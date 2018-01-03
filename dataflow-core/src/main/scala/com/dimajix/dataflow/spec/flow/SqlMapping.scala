@@ -8,7 +8,7 @@ import org.apache.spark.sql.catalyst.plans.logical.With
 
 import com.dimajix.dataflow.execution.Context
 
-class SqlMapping extends Mapping {
+class SqlMapping extends BaseMapping {
     @JsonProperty("sql") private[spec] var _sql:String = _
     @JsonProperty("file") private[spec] var _file:String = _
 

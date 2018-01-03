@@ -6,7 +6,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.dataflow.execution.Context
 
 
-class AliasMapping extends Mapping {
+class AliasMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
 
     def input(implicit context: Context) : String = context.evaluate(_input)

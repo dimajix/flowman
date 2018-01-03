@@ -4,8 +4,8 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-import com.dimajix.dataflow.cli.Driver
-import com.dimajix.dataflow.spec.Dataflow
+import com.dimajix.dataflow.spec.Project
+import com.dimajix.dataflow.tools.dfexec.Driver
 
 
 class Session(sparkName:String, sparkConfig:Seq[(String,String)], environment: Seq[(String,String)]) {
@@ -36,23 +36,22 @@ class Session(sparkName:String, sparkConfig:Seq[(String,String)], environment: S
         context
     }
 
-    def createContext(dataflow: Dataflow, profiles:Seq[String]) : Context = {
+    def createContext(project: Project, profiles:Seq[String]) : Context = {
         // Apply all active profiles
         val profileContext = profiles
-            .map(name => (name,dataflow.profiles(name)))
+            .map(name => (name,project.profiles(name)))
             .foldLeft(rootContext){case (context,(name,profile)) =>
                 logger.info(s"Applying profile $name to context")
                 context.withProfile(profile)
             }
         // Finally set additional values
         val context = profileContext
-            .withEnvironment(dataflow.environment)
-            .withConfig(dataflow.config)
+            .withEnvironment(project.environment)
+            .withConfig(project.config)
 
         // Print current environment variables
         context.environment.foreach(kv => logger.info("Environment: {} = {}", kv._1: Any, kv._2: Any))
 
         context
     }
-
 }

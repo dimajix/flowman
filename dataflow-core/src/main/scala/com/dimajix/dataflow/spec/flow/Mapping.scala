@@ -22,6 +22,9 @@ object Mapping {
 }
 
 
+/**
+  * Interface class for specifying a transformation (mapping)
+  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
@@ -37,11 +40,19 @@ object Mapping {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping])
 ))
 abstract class Mapping {
-    @JsonProperty("broadcast") private[spec] var _broadcast:String = "false"
-    @JsonProperty("cache") private[spec] var _cache:String = "NONE"
+    /**
+      * This method should return true, if the resulting dataframe should be broadcast for map-side joins
+      * @param context
+      * @return
+      */
+    def broadcast(implicit context: Context) : Boolean
 
-    def broadcast(implicit context: Context) : Boolean = context.evaluate(_broadcast).toBoolean
-    def cache(implicit context: Context) : StorageLevel = StorageLevel.fromString(context.evaluate(_cache))
+    /**
+      * Returns the desired storage level. Default should be StorageLevel.NONE
+      * @param context
+      * @return
+      */
+    def cache(implicit context: Context) : StorageLevel
 
     /**
       * Executes this Transform and returns a corresponding DataFrame

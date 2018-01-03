@@ -1,4 +1,4 @@
-package com.dimajix.dataflow.cli
+package com.dimajix.dataflow.tools.dfexec
 
 import org.kohsuke.args4j.CmdLineParser
 

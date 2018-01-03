@@ -1,6 +1,4 @@
-package com.dimajix.dataflow.cli
-
-import java.util.Locale
+package com.dimajix.dataflow.tools.dfexec
 
 import scala.collection.JavaConversions._
 
@@ -12,8 +10,8 @@ import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
-import com.dimajix.dataflow.cli.flow.DataflowCommand
-import com.dimajix.dataflow.cli.model.ModelCommand
+import com.dimajix.dataflow.tools.dfexec.flow.DataflowCommand
+import com.dimajix.dataflow.tools.dfexec.model.ModelCommand
 
 
 class Arguments(args:Array[String]) extends NestedCommand {

@@ -6,7 +6,7 @@ import org.apache.spark.sql.functions.col
 
 import com.dimajix.dataflow.execution.Context
 
-class RepartitionMapping extends Mapping {
+class RepartitionMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private[spec] var _columns:Seq[String] = _
     @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _

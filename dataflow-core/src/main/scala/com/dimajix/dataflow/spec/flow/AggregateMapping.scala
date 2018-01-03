@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.execution.Context
 
 
-class AggregateMapping extends Mapping {
+class AggregateMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[AggregateMapping])
 
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _

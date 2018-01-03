@@ -7,7 +7,7 @@ import org.apache.spark.sql.functions.col
 import com.dimajix.dataflow.execution.Context
 
 
-class SortMapping extends Mapping {
+class SortMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Seq[Map[String,String]] = Seq()
 

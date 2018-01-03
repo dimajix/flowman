@@ -6,7 +6,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.dataflow.execution.Context
 
 
-class FilterMapping extends Mapping {
+class FilterMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "condition", required = true) private var _condition:String = _
 

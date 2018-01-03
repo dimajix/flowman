@@ -7,7 +7,7 @@ import org.apache.spark.sql.functions.expr
 
 import com.dimajix.dataflow.execution.Context
 
-class ExtendMapping extends Mapping {
+class ExtendMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = _
 

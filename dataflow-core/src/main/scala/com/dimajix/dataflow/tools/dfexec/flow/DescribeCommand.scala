@@ -1,4 +1,4 @@
-package com.dimajix.dataflow.cli.flow
+package com.dimajix.dataflow.tools.dfexec.flow
 
 import scala.util.Failure
 import scala.util.Success
@@ -7,10 +7,9 @@ import scala.util.Try
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
-import com.dimajix.dataflow.cli.Command
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.spec.Dataflow
+import com.dimajix.dataflow.spec.Project
 
 
 class DescribeCommand extends AbstractCommand {
@@ -19,7 +18,7 @@ class DescribeCommand extends AbstractCommand {
     @Argument(usage = "specifies the table to describe", metaVar = "<tablename>", required = true)
     var tablename: String = ""
 
-    override def executeInternal(context:Context, dataflow:Dataflow) : Boolean = {
+    override def executeInternal(context:Context, dataflow:Project) : Boolean = {
         logger.info("Describing table {}", tablename)
 
         val executor = new Executor(context, dataflow)

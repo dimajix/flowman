@@ -8,7 +8,7 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.spec.model.Relation.Partition
 
 
-class FileRelation extends Relation {
+class FileRelation extends BaseRelation {
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = _
     @JsonProperty(value="partitions") private var _partitions: Seq[Field] = Seq()

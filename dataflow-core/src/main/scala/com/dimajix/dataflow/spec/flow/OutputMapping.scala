@@ -7,7 +7,7 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.util.SchemaUtils
 
 
-class OutputMapping extends Mapping {
+class OutputMapping extends BaseMapping {
     @JsonProperty(value = "input", required=true) private var _input:String = _
     @JsonProperty(value = "target", required=true) private var _target:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _

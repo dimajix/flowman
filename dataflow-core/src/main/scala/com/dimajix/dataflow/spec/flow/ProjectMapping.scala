@@ -8,7 +8,7 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.util.SchemaUtils
 
 
-class ProjectMapping extends Mapping {
+class ProjectMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Seq[Map[String,String]] = Seq()
 

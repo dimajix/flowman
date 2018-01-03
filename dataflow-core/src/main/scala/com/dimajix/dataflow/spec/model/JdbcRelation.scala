@@ -12,7 +12,7 @@ import com.dimajix.dataflow.spec.model.Relation.Partition
 import com.dimajix.dataflow.util.SchemaUtils
 
 
-class JdbcRelation extends Relation {
+class JdbcRelation extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
     @JsonProperty(value="properties") private var _properties:Map[String,String] = Map()

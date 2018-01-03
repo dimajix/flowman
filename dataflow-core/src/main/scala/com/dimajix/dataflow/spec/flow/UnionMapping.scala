@@ -11,7 +11,7 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.util.SchemaUtils
 
 
-class UnionMapping extends Mapping {
+class UnionMapping extends BaseMapping {
     @JsonProperty(value="inputs", required=true) private[spec] var _inputs:Seq[String] = _
     @JsonProperty(value="fields", required=false) private[spec] var _fields:Map[String,String] = _
 

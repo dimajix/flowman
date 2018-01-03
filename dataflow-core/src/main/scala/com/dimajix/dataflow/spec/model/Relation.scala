@@ -32,7 +32,9 @@ object Relation {
     }
 }
 
-
+/**
+  * Interface class for declaring relations (for sources and sinks) as part of a model
+  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
@@ -40,21 +42,6 @@ object Relation {
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelation])
 ))
 abstract class Relation {
-    @JsonProperty(value="database") private var _database: String = _
-    @JsonProperty(value="namespace") private var _namespace: String = _
-    @JsonProperty(value="entity") private var _entity: String = _
-    @JsonProperty(value="external") private var _external: String = _
-    @JsonProperty(value="options") private var _options:Map[String,String] = Map()
-    @JsonProperty(value="schema") private var _schema: Seq[Field] = Seq()
-    @JsonProperty(value="defaults", required=false) private var _defaultValues:Map[String,String] = Map()
-
-    def external(implicit context:Context) : Boolean = context.evaluate(_external).toBoolean
-    def namespace(implicit context:Context) : String = context.evaluate(_namespace)
-    def entity(implicit context:Context) : String = context.evaluate(_entity)
-    def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
-    def database(implicit context: Context) : String = context.evaluate(_database)
-    def defaultValues(implicit context: Context) : Map[String,String] = _defaultValues.mapValues(context.evaluate)
-
     /**
       * Reads data from the relation, possibly from specific partitions
       *

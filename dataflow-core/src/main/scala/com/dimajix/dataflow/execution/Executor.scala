@@ -6,10 +6,10 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.broadcast
 import org.slf4j.LoggerFactory
 
-import com.dimajix.dataflow.spec.Dataflow
+import com.dimajix.dataflow.spec.Project
 
 
-class Executor(val context:Context, val dataflow:Dataflow) {
+class Executor(val context:Context, val dataflow:Project) {
     private val logger = LoggerFactory.getLogger(classOf[Executor])
 
     private implicit val _context = context

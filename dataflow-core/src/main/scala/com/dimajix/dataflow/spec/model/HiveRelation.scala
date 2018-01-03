@@ -7,7 +7,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.spec.model.Relation.Partition
 
-class HiveRelation extends Relation  {
+class HiveRelation extends BaseRelation  {
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = _
     @JsonProperty(value="partitions") private var _partitions: Seq[Field] = Seq()

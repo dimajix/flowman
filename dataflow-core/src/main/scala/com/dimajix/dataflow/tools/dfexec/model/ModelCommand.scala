@@ -1,4 +1,4 @@
-package com.dimajix.dataflow.cli.model
+package com.dimajix.dataflow.tools.dfexec.model
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.CmdLineParser
@@ -6,8 +6,8 @@ import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
-import com.dimajix.dataflow.cli.Arguments
-import com.dimajix.dataflow.cli.Command
+import com.dimajix.dataflow.tools.dfexec.Arguments
+import com.dimajix.dataflow.tools.dfexec.Command
 
 
 class ModelCommand extends Command {

@@ -11,9 +11,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.Project
+import com.dimajix.dataflow.tools.dfexec.ActionCommand
 
 
-class ExplainCommand extends AbstractCommand {
+class ExplainCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Option(name="-e", aliases=Array("--extended"), required = false)

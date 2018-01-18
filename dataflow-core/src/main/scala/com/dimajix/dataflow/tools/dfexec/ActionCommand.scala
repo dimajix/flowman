@@ -1,30 +1,28 @@
-package com.dimajix.dataflow.tools.dfexec.flow
+package com.dimajix.dataflow.tools.dfexec
 
 import org.kohsuke.args4j.Option
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Session
 import com.dimajix.dataflow.spec.Project
-import com.dimajix.dataflow.tools.dfexec.Arguments
-import com.dimajix.dataflow.tools.dfexec.Command
 import com.dimajix.dataflow.util.splitSettings
 
 
-abstract class AbstractCommand extends Command {
-    @Option(name = "-f", aliases=Array("--file"), usage = "dataflow file", metaVar = "<dataflow>")
-    var dataflowFile: String = "dataflow.yaml"
+abstract class ActionCommand extends Command {
+    @Option(name = "-f", aliases=Array("--file"), usage = "project file", metaVar = "<project>")
+    var dataflowFile: String = "project.yaml"
 
     override def execute(options:Arguments): Boolean = {
         super.execute(options)
 
-        val dataflow = Project.load(dataflowFile)
+        val model = Project.load(dataflowFile)
 
         val sparkConfig = splitSettings(options.sparkConfig)
         val environment = splitSettings(options.environment)
         val session = new Session(options.sparkName, sparkConfig, environment)
 
-        val context = session.createContext(dataflow, options.profiles)
-        val result = executeInternal(context, dataflow)
+        val context = session.createContext(model, options.profiles)
+        val result = executeInternal(context, model)
         context.cleanup()
 
         result

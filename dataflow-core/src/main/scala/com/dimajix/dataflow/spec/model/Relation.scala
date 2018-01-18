@@ -1,5 +1,6 @@
 package com.dimajix.dataflow.spec.model
 
+import java.sql.Types
 import java.util.ServiceLoader
 
 import scala.collection.JavaConversions._
@@ -9,17 +10,24 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.model.Relation.Partition
 import com.dimajix.dataflow.spi.RelationProvider
+import com.dimajix.dataflow.util.SchemaUtils
 
 
 class Field {
     @JsonProperty(value="name") private var _name: String = _
     @JsonProperty(value="type") private var _type: String = _
     @JsonProperty(value="description") private var _description: String = _
+
+    def name(implicit context: Context) : String = context.evaluate(_name)
+    def dtype(implicit context: Context) : DataType = SchemaUtils.mapType(context.evaluate(_type))
+    def description(implicit context: Context) : String = context.evaluate(_description)
 }
 
 
@@ -45,21 +53,21 @@ abstract class Relation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param context
+      * @param executor
       * @param schema
       * @param partition
       * @return
       */
-    def read(context:Context, schema:StructType, partition:Seq[Partition] = Seq()) : DataFrame
+    def read(executor:Executor, schema:StructType, partition:Seq[Partition] = Seq()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
-      * @param context
+      * @param executor
       * @param df
       * @param partition
       */
-    def write(context:Context, df:DataFrame, partition:Partition = null) : Unit
-    def create(context:Context) : Unit
-    def destroy(context:Context) : Unit
-    def migrate(context: Context) : Unit
+    def write(executor:Executor, df:DataFrame, partition:Partition = null, mode:String = "OVERWRITE") : Unit
+    def create(executor:Executor) : Unit
+    def destroy(executor:Executor) : Unit
+    def migrate(executor:Executor) : Unit
 }

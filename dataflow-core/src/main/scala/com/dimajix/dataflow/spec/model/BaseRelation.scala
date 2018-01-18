@@ -3,6 +3,7 @@ package com.dimajix.dataflow.spec.model
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.spec.DatabaseIdentifier
 
 
 /**
@@ -21,6 +22,6 @@ abstract class BaseRelation extends Relation {
     def namespace(implicit context:Context) : String = context.evaluate(_namespace)
     def entity(implicit context:Context) : String = context.evaluate(_entity)
     def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
-    def database(implicit context: Context) : String = context.evaluate(_database)
+    def database(implicit context: Context) : DatabaseIdentifier = DatabaseIdentifier.parse(context.evaluate(_database))
     def defaultValues(implicit context: Context) : Map[String,String] = _defaultValues.mapValues(context.evaluate)
 }

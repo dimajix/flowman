@@ -7,6 +7,8 @@ import org.apache.spark.sql.functions.expr
 import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.execution.TableIdentifier
 
 
 class AggregateMapping extends BaseMapping {
@@ -17,7 +19,7 @@ class AggregateMapping extends BaseMapping {
     @JsonProperty(value = "aggregations", required = true) private[spec] var _aggregations:Map[String,String] = _
     @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
 
-    def input(implicit context: Context) : String = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
     def dimensions(implicit context: Context) : Seq[String] = _dimensions.map(context.evaluate)
     def aggregations(implicit context: Context) : Map[String,String] = _aggregations.mapValues(context.evaluate)
     def partitions(implicit context: Context) : Int = if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
@@ -25,13 +27,15 @@ class AggregateMapping extends BaseMapping {
     /**
       * Creates an instance of the aggregated table.
       *
-      * @param context
+      * @param executor
+      * @param input
       * @return
       */
-    override def execute(implicit context:Context): DataFrame = {
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]): DataFrame = {
         logger.info("Aggregating table {} on dimensions {}", Array(input, dimensions.mkString(",")):_*)
+        implicit val context = executor.context
 
-        val df = context.session.table(input)
+        val df = input(this.input)
         val dims = dimensions.map(col)
         val aggs = aggregations.map(kv => expr(kv._2).as(kv._1))
         val parts = partitions

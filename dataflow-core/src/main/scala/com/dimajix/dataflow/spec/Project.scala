@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
+import com.dimajix.dataflow.spec.output.Output
 
 
 object Project {
@@ -40,6 +41,7 @@ object Project {
         project._databases = module.databases
         project._models = module.models
         project._dataflow = module.transforms
+        project._outputs = module.outputs
         project
     }
 
@@ -70,16 +72,19 @@ class Project {
     private var _databases: Map[String,Database] = Map()
     private var _models: Map[String,Relation] = Map()
     private var _dataflow: Map[String,Mapping] = Map()
+    private var _outputs: Map[String,Output] = Map()
 
     def name : String = _name
     def version : String = _version
     def modules : Seq[String] = _modules
 
+    def config : Seq[(String,String)] = _config
+    def environment : Seq[(String,String)] = _environment
+
     def profiles : Map[String,Profile] = _profiles
     def models : Map[String,Relation] = _models
     def databases : Map[String,Database] = _databases
     def transforms : Map[String,Mapping] = _dataflow
-    def config : Seq[(String,String)] = _config
-    def environment : Seq[(String,String)] = _environment
+    def outputs : Map[String,Output] = _outputs
 }
 

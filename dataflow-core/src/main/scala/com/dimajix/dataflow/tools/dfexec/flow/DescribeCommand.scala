@@ -10,9 +10,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.Project
+import com.dimajix.dataflow.tools.dfexec.ActionCommand
 
 
-class DescribeCommand extends AbstractCommand {
+class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Argument(usage = "specifies the table to describe", metaVar = "<tablename>", required = true)

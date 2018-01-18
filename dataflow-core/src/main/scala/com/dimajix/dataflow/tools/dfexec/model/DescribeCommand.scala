@@ -9,9 +9,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.spec.Project
+import com.dimajix.dataflow.tools.dfexec.ActionCommand
 
 
-class DescribeCommand extends AbstractCommand {
+class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Argument(usage = "specifies the relation to describe", metaVar = "<relation>", required = true)

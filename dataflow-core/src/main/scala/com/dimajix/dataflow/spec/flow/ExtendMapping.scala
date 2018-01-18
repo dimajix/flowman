@@ -6,15 +6,24 @@ import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.functions.expr
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.execution.TableIdentifier
 
 class ExtendMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = _
 
-    def input(implicit context: Context) : String = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
     def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
 
-    override def execute(implicit context:Context) : DataFrame = {
+    /**
+      * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
+      *
+      * @param executor
+      * @param input
+      * @return
+      */
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
         val allColumns = columns
         val columnNames = allColumns.keys.toSet
 

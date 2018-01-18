@@ -1,12 +1,15 @@
 package com.dimajix.dataflow.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.With
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.execution.TableIdentifier
 
 class SqlMapping extends BaseMapping {
     @JsonProperty("sql") private[spec] var _sql:String = _
@@ -15,10 +18,18 @@ class SqlMapping extends BaseMapping {
     def sql(implicit context: Context) : String = context.evaluate(_sql)
     def file(implicit context: Context) : String = context.evaluate(_file)
 
-    override def execute(implicit context:Context) = {
-        context.session.sql(sql)
+    /**
+      * Executes this Mapping and returns a corresponding DataFrame
+      *
+      * @param executor
+      * @param input
+      * @return
+      */
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
+        implicit val context = executor.context
+        executor.session.sql(sql)
     }
-    override def dependencies(implicit context:Context) : Array[String] = {
+    override def dependencies(implicit context:Context) : Array[TableIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
         resolveDependencies(plan).toArray
     }

@@ -8,9 +8,10 @@ import org.kohsuke.args4j.spi.SubCommands
 
 import com.dimajix.dataflow.tools.dfexec.Arguments
 import com.dimajix.dataflow.tools.dfexec.Command
+import com.dimajix.dataflow.tools.dfexec.NestedCommand
 
 
-class ModelCommand extends Command {
+class ModelCommand extends NestedCommand {
     @Argument(required=false,index=0,metaVar="action",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="create",impl=classOf[CreateCommand]),
@@ -18,16 +19,10 @@ class ModelCommand extends Command {
         new SubCommand(name="describe",impl=classOf[DescribeCommand]),
         new SubCommand(name="show",impl=classOf[ShowCommand])
     ))
-    var command:Command = _
+    override var command:Command = _
 
     override def execute(options:Arguments) : Boolean = {
         super.execute(options)
-
-        if (command == null) {
-            new CmdLineParser(this).printUsage(System.err)
-            System.err.println
-            System.exit(1)
-        }
 
         command.execute(options)
     }

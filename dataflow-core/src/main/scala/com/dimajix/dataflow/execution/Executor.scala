@@ -1,59 +1,58 @@
 package com.dimajix.dataflow.execution
 
-import scala.collection.mutable
-
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.broadcast
-import org.slf4j.LoggerFactory
+import org.apache.spark.sql.SparkSession
 
-import com.dimajix.dataflow.spec.Project
+import com.dimajix.dataflow.spec.RelationIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
+import com.dimajix.dataflow.spec.flow.Mapping
+import com.dimajix.dataflow.spec.model.Relation
 
 
-class Executor(val context:Context, val dataflow:Project) {
-    private val logger = LoggerFactory.getLogger(classOf[Executor])
+abstract class Executor {
+    def mappings : Map[TableIdentifier,Mapping]
 
-    private implicit val _context = context
-    private val transforms = dataflow.transforms
+    def getMapping(name:TableIdentifier) : Mapping
+    def getRelation(name: RelationIdentifier): Relation
 
     /**
-      * Instantiates a table and recursively all its dependencies
+      * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
+      * SparkSession, but a new derived session with a separate namespace will be created.
       *
-      * @param tableName
       * @return
       */
-    private def createTable(tableName: String): DataFrame = {
-        logger.info("Creating instance of table {}", tableName)
-        if (!transforms.contains(tableName)) {
-            logger.error("Table {} not found", tableName)
-            throw new NoSuchElementException(s"Table $tableName not found")
-        }
+    def session: SparkSession
 
-        // Lookup table definition
-        val transform = transforms(tableName)
+    /**
+      * Returns the Context associated with this Executor. This context will be used for looking up
+      * databases and relations and for variable substition
+      *
+      * @return
+      */
+    def context : Context
 
-        // Ensure all dependencies are instantiated
-        logger.info("Ensuring dependencies for table {}", tableName)
-        val dependencies = transform.dependencies
-        dependencies.foreach(instantiate)
+    /**
+      * Returns a map of all temporary tables created by this executor
+      *
+      * @return
+      */
+    def tables : Map[TableIdentifier,DataFrame]
 
-        // Process table and register result as temp table
-        logger.info("Instantiating table {}", tableName)
-        val instance = transform.execute.persist(transform.cache)
-        val df = if (transform.broadcast)
-            broadcast(instance)
-        else
-            instance
-
-        context.putTable(tableName, df)
-        df
-    }
+    /**
+      * Returns a named table created by an executor. If a project is specified, Executors for other projects
+      * will be searched as well
+      *
+      * @param identifier
+      * @return
+      */
+    def getTable(identifier: TableIdentifier) : DataFrame
 
     /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache
       *
-      * @param tableName
+      * @param identifier
       */
-    def instantiate(tableName: String) : DataFrame = {
-        context.getTable(tableName, createTable(tableName))
-    }
+    def instantiate(identifier: TableIdentifier) : DataFrame
+
+    def cleanup() : Unit
 }

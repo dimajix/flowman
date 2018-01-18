@@ -6,10 +6,23 @@ import com.dimajix.dataflow.util.splitSettings
 
 
 class Profile {
+    @JsonProperty(value="enabled") private var _enabled : Boolean = true
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="databases") private var _databases: Map[String,Database] = Map()
 
+    /**
+      * Returns true if the profile is enabled
+      *
+      * @return
+      */
+    def enabled : Boolean = _enabled
+
+    /**
+      * Returns a map of all configured databases
+      *
+      * @return
+      */
     def databases : Map[String,Database] = _databases
 
     /**

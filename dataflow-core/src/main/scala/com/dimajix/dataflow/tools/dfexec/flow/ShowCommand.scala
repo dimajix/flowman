@@ -11,9 +11,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.Project
+import com.dimajix.dataflow.tools.dfexec.ActionCommand
 
 
-class ShowCommand extends AbstractCommand {
+class ShowCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ShowCommand])
 
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)

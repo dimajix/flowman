@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
+import com.dimajix.dataflow.spec.output.Output
 import com.dimajix.dataflow.util.splitSettings
 
 
@@ -73,11 +74,13 @@ class Module {
     @JsonProperty(value="databases") private var _databases: Map[String,Database] = Map()
     @JsonProperty(value="models") private var _models: Map[String,Relation] = Map()
     @JsonProperty(value="dataflow") private var _dataflow: Map[String,Mapping] = Map()
+    @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
 
     def profiles : Map[String,Profile] = _profiles
     def models : Map[String,Relation] = _models
     def databases : Map[String,Database] = _databases
     def transforms : Map[String,Mapping] = _dataflow
+    def outputs : Map[String,Output] = _outputs
 
     /**
       * Returns all configuration variables as a key-value sequence
@@ -106,6 +109,7 @@ class Module {
         result._databases = _databases ++ other._databases
         result._models = _models ++ other._models
         result._dataflow = _dataflow ++ other._dataflow
+        result._outputs = _outputs ++ other._outputs
         result._profiles = _profiles ++ other._profiles
         result
     }

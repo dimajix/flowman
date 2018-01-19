@@ -1,9 +1,12 @@
 package com.dimajix.dataflow.spec.output
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.spec.TableIdentifier
 
 
 class FileOutput extends RelationOutput {
@@ -16,7 +19,8 @@ class FileOutput extends RelationOutput {
     def pattern(implicit context: Context) : String = context.evaluate(_pattern)
 
 
-    override def execute(implicit context:Context) = {
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
+        implicit var context = executor.context
 //        val datetime = DateTimeFormatter.ofPattern(pattern).format(context.startDate)
 //        val path = new File(directory, datetime).toString
 //

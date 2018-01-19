@@ -135,6 +135,6 @@ class RootExecutor(context:RootContext, profiles:Seq[String], sessionFactory:() 
 
     private def loadProject(name: String): ProjectExecutor = {
         val project : Project = ???
-        project
+        createProjectExecutor(project)
     }
 }

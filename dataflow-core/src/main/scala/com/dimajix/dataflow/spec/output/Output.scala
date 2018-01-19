@@ -6,7 +6,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")

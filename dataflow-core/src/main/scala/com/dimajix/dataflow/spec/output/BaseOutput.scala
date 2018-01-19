@@ -6,7 +6,7 @@ import com.dimajix.dataflow.execution.Context
 
 
 abstract class BaseOutput extends Output {
-    @JsonProperty(value = "enabled", required=true) private var _enabled:String = _
+    @JsonProperty(value = "enabled", required=false) private var _enabled:String = _
     @JsonProperty(value = "input", required=true) private var _input:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
 
@@ -15,6 +15,12 @@ abstract class BaseOutput extends Output {
 
     override def enabled(implicit context:Context) : Boolean = if (_enabled != null) context.evaluate(_enabled).toBoolean else true
 
+    /**
+      * Returns the dependencies of this mapping, which is exactly one input table
+      *
+      * @param context
+      * @return
+      */
     override def dependencies(implicit context: Context) : Array[String] = {
         val table = input
         if (table != null)

@@ -1,9 +1,13 @@
 package com.dimajix.dataflow.spec.output
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
+import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.spec.RelationIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.util.SchemaUtils
 
 
@@ -15,17 +19,18 @@ class RelationOutput extends BaseOutput {
     @JsonProperty(value="partitions", required=false) private[spec] var _partitions:Array[String] = _
     @JsonProperty(value="parallelism", required=false) private[spec] var _parallelism:String = "16"
 
-    def target(implicit context: Context) : String = context.evaluate(_target)
+    def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
     def mode(implicit context: Context) : String = context.evaluate(_mode)
     def partitions(implicit context: Context) : Array[String] = if (_partitions != null) _partitions.map(context.evaluate) else Array[String]()
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
 
-    override def execute(implicit context: Context) = {
-        logger.info("Writing to relation {} with format {}", target, format.toString)
-        val relation = context.getRelation(target)
-        val table = context.getTable(input).coalesce(parallelism)
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
+        implicit var context = executor.context
+        logger.info("Writing to relation {}", target)
+        val relation = executor.getRelation(target)
+        val table = input(this.input).coalesce(parallelism)
         val fields = columns
         val schema = if (fields != null) SchemaUtils.createSchema(fields) else null
-        relation.write(context, table, null, mode)
+        relation.write(executor, table, null, mode)
     }
 }

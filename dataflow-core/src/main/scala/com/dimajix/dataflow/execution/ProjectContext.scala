@@ -1,7 +1,7 @@
 package com.dimajix.dataflow.execution
 
-import com.dimajix.dataflow.spec.Database
-import com.dimajix.dataflow.spec.DatabaseIdentifier
+import com.dimajix.dataflow.spec.Connection
+import com.dimajix.dataflow.spec.ConnectionIdentifier
 import com.dimajix.dataflow.spec.OutputIdentifier
 import com.dimajix.dataflow.spec.Profile
 import com.dimajix.dataflow.spec.Project
@@ -26,7 +26,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getMapping(identifier: TableIdentifier): Mapping = {
         if (identifier.project.forall(_ == _project.name))
-            _project.transforms.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping $identifier not found in project ${_project.name}"))
+            _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping $identifier not found in project ${_project.name}"))
         else
             parent.getMapping(identifier)
     }
@@ -40,7 +40,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
         if (identifier.project.forall(_ == _project.name))
-            _project.models.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation $identifier not found in project ${_project.name}"))
+            _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation $identifier not found in project ${_project.name}"))
         else
             parent.getRelation(identifier)
     }
@@ -65,12 +65,12 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       * @param identifier
       * @return
       */
-    override def getDatabase(identifier:DatabaseIdentifier) : Database = {
+    override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         if (identifier.project.forall(_ == _project.name)) {
             databases.getOrElse(identifier.name, throw new NoSuchElementException(s"Database $identifier not found in project ${_project.name}"))
         }
         else {
-            parent.getDatabase(identifier)
+            parent.getConnection(identifier)
         }
     }
 

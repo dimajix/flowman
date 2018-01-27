@@ -6,8 +6,8 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.dataflow.spec.Database
-import com.dimajix.dataflow.spec.DatabaseIdentifier
+import com.dimajix.dataflow.spec.Connection
+import com.dimajix.dataflow.spec.ConnectionIdentifier
 import com.dimajix.dataflow.spec.Namespace
 import com.dimajix.dataflow.spec.OutputIdentifier
 import com.dimajix.dataflow.spec.Profile
@@ -64,11 +64,11 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
         child.getOutput(OutputIdentifier(name.name, None))
     }
 
-    override def getDatabase(identifier:DatabaseIdentifier) : Database = {
+    override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         if (identifier.project.isEmpty)
             throw new NoSuchElementException("Expected project name in table specifier")
         val child = getProjectContext(identifier.project.get)
-        child.getDatabase(DatabaseIdentifier(identifier.name, None))
+        child.getConnection(ConnectionIdentifier(identifier.name, None))
     }
 
     /**

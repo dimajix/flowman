@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.dataflow.execution.Context
 
-class Database {
+
+class Connection {
     @JsonProperty(value="driver", required=true) private[spec] var _driver:String = _
     @JsonProperty(value="url", required=true) private[spec] var _url:String = _
     @JsonProperty(value="username", required=true) private[spec] var _username:String = _

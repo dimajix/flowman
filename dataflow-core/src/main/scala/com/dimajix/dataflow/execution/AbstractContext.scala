@@ -11,8 +11,8 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory
 
-import com.dimajix.dataflow.spec.Database
-import com.dimajix.dataflow.spec.DatabaseIdentifier
+import com.dimajix.dataflow.spec.Connection
+import com.dimajix.dataflow.spec.ConnectionIdentifier
 
 
 object AbstractContext {
@@ -32,7 +32,7 @@ abstract class AbstractContext extends Context {
 
     private val _environment = mutable.Map[String,(String, Int)]()
     private val _config = mutable.Map[String,(String, Int)]()
-    private val _databases = mutable.Map[String, (Database, Int)]()
+    private val _databases = mutable.Map[String, (Connection, Int)]()
 
     private lazy val templateEngine = {
         val ve = new VelocityEngine()
@@ -45,7 +45,7 @@ abstract class AbstractContext extends Context {
         context
     }
 
-    protected def databases : Map[String,Database] = _databases.mapValues(_._1).toMap
+    protected def databases : Map[String,Connection] = _databases.mapValues(_._1).toMap
 
     protected def updateFrom(context:AbstractContext) = {
         context._environment.foreach(kv => _environment.update(kv._1,kv._2))
@@ -141,10 +141,10 @@ abstract class AbstractContext extends Context {
         }
     }
 
-    def setDatabases(databases:Map[String,Database], settingLevel: SettingLevel) : Unit = {
+    def setDatabases(databases:Map[String,Connection], settingLevel: SettingLevel) : Unit = {
         databases.foreach(kv => setDatabase(kv._1, kv._2, settingLevel))
     }
-    def setDatabase(name:String, database:Database, settingLevel: SettingLevel) : Unit = {
+    def setDatabase(name:String, database:Connection, settingLevel: SettingLevel) : Unit = {
         val currentValue = _databases.getOrElse(name, (null, SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
             _databases.update(name, (database, settingLevel.level))

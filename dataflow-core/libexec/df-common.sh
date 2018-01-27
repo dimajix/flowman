@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-basedir=$(readlink -f $(dirname $0/..))
+basedir=$(readlink -f $(dirname $0)/..)
 confdir=$basedir/conf
 
 # Set basic options
@@ -18,22 +18,37 @@ if [ -f $confdir/dataflow-env.sh ]; then
     source $confdir/dataflow-env.sh
 fi
 
+if [ -f $HADOOP_HOME/etc/hadoop/hadoop-env.sh ]; then
+    source $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+fi
+
 # Build Spark dist classpath
-export SPARK_DIST_CLASSPATH=""
-if [ -d $HADOOP_HOME ]; then
-    export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/*.jar:$HADOOP_HOME/lib/*.jar"
-fi
-if [ -d $HADOOP_CONF_DIR ]; then
-    export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_CONF_DIR/*"
-fi
-if [ -d $YARN_HOME ]; then
-    export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$YARN_HOME/*.jar:$YARN_HOME/lib/*.jar"
-fi
-if [ -d $HDFS_HOME ]; then
-    export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HDFS_HOME/*.jar:$HDFS_HOME/lib/*.jar"
-fi
-if [ -d $MAPRED_HOME ]; then
-    export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$MAPRED_HOME/*:$MAPRED_HOME/*.jar"
+if [ $SPARK_DIST_CLASSPATH = "" ]; then
+    if [ -d $HADOOP_HOME ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/*.jar:$HADOOP_HOME/lib/*.jar"
+    fi
+    if [ -d $HADOOP_CONF_DIR ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_CONF_DIR/*"
+    fi
+    if [ -d $HADOOP_HOME/share/hadoop/common ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/share/hadoop/common/*.jar:$HADOOP_HOME/share/hadoop/common/lib/*.jar"
+    fi
+
+    if [ -d $YARN_HOME ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$YARN_HOME/*.jar:$YARN_HOME/lib/*.jar"
+    elif [ -d $HADOOP_HOME/share/hadoop/yarn ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/share/hadoop/yarn/*.jar:$HADOOP_HOME/share/hadoop/yarn/lib/*.jar"
+    fi
+
+    if [ -d $HDFS_HOME ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HDFS_HOME/*.jar:$HDFS_HOME/lib/*.jar"
+    elif [ -d $HADOOP_HOME/share/hadoop/hdfs ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/share/hadoop/hdfs/*.jar:$HADOOP_HOME/share/hadoop/hdfs/lib/*.jar"
+    fi
+
+    if [ -d $MAPRED_HOME ]; then
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$MAPRED_HOME/*:$MAPRED_HOME/*.jar"
+    fi
 fi
 
 
@@ -47,8 +62,8 @@ spark_submit() {
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.executor.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
       --master $SPARK_MASTER \
-      --class $1 \
+      --class $2 \
       $SPARK_OPTS \
       --jars $LIB_JARS \
-      $2 "${@:3}"
+      $1 "${@:3}"
 }

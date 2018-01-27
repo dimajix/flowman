@@ -9,7 +9,7 @@ class Profile {
     @JsonProperty(value="enabled") private var _enabled : Boolean = true
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
-    @JsonProperty(value="databases") private var _databases: Map[String,Database] = Map()
+    @JsonProperty(value="databases") private var _databases: Map[String,Connection] = Map()
 
     /**
       * Returns true if the profile is enabled
@@ -23,7 +23,7 @@ class Profile {
       *
       * @return
       */
-    def databases : Map[String,Database] = _databases
+    def databases : Map[String,Connection] = _databases
 
     /**
       * Returns all configuration variables as a key-value sequence

@@ -1,6 +1,6 @@
 package com.dimajix.dataflow.storage
 
-import com.dimajix.dataflow.spec.Database
+import com.dimajix.dataflow.spec.Connection
 import com.dimajix.dataflow.spec.Profile
 import com.dimajix.dataflow.spec.Project
 import com.dimajix.dataflow.spec.model.Relation
@@ -15,7 +15,7 @@ abstract class Store {
     def loadEnvironment() : Map[String,String]
     def addEnvironment(key:String, value:String) : Unit
     def removeEnvironment(key:String) : Unit
-    
+
     def listProfiles() : Seq[String]
     def loadProfiles() : Map[String,Profile]
     def enableProfile(name:String) : Unit
@@ -32,7 +32,7 @@ abstract class Store {
 
     def listDatabases() : Seq[String]
     def loadDatabases() : Map[String,Profile]
-    def loadDatabase(name:String) : Database
-    def storeDatabase(name:String, database: Database) : Unit
+    def loadDatabase(name:String) : Connection
+    def storeDatabase(name:String, database: Connection) : Unit
     def removeDatabase(name:String) : Unit
 }

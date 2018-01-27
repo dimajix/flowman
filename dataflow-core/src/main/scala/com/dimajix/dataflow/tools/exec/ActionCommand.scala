@@ -9,12 +9,12 @@ import com.dimajix.dataflow.spec.Project
 
 abstract class ActionCommand extends Command {
     @Option(name = "-f", aliases=Array("--file"), usage = "project file", metaVar = "<project>")
-    var dataflowFile: String = "project.yaml"
+    var projectFile: String = "project.yaml"
 
     override def execute(project:Project, session: Session): Boolean = {
         super.execute(project, session)
 
-        val model = Project.load(dataflowFile)
+        val model = Project.read.yaml(projectFile)
 
         val executor = session.createExecutor(project)
         val result = executeInternal(executor, model)

@@ -15,7 +15,7 @@ import com.dimajix.dataflow.spec.output.Output
 import com.dimajix.dataflow.util.splitSettings
 
 
-object Module {
+class ModuleReader {
     private val logger = LoggerFactory.getLogger(classOf[Project])
 
     private def mapper = {
@@ -38,7 +38,7 @@ object Module {
       * @param file
       * @return
       */
-    def load(file:File) : Module = {
+    def yaml(file:File) : Module = {
         if (file.isDirectory) {
             logger.info(s"Reading all module files in directory ${file.toString}")
             file.listFiles()
@@ -56,30 +56,34 @@ object Module {
       * @param filename
       * @return
       */
-    def load(filename:String) : Module = {
-        load(new File(filename))
+    def yaml(filename:String) : Module = {
+        yaml(new File(filename))
     }
 
-    def parse(text:String) : Module = {
+    def string(text:String) : Module = {
         mapper.readValue(text, classOf[Module])
     }
 }
 
+
+object Module {
+    def read = new ModuleReader
+}
 
 
 class Module {
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
-    @JsonProperty(value="databases") private var _databases: Map[String,Database] = Map()
-    @JsonProperty(value="models") private var _models: Map[String,Relation] = Map()
-    @JsonProperty(value="dataflow") private var _dataflow: Map[String,Mapping] = Map()
+    @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
+    @JsonProperty(value="models") private var _relations: Map[String,Relation] = Map()
+    @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
     @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
 
     def profiles : Map[String,Profile] = _profiles
-    def models : Map[String,Relation] = _models
-    def databases : Map[String,Database] = _databases
-    def transforms : Map[String,Mapping] = _dataflow
+    def relations : Map[String,Relation] = _relations
+    def connections : Map[String,Connection] = _connections
+    def mappings : Map[String,Mapping] = _mappings
     def outputs : Map[String,Output] = _outputs
 
     /**
@@ -106,11 +110,30 @@ class Module {
         val result = new Module
         result._environment = _environment ++ other._environment
         result._config = _config ++ other._config
-        result._databases = _databases ++ other._databases
-        result._models = _models ++ other._models
-        result._dataflow = _dataflow ++ other._dataflow
+        result._connections = _connections ++ other._connections
+        result._relations = _relations ++ other._relations
+        result._mappings = _mappings ++ other._mappings
         result._outputs = _outputs ++ other._outputs
         result._profiles = _profiles ++ other._profiles
         result
+    }
+
+    /**
+      * Convert this module into a project. This is useful if a module is loaded instead of a project.
+      *
+      * @param projectName
+      * @return
+      */
+    def toProject(projectName:String) : Project = {
+        val project = new Project
+        project._name = projectName
+        project._environment = environment
+        project._config = config
+        project._profiles = profiles
+        project._connections = connections
+        project._relations = relations
+        project._mappings = mappings
+        project._outputs = outputs
+        project
     }
 }

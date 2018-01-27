@@ -2,8 +2,8 @@ package com.dimajix.dataflow.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.dataflow.spec.Database
-import com.dimajix.dataflow.spec.DatabaseIdentifier
+import com.dimajix.dataflow.spec.Connection
+import com.dimajix.dataflow.spec.ConnectionIdentifier
 import com.dimajix.dataflow.spec.OutputIdentifier
 import com.dimajix.dataflow.spec.Profile
 import com.dimajix.dataflow.spec.RelationIdentifier
@@ -36,14 +36,14 @@ abstract class Context {
     def evaluate(string: String): String
 
     /**
-      * Try to retrieve the specified database. Performs lookups in parent context if required
+      * Try to retrieve the specified database connection. Performs lookups in parent context if required
       *
       * @param identifier
       * @return
       */
-    def getDatabase(identifier: DatabaseIdentifier): Database
+    def getConnection(identifier: ConnectionIdentifier): Connection
     /**
-      * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different
+      * Returns a specific named Mapping. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier

@@ -69,11 +69,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.api_version}</artifactId>
         </dependency>
@@ -146,16 +141,6 @@
         <dependency>
             <groupId>com.jsuereth</groupId>
             <artifactId>scala-arm_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scalikejdbc</groupId>
-            <artifactId>scalikejdbc_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
         </dependency>
     </dependencies>
 </project>

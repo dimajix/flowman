@@ -16,9 +16,47 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-test-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>../dataflow-core/target</directory>
+                                    <includes>
+                                        <include>*.tar.gz</include>
+                                    </includes>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>
-                <version>1.3.7</version>
                 <executions>
                     <execution>
                         <id>default</id>
@@ -29,12 +67,9 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <repository>${docker.registry.host}/dimajix/dataflow</repository>
+                    <repository>dimajix/dataflow</repository>
                     <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
                     <tag>${project.version}</tag>
-                    <buildArgs>
-                        <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-                    </buildArgs>
                 </configuration>
             </plugin>
         </plugins>

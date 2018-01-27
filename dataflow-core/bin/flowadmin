@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-basedir=$(readlink -f $(dirname $0/..))
+basedir=$(readlink -f $(dirname $0)/..)
 source $basedir/libexec/df-common.sh
 
 APP_NAME="dataflow"

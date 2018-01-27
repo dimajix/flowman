@@ -10,13 +10,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.spec.Namespace
 import com.dimajix.dataflow.spec.Project
-import com.dimajix.dataflow.spec.RelationIdentifier
 import com.dimajix.dataflow.spec.TableIdentifier
-import com.dimajix.dataflow.spec.flow.Mapping
-import com.dimajix.dataflow.spec.model.Relation
 
 
-class RootExecutor(context:RootContext, profiles:Seq[String], sessionFactory:() => SparkSession) extends AbstractExecutor(context) {
+private[execution] class RootExecutor(context:RootContext, sessionFactory:() => SparkSession) extends AbstractExecutor(context) {
     private val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
     private var _session:Option[SparkSession] = None
@@ -46,35 +43,7 @@ class RootExecutor(context:RootContext, profiles:Seq[String], sessionFactory:() 
         _session.get
     }
 
-    override def mappings: Map[TableIdentifier, Mapping] = {
-        _children.values.map(_.mappings).reduce(_ ++ _)
-    }
-
-    /**
-      * Returns a fully qualified mapping from a project belonging to the namespace of this executor
-      *
-      * @param name
-      * @return
-      */
-    override def getMapping(name: TableIdentifier): Mapping = {
-        if (name.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in mapping specifier")
-        val child = _children.getOrElseUpdate(name.project.get, loadProject(name.project.get))
-        child.getMapping(TableIdentifier(name.name, None))
-    }
-    /**
-      * Returns a fully qualified relation from a project belonging to the namespace of this executor
-      *
-      * @param name
-      * @return
-      */
-    override def getRelation(name: RelationIdentifier): Relation = {
-        if (name.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in relation specifier")
-        val child = _children.getOrElseUpdate(name.project.get, loadProject(name.project.get))
-        child.getRelation(RelationIdentifier(name.name, None))
-    }
-    /**
+     /**
       * Returns a fully qualified table as a DataFrame from a project belonging to the namespace of this executor
       *
       * @param name
@@ -83,7 +52,7 @@ class RootExecutor(context:RootContext, profiles:Seq[String], sessionFactory:() 
     override def getTable(name: TableIdentifier): DataFrame = {
         if (name.project.isEmpty)
             throw new NoSuchElementException("Expected project name in table specifier")
-        val child = _children.getOrElseUpdate(name.project.get, loadProject(name.project.get))
+        val child = _children.getOrElseUpdate(name.project.get, getProjectExecutor(name.project.get))
         child.getTable(TableIdentifier(name.name, None))
     }
 
@@ -112,29 +81,17 @@ class RootExecutor(context:RootContext, profiles:Seq[String], sessionFactory:() 
         _children.values.foreach(_.cleanup())
     }
 
-    private def getProjectExecutor(name:String) : ProjectExecutor = {
-        _children.getOrElseUpdate(name, loadProject(name))
+    def getProjectExecutor(project:Project) : ProjectExecutor = {
+        _children.getOrElseUpdate(project.name, createProjectExecutor(project.name))
+    }
+    def getProjectExecutor(name:String) : ProjectExecutor = {
+        _children.getOrElseUpdate(name, createProjectExecutor(name))
     }
 
-    private def createProjectExecutor(project:Project) : Executor = {
-        val context = createProjectContext(project)
-        val executor = new ProjectExecutor(this, context)
-        _children.update(project.name, executor)
+    private def createProjectExecutor(project:String) : ProjectExecutor = {
+        val pcontext = context.getProjectContext(project)
+        val executor = new ProjectExecutor(this, pcontext)
+        _children.update(project, executor)
         executor
-    }
-    private def createProjectContext(project: Project) : ProjectContext = {
-        val pcontext = context.newProjectContext(project)
-        profiles.foreach(p => project.profiles.get(p).foreach { profile =>
-            logger.info(s"Applying project profile $p")
-            context.withProfile(profile)
-        })
-        pcontext.withEnvironment(project.environment)
-        pcontext.withConfig(project.config)
-        pcontext
-    }
-
-    private def loadProject(name: String): ProjectExecutor = {
-        val project : Project = ???
-        createProjectExecutor(project)
     }
 }

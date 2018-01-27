@@ -9,8 +9,8 @@ object Namespace {
 
 
 class Namespace {
-    private val _store: Store = _
-    private val _name: String = _
+    private var _store: Store = _
+    private var _name: String = "default"
     private var _environment: Seq[(String,String)] = Seq()
     private var _config: Seq[(String,String)] = Seq()
     private var _profiles: Map[String,Profile] = Map()

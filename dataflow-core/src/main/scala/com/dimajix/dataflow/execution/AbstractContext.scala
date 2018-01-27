@@ -27,7 +27,7 @@ object AbstractContext {
     }
 }
 
-class AbstractContext extends Context {
+abstract class AbstractContext extends Context {
     private val logger = LoggerFactory.getLogger(classOf[RootContext])
 
     private val _environment = mutable.Map[String,(String, Int)]()
@@ -44,6 +44,8 @@ class AbstractContext extends Context {
         environment.foreach(kv => context.put(kv._1, kv._2))
         context
     }
+
+    protected def databases : Map[String,Database] = _databases.mapValues(_._1).toMap
 
     protected def updateFrom(context:AbstractContext) = {
         context._environment.foreach(kv => _environment.update(kv._1,kv._2))
@@ -66,8 +68,6 @@ class AbstractContext extends Context {
             null
         }
     }
-
-    override def getDatabase(name:DatabaseIdentifier) : Database = _databases.mapValues(_._1).getOrElse(name, null)
 
     /**
       * Returns all configuration options as a key-value map

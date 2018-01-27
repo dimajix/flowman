@@ -21,16 +21,18 @@ class HiveRelation extends BaseRelation  {
     def format(implicit context: Context) : String = context.evaluate(_format)
 
     override def read(executor:Executor, schema:StructType, partition:Seq[Partition] = Seq()) : DataFrame = {
+        implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         val tableName = namespace + "." + entity
-        logger.info("Reading DataFrame from Hive table {} with partitions {}", tableName, partitionNames.mkString(","))
+        logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
-        val table = executor.session.read.table(tableName)
+        executor.session.read.table(tableName)
     }
     override def write(executor:Executor, df:DataFrame, partition:Partition, mode:String) : Unit = {
+        implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         val tableName = namespace + "." + entity
-        logger.info("Writing DataFrame to hive table {} with partitions {}", tableName, partitionNames.mkString(","))
+        logger.info(s"Writing DataFrame to Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
         val writer = df.write
             .format(format)

@@ -28,7 +28,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
-                    <execution>
+                    <!--<execution>
                         <id>jar-with-dependencies</id>
                         <phase>package</phase>
                         <goals>
@@ -39,7 +39,7 @@
                                 <descriptorId>jar-with-dependencies</descriptorId>
                             </descriptorRefs>
                         </configuration>
-                    </execution>
+                    </execution>-->
                     <execution>
                         <id>make-assembly</id>
                         <phase>package</phase>
@@ -76,16 +76,6 @@
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.falktech.ang</groupId>
-            <artifactId>ang-hdfsapi</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.falktech.ang</groupId>
-            <artifactId>ang-reportsapi</artifactId>
         </dependency>
 
         <dependency>
@@ -131,11 +121,6 @@
         <dependency>
             <groupId>args4j</groupId>
             <artifactId>args4j</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
         </dependency>
 
         <dependency>

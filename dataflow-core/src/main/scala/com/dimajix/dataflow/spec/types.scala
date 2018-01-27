@@ -26,3 +26,11 @@ object RelationIdentifier {
 }
 case class RelationIdentifier(name:String, project:Option[String]) {
 }
+
+object OutputIdentifier {
+    def parse(fqName:String) : OutputIdentifier = {
+        new OutputIdentifier(fqName.split('/')(0), None)
+    }
+}
+case class OutputIdentifier(name:String, project:Option[String]) {
+}

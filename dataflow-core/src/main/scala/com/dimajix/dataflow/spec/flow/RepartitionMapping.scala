@@ -6,7 +6,7 @@ import org.apache.spark.sql.functions.col
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 
 class RepartitionMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
@@ -14,7 +14,7 @@ class RepartitionMapping extends BaseMapping {
     @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
     @JsonProperty(value = "sort", required = false) private[spec] var _sort:String = _
 
-    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) :Seq[String] = if (_columns != null) _columns.map(context.evaluate) else Seq[String]()
     def partitions(implicit context: Context) : Int= if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
     def sort(implicit context: Context) : Boolean = if (_sort == null || _sort.isEmpty) false else context.evaluate(_sort).toBoolean

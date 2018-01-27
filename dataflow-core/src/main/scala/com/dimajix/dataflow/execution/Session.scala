@@ -35,6 +35,10 @@ class SessionBuilder {
         _profiles = _profiles + profile
         this
     }
+    def withProfiles(profile:Seq[String]) : SessionBuilder = {
+        _profiles = _profiles ++ profile
+        this
+    }
 
     def build() : Session = {
         val session = new Session(_namespace, _sparkName, _sparkConfig, _environment, _profiles)
@@ -80,9 +84,9 @@ class Session private[execution](
     private lazy val sparkSession = createSession()
 
     private lazy val rootContext : RootContext = {
-        val context = new RootContext(namespace)
-        context.withEnvironment(environment)
-        context.withConfig(sparkConfig)
+        val context = new RootContext(namespace, profiles.toSeq)
+        context.setEnvironment(environment, SettingLevel.GLOBAL_OVERRIDE)
+        context.setConfig(sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
         profiles.foreach(p => namespace.profiles.get(p).foreach { profile =>
             logger.info(s"Applying namespace profile $p")
             context.withProfile(profile)
@@ -92,32 +96,24 @@ class Session private[execution](
         context
     }
 
+    private lazy val rootExecutor : RootExecutor = {
+        val executor = new RootExecutor(rootContext, () => sparkSession)
+        executor
+    }
+
     def context : Context = rootContext
 
     /**
       * Creates a new namespace specific context
       *
       * @param project
-      * @param profiles
       * @return
       */
-    def createContext(project: Project, profiles:Seq[String]) : Context = {
-        // Apply all active profiles
-        val profileContext = profiles
-            .map(name => (name,project.profiles(name)))
-            .foldLeft(rootContext){case (context,(name,profile)) =>
-                logger.info(s"Applying profile $name to context")
-                context.withProfile(profile)
-            }
-        // Finally set additional values
-        val context = profileContext
-            .withEnvironment(project.environment)
-            .withConfig(project.config)
-
-        // Print current environment variables
-        context.environment.foreach(kv => logger.info("Environment: {} = {}", kv._1: Any, kv._2: Any))
-        context
+    def createContext(project: Project) : Context = {
+        createExecutor(project).context
     }
 
-    def createExecutor(project: Project, profiles:Seq[String]) : Executor = ???
+    def createExecutor(project: Project) : Executor = {
+        rootExecutor.getProjectExecutor(project)
+    }
 }

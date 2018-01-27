@@ -27,7 +27,7 @@ class RelationOutput extends BaseOutput {
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
         implicit var context = executor.context
         logger.info("Writing to relation {}", target)
-        val relation = executor.getRelation(target)
+        val relation = context.getRelation(target)
         val table = input(this.input).coalesce(parallelism)
         val fields = columns
         val schema = if (fields != null) SchemaUtils.createSchema(fields) else null

@@ -9,6 +9,10 @@ confdir=$basedir/conf
 : ${SPARK_EXECUTOR_MEMORY:="8G"}
 : ${SPARK_DRIVER_MEMORY:="2G"}
 
+: ${SPARK_OPTS:=""}
+: ${SPARK_DRIVER_JAVA_OPTS:="-server"}
+: ${SPARK_EXECUTOR_JAVA_OPTS:="-server"}
+
 # Load environment file if present
 if [ -f $confdir/dataflow-env.sh ]; then
     source $confdir/dataflow-env.sh

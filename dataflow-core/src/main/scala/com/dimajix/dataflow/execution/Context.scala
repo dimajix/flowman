@@ -4,9 +4,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.spec.Database
 import com.dimajix.dataflow.spec.DatabaseIdentifier
+import com.dimajix.dataflow.spec.OutputIdentifier
 import com.dimajix.dataflow.spec.Profile
 import com.dimajix.dataflow.spec.RelationIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
+import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
+import com.dimajix.dataflow.spec.output.Output
 
 case class SettingLevel(
     level:Int
@@ -31,7 +35,37 @@ abstract class Context {
       */
     def evaluate(string: String): String
 
-    def getDatabase(name: DatabaseIdentifier): Database
+    /**
+      * Try to retrieve the specified database. Performs lookups in parent context if required
+      *
+      * @param identifier
+      * @return
+      */
+    def getDatabase(identifier: DatabaseIdentifier): Database
+    /**
+      * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different
+      * project within the same namespace
+      *
+      * @param identifier
+      * @return
+      */
+    def getMapping(identifier: TableIdentifier) : Mapping
+    /**
+      * Returns a specific named Relation. The Relation can either be inside this Contexts project or in a different
+      * project within the same namespace
+      *
+      * @param identifier
+      * @return
+      */
+    def getRelation(identifier: RelationIdentifier): Relation
+    /**
+      * Returns a specific named Output. The Output can either be inside this Contexts project or in a different
+      * project within the same namespace
+      *
+      * @param identifier
+      * @return
+      */
+    def getOutput(identifier: OutputIdentifier): Output
 
     /**
       * Returns all configuration options as a key-value map

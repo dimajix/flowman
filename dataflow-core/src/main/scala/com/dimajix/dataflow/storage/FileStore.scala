@@ -2,9 +2,9 @@ package com.dimajix.dataflow.storage
 
 
 object FileStore {
-    def createNamespace(name:String) : FileStore = null
-    def openNamespace(name:String) : FileStore = null
-    def removeNamespace(name:String) : Unit = null
+    def createNamespace(name:String) : FileStore = ???
+    def openNamespace(name:String) : FileStore = ???
+    def removeNamespace(name:String) : Unit = ???
 }
 
 

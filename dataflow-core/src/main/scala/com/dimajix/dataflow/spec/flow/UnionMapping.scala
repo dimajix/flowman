@@ -9,7 +9,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.util.SchemaUtils
 
 
@@ -17,7 +17,7 @@ class UnionMapping extends BaseMapping {
     @JsonProperty(value="inputs", required=true) private[spec] var _inputs:Seq[String] = _
     @JsonProperty(value="fields", required=false) private[spec] var _fields:Map[String,String] = _
 
-    def inputs(implicit context: Context) : Seq[TableIdentifier] = _inputs.map(context.evaluate)
+    def inputs(implicit context: Context) : Seq[TableIdentifier] = _inputs.map(i => TableIdentifier.parse(context.evaluate(i)))
     def fields(implicit context: Context) : Map[String,String] = if (_fields != null) _fields.mapValues(context.evaluate) else null
 
     /**
@@ -28,6 +28,7 @@ class UnionMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+        implicit val context = executor.context
         val tables = inputs.map(input(_))
 
         // Create a common schema from collected columns
@@ -49,7 +50,7 @@ class UnionMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[String] = {
+    override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
         inputs.toArray
     }
 

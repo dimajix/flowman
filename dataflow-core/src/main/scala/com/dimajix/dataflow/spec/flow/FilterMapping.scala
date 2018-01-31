@@ -5,14 +5,14 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 
 
 class FilterMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "condition", required = true) private var _condition:String = _
 
-    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
     def condition(implicit context: Context) : String = context.evaluate(_condition)
 
     /**
@@ -33,6 +33,7 @@ class FilterMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+        implicit val context = executor.context
         val df = input(this.input)
         df.filter(condition)
     }

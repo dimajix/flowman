@@ -13,24 +13,30 @@ import com.dimajix.dataflow.spec.model.Relation.Partition
 class HiveRelation extends BaseRelation  {
     private val logger = LoggerFactory.getLogger(classOf[HiveRelation])
 
+    @JsonProperty(value="namespace") private var _namespace: String = _
+    @JsonProperty(value="table") private var _table: String = _
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = _
     @JsonProperty(value="partitions") private var _partitions: Seq[Field] = Seq()
 
     def partitions(implicit context: Context) : Seq[Field] = _partitions
     def format(implicit context: Context) : String = context.evaluate(_format)
+    def namespace(implicit context:Context) : String = context.evaluate(_namespace)
+    def table(implicit context:Context) : String = context.evaluate(_table)
 
     override def read(executor:Executor, schema:StructType, partition:Seq[Partition] = Seq()) : DataFrame = {
+        implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
-        val tableName = namespace + "." + entity
-        logger.info("Reading DataFrame from Hive table {} with partitions {}", tableName, partitionNames.mkString(","))
+        val tableName = namespace + "." + table
+        logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
-        val table = executor.session.read.table(tableName)
+        executor.spark.read.table(tableName)
     }
     override def write(executor:Executor, df:DataFrame, partition:Partition, mode:String) : Unit = {
+        implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
-        val tableName = namespace + "." + entity
-        logger.info("Writing DataFrame to hive table {} with partitions {}", tableName, partitionNames.mkString(","))
+        val tableName = namespace + "." + table
+        logger.info(s"Writing DataFrame to Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
         val writer = df.write
             .format(format)

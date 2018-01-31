@@ -5,13 +5,13 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 
 
 class AliasMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
 
-    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
 
     /**
       * Executes this mapping by returning a DataFrame which corresponds to the specified input
@@ -31,6 +31,6 @@ class AliasMapping extends BaseMapping {
       * @return
       */
     override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
-        Array(TableIdentifier(input))
+        Array(input)
     }
 }

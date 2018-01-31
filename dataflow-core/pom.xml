@@ -28,7 +28,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
-                    <execution>
+                    <!--<execution>
                         <id>jar-with-dependencies</id>
                         <phase>package</phase>
                         <goals>
@@ -39,7 +39,7 @@
                                 <descriptorId>jar-with-dependencies</descriptorId>
                             </descriptorRefs>
                         </configuration>
-                    </execution>
+                    </execution>-->
                     <execution>
                         <id>make-assembly</id>
                         <phase>package</phase>
@@ -69,23 +69,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.falktech.ang</groupId>
-            <artifactId>ang-hdfsapi</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.falktech.ang</groupId>
-            <artifactId>ang-reportsapi</artifactId>
         </dependency>
 
         <dependency>
@@ -134,11 +119,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
         </dependency>
@@ -164,13 +144,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.scalikejdbc</groupId>
-            <artifactId>scalikejdbc_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>io.github.lukehutch</groupId>
+            <artifactId>fast-classpath-scanner</artifactId>
         </dependency>
     </dependencies>
 </project>

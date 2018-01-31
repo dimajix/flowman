@@ -12,9 +12,8 @@ import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
 
-
-object Project {
-    private val logger = LoggerFactory.getLogger(classOf[Project])
+class ProjectReader {
+    private val logger = LoggerFactory.getLogger(classOf[ProjectReader])
 
     private def mapper = {
         val mapper = new ObjectMapper(new YAMLFactory())
@@ -28,20 +27,10 @@ object Project {
       * @param file
       * @return
       */
-    def load(file:File) : Project = {
+    def file(file:File) : Project = {
         logger.info(s"Reading project file ${file.toString}")
         val project = mapper.readValue(file, classOf[Project])
-        val module = project._modules
-            .map(f => Module.load(new File(file.getParentFile, f)))
-            .reduce((l,r) => l.merge(r))
-
-        project._environment = module.environment
-        project._config = module.config
-        project._profiles = module.profiles
-        project._databases = module.databases
-        project._models = module.models
-        project._dataflow = module.transforms
-        project._outputs = module.outputs
+        loadModules(project, file.getParentFile)
         project
     }
 
@@ -51,28 +40,47 @@ object Project {
       * @param filename
       * @return
       */
-    def load(filename:String) : Project = {
-        load(new File(filename))
+    def file(filename:String) : Project = {
+        file(new File(filename))
     }
 
-    def parse(text:String) : Project = {
+    def string(text:String) : Project = {
         mapper.readValue(text, classOf[Project])
+    }
+
+    private def loadModules(project: Project, directory:File) : Unit = {
+        val module = project.modules
+            .map(f => Module.read.file(new File(directory, f)))
+            .reduce((l,r) => l.merge(r))
+
+        project._environment = module.environment
+        project._config = module.config
+        project._profiles = module.profiles
+        project._connections = module.connections
+        project._relations = module.relations
+        project._mappings = module.mappings
+        project._outputs = module.outputs
     }
 }
 
 
-class Project {
-    @JsonProperty(value="name") private var _name: String = _
-    @JsonProperty(value="version") private var _version: String = _
-    @JsonProperty(value="modules") private var _modules: Seq[String] = Seq()
+object Project {
+    def read = new ProjectReader
+}
 
-    private var _environment: Seq[(String,String)] = Seq()
-    private var _config: Seq[(String,String)] = Seq()
-    private var _profiles: Map[String,Profile] = Map()
-    private var _databases: Map[String,Database] = Map()
-    private var _models: Map[String,Relation] = Map()
-    private var _dataflow: Map[String,Mapping] = Map()
-    private var _outputs: Map[String,Output] = Map()
+
+class Project {
+    @JsonProperty(value="name") private[spec] var _name: String = _
+    @JsonProperty(value="version") private[spec] var _version: String = _
+    @JsonProperty(value="modules") private[spec] var _modules: Seq[String] = Seq()
+
+    private[spec] var _environment: Seq[(String,String)] = Seq()
+    private[spec] var _config: Seq[(String,String)] = Seq()
+    private[spec] var _profiles: Map[String,Profile] = Map()
+    private[spec] var _connections: Map[String,Connection] = Map()
+    private[spec] var _relations: Map[String,Relation] = Map()
+    private[spec] var _mappings: Map[String,Mapping] = Map()
+    private[spec] var _outputs: Map[String,Output] = Map()
 
     def name : String = _name
     def version : String = _version
@@ -82,9 +90,9 @@ class Project {
     def environment : Seq[(String,String)] = _environment
 
     def profiles : Map[String,Profile] = _profiles
-    def models : Map[String,Relation] = _models
-    def databases : Map[String,Database] = _databases
-    def transforms : Map[String,Mapping] = _dataflow
+    def relations : Map[String,Relation] = _relations
+    def connections : Map[String,Connection] = _connections
+    def mappings : Map[String,Mapping] = _mappings
     def outputs : Map[String,Output] = _outputs
 }
 

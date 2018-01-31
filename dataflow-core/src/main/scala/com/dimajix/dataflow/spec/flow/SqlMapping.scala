@@ -9,7 +9,8 @@ import org.apache.spark.sql.catalyst.plans.logical.With
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
+
 
 class SqlMapping extends BaseMapping {
     @JsonProperty("sql") private[spec] var _sql:String = _
@@ -27,11 +28,11 @@ class SqlMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
         implicit val context = executor.context
-        executor.session.sql(sql)
+        executor.spark.sql(sql)
     }
     override def dependencies(implicit context:Context) : Array[TableIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
-        resolveDependencies(plan).toArray
+        resolveDependencies(plan).map(TableIdentifier.parse).toArray
     }
 
     private def resolveDependencies(plan:LogicalPlan) : Seq[String] = {

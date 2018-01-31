@@ -7,13 +7,13 @@ import org.apache.spark.sql.functions.expr
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 
 class ExtendMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = _
 
-    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
 
     /**
@@ -24,6 +24,7 @@ class ExtendMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+        implicit val context = executor.context
         val allColumns = columns
         val columnNames = allColumns.keys.toSet
 
@@ -58,7 +59,7 @@ class ExtendMapping extends BaseMapping {
         }
 
         // Now that we have a field order, we can transform the DataFrame
-        val table = context.session.table(input)
+        val table = input(this.input)
         orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
     }
 
@@ -68,7 +69,7 @@ class ExtendMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[String] = {
+    override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
         Array(input)
     }
 }

@@ -1,30 +1,21 @@
 package com.dimajix.dataflow.spec.flow
 
-import scala.collection.JavaConversions._
-import java.util.ServiceLoader
-
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.jsontype.NamedType
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
 import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.spec.output.Output
-import com.dimajix.dataflow.spi.MappingProvider
+import com.dimajix.dataflow.spi.Scanner
 
 
 object Mapping {
-    def getProviders() = {
-        val loader = ServiceLoader.load(classOf[MappingProvider])
-        loader.iterator().toSeq
-    }
-}
+    def subtypes : Seq[(String,Class[_ <: Mapping])] = Scanner.mappings
 
+}
 
 /**
   * Interface class for specifying a transformation (mapping)

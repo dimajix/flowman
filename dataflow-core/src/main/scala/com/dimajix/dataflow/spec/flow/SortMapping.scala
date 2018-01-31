@@ -6,14 +6,14 @@ import org.apache.spark.sql.functions.col
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.execution.TableIdentifier
+import com.dimajix.dataflow.spec.TableIdentifier
 
 
 class SortMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Seq[Map[String,String]] = Seq()
 
-    def input(implicit context: Context) : TableIdentifier = context.evaluate(_input)
+    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) :Seq[(String,String)] = _columns.flatMap(_.mapValues(context.evaluate))
 
     /**

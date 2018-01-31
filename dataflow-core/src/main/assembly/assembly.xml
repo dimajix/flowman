@@ -6,13 +6,14 @@
     <formats>
         <format>tar.gz</format>
     </formats>
-    <includeBaseDirectory>false</includeBaseDirectory>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>dataflow-${project.version}</baseDirectory>
     <fileSets>
         <fileSet>
             <directory>${project.basedir}/conf/</directory>
             <outputDirectory>conf</outputDirectory>
-            <fileMode>0640</fileMode>
-            <directoryMode>0750</directoryMode>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
             <includes>
                 <include>**/*</include>
             </includes>
@@ -20,8 +21,8 @@
         <fileSet>
             <directory>${project.basedir}/bin/</directory>
             <outputDirectory>bin</outputDirectory>
-            <fileMode>0750</fileMode>
-            <directoryMode>0750</directoryMode>
+            <fileMode>0755</fileMode>
+            <directoryMode>0755</directoryMode>
             <includes>
                 <include>**/*</include>
             </includes>
@@ -29,8 +30,8 @@
         <fileSet>
             <directory>${project.basedir}/libexec/</directory>
             <outputDirectory>libexec</outputDirectory>
-            <fileMode>0750</fileMode>
-            <directoryMode>0750</directoryMode>
+            <fileMode>0755</fileMode>
+            <directoryMode>0755</directoryMode>
             <includes>
                 <include>**/*</include>
             </includes>
@@ -38,11 +39,27 @@
         <fileSet>
             <directory>${project.basedir}/target/</directory>
             <outputDirectory>lib</outputDirectory>
-            <fileMode>0640</fileMode>
-            <directoryMode>0750</directoryMode>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
             <includes>
-                <include>${project.artifactId}-${project.version}-jar-with-dependencies.jar</include>
+                <include>${project.artifactId}-${project.version}.jar</include>
+                <!-- <include>${project.artifactId}-${project.version}-jar-with-dependencies.jar</include> -->
             </includes>
         </fileSet>
     </fileSets>
+
+    <dependencySets>
+        <!--<dependencySet>
+            <includes>
+                <include>*:*:jar</include>
+            </includes>
+        </dependencySet>-->
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <unpack>false</unpack>
+            <scope>runtime</scope>
+            <useProjectArtifact>false</useProjectArtifact>
+        </dependencySet>
+    </dependencySets>
 </assembly>

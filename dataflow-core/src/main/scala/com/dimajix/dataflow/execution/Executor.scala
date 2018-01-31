@@ -3,25 +3,17 @@ package com.dimajix.dataflow.execution
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 
-import com.dimajix.dataflow.spec.RelationIdentifier
 import com.dimajix.dataflow.spec.TableIdentifier
-import com.dimajix.dataflow.spec.flow.Mapping
-import com.dimajix.dataflow.spec.model.Relation
 
 
 abstract class Executor {
-    def mappings : Map[TableIdentifier,Mapping]
-
-    def getMapping(name:TableIdentifier) : Mapping
-    def getRelation(name: RelationIdentifier): Relation
-
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
       * SparkSession, but a new derived session with a separate namespace will be created.
       *
       * @return
       */
-    def session: SparkSession
+    def spark: SparkSession
 
     /**
       * Returns the Context associated with this Executor. This context will be used for looking up

@@ -26,7 +26,7 @@ class InputMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        val relation = executor.getRelation(source)
+        val relation = context.getRelation(source)
         val fields = columns
         val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else null
         relation.read(executor, schema)

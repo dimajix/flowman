@@ -2,6 +2,7 @@ package com.dimajix.dataflow.spec
 
 import scala.collection.immutable.ListMap
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.dataflow.execution.Executor
@@ -21,6 +22,7 @@ class Job {
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
     def tasks : Seq[Task] = _tasks
+    @JsonIgnore
     def tasks_=(tasks:Seq[Task]) : Unit = _tasks = tasks
 
     def execute(executor:Executor) : JobStatus = {

@@ -3,6 +3,7 @@ package com.dimajix.dataflow.spec
 import java.io.File
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -23,6 +24,7 @@ class ModuleReader {
         val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new ObjectMapper(new YAMLFactory())
+        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
         mapper.registerModule(DefaultScalaModule)
         mapper.registerSubtypes(relationTypes:_*)
         mapper.registerSubtypes(mappingTypes:_*)
@@ -80,6 +82,7 @@ class Module {
     @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()
     @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
     @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
+    @JsonProperty(value="jobs") private var _jobs: Map[String,Job] = Map()
     @JsonProperty(value="runner") private var _runner: Runner = _
 
     def profiles : Map[String,Profile] = _profiles
@@ -87,6 +90,7 @@ class Module {
     def connections : Map[String,Connection] = _connections
     def mappings : Map[String,Mapping] = _mappings
     def outputs : Map[String,Output] = _outputs
+    def jobs : Map[String,Job] = _jobs
     def runner : Runner = _runner
 
     /**
@@ -118,6 +122,7 @@ class Module {
         result._mappings = _mappings ++ other._mappings
         result._outputs = _outputs ++ other._outputs
         result._profiles = _profiles ++ other._profiles
+        result._jobs = _jobs ++ other._jobs
         result
     }
 
@@ -137,6 +142,7 @@ class Module {
         project._relations = relations
         project._mappings = mappings
         project._outputs = outputs
+        project._jobs = jobs
         project
     }
 }

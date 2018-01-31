@@ -82,12 +82,18 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
     }
 
     def getProjectExecutor(project:Project) : ProjectExecutor = {
-        _children.getOrElseUpdate(project.name, createProjectExecutor(project.name))
+        _children.getOrElseUpdate(project.name, createProjectExecutor(project))
     }
     def getProjectExecutor(name:String) : ProjectExecutor = {
         _children.getOrElseUpdate(name, createProjectExecutor(name))
     }
 
+    private def createProjectExecutor(project:Project) : ProjectExecutor = {
+        val pcontext = context.getProjectContext(project)
+        val executor = new ProjectExecutor(this, pcontext)
+        _children.update(project.name, executor)
+        executor
+    }
     private def createProjectExecutor(project:String) : ProjectExecutor = {
         val pcontext = context.getProjectContext(project)
         val executor = new ProjectExecutor(this, pcontext)

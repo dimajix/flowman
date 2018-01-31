@@ -82,6 +82,7 @@ class Project {
     private[spec] var _relations: Map[String,Relation] = Map()
     private[spec] var _mappings: Map[String,Mapping] = Map()
     private[spec] var _outputs: Map[String,Output] = Map()
+    private[spec] var _jobs: Map[String,Job] = Map()
     private[spec] var _runner: Runner = _
 
     def name : String = _name
@@ -97,5 +98,6 @@ class Project {
     def connections : Map[String,Connection] = _connections
     def mappings : Map[String,Mapping] = _mappings
     def outputs : Map[String,Output] = _outputs
+    def jobs : Map[String,Job] = _jobs
 }
 

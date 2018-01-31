@@ -10,5 +10,5 @@ class LoopTask extends BaseTask {
     @JsonProperty(value="var", required=true) private var _var:String = "item"
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
-    def execute(executor:Executor) : Unit = ???
+    override def execute(executor:Executor) : Boolean = ???
 }

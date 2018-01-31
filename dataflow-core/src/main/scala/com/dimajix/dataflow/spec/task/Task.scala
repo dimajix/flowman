@@ -19,5 +19,5 @@ abstract class Task {
       *
       * @param executor
       */
-    def execute(executor:Executor) : Unit
+    def execute(executor:Executor) : Boolean
 }

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spec.runner.Runner
 import com.dimajix.dataflow.util.splitSettings
 
 
@@ -79,12 +80,14 @@ class Module {
     @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()
     @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
     @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
+    @JsonProperty(value="runner") private var _runner: Runner = _
 
     def profiles : Map[String,Profile] = _profiles
     def relations : Map[String,Relation] = _relations
     def connections : Map[String,Connection] = _connections
     def mappings : Map[String,Mapping] = _mappings
     def outputs : Map[String,Output] = _outputs
+    def runner : Runner = _runner
 
     /**
       * Returns all configuration variables as a key-value sequence

@@ -8,6 +8,12 @@ object TableIdentifier {
     }
 }
 case class TableIdentifier(name:String, project:Option[String]) {
+    override def toString : String = {
+        if (project.isEmpty)
+            name
+        else
+            name + "/" + project.get
+    }
 }
 
 
@@ -17,7 +23,14 @@ object ConnectionIdentifier {
     }
 }
 case class ConnectionIdentifier(name:String, project:Option[String]) {
+    override def toString : String = {
+        if (project.isEmpty)
+            name
+        else
+            name + "/" + project.get
+    }
 }
+
 
 object RelationIdentifier {
     def parse(fqName:String) : RelationIdentifier = {
@@ -25,7 +38,14 @@ object RelationIdentifier {
     }
 }
 case class RelationIdentifier(name:String, project:Option[String]) {
+    override def toString : String = {
+        if (project.isEmpty)
+            name
+        else
+            name + "/" + project.get
+    }
 }
+
 
 object OutputIdentifier {
     def parse(fqName:String) : OutputIdentifier = {
@@ -33,4 +53,10 @@ object OutputIdentifier {
     }
 }
 case class OutputIdentifier(name:String, project:Option[String]) {
+    override def toString : String = {
+        if (project.isEmpty)
+            name
+        else
+            name + "/" + project.get
+    }
 }

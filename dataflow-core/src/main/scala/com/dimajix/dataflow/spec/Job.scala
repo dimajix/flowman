@@ -8,9 +8,26 @@ import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.task.Task
 
 
+case class JobStatus(name:String)
+object JobStatus {
+    val SUCCESS = new JobStatus("SUCCESS")
+    val FAILURE = new JobStatus("FAILURE")
+    val ABORTED = new JobStatus("ABORTED")
+    val SKIPPED = new JobStatus("SKIPPED")
+}
+
 class Job {
     @JsonProperty(value="parameters") private var _parameters:ListMap[String,String] = ListMap()
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
-    def execute(executor:Executor) : Unit = ???
+    def tasks : Seq[Task] = _tasks
+    def tasks_=(tasks:Seq[Task]) : Unit = _tasks = tasks
+
+    def execute(executor:Executor) : JobStatus = {
+        val result = _tasks.forall(_.execute(executor))
+        if (result)
+            JobStatus.SUCCESS
+        else
+            JobStatus.FAILURE
+    }
 }

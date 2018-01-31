@@ -1,5 +1,6 @@
 package com.dimajix.dataflow.spec
 
+import com.dimajix.dataflow.spec.runner.Runner
 import com.dimajix.dataflow.storage.Store
 
 
@@ -14,6 +15,7 @@ class Namespace {
     private var _environment: Seq[(String,String)] = Seq()
     private var _config: Seq[(String,String)] = Seq()
     private var _profiles: Map[String,Profile] = Map()
+    private var _runner : Runner = _
 
     def name : String = _name
 
@@ -22,4 +24,5 @@ class Namespace {
 
     def profiles : Map[String,Profile] = _profiles
     def projects : Seq[String] = ???
+    def runner : Runner = _runner
 }

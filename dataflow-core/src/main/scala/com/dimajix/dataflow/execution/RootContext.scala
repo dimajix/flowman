@@ -17,15 +17,30 @@ import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spec.runner.Runner
+import com.dimajix.dataflow.spec.runner.SimpleRunner
 
 
 
 class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
     private val logger = LoggerFactory.getLogger(classOf[RootContext])
     private val _children: mutable.Map[String, ProjectContext] = mutable.Map()
+    private val _runner = new SimpleRunner()
 
     def namespace : Namespace = _namespace
     def profiles : Seq[String] = _profiles
+
+    /**
+      * Returns the appropriate runner
+      *
+      * @return
+      */
+    override def runner : Runner = {
+        if (_namespace != null && _namespace.runner != null)
+            _namespace.runner
+        else
+            _runner
+    }
 
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this executor

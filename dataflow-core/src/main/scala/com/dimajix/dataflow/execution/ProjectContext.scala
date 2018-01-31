@@ -10,12 +10,25 @@ import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spec.runner.Runner
 
 
 class ProjectContext(parent:RootContext, _project:Project) extends AbstractContext {
     updateFrom(parent)
 
     def project : Project = _project
+
+    /**
+      * Returns the appropriate runner for this project.
+      *
+      * @return
+      */
+    override def runner : Runner = {
+        if (_project.runner != null)
+            _project.runner
+        else
+            parent.runner
+    }
 
     /**
       * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different

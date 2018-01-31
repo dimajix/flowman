@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spec.runner.Runner
 
 class ProjectReader {
     private val logger = LoggerFactory.getLogger(classOf[ProjectReader])
@@ -81,6 +82,7 @@ class Project {
     private[spec] var _relations: Map[String,Relation] = Map()
     private[spec] var _mappings: Map[String,Mapping] = Map()
     private[spec] var _outputs: Map[String,Output] = Map()
+    private[spec] var _runner: Runner = _
 
     def name : String = _name
     def version : String = _version
@@ -88,6 +90,7 @@ class Project {
 
     def config : Seq[(String,String)] = _config
     def environment : Seq[(String,String)] = _environment
+    def runner : Runner = _runner
 
     def profiles : Map[String,Profile] = _profiles
     def relations : Map[String,Relation] = _relations

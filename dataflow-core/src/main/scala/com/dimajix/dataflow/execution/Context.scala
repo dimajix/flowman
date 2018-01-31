@@ -11,6 +11,7 @@ import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spec.runner.Runner
 
 case class SettingLevel(
     level:Int
@@ -66,6 +67,13 @@ abstract class Context {
       * @return
       */
     def getOutput(identifier: OutputIdentifier): Output
+
+    /**
+      * Returns the appropriate runner
+      *
+      * @return
+      */
+    def runner : Runner
 
     /**
       * Returns all configuration options as a key-value map

@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
-import com.dimajix.dataflow.spi.MappingProvider
-import com.dimajix.dataflow.spi.RelationProvider
 import com.dimajix.dataflow.util.splitSettings
 
 
@@ -21,8 +19,8 @@ class ModuleReader {
     private val logger = LoggerFactory.getLogger(classOf[Project])
 
     private def mapper = {
-        val relationTypes = RelationProvider.providers.map(p => new NamedType(p.getImpl, p.getName))
-        val mappingTypes = MappingProvider.providers.map(p => new NamedType(p.getImpl, p.getName))
+        val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new ObjectMapper(new YAMLFactory())
         mapper.registerModule(DefaultScalaModule)
         mapper.registerSubtypes(relationTypes:_*)

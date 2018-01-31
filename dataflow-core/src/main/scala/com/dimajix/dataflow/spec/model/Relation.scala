@@ -11,6 +11,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.model.Relation.Partition
+import com.dimajix.dataflow.spi.Scanner
 import com.dimajix.dataflow.util.SchemaUtils
 
 
@@ -27,6 +28,8 @@ class Field {
 
 object Relation {
     type Partition = Row
+
+    def subtypes : Seq[(String,Class[_ <: Relation])] = Scanner.relations
 }
 
 /**

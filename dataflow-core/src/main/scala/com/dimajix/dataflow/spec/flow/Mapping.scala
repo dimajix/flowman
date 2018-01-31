@@ -9,7 +9,13 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spi.Scanner
 
+
+object Mapping {
+    def subtypes : Seq[(String,Class[_ <: Mapping])] = Scanner.mappings
+
+}
 
 /**
   * Interface class for specifying a transformation (mapping)

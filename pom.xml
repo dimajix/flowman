@@ -400,6 +400,12 @@
             </dependency>
 
             <dependency>
+                <groupId>io.github.lukehutch</groupId>
+                <artifactId>fast-classpath-scanner</artifactId>
+                <version>2.12.0</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.scalikejdbc</groupId>
                 <artifactId>scalikejdbc_${scala.api_version}</artifactId>
                 <version>3.0.2</version>

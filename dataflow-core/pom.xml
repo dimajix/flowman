@@ -142,6 +142,11 @@
             <groupId>com.jsuereth</groupId>
             <artifactId>scala-arm_${scala.api_version}</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>io.github.lukehutch</groupId>
+            <artifactId>fast-classpath-scanner</artifactId>
+        </dependency>
     </dependencies>
 </project>
 

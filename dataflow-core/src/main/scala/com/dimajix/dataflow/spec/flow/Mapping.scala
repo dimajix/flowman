@@ -1,9 +1,5 @@
 package com.dimajix.dataflow.spec.flow
 
-import java.util.ServiceLoader
-
-import scala.collection.JavaConversions._
-
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.DataFrame
@@ -13,15 +9,6 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.TableIdentifier
 import com.dimajix.dataflow.spec.output.Output
-import com.dimajix.dataflow.spi.MappingProvider
-
-
-object Mapping {
-    def getProviders() = {
-        val loader = ServiceLoader.load(classOf[MappingProvider])
-        loader.iterator().toSeq
-    }
-}
 
 
 /**

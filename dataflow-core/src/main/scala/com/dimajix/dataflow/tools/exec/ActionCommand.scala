@@ -14,7 +14,7 @@ abstract class ActionCommand extends Command {
     override def execute(project:Project, session: Session): Boolean = {
         super.execute(project, session)
 
-        val model = Project.read.yaml(projectFile)
+        val model = Project.read.file(projectFile)
 
         val executor = session.createExecutor(project)
         val result = executeInternal(executor, model)

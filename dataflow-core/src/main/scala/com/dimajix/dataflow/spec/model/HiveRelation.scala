@@ -30,7 +30,7 @@ class HiveRelation extends BaseRelation  {
         val tableName = namespace + "." + table
         logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
-        executor.session.read.table(tableName)
+        executor.spark.read.table(tableName)
     }
     override def write(executor:Executor, df:DataFrame, partition:Partition, mode:String) : Unit = {
         implicit val context = executor.context

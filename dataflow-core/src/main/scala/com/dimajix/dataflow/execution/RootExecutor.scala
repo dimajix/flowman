@@ -33,7 +33,7 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
       *
       * @return
       */
-    override def session: SparkSession = {
+    override def spark: SparkSession = {
         logger.info("Creating new local session for context")
         if (_session.isEmpty) {
             val session = sessionFactory()

@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.spec.flow.Mapping
 import com.dimajix.dataflow.spec.model.Relation
 import com.dimajix.dataflow.spec.output.Output
+import com.dimajix.dataflow.spi.MappingProvider
+import com.dimajix.dataflow.spi.RelationProvider
 import com.dimajix.dataflow.util.splitSettings
 
 
@@ -19,8 +21,8 @@ class ModuleReader {
     private val logger = LoggerFactory.getLogger(classOf[Project])
 
     private def mapper = {
-        val relationTypes = Relation.getProviders.map(p => new NamedType(p.getClass, p.getName))
-        val mappingTypes = Mapping.getProviders.map(p => new NamedType(p.getClass, p.getName))
+        val relationTypes = RelationProvider.providers.map(p => new NamedType(p.getImpl, p.getName))
+        val mappingTypes = MappingProvider.providers.map(p => new NamedType(p.getImpl, p.getName))
         val mapper = new ObjectMapper(new YAMLFactory())
         mapper.registerModule(DefaultScalaModule)
         mapper.registerSubtypes(relationTypes:_*)
@@ -38,7 +40,7 @@ class ModuleReader {
       * @param file
       * @return
       */
-    def yaml(file:File) : Module = {
+    def file(file:File) : Module = {
         if (file.isDirectory) {
             logger.info(s"Reading all module files in directory ${file.toString}")
             file.listFiles()
@@ -56,8 +58,8 @@ class ModuleReader {
       * @param filename
       * @return
       */
-    def yaml(filename:String) : Module = {
-        yaml(new File(filename))
+    def file(filename:String) : Module = {
+        file(new File(filename))
     }
 
     def string(text:String) : Module = {
@@ -76,7 +78,7 @@ class Module {
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
-    @JsonProperty(value="models") private var _relations: Map[String,Relation] = Map()
+    @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()
     @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
     @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
 

@@ -13,7 +13,7 @@ abstract class Executor {
       *
       * @return
       */
-    def session: SparkSession
+    def spark: SparkSession
 
     /**
       * Returns the Context associated with this Executor. This context will be used for looking up

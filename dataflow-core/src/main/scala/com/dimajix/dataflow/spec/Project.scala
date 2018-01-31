@@ -27,7 +27,7 @@ class ProjectReader {
       * @param file
       * @return
       */
-    def yaml(file:File) : Project = {
+    def file(file:File) : Project = {
         logger.info(s"Reading project file ${file.toString}")
         val project = mapper.readValue(file, classOf[Project])
         loadModules(project, file.getParentFile)
@@ -40,8 +40,8 @@ class ProjectReader {
       * @param filename
       * @return
       */
-    def yaml(filename:String) : Project = {
-        yaml(new File(filename))
+    def file(filename:String) : Project = {
+        file(new File(filename))
     }
 
     def string(text:String) : Project = {
@@ -50,7 +50,7 @@ class ProjectReader {
 
     private def loadModules(project: Project, directory:File) : Unit = {
         val module = project.modules
-            .map(f => Module.read.yaml(new File(directory, f)))
+            .map(f => Module.read.file(new File(directory, f)))
             .reduce((l,r) => l.merge(r))
 
         project._environment = module.environment

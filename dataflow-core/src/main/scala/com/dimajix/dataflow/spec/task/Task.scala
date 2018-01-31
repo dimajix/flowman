@@ -15,8 +15,7 @@ import com.dimajix.dataflow.spec.Project
 ))
 abstract class Task {
     /**
-      * Abstract method which will perform the output operation. All required tables need to be
-      * registered as temporary tables in the Spark session before calling the execute method.
+      * Abstract method which will perform the given task.
       *
       * @param executor
       */

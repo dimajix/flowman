@@ -48,7 +48,7 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
         df
     }
 
-    override def session: SparkSession = _parent.session
+    override def spark: SparkSession = _parent.spark
 
     /**
       * Returns a list of all tables of this Executor.
@@ -75,7 +75,7 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
     def cleanup() : Unit = {
         // Unregister all temporary tables
         logger.info("Cleaning up temporary tables and caches")
-        val catalog = session.catalog
+        val catalog = spark.catalog
         catalog.clearCache()
         _tables.foreach(kv => catalog.dropTempView(kv._1))
         _tables.foreach(kv => kv._2.unpersist())

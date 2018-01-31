@@ -1,6 +1,7 @@
 package com.dimajix.dataflow.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor

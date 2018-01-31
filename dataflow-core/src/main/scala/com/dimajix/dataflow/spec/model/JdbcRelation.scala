@@ -40,7 +40,7 @@ class JdbcRelation extends BaseRelation {
 
         logger.info(s"Reading data from JDBC source $tableName in database $connection")
 
-        val reader = executor.session.read
+        val reader = executor.spark.read
         options.foreach(kv => reader.option(kv._1, kv._2))
 
         // Get Connection

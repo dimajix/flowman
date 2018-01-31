@@ -26,13 +26,13 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getMapping(identifier: TableIdentifier): Mapping = {
         if (identifier.project.forall(_ == _project.name))
-            _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping $identifier not found in project ${_project.name}"))
+            _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"MappingType $identifier not found in project ${_project.name}"))
         else
             parent.getMapping(identifier)
     }
 
     /**
-      * Returns a specific named Relation. The Relation can either be inside this Contexts project or in a different
+      * Returns a specific named RelationType. The RelationType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -40,13 +40,13 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
         if (identifier.project.forall(_ == _project.name))
-            _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation $identifier not found in project ${_project.name}"))
+            _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"RelationType $identifier not found in project ${_project.name}"))
         else
             parent.getRelation(identifier)
     }
 
     /**
-      * Returns a specific named Output. The Output can either be inside this Contexts project or in a different
+      * Returns a specific named OutputType. The OutputType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -54,7 +54,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getOutput(identifier: OutputIdentifier): Output = {
         if (identifier.project.forall(_ == _project.name))
-            _project.outputs.getOrElse(identifier.name, throw new NoSuchElementException(s"Output $identifier not found in project ${_project.name}"))
+            _project.outputs.getOrElse(identifier.name, throw new NoSuchElementException(s"OutputType $identifier not found in project ${_project.name}"))
         else
             parent.getOutput(identifier)
     }

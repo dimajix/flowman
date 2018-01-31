@@ -57,7 +57,7 @@ abstract class Mapping {
     def dependencies(implicit context:Context) : Array[TableIdentifier]
 
     /**
-      * Executes this Mapping and returns a corresponding DataFrame
+      * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
       * @param input

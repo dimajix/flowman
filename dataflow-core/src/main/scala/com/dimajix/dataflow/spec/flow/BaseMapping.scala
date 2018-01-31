@@ -6,7 +6,7 @@ import org.apache.spark.storage.StorageLevel
 import com.dimajix.dataflow.execution.Context
 
 /**
-  * Common base implementation for the Mapping interface
+  * Common base implementation for the MappingType interface
   */
 abstract class BaseMapping extends Mapping {
     @JsonProperty("broadcast") private[spec] var _broadcast:String = "false"

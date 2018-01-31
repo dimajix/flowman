@@ -21,7 +21,7 @@ class UnionMapping extends BaseMapping {
     def fields(implicit context: Context) : Map[String,String] = if (_fields != null) _fields.mapValues(context.evaluate) else null
 
     /**
-      * Executes this Mapping and returns a corresponding DataFrame
+      * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
       * @param input

@@ -43,7 +43,7 @@ abstract class Context {
       */
     def getConnection(identifier: ConnectionIdentifier): Connection
     /**
-      * Returns a specific named Mapping. The Transform can either be inside this Contexts project or in a different
+      * Returns a specific named MappingType. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -51,7 +51,7 @@ abstract class Context {
       */
     def getMapping(identifier: TableIdentifier) : Mapping
     /**
-      * Returns a specific named Relation. The Relation can either be inside this Contexts project or in a different
+      * Returns a specific named RelationType. The RelationType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -59,7 +59,7 @@ abstract class Context {
       */
     def getRelation(identifier: RelationIdentifier): Relation
     /**
-      * Returns a specific named Output. The Output can either be inside this Contexts project or in a different
+      * Returns a specific named OutputType. The OutputType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier

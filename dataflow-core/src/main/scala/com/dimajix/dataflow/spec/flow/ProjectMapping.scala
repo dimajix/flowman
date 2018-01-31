@@ -18,7 +18,7 @@ class ProjectMapping extends BaseMapping {
     def columns(implicit context: Context) :Seq[(String,String)] = _columns.flatMap(_.mapValues(context.evaluate))
 
     /**
-      * Executes this Mapping and returns a corresponding DataFrame
+      * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
       * @param input

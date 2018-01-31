@@ -3,10 +3,11 @@ package com.dimajix.dataflow.spec.model
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.dataflow.annotation.RelationType
 import com.dimajix.dataflow.spec.Module
 
 
-@com.dimajix.dataflow.annotation.Relation(typeName = "annotatedRelation")
+@RelationType(name = "annotatedRelation")
 class AnnotationRelation extends NullRelation { }
 
 

@@ -20,7 +20,7 @@ class SqlMapping extends BaseMapping {
     def file(implicit context: Context) : String = context.evaluate(_file)
 
     /**
-      * Executes this Mapping and returns a corresponding DataFrame
+      * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
       * @param input

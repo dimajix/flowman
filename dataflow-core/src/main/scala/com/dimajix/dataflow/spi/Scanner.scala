@@ -8,6 +8,30 @@ import com.dimajix.dataflow.spec.model.Relation
 
 
 object Scanner {
+    private val IGNORED_PACKAGES = Array(
+        "java",
+        "javax",
+        "scala",
+        "org.scala",
+        "org.scalatest",
+        "org.apache",
+        "org.joda",
+        "org.slf4j",
+        "org.yaml",
+        "org.xerial",
+        "org.json4s",
+        "org.mortbay",
+        "org.codehaus",
+        "org.glassfish",
+        "org.jboss",
+        "com.amazonaws",
+        "com.codahale",
+        "com.sun",
+        "com.google",
+        "com.twitter",
+        "com.databricks",
+        "com.fasterxml"
+    )
     private var _mappings : Seq[(String,Class[_ <: Mapping])] = _
     private var _relations : Seq[(String,Class[_ <: Relation])] = _
 
@@ -17,7 +41,7 @@ object Scanner {
                 val mappings = MappingProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
                 val relations = RelationProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
 
-                new FastClasspathScanner()
+                new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
                     .matchClassesWithAnnotation(classOf[com.dimajix.dataflow.annotation.Mapping],
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {

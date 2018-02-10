@@ -9,6 +9,7 @@ import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.model.Relation.SingleValue
 import com.dimajix.dataflow.spec.model.Relation.Value
+import com.dimajix.dataflow.spec.schema.Field
 import com.dimajix.dataflow.util.SchemaUtils
 
 

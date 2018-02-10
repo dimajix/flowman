@@ -7,6 +7,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.spec.schema.Field
 
 
 /**

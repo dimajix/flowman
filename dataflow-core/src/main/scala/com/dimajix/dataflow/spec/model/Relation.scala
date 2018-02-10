@@ -1,29 +1,12 @@
 package com.dimajix.dataflow.spec.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.spec.ValueOrRange
 import com.dimajix.dataflow.spi.Scanner
-import com.dimajix.dataflow.util.SchemaUtils
-
-
-class Field {
-    @JsonProperty(value="name", required = true) private var _name: String = _
-    @JsonProperty(value="type", required = false) private var _type: String = _
-    @JsonProperty(value="description", required = false) private var _description: String = _
-
-    def name(implicit context: Context) : String = context.evaluate(_name)
-    def dtype(implicit context: Context) : DataType = SchemaUtils.mapType(context.evaluate(_type))
-    def description(implicit context: Context) : String = context.evaluate(_description)
-}
 
 
 object Relation {
@@ -46,8 +29,8 @@ object Relation {
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
 abstract class Relation {
-    import com.dimajix.dataflow.spec.model.Relation.Value
     import com.dimajix.dataflow.spec.model.Relation.SingleValue
+    import com.dimajix.dataflow.spec.model.Relation.Value
 
     /**
       * Reads data from the relation, possibly from specific partitions

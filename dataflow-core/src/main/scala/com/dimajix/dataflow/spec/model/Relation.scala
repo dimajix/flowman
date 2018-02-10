@@ -10,15 +10,15 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.spec.model.Relation.Partition
+import com.dimajix.dataflow.spec.ValueOrRange
 import com.dimajix.dataflow.spi.Scanner
 import com.dimajix.dataflow.util.SchemaUtils
 
 
 class Field {
-    @JsonProperty(value="name") private var _name: String = _
-    @JsonProperty(value="type") private var _type: String = _
-    @JsonProperty(value="description") private var _description: String = _
+    @JsonProperty(value="name", required = true) private var _name: String = _
+    @JsonProperty(value="type", required = false) private var _type: String = _
+    @JsonProperty(value="description", required = false) private var _description: String = _
 
     def name(implicit context: Context) : String = context.evaluate(_name)
     def dtype(implicit context: Context) : DataType = SchemaUtils.mapType(context.evaluate(_type))
@@ -27,7 +27,10 @@ class Field {
 
 
 object Relation {
-    type Partition = Row
+    class Value
+    case class RangeValue(start:Any, end:Any) extends Value
+    case class ArrayValue(values:Array[Any]) extends Value
+    case class SingleValue(value:Any) extends Value
 
     def subtypes : Seq[(String,Class[_ <: Relation])] = Scanner.relations
 }
@@ -43,23 +46,26 @@ object Relation {
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
 abstract class Relation {
+    import com.dimajix.dataflow.spec.model.Relation.Value
+    import com.dimajix.dataflow.spec.model.Relation.SingleValue
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *
       * @param executor
-      * @param schema
-      * @param partition
+      * @param schema - the schema to read. If none is specified, all available columns will be read
+      * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(executor:Executor, schema:StructType, partition:Seq[Partition] = Seq()) : DataFrame
+    def read(executor:Executor, schema:StructType, partitions:Map[String,Value] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
       * @param executor
-      * @param df
-      * @param partition
+      * @param df - dataframe to write
+      * @param partition - destination partition
       */
-    def write(executor:Executor, df:DataFrame, partition:Partition = null, mode:String = "OVERWRITE") : Unit
+    def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:String = "OVERWRITE") : Unit
     def create(executor:Executor) : Unit
     def destroy(executor:Executor) : Unit
     def migrate(executor:Executor) : Unit

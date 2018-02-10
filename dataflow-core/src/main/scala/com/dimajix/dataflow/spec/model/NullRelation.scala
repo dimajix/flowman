@@ -4,7 +4,8 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.spec.model.Relation.Partition
+import com.dimajix.dataflow.spec.model.Relation.SingleValue
+import com.dimajix.dataflow.spec.model.Relation.Value
 
 
 class NullRelation extends Relation {
@@ -13,10 +14,10 @@ class NullRelation extends Relation {
       *
       * @param executor
       * @param schema
-      * @param partition
+      * @param partitions
       * @return
       */
-    override def read(executor: Executor, schema: StructType, partition: Seq[Partition]): DataFrame = {
+    override def read(executor:Executor, schema:StructType, partitions:Map[String,Value] = Map()) : DataFrame = {
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
         executor.spark.createDataFrame(rdd, schema)
     }
@@ -28,7 +29,7 @@ class NullRelation extends Relation {
       * @param df
       * @param partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Partition, mode: String): Unit = {
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
     }
 
     override def create(executor: Executor): Unit = {

@@ -10,7 +10,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
 import com.dimajix.dataflow.spec.ConnectionIdentifier
-import com.dimajix.dataflow.spec.model.Relation.Partition
+import com.dimajix.dataflow.spec.model.Relation.SingleValue
+import com.dimajix.dataflow.spec.model.Relation.Value
 import com.dimajix.dataflow.util.SchemaUtils
 
 
@@ -33,21 +34,20 @@ class JdbcRelation extends BaseRelation {
       * @param schema
       * @return
       */
-    override def read(executor:Executor, schema:StructType, partitions:Seq[Partition] = Seq()) : DataFrame = {
+    override def read(executor:Executor, schema:StructType, partitions:Map[String,Value] = Map()) : DataFrame = {
         implicit val context = executor.context
 
         val tableName = namespace + "." + table
 
         logger.info(s"Reading data from JDBC source $tableName in database $connection")
 
-        val reader = executor.spark.read
-        options.foreach(kv => reader.option(kv._1, kv._2))
-
         // Get Connection
         val (db,props) = createProperties(context)
 
         // Connect to database
-        SchemaUtils.applySchema(reader.jdbc(db.url, tableName, props), schema)
+        val reader = this.reader(executor)
+        val df = reader.jdbc(db.url, tableName, props)
+        SchemaUtils.applySchema(df, schema)
     }
 
     /**
@@ -58,7 +58,7 @@ class JdbcRelation extends BaseRelation {
       * @param partition
       * @param mode
       */
-    override def write(executor:Executor, df:DataFrame, partition:Partition, mode:String) : Unit = {
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
 
         val tableName = namespace + "." + table

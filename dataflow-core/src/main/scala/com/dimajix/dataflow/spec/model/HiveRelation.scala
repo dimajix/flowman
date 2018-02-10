@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.spec.model.Relation.Partition
+import com.dimajix.dataflow.spec.model.Relation.SingleValue
+import com.dimajix.dataflow.spec.model.Relation.Value
+import com.dimajix.dataflow.util.SchemaUtils
 
 
 class HiveRelation extends BaseRelation  {
@@ -24,15 +26,32 @@ class HiveRelation extends BaseRelation  {
     def namespace(implicit context:Context) : String = context.evaluate(_namespace)
     def table(implicit context:Context) : String = context.evaluate(_table)
 
-    override def read(executor:Executor, schema:StructType, partition:Seq[Partition] = Seq()) : DataFrame = {
+    /**
+      * Reads data from the relation, possibly from specific partitions
+      *
+      * @param executor
+      * @param schema - the schema to read. If none is specified, all available columns will be read
+      * @param partitions - List of partitions. If none are specified, all the data will be read
+      * @return
+      */
+    override def read(executor:Executor, schema:StructType, partitions:Map[String,Value] = Map()) : DataFrame = {
         implicit val context = executor.context
-        val partitionNames = partitions.map(_.name)
+        val partitionNames = this.partitions.map(_.name)
         val tableName = namespace + "." + table
         logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
-        executor.spark.read.table(tableName)
+        val reader = this.reader(executor)
+        val df = reader.table(tableName)
+        SchemaUtils.applySchema(df, schema)
     }
-    override def write(executor:Executor, df:DataFrame, partition:Partition, mode:String) : Unit = {
+
+    /**
+      * Writes data into the relation, possibly into a specific partition
+      * @param executor
+      * @param df - dataframe to write
+      * @param partition - destination partition
+      */
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         val tableName = namespace + "." + table
@@ -44,6 +63,7 @@ class HiveRelation extends BaseRelation  {
             .partitionBy(partitionNames:_*)
         writer.saveAsTable(tableName)
     }
+
     override def create(executor:Executor) : Unit = ???
     override def destroy(executor:Executor) : Unit = ???
     override def migrate(executor:Executor) : Unit = ???

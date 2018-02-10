@@ -29,7 +29,7 @@ class FieldTest extends FlatSpec with Matchers {
         val result = mapper.readValue(spec, classOf[Field])
         result.nullable should be (true)
         result.name should be ("lala")
-        result.dtype should be (org.apache.spark.sql.types.StringType)
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
         result.ftype should be (StringType)
     }
 
@@ -51,14 +51,14 @@ class FieldTest extends FlatSpec with Matchers {
         val result = mapper.readValue(spec, classOf[Field])
         result.nullable should be (true)
         result.name should be ("lala")
-        result.dtype shouldBe a[org.apache.spark.sql.types.StructType]
-        result.dtype should be (org.apache.spark.sql.types.StructType(
+        result.sparkType shouldBe a[org.apache.spark.sql.types.StructType]
+        result.sparkType should be (org.apache.spark.sql.types.StructType(
             org.apache.spark.sql.types.StructField("lolo", org.apache.spark.sql.types.StringType, false) :: Nil
         ))
         result.ftype shouldBe a[StructType]
         result.ftype.asInstanceOf[StructType].fields(0).name should be ("lolo")
         result.ftype.asInstanceOf[StructType].fields(0).ftype should be (StringType)
-        result.ftype.asInstanceOf[StructType].fields(0).dtype should be (org.apache.spark.sql.types.StringType)
+        result.ftype.asInstanceOf[StructType].fields(0).sparkType should be (org.apache.spark.sql.types.StringType)
         result.ftype.asInstanceOf[StructType].fields(0).nullable should be (false)
     }
 
@@ -77,7 +77,7 @@ class FieldTest extends FlatSpec with Matchers {
         val result = mapper.readValue(spec, classOf[Field])
         result.nullable should be (true)
         result.name should be ("lala")
-        result.dtype shouldBe a[org.apache.spark.sql.types.ArrayType]
-        result.dtype should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType))
+        result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
+        result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType))
     }
 }

@@ -5,16 +5,21 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.dataflow.spec.schema.ArrayValue
+import com.dimajix.dataflow.spec.schema.FieldValue
+import com.dimajix.dataflow.spec.schema.RangeValue
+import com.dimajix.dataflow.spec.schema.SingleValue
 
-class ValueOrRangeTest extends FlatSpec with Matchers {
-    "A ValueOrRange" should "be readable from a single value" in {
+
+class FieldValueTest extends FlatSpec with Matchers {
+    "A FieldValue" should "be readable from a single value" in {
         val spec =
             """
               |"someValue"
             """.stripMargin
 
         val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[ValueOrRange])
+        val result = mapper.readValue(spec, classOf[FieldValue])
         result shouldBe a [SingleValue]
         result.asInstanceOf[SingleValue].value should be("someValue")
     }
@@ -26,9 +31,9 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[ValueOrRange])
+        val result = mapper.readValue(spec, classOf[FieldValue])
         result shouldBe a [ArrayValue]
-        result.asInstanceOf[ArrayValue].value should be (Array("someValue","secondValue"))
+        result.asInstanceOf[ArrayValue].values should be (Array("someValue","secondValue"))
     }
 
     it should "be readable from a range definition value" in {
@@ -39,7 +44,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[ValueOrRange])
+        val result = mapper.readValue(spec, classOf[FieldValue])
         result shouldBe a [RangeValue]
         result.asInstanceOf[RangeValue].start should be ("someValue")
         result.asInstanceOf[RangeValue].end should be ("secondValue")

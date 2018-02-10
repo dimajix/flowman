@@ -33,7 +33,7 @@ abstract class BaseRelation extends Relation {
         reader
     }
     protected def createSchema(implicit context:Context) : StructType = {
-        val fields = _schema.map(f => StructField(f.name, f.dtype))
+        val fields = _schema.map(f => StructField(f.name, f.sparkType))
         StructType(fields)
     }
 }

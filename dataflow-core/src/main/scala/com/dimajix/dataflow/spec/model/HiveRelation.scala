@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.dataflow.execution.Context
 import com.dimajix.dataflow.execution.Executor
-import com.dimajix.dataflow.spec.model.Relation.SingleValue
-import com.dimajix.dataflow.spec.model.Relation.Value
 import com.dimajix.dataflow.spec.schema.Field
+import com.dimajix.dataflow.spec.schema.FieldValue
+import com.dimajix.dataflow.spec.schema.SingleValue
 import com.dimajix.dataflow.util.SchemaUtils
 
 
@@ -35,7 +35,7 @@ class HiveRelation extends BaseRelation  {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor:Executor, schema:StructType, partitions:Map[String,Value] = Map()) : DataFrame = {
+    override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
         val partitionNames = this.partitions.map(_.name)
         val tableName = namespace + "." + table

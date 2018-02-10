@@ -6,15 +6,12 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.dataflow.execution.Executor
+import com.dimajix.dataflow.spec.schema.FieldValue
+import com.dimajix.dataflow.spec.schema.SingleValue
 import com.dimajix.dataflow.spi.Scanner
 
 
 object Relation {
-    class Value
-    case class RangeValue(start:Any, end:Any) extends Value
-    case class ArrayValue(values:Array[Any]) extends Value
-    case class SingleValue(value:Any) extends Value
-
     def subtypes : Seq[(String,Class[_ <: Relation])] = Scanner.relations
 }
 
@@ -29,9 +26,6 @@ object Relation {
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
 abstract class Relation {
-    import com.dimajix.dataflow.spec.model.Relation.SingleValue
-    import com.dimajix.dataflow.spec.model.Relation.Value
-
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -40,7 +34,7 @@ abstract class Relation {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(executor:Executor, schema:StructType, partitions:Map[String,Value] = Map()) : DataFrame
+    def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition

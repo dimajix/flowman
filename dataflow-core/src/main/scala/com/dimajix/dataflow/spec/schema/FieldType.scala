@@ -18,12 +18,26 @@ import com.dimajix.dataflow.execution.Context
 
 @JsonDeserialize(using=classOf[FieldTypeDeserializer])
 abstract class FieldType {
-    def dtype(implicit context: Context) : DataType
+    /**
+      * The Spark type to use
+      *
+      * @param context
+      * @return
+      */
+    def sparkType(implicit context: Context) : DataType
+
+    /**
+      * Short Type Name as used in SQL and in YAML specification files
+      * @return
+      */
     def typeName : String = {
         this.getClass.getSimpleName
         .stripSuffix("$").stripSuffix("Type")
         .toLowerCase(Locale.ROOT)
     }
+
+    def parse(value:String) : Any
+    def interpolate(value: FieldValue, granularity:String) : Iterable[Any]
 }
 
 @JsonDeserialize

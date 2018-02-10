@@ -6,5 +6,7 @@ import com.dimajix.dataflow.execution.Context
 
 
 case object NullType extends FieldType {
-    override def dtype(implicit context: Context) : DataType = org.apache.spark.sql.types.NullType
+    override def sparkType(implicit context: Context) : DataType = org.apache.spark.sql.types.NullType
+    override def parse(value:String) : Any = ???
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
 }

@@ -12,5 +12,7 @@ object DecimalType {
     val USER_DEFAULT: DecimalType = DecimalType(10, 0)
 }
 case class DecimalType(precision: Int, scale: Int) extends FieldType {
-    override def dtype(implicit context: Context) : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
+    override def sparkType(implicit context: Context) : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
+    override def parse(value:String) : Any = ???
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
 }

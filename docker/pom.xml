@@ -3,12 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>dataflow-docker</artifactId>
-    <name>dataflow-docker</name>
+    <artifactId>flowman-docker</artifactId>
+    <name>flowman-docker</name>
 
     <parent>
-        <groupId>com.dimajix.dataflow</groupId>
-        <artifactId>dataflow-root</artifactId>
+        <groupId>com.dimajix.flowman</groupId>
+        <artifactId>flowman-root</artifactId>
         <version>1.0</version>
         <relativePath>..</relativePath>
     </parent>
@@ -43,7 +43,7 @@
                             <outputDirectory>${basedir}/target</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>../dataflow-core/target</directory>
+                                    <directory>../flowman-core/target</directory>
                                     <includes>
                                         <include>*.tar.gz</include>
                                     </includes>
@@ -67,7 +67,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <repository>dimajix/dataflow</repository>
+                    <repository>dimajix/flowman</repository>
                     <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
                     <tag>${project.version}</tag>
                 </configuration>

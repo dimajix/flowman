@@ -6,9 +6,9 @@ USER root
 # Copy and install Repository
 ADD target /tmp/repo/
 RUN ls /tmp/repo/*.tar.gz | xargs tar --owner=root --grou=root -C /opt -xzf  \
-    && ln -s /opt/dataflow* /opt/dataflow \
+    && ln -s /opt/flowman* /opt/flowman \
     && rm -rf /tmp/repo
 
-ENV PATH=$PATH:/opt/dataflow/bin
+ENV PATH=$PATH:/opt/flowman/bin
 
 CMD bash

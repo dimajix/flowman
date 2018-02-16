@@ -9,11 +9,11 @@ import org.scalatest.Matchers
 
 
 class TimestampTypeTest extends FlatSpec with Matchers {
-    def parseDateTime(value:String) = new Timestamp(LocalDateTime.parse(value).toEpochSecond(ZoneOffset.UTC)*1000)
+    def parseDateTime(value:String) = new Timestamp(LocalDateTime.parse(value).toEpochSecond(ZoneOffset.UTC)*1000l)
 
     "A TimestampType" should "parse strings" in {
         TimestampType.parse("2017-12-01T12:21:20").asInstanceOf[Timestamp] should be (parseDateTime("2017-12-01T12:21:20"))
-        // TimestampType.parse("2017-12-01T12:21:20").asInstanceOf[Timestamp] should be (Timestamp.valueOf("2017-12-01 12:21:20"))
+        TimestampType.parse("2017-12-01T12:21:20").asInstanceOf[Timestamp] should be (new Timestamp(1512130880*1000l))
     }
 
     it should "support interpolation of SingleValues" in {

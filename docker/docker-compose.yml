@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  flowman:
+    container_name: dmx-flowman
+    hostname: flowman
+    image: dimajix/flowman:1.0
+    command: bash
+    environment:
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - SPARK_MASTER=local[10]
+      - HDFS_DEFAULT_FS=
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - S3_ENDPOINT=s3.eu-central-1.amazonaws.com
+      - S3_PROXY_HOST=
+      - S3_PROXY_PORT=

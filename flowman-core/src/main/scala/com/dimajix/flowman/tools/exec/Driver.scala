@@ -56,7 +56,7 @@ class Driver(options:Arguments) {
             .withProfiles(options.profiles)
             .build()
 
-        val project:Project = null
+        val project:Project = Project.read.file(options.projectFile)
 
         options.command.execute(project, session)
     }

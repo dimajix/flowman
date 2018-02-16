@@ -1,0 +1,6 @@
+jobs:
+  dump:
+    tasks:
+      - type: output
+        outputs:
+          - measurements-dump

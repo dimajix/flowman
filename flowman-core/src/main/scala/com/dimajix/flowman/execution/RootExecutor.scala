@@ -13,7 +13,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-private[execution] class RootExecutor(context:RootContext, sessionFactory:() => SparkSession) extends AbstractExecutor(context) {
+private[execution] class RootExecutor(context:RootContext, sessionFactory:() => Option[SparkSession]) extends AbstractExecutor(context) {
     private val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
     private var _session:Option[SparkSession] = None
@@ -34,11 +34,10 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
       * @return
       */
     override def spark: SparkSession = {
-        logger.info("Creating new local session for context")
         if (_session.isEmpty) {
-            val session = sessionFactory()
-            _session = Some(session)
-            context.config.foreach(kv => session.conf.set(kv._1, kv._2))
+            logger.info("Creating new local session for context")
+            _session = sessionFactory()
+            _session.foreach(session => context.config.foreach(kv => session.conf.set(kv._1, kv._2)))
         }
         _session.get
     }

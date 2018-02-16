@@ -23,6 +23,10 @@ class RunCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
-        false
+        val runner = context.runner
+        project.jobs.forall { case (name,job) =>
+            logger.info("Executing job {}", name)
+            runner.execute(executor, job)
+        }
     }
 }

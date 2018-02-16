@@ -17,16 +17,21 @@ import com.dimajix.flowman.util.SchemaUtils
 class InputMapping extends BaseMapping {
     @JsonProperty(value = "source", required = true) private var _source:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
-    @JsonProperty(value = "arguments", required=false) private var _arguments:Map[String,FieldValue] = _
+    @JsonProperty(value = "partitions", required=false) private var _partitions:Map[String,FieldValue] = _
 
     def source(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_source))
     def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
-    def arguments(implicit context:Context) : Map[String,FieldValue] = {
-        _arguments.mapValues(_ match {
-            case v:SingleValue => SingleValue(context.evaluate(v.value))
-            case v:ArrayValue => ArrayValue(v.values.map(context.evaluate))
-            case v:RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end))
-        })
+    def partitions(implicit context:Context) : Map[String,FieldValue] = {
+        if (_partitions != null) {
+            _partitions.mapValues(_ match {
+                case v: SingleValue => SingleValue(context.evaluate(v.value))
+                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
+                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end))
+            })
+        }
+        else {
+            null
+        }
     }
 
     /**
@@ -41,7 +46,7 @@ class InputMapping extends BaseMapping {
         val relation = context.getRelation(source)
         val fields = columns
         val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else null
-        relation.read(executor, schema)
+        relation.read(executor, schema, partitions)
     }
 
     /**

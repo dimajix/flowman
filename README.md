@@ -1,3 +1,3 @@
-# Dataflow Tool
+# Flowman
 
-The dataflow tool is a Spark based ETL tool.
+Flowman is a Spark based ETL tool.

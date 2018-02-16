@@ -1,5 +1,9 @@
 package com.dimajix.flowman.execution
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
@@ -71,25 +75,41 @@ class Session private[execution](
       *
       * @return
       */
-    private def createSession() = {
-        val sparkSession = if(_sparkSession != null) {
+
+
+    private def createOrReuseSession() : Option[SparkSession] = {
+        if(_sparkSession != null) {
             _sparkConfig.foreach(kv => _sparkSession.conf.set(kv._1,kv._2))
-            _sparkSession
+            Some(_sparkSession)
         }
         else {
-            val config = new SparkConf()
-                .setAll(_sparkConfig)
-                .setAppName(_sparkName)
-            SparkSession.builder()
-                .config(config)
-                .enableHiveSupport()
-                .getOrCreate()
+            Try {
+                val config = new SparkConf()
+                    .setAll(_sparkConfig)
+                    .setAppName(_sparkName)
+                SparkSession.builder()
+                    .config(config)
+                    .enableHiveSupport()
+                    .getOrCreate()
+            }
+            match {
+                case Success(session) =>
+                    logger.info("Successfully created Spark Session")
+                    Some(session)
+                case Failure(e) =>
+                    logger.error("Failed to create Spark Session.", e)
+                    None
+            }
         }
+
+    }
+    private def createSession() = {
+        val sparkSession = createOrReuseSession()
 
         // Register special UDFs
         //udf.register(sparkSession)
 
-        sparkSession.conf.getAll.foreach(kv => logger.info("Config: {} = {}", kv._1: Any, kv._2: Any))
+        sparkSession.foreach(_.conf.getAll.foreach(kv => logger.info("Config: {} = {}", kv._1: Any, kv._2: Any)))
         sparkSession
     }
     private lazy val sparkSession = createSession()

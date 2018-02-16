@@ -1,0 +1,5 @@
+outputs:
+  measurements-dump:
+    type: dump
+    input: measurements
+    limit: 100

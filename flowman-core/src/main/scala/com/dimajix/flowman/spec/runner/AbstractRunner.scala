@@ -39,32 +39,36 @@ abstract class AbstractRunner extends Runner {
                 true
             }
             else {
-                val result = Try {
-                    job.execute(executor)
-                }
-                result match {
-                    case Success(JobStatus.SUCCESS) =>
-                        logger.info("Successfully finished execution of Job")
-                        success(context, token)
-                        true
-                    case Success(JobStatus.FAILURE) =>
-                        logger.error("Execution of Job failed")
-                        failure(context, token)
-                        false
-                    case Success(JobStatus.ABORTED) =>
-                        logger.error("Execution of Job aborted")
-                        aborted(context, token)
-                        false
-                    case Success(JobStatus.SKIPPED) =>
-                        logger.error("Execution of Job skipped")
-                        skipped(context, token)
-                        true
-                    case Failure(e) =>
-                        logger.error("Caught exception while executing job: {}", e.getMessage)
-                        logger.error(e.getStackTrace.mkString("\n    at "))
-                        false
-                }
+                runJob(executor, job, token)
             }
+        }
+    }
+
+    private def runJob(executor: Executor, job:Job, token:Object) : Boolean = {
+        implicit val context = executor.context
+        Try {
+            job.execute(executor)
+        }
+        match {
+            case Success(JobStatus.SUCCESS) =>
+                logger.info("Successfully finished execution of Job")
+                success(context, token)
+                true
+            case Success(JobStatus.FAILURE) =>
+                logger.error("Execution of Job failed")
+                failure(context, token)
+                false
+            case Success(JobStatus.ABORTED) =>
+                logger.error("Execution of Job aborted")
+                aborted(context, token)
+                false
+            case Success(JobStatus.SKIPPED) =>
+                logger.error("Execution of Job skipped")
+                skipped(context, token)
+                true
+            case Failure(e) =>
+                logger.error("Caught exception while executing job.", e)
+                false
         }
     }
 

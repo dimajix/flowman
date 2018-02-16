@@ -1,0 +1,8 @@
+name: "weather"
+version: "1.0"
+
+modules:
+ - model
+ - mapping
+ - output
+ - job

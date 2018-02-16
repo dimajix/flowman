@@ -8,17 +8,12 @@ import com.dimajix.flowman.spec.Project
 
 
 abstract class ActionCommand extends Command {
-    @Option(name = "-f", aliases=Array("--file"), usage = "project file", metaVar = "<project>")
-    var projectFile: String = "project.yaml"
-
     override def execute(project:Project, session: Session): Boolean = {
         super.execute(project, session)
 
-        val model = Project.read.file(projectFile)
-
         // Create project specific executor
         val executor = session.createExecutor(project)
-        val result = executeInternal(executor, model)
+        val result = executeInternal(executor, project)
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured
         executor.cleanup()
@@ -26,5 +21,5 @@ abstract class ActionCommand extends Command {
         result
     }
 
-    def executeInternal(executor:Executor, dataflow: Project) : Boolean
+    def executeInternal(executor:Executor, project: Project) : Boolean
 }

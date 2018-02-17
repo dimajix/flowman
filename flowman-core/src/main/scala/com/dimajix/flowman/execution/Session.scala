@@ -87,15 +87,18 @@ class Session private[execution](
 
     private def createOrReuseSession() : Option[SparkSession] = {
         if(_sparkSession != null) {
+            logger.info("Reusing existing Spark session")
             _sparkConfig.foreach(kv => _sparkSession.conf.set(kv._1,kv._2))
             Some(_sparkSession)
         }
         else {
+            logger.info("Creating new Spark session")
             Try {
                 val config = new SparkConf()
                     .setAppName(_sparkName)
                 val master = System.getProperty("spark.master")
                 if (master == null || master.isEmpty) {
+                    logger.info("No Spark master specified - using local[*]")
                     config.setMaster("local[*]")
                     config.set("spark.sql.shuffle.partitions", "16")
                 }
@@ -116,12 +119,16 @@ class Session private[execution](
 
     }
     private def createSession(config:Map[String,String]) = {
-        val mergedConfig = if (_project != null)
-            createContext(_project).config
-        else
-            context.config
-
         val sparkSession = createOrReuseSession()
+        val mergedConfig = if (_project != null) {
+            logger.info("Using project specific Spark configuration settings")
+            createContext(_project).config
+        }
+        else {
+            logger.info("Using global Spark configuration settings")
+            context.config
+        }
+
         sparkSession.foreach(spark => {
             SparkUtils.configure(spark, mergedConfig)
             spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }

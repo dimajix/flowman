@@ -87,7 +87,7 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
         executor
     }
     private def createProjectSession(context: Context)() : Option[SparkSession] = {
-        logger.info("Creating new Spark Session for project")
+        logger.info("Creating new Spark session for project")
         val session = spark
         if (session != null) {
             val sparkSession = session.newSession()

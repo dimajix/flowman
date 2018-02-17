@@ -24,7 +24,7 @@ abstract class AbstractExecutor(_context:Context, sessionFactory:() => Option[Sp
       */
     override def spark: SparkSession = {
         if (_session.isEmpty) {
-            logger.info("Creating new local session for context")
+            logger.info("Creating new local Spark session for context")
             _session = sessionFactory()
             _session.foreach(session => context.config.foreach(kv => session.conf.set(kv._1, kv._2)))
         }

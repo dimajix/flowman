@@ -19,7 +19,7 @@ class FileRelation extends BaseRelation {
 
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="partitions") private var _partitions: Seq[Field] = Seq()
+    @JsonProperty(value="partitions") private var _partitions: Seq[Field] = _
     @JsonProperty(value="pattern") private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
@@ -67,15 +67,40 @@ class FileRelation extends BaseRelation {
       */
     private def collectFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
         implicit val context = executor.context
+        if (location == null || location.isEmpty)
+            throw new IllegalArgumentException("location needs to be defined for reading files")
+
+        val inputFiles =
+            if (this.partitions != null && this.partitions.nonEmpty)
+                collectPartitionedFiles(executor, partitions)
+            else
+                collectUnpartitionedFiles(executor)
+
+        // Print all files that we found
+        inputFiles.foreach(f => logger.info("Reading input file {}", f.toString))
+        inputFiles
+    }
+
+    private def collectPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+        implicit val context = executor.context
+        if (partitions == null)
+            throw new NullPointerException("Partitioned data source requires partition values to be defined")
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
         val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
         val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName(kv._1).interpolate(kv._2).map(_.toString)))
         val collector = new FileCollector(executor.spark)
             .path(new Path(location))
             .pattern(pattern)
-        val inputFiles = collector.collect(resolvedPartitions)
+        collector.collect(resolvedPartitions)
+    }
 
-        // Print all files that we found
-        inputFiles.foreach(f => logger.info("Reading input file {}", f.toString))
-        inputFiles
+    private def collectUnpartitionedFiles(executor: Executor) = {
+        implicit val context = executor.context
+        val collector = new FileCollector(executor.spark)
+            .path(new Path(location))
+            .pattern(pattern)
+        collector.collect()
     }
 }

@@ -81,11 +81,13 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
       */
     override def cleanup() : Unit = {
         // Unregister all temporary tables
-        logger.info("Cleaning up temporary tables and caches")
-        val catalog = spark.catalog
-        catalog.clearCache()
-        _tables.foreach(kv => catalog.dropTempView(kv._1))
-        _tables.foreach(kv => kv._2.unpersist())
+        if (sparkRunning) {
+            logger.info("Cleaning up temporary tables and caches")
+            val catalog = spark.catalog
+            catalog.clearCache()
+            _tables.foreach(kv => catalog.dropTempView(kv._1))
+            _tables.foreach(kv => kv._2.unpersist())
+        }
     }
 
     /**

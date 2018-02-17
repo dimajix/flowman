@@ -1,0 +1,4 @@
+mappings:
+  stations:
+    type: read
+    source: stations

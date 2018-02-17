@@ -49,6 +49,14 @@
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>
+                                <resource>
+                                    <directory>../examples</directory>
+                                    <output>target</output>
+                                    <includes>
+                                        <include>*</include>
+                                    </includes>
+                                    <filtering>false</filtering>
+                                </resource>
                             </resources>
                         </configuration>
                     </execution>

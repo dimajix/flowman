@@ -16,6 +16,12 @@ abstract class Executor {
     def spark: SparkSession
 
     /**
+      * Returns true if a SparkSession is already available
+      * @return
+      */
+    def sparkRunning: Boolean
+
+    /**
       * Returns the Context associated with this Executor. This context will be used for looking up
       * databases and relations and for variable substition
       *

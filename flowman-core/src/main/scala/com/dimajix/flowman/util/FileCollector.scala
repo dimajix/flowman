@@ -6,6 +6,7 @@ import scala.math.Ordering
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
@@ -75,6 +76,11 @@ class FileCollector(hadoopConf:Configuration) {
       */
     def collect(partitions:Map[String,Iterable[String]]) : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        if (_pattern == null)
+            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+        if (_path == null)
+            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
+
         val fs = _path.getFileSystem(hadoopConf)
         val context = new VelocityContext()
 
@@ -91,18 +97,38 @@ class FileCollector(hadoopConf:Configuration) {
             val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
 
             logger.info(s"Collecting files for partition $partitions in location $curPath")
-            if (fs.isDirectory(curPath)) {
-                // If path is a directory, simply list all files
-                fs.listStatus(curPath).sorted.map(_.getPath).toSeq
-            }
-            else {
-                // Otherwise assume a file pattern and try to glob all files
-                val files = fs.globStatus(curPath)
-                if (files != null)
-                    files.sorted.map(_.getPath).toSeq
-                else
-                    Seq()
-            }
+            collectPath(fs, curPath)
         }).toSeq
+    }
+
+    /**
+      * Collects files from the configured directory. Does not perform partition resolution
+      *
+      * @return
+      */
+    def collect() : Seq[Path] = {
+        logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        if (_path == null)
+            throw new IllegalArgumentException("path needs to be defined for collecting files")
+
+        val fs = _path.getFileSystem(hadoopConf)
+        val curPath:Path = if (_pattern != null && _pattern.nonEmpty) new Path(_path, _pattern) else _path
+        collectPath(fs, curPath)
+    }
+
+    private def collectPath(fs:FileSystem, path:Path) = {
+        if (fs.isDirectory(path)) {
+            // If path is a directory, simply list all files
+            fs.listStatus(path).sorted.map(_.getPath).toSeq
+        }
+        else {
+            // Otherwise assume a file pattern and try to glob all files
+            val files = fs.globStatus(path)
+            if (files != null)
+                files.sorted.map(_.getPath).toSeq
+            else
+                Seq()
+        }
+
     }
 }

@@ -30,4 +30,11 @@ abstract class AbstractExecutor(_context:Context, sessionFactory:() => Option[Sp
         }
         _session.get
     }
+
+    /**
+      * Returns true if a SparkSession is already available
+      * @return
+      */
+    override def sparkRunning: Boolean = _session.nonEmpty
+
 }

@@ -89,14 +89,13 @@ class FileCollector(hadoopConf:Configuration) {
             val relPath = evaluate(_pattern)
             val curPath:Path = new Path(_path, relPath)
 
+            logger.info(s"Collecting files in location $curPath")
             if (fs.isDirectory(curPath)) {
                 // If path is a directory, simply list all files
-                logger.info(s"Collecting recursively files in location $curPath")
                 fs.listStatus(curPath).sorted.map(_.getPath).toSeq
             }
             else {
                 // Otherwise assume a file pattern and try to glob all files
-                logger.info(s"Collecting all files in leaf location $curPath")
                 val files = fs.globStatus(curPath)
                 if (files != null)
                     files.sorted.map(_.getPath).toSeq

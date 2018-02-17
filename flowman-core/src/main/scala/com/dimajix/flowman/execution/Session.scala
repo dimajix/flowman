@@ -20,6 +20,7 @@ class SessionBuilder {
     private var _sparkConfig = Map[String,String]()
     private var _environment = Map[String,String]()
     private var _profiles = Set[String]()
+    private var _project:Project = _
     private var _namespace:Namespace = _
 
     def withSparkSession(session:SparkSession) = {
@@ -42,6 +43,10 @@ class SessionBuilder {
         _namespace = namespace
         this
     }
+    def withProject(project:Project) : SessionBuilder = {
+        _project = project
+        this
+    }
     def withProfile(profile:String) : SessionBuilder = {
         _profiles = _profiles + profile
         this
@@ -52,7 +57,7 @@ class SessionBuilder {
     }
 
     def build() : Session = {
-        val session = new Session(_namespace, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles)
+        val session = new Session(_namespace, _project, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles)
         session
     }
 }
@@ -64,6 +69,7 @@ object Session {
 
 class Session private[execution](
     _namespace:Namespace,
+    _project:Project,
     _sparkSession:SparkSession,
     _sparkName:String,
     _sparkConfig:Map[String,String],
@@ -110,9 +116,12 @@ class Session private[execution](
 
     }
     private def createSession(config:Map[String,String]) = {
-        val sparkSession = createOrReuseSession()
+        val mergedConfig = if (_project != null)
+            createContext(_project).config
+        else
+            context.config
 
-        val mergedConfig = config ++ _sparkConfig
+        val sparkSession = createOrReuseSession()
         sparkSession.foreach(spark => {
             SparkUtils.configure(spark, mergedConfig)
             spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
@@ -147,6 +156,10 @@ class Session private[execution](
 
     def namespace : Namespace = _namespace
 
+    def project : Project = _project
+
+    def spark : SparkSession = sparkSession.get
+
     /**
      * Returns the root context of this session.
      */
@@ -167,7 +180,7 @@ class Session private[execution](
       * @return
       */
     def createContext(project: Project) : Context = {
-        createExecutor(project).context
+        rootContext.getProjectContext(project)
     }
 
     def createExecutor(project: Project) : Executor = {

@@ -51,18 +51,19 @@ class Driver(options:Arguments) {
             System.exit(1)
         }
 
+        val project:Project = Project.read.file(options.projectFile)
+
         val namespace:Namespace = null
         val sparkConfig = splitSettings(options.sparkConfig)
         val environment = splitSettings(options.environment)
         val session:Session = Session.builder
             .withNamespace(namespace)
+            .withProject(project)
             .withSparkName(options.sparkName)
             .withSparkConfig(sparkConfig.toMap)
             .withEnvironment(environment.toMap)
             .withProfiles(options.profiles)
             .build()
-
-        val project:Project = Project.read.file(options.projectFile)
 
         options.command.execute(project, session)
     }

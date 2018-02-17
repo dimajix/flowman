@@ -91,8 +91,6 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
         val session = spark
         if (session != null) {
             val sparkSession = session.newSession()
-            SparkUtils.configure(sparkSession, context.config)
-            sparkSession.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
             Some(sparkSession)
         }
         else {

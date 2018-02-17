@@ -31,6 +31,7 @@ object Mapping {
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
+    new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping])
 ))

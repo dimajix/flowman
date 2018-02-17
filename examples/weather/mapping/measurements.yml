@@ -10,7 +10,7 @@ mappings:
       raw_data: String
 
   measurements:
-    type: extend
+    type: select
     input: measurements_raw
     columns:
       usaf: "SUBSTR(raw_data,5,6)"

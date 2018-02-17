@@ -2,20 +2,19 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
-import com.dimajix.flowman.util.SchemaUtils
 
 
-class ProjectMapping extends BaseMapping {
+class SelectMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = Map()
+    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = _
 
     def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) :Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
+    def columns(implicit context: Context) : Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -27,7 +26,7 @@ class ProjectMapping extends BaseMapping {
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         val df = input(this.input)
-        val cols = columns.map(nv => col(nv._1).cast(SchemaUtils.mapType(nv._2)))
+        val cols = columns.map { case (name,value) => functions.expr(value).as(name) }
         df.select(cols:_*)
     }
 

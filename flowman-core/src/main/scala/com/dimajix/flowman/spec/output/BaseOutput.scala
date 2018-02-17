@@ -9,10 +9,8 @@ import com.dimajix.flowman.spec.TableIdentifier
 abstract class BaseOutput extends Output {
     @JsonProperty(value = "enabled", required=false) private var _enabled:String = _
     @JsonProperty(value = "input", required=true) private var _input:String = _
-    @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
 
     def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[(String,String)] = if (_columns != null) _columns.mapValues(context.evaluate).toSeq else null
 
     override def enabled(implicit context:Context) : Boolean = if (_enabled != null) context.evaluate(_enabled).toBoolean else true
 

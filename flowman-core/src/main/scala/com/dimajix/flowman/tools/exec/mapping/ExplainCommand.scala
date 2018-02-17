@@ -34,8 +34,7 @@ class ExplainCommand extends ActionCommand {
                 logger.info("Successfully finished explaining table")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while explaining table: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+                logger.error("Caught exception while explaining table: {}", e)
                 false
         }
     }

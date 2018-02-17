@@ -16,7 +16,7 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class ValidateCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ValidateCommand])
 
-    @Argument(usage = "specifies outputs to process", metaVar = "<output>")
+    @Argument(usage = "specifies outputs to validate", metaVar = "<output>")
     var outputs: Array[String] = Array()
     @Option(name = "-a", aliases=Array("--all"), usage = "runs all outputs, even the disabled ones")
     var all: Boolean = false
@@ -46,7 +46,6 @@ class ValidateCommand extends ActionCommand {
                 false
             case Failure(e) =>
                 logger.error("Caught exception while validating output", e)
-                // logger.error(e.getStackTrace.mkString("\n    at "))
                 false
         }
     }

@@ -88,8 +88,9 @@ class FileCollector(hadoopConf:Configuration) {
             p.foreach(kv => context.put(kv._1, kv._2))
             val relPath = evaluate(_pattern)
             val curPath:Path = new Path(_path, relPath)
+            val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
 
-            logger.info(s"Collecting files in location $curPath")
+            logger.info(s"Collecting files for partition $partitions in location $curPath")
             if (fs.isDirectory(curPath)) {
                 // If path is a directory, simply list all files
                 fs.listStatus(curPath).sorted.map(_.getPath).toSeq

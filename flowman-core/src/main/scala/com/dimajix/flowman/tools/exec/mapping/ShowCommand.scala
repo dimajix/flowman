@@ -34,8 +34,7 @@ class ShowCommand extends ActionCommand {
                 logger.info("Successfully finished dumping table")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while dumping table: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+                logger.error("Caught exception while dumping table: {}", e)
                 false
         }
     }

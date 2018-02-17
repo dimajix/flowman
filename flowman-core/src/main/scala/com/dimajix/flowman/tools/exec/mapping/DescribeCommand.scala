@@ -31,8 +31,7 @@ class DescribeCommand extends ActionCommand {
                 logger.info("Successfully finished describing table")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while describing table: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+                logger.error("Caught exception while describing table: {}", e)
                 false
         }
     }

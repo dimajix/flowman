@@ -1,4 +1,7 @@
 .idea/
 dataflow-core/target/
 *.iml
-velocity.log
+velocity.log*
+derby.log
+metastore_db/
+*/target/

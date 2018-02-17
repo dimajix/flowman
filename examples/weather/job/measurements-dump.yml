@@ -1,5 +1,6 @@
 jobs:
   dump:
+    description: "Runs all outputs"
     tasks:
       - type: output
         outputs:

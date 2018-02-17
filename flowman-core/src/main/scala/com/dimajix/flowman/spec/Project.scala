@@ -12,6 +12,7 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
+import com.dimajix.flowman.spec.task.Job
 
 class ProjectReader {
     private val logger = LoggerFactory.getLogger(classOf[ProjectReader])

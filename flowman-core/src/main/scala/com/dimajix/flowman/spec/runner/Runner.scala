@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.Job
+import com.dimajix.flowman.spec.task.Job
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")

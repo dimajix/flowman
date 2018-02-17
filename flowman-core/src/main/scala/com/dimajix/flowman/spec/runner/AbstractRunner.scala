@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.Job
-import com.dimajix.flowman.spec.JobStatus
+import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.task.JobStatus
 
 
 abstract class AbstractRunner extends Runner {

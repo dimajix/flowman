@@ -1,5 +1,4 @@
 .idea/
-dataflow-core/target/
 *.iml
 velocity.log*
 derby.log

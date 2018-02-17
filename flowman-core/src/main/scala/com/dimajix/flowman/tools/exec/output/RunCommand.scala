@@ -5,8 +5,8 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.Job
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.OutputTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -36,7 +36,7 @@ class RunCommand extends ActionCommand {
                 project.outputs.filter(_._2.enabled).keys.toSeq
 
         val task = new OutputTask
-        task.outputs = outputs
+        task.outputs = toRun
         val job = new Job
         job.tasks = Seq(task)
 

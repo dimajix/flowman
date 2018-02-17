@@ -3,6 +3,7 @@ package com.dimajix.flowman.spec.task
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 
@@ -20,4 +21,6 @@ abstract class Task {
       * @param executor
       */
     def execute(executor:Executor) : Boolean
+
+    def description(implicit context:Context) : String
 }

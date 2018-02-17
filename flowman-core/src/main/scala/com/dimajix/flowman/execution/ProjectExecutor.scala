@@ -10,8 +10,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContext) extends AbstractExecutor(context) {
-    private val logger = LoggerFactory.getLogger(classOf[ProjectExecutor])
+private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContext, sessionFactory:() => Option[SparkSession])
+    extends AbstractExecutor(context, sessionFactory) {
+    override protected val logger = LoggerFactory.getLogger(classOf[ProjectExecutor])
     private val _tables = mutable.Map[String,DataFrame]()
     private val _project = context.project
 
@@ -47,8 +48,6 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
         _tables.put(tableName, df)
         df
     }
-
-    override def spark: SparkSession = _parent.spark
 
     /**
       * Returns a list of all tables of this Executor.

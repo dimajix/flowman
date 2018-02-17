@@ -29,10 +29,16 @@ class ProjectReader {
       * @return
       */
     def file(file:File) : Project = {
-        logger.info(s"Reading project file ${file.toString}")
-        val project = mapper.readValue(file, classOf[Project])
-        loadModules(project, file.getParentFile)
-        project
+        if (file.isDirectory) {
+            logger.info(s"Reading project in directory ${file.toString}")
+            this.file(new File(file, "project.yml"))
+        }
+        else {
+            logger.info(s"Reading project file ${file.toString}")
+            val project = mapper.readValue(file, classOf[Project])
+            loadModules(project, file.getParentFile)
+            project
+        }
     }
 
     /**

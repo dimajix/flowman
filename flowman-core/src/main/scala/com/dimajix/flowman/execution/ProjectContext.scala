@@ -1,5 +1,8 @@
 package com.dimajix.flowman.execution
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.OutputIdentifier
@@ -14,6 +17,8 @@ import com.dimajix.flowman.spec.runner.Runner
 
 
 class ProjectContext(parent:RootContext, _project:Project) extends AbstractContext {
+    override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
+
     updateFrom(parent)
 
     def project : Project = _project

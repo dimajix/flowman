@@ -9,10 +9,9 @@ import scala.collection.mutable
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
-import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import com.dimajix.flowman.spec.Connection
-import com.dimajix.flowman.spec.ConnectionIdentifier
 
 
 object AbstractContext {
@@ -28,7 +27,7 @@ object AbstractContext {
 }
 
 abstract class AbstractContext extends Context {
-    private val logger = LoggerFactory.getLogger(classOf[RootContext])
+    protected val logger:Logger
 
     private val _environment = mutable.Map[String,(String, Int)]()
     private val _config = mutable.Map[String,(String, Int)]()
@@ -95,7 +94,7 @@ abstract class AbstractContext extends Context {
             _config.update(key, (finalValue, settingLevel.level))
         }
         else {
-            logger.warn(s"Ignoring changing final config variable $key=${currentValue._1} to $value")
+            logger.info(s"Ignoring changing final config variable $key=${currentValue._1} to '$value'")
         }
     }
     def unsetConfig(key:String, settingLevel: SettingLevel) : Unit = {
@@ -104,7 +103,7 @@ abstract class AbstractContext extends Context {
             _config.remove(key)
         }
         else {
-            logger.warn(s"Ignoring removing final config variable $key=${currentValue._1}")
+            logger.info(s"Ignoring removing final config variable $key=${currentValue._1}")
         }
     }
 
@@ -127,7 +126,7 @@ abstract class AbstractContext extends Context {
             templateContext.put(key, finalValue)
         }
         else {
-            logger.warn(s"Ignoring changing final environment variable $key=${currentValue._1} to $value")
+            logger.info(s"Ignoring changing final environment variable $key=${currentValue._1} to '$value'")
         }
     }
     def unsetEnvironment(key:String, settingLevel: SettingLevel) : Unit = {
@@ -137,7 +136,7 @@ abstract class AbstractContext extends Context {
             templateContext.remove(key)
         }
         else {
-            logger.warn(s"Ignoring removing final config variable $key=${currentValue._1}")
+            logger.info(s"Ignoring removing final config variable $key=${currentValue._1}")
         }
     }
 
@@ -150,7 +149,7 @@ abstract class AbstractContext extends Context {
             _databases.update(name, (database, settingLevel.level))
         }
         else {
-            logger.warn(s"Ignoring changing final database $name")
+            logger.info(s"Ignoring changing final database $name")
         }
     }
 }

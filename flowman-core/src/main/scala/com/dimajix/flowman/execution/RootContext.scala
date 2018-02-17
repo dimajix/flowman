@@ -23,7 +23,7 @@ import com.dimajix.flowman.spec.runner.SimpleRunner
 
 
 class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
-    private val logger = LoggerFactory.getLogger(classOf[RootContext])
+    override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
     private val _children: mutable.Map[String, ProjectContext] = mutable.Map()
     private val _runner = new SimpleRunner()
 

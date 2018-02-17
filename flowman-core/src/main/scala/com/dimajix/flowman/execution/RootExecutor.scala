@@ -4,6 +4,7 @@ import java.util.NoSuchElementException
 
 import scala.collection.mutable
 
+import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
@@ -11,12 +12,13 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.util.SparkUtils
 
 
-private[execution] class RootExecutor(context:RootContext, sessionFactory:() => Option[SparkSession]) extends AbstractExecutor(context) {
-    private val logger = LoggerFactory.getLogger(classOf[RootExecutor])
+private[execution] class RootExecutor(context:RootContext, sessionFactory:() => Option[SparkSession])
+    extends AbstractExecutor(context, sessionFactory) {
+    override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
-    private var _session:Option[SparkSession] = None
     private val _children = mutable.Map[String,ProjectExecutor]()
     private val _namespace = context.namespace
 
@@ -26,21 +28,6 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
       * @return
       */
     def namespace : Namespace = _namespace
-
-    /**
-      * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
-      * SparkSession, but a new derived session with a separate namespace will be created.
-      *
-      * @return
-      */
-    override def spark: SparkSession = {
-        if (_session.isEmpty) {
-            logger.info("Creating new local session for context")
-            _session = sessionFactory()
-            _session.foreach(session => context.config.foreach(kv => session.conf.set(kv._1, kv._2)))
-        }
-        _session.get
-    }
 
      /**
       * Returns a fully qualified table as a DataFrame from a project belonging to the namespace of this executor
@@ -89,14 +76,27 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
 
     private def createProjectExecutor(project:Project) : ProjectExecutor = {
         val pcontext = context.getProjectContext(project)
-        val executor = new ProjectExecutor(this, pcontext)
+        val executor = new ProjectExecutor(this, pcontext, createProjectSession(pcontext))
         _children.update(project.name, executor)
         executor
     }
     private def createProjectExecutor(project:String) : ProjectExecutor = {
         val pcontext = context.getProjectContext(project)
-        val executor = new ProjectExecutor(this, pcontext)
+        val executor = new ProjectExecutor(this, pcontext, createProjectSession(pcontext))
         _children.update(project, executor)
         executor
+    }
+    private def createProjectSession(context: Context)() : Option[SparkSession] = {
+        logger.info("Creating new Spark Session for project")
+        val session = spark
+        if (session != null) {
+            val sparkSession = session.newSession()
+            SparkUtils.configure(sparkSession, context.config)
+            sparkSession.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
+            Some(sparkSession)
+        }
+        else {
+            None
+        }
     }
 }

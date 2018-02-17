@@ -5,11 +5,13 @@ import scala.util.Success
 import scala.util.Try
 
 import org.apache.spark.SparkConf
+import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.util.SparkUtils
 
 
 class SessionBuilder {
@@ -85,8 +87,12 @@ class Session private[execution](
         else {
             Try {
                 val config = new SparkConf()
-                    .setAll(_sparkConfig)
                     .setAppName(_sparkName)
+                val master = System.getProperty("spark.master")
+                if (master == null || master.isEmpty) {
+                    config.setMaster("local[*]")
+                    config.set("spark.sql.shuffle.partitions", "16")
+                }
                 SparkSession.builder()
                     .config(config)
                     .enableHiveSupport()
@@ -103,16 +109,21 @@ class Session private[execution](
         }
 
     }
-    private def createSession() = {
+    private def createSession(config:Map[String,String]) = {
         val sparkSession = createOrReuseSession()
+
+        val mergedConfig = config ++ _sparkConfig
+        sparkSession.foreach(spark => {
+            SparkUtils.configure(spark, mergedConfig)
+            spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
+        })
 
         // Register special UDFs
         //udf.register(sparkSession)
 
-        sparkSession.foreach(_.conf.getAll.foreach(kv => logger.info("Config: {} = {}", kv._1: Any, kv._2: Any)))
         sparkSession
     }
-    private lazy val sparkSession = createSession()
+    private lazy val sparkSession = createSession(rootContext.config)
 
     private lazy val rootContext : RootContext = {
         val context = new RootContext(_namespace, _profiles.toSeq)

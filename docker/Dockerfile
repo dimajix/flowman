@@ -7,6 +7,7 @@ USER root
 ADD target /tmp/repo/
 RUN ls /tmp/repo/*.tar.gz | xargs tar --owner=root --grou=root -C /opt -xzf  \
     && ln -s /opt/flowman* /opt/flowman \
+    && cp -r /tmp/repo/examples /opt/flowman \
     && rm -rf /tmp/repo
 
 ENV PATH=$PATH:/opt/flowman/bin

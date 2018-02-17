@@ -50,10 +50,9 @@
                                     <filtering>false</filtering>
                                 </resource>
                                 <resource>
-                                    <directory>../examples</directory>
-                                    <output>target</output>
+                                    <directory>..</directory>
                                     <includes>
-                                        <include>*</include>
+                                        <include>examples/**/*</include>
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>

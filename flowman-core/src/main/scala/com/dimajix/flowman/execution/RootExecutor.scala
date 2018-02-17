@@ -62,6 +62,9 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
         child.instantiate(TableIdentifier(identifier.name, None))
     }
 
+    /**
+      * Perform Spark related cleanup operations (like deregistering temp tables, clearing caches, ...)
+      */
     override def cleanup(): Unit = {
         logger.info("Cleaning up root executor and all children")
         _children.values.foreach(_.cleanup())

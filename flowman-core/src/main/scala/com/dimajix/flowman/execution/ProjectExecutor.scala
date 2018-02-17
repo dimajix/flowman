@@ -7,6 +7,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.broadcast
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
@@ -50,6 +51,13 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
     }
 
     /**
+      * Returns the project of this executor
+      *
+      * @return
+      */
+    def project : Project = _project
+
+    /**
       * Returns a list of all tables of this Executor.
       *
       * @return
@@ -62,7 +70,7 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
       * @param tableName
       */
     override def instantiate(tableName: TableIdentifier) : DataFrame = {
-        if (tableName.project.isEmpty)
+        if (tableName.project.forall(_ == _project.name))
             _tables.getOrElseUpdate(tableName.name, createTable(tableName.name))
         else
             _parent.instantiate(tableName)
@@ -71,7 +79,7 @@ private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContex
     /**
       * Cleans up the session
       */
-    def cleanup() : Unit = {
+    override def cleanup() : Unit = {
         // Unregister all temporary tables
         logger.info("Cleaning up temporary tables and caches")
         val catalog = spark.catalog

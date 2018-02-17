@@ -8,7 +8,7 @@ import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.spec.schema.FieldValue
 
 
-class NullRelation extends Relation {
+class NullRelation extends BaseRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -18,8 +18,10 @@ class NullRelation extends Relation {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        implicit val context = executor.context
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
-        executor.spark.createDataFrame(rdd, schema)
+        val readSchema = Option(schema).getOrElse(createSchema)
+        executor.spark.createDataFrame(rdd, readSchema)
     }
 
     /**

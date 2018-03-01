@@ -77,6 +77,10 @@
                     <repository>dimajix/flowman</repository>
                     <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
                     <tag>${project.version}</tag>
+                    <pullNewerImage>false</pullNewerImage>
+                    <buildArgs>
+                        <APP_ARCHIVE>flowman-core-${project.version}-bin.tar.gz</APP_ARCHIVE>
+                    </buildArgs>
                 </configuration>
             </plugin>
         </plugins>

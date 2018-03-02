@@ -8,13 +8,21 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.OutputIdentifier
 
 
+object OutputTask {
+    def apply(outputs:Seq[String]) = {
+        val task = new OutputTask
+        task._outputs = outputs
+        task
+    }
+}
+
+
 class OutputTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[OutputTask])
 
     @JsonProperty(value="outputs", required=true) private var _outputs:Seq[String] = Seq()
 
     def outputs(implicit context: Context) : Seq[OutputIdentifier] = _outputs.map(i => OutputIdentifier.parse(context.evaluate(i)))
-    def outputs_=(outputs:Seq[String]) : Unit = _outputs = outputs
 
     /**
       * Executes all outputs defined in this task

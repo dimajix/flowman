@@ -12,8 +12,7 @@ class OutputTaskTest extends FlatSpec with Matchers {
     "The OutputTask" should "support string assignments from code" in {
         val session = Session.builder().build()
         implicit val context = session.context
-        val task = new OutputTask
-        task.outputs = Seq("lala")
+        val task = OutputTask(Seq("lala"))
         task.outputs should equal(Seq(OutputIdentifier("lala",None)))
     }
     it should "support configuration via YML" in {

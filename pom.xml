@@ -236,7 +236,14 @@
             <dependency>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest_${scala.api_version}</artifactId>
-                <version>2.2.5</version>
+                <version>3.0.3</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.scalamock</groupId>
+                <artifactId>scalamock_${scala.api_version}</artifactId>
+                <version>4.1.0</version>
                 <scope>test</scope>
             </dependency>
 

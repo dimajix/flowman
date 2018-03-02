@@ -13,19 +13,22 @@ import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class HiveRelation extends BaseRelation  {
-    private val logger = LoggerFactory.getLogger(classOf[HiveRelation])
+class HiveTableRelation extends BaseRelation  {
+    private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
-    @JsonProperty(value="namespace") private var _namespace: String = _
+    @JsonProperty(value="database") private var _database: String = _
     @JsonProperty(value="table") private var _table: String = _
+    @JsonProperty(value="external", required=false) private var _external: String = "false"
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = _
-    @JsonProperty(value="partitions") private var _partitions: Seq[Field] = Seq()
+    @JsonProperty(value="partitions") private var _partitions: Seq[Field] = _
 
-    def partitions(implicit context: Context) : Seq[Field] = _partitions
-    def format(implicit context: Context) : String = context.evaluate(_format)
-    def namespace(implicit context:Context) : String = context.evaluate(_namespace)
+    def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
+    def external(implicit context:Context) : Boolean = context.evaluate(_external).toBoolean
+    def location(implicit context:Context) : String = context.evaluate(_location)
+    def format(implicit context: Context) : String = context.evaluate(_format)
+    def partitions(implicit context: Context) : Seq[Field] = _partitions
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -38,7 +41,7 @@ class HiveRelation extends BaseRelation  {
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
         val partitionNames = this.partitions.map(_.name)
-        val tableName = namespace + "." + table
+        val tableName = database + "." + table
         logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
         val reader = this.reader(executor)
@@ -55,7 +58,7 @@ class HiveRelation extends BaseRelation  {
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
-        val tableName = namespace + "." + table
+        val tableName = database + "." + table
         logger.info(s"Writing DataFrame to Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
         val writer = df.write
@@ -65,7 +68,24 @@ class HiveRelation extends BaseRelation  {
         writer.saveAsTable(tableName)
     }
 
-    override def create(executor:Executor) : Unit = ???
-    override def destroy(executor:Executor) : Unit = ???
+    override def create(executor:Executor) : Unit = {
+        implicit val context = executor.context
+        val external = if (this.external) "EXTERNAL" else ""
+        val create = s"CREATE $external TABLE $database.$table"
+        val fields = "(\n" + schema.map(field => "    " + field.name + " " + field.sparkType.catalogString).mkString(",\n") + "\n)"
+        val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
+        val partitionBy = Option(partitions).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.sparkType.catalogString).mkString(", ")})").getOrElse("")
+        val storedAs = Option(format).map(f => s"\nSTORED AS $f ").getOrElse("")
+        val location = Option(this.location).map(l => s"\nLOCATION $l ").getOrElse("")
+        val stmt = create + fields + comment + partitionBy + storedAs + location
+        logger.info(s"Executing SQL statement:\n$stmt")
+        executor.spark.sql(stmt)
+    }
+    override def destroy(executor:Executor) : Unit = {
+        implicit val context = executor.context
+        val stmt = s"DROP TABLE $database.$table"
+        logger.info(s"Executing SQL statement:\n$stmt")
+        executor.spark.sql(stmt)
+    }
     override def migrate(executor:Executor) : Unit = ???
 }

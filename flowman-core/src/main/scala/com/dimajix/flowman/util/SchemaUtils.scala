@@ -32,7 +32,7 @@ object SchemaUtils {
             case _ => throw new RuntimeException(s"Unknown type $typeName")
         }
     }
-    def createSchema(fields:Seq[(String,String)]) = {
+    def createSchema(fields:Seq[(String,String)]) : StructType = {
         // When reading data from MCSV files, we need to specify our desired schema. Here
         // we create a Spark SQL schema definition from the fields list in the specification
         def mapField(fieldName:String, typeName:String) : StructField = {
@@ -49,7 +49,7 @@ object SchemaUtils {
       * @param schema
       * @return
       */
-    def applySchema(df:DataFrame, schema:StructType) = {
+    def applySchema(df:DataFrame, schema:StructType) : DataFrame = {
         // Apply requested Schema
         if (schema != null)
             df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)

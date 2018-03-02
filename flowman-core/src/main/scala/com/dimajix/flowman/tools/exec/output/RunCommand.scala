@@ -35,10 +35,8 @@ class RunCommand extends ActionCommand {
             else
                 project.outputs.filter(_._2.enabled).keys.toSeq
 
-        val task = new OutputTask
-        task.outputs = toRun
-        val job = new Job
-        job.tasks = Seq(task)
+        val task = OutputTask(toRun)
+        val job = Job(Seq(task))
 
         val runner = context.runner
         val result = runner.execute(executor, job)

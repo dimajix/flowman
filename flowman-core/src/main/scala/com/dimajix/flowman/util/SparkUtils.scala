@@ -5,13 +5,14 @@ import org.apache.spark.sql.SparkSession
 
 
 object SparkUtils {
-    def configure(spark:SparkSession, config:Map[String,String]) = {
-        val hadoopConf = spark.sparkContext.hadoopConfiguration
+    def configure(spark:SparkSession, config:Map[String,String]) : Unit = {
         val sparkConf = spark.sparkContext.getConf
         config.foreach{ case(key, value) =>
             spark.conf.set(key, value)
             sparkConf.set(key, value)
         }
-        SparkHadoopUtil.get.appendS3AndSparkHadoopConfigurations(sparkConf, hadoopConf)
+        val hadoopConf = spark.sparkContext.hadoopConfiguration
+        if (hadoopConf != null)
+            SparkHadoopUtil.get.appendS3AndSparkHadoopConfigurations(sparkConf, hadoopConf)
     }
 }

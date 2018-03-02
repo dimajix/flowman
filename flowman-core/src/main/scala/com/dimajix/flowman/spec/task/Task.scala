@@ -12,7 +12,8 @@ import com.dimajix.flowman.spec.Project
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask]),
     new JsonSubTypes.Type(name = "output", value = classOf[OutputTask]),
-    new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask])
+    new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
+    new JsonSubTypes.Type(name = "create-relation", value = classOf[CreateRelationTask])
 ))
 abstract class Task {
     /**

@@ -20,12 +20,12 @@ class JdbcRelation extends BaseRelation {
 
     @JsonProperty(value="connection") private var _connection: String = _
     @JsonProperty(value="properties") private var _properties:Map[String,String] = Map()
-    @JsonProperty(value="namespace") private var _namespace: String = _
+    @JsonProperty(value="database") private var _database: String = _
     @JsonProperty(value="table") private var _table: String = _
 
     def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
     def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
-    def namespace(implicit context:Context) : String = context.evaluate(_namespace)
+    def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
 
     /**
@@ -37,7 +37,7 @@ class JdbcRelation extends BaseRelation {
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
 
-        val tableName = namespace + "." + table
+        val tableName = database + "." + table
 
         logger.info(s"Reading data from JDBC source $tableName in database $connection")
 
@@ -61,7 +61,7 @@ class JdbcRelation extends BaseRelation {
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
 
-        val tableName = namespace + "." + table
+        val tableName = database + "." + table
 
         logger.info(s"Writing data to JDBC source $tableName in database $connection")
 

@@ -21,6 +21,14 @@ object JobStatus {
     val SKIPPED = new JobStatus("SKIPPED")
 }
 
+object Job {
+    def apply(tasks:Seq[Task]) : Job = {
+        val job = new Job
+        job._tasks = tasks
+        job
+    }
+}
+
 class Job {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
@@ -30,8 +38,6 @@ class Job {
 
     def description(implicit context:Context) : String = context.evaluate(_description)
     def tasks : Seq[Task] = _tasks
-    @JsonIgnore
-    def tasks_=(tasks:Seq[Task]) : Unit = _tasks = tasks
 
     def execute(executor:Executor) : JobStatus = {
         implicit val context = executor.context

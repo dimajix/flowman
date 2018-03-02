@@ -80,4 +80,38 @@ class FieldTest extends FlatSpec with Matchers {
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
         result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType))
     }
+
+    "A decimal Field" should "be deserializable" in {
+        val spec =
+            """
+              |name: lala
+              |type: decimal(10,4)
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.readValue(spec, classOf[Field])
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
+        result.ftype should be (DecimalType(10,4))
+    }
+
+    "A varchar Field" should "be deserializable" in {
+        val spec =
+            """
+              |name: lala
+              |type: varchar(14)
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.readValue(spec, classOf[Field])
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkType should be (org.apache.spark.sql.types.VarcharType(14))
+        result.ftype should be (VarcharType(14))
+    }
 }

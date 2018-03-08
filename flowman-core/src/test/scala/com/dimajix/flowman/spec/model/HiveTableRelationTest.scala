@@ -33,7 +33,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
         verify(spark).sql(
             """CREATE  TABLE default.lala(
               |    str_col string,
-              |    int_col int
+              |    int_col integer
               |)""".stripMargin)
     }
 
@@ -63,7 +63,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
         verify(spark).sql(
             """CREATE  TABLE default.lala(
               |    str_col string,
-              |    int_col int
+              |    int_col integer
               |)
               |PARTITIONED BY (spart string)""".stripMargin)
     }
@@ -96,8 +96,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
         verify(spark).sql(
             """CREATE  TABLE default.lala(
               |    str_col string,
-              |    int_col int
+              |    int_col integer
               |)
-              |PARTITIONED BY (spart string, ip int)""".stripMargin)
+              |PARTITIONED BY (spart string, ip integer)""".stripMargin)
     }
 }

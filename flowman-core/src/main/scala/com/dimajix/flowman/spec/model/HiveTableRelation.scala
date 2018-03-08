@@ -72,9 +72,9 @@ class HiveTableRelation extends BaseRelation  {
         implicit val context = executor.context
         val external = if (this.external) "EXTERNAL" else ""
         val create = s"CREATE $external TABLE $database.$table"
-        val fields = "(\n" + schema.map(field => "    " + field.name + " " + field.sparkType.catalogString).mkString(",\n") + "\n)"
+        val fields = "(\n" + schema.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
-        val partitionBy = Option(partitions).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.sparkType.catalogString).mkString(", ")})").getOrElse("")
+        val partitionBy = Option(partitions).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
         val storedAs = Option(format).map(f => s"\nSTORED AS $f ").getOrElse("")
         val location = Option(this.location).map(l => s"\nLOCATION $l ").getOrElse("")
         val stmt = create + fields + comment + partitionBy + storedAs + location

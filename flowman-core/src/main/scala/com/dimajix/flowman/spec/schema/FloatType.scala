@@ -2,11 +2,10 @@ package com.dimajix.flowman.spec.schema
 
 import org.apache.spark.sql.types.DataType
 
-import com.dimajix.flowman.execution.Context
-
 
 case object FloatType extends FieldType {
-    override def sparkType(implicit context: Context) : DataType = org.apache.spark.sql.types.FloatType
+    override def sparkType : DataType = org.apache.spark.sql.types.FloatType
+
     override def parse(value:String) : Any = value.toFloat
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {

@@ -2,8 +2,6 @@ package com.dimajix.flowman.spec.schema
 
 import org.apache.spark.sql.types.DataType
 
-import com.dimajix.flowman.execution.Context
-
 
 object DecimalType {
     val MAX_PRECISION = 38
@@ -12,7 +10,9 @@ object DecimalType {
     val USER_DEFAULT: DecimalType = DecimalType(10, 0)
 }
 case class DecimalType(precision: Int, scale: Int) extends FieldType {
-    override def sparkType(implicit context: Context) : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
+    override def sparkType : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
+    override def sqlType : String = s"decimal($precision, $scale)"
+
     override def parse(value:String) : Any = ???
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
 }

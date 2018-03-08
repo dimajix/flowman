@@ -14,14 +14,14 @@ class Field {
     @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="granularity", required = false) private var _granularity: String = _
 
-    def name(implicit context: Context) : String = context.evaluate(_name)
+    def name : String = _name
     def ftype : FieldType = _type
-    def nullable(implicit context: Context) : Boolean = context.evaluate(_nullable).toBoolean
+    def nullable : Boolean = _nullable.toBoolean
     def description(implicit context: Context) : String = context.evaluate(_description)
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
 
-    def sparkType(implicit context: Context) : DataType = _type.sparkType
-    def sparkField(implicit context: Context) : StructField = StructField(name, sparkType, nullable)
+    def sparkType : DataType = _type.sparkType
+    def sparkField : StructField = StructField(name, sparkType, nullable)
 
     def interpolate(value: FieldValue)(implicit context: Context) : Iterable[Any] = _type.interpolate(value, granularity)
 }

@@ -21,16 +21,15 @@ abstract class FieldType {
     /**
       * The Spark type to use
       *
-      * @param context
       * @return
       */
-    def sparkType(implicit context: Context) : DataType
+    def sparkType : DataType
 
     /**
       * Short Type Name as used in SQL and in YAML specification files
       * @return
       */
-    def typeName : String = {
+    def sqlType : String = {
         this.getClass.getSimpleName
         .stripSuffix("$").stripSuffix("Type")
         .toLowerCase(Locale.ROOT)
@@ -56,7 +55,7 @@ private object FieldTypeDeserializer {
     private val nonDecimalNameToType = {
         Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
             DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType)
-            .map(t => t.typeName -> t).toMap ++
+            .map(t => t.sqlType -> t).toMap ++
         Map("int" -> IntegerType)
     }
 

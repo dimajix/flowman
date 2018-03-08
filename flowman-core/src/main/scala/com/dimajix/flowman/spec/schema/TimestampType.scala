@@ -7,11 +7,10 @@ import java.time.ZoneOffset
 
 import org.apache.spark.sql.types.DataType
 
-import com.dimajix.flowman.execution.Context
-
 
 case object TimestampType extends FieldType {
-    override def sparkType(implicit context: Context) : DataType = org.apache.spark.sql.types.TimestampType
+    override def sparkType : DataType = org.apache.spark.sql.types.TimestampType
+
     override def parse(value:String) : Any = new Timestamp(LocalDateTime.parse(value).toEpochSecond(ZoneOffset.UTC)*1000l)
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {

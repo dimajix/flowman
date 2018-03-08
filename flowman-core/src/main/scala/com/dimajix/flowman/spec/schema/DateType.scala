@@ -7,11 +7,10 @@ import java.time.temporal.ChronoUnit
 
 import org.apache.spark.sql.types.DataType
 
-import com.dimajix.flowman.execution.Context
-
 
 case object DateType extends FieldType {
-    override def sparkType(implicit context: Context) : DataType = org.apache.spark.sql.types.DateType
+    override def sparkType : DataType = org.apache.spark.sql.types.DateType
+
     override def parse(value:String) : Any = Date.valueOf(value)
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {

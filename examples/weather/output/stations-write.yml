@@ -1,6 +1,0 @@
-outputs:
-  stations-write:
-    type: write
-    input: stations
-    target: stations
-    mode: overwrite

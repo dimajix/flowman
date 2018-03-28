@@ -66,25 +66,54 @@ class FileRelation extends BaseRelation {
         implicit val context = executor.context
 
         val partitionName = resolvePartition(partition)
-        val outputPath = new Path(location, partitionName)
+        val outputPath = if (partitionName.nonEmpty) new Path(location, partitionName) else new Path(location)
+
+        logger.info(s"Writing to output location '$outputPath' (partition=$partition)")
 
         // Create correct schema for output
         val writer = this.writer(executor, df)
         writer.format(format)
+            .mode(mode)
             .save(outputPath.toString)
     }
 
-    override def create(executor:Executor) : Unit = ???
-    override def destroy(executor:Executor) : Unit = ???
+    /**
+      * This method will create the given directory as specified in "location"
+      * @param executor
+      */
+    override def create(executor:Executor) : Unit = {
+        implicit val context = executor.context
+        logger.info(s"Creating directory '$location' for file relation")
+        val path = new Path(location)
+        val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        fs.mkdirs(path)
+    }
+
+    /**
+      * This method will remove the given directory as specified in "location"
+      * @param executor
+      */
+    override def destroy(executor:Executor) : Unit =  {
+        implicit val context = executor.context
+        logger.info(s"Deleting directory '$location' of file relation")
+        val path = new Path(location)
+        val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        fs.delete(path, true)
+    }
     override def migrate(executor:Executor) : Unit = ???
 
 
     private def resolvePartition(partition:Map[String,SingleValue])(implicit context: Context) = {
-        val vcontext = new VelocityContext()
-        partition.foreach(kv => vcontext.put(kv._1, kv._2))
-        val output = new StringWriter()
-        templateEngine.evaluate(vcontext, output, "context", pattern)
-        output.getBuffer.toString
+        if (_pattern != null && _pattern.nonEmpty) {
+            val vcontext = new VelocityContext()
+            partition.foreach(kv => vcontext.put(kv._1, kv._2))
+            val output = new StringWriter()
+            templateEngine.evaluate(vcontext, output, "context", pattern)
+            output.getBuffer.toString
+        }
+        else {
+            ""
+        }
     }
     /**
       * Collects files for a given time period using the pattern inside the specification

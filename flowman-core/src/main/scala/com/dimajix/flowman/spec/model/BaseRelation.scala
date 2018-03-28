@@ -27,20 +27,39 @@ abstract class BaseRelation extends Relation {
     def defaultValues(implicit context: Context) : Map[String,String] = _defaultValues.mapValues(context.evaluate)
     def schema(implicit context: Context) : Seq[Field] = _schema
 
+    /**
+      * Creates a DataFrameReader which is already configured with options and the schema is also
+      * already included
+      * @param executor
+      * @return
+      */
     protected def reader(executor:Executor) : DataFrameReader = {
         implicit val context = executor.context
-        val reader = executor.spark.read
-        options.foreach(kv => reader.option(kv._1, kv._2))
+        val reader = executor.spark.read.options(options)
         if (schema != null)
             reader.schema(createSchema)
         reader
     }
+
+    /**
+      * Ceates a DataFrameWriter which is already configured with any options. Moreover
+      * the desired schema of the relation is also applied to the DataFrame
+      * @param executor
+      * @param df
+      * @return
+      */
     protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
         implicit val context = executor.context
         val outputColumns = schema.map(field => df(field.name).cast(field.sparkType))
         val outputDf = df.select(outputColumns:_*)
-        outputDf.write
+        outputDf.write.options(options)
     }
+
+    /**
+      * Creates a Spark schema from the list of fields.
+      * @param context
+      * @return
+      */
     protected def createSchema(implicit context:Context) : StructType = {
         val fields = schema.map(f => StructField(f.name, f.sparkType))
         StructType(fields)

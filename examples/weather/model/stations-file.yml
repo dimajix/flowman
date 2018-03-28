@@ -1,8 +1,8 @@
 relations:
-  stations:
+  stations-file:
     type: file
     format: csv
-    location: "hdfs://data/weather/isd-history/"
+    location: "file:///tmp/weather/isd-history/"
     options:
       sep: ","
       encoding: "UTF-8"

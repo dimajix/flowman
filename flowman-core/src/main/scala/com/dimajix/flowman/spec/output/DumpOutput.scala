@@ -21,7 +21,7 @@ class DumpOutput extends BaseOutput {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         val dfIn = input(this.input)
         val dfOut = if (_columns != null && _columns.nonEmpty)

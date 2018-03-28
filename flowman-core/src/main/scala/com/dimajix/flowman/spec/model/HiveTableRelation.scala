@@ -68,6 +68,10 @@ class HiveTableRelation extends BaseRelation  {
         writer.saveAsTable(tableName)
     }
 
+    /**
+      * Creates a Hive table by executing the appropriate DDL
+      * @param executor
+      */
     override def create(executor:Executor) : Unit = {
         implicit val context = executor.context
         val external = if (this.external) "EXTERNAL" else ""
@@ -81,6 +85,11 @@ class HiveTableRelation extends BaseRelation  {
         logger.info(s"Executing SQL statement:\n$stmt")
         executor.spark.sql(stmt)
     }
+
+    /**
+      * Destroys the Hive table by executing an appropriate DROP statement
+      * @param executor
+      */
     override def destroy(executor:Executor) : Unit = {
         implicit val context = executor.context
         val stmt = s"DROP TABLE $database.$table"

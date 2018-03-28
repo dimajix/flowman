@@ -26,10 +26,17 @@ class SqlMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         executor.spark.sql(sql)
     }
+
+    /**
+      * Resolves all dependencies required to execute the SQL
+      *
+      * @param context
+      * @return
+      */
     override def dependencies(implicit context:Context) : Array[TableIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
         resolveDependencies(plan).map(TableIdentifier.parse).toArray

@@ -22,9 +22,10 @@ object JobStatus {
 }
 
 object Job {
-    def apply(tasks:Seq[Task]) : Job = {
+    def apply(tasks:Seq[Task], description:String) : Job = {
         val job = new Job
         job._tasks = tasks
+        job._description = description
         job
     }
 }

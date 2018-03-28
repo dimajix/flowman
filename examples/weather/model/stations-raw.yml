@@ -1,8 +1,8 @@
 relations:
-  stations:
+  stations-raw:
     type: file
     format: csv
-    location: "hdfs://data/weather/isd-history/"
+    location: "s3a://dimajix-training/data/weather/isd-history/"
     options:
       sep: ","
       encoding: "UTF-8"

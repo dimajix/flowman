@@ -1,7 +1,10 @@
 package com.dimajix.flowman.spec.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.executor
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.DataFrameReader
+import org.apache.spark.sql.DataFrameWriter
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
@@ -24,7 +27,7 @@ abstract class BaseRelation extends Relation {
     def defaultValues(implicit context: Context) : Map[String,String] = _defaultValues.mapValues(context.evaluate)
     def schema(implicit context: Context) : Seq[Field] = _schema
 
-    protected def reader(executor:Executor) = {
+    protected def reader(executor:Executor) : DataFrameReader = {
         implicit val context = executor.context
         val reader = executor.spark.read
         options.foreach(kv => reader.option(kv._1, kv._2))
@@ -32,8 +35,14 @@ abstract class BaseRelation extends Relation {
             reader.schema(createSchema)
         reader
     }
+    protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
+        implicit val context = executor.context
+        val outputColumns = schema.map(field => df(field.name).cast(field.sparkType))
+        val outputDf = df.select(outputColumns:_*)
+        outputDf.write
+    }
     protected def createSchema(implicit context:Context) : StructType = {
-        val fields = _schema.map(f => StructField(f.name, f.sparkType))
+        val fields = schema.map(f => StructField(f.name, f.sparkType))
         StructType(fields)
     }
 }

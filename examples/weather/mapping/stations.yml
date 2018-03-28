@@ -1,4 +1,4 @@
 mappings:
   stations:
     type: read
-    source: stations
+    source: stations-raw

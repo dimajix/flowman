@@ -1,0 +1,7 @@
+jobs:
+  write-all:
+    description: "Writes all outputs"
+    tasks:
+      - type: output
+        outputs:
+          - stations-write

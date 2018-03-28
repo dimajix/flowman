@@ -1,21 +1,29 @@
 package com.dimajix.flowman.spec.model
 
+import java.io.StringWriter
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.util.FileCollector
+import org.apache.velocity.VelocityContext
+import org.apache.velocity.app.VelocityEngine
 
 
 class FileRelation extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
+    private lazy val templateEngine = {
+        val ve = new VelocityEngine()
+        ve.init()
+        ve
+    }
 
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
@@ -39,8 +47,10 @@ class FileRelation extends BaseRelation {
         implicit val context = executor.context
         val inputFiles = collectFiles(executor, partitions)
 
-        val reader = this.reader(executor).format(format)
-        val rawData = reader.load(inputFiles.map(_.toString):_*)
+        val reader = this.reader(executor)
+        val rawData = reader
+            .format(format)
+            .load(inputFiles.map(_.toString):_*)
 
         //applySchema(rawData, requestedSchema)
         rawData
@@ -52,12 +62,30 @@ class FileRelation extends BaseRelation {
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        implicit val context = executor.context
+
+        val partitionName = resolvePartition(partition)
+        val outputPath = new Path(location, partitionName)
+
+        // Create correct schema for output
+        val writer = this.writer(executor, df)
+        writer.format(format)
+            .save(outputPath.toString)
+    }
 
     override def create(executor:Executor) : Unit = ???
     override def destroy(executor:Executor) : Unit = ???
     override def migrate(executor:Executor) : Unit = ???
 
+
+    private def resolvePartition(partition:Map[String,SingleValue])(implicit context: Context) = {
+        val vcontext = new VelocityContext()
+        partition.foreach(kv => vcontext.put(kv._1, kv._2))
+        val output = new StringWriter()
+        templateEngine.evaluate(vcontext, output, "context", pattern)
+        output.getBuffer.toString
+    }
     /**
       * Collects files for a given time period using the pattern inside the specification
       *

@@ -17,15 +17,15 @@ import com.dimajix.flowman.spec.schema.Field
   * Common base implementation for the Relation interface class. It contains a couple of common properties.
   */
 abstract class BaseRelation extends Relation {
+    @JsonProperty(value="schema", required=false) private var _schema: Seq[Field] = _
     @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="options", required=false) private var _options:Map[String,String] = Map()
-    @JsonProperty(value="schema", required=false) private var _schema: Seq[Field] = _
     @JsonProperty(value="defaults", required=false) private var _defaultValues:Map[String,String] = Map()
 
-    def description(implicit context: Context) : String = context.evaluate(_description)
+    override def description(implicit context: Context) : String = context.evaluate(_description)
+    override def schema(implicit context: Context) : Seq[Field] = _schema
     def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
     def defaultValues(implicit context: Context) : Map[String,String] = _defaultValues.mapValues(context.evaluate)
-    def schema(implicit context: Context) : Seq[Field] = _schema
 
     /**
       * Creates a DataFrameReader which is already configured with options and the schema is also

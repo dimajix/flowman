@@ -13,6 +13,9 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.schema.SingleValue
+
 
 /**
   * Helper class for collecting files from a file system, which also support pattern substitution
@@ -68,6 +71,19 @@ class FileCollector(hadoopConf:Configuration) {
         this
     }
 
+    def resolve(partition:Map[String,String]) : Path = {
+        if (_pattern != null && _pattern.nonEmpty) {
+            val vcontext = new VelocityContext()
+            partition.foreach(kv => vcontext.put(kv._1, kv._2))
+            val output = new StringWriter()
+            templateEngine.evaluate(vcontext, output, "context", _pattern)
+            new Path(_path, output.getBuffer.toString)
+        }
+        else {
+            _path
+        }
+    }
+
     /**
       * Collects files from the given partitions
       *
@@ -76,10 +92,10 @@ class FileCollector(hadoopConf:Configuration) {
       */
     def collect(partitions:Map[String,Iterable[String]]) : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        if (_path == null || _path.toString.isEmpty)
+            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
         if (_pattern == null)
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
-        if (_path == null)
-            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
 
         val fs = _path.getFileSystem(hadoopConf)
         val context = new VelocityContext()
@@ -108,7 +124,7 @@ class FileCollector(hadoopConf:Configuration) {
       */
     def collect() : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
-        if (_path == null)
+        if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting files")
 
         val fs = _path.getFileSystem(hadoopConf)

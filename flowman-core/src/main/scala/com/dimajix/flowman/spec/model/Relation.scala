@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.spi.Scanner
@@ -24,9 +26,13 @@ object Relation {
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
+    new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
 abstract class Relation {
+    def description(implicit context: Context) : String
+    def schema(implicit context: Context) : Seq[Field]
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

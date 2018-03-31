@@ -14,8 +14,8 @@ import com.dimajix.flowman.spec.TableIdentifier
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeOutput]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountOutput]),
     new JsonSubTypes.Type(name = "dump", value = classOf[DumpOutput]),
-    new JsonSubTypes.Type(name = "file", value = classOf[FileOutput]),
-    new JsonSubTypes.Type(name = "generic", value = classOf[RelationOutput]))
+    new JsonSubTypes.Type(name = "local", value = classOf[LocalOutput]),
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationOutput]))
 )
 abstract class Output {
     def enabled(implicit context:Context) : Boolean

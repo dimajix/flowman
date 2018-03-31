@@ -29,7 +29,7 @@ class DestroyCommand extends ActionCommand {
                 project.relations.keys.toSeq
 
         val task = DestroyRelationTask(toRun)
-        val job = Job(Seq(task))
+        val job = Job(Seq(task), "Destroy relations")
 
         val runner = context.runner
         val result = runner.execute(executor, job)

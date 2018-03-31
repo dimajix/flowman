@@ -1,0 +1,34 @@
+relations:
+  stations-local:
+    type: local
+    format: csv
+    location: "file:///tmp/weather-local/isd-history/"
+    filename: "stations.csv"
+    options:
+      sep: ","
+      encoding: "UTF-8"
+      quote: "\""
+      header: "true"
+    schema:
+      - name: usaf
+        type: STRING
+      - name: wban
+        type: STRING
+      - name: name
+        type: STRING
+      - name: country
+        type: STRING
+      - name: state
+        type: STRING
+      - name: icao
+        type: STRING
+      - name: latitude
+        type: FLOAT
+      - name: longitude
+        type: FLOAT
+      - name: elevation
+        type: FLOAT
+      - name: date_begin
+        type: STRING
+      - name: date_end
+        type: STRING

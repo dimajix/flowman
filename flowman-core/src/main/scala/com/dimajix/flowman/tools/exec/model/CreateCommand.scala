@@ -32,7 +32,7 @@ class CreateCommand extends ActionCommand {
                 project.relations.keys.toSeq
 
         val task = CreateRelationTask(toRun)
-        val job = Job(Seq(task))
+        val job = Job(Seq(task), "Create relations")
 
         val runner = context.runner
         val result = runner.execute(executor, job)

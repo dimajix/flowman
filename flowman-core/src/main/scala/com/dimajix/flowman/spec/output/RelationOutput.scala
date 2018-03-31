@@ -8,7 +8,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.TableIdentifier
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.spec.schema.SingleValue
 
 
 class RelationOutput extends BaseOutput {
@@ -16,19 +16,20 @@ class RelationOutput extends BaseOutput {
 
     @JsonProperty(value="target", required=true) private var _target:String = _
     @JsonProperty(value="mode", required=false) private[spec] var _mode:String = "overwrite"
-    @JsonProperty(value="partitions", required=false) private[spec] var _partitions:Array[String] = _
+    @JsonProperty(value="partition", required=false) private[spec] var _partition:Map[String,String] = _
     @JsonProperty(value="parallelism", required=false) private[spec] var _parallelism:String = "16"
 
     def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
     def mode(implicit context: Context) : String = context.evaluate(_mode)
-    def partitions(implicit context: Context) : Array[String] = if (_partitions != null) _partitions.map(context.evaluate) else Array[String]()
+    def partition(implicit context: Context) : Map[String,String] = if (_partition != null) _partition.mapValues(context.evaluate) else Map()
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
 
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) = {
+    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
-        logger.info("Writing to relation {}", target)
+        logger.info("Writing to relation '{}'", target)
+        val partition = this.partition.mapValues(v => SingleValue(v))
         val relation = context.getRelation(target)
         val table = input(this.input).coalesce(parallelism)
-        relation.write(executor, table, null, mode)
+        relation.write(executor, table, partition, mode)
     }
 }

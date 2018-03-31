@@ -35,8 +35,8 @@ class RunCommand extends ActionCommand {
             else
                 project.outputs.filter(_._2.enabled).keys.toSeq
 
-        val task = OutputTask(toRun)
-        val job = Job(Seq(task))
+        val task = OutputTask(toRun, s"Execute otuputs ${toRun.mkString(",")}")
+        val job = Job(Seq(task), "Perform output operations")
 
         val runner = context.runner
         val result = runner.execute(executor, job)

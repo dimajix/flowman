@@ -40,7 +40,7 @@ class CreateRelationTask extends BaseTask {
         implicit val context = executor.context
         val relation = context.getRelation(identifier)
 
-        logger.info("Creating relation {}", identifier.toString)
+        logger.info("Creating relation '{}'", identifier.toString)
         relation.create(executor)
         true
     }

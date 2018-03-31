@@ -1,5 +1,6 @@
 outputs:
   measurements-dump:
     type: dump
+    enabled: false
     input: measurements
     limit: 100

@@ -22,6 +22,7 @@ object AbstractContext {
         context.put("LocalDateTime", classOf[LocalDateTime])
         context.put("Duration", classOf[Duration])
         context.put("Period", classOf[Period])
+        context.put("System", classOf[System])
         context
     }
 }

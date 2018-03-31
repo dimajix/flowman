@@ -9,9 +9,10 @@ import com.dimajix.flowman.spec.OutputIdentifier
 
 
 object OutputTask {
-    def apply(outputs:Seq[String]) = {
+    def apply(outputs:Seq[String], description:String) = {
         val task = new OutputTask
         task._outputs = outputs
+        task._description = description
         task
     }
 }
@@ -40,12 +41,12 @@ class OutputTask extends BaseTask {
         implicit val context = executor.context
         val output = context.getOutput(identifier)
 
-        logger.info("Resolving dependencies for output {}", identifier.toString)
+        logger.info("Resolving dependencies for output '{}'", identifier.toString)
         val dependencies = output.dependencies
             .map(d => (d, executor.instantiate(d)))
             .toMap
 
-        logger.info("Executing output {}", identifier.toString)
+        logger.info("Executing output '{}'", identifier.toString)
         output.execute(executor, dependencies)
         true
     }

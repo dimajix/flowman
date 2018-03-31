@@ -40,7 +40,7 @@ class DestroyRelationTask extends BaseTask {
         implicit val context = executor.context
         val relation = context.getRelation(identifier)
 
-        logger.info("Destroying relation {}", identifier.toString)
+        logger.info("Destroying relation '{}'", identifier.toString)
         relation.destroy(executor)
         true
     }

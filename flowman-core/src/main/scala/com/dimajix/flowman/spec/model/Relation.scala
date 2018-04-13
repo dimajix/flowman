@@ -43,6 +43,7 @@ object Relation {
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
+    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
 abstract class Relation {

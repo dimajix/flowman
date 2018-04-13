@@ -40,6 +40,7 @@ object Mapping {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
+    new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
     new JsonSubTypes.Type(name = "read", value = classOf[InputMapping]),
     new JsonSubTypes.Type(name = "write", value = classOf[Output]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMapping]),
@@ -47,6 +48,7 @@ object Mapping {
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
+    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMapping]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping])

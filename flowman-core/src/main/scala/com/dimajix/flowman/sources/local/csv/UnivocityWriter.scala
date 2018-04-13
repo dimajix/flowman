@@ -67,9 +67,6 @@ class UnivocityWriter(schema: StructType, writer:Writer, options:CsvOptions) ext
         case BooleanType =>
             (row: Row, ordinal: Int) =>
                 row.getBoolean(ordinal).toString
-        case BooleanType =>
-            (row: Row, ordinal: Int) =>
-                row.getBoolean(ordinal).toString
         case ByteType =>
             (row: Row, ordinal: Int) =>
                 row.getByte(ordinal).toString

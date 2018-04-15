@@ -21,12 +21,12 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.ScopedContext
 
 
 case class JobStatus(name:String)
@@ -59,10 +59,15 @@ class Job {
     def execute(executor:Executor) : JobStatus = {
         implicit val context = executor.context
         logger.info(s"Running job: '$description'")
+
+        // Create a new execution environment
+        val jobContext = new ScopedContext(context)
+        val jobExecutor = executor.withContext(jobContext)
+
         Try {
             _tasks.forall { task =>
                 logger.info(s"Executing task ${task.description}")
-                task.execute(executor)
+                task.execute(jobExecutor)
             }
         } match {
             case Success(true) =>

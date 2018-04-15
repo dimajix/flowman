@@ -40,7 +40,7 @@ import com.dimajix.flowman.spec.runner.SimpleRunner
 
 class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
-    private val _children: mutable.Map[String, ProjectContext] = mutable.Map()
+    private val _children: mutable.Map[String, Context] = mutable.Map()
     private val _runner = new SimpleRunner()
 
     def namespace : Namespace = _namespace
@@ -157,24 +157,25 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       * @param name
       * @return
       */
-    def getProjectContext(name:String) : ProjectContext = {
+    def getProjectContext(name:String) : Context = {
         _children.getOrElseUpdate(name, createProjectContext(loadProject(name)))
     }
-    def getProjectContext(project:Project) : ProjectContext = {
+    def getProjectContext(project:Project) : Context = {
         _children.getOrElseUpdate(project.name, createProjectContext(project))
     }
 
-    private def createProjectContext(project: Project) : ProjectContext = {
-        val pcontext = newProjectContext(project)
-        profiles.foreach(p => project.profiles.get(p).foreach { profile =>
-            logger.info(s"Applying project profile $p")
-            pcontext.withProfile(profile)
-        })
-        pcontext.withEnvironment(project.environment)
-        pcontext.withConfig(project.config)
-        pcontext
+    private def createProjectContext(project: Project) : Context = {
+        profiles.foldLeft(newProjectContext(project)) { (context,prof) =>
+                project.profiles.get(prof).foreach { profile =>
+                    logger.info(s"Applying project profile $prof")
+                    context.withProfile(profile)
+                }
+                context
+            }
+            .withEnvironment(project.environment)
+            .withConfig(project.config)
     }
-    private def loadProject(name: String): Project = {
+    def loadProject(name: String): Project = {
         val project : Project = ???
         project
     }

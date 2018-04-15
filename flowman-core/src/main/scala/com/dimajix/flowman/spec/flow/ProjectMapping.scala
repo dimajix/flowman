@@ -27,11 +27,11 @@ import com.dimajix.flowman.util.SchemaUtils
 
 
 class ProjectMapping extends BaseMapping {
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = Map()
+    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
+    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = Map()
 
     def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) :Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
+    def columns(implicit context: Context) : Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame

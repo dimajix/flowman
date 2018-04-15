@@ -17,14 +17,37 @@
 package com.dimajix.flowman.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 
 
 class LoopTask extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[LoopTask])
+
     @JsonProperty(value="items", required=true) private var _items:String = _
     @JsonProperty(value="var", required=true) private var _var:String = "item"
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
+    @JsonProperty(value="job") private var _job:String = _
 
-    override def execute(executor:Executor) : Boolean = ???
+    def tasks : Seq[Task] = _tasks
+    def job(implicit context:Context) : String = context.evaluate(_job)
+
+    override def execute(executor:Executor) : Boolean = {
+        implicit val context = executor.context
+        val impl = if (Option(job).exists(_.nonEmpty))
+            executeJob _
+        else
+            executeTasks _
+
+        impl(executor)
+    }
+
+    private def executeJob(executor: Executor) : Boolean = {
+        implicit val context = executor.context
+        logger.info(s"Running job: '$job'")
+        false
+    }
+    private def executeTasks(executor: Executor) : Boolean = ???
 }

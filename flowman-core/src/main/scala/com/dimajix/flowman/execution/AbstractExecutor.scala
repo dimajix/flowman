@@ -53,4 +53,11 @@ abstract class AbstractExecutor(_context:Context, sessionFactory:() => Option[Sp
       */
     override def sparkRunning: Boolean = _session.nonEmpty
 
+    /**
+      * Creates a new Executor which uses a different context
+      *
+      * @param context
+      * @return
+      */
+    override def withContext(context:Context) : Executor = new ScopedExecutor(this, context)
 }

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.execution
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Connection
@@ -29,29 +30,11 @@ import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
 
-case class SettingLevel(
-    level:Int
-)
-object SettingLevel {
-    val SCOPE_OVERRIDE = new SettingLevel(500)
-    val GLOBAL_OVERRIDE = new SettingLevel(300)
-    val PROJECT_PROFILE = new SettingLevel(250)
-    val PROJECT_SETTING = new SettingLevel(200)
-    val NAMESPACE_PROFILE = new SettingLevel(150)
-    val NAMESPACE_SETTING = new SettingLevel(100)
-    val NONE = new SettingLevel(0)
-}
 
-abstract class Context {
-    private val logger = LoggerFactory.getLogger(classOf[Executor])
+class ScopedContext(parent:Context) extends AbstractContext {
+    override protected val logger: Logger = LoggerFactory.getLogger(classOf[ScopedContext])
 
-    /**
-      * Evaluates a string containing expressions to be processed.
-      *
-      * @param string
-      * @return
-      */
-    def evaluate(string: String): String
+    updateFrom(parent)
 
     /**
       * Try to retrieve the specified database connection. Performs lookups in parent context if required
@@ -59,7 +42,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getConnection(identifier: ConnectionIdentifier): Connection
+    override def getConnection(identifier: ConnectionIdentifier): Connection = parent.getConnection(identifier)
+
     /**
       * Returns a specific named MappingType. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -67,7 +51,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getMapping(identifier: TableIdentifier) : Mapping
+    override def getMapping(identifier: TableIdentifier): Mapping = parent.getMapping(identifier)
+
     /**
       * Returns a specific named RelationType. The RelationType can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -75,7 +60,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getRelation(identifier: RelationIdentifier): Relation
+    override def getRelation(identifier: RelationIdentifier): Relation = parent.getRelation(identifier)
+
     /**
       * Returns a specific named OutputType. The OutputType can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -83,35 +69,45 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getOutput(identifier: OutputIdentifier): Output
+    override def getOutput(identifier: OutputIdentifier): Output = parent.getOutput(identifier)
 
     /**
       * Returns the appropriate runner
       *
       * @return
       */
-    def runner : Runner
+    override def runner: Runner = parent.runner
 
     /**
-      * Returns all configuration options as a key-value map
-      *
+      * Creates a new chained context with additional environment variables
+      * @param env
       * @return
       */
-    def config: Map[String, String]
+    override def withEnvironment(env:Map[String,String]) : Context = {
+        withEnvironment(env.toSeq)
+    }
+    override def withEnvironment(env:Seq[(String,String)]) : Context = {
+        setEnvironment(env, SettingLevel.SCOPE_OVERRIDE)
+        this
+    }
 
     /**
-      * Returns the current environment used for replacing variables
-      *
+      * Creates a new chained context with additional Spark configuration variables
+      * @param env
       * @return
       */
-    def environment: Map[String, String]
+    override def withConfig(env:Map[String,String]) : Context = {
+        withConfig(env.toSeq)
+    }
+    override def withConfig(env:Seq[(String,String)]) : Context = {
+        setConfig(env, SettingLevel.SCOPE_OVERRIDE)
+        this
+    }
 
-    def rawEnvironment : Map[String,(String, Int)]
-    def rawConfig : Map[String,(String, Int)]
-
-    def withEnvironment(env: Map[String, String]): Context
-    def withEnvironment(env: Seq[(String, String)]): Context
-    def withConfig(env:Map[String,String]) : Context
-    def withConfig(env:Seq[(String,String)]) : Context
-    def withProfile(profile:Profile) : Context
+    /**
+      * Creates a new chained context with additional properties from a profile
+      * @param profile
+      * @return
+      */
+    override def withProfile(profile:Profile) : Context = ???
 }

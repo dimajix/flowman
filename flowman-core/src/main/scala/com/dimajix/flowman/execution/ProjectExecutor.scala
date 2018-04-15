@@ -27,11 +27,10 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-private[execution] class ProjectExecutor(_parent:Executor, context:ProjectContext, sessionFactory:() => Option[SparkSession])
+private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context, sessionFactory:() => Option[SparkSession])
     extends AbstractExecutor(context, sessionFactory) {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectExecutor])
     private val _tables = mutable.Map[String,DataFrame]()
-    private val _project = context.project
 
     /**
       * Instantiates a table and recursively all its dependencies

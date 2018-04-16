@@ -40,4 +40,28 @@ class LoopTaskTest extends FlatSpec with Matchers {
         val job = project.jobs("loop")
         job.execute(executor, Map()) shouldBe (JobStatus.SUCCESS)
     }
+
+    it should "fail on undefined parameters" in {
+        val spec =
+            """
+              |jobs:
+              |  child:
+              |    parameters:
+              |      - name: p1
+              |  loop:
+              |    tasks:
+              |      - type: loop
+              |        job: child
+              |        args:
+              |          p2: [abc, xyz]
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().build()
+        val executor = session.createExecutor(project)
+        implicit val context = session.context
+
+        val job = project.jobs("loop")
+        job.execute(executor, Map()) shouldBe (JobStatus.FAILURE)
+    }
 }

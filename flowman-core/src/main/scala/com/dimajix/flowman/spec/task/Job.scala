@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopedContext
+import com.dimajix.flowman.spec.schema.FieldType
+import com.dimajix.flowman.spec.schema.StringType
 
 
 case class JobStatus(name:String)
@@ -37,6 +39,19 @@ object JobStatus {
     val SKIPPED = new JobStatus("SKIPPED")
 }
 
+class JobParameter {
+    @JsonProperty(value="name") private var _name:String = ""
+    @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
+    @JsonProperty(value="granularity", required = false) private var _granularity: String = _
+    @JsonProperty(value="value", required = false) private var _value: String = ""
+
+    def name : String = _name
+    def ftype : FieldType = _type
+    def granularity(implicit context: Context) : String = context.evaluate(_granularity)
+    def value(implicit context:Context) : String = context.evaluate(_value)
+}
+
+
 object Job {
     def apply(tasks:Seq[Task], description:String) : Job = {
         val job = new Job
@@ -46,22 +61,35 @@ object Job {
     }
 }
 
+/**
+  * A Job represents a collection of individual tasks. Jobs can be logged by appropriate runners.
+  */
 class Job {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
     @JsonProperty(value="description") private var _description:String = ""
-    @JsonProperty(value="parameters") private var _parameters:ListMap[String,String] = ListMap()
+    @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
     def description(implicit context:Context) : String = context.evaluate(_description)
     def tasks : Seq[Task] = _tasks
+    def parameters: Seq[JobParameter] = _parameters
 
-    def execute(executor:Executor) : JobStatus = {
+    /**
+      * Executes this job and adds the arguments as additional environment variables. They will only be
+      * available inside the job and are cleared afterwards
+      *
+      * @param executor
+      * @param args
+      * @return
+      */
+    def execute(executor:Executor, args:Map[String,String]) : JobStatus = {
         implicit val context = executor.context
         logger.info(s"Running job: '$description'")
 
         // Create a new execution environment
-        val jobContext = new ScopedContext(context)
+        val jobArgs = parameters.map(p => (p.name, p.value)).toMap ++ args
+        val jobContext = new ScopedContext(context).withConfig(jobArgs)
         val jobExecutor = executor.withContext(jobContext)
 
         Try {

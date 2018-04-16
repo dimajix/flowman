@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
@@ -29,6 +30,7 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
+import com.dimajix.flowman.spec.task.Job
 
 
 class ProjectContext(parent:RootContext, _project:Project) extends AbstractContext {
@@ -59,7 +61,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getMapping(identifier: TableIdentifier): Mapping = {
         if (identifier.project.forall(_ == _project.name))
-            _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"MappingType $identifier not found in project ${_project.name}"))
+            _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${_project.name}"))
         else
             parent.getMapping(identifier)
     }
@@ -73,7 +75,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
         if (identifier.project.forall(_ == _project.name))
-            _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"RelationType $identifier not found in project ${_project.name}"))
+            _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation '$identifier' not found in project ${_project.name}"))
         else
             parent.getRelation(identifier)
     }
@@ -87,7 +89,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getOutput(identifier: OutputIdentifier): Output = {
         if (identifier.project.forall(_ == _project.name))
-            _project.outputs.getOrElse(identifier.name, throw new NoSuchElementException(s"OutputType $identifier not found in project ${_project.name}"))
+            _project.outputs.getOrElse(identifier.name, throw new NoSuchElementException(s"Output '$identifier' not found in project ${_project.name}"))
         else
             parent.getOutput(identifier)
     }
@@ -100,11 +102,25 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         if (identifier.project.forall(_ == _project.name)) {
-            databases.getOrElse(identifier.name, throw new NoSuchElementException(s"Database $identifier not found in project ${_project.name}"))
+            databases.getOrElse(identifier.name, throw new NoSuchElementException(s"Database '$identifier' not found in project ${_project.name}"))
         }
         else {
             parent.getConnection(identifier)
         }
+    }
+
+    /**
+      * Returns a specific named Job. The JobType can either be inside this Contexts project or in a different
+      * project within the same namespace
+      *
+      * @param identifier
+      * @return
+      */
+    override def getJob(identifier: JobIdentifier): Job = {
+        if (identifier.project.forall(_ == _project.name))
+            _project.jobs.getOrElse(identifier.name, throw new NoSuchElementException(s"Job $identifier not found in project ${_project.name}"))
+        else
+            parent.getJob(identifier)
     }
 
     /**

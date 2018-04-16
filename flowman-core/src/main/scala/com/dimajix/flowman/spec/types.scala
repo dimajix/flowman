@@ -83,3 +83,19 @@ case class OutputIdentifier(name:String, project:Option[String]) {
             project.get + "/" + name
     }
 }
+
+
+object JobIdentifier {
+    def parse(fqName:String) : JobIdentifier = {
+        val parts = fqName.split('/')
+        new JobIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
+    }
+}
+case class JobIdentifier(name:String, project:Option[String]) {
+    override def toString : String = {
+        if (project.isEmpty)
+            name
+        else
+            project.get + "/" + name
+    }
+}

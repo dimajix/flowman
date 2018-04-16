@@ -21,33 +21,39 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.schema.FieldValue
 
 
 class LoopTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[LoopTask])
 
-    @JsonProperty(value="items", required=true) private var _items:String = _
-    @JsonProperty(value="var", required=true) private var _var:String = "item"
-    @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
-    @JsonProperty(value="job") private var _job:String = _
+    @JsonProperty(value="args", required=true) private[spec] var _args:Map[String,FieldValue] = _
+    @JsonProperty(value="job") private[spec] var _job:String = _
 
-    def tasks : Seq[Task] = _tasks
-    def job(implicit context:Context) : String = context.evaluate(_job)
+    def args : Map[String,FieldValue] = _args
+    def job(implicit context:Context) : JobIdentifier = if (Option(_job).exists(_.nonEmpty)) JobIdentifier.parse(context.evaluate(_job)) else null
 
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val impl = if (Option(job).exists(_.nonEmpty))
-            executeJob _
-        else
-            executeTasks _
-
-        impl(executor)
+        executeJob(executor)
     }
 
     private def executeJob(executor: Executor) : Boolean = {
         implicit val context = executor.context
-        logger.info(s"Running job: '$job'")
-        false
+        logger.info(s"Running job: '${this.job}'")
+
+        def interpolate(fn:Map[String,String] => Boolean, param:JobParameter, values:FieldValue) : Map[String,String] => Boolean = {
+            val vals = param.ftype.interpolate(values, param.granularity).map(_.toString)
+            (args:Map[String,String]) => vals.forall(v => fn(args + (param.name -> v)))
+        }
+
+        val job = context.getJob(this.job)
+
+        // Iterate by all parameters and create argument map
+        val paramByName = job.parameters.map(p => (p.name, p)).toMap
+        val run = (args:Map[String,String]) => context.runner.execute(executor, job, args)
+        val result = args.toSeq.foldLeft(run)((a,p) => interpolate(a, paramByName(p._1), p._2))
+
+        result(Map())
     }
-    private def executeTasks(executor: Executor) : Boolean = ???
 }

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
@@ -35,6 +36,7 @@ import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
 import com.dimajix.flowman.spec.runner.SimpleRunner
+import com.dimajix.flowman.spec.task.Job
 
 
 
@@ -61,45 +63,65 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this executor
       *
-      * @param name
+      * @param identifier
       * @return
       */
-    override def getMapping(name: TableIdentifier): Mapping = {
-        if (name.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in mapping specifier")
-        val child = _children.getOrElseUpdate(name.project.get, getProjectContext(name.project.get))
-        child.getMapping(TableIdentifier(name.name, None))
+    override def getMapping(identifier: TableIdentifier): Mapping = {
+        if (identifier.project.isEmpty)
+            throw new NoSuchElementException(s"Expected project name in mapping specifier '$identifier'")
+        val child = _children.getOrElseUpdate(identifier.project.get, getProjectContext(identifier.project.get))
+        child.getMapping(TableIdentifier(identifier.name, None))
     }
     /**
       * Returns a fully qualified relation from a project belonging to the namespace of this executor
       *
-      * @param name
+      * @param identifier
       * @return
       */
-    override def getRelation(name: RelationIdentifier): Relation = {
-        if (name.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in relation specifier")
-        val child = _children.getOrElseUpdate(name.project.get, getProjectContext(name.project.get))
-        child.getRelation(RelationIdentifier(name.name, None))
+    override def getRelation(identifier: RelationIdentifier): Relation = {
+        if (identifier.project.isEmpty)
+            throw new NoSuchElementException(s"Expected project name in relation specifier '$identifier'")
+        val child = _children.getOrElseUpdate(identifier.project.get, getProjectContext(identifier.project.get))
+        child.getRelation(RelationIdentifier(identifier.name, None))
     }
+
     /**
       * Returns a fully qualified output from a project belonging to the namespace of this executor
       *
-      * @param name
+      * @param identifier
       * @return
       */
-    override def getOutput(name: OutputIdentifier): Output = {
-        if (name.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in output specifier")
-        val child = _children.getOrElseUpdate(name.project.get, getProjectContext(name.project.get))
-        child.getOutput(OutputIdentifier(name.name, None))
+    override def getOutput(identifier: OutputIdentifier): Output = {
+        if (identifier.project.isEmpty)
+            throw new NoSuchElementException(s"Expected project name in output specifier '$identifier'")
+        val child = _children.getOrElseUpdate(identifier.project.get, getProjectContext(identifier.project.get))
+        child.getOutput(OutputIdentifier(identifier.name, None))
     }
 
+    /**
+      * Returns a fully qualified connection from a project belonging to the namespace of this executor
+      *
+      * @param identifier
+      * @return
+      */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in table specifier")
+            throw new NoSuchElementException(s"Expected project name in table specifier '$identifier'")
         val child = getProjectContext(identifier.project.get)
         child.getConnection(ConnectionIdentifier(identifier.name, None))
+    }
+
+    /**
+      * Returns a fully qualified job from a project belonging to the namespace of this executor
+      *
+      * @param identifier
+      * @return
+      */
+    override def getJob(identifier: JobIdentifier): Job = {
+        if (identifier.project.isEmpty)
+            throw new NoSuchElementException(s"Expected project name in Job specifier '$identifier'")
+        val child = _children.getOrElseUpdate(identifier.project.get, getProjectContext(identifier.project.get))
+        child.getJob(JobIdentifier(identifier.name, None))
     }
 
     /**

@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -29,6 +30,7 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
+import com.dimajix.flowman.spec.task.Job
 
 
 class ScopedContext(parent:Context) extends AbstractContext {
@@ -45,7 +47,7 @@ class ScopedContext(parent:Context) extends AbstractContext {
     override def getConnection(identifier: ConnectionIdentifier): Connection = parent.getConnection(identifier)
 
     /**
-      * Returns a specific named MappingType. The Transform can either be inside this Contexts project or in a different
+      * Returns a specific named Mapping. The Mapping can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -54,7 +56,7 @@ class ScopedContext(parent:Context) extends AbstractContext {
     override def getMapping(identifier: TableIdentifier): Mapping = parent.getMapping(identifier)
 
     /**
-      * Returns a specific named RelationType. The RelationType can either be inside this Contexts project or in a different
+      * Returns a specific named Relation. The Relation can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -63,13 +65,22 @@ class ScopedContext(parent:Context) extends AbstractContext {
     override def getRelation(identifier: RelationIdentifier): Relation = parent.getRelation(identifier)
 
     /**
-      * Returns a specific named OutputType. The OutputType can either be inside this Contexts project or in a different
+      * Returns a specific named Output. The Output can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
     override def getOutput(identifier: OutputIdentifier): Output = parent.getOutput(identifier)
+
+    /**
+      * Returns a specific named Job. The Job can either be inside this Contexts project or in a different
+      * project within the same namespace
+      *
+      * @param identifier
+      * @return
+      */
+    override def getJob(identifier: JobIdentifier): Job = parent.getJob(identifier)
 
     /**
       * Returns the appropriate runner

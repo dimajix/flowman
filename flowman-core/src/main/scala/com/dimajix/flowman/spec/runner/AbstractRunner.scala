@@ -39,7 +39,7 @@ abstract class AbstractRunner extends Runner {
       * @param job
       * @return
       */
-    def execute(executor: Executor, job:Job) : Boolean = {
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : Boolean = {
         implicit val context = executor.context
 
         // Get Monitor
@@ -55,15 +55,15 @@ abstract class AbstractRunner extends Runner {
                 true
             }
             else {
-                runJob(executor, job, token)
+                runJob(executor, job, args, token)
             }
         }
     }
 
-    private def runJob(executor: Executor, job:Job, token:Object) : Boolean = {
+    private def runJob(executor: Executor, job:Job, args:Map[String,String], token:Object) : Boolean = {
         implicit val context = executor.context
         Try {
-            job.execute(executor)
+            job.execute(executor, args)
         }
         match {
             case Success(JobStatus.SUCCESS) =>

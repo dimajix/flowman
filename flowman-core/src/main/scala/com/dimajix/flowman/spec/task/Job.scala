@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.task
 
-import scala.collection.immutable.ListMap
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -28,6 +27,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopedContext
 import com.dimajix.flowman.spec.schema.FieldType
+import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.StringType
 
 
@@ -49,6 +49,13 @@ class JobParameter {
     def ftype : FieldType = _type
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
     def value(implicit context:Context) : String = context.evaluate(_value)
+
+    def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
+        ftype.interpolate(value, granularity)
+    }
+    def parse(value:String)(implicit context:Context) : Any = {
+        ftype.parse(value)
+    }
 }
 
 
@@ -76,6 +83,18 @@ class Job {
     def parameters: Seq[JobParameter] = _parameters
 
     /**
+      * Determine final arguments of this job, by performing granularity adjustments atc
+      * @param args
+      * @param context
+      * @return
+      */
+    def arguments(args:Map[String,String])(implicit context:Context) : Map[String,String] = {
+        val paramsByName = parameters.map(p => (p.name, p)).toMap
+        val processedArgs = args.map(kv => (kv._1, paramsByName(kv._1).parse(kv._2).toString))
+        parameters.map(p => (p.name, p.value)).toMap ++ processedArgs
+    }
+
+    /**
       * Executes this job and adds the arguments as additional environment variables. They will only be
       * available inside the job and are cleared afterwards
       *
@@ -88,7 +107,7 @@ class Job {
         logger.info(s"Running job: '$description'")
 
         // Create a new execution environment
-        val jobArgs = parameters.map(p => (p.name, p.value)).toMap ++ args
+        val jobArgs = arguments(args)
         val jobContext = new ScopedContext(context).withConfig(jobArgs)
         val jobExecutor = executor.withContext(jobContext)
 

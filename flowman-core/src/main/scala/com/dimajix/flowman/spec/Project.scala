@@ -30,83 +30,153 @@ import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
 import com.dimajix.flowman.spec.task.Job
 
-class ProjectReader {
-    private val logger = LoggerFactory.getLogger(classOf[ProjectReader])
-
-    private def mapper = {
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
-        mapper
-    }
-
-    /**
-      * Loads a project file and all related module files
-      *
-      * @param file
-      * @return
-      */
-    def file(file:File) : Project = {
-        if (file.isDirectory) {
-            logger.info(s"Reading project in directory ${file.toString}")
-            this.file(new File(file, "project.yml"))
-        }
-        else {
-            logger.info(s"Reading project file ${file.toString}")
-            val project = mapper.readValue(file, classOf[Project])
-            loadModules(project, file.getParentFile)
-            project
-        }
-    }
-
-    /**
-      * Loads a project file
-      *
-      * @param filename
-      * @return
-      */
-    def file(filename:String) : Project = {
-        file(new File(filename))
-    }
-
-    def string(text:String) : Project = {
-        mapper.readValue(text, classOf[Project])
-    }
-
-    private def loadModules(project: Project, directory:File) : Unit = {
-        val module = project.modules
-            .map(f => Module.read.file(new File(directory, f)))
-            .reduce((l,r) => l.merge(r))
-
-        project._environment = module.environment
-        project._config = module.config
-        project._profiles = module.profiles
-        project._connections = module.connections
-        project._relations = module.relations
-        project._mappings = module.mappings
-        project._outputs = module.outputs
-    }
-}
-
 
 object Project {
-    def read = new ProjectReader
+    class Reader {
+        private val logger = LoggerFactory.getLogger(classOf[Reader])
+
+        private def mapper = {
+            val mapper = new ObjectMapper(new YAMLFactory())
+            mapper.registerModule(DefaultScalaModule)
+            mapper
+        }
+
+        /**
+          * Loads a project file and all related module files
+          *
+          * @param file
+          * @return
+          */
+        def file(file:File) : Project = {
+            if (file.isDirectory) {
+                logger.info(s"Reading project in directory ${file.toString}")
+                this.file(new File(file, "project.yml"))
+            }
+            else {
+                logger.info(s"Reading project file ${file.toString}")
+                val project = mapper.readValue(file, classOf[Project])
+                loadModules(project, file.getParentFile)
+                project
+            }
+        }
+
+        /**
+          * Loads a project file
+          *
+          * @param filename
+          * @return
+          */
+        def file(filename:String) : Project = {
+            file(new File(filename))
+        }
+
+        def string(text:String) : Project = {
+            mapper.readValue(text, classOf[Project])
+        }
+
+        private def loadModules(project: Project, directory:File) : Unit = {
+            val module = project.modules
+                .map(f => Module.read.file(new File(directory, f)))
+                .reduce((l,r) => l.merge(r))
+
+            project._environment = module.environment
+            project._config = module.config
+            project._profiles = module.profiles
+            project._connections = module.connections
+            project._relations = module.relations
+            project._mappings = module.mappings
+            project._outputs = module.outputs
+        }
+    }
+
+    class Builder {
+        private val project = new Project
+
+        def build() : Project = project
+
+        def setName(name:String) : Builder = {
+            project._name = name
+            this
+        }
+
+        def setEnvironment(env:Seq[(String,String)]) : Builder = {
+            project._environment = env
+            this
+        }
+        def setConfig(conf:Seq[(String,String)]) : Builder = {
+            project._config = conf
+            this
+        }
+        def setProfiles(profiles:Map[String,Profile]) : Builder = {
+            project._profiles = profiles
+            this
+        }
+        def addProfile(name:String, profile:Profile) : Builder = {
+            project._profiles = project._profiles + (name -> profile)
+            this
+        }
+        def setConnections(connections:Map[String,Connection]) : Builder = {
+            project._connections = connections
+            this
+        }
+        def addConnection(name:String, connection:Connection) : Builder = {
+            project._connections = project._connections + (name -> connection)
+            this
+        }
+        def setRelations(relations:Map[String,Relation]) : Builder = {
+            project._relations = relations
+            this
+        }
+        def addRelations(name:String, relation:Relation) : Builder = {
+            project._relations = project._relations + (name -> relation)
+            this
+        }
+        def setMappings(mappings:Map[String,Mapping]) : Builder = {
+            project._mappings = mappings
+            this
+        }
+        def addMapping(name:String, mapping:Mapping) : Builder = {
+            project._mappings = project._mappings + (name -> mapping)
+            this
+        }
+        def setOutputs(outputs:Map[String,Output]) : Builder = {
+            project._outputs = outputs
+            this
+        }
+        def addOutput(name:String, output:Output) : Builder = {
+            project._outputs = project._outputs + (name -> output)
+            this
+        }
+        def setJobs(jobs:Map[String,Job]) : Builder = {
+            project._jobs = jobs
+            this
+        }
+        def addJob(name:String, job:Job) : Builder = {
+            project._jobs = project._jobs + (name -> job)
+            this
+        }
+    }
+
+    def read = new Reader
+
+    def builder() = new Builder
 }
 
 
 class Project {
-    @JsonProperty(value="name") private[spec] var _name: String = _
-    @JsonProperty(value="version") private[spec] var _version: String = _
-    @JsonProperty(value="modules") private[spec] var _modules: Seq[String] = Seq()
+    @JsonProperty(value="name") private var _name: String = _
+    @JsonProperty(value="version") private var _version: String = _
+    @JsonProperty(value="modules") private var _modules: Seq[String] = Seq()
 
-    private[spec] var _environment: Seq[(String,String)] = Seq()
-    private[spec] var _config: Seq[(String,String)] = Seq()
-    private[spec] var _profiles: Map[String,Profile] = Map()
-    private[spec] var _connections: Map[String,Connection] = Map()
-    private[spec] var _relations: Map[String,Relation] = Map()
-    private[spec] var _mappings: Map[String,Mapping] = Map()
-    private[spec] var _outputs: Map[String,Output] = Map()
-    private[spec] var _jobs: Map[String,Job] = Map()
-    private[spec] var _runner: Runner = _
+    private var _environment: Seq[(String,String)] = Seq()
+    private var _config: Seq[(String,String)] = Seq()
+    private var _profiles: Map[String,Profile] = Map()
+    private var _connections: Map[String,Connection] = Map()
+    private var _relations: Map[String,Relation] = Map()
+    private var _mappings: Map[String,Mapping] = Map()
+    private var _outputs: Map[String,Output] = Map()
+    private var _jobs: Map[String,Job] = Map()
+    private var _runner: Runner = _
 
     def name : String = _name
     def version : String = _version

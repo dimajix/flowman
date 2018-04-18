@@ -58,3 +58,7 @@ class FieldValue
 case class SingleValue(value:String) extends FieldValue { }
 case class ArrayValue(values:Array[String]) extends FieldValue { }
 case class RangeValue(start:String, end:String) extends FieldValue { }
+
+object ArrayValue {
+    def apply(values:String*) : ArrayValue = ArrayValue(values.toArray)
+}

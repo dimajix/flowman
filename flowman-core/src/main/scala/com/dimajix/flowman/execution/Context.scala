@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -28,11 +29,13 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
+import com.dimajix.flowman.spec.task.Job
 
 case class SettingLevel(
     level:Int
 )
 object SettingLevel {
+    val SCOPE_OVERRIDE = new SettingLevel(500)
     val GLOBAL_OVERRIDE = new SettingLevel(300)
     val PROJECT_PROFILE = new SettingLevel(250)
     val PROJECT_SETTING = new SettingLevel(200)
@@ -60,7 +63,7 @@ abstract class Context {
       */
     def getConnection(identifier: ConnectionIdentifier): Connection
     /**
-      * Returns a specific named MappingType. The Transform can either be inside this Contexts project or in a different
+      * Returns a specific named Mapping. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -68,7 +71,7 @@ abstract class Context {
       */
     def getMapping(identifier: TableIdentifier) : Mapping
     /**
-      * Returns a specific named RelationType. The RelationType can either be inside this Contexts project or in a different
+      * Returns a specific named Relation. The RelationType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -76,13 +79,21 @@ abstract class Context {
       */
     def getRelation(identifier: RelationIdentifier): Relation
     /**
-      * Returns a specific named OutputType. The OutputType can either be inside this Contexts project or in a different
+      * Returns a specific named Output. The OutputType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
     def getOutput(identifier: OutputIdentifier): Output
+    /**
+      * Returns a specific named Job. The JobType can either be inside this Contexts project or in a different
+      * project within the same namespace
+      *
+      * @param identifier
+      * @return
+      */
+    def getJob(identifier: JobIdentifier): Job
 
     /**
       * Returns the appropriate runner
@@ -104,6 +115,9 @@ abstract class Context {
       * @return
       */
     def environment: Map[String, String]
+
+    def rawEnvironment : Map[String,(String, Int)]
+    def rawConfig : Map[String,(String, Int)]
 
     def withEnvironment(env: Map[String, String]): Context
     def withEnvironment(env: Seq[(String, String)]): Context

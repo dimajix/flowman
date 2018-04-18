@@ -22,20 +22,27 @@ import org.apache.spark.sql.SparkSession
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-abstract class Executor {
+/**
+  * This special Executor is meant to be used with Jobs. It mainly encapsulates a new context
+  *
+  * @param _parent
+  * @param _context
+  */
+class ScopedExecutor(_parent:Executor, _context:Context) extends Executor {
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
       * SparkSession, but a new derived session with a separate namespace will be created.
       *
       * @return
       */
-    def spark: SparkSession
+    override def spark: SparkSession = _parent.spark
 
     /**
       * Returns true if a SparkSession is already available
+      *
       * @return
       */
-    def sparkRunning: Boolean
+    override def sparkRunning: Boolean = _parent.sparkRunning
 
     /**
       * Returns the Context associated with this Executor. This context will be used for looking up
@@ -43,14 +50,14 @@ abstract class Executor {
       *
       * @return
       */
-    def context : Context
+    override def context: Context = _context
 
     /**
       * Returns a map of all temporary tables created by this executor
       *
       * @return
       */
-    def tables : Map[TableIdentifier,DataFrame]
+    override def tables: Map[TableIdentifier, DataFrame] = _parent.tables
 
     /**
       * Returns a named table created by an executor. If a project is specified, Executors for other projects
@@ -59,19 +66,15 @@ abstract class Executor {
       * @param identifier
       * @return
       */
-    def getTable(identifier: TableIdentifier) : DataFrame
+    override def getTable(identifier: TableIdentifier): DataFrame = _parent.getTable(identifier)
 
     /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache
       *
       * @param identifier
       */
-    def instantiate(identifier: TableIdentifier) : DataFrame
-
-    /**
-      * Releases any temporary tables
-      */
-    def cleanup() : Unit
+    override def instantiate(identifier: TableIdentifier): DataFrame = _parent.instantiate(identifier)
+    override def cleanup(): Unit = _parent.cleanup()
 
     /**
       * Creates a new Executor which uses a different context
@@ -79,5 +82,5 @@ abstract class Executor {
       * @param context
       * @return
       */
-    def withContext(context:Context) : Executor
+    override def withContext(context:Context) : Executor = new ScopedExecutor(_parent, context)
 }

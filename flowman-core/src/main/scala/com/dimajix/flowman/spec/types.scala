@@ -21,7 +21,8 @@ object TableIdentifier {
     def apply(name:String) = parse(name)
     def apply(name:String, project:String) = new TableIdentifier(name, Some(project))
     def parse(fqName:String) : TableIdentifier= {
-        new TableIdentifier(fqName.split('/')(0), None)
+        val parts = fqName.split('/')
+        new TableIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
     }
 }
 case class TableIdentifier(name:String, project:Option[String]) {
@@ -29,7 +30,7 @@ case class TableIdentifier(name:String, project:Option[String]) {
         if (project.isEmpty)
             name
         else
-            name + "/" + project.get
+            project.get + "/" + name
     }
 }
 
@@ -37,7 +38,8 @@ case class TableIdentifier(name:String, project:Option[String]) {
 object ConnectionIdentifier {
     def apply(fqName:String) = parse(fqName)
     def parse(fqName:String) : ConnectionIdentifier = {
-        new ConnectionIdentifier(fqName.split('/')(0), None)
+        val parts = fqName.split('/')
+        new ConnectionIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
     }
 }
 case class ConnectionIdentifier(name:String, project:Option[String]) {
@@ -45,7 +47,7 @@ case class ConnectionIdentifier(name:String, project:Option[String]) {
         if (project.isEmpty)
             name
         else
-            name + "/" + project.get
+            project.get + "/" + name
     }
 }
 
@@ -53,7 +55,8 @@ case class ConnectionIdentifier(name:String, project:Option[String]) {
 object RelationIdentifier {
     def apply(fqName:String) = parse(fqName)
     def parse(fqName:String) : RelationIdentifier = {
-        new RelationIdentifier(fqName.split('/')(0), None)
+        val parts = fqName.split('/')
+        new RelationIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
     }
 }
 case class RelationIdentifier(name:String, project:Option[String]) {
@@ -61,14 +64,15 @@ case class RelationIdentifier(name:String, project:Option[String]) {
         if (project.isEmpty)
             name
         else
-            name + "/" + project.get
+            project.get + "/" + name
     }
 }
 
 
 object OutputIdentifier {
     def parse(fqName:String) : OutputIdentifier = {
-        new OutputIdentifier(fqName.split('/')(0), None)
+        val parts = fqName.split('/')
+        new OutputIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
     }
 }
 case class OutputIdentifier(name:String, project:Option[String]) {
@@ -76,6 +80,22 @@ case class OutputIdentifier(name:String, project:Option[String]) {
         if (project.isEmpty)
             name
         else
-            name + "/" + project.get
+            project.get + "/" + name
+    }
+}
+
+
+object JobIdentifier {
+    def parse(fqName:String) : JobIdentifier = {
+        val parts = fqName.split('/')
+        new JobIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
+    }
+}
+case class JobIdentifier(name:String, project:Option[String]) {
+    override def toString : String = {
+        if (project.isEmpty)
+            name
+        else
+            project.get + "/" + name
     }
 }

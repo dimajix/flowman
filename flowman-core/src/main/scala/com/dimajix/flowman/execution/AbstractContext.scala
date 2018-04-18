@@ -63,9 +63,9 @@ abstract class AbstractContext extends Context {
 
     protected def databases : Map[String,Connection] = _databases.mapValues(_._1).toMap
 
-    protected def updateFrom(context:AbstractContext) = {
-        context._environment.foreach(kv => _environment.update(kv._1,kv._2))
-        context._config.foreach(kv => _config.update(kv._1,kv._2))
+    protected def updateFrom(context:Context) = {
+        context.rawEnvironment.foreach(kv => _environment.update(kv._1,kv._2))
+        context.rawConfig.foreach(kv => _config.update(kv._1,kv._2))
     }
 
     /**
@@ -89,13 +89,16 @@ abstract class AbstractContext extends Context {
       * Returns all configuration options as a key-value map
       * @return
       */
-    def config : Map[String,String] = _config.toMap.mapValues(_._1)
+    override def config : Map[String,String] = _config.toMap.mapValues(_._1)
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    def environment : Map[String,String] = _environment.toMap.mapValues(_._1)
+    override def environment : Map[String,String] = _environment.toMap.mapValues(_._1)
+
+    override def rawEnvironment : Map[String,(String, Int)] = _environment.toMap
+    override def rawConfig : Map[String,(String, Int)] = _config.toMap
 
 
     def setConfig(config:Map[String,String], settingLevel: SettingLevel) : Unit = {

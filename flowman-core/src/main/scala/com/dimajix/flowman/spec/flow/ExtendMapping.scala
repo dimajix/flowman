@@ -26,8 +26,8 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
 
 class ExtendMapping extends BaseMapping {
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = _
+    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
+    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = _
 
     def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)

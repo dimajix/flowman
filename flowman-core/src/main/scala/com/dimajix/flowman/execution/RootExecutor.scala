@@ -95,15 +95,12 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
 
     private def createProjectExecutor(project:Project) : ProjectExecutor = {
         val pcontext = context.getProjectContext(project)
-        val executor = new ProjectExecutor(this, pcontext, createProjectSession(pcontext))
+        val executor = new ProjectExecutor(this, project, pcontext, createProjectSession(pcontext))
         _children.update(project.name, executor)
         executor
     }
     private def createProjectExecutor(project:String) : ProjectExecutor = {
-        val pcontext = context.getProjectContext(project)
-        val executor = new ProjectExecutor(this, pcontext, createProjectSession(pcontext))
-        _children.update(project, executor)
-        executor
+        createProjectExecutor(context.loadProject(project))
     }
     private def createProjectSession(context: Context)() : Option[SparkSession] = {
         logger.info("Creating new Spark session for project")

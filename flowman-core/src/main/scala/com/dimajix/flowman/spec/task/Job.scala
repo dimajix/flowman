@@ -43,7 +43,15 @@ class JobParameter {
     @JsonProperty(value="name") private var _name:String = ""
     @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
     @JsonProperty(value="granularity", required = false) private var _granularity: String = _
-    @JsonProperty(value="value", required = false) private var _value: String = ""
+    @JsonProperty(value="value", required = false) private var _value: String = _
+
+    def this(name:String, ftype:FieldType, granularity:String = null, value:String = null) = {
+        this()
+        _name = name
+        _type = ftype
+        _granularity = granularity
+        _value = value
+    }
 
     def name : String = _name
     def ftype : FieldType = _type
@@ -66,6 +74,39 @@ object Job {
         job._description = description
         job
     }
+
+    class Builder {
+        private val job = new Job
+
+        def build() : Job = job
+
+        def setDescription(desc:String) : Builder = {
+            job._description = desc
+            this
+        }
+        def setParameters(params:Seq[JobParameter]) : Builder = {
+            job._parameters = params
+            this
+        }
+        def addParameter(param:JobParameter) : Builder = {
+            job._parameters = job._parameters :+ param
+            this
+        }
+        def addParameter(name:String, ftype:FieldType, granularity:String = null, value:String = null) : Builder = {
+            job._parameters = job._parameters :+ new JobParameter(name, ftype, granularity, value)
+            this
+        }
+        def setTasks(tasks:Seq[Task]) : Builder = {
+            job._tasks = tasks
+            this
+        }
+        def addTask(task:Task) : Builder = {
+            job._tasks = job._tasks :+ task
+            this
+        }
+    }
+
+    def builder() : Builder = new Builder
 }
 
 /**
@@ -90,7 +131,8 @@ class Job {
       */
     def arguments(args:Map[String,String])(implicit context:Context) : Map[String,String] = {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
-        val processedArgs = args.map(kv => (kv._1, paramsByName(kv._1).parse(kv._2).toString))
+        val processedArgs = args.map(kv =>
+            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2).toString))
         parameters.map(p => (p.name, p.value)).toMap ++ processedArgs
     }
 

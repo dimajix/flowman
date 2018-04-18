@@ -34,60 +34,60 @@ import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.util.splitSettings
 
 
-class ModuleReader {
-    private val logger = LoggerFactory.getLogger(classOf[Project])
-
-    private def mapper = {
-        val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
-        mapper.registerModule(DefaultScalaModule)
-        mapper.registerSubtypes(relationTypes:_*)
-        mapper.registerSubtypes(mappingTypes:_*)
-        mapper
-    }
-    private def loadFile(file:File) : Module = {
-        logger.info(s"Reading module file ${file.toString}")
-        mapper.readValue(file, classOf[Module])
-    }
-
-    /**
-      * Loads a single file or a whole directory (non recursibely)
-      *
-      * @param file
-      * @return
-      */
-    def file(file:File) : Module = {
-        if (file.isDirectory) {
-            logger.info(s"Reading all module files in directory ${file.toString}")
-            file.listFiles()
-                .filter(_.isFile)
-                .map(f => loadFile(f))
-                .reduce((l,r) => l.merge(r))
-        }
-        else {
-            loadFile(file)
-        }
-    }
-    /**
-      * Loads a single file or a whole directory (non recursibely)
-      *
-      * @param filename
-      * @return
-      */
-    def file(filename:String) : Module = {
-        file(new File(filename))
-    }
-
-    def string(text:String) : Module = {
-        mapper.readValue(text, classOf[Module])
-    }
-}
-
 
 object Module {
-    def read = new ModuleReader
+    class Reader {
+        private val logger = LoggerFactory.getLogger(classOf[Project])
+
+        private def mapper = {
+            val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val mapper = new ObjectMapper(new YAMLFactory())
+            mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+            mapper.registerModule(DefaultScalaModule)
+            mapper.registerSubtypes(relationTypes:_*)
+            mapper.registerSubtypes(mappingTypes:_*)
+            mapper
+        }
+        private def loadFile(file:File) : Module = {
+            logger.info(s"Reading module file ${file.toString}")
+            mapper.readValue(file, classOf[Module])
+        }
+
+        /**
+          * Loads a single file or a whole directory (non recursibely)
+          *
+          * @param file
+          * @return
+          */
+        def file(file:File) : Module = {
+            if (file.isDirectory) {
+                logger.info(s"Reading all module files in directory ${file.toString}")
+                file.listFiles()
+                    .filter(_.isFile)
+                    .map(f => loadFile(f))
+                    .reduce((l,r) => l.merge(r))
+            }
+            else {
+                loadFile(file)
+            }
+        }
+        /**
+          * Loads a single file or a whole directory (non recursibely)
+          *
+          * @param filename
+          * @return
+          */
+        def file(filename:String) : Module = {
+            file(new File(filename))
+        }
+
+        def string(text:String) : Module = {
+            mapper.readValue(text, classOf[Module])
+        }
+    }
+
+    def read = new Reader
 }
 
 
@@ -150,16 +150,16 @@ class Module {
       * @return
       */
     def toProject(projectName:String) : Project = {
-        val project = new Project
-        project._name = projectName
-        project._environment = environment
-        project._config = config
-        project._profiles = profiles
-        project._connections = connections
-        project._relations = relations
-        project._mappings = mappings
-        project._outputs = outputs
-        project._jobs = jobs
-        project
+        Project.builder()
+                .setName(projectName)
+                .setEnvironment(environment)
+                .setConfig(config)
+                .setProfiles(profiles)
+                .setConnections(connections)
+                .setRelations(relations)
+                .setMappings(mappings)
+                .setOutputs(outputs)
+                .setJobs(jobs)
+                .build()
     }
 }

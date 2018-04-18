@@ -28,11 +28,17 @@ import com.dimajix.flowman.spec.schema.FieldValue
 class LoopTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[LoopTask])
 
-    @JsonProperty(value="args", required=true) private[spec] var _args:Map[String,FieldValue] = _
-    @JsonProperty(value="job") private[spec] var _job:String = _
+    @JsonProperty(value="job") private var _job:String = _
+    @JsonProperty(value="args", required=true) private var _args:Map[String,FieldValue] = Map()
 
-    def args : Map[String,FieldValue] = _args
+    def this(job:String, args:Map[String,FieldValue]) = {
+        this()
+        _job = job
+        _args = args
+    }
+
     def job(implicit context:Context) : JobIdentifier = if (Option(_job).exists(_.nonEmpty)) JobIdentifier.parse(context.evaluate(_job)) else null
+    def args : Map[String,FieldValue] = _args
 
     override def execute(executor:Executor) : Boolean = {
         executeJob(executor)

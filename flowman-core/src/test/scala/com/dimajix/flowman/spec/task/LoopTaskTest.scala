@@ -16,14 +16,22 @@
 
 package com.dimajix.flowman.spec.task
 
+import org.mockito.Mockito.when
+import org.mockito.Mockito.verify
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.scalatest.mockito.MockitoSugar
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.schema.ArrayValue
+import com.dimajix.flowman.spec.schema.IntegerType
+import com.dimajix.flowman.spec.schema.RangeValue
+import com.dimajix.flowman.spec.schema.StringType
 
 
-class LoopTaskTest extends FlatSpec with Matchers {
+class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
     "The LoopTask" should "support simple loops" in {
         val spec =
             """
@@ -79,5 +87,73 @@ class LoopTaskTest extends FlatSpec with Matchers {
 
         val job = project.jobs("loop")
         job.execute(executor, Map()) shouldBe (JobStatus.FAILURE)
+    }
+
+    it should "loop as expected with a single parameter" in {
+        val loopJob = mock[Job]
+        val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2")))
+
+        val project = Project.builder()
+            .addJob("job", loopJob)
+            .build()
+        val session = Session.builder().build()
+        val executor = session.createExecutor(project)
+
+        when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType)))
+        when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(JobStatus.SUCCESS)
+
+        loopTask.execute(executor)
+
+        verify(loopJob).execute(executor, Map("p1" -> "v1"))
+        verify(loopJob).execute(executor, Map("p1" -> "v2"))
+    }
+
+    it should "loop as expected with a multiple parameter" in {
+        val loopJob = mock[Job]
+        val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8")))
+
+        val project = Project.builder()
+            .addJob("job", loopJob)
+            .build()
+        val session = Session.builder().build()
+        val executor = session.createExecutor(project)
+
+        when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2")))
+        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "4"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "6"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "2"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "4"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "6"))).thenReturn(JobStatus.SUCCESS)
+
+        loopTask.execute(executor)
+
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "2"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "4"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "6"))
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "2"))
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "4"))
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "6"))
+    }
+
+    it should "loop as expected with a single parameter and predefined value" in {
+        val loopJob = mock[Job]
+        val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2")))
+
+        val project = Project.builder()
+            .addJob("job", loopJob)
+            .build()
+        val session = Session.builder().build()
+        val executor = session.createExecutor(project)
+
+        when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2", "4")))
+        when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(JobStatus.SUCCESS)
+
+        loopTask.execute(executor)
+
+        verify(loopJob).execute(executor, Map("p1" -> "v1"))
+        verify(loopJob).execute(executor, Map("p1" -> "v2"))
     }
 }

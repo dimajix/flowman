@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.model
+package com.dimajix.flowman.tools.exec.job
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand
@@ -27,14 +27,11 @@ import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
 
 
-class ModelCommand extends NestedCommand {
+class JobCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="task",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
-        new SubCommand(name="create",impl=classOf[CreateCommand]),
-        new SubCommand(name="describe",impl=classOf[DescribeCommand]),
-        new SubCommand(name="destroy",impl=classOf[DestroyCommand]),
         new SubCommand(name="list",impl=classOf[ListCommand]),
-        new SubCommand(name="show",impl=classOf[ShowCommand])
+        new SubCommand(name="run",impl=classOf[RunCommand])
     ))
     override var command:Command = _
 

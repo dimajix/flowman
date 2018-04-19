@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.project
+package com.dimajix.flowman.tools.exec.job
 
 import org.kohsuke.args4j.Argument
+import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -27,12 +29,33 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class RunCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[RunCommand])
 
+    @Argument(usage = "specifies jobs to run", metaVar = "<job>")
+    var jobs: Array[String] = Array()
+    @Option(name = "-a", aliases=Array("--all"), usage = "runs all outputs, even the disabled ones")
+    var all: Boolean = false
+    @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
+    var force: Boolean = false
+
+
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
+        logger.info("Processing outputs {}", if (jobs != null) jobs.mkString(",") else "all")
+
+        // Then execute output operations
+        val toRun =
+            if (all)
+                project.jobs.keys.toSeq
+            else if (jobs.nonEmpty)
+                jobs.toSeq
+            else
+                project.jobs.keys.toSeq
+
         val runner = context.runner
-        project.jobs.forall { case (name,job) =>
-            logger.info("Executing job {}", name)
+        val result = toRun.forall(jobname => {
+            val job = context.getJob(JobIdentifier.parse(jobname))
             runner.execute(executor, job)
-        }
+        })
+
+        result
     }
 }

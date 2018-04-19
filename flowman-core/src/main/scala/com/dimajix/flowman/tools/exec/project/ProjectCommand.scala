@@ -28,7 +28,7 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 
 
 class ProjectCommand extends NestedCommand {
-    @Argument(required=false,index=0,metaVar="task",usage="the subcommand to run",handler=classOf[SubCommandHandler])
+    @Argument(required=true,index=0,metaVar="task",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="run",impl=classOf[RunCommand])
     ))

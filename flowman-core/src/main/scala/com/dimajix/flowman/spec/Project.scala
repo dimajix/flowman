@@ -86,6 +86,7 @@ object Project {
             project._relations = module.relations
             project._mappings = module.mappings
             project._outputs = module.outputs
+            project._jobs = module.jobs
         }
     }
 

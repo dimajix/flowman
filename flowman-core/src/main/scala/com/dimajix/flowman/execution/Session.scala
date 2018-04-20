@@ -104,8 +104,9 @@ class Session private[execution](
     private def createOrReuseSession() : Option[SparkSession] = {
         if(_sparkSession != null) {
             logger.info("Reusing existing Spark session")
-            _sparkConfig.foreach(kv => _sparkSession.conf.set(kv._1,kv._2))
-            Some(_sparkSession)
+            val newSession = _sparkSession.newSession()
+            _sparkConfig.foreach(kv => newSession.conf.set(kv._1,kv._2))
+            Some(newSession)
         }
         else {
             logger.info("Creating new Spark session")

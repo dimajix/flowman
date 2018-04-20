@@ -37,15 +37,15 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         implicit val context = executor.context
 
-        val xfs = new ProjectMapping
-        xfs._input = "myview"
-        xfs._columns = Map("_2" -> "int")
+        val mapping = new ProjectMapping
+        mapping._input = "myview"
+        mapping._columns = Map("_2" -> "int")
 
-        xfs.input should be (TableIdentifier("myview"))
-        xfs.columns should be (Seq("_2" -> "int"))
-        xfs.dependencies should be (Array(TableIdentifier("myview")))
+        mapping.input should be (TableIdentifier("myview"))
+        mapping.columns should be (Seq("_2" -> "int"))
+        mapping.dependencies should be (Array(TableIdentifier("myview")))
 
-        val result = xfs.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_1", "_2").collect()
+        val result = mapping.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_1", "_2").collect()
         result.size should be (2)
         result(0) should be (Row(12))
         result(1) should be (Row(23))

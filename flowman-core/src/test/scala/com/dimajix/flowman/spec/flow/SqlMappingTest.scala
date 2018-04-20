@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.spec.flow
 
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -106,28 +110,28 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |          WITH current AS (
               |            SELECT
               |              0 AS from_archive,
-              |              lip.line_item_id as lineitem_id
-              |            FROM fe_lineitem li
-              |            INNER JOIN fe_lineitem_placement lip ON lip.line_item_id = li.id
+              |              t.some_id
+              |            FROM other_table other
+              |            INNER JOIN some_table t ON t.some_id = other.id
               |          ),
               |          archive AS (
               |            SELECT
               |              1 AS from_archive,
-              |              lipa.line_item_id as lineitem_id
-              |            FROM fe_lineitem li
-              |            INNER JOIN fe_lineitem_placement_archive lipa ON lipa.line_item_id = li.id
+              |              ta.some_id
+              |            FROM other_table other
+              |            INNER JOIN some_table_archive ta ON ta.some_id = other.id
               |          ),
               |          merged AS (
               |            SELECT
               |              COALESCE(cur.from_archive, ar.from_archive) AS from_archive,
-              |              COALESCE(cur.placement_id, ar.placement_id) AS placement_id
+              |              COALESCE(cur.other_id, ar.other_id) AS other_id
               |            FROM current cur
-              |            FULL OUTER JOIN archive ar ON cur.lineitem_id = ar.lineitem_id AND cur.placement_id = ar.placement_id
+              |            FULL OUTER JOIN archive ar ON cur.some_id = ar.some_id AND cur.other_id = ar.other_id
               |          )
               |          SELECT
               |            from_archive,
-              |            placement_id
-              |          FROM merged lipa
+              |            other_id
+              |          FROM merged all
               |     "
             """.stripMargin
 
@@ -137,7 +141,36 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         implicit val icontext = session.context
-        val table = project.mappings("t1")
-        table.dependencies.map(_.name).sorted should be (Array("fe_lineitem", "fe_lineitem_placement", "fe_lineitem_placement_archive"))
+        val mapping = project.mappings("t1")
+        mapping.dependencies.map(_.name).sorted should be (Array("other_table", "some_table", "some_table_archive"))
     }
+
+    it should "execute the SQL query" in {
+        val spec =
+            """
+              |mappings:
+              |  t1:
+              |    type: sql
+              |    sql: "
+              |      SELECT _1,_2
+              |      FROM t0
+              |      "
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.createExecutor(project)
+        implicit val icontext = executor.context
+
+        val df = executor.spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+
+        val mapping = project.mappings("t1")
+        val result = mapping.execute(executor, Map(TableIdentifier("t0") -> df)).orderBy("_1", "_2")
+        result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
+        result.collect().size should be (2)
+    }
+
 }

@@ -37,6 +37,7 @@ trait MockedSparkSession extends BeforeAndAfterAll with MockitoSugar { this:Suit
         session.sparkContext.setLogLevel("WARN")
 
         spark = mock[SparkSession]
+        when(spark.newSession()).thenReturn(spark)
         when(spark.sparkContext).thenReturn(session.sparkContext)
         when(spark.conf).thenReturn(session.conf)
     }

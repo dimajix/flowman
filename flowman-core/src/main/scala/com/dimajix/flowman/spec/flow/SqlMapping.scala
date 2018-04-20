@@ -44,7 +44,13 @@ class SqlMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        executor.spark.sql(sql)
+        // Register all input DataFrames as temp views
+        input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
+        // Execute query
+        val result = executor.spark.sql(sql)
+        // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
+        input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
+        result
     }
 
     /**

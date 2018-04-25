@@ -101,7 +101,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     "An appropriate Dataflow" should "be readable from YML" in {
         val spec =
-            s"""
+            """
               |environment:
               |  - start_ts=2016-06-02T23:40:00
               |mappings:
@@ -115,7 +115,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |    columns:
               |      f1: 2*_2
               |      f2: concat(_1, "lala")
-              |      f3: unix_timestamp("$${start_ts}","yyyy-MM-dd HH:mm:ss")
+              |      f3: unix_timestamp("${start_ts}","yyyy-MM-dd HH:mm:ss")
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")

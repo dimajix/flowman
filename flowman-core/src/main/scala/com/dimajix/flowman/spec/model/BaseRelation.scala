@@ -21,7 +21,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
@@ -77,7 +76,6 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def createSchema(implicit context:Context) : StructType = {
-        val fields = schema.map(f => StructField(f.name, f.sparkType))
-        StructType(fields)
+        StructType(schema.map(_.sparkField))
     }
 }

@@ -22,14 +22,19 @@ import org.apache.spark.sql.types.DataType
 case object LongType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.LongType
 
-    override def parse(value:String) : Any = value.toLong
+    override def parse(value:String, granularity: String) : Any = {
+        if (granularity != null && granularity.nonEmpty)
+            value.toLong / granularity.toLong * granularity.toLong
+        else
+            value.toLong
+    }
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {
-            case SingleValue(v) => Seq(parse(v))
-            case ArrayValue(values) => values.map(parse)
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(parse(_, granularity))
             case RangeValue(start,end) => {
                 if (granularity != null && granularity.nonEmpty)
-                    start.toLong until end.toLong by granularity.toLong
+                    parse(start, granularity).asInstanceOf[Long] until parse(end,granularity).asInstanceOf[Long] by granularity.toLong
                 else
                     start.toLong until end.toLong
             }

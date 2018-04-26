@@ -26,8 +26,10 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.util.FileCollector
+import com.dimajix.flowman.util.SchemaUtils
 
 
 class FileRelation extends BaseRelation {
@@ -35,13 +37,13 @@ class FileRelation extends BaseRelation {
 
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="partitions") private var _partitions: Seq[Field] = _
+    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
     @JsonProperty(value="pattern") private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context:Context) : String = context.evaluate(_format)
-    def partitions : Seq[Field] = _partitions
+    def partitions : Seq[PartitionField] = _partitions
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -60,8 +62,7 @@ class FileRelation extends BaseRelation {
             .format(format)
             .load(inputFiles.map(_.toString):_*)
 
-        //applySchema(rawData, requestedSchema)
-        rawData
+        SchemaUtils.applySchema(rawData, schema)
     }
 
     /**

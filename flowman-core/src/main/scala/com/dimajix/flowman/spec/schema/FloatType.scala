@@ -22,13 +22,22 @@ import org.apache.spark.sql.types.DataType
 case object FloatType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.FloatType
 
-    override def parse(value:String) : Any = value.toFloat
+    override def parse(value:String, granularity: String) : Any = {
+        if (granularity != null && granularity.nonEmpty) {
+            val step = granularity.toFloat
+            val v = value.toFloat
+            v - (v % step)
+        }
+        else {
+            value.toFloat
+        }
+    }
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {
-            case SingleValue(v) => Seq(parse(v))
-            case ArrayValue(values) => values.map(parse)
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(v => parse(v,granularity))
             case RangeValue(start,end) => {
-                start.toFloat until end.toFloat by granularity.toFloat
+                parse(start,granularity).asInstanceOf[Float] until parse(end, granularity).asInstanceOf[Float] by granularity.toFloat
             }
         }
     }

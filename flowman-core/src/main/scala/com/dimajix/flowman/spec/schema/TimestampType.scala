@@ -27,18 +27,27 @@ import org.apache.spark.sql.types.DataType
 case object TimestampType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.TimestampType
 
-    override def parse(value:String) : Any = new Timestamp(LocalDateTime.parse(value).toEpochSecond(ZoneOffset.UTC)*1000l)
+    override def parse(value:String, granularity: String) : Any = {
+        if (granularity != null && granularity.nonEmpty) {
+            val secs = LocalDateTime.parse(value).toEpochSecond(ZoneOffset.UTC)
+            val step = Duration.parse(granularity).getSeconds
+            new Timestamp(secs / step * step * 1000l)
+        }
+        else {
+            new Timestamp(LocalDateTime.parse(value).toEpochSecond(ZoneOffset.UTC) * 1000l)
+        }
+    }
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {
-            case SingleValue(v) => Seq(parse(v))
-            case ArrayValue(values) => values.map(parse)
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(parse(_, granularity))
             case RangeValue(start,end) => {
-                val startDate = LocalDateTime.parse(start).toEpochSecond(ZoneOffset.UTC)
-                val endDate = LocalDateTime.parse(end).toEpochSecond(ZoneOffset.UTC)
                 val step = if (granularity != null && granularity.nonEmpty)
                     Duration.parse(granularity).getSeconds
                 else
                     1
+                val startDate = LocalDateTime.parse(start).toEpochSecond(ZoneOffset.UTC) / step * step
+                val endDate = LocalDateTime.parse(end).toEpochSecond(ZoneOffset.UTC) / step * step
                 startDate until endDate by step map(x => new Timestamp(x * 1000l))
             }
         }

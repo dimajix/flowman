@@ -27,18 +27,27 @@ import org.apache.spark.sql.types.DataType
 case object DateType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.DateType
 
-    override def parse(value:String) : Any = Date.valueOf(value)
+    override def parse(value:String, granularity: String) : Any = {
+        if (granularity != null && granularity.nonEmpty) {
+            val step = Duration.parse(granularity).get(ChronoUnit.SECONDS)/(24*60*60)
+            val day = Date.valueOf(value).toLocalDate.toEpochDay / step * step
+            Date.valueOf(LocalDate.ofEpochDay(day))
+        }
+        else {
+            Date.valueOf(value)
+        }
+    }
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {
-            case SingleValue(v) => Seq(Date.valueOf(v))
-            case ArrayValue(values) => values.map(Date.valueOf)
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(v => parse(v, granularity))
             case RangeValue(start,end) => {
-                val startDate = Date.valueOf(start).toLocalDate.toEpochDay
-                val endDate = Date.valueOf(end).toLocalDate.toEpochDay
                 val step = if (granularity != null && granularity.nonEmpty)
                     Duration.parse(granularity).get(ChronoUnit.SECONDS)/(24*60*60)
                 else
                     1
+                val startDate = Date.valueOf(start).toLocalDate.toEpochDay / step * step
+                val endDate = Date.valueOf(end).toLocalDate.toEpochDay / step * step
                 startDate until endDate by step map(x => Date.valueOf(LocalDate.ofEpochDay(x)))
             }
         }

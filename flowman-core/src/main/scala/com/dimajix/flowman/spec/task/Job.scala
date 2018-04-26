@@ -31,12 +31,12 @@ import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.StringType
 
 
-case class JobStatus(name:String)
+sealed abstract class JobStatus;
 object JobStatus {
-    val SUCCESS = new JobStatus("SUCCESS")
-    val FAILURE = new JobStatus("FAILURE")
-    val ABORTED = new JobStatus("ABORTED")
-    val SKIPPED = new JobStatus("SKIPPED")
+    case object SUCCESS extends JobStatus
+    case object FAILURE extends JobStatus
+    case object ABORTED extends JobStatus
+    case object SKIPPED extends JobStatus
 }
 
 class JobParameter {

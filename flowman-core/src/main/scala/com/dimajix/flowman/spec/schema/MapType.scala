@@ -28,6 +28,6 @@ case class MapType(
         org.apache.spark.sql.types.MapType(keyType.sparkType, valueType.sparkType)
     }
 
-    override def parse(value:String) : Any = ???
+    override def parse(value:String, granularity: String) : Any = ???
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
 }

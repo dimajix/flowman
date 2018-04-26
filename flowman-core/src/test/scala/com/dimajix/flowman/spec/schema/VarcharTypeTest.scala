@@ -40,4 +40,20 @@ class VarcharTypeTest extends FlatSpec with Matchers {
         result.asInstanceOf[VarcharType].length should be (14)
         result.sparkType should be (org.apache.spark.sql.types.VarcharType(14))
     }
+
+    it should "parse strings" in {
+        VarcharType(100).parse("lala").asInstanceOf[String] should be ("lala")
+    }
+
+    it should "support interpolation of SingleValues" in {
+        VarcharType(100).interpolate(SingleValue("lala"), null).head.asInstanceOf[String] should be ("lala")
+    }
+
+    it should "support interpolation of ArrayValues" in {
+        val result = VarcharType(100).interpolate(ArrayValue(Array("12","27")), null).toSeq
+        result(0).asInstanceOf[String] should be ("12")
+        result(1).asInstanceOf[String] should be ("27")
+    }
+
 }
+

@@ -29,6 +29,13 @@ class ByteTypeTest extends FlatSpec with Matchers {
         ByteType.interpolate(SingleValue("12"), null).head.asInstanceOf[Byte] should be (12)
     }
 
+    it should "support interpolation of SingleValues with granularity" in {
+        ByteType.interpolate(SingleValue("12"), "3").head.asInstanceOf[Byte] should be (12)
+        ByteType.interpolate(SingleValue("13"), "3").head.asInstanceOf[Byte] should be (12)
+        ByteType.interpolate(SingleValue("14"), "3").head.asInstanceOf[Byte] should be (12)
+        ByteType.interpolate(SingleValue("15"), "3").head.asInstanceOf[Byte] should be (15)
+    }
+
     it should "support interpolation of ArrayValues" in {
         val result = ByteType.interpolate(ArrayValue(Array("12","27")), null)
         result.head.asInstanceOf[Byte] should be (12)
@@ -43,5 +50,8 @@ class ByteTypeTest extends FlatSpec with Matchers {
     it should "support interpolation of Ranges with granularity" in {
         val result = ByteType.interpolate(RangeValue("12","16"), "2")
         result.map(_.asInstanceOf[Byte]).toSeq should be (Seq(12,14).map(_.toByte))
+
+        val result2 = ByteType.interpolate(RangeValue("13","17"), "2")
+        result2.map(_.asInstanceOf[Byte]).toSeq should be (Seq(12,14).map(_.toByte))
     }
 }

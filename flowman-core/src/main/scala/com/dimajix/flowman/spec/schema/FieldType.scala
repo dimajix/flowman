@@ -51,7 +51,8 @@ abstract class FieldType {
         .toLowerCase(Locale.ROOT)
     }
 
-    def parse(value:String) : Any
+    def parse(value:String) : Any = parse(value, null)
+    def parse(value:String, granularity:String) : Any
     def interpolate(value: FieldValue, granularity:String) : Iterable[Any]
 }
 

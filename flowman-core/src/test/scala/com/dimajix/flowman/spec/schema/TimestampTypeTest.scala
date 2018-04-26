@@ -36,11 +36,23 @@ class TimestampTypeTest extends FlatSpec with Matchers {
         TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), null).head.asInstanceOf[Timestamp] should be (parseDateTime("2017-12-20T10:11:12"))
     }
 
+    it should "support interpolation of SingleValues with granularity" in {
+        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), "PT1H").head.asInstanceOf[Timestamp] should be (parseDateTime("2017-12-20T10:00:00"))
+        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), "P1D").head.asInstanceOf[Timestamp] should be (parseDateTime("2017-12-20T00:00:00"))
+    }
+
     it should "support interpolation of ArrayValues" in {
         val result = TimestampType.interpolate(ArrayValue(Array("2017-12-10T12:21:20","2017-12-10T12:21:40")), null).toSeq
         result.size should be (2)
         result(0).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T12:21:20"))
         result(1).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T12:21:40"))
+    }
+
+    it should "support interpolation of ArrayValues with granularity" in {
+        val result = TimestampType.interpolate(ArrayValue(Array("2017-12-10T12:21:20","2017-12-10T12:21:40")), "PT1H").toSeq
+        result.size should be (2)
+        result(0).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T12:00:00"))
+        result(1).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T12:00:00"))
     }
 
     it should "support interpolation of Ranges" in {
@@ -52,10 +64,24 @@ class TimestampTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of Ranges with granularity" in {
-        val result = TimestampType.interpolate(RangeValue("2017-12-10T00:00:00","2017-12-18T00:00:00"), "P2D").toSeq
+        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00"), "P2D").toSeq
         result.size should be (4)
         result(0).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T00:00:00"))
         result(1).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-12T00:00:00"))
         result(3).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-16T00:00:00"))
+
+        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00"), "P2D").toSeq
+        result2.size should be (4)
+        result2(0).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T00:00:00"))
+        result2(1).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-12T00:00:00"))
+        result2(2).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-14T00:00:00"))
+        result2(3).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-16T00:00:00"))
+
+        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00"), "P2D").toSeq
+        result3.size should be (4)
+        result3(0).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-10T00:00:00"))
+        result3(1).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-12T00:00:00"))
+        result3(2).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-14T00:00:00"))
+        result3(3).asInstanceOf[Timestamp] should be (parseDateTime("2017-12-16T00:00:00"))
     }
 }

@@ -29,10 +29,24 @@ class ShortTypeTest extends FlatSpec with Matchers {
         ShortType.interpolate(SingleValue("12"), null).head.asInstanceOf[Short] should be (12)
     }
 
+    it should "support interpolation of SingleValues with granularity" in {
+        ShortType.interpolate(SingleValue("12"), "3").head.asInstanceOf[Short] should be (12)
+        ShortType.interpolate(SingleValue("13"), "3").head.asInstanceOf[Short] should be (12)
+        ShortType.interpolate(SingleValue("14"), "3").head.asInstanceOf[Short] should be (12)
+        ShortType.interpolate(SingleValue("15"), "3").head.asInstanceOf[Short] should be (15)
+    }
+
     it should "support interpolation of ArrayValues" in {
         val result = ShortType.interpolate(ArrayValue(Array("12","27")), null)
         result.head.asInstanceOf[Short] should be (12)
         result.drop(1).head.asInstanceOf[Short] should be (27)
+    }
+
+    it should "support interpolation of ArrayValues with granularity" in {
+        val result = ShortType.interpolate(ArrayValue(Array("12","16","17")), "3").toSeq
+        result(0).asInstanceOf[Short] should be (12)
+        result(1).asInstanceOf[Short] should be (15)
+        result(2).asInstanceOf[Short] should be (15)
     }
 
     it should "support interpolation of Ranges" in {
@@ -43,5 +57,8 @@ class ShortTypeTest extends FlatSpec with Matchers {
     it should "support interpolation of Ranges with granularity" in {
         val result = ShortType.interpolate(RangeValue("12","16"), "2")
         result.map(_.asInstanceOf[Short]).toSeq should be (Seq(12,14).map(_.toShort))
+
+        val result2 = ShortType.interpolate(RangeValue("13","17"), "2")
+        result2.map(_.asInstanceOf[Short]).toSeq should be (Seq(12,14).map(_.toShort))
     }
 }

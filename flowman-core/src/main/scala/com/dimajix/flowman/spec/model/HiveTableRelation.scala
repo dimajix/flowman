@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
@@ -37,14 +38,14 @@ class HiveTableRelation extends BaseRelation  {
     @JsonProperty(value="external", required=false) private var _external: String = "false"
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = _
-    @JsonProperty(value="partitions") private var _partitions: Seq[Field] = _
+    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
 
     def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
     def external(implicit context:Context) : Boolean = context.evaluate(_external).toBoolean
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context: Context) : String = context.evaluate(_format)
-    def partitions(implicit context: Context) : Seq[Field] = _partitions
+    def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -56,12 +57,20 @@ class HiveTableRelation extends BaseRelation  {
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
+        val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
         val partitionNames = this.partitions.map(_.name)
         val tableName = database + "." + table
         logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
+        def applyPartitionFilter(df:DataFrame, partitionName:String, partitionValue:FieldValue): DataFrame = {
+            val field = partitionsByName(partitionName)
+            val values = field.interpolate(partitionValue).toSeq
+            df.filter(df(partitionName).isin(values:_*))
+        }
+
         val reader = this.reader(executor)
-        val df = reader.table(tableName)
+        val df = partitions.foldLeft(reader.table(tableName))((df,pv) => applyPartitionFilter(df, pv._1, pv._2))
+
         SchemaUtils.applySchema(df, schema)
     }
 

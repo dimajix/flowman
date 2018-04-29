@@ -43,7 +43,7 @@
                             <outputDirectory>${basedir}/target</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>../flowman-core/target</directory>
+                                    <directory>../flowman-tools/target</directory>
                                     <includes>
                                         <include>*.tar.gz</include>
                                     </includes>
@@ -79,7 +79,7 @@
                     <tag>${project.version}</tag>
                     <pullNewerImage>false</pullNewerImage>
                     <buildArgs>
-                        <APP_ARCHIVE>flowman-core-${project.version}-bin.tar.gz</APP_ARCHIVE>
+                        <APP_ARCHIVE>flowman-tools-${project.version}-bin.tar.gz</APP_ARCHIVE>
                     </buildArgs>
                 </configuration>
             </plugin>

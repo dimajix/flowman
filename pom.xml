@@ -46,6 +46,7 @@
 
     <modules>
         <module>flowman-core</module>
+        <module>flowman-tools</module>
         <module>docker</module>
     </modules>
 

@@ -51,8 +51,29 @@ abstract class FieldType {
         .toLowerCase(Locale.ROOT)
     }
 
+    /**
+      * Function for parsing a string as an instance of the given FieldType.
+      * @param value
+      * @return
+      */
     def parse(value:String) : Any = parse(value, null)
+
+    /**
+      * Function for parsing a string as an instance of the given FieldType. This method
+      * will also take into account any granularity.
+      * @param value
+      * @param granularity
+      * @return
+      */
     def parse(value:String, granularity:String) : Any
+
+    /**
+      * Function for interpolating a FieldValue as a sequence of the given FieldType. This method
+      * will also take into account any granularity.
+      * @param value
+      * @param granularity
+      * @return
+      */
     def interpolate(value: FieldValue, granularity:String) : Iterable[Any]
 }
 

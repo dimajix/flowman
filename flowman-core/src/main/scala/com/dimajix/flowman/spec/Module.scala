@@ -34,7 +34,6 @@ import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.util.splitSettings
 
 
-
 object Module {
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Project])
@@ -42,11 +41,13 @@ object Module {
         private def mapper = {
             val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
             val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))
             val mapper = new ObjectMapper(new YAMLFactory())
             mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
             mapper.registerModule(DefaultScalaModule)
             mapper.registerSubtypes(relationTypes:_*)
             mapper.registerSubtypes(mappingTypes:_*)
+            mapper.registerSubtypes(outputTypes:_*)
             mapper
         }
         private def loadFile(file:File) : Module = {

@@ -169,6 +169,9 @@ class Project {
     @JsonProperty(value="version") private var _version: String = _
     @JsonProperty(value="modules") private var _modules: Seq[String] = Seq()
 
+    private var _basedir: File = new File("")
+    private var _filename: File = new File("")
+
     private var _environment: Seq[(String,String)] = Seq()
     private var _config: Seq[(String,String)] = Seq()
     private var _profiles: Map[String,Profile] = Map()
@@ -182,6 +185,8 @@ class Project {
     def name : String = _name
     def version : String = _version
     def modules : Seq[String] = _modules
+    def filename : File = _filename
+    def basedir : File = _basedir
 
     def config : Seq[(String,String)] = _config
     def environment : Seq[(String,String)] = _environment

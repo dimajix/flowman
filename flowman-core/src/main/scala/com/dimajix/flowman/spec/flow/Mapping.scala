@@ -30,7 +30,6 @@ import com.dimajix.flowman.spi.Scanner
 
 object Mapping {
     def subtypes : Seq[(String,Class[_ <: Mapping])] = Scanner.mappings
-
 }
 
 /**

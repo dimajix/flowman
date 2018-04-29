@@ -23,6 +23,12 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spi.Scanner
+
+
+object Output {
+    def subtypes : Seq[(String,Class[_ <: Output])] = Scanner.outputs
+}
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")

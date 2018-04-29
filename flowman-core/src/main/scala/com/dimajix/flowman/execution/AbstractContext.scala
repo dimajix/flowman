@@ -31,6 +31,10 @@ import com.dimajix.flowman.spec.Connection
 
 
 object AbstractContext {
+    private object SystemWrapper {
+        def getenv(name:String) : String = System.getenv(name)
+    }
+
     private lazy val rootContext = {
         val context = new VelocityContext()
         context.put("Integer", classOf[java.lang.Integer])
@@ -38,7 +42,7 @@ object AbstractContext {
         context.put("LocalDateTime", classOf[LocalDateTime])
         context.put("Duration", classOf[Duration])
         context.put("Period", classOf[Period])
-        context.put("System", classOf[System])
+        context.put("System", SystemWrapper)
         context
     }
 }

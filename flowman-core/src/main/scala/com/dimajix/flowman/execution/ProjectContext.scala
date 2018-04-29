@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.io.File
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Connection
@@ -36,7 +38,15 @@ import com.dimajix.flowman.spec.task.Job
 class ProjectContext(parent:RootContext, _project:Project) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
 
+    private object ProjectWrapper {
+        def getBasedir() : File = _project.basedir
+        def getFilename() : File = _project.filename
+        def getName() : String = _project.name
+        def getVersion() : String = _project.version
+    }
+
     updateFrom(parent)
+    templateContext.put("Project", ProjectWrapper)
 
     def project : Project = _project
 

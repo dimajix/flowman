@@ -20,7 +20,12 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spi.Scanner
 
+
+object Schema {
+    def subtypes : Seq[(String,Class[_ <: Schema])] = Scanner.schemas
+}
 
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
@@ -28,7 +33,8 @@ import com.dimajix.flowman.execution.Context
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", defaultImpl = classOf[EmbeddedSchema])
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchema]),
-    new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema])
+    new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema]),
+    new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchema])
 ))
 abstract class Schema {
     def description(implicit context: Context) : String

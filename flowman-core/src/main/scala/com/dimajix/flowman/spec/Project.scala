@@ -19,9 +19,6 @@ package com.dimajix.flowman.spec
 import java.io.File
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.flow.Mapping
@@ -34,12 +31,6 @@ import com.dimajix.flowman.spec.task.Job
 object Project {
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Reader])
-
-        private def mapper = {
-            val mapper = new ObjectMapper(new YAMLFactory())
-            mapper.registerModule(DefaultScalaModule)
-            mapper
-        }
 
         /**
           * Loads a project file and all related module files
@@ -54,7 +45,7 @@ object Project {
             }
             else {
                 logger.info(s"Reading project file ${file.toString}")
-                val project = mapper.readValue(file, classOf[Project])
+                val project = ObjectMapper.read[Project](file)
                 loadModules(project, file.getParentFile)
                 project
             }
@@ -71,7 +62,7 @@ object Project {
         }
 
         def string(text:String) : Project = {
-            mapper.readValue(text, classOf[Project])
+            ObjectMapper.parse[Project](text)
         }
 
         private def loadModules(project: Project, directory:File) : Unit = {

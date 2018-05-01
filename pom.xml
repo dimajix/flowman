@@ -6,7 +6,7 @@
     <packaging>pom</packaging>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <name>flowman-root</name>
 
     <properties>
@@ -17,7 +17,6 @@
         <avro.version>1.7.6</avro.version>
         <jackson.version>2.9.2</jackson.version>
         <spark-avro.version>3.0.0</spark-avro.version>
-        <snakeyaml.version>1.17</snakeyaml.version>
         <mysql-connector.version>6.0.6</mysql-connector.version>
         <velocity.version>1.7</velocity.version>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -347,12 +346,6 @@
                 <groupId>com.databricks</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark-avro.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
             </dependency>
 
             <dependency>

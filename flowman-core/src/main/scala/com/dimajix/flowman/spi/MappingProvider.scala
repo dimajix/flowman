@@ -22,7 +22,7 @@ import scala.collection.JavaConversions._
 
 
 object MappingProvider {
-    def providers() = {
+    def providers : Seq[MappingProvider] = {
         val loader = ServiceLoader.load(classOf[MappingProvider])
         loader.iterator().toSeq
     }

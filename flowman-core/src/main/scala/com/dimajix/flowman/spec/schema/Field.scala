@@ -23,6 +23,18 @@ import org.apache.spark.sql.types.StructField
 import com.dimajix.flowman.execution.Context
 
 
+object Field {
+    def apply(name:String, ftype:FieldType, nullable:Boolean, description:String) : Field = {
+        val field = new Field()
+        field._name = name
+        field._type = ftype
+        field._nullable = nullable.toString
+        field._description = description
+        field
+    }
+}
+
+
 class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = _

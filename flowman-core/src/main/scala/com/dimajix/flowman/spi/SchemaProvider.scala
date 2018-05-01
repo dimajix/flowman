@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.schema
+package com.dimajix.flowman.spi
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.types.DataType
+import java.util.ServiceLoader
+
+import scala.collection.JavaConversions._
 
 
-case class ArrayType(
-    @JsonProperty(value="elementType") elementType:FieldType,
-    @JsonProperty(value="containsNull") containsNull:Boolean
-                    ) extends ContainerType {
-    override def sparkType : DataType = {
-        org.apache.spark.sql.types.ArrayType(elementType.sparkType, containsNull)
+object SchemaProvider {
+    def providers : Seq[SchemaProvider] = {
+        val loader = ServiceLoader.load(classOf[SchemaProvider])
+        loader.iterator().toSeq
     }
+}
 
-    override def parse(value:String, granularity:String) : Any = ???
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+
+abstract class SchemaProvider {
+    def getName() : String
+    def getImpl() : Class[_]
 }

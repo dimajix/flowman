@@ -22,10 +22,11 @@ import org.apache.spark.sql.types.DataType
 
 case class MapType(
       @JsonProperty(value="keyType") keyType:FieldType,
-      @JsonProperty(value="valueType") valueType:FieldType
+      @JsonProperty(value="valueType") valueType:FieldType,
+      @JsonProperty(value="containsNull") containsNull:Boolean
 ) extends ContainerType {
     override def sparkType : DataType = {
-        org.apache.spark.sql.types.MapType(keyType.sparkType, valueType.sparkType)
+        org.apache.spark.sql.types.MapType(keyType.sparkType, valueType.sparkType, containsNull)
     }
 
     override def parse(value:String, granularity: String) : Any = ???

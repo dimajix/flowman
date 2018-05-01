@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.annotation;
 
-import java.util.ServiceLoader
-
-import scala.collection.JavaConversions._
-
-
-object OutputProvider {
-    def providers : Seq[OutputProvider] = {
-        val loader = ServiceLoader.load(classOf[OutputProvider])
-        loader.iterator().toSeq
-    }
-}
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 
-abstract class OutputProvider {
-    def getName() : String
-    def getImpl() : Class[_]
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface SchemaType {
+    String name();
 }

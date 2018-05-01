@@ -1,0 +1,56 @@
+fast-classpath-scanner
+Copyright (c) 2015 Luke Hutchison
+  * LICENSE:
+    * license/LICENSE-fast-classpath-scanner.txt (MIT License)
+  * HOMEPAGE:
+    * https://github.com/lukehutch/fast-classpath-scanner
+
+Apache Hadoop
+  * LICENSE
+    * license/LICENSE-hadoop.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * http://hadoop.apache.org/
+
+Apache Spark
+  * LICENSE
+    * license/LICENSE-spark.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * http://spark.apache.org/
+
+Spark Avro
+  * LICENSE
+    * license/LICENSE-spark-avro.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://github.com/databricks/spark-avro
+
+Log4j
+  * LICENSE
+    * license/LICENSE-log4j.txt (Apache License)
+  * HOMEPAGE:
+    * https://logging.apache.org/log4j/2.x/
+
+Args4j
+Copyright (c) 2013 Kohsuke Kawaguchi and other contributors
+  * LICENSE
+    * license/LICENSE-args4j.txt (MIT License)
+  * HOMEPAGE:
+    * http://args4j.kohsuke.org/
+
+Jackson
+  * LICENSE
+    * license/LICENSE-jackson.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://github.com/FasterXML/jackson
+
+Velocity
+  * LICENSE
+    * license/LICENSE-velocity.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * http://velocity.apache.org/
+
+ScalikeJDBC
+Copyright scalikejdbc.org
+  * LICENSE:
+    * license/LICENSE-ScalikeJDBC.txt (Apache License)
+  * HOMEPAGE:
+    * http://scalikejdbc.org/

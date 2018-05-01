@@ -1,0 +1,13 @@
+{
+    "type": "record",
+    "namespace": "",
+    "name": "test_schema",
+    "fields": [
+        {
+            "doc": "AccessDateTime as a string",
+            "type": ["string", "null"],
+            "name": "AccessDateTime",
+            "order": "ignore"
+        }
+    ]
+}

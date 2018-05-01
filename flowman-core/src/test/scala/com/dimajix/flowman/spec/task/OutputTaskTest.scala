@@ -38,7 +38,7 @@ class OutputTaskTest extends FlatSpec with Matchers {
               |  dump:
               |    description: "Runs all outputs"
               |    tasks:
-              |      - type: output
+              |      - kind: output
               |        outputs:
               |          - measurements
             """.stripMargin

@@ -11,7 +11,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
     "An AvroSchema" should "be declarable inline" in {
         val spec =
             """
-              |type: avro
+              |kind: avro
               |spec: |
               |    {
               |    "type": "record",
@@ -56,7 +56,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
     it should "support nullable fields" in {
         val spec =
             """
-              |type: avro
+              |kind: avro
               |spec: |
               |    {
               |    "type": "record",
@@ -92,7 +92,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
     it should "be readable from an external file" in {
         val spec =
             """
-              |type: avro
+              |kind: avro
               |file: test/schema/AvroSchema.json
             """.stripMargin
 

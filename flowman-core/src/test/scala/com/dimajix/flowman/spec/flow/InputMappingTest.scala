@@ -31,10 +31,10 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |relations:
               |  empty:
-              |    type: null
+              |    kind: null
               |mappings:
               |  empty:
-              |    type: read
+              |    kind: read
               |    source: empty
               |    columns:
               |      str_col: string
@@ -56,15 +56,17 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |relations:
               |  empty:
-              |    type: null
+              |    kind: null
               |    schema:
-              |      - name: str_col
-              |        type: string
-              |      - name: int_col
-              |        type: integer
+              |      kind: embedded
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
               |mappings:
               |  empty:
-              |    type: read
+              |    kind: read
               |    source: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")

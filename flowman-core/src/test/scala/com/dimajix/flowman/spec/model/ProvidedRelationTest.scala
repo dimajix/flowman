@@ -17,11 +17,11 @@ class ProvidedRelationTest extends FlatSpec with Matchers with LocalSparkSession
             """
               |relations:
               |  dummy:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
               |mappings:
               |  dummy:
-              |    type: read
+              |    kind: read
               |    source: dummy
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")

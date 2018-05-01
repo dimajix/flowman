@@ -30,7 +30,7 @@ object Schema {
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", defaultImpl = classOf[EmbeddedSchema])
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[EmbeddedSchema])
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchema]),
     new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema]),

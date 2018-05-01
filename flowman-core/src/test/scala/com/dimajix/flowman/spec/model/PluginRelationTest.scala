@@ -33,7 +33,7 @@ class PluginRelationTest extends FlatSpec with Matchers {
             """
               |relations:
               |  custom:
-              |    type: customRelation
+              |    kind: customRelation
             """.stripMargin
         val module = Module.read.string(spec)
         module.relations.keys should contain("custom")
@@ -44,7 +44,7 @@ class PluginRelationTest extends FlatSpec with Matchers {
             """
               |relations:
               |  custom:
-              |    type: annotatedRelation
+              |    kind: annotatedRelation
             """.stripMargin
         val module = Module.read.string(spec)
         module.relations.keys should contain("custom")

@@ -1,6 +1,6 @@
 relations:
   stations-raw:
-    type: file
+    kind: file
     format: csv
     location: "s3a://dimajix-training/data/weather/isd-history/"
     options:
@@ -9,7 +9,7 @@ relations:
       quote: "\""
       header: "true"
     schema:
-      type: embedded
+      kind: embedded
       fields:
         - name: usaf
           type: STRING

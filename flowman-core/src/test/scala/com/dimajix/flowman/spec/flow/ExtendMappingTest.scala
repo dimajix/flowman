@@ -106,11 +106,11 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |  - start_ts=2016-06-02T23:40:00
               |mappings:
               |  t0:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
               |
               |  t1:
-              |    type: extend
+              |    kind: extend
               |    input: t0
               |    columns:
               |      f1: 2*_2

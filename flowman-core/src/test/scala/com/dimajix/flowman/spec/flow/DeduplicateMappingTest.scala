@@ -38,10 +38,10 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             """
               |mappings:
               |  dummy:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
               |  dedup:
-              |    type: deduplicate
+              |    kind: deduplicate
               |    input: dummy
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")

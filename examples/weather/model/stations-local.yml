@@ -1,6 +1,6 @@
 relations:
   stations-local:
-    type: local
+    kind: local
     format: csv
     location: "file:///tmp/weather-local/isd-history/"
     filename: "stations.csv"
@@ -10,7 +10,7 @@ relations:
       quote: "\""
       header: "true"
     schema:
-      type: embedded
+      kind: embedded
       fields:
         - name: usaf
           type: STRING

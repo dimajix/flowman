@@ -35,7 +35,7 @@ object Mapping {
 /**
   * Interface class for specifying a transformation (mapping)
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),

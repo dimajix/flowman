@@ -35,7 +35,7 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
     "An EmbeddedSchema" should "be parseable with explicit type" in {
         val spec =
             """
-              |type: embedded
+              |kind: embedded
               |fields:
               |  - name: str_col
               |    type: string
@@ -56,7 +56,7 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
     it should "be parseable with inline type" in {
         val spec =
             """
-              |type: inline
+              |kind: inline
               |fields:
               |  - name: str_col
               |    type: string

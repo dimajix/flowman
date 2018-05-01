@@ -2,6 +2,6 @@ jobs:
   dump-all:
     description: "Dumps all outputs"
     tasks:
-      - type: output
+      - kind: output
         outputs:
           - measurements-dump

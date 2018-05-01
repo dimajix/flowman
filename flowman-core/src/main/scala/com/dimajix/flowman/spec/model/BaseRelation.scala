@@ -25,20 +25,20 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.Field
+import com.dimajix.flowman.spec.schema.Schema
 
 
 /**
   * Common base implementation for the Relation interface class. It contains a couple of common properties.
   */
 abstract class BaseRelation extends Relation {
-    @JsonProperty(value="schema", required=false) private var _schema: Seq[Field] = _
+    @JsonProperty(value="schema", required=false) private var _schema: Schema = _
     @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="options", required=false) private var _options:Map[String,String] = Map()
     @JsonProperty(value="defaults", required=false) private var _defaultValues:Map[String,String] = Map()
 
     override def description(implicit context: Context) : String = context.evaluate(_description)
-    override def schema(implicit context: Context) : Seq[Field] = _schema
+    override def schema(implicit context: Context) : Schema = _schema
     def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
     def defaultValues(implicit context: Context) : Map[String,String] = _defaultValues.mapValues(context.evaluate)
 
@@ -51,7 +51,7 @@ abstract class BaseRelation extends Relation {
     protected def reader(executor:Executor) : DataFrameReader = {
         implicit val context = executor.context
         val reader = executor.spark.read.options(options)
-        if (schema != null)
+        if (_schema != null)
             reader.schema(createSchema)
         reader
     }
@@ -65,7 +65,7 @@ abstract class BaseRelation extends Relation {
       */
     protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
         implicit val context = executor.context
-        val outputColumns = schema.map(field => df(field.name).cast(field.sparkType))
+        val outputColumns = schema.fields.map(field => df(field.name).cast(field.sparkType))
         val outputDf = df.select(outputColumns:_*)
         outputDf.write.options(options)
     }
@@ -76,6 +76,6 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def createSchema(implicit context:Context) : StructType = {
-        StructType(schema.map(_.sparkField))
+        StructType(schema.fields.map(_.sparkField))
     }
 }

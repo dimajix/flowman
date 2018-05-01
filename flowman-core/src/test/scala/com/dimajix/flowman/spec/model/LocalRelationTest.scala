@@ -45,15 +45,17 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             s"""
               |relations:
               |  local:
-              |    type: local
+              |    kind: local
               |    location: $tempDir/csv/test
               |    filename: data.csv
               |    format: csv
               |    schema:
-              |      - name: str_col
-              |        type: string
-              |      - name: int_col
-              |        type: integer
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
@@ -85,15 +87,17 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             s"""
                |relations:
                |  local:
-               |    type: local
+               |    kind: local
                |    location: file:///$tempDir/csv/test
                |    filename: data.csv
                |    format: csv
                |    schema:
-               |      - name: str_col
-               |        type: string
-               |      - name: int_col
-               |        type: integer
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")

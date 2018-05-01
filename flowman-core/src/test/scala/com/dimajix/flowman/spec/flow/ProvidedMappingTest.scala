@@ -31,7 +31,7 @@ class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             """
               |mappings:
               |  dummy:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")

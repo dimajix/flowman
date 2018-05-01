@@ -109,14 +109,14 @@ private object FieldTypeDeserializer {
                     case VARCHAR(length) => VarcharType(length.toInt)
                     case other => nonDecimalNameToType.getOrElse (
                         other,
-                        throw new JsonMappingException(jp, s"Failed to convert the JSON string '${jp.getText}' to a field type.")
+                        throw JsonMappingException.from(jp, s"Failed to convert the JSON string '${jp.getText}' to a field type.")
                     )
                 }
             }
             case JsonToken.START_OBJECT => {
                 jp.readValueAs(classOf[ContainerType])
             }
-            case _ => throw new JsonMappingException(jp, "Wrong type for FieldType")
+            case _ => throw JsonMappingException.from(jp, "Wrong type for FieldType")
         }
     }
 }

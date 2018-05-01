@@ -1,6 +1,6 @@
 relations:
   stations-file:
-    type: file
+    kind: file
     format: csv
     location: "file:///tmp/weather-file/isd-history/"
     options:
@@ -9,7 +9,7 @@ relations:
       quote: "\""
       header: "true"
     schema:
-      type: embedded
+      kind: embedded
       fields:
         - name: usaf
           type: STRING

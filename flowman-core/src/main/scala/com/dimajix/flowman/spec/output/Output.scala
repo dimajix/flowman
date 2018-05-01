@@ -31,7 +31,7 @@ object Output {
 }
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeOutput]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountOutput]),

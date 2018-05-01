@@ -30,7 +30,7 @@ class JobTest extends FlatSpec with Matchers {
               |jobs:
               |  job:
               |    tasks:
-              |      - type: loop
+              |      - kind: loop
               |        job: child
             """.stripMargin
 

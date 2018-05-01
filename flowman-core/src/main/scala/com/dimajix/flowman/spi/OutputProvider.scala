@@ -22,7 +22,7 @@ import scala.collection.JavaConversions._
 
 
 object OutputProvider {
-    def providers() = {
+    def providers : Seq[OutputProvider] = {
         val loader = ServiceLoader.load(classOf[OutputProvider])
         loader.iterator().toSeq
     }

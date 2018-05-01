@@ -19,11 +19,6 @@ package com.dimajix.flowman.spec
 import java.io.File
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.jsontype.NamedType
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.flow.Mapping
@@ -38,21 +33,9 @@ object Module {
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Project])
 
-        private def mapper = {
-            val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
-            val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
-            val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))
-            val mapper = new ObjectMapper(new YAMLFactory())
-            mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
-            mapper.registerModule(DefaultScalaModule)
-            mapper.registerSubtypes(relationTypes:_*)
-            mapper.registerSubtypes(mappingTypes:_*)
-            mapper.registerSubtypes(outputTypes:_*)
-            mapper
-        }
         private def loadFile(file:File) : Module = {
             logger.info(s"Reading module file ${file.toString}")
-            mapper.readValue(file, classOf[Module])
+            ObjectMapper.read[Module](file)
         }
 
         /**
@@ -84,7 +67,7 @@ object Module {
         }
 
         def string(text:String) : Module = {
-            mapper.readValue(text, classOf[Module])
+            ObjectMapper.parse[Module](text)
         }
     }
 

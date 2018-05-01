@@ -31,14 +31,16 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
             """
               |relations:
               |  t0:
-              |    type: table
+              |    kind: table
               |    database: default
               |    table: lala
               |    schema:
-              |      - name: str_col
-              |        type: string
-              |      - name: int_col
-              |        type: integer
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
@@ -58,14 +60,16 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
             """
               |relations:
               |  t0:
-              |    type: table
+              |    kind: table
               |    database: default
               |    table: lala
               |    schema:
-              |      - name: str_col
-              |        type: string
-              |      - name: int_col
-              |        type: integer
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
               |    partitions:
               |      - name: spart
               |        type: string
@@ -89,14 +93,16 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
             """
               |relations:
               |  t0:
-              |    type: table
+              |    kind: table
               |    database: default
               |    table: lala
               |    schema:
-              |      - name: str_col
-              |        type: string
-              |      - name: int_col
-              |        type: integer
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
               |    partitions:
               |      - name: spart
               |        type: string

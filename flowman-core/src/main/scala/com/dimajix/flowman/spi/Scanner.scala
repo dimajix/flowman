@@ -27,6 +27,8 @@ import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.annotation.OutputType
 import com.dimajix.flowman.annotation.RelationType
+import com.dimajix.flowman.annotation.SchemaType
+import com.dimajix.flowman.spec.schema.Schema
 
 
 object Scanner {
@@ -57,6 +59,7 @@ object Scanner {
     private var _mappings : Seq[(String,Class[_ <: Mapping])] = _
     private var _relations : Seq[(String,Class[_ <: Relation])] = _
     private var _outputs : Seq[(String,Class[_ <: Output])] = _
+    private var _schemas : Seq[(String,Class[_ <: Schema])] = _
 
     private def loadSubtypes: Unit = {
         synchronized {
@@ -64,6 +67,7 @@ object Scanner {
                 val mappings = MappingProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
                 val relations = RelationProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
                 var outputs = OutputProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
+                var schemas = SchemaProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
 
                 new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
                     .matchClassesWithAnnotation(classOf[MappingType],
@@ -90,10 +94,19 @@ object Scanner {
                             }
                         }
                     )
+                    .matchClassesWithAnnotation(classOf[SchemaType],
+                        new ClassAnnotationMatchProcessor {
+                            override def processMatch(aClass: Class[_]): Unit = {
+                                val annotation = aClass.getAnnotation(classOf[SchemaType])
+                                relations.append((annotation.name(), aClass))
+                            }
+                        }
+                    )
                     .scan()
                 _mappings = mappings.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Mapping]]))
                 _relations = relations.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Relation]]))
                 _outputs = outputs.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Output]]))
+                _schemas = schemas.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Schema]]))
             }
         }
     }
@@ -110,5 +123,9 @@ object Scanner {
     def outputs: Seq[(String,Class[_ <: Output])] = {
         loadSubtypes
         _outputs
+    }
+    def schemas: Seq[(String,Class[_ <: Schema])] = {
+        loadSubtypes
+        _schemas
     }
 }

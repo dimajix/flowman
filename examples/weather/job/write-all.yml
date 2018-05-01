@@ -2,6 +2,6 @@ jobs:
   write-all:
     description: "Writes all outputs"
     tasks:
-      - type: output
+      - kind: output
         outputs:
           - stations-write

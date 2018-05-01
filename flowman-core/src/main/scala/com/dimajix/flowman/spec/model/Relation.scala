@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.spi.Scanner
 
@@ -36,7 +37,7 @@ object Relation {
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
@@ -48,7 +49,8 @@ object Relation {
 ))
 abstract class Relation {
     def description(implicit context: Context) : String
-    def schema(implicit context: Context) : Seq[Field]
+    def schema(implicit context: Context) : Schema
+    def fields(implicit context: Context) : Seq[Field] = schema.fields
 
     /**
       * Reads data from the relation, possibly from specific partitions

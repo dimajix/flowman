@@ -36,11 +36,11 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t0:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
               |
               |  t1:
-              |    type: sql
+              |    kind: sql
               |    sql: |
               |      SELECT x,y
               |
@@ -59,11 +59,11 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t0:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
               |
               |  t1:
-              |    type: sql
+              |    kind: sql
               |    sql: "
               |      SELECT x,y
               |
@@ -83,7 +83,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t1:
-              |    type: sql
+              |    kind: sql
               |    sql: "
               |      SELECT x,y
               |      FROM t0
@@ -105,7 +105,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t1:
-              |    type: sql
+              |    kind: sql
               |    sql: "
               |          WITH current AS (
               |            SELECT
@@ -150,7 +150,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t1:
-              |    type: sql
+              |    kind: sql
               |    sql: "
               |      SELECT _1,_2
               |      FROM t0

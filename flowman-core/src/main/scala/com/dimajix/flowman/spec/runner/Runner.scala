@@ -23,7 +23,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.task.Job
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "simple", value = classOf[SimpleRunner]),
     new JsonSubTypes.Type(name = "logged", value = classOf[JdbcLoggedRunner])

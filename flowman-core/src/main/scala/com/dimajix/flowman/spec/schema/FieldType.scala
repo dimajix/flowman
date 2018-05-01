@@ -51,8 +51,29 @@ abstract class FieldType {
         .toLowerCase(Locale.ROOT)
     }
 
+    /**
+      * Function for parsing a string as an instance of the given FieldType.
+      * @param value
+      * @return
+      */
     def parse(value:String) : Any = parse(value, null)
+
+    /**
+      * Function for parsing a string as an instance of the given FieldType. This method
+      * will also take into account any granularity.
+      * @param value
+      * @param granularity
+      * @return
+      */
     def parse(value:String, granularity:String) : Any
+
+    /**
+      * Function for interpolating a FieldValue as a sequence of the given FieldType. This method
+      * will also take into account any granularity.
+      * @param value
+      * @param granularity
+      * @return
+      */
     def interpolate(value: FieldValue, granularity:String) : Iterable[Any]
 }
 
@@ -73,7 +94,7 @@ private object FieldTypeDeserializer {
         Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
             DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType)
             .map(t => t.sqlType -> t).toMap ++
-        Map("int" -> IntegerType)
+        Map("int" -> IntegerType, "text" -> StringType)
     }
 
     private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r
@@ -88,14 +109,14 @@ private object FieldTypeDeserializer {
                     case VARCHAR(length) => VarcharType(length.toInt)
                     case other => nonDecimalNameToType.getOrElse (
                         other,
-                        throw new JsonMappingException(jp, s"Failed to convert the JSON string '${jp.getText}' to a field type.")
+                        throw JsonMappingException.from(jp, s"Failed to convert the JSON string '${jp.getText}' to a field type.")
                     )
                 }
             }
             case JsonToken.START_OBJECT => {
                 jp.readValueAs(classOf[ContainerType])
             }
-            case _ => throw new JsonMappingException(jp, "Wrong type for FieldType")
+            case _ => throw JsonMappingException.from(jp, "Wrong type for FieldType")
         }
     }
 }

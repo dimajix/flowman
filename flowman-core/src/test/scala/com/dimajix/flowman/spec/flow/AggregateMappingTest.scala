@@ -75,11 +75,11 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
             """
               |mappings:
               |  t0:
-              |    type: provided
+              |    kind: provided
               |    table: my_table
               |
               |  t1:
-              |    type: aggregate
+              |    kind: aggregate
               |    input: t0
               |    dimensions:
               |      - _1

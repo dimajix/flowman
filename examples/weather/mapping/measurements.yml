@@ -1,6 +1,6 @@
 mappings:
   measurements-raw:
-    type: read
+    kind: read
     source: measurements-raw
     partitions:
       year:
@@ -10,7 +10,7 @@ mappings:
       raw_data: String
 
   measurements:
-    type: select
+    kind: select
     input: measurements-raw
     columns:
       usaf: "SUBSTR(raw_data,5,6)"

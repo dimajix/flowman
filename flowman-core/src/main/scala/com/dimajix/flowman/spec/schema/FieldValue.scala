@@ -48,7 +48,7 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
                 val end = node.get("end").asText
                 RangeValue(start, end)
             }
-            case _ => throw new JsonMappingException(jp, "Wrong type for value/range")
+            case _ => throw JsonMappingException.from(jp, "Wrong type for value/range")
         }
     }
 }

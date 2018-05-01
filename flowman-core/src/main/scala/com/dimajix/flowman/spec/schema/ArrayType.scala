@@ -16,15 +16,21 @@
 
 package com.dimajix.flowman.spec.schema
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.types.DataType
 
 
-case class ArrayType(
-    @JsonProperty(value="elementType") elementType:FieldType
-                    ) extends ContainerType {
+case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED)(
+        @JsonProperty(value="elementType") elementType:FieldType,
+        @JsonProperty(value="containsNull") containsNull:Boolean = true
+    ) extends ContainerType {
+
+    @JsonCreator
+    def this() = { this(null, true) }
+
     override def sparkType : DataType = {
-        org.apache.spark.sql.types.ArrayType(elementType.sparkType)
+        org.apache.spark.sql.types.ArrayType(elementType.sparkType, containsNull)
     }
 
     override def parse(value:String, granularity:String) : Any = ???

@@ -24,7 +24,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask]),
     new JsonSubTypes.Type(name = "output", value = classOf[OutputTask]),

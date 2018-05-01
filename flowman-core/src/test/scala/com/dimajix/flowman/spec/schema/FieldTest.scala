@@ -32,11 +32,27 @@ class FieldTest extends FlatSpec with Matchers {
         mapper
     }
 
-    "A simple Field" should "be deserializable" in {
+    "A string Field" should "be deserializable" in {
         val spec =
             """
               |name: lala
               |type: String
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.readValue(spec, classOf[Field])
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+    it should "be deserializable as text" in {
+        val spec =
+            """
+              |name: lala
+              |type: TEXT
             """.stripMargin
 
         val session = Session.builder().build()
@@ -94,7 +110,45 @@ class FieldTest extends FlatSpec with Matchers {
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
-        result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType))
+        result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType, true))
+    }
+    it should "be deserializable with nullable elements" in {
+        val spec =
+            """
+              |name: lala
+              |type:
+              |  type: array
+              |  containsNull: true
+              |  elementType: String
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.readValue(spec, classOf[Field])
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
+        result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType, true))
+    }
+    it should "be deserializable with non-nullable elements" in {
+        val spec =
+            """
+              |name: lala
+              |type:
+              |  type: array
+              |  containsNull: false
+              |  elementType: String
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.readValue(spec, classOf[Field])
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
+        result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType, false))
     }
 
     "An array Field of Structs" should "be deserializable" in {

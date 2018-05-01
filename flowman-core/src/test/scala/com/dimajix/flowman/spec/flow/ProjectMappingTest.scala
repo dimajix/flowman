@@ -56,7 +56,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t1:
-              |    type: project
+              |    kind: project
               |    input: t0
               |    columns:
               |      _2: string

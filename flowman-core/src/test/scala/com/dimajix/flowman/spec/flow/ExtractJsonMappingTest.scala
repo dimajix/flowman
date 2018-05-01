@@ -37,7 +37,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             """
               |mappings:
               |  m0:
-              |    type: json-extract
+              |    kind: json-extract
               |    input: p0
               |    column: _1
               |    schema:

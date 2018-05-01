@@ -46,7 +46,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
               |        value: 7
               |  loop:
               |    tasks:
-              |      - type: loop
+              |      - kind: loop
               |        job: child
               |        args:
               |          p1: xyz
@@ -74,7 +74,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
               |      - name: p1
               |  loop:
               |    tasks:
-              |      - type: loop
+              |      - kind: loop
               |        job: child
               |        args:
               |          p2: [abc, xyz]

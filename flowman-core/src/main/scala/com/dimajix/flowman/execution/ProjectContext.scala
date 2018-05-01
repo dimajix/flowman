@@ -56,10 +56,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       * @return
       */
     override def runner : Runner = {
-        if (_project.runner != null)
-            _project.runner
-        else
-            parent.runner
+        parent.runner
     }
 
     /**

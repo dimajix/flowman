@@ -21,7 +21,6 @@ import scala.util.Success
 import scala.util.Try
 
 import org.apache.spark.SparkConf
-import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
@@ -39,7 +38,7 @@ class SessionBuilder {
     private var _project:Project = _
     private var _namespace:Namespace = _
 
-    def withSparkSession(session:SparkSession) = {
+    def withSparkSession(session:SparkSession) : SessionBuilder = {
         _sparkSession = session
         this
     }

@@ -35,7 +35,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         module.environment should contain("x" -> "y")
         module.config should contain("spark.lala" -> "lolo")
     }
-
+    
     it should "be executable" in {
         val spec =
             """

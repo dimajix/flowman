@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-export JAVA_HOME=
+export JAVA_HOME
+
+export FLOWMAN_HOME
+export FLOWMAN_CONF_DIR
 
 export HADOOP_HOME=
 export HADOOP_CONF_DIR=${HADOOP_CONF_DIR=$HADOOP_HOME/conf}

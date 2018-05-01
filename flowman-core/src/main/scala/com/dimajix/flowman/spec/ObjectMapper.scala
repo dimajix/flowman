@@ -40,6 +40,7 @@ object ObjectMapper {
         val schemaTypes = Schema.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new JacksonMapper(new YAMLFactory())
         mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+        mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
         mapper.registerModule(DefaultScalaModule)
         mapper.registerSubtypes(relationTypes:_*)
         mapper.registerSubtypes(mappingTypes:_*)

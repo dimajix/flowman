@@ -171,7 +171,6 @@ class Project {
     private var _mappings: Map[String,Mapping] = Map()
     private var _outputs: Map[String,Output] = Map()
     private var _jobs: Map[String,Job] = Map()
-    private var _runner: Runner = _
 
     def name : String = _name
     def version : String = _version
@@ -181,7 +180,6 @@ class Project {
 
     def config : Seq[(String,String)] = _config
     def environment : Seq[(String,String)] = _environment
-    def runner : Runner = _runner
 
     def profiles : Map[String,Profile] = _profiles
     def relations : Map[String,Relation] = _relations

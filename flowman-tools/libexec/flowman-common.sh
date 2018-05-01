@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-basedir=$(readlink -f $(dirname $0)/..)
-confdir=$basedir/conf
+export FLOWMAN_HOME=${FLOWMAN_HOME=$(readlink -f $(dirname $0)/..)}
+export FLOWMAN_CONF_DIR=${FLOWMAN_CONF_DIR=$FLOWMAN_HOME/conf}
 
 # Set basic options
 : ${SPARK_MASTER:="yarn"}
@@ -14,8 +14,8 @@ confdir=$basedir/conf
 : ${SPARK_EXECUTOR_JAVA_OPTS:="-server"}
 
 # Load environment file if present
-if [ -f $confdir/dataflow-env.sh ]; then
-    source $confdir/dataflow-env.sh
+if [ -f $FLOWMAN_CONF_DIR/flowman-env.sh ]; then
+    source $FLOWMAN_CONF_DIR/flowman-env.sh
 fi
 
 if [ -f $HADOOP_HOME/etc/hadoop/hadoop-env.sh ]; then
@@ -53,7 +53,7 @@ fi
 
 
 spark_submit() {
-    LIB_JARS=$(ls $basedir/lib/*.jar | awk -vORS=, '{ print $1 }' | sed 's/,$/\n/')
+    LIB_JARS=$(ls $FLOWMAN_HOME/lib/*.jar | awk -vORS=, '{ print $1 }' | sed 's/,$/\n/')
 
     $SPARK_HOME/bin/spark-submit \
       --executor-cores $SPARK_EXECUTOR_CORES \

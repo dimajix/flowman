@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
-import com.dimajix.flowman.spec.runner.Runner
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.util.splitSettings
 
@@ -84,7 +83,6 @@ class Module {
     @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
     @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
     @JsonProperty(value="jobs") private var _jobs: Map[String,Job] = Map()
-    @JsonProperty(value="runner") private var _runner: Runner = _
 
     def profiles : Map[String,Profile] = _profiles
     def relations : Map[String,Relation] = _relations
@@ -92,7 +90,6 @@ class Module {
     def mappings : Map[String,Mapping] = _mappings
     def outputs : Map[String,Output] = _outputs
     def jobs : Map[String,Job] = _jobs
-    def runner : Runner = _runner
 
     /**
       * Returns all configuration variables as a key-value sequence

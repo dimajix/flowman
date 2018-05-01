@@ -40,7 +40,7 @@ class Arguments(args:Array[String]) {
     var projectFile: String = "project.yml"
     @Option(name = "-p", aliases=Array("--profile"), usage = "profile to enable", metaVar = "<profile>")
     var profiles: Array[String] = Array()
-    @Option(name = "-e", aliases=Array("--env"), usage = "sets environment variables which can be accessed inside config", metaVar = "<key=value>")
+    @Option(name = "-D", aliases=Array("--env"), usage = "sets environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false

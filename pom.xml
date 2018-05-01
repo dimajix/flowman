@@ -13,12 +13,14 @@
         <hadoop.version>2.8.3</hadoop.version>
         <spark.version>2.2.1</spark.version>
         <icu4j.version>50.1.1</icu4j.version>
+        <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
         <avro.version>1.7.6</avro.version>
-        <jackson.version>2.9.2</jackson.version>
+        <jackson.version>2.9.5</jackson.version>
         <spark-avro.version>3.0.0</spark-avro.version>
         <mysql-connector.version>6.0.6</mysql-connector.version>
         <velocity.version>1.7</velocity.version>
+        <scalikejdbc.version>3.0.2</scalikejdbc.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <scala.version>2.11.8</scala.version>
@@ -228,12 +230,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.scala-lang.modules</groupId>
-                <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
-                <version>1.0.4</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest_${scala.api_version}</artifactId>
                 <version>3.0.3</version>
@@ -314,7 +310,7 @@
             <dependency>
                 <groupId>args4j</groupId>
                 <artifactId>args4j</artifactId>
-                <version>2.33</version>
+                <version>${args4j.version}</version>
             </dependency>
 
             <dependency>
@@ -399,7 +395,7 @@
             <dependency>
                 <groupId>org.scalikejdbc</groupId>
                 <artifactId>scalikejdbc_${scala.api_version}</artifactId>
-                <version>3.0.2</version>
+                <version>${scalikejdbc.version}</version>
             </dependency>
 
             <dependency>

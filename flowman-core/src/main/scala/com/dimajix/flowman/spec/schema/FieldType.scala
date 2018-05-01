@@ -94,7 +94,7 @@ private object FieldTypeDeserializer {
         Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
             DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType)
             .map(t => t.sqlType -> t).toMap ++
-        Map("int" -> IntegerType)
+        Map("int" -> IntegerType, "text" -> StringType)
     }
 
     private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r

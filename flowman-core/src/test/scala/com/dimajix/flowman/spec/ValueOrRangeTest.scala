@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -34,8 +32,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
               |"someValue"
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[FieldValue])
+        val result = ObjectMapper.parse[FieldValue](spec)
         result shouldBe a [SingleValue]
         result.asInstanceOf[SingleValue].value should be("someValue")
     }
@@ -46,8 +43,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
               |["someValue", "secondValue"]
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[FieldValue])
+        val result = ObjectMapper.parse[FieldValue](spec)
         result shouldBe a [ArrayValue]
         result.asInstanceOf[ArrayValue].values should be (Array("someValue","secondValue"))
     }
@@ -58,8 +54,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
               |[someValue, secondValue]
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[FieldValue])
+        val result = ObjectMapper.parse[FieldValue](spec)
         result shouldBe a [ArrayValue]
         result.asInstanceOf[ArrayValue].values should be (Array("someValue","secondValue"))
     }
@@ -71,8 +66,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
               |end: "secondValue"
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[FieldValue])
+        val result = ObjectMapper.parse[FieldValue](spec)
         result shouldBe a [RangeValue]
         result.asInstanceOf[RangeValue].start should be ("someValue")
         result.asInstanceOf[RangeValue].end should be ("secondValue")
@@ -85,8 +79,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
               |end: secondValue
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        val result = mapper.readValue(spec, classOf[FieldValue])
+        val result = ObjectMapper.parse[FieldValue](spec)
         result shouldBe a [RangeValue]
         result.asInstanceOf[RangeValue].start should be ("someValue")
         result.asInstanceOf[RangeValue].end should be ("secondValue")

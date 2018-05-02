@@ -18,6 +18,7 @@
         <avro.version>1.7.6</avro.version>
         <jackson.version>2.9.5</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
+        <snakeyaml.version>1.21</snakeyaml.version>
         <spark-avro.version>3.0.0</spark-avro.version>
         <mysql-connector.version>6.0.6</mysql-connector.version>
         <velocity.version>1.7</velocity.version>
@@ -161,6 +162,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -352,50 +358,64 @@
 
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
-                <artifactId>ackson-mapper-asl</artifactId>
+                <artifactId>jackson-mapper-asl</artifactId>
                 <version>${jackson_asl.version}</version>
-                <!--<scope>provided</scope>-->
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
-                <artifactId>ackson-core-asl</artifactId>
+                <artifactId>jackson-core-asl</artifactId>
                 <version>${jackson_asl.version}</version>
-                <!--<scope>provided</scope>-->
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-yaml</artifactId>
                 <version>${jackson.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
-                <!--<scope>provided</scope>-->
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>${jackson.version}</version>
-                <!--<scope>provided</scope>-->
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
-                <!--<scope>provided</scope>-->
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-paranamer</artifactId>
+                <version>${jackson.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-scala_${scala.api_version}</artifactId>
                 <version>${jackson.version}</version>
-                <!--<scope>provided</scope>-->
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
             </dependency>
 
             <dependency>

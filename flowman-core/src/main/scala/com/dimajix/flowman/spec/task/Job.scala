@@ -44,7 +44,7 @@ class JobParameter {
     @JsonProperty(value="description") private var _description:String = ""
     @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
     @JsonProperty(value="granularity", required = false) private var _granularity: String = _
-    @JsonProperty(value="value", required = false) private var _value: String = _
+    @JsonProperty(value="default", required = false) private var _default: String = _
 
     def this(name:String, ftype:FieldType, granularity:String = null, value:String = null, description:String = "") = {
         this()
@@ -52,14 +52,14 @@ class JobParameter {
         _description = description
         _type = ftype
         _granularity = granularity
-        _value = value
+        _default = value
     }
 
     def name : String = _name
     def description : String = _description
     def ftype : FieldType = _type
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
-    def value(implicit context:Context) : String = context.evaluate(_value)
+    def default(implicit context:Context) : String = context.evaluate(_default)
 
     def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
         ftype.interpolate(value, granularity)
@@ -136,7 +136,7 @@ class Job {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
             (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2).toString))
-        parameters.map(p => (p.name, p.value)).toMap ++ processedArgs
+        parameters.map(p => (p.name, p.default)).toMap ++ processedArgs
     }
 
     /**

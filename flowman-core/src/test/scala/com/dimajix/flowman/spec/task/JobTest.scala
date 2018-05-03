@@ -50,10 +50,10 @@ class JobTest extends FlatSpec with Matchers {
               |    parameters:
               |      - name: p1
               |      - name: p2
-              |        value: v2
+              |        default: v2
               |      - name: p3
               |        type: Integer
-              |        value: 7
+              |        default: 7
             """.stripMargin
 
         val module = Module.read.string(spec)
@@ -115,10 +115,10 @@ class JobTest extends FlatSpec with Matchers {
               |    parameters:
               |      - name: p1
               |      - name: p2
-              |        value: v2
+              |        default: v2
               |      - name: p3
               |        type: Integer
-              |        value: 7
+              |        default: 7
             """.stripMargin
 
         val module = Module.read.string(spec)

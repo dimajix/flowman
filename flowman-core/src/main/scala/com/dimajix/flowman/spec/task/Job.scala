@@ -41,19 +41,22 @@ object JobStatus {
 
 class JobParameter {
     @JsonProperty(value="name") private var _name:String = ""
+    @JsonProperty(value="description") private var _description:String = ""
     @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
     @JsonProperty(value="granularity", required = false) private var _granularity: String = _
     @JsonProperty(value="value", required = false) private var _value: String = _
 
-    def this(name:String, ftype:FieldType, granularity:String = null, value:String = null) = {
+    def this(name:String, ftype:FieldType, granularity:String = null, value:String = null, description:String = "") = {
         this()
         _name = name
+        _description = description
         _type = ftype
         _granularity = granularity
         _value = value
     }
 
     def name : String = _name
+    def description : String = _description
     def ftype : FieldType = _type
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
     def value(implicit context:Context) : String = context.evaluate(_value)
@@ -150,6 +153,7 @@ class Job {
 
         // Create a new execution environment
         val jobArgs = arguments(args)
+        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
         val jobContext = new ScopedContext(context).withConfig(jobArgs)
         val jobExecutor = executor.withContext(jobContext)
 

@@ -150,6 +150,7 @@ class Job {
 
         // Create a new execution environment
         val jobArgs = arguments(args)
+        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
         val jobContext = new ScopedContext(context).withConfig(jobArgs)
         val jobExecutor = executor.withContext(jobContext)
 

@@ -83,7 +83,28 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
+    }
+
+    it should "fail on missing parameters" in {
+        val spec =
+            """
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map()))
     }
 
     it should "return correct arguments" in {

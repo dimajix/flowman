@@ -51,6 +51,7 @@ abstract class Context {
 
     def namespace : Namespace
     def project : Project
+    def root : Context
 
     /**
       * Evaluates a string containing expressions to be processed.

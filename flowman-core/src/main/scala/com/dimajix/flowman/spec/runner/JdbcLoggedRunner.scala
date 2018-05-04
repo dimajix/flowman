@@ -29,7 +29,6 @@ import scalikejdbc.ConnectionPool
 import scalikejdbc.DB
 import scalikejdbc.DBSession
 import scalikejdbc.SQLSyntaxSupport
-import scalikejdbc.SubQuery
 import scalikejdbc.insert
 import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 import scalikejdbc.select
@@ -61,9 +60,9 @@ class JdbcLoggedRunner extends AbstractRunner {
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
 
-    @JsonProperty(value="connection", required=true) private[spec] var _connection:String = _
-    @JsonProperty(value="retries", required=false) private[spec] var _retries:String = "3"
-    @JsonProperty(value="timeout", required=false) private[spec] var _timeout:String = "1000"
+    @JsonProperty(value="connection", required=true) private var _connection:String = ""
+    @JsonProperty(value="retries", required=false) private var _retries:String = "3"
+    @JsonProperty(value="timeout", required=false) private var _timeout:String = "1000"
 
     def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
     def retries(implicit context: Context) : Int = context.evaluate(_retries).toInt
@@ -74,8 +73,8 @@ class JdbcLoggedRunner extends AbstractRunner {
 
         val run =  Run(
             0,
-            Option(context.namespace.name).getOrElse(""),
-            Option(context.project.name).getOrElse(""),
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
             job.name,
             hashArgs(job, args),
             null,
@@ -86,18 +85,18 @@ class JdbcLoggedRunner extends AbstractRunner {
         val result =
             withSession(context) { implicit session =>
                 val r = Run.syntax("r")
-                val sq = SubQuery.syntax("sq").include(r)
+                val sq = Run.syntax("sq")
                 withSQL {
                     select(r.status)
                         .from(Run as r)
                         .where.in(r.id,
-                        select(sqls"${max(sq(r).id)} as id")
-                            .from(Run as r)
-                            .where.eq(r.namespace, run.namespace)
-                            .and.eq(r.project, run.project)
-                            .and.eq(r.job, run.job)
-                            .and.eq(r.args_hash, run.args_hash)
-                            .and.not.eq(r.status, STATUS_SKIPPED)
+                        select(sqls"${max(sq.id)} as id")
+                            .from(Run as sq)
+                            .where.eq(sq.namespace, run.namespace)
+                            .and.eq(sq.project, run.project)
+                            .and.eq(sq.job, run.job)
+                            .and.eq(sq.args_hash, run.args_hash)
+                            .and.not.eq(sq.status, STATUS_SKIPPED)
                     )
                 }.map(rs => rs.get[String]("status")).first.apply()
             }
@@ -112,8 +111,8 @@ class JdbcLoggedRunner extends AbstractRunner {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  Run(
             0,
-            Option(context.namespace.name).getOrElse(""),
-            Option(context.project.name).getOrElse(""),
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
             job.name,
             hashArgs(job, args),
             now,
@@ -197,7 +196,7 @@ class JdbcLoggedRunner extends AbstractRunner {
       * @return
       */
     private def withSession[T](context: Context)(query: DBSession => T) : T = {
-        implicit val icontext = context
+        implicit val icontext = context.root
 
         def retry[T](n:Int)(fn: => T) : T = {
             try {
@@ -212,7 +211,7 @@ class JdbcLoggedRunner extends AbstractRunner {
         }
 
         retry(retries) {
-            scalikejdbc.using(connect(context).borrow()) { conn =>
+            scalikejdbc.using(connect(icontext).borrow()) { conn =>
                 DB(conn) autoCommit query
             }
         }
@@ -234,7 +233,7 @@ class JdbcLoggedRunner extends AbstractRunner {
 
         if (!ConnectionPool.isInitialized(connection)) {
             val url = connection.url
-            logger.info(s"Connecting via JDBC to ${url}")
+            logger.info(s"Connecting via JDBC to $url")
             DriverRegistry.register(connection.driver)
 
             ConnectionPool.add(connection, url, connection.username, connection.password)

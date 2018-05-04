@@ -53,6 +53,9 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
 
     override def project : Project = _project
 
+    override def root : Context = parent.root
+
+
     /**
       * Returns the appropriate runner for this project.
       *
@@ -111,7 +114,10 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
       * @return
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
-        if (identifier.project.forall(_ == _project.name)) {
+        if (identifier.project.isEmpty) {
+            databases.getOrElse(identifier.name, parent.getConnection(identifier))
+        }
+        else if (identifier.project.contains(_project.name)) {
             databases.getOrElse(identifier.name, throw new NoSuchElementException(s"Database '$identifier' not found in project ${_project.name}"))
         }
         else {
@@ -167,7 +173,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
     override def withProfile(profile:Profile) : Context = {
         setConfig(profile.config, SettingLevel.PROJECT_PROFILE)
         setEnvironment(profile.environment, SettingLevel.PROJECT_PROFILE)
-        setDatabases(profile.databases, SettingLevel.PROJECT_PROFILE)
+        setConnections(profile.connections, SettingLevel.PROJECT_PROFILE)
         this
     }
 }

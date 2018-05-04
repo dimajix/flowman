@@ -85,6 +85,10 @@ object Job {
 
         def build() : Job = job
 
+        def setName(name:String) : Builder = {
+            job._name = name
+            this
+        }
         def setDescription(desc:String) : Builder = {
             job._description = desc
             this

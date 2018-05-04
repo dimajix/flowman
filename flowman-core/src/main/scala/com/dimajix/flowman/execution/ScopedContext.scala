@@ -44,6 +44,8 @@ class ScopedContext(parent:Context) extends AbstractContext {
 
     override def project : Project = parent.project
 
+    override def root : Context = parent.root
+
     /**
       * Try to retrieve the specified database connection. Performs lookups in parent context if required
       *

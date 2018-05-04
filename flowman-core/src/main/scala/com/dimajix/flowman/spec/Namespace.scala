@@ -21,12 +21,56 @@ import java.io.File
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.model.Relation
+import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.runner.Runner
+import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.storage.Store
 import com.dimajix.flowman.util.splitSettings
 
 
 object Namespace {
+    class Builder {
+        private val namespace = new Namespace
+
+        def build() : Namespace = namespace
+
+        def setName(name:String) : Builder = {
+            namespace._name = name
+            this
+        }
+        def setRunner(runner:Runner) : Builder = {
+            namespace._runner = runner
+            this
+        }
+
+        def setEnvironment(env:Seq[(String,String)]) : Builder = {
+            namespace._environment = env.map(kv => kv._1 + "=" + kv._2)
+            this
+        }
+        def setConfig(conf:Seq[(String,String)]) : Builder = {
+            namespace._config = conf
+            this
+        }
+        def setProfiles(profiles:Map[String,Profile]) : Builder = {
+            namespace._profiles = profiles
+            this
+        }
+        def addProfile(name:String, profile:Profile) : Builder = {
+            namespace._profiles = namespace._profiles + (name -> profile)
+            this
+        }
+        def setConnections(connections:Map[String,Connection]) : Builder = {
+            namespace._connections = connections
+            this
+        }
+        def addConnection(name:String, connection:Connection) : Builder = {
+            namespace._connections = namespace._connections + (name -> connection)
+            this
+        }
+    }
+
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Project])
 
@@ -51,6 +95,8 @@ object Namespace {
     }
 
     def read = new Reader
+
+    def builder() = new Builder
 }
 
 
@@ -60,6 +106,7 @@ class Namespace {
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[(String,String)] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
+    @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
     @JsonProperty(value="runner") private var _runner : Runner = _
 
     def name : String = _name
@@ -68,6 +115,7 @@ class Namespace {
     def environment : Seq[(String,String)] = splitSettings(_environment)
 
     def profiles : Map[String,Profile] = _profiles
+    def connections : Map[String,Connection] = _connections
     def projects : Seq[String] = ???
     def runner : Runner = _runner
 }

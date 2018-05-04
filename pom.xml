@@ -23,6 +23,7 @@
         <mysql-connector.version>6.0.6</mysql-connector.version>
         <velocity.version>1.7</velocity.version>
         <scalikejdbc.version>3.0.2</scalikejdbc.version>
+        <derby.version>10.12.1.1</derby.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <scala.version>2.11.8</scala.version>
@@ -410,6 +411,12 @@
                 <artifactId>jackson-module-scala_${scala.api_version}</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derby</artifactId>
+                <version>${derby.version}</version>
             </dependency>
 
             <dependency>

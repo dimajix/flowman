@@ -21,11 +21,23 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.flowman.execution.Context
 
 
+object Connection {
+    def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : Connection = {
+        val connection = new Connection
+        connection._driver = driver
+        connection._url = url
+        connection._username = username
+        connection._password = password
+        connection._properties = properties
+        connection
+    }
+}
+
 class Connection {
-    @JsonProperty(value="driver", required=true) private[spec] var _driver:String = _
-    @JsonProperty(value="url", required=true) private[spec] var _url:String = _
-    @JsonProperty(value="username", required=true) private[spec] var _username:String = _
-    @JsonProperty(value="password", required=true) private[spec] var _password:String = _
+    @JsonProperty(value="driver", required=true) private var _driver:String = _
+    @JsonProperty(value="url", required=true) private var _url:String = _
+    @JsonProperty(value="username", required=true) private var _username:String = _
+    @JsonProperty(value="password", required=true) private var _password:String = _
     @JsonProperty(value="properties") private var _properties:Map[String,String] = Map()
 
     def driver(implicit context: Context) : String = context.evaluate(_driver)

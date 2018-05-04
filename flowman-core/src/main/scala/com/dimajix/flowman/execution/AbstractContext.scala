@@ -164,7 +164,7 @@ abstract class AbstractContext extends Context {
         }
     }
 
-    def setDatabases(databases:Map[String,Connection], settingLevel: SettingLevel) : Unit = {
+    def setConnections(databases:Map[String,Connection], settingLevel: SettingLevel) : Unit = {
         databases.foreach(kv => setDatabase(kv._1, kv._2, settingLevel))
     }
     def setDatabase(name:String, database:Connection, settingLevel: SettingLevel) : Unit = {

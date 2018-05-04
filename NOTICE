@@ -48,6 +48,12 @@ Velocity
   * HOMEPAGE:
     * http://velocity.apache.org/
 
+Squeryl
+  * LICENSE
+    * license/LICENSE-squeryl.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * http://squeryl.org/
+
 ScalikeJDBC
 Copyright scalikejdbc.org
   * LICENSE:

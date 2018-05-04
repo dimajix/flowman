@@ -164,7 +164,7 @@ class Job {
       */
     def execute(executor:Executor, args:Map[String,String]) : JobStatus = {
         implicit val context = executor.context
-        logger.info(s"Running job: '$description'")
+        logger.info(s"Running job: '$name' ($description)")
 
         // Create a new execution environment
         val jobArgs = arguments(args)

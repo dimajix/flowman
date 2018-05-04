@@ -25,38 +25,99 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import javax.xml.bind.DatatypeConverter
 import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.slf4j.LoggerFactory
-import scalikejdbc.ConnectionPool
-import scalikejdbc.DB
-import scalikejdbc.DBSession
-import scalikejdbc.SQLSyntaxSupport
-import scalikejdbc.insert
-import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
-import scalikejdbc.select
-import scalikejdbc.update
-import scalikejdbc.withSQL
+import org.squeryl.AbstractSession
+import org.squeryl.KeyedEntity
+import org.squeryl.PrimitiveTypeMode
+import org.squeryl.Schema
+import org.squeryl.Session
+import org.squeryl.adapters.DerbyAdapter
+import org.squeryl.adapters.MySQLAdapter
+import org.squeryl.adapters.PostgreSqlAdapter
+import org.squeryl.internals.DatabaseAdapter
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.task.Job
 
 
 object JdbcLoggedRunner {
-    private val STATUS_SUCCESS = "success"
-    private val STATUS_FAILED = "failed"
-    private val STATUS_RUNNING = "running"
-    private val STATUS_SKIPPED = "skipped"
-    private val STATUS_KILLED = "killed"
-
-    private object Run extends SQLSyntaxSupport[Run] {
-        override val tableName = "run"
-        override val columnNames = Seq("id", "namespace", "project", "job", "args_hash", "start_ts", "end_ts", "status")
-    }
-    private case class Run(id:Long, namespace: String, project:String, job:String, args_hash:String, start_ts:Timestamp, end_ts:Timestamp, status:String)
+    val STATUS_SUCCESS = "success"
+    val STATUS_FAILED = "failed"
+    val STATUS_RUNNING = "running"
+    val STATUS_SKIPPED = "skipped"
+    val STATUS_KILLED = "killed"
 }
 
 
+private object JdbcLoggedRunnerModel extends PrimitiveTypeMode {
+    case class Run (
+           id:Long,
+           namespace: String,
+           project:String,
+           job:String,
+           args_hash:String,
+           start_ts:Timestamp,
+           end_ts:Timestamp,
+           status:String
+       ) extends KeyedEntity[Long] {
+    }
+
+    object Library extends Schema {
+        val runs = table[Run]("JOB_RUN")
+
+        on(runs)(b => declare(
+            b.id is(primaryKey, autoIncremented),
+            b.namespace defaultsTo(""),
+            b.project defaultsTo(""),
+            b.job defaultsTo(""),
+            b.args_hash defaultsTo(""),
+            b.start_ts is(),
+            b.end_ts is(),
+            b.status defaultsTo(""),
+
+            columns(b.namespace, b.project, b.job, b.args_hash, b.status) are (indexed)
+        ))
+
+        def getStatus(run:Run) : Option[String] = {
+            from(runs)(r =>
+                where(r.id in
+                    from(runs)(r2 =>
+                        where(r2.namespace === run.namespace
+                            and r2.project === run.project
+                            and r2.job === run.job
+                            and r2.args_hash === run.args_hash
+                            and r2.status <> JdbcLoggedRunner.STATUS_SKIPPED
+                        )
+                        compute max(r2.id)
+                    )
+                )
+                select r.status
+            ).singleOption
+        }
+
+        def insertRun(run:Run) : Run = {
+            transaction(Session.currentSession) {
+                Library.runs.insert(run)
+            }
+        }
+        def setState(run:Run) : Int = {
+            transaction(Session.currentSession) {
+                update(Library.runs)(r =>
+                    where(r.id === run.id)
+                        .set(
+                            r.end_ts := run.end_ts,
+                            r.status := run.status
+                        )
+                )
+            }
+        }
+    }
+}
+
 class JdbcLoggedRunner extends AbstractRunner {
     import JdbcLoggedRunner._
+    import JdbcLoggedRunnerModel._
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
 
@@ -69,8 +130,6 @@ class JdbcLoggedRunner extends AbstractRunner {
     def timeout(implicit context: Context) : Int = context.evaluate(_timeout).toInt
 
     protected override def check(context:Context, job:Job, args:Map[String,String]) : Boolean = {
-        import scalikejdbc.SQLSyntax.max
-
         val run =  Run(
             0,
             Option(context.namespace).map(_.name).getOrElse(""),
@@ -83,22 +142,8 @@ class JdbcLoggedRunner extends AbstractRunner {
         )
         logger.info(s"Checking last state for job ${run.namespace}/${run.project}/${run.job} in state database")
         val result =
-            withSession(context) { implicit session =>
-                val r = Run.syntax("r")
-                val sq = Run.syntax("sq")
-                withSQL {
-                    select(r.status)
-                        .from(Run as r)
-                        .where.in(r.id,
-                        select(sqls"${max(sq.id)} as id")
-                            .from(Run as sq)
-                            .where.eq(sq.namespace, run.namespace)
-                            .and.eq(sq.project, run.project)
-                            .and.eq(sq.job, run.job)
-                            .and.eq(sq.args_hash, run.args_hash)
-                            .and.not.eq(sq.status, STATUS_SKIPPED)
-                    )
-                }.map(rs => rs.get[String]("status")).first.apply()
+            withSession(context) {
+                Library.getStatus(run)
             }
 
         result match {
@@ -116,25 +161,14 @@ class JdbcLoggedRunner extends AbstractRunner {
             job.name,
             hashArgs(job, args),
             now,
-            null,
+            new Timestamp(0),
             STATUS_RUNNING
         )
 
         logger.info(s"Writing start marker for job ${run.namespace}/${run.project}/${run.job} into state database")
-        val runId =
-            withSession(context) { implicit session =>
-                withSQL {
-                    insert.into(Run).namedValues(
-                        Run.column.namespace -> run.namespace,
-                        Run.column.project -> run.project,
-                        Run.column.job -> run.job,
-                        Run.column.start_ts -> run.start_ts,
-                        Run.column.status -> run.status
-                    )
-                }.updateAndReturnGeneratedKey.apply()
-            }
-
-        run.copy(id = runId)
+        withSession(context) {
+            Library.insertRun(run)
+        }
     }
 
     protected override def success(context: Context, token:Object) : Unit = {
@@ -171,18 +205,11 @@ class JdbcLoggedRunner extends AbstractRunner {
       * @param run
       * @param status
       */
-    private def setState(context: Context, run: Run, status:String) = {
+    private def setState(context: Context, run: Run, status:String): Unit = {
         logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-
-        withSession(context) { implicit session =>
-            withSQL {
-                update(Run).set(
-                    Run.column.end_ts -> now,
-                    Run.column.status -> status
-                )
-                .where.eq(Run.column.id, run.id)
-            }.update.apply()
+        withSession(context) {
+            Library.setState(run.copy(end_ts = now, status=status))
         }
     }
 
@@ -195,8 +222,9 @@ class JdbcLoggedRunner extends AbstractRunner {
       * @tparam T
       * @return
       */
-    private def withSession[T](context: Context)(query: DBSession => T) : T = {
+    private def withSession[T](context: Context)(query: => T) : T = {
         implicit val icontext = context.root
+
 
         def retry[T](n:Int)(fn: => T) : T = {
             try {
@@ -211,11 +239,19 @@ class JdbcLoggedRunner extends AbstractRunner {
         }
 
         retry(retries) {
-            scalikejdbc.using(connect(icontext).borrow()) { conn =>
-                DB(conn) autoCommit query
+            val session = newSession(icontext)
+            try {
+                using(session) {
+                    query
+                }
+            }
+            finally {
+                session.close
             }
         }
     }
+
+    private var tablesCreated:Boolean = false
 
     /**
       * Connects to a JDBC source
@@ -223,7 +259,18 @@ class JdbcLoggedRunner extends AbstractRunner {
       * @param context
       * @return
       */
-    private def connect(context: Context) : ConnectionPool = {
+    private def connect(context: Context, connection:Connection) : java.sql.Connection = {
+        implicit val icontext = context
+
+        val url = connection.url
+        logger.info(s"Connecting via JDBC to $url")
+
+        DriverRegistry.register(connection.driver)
+
+        java.sql.DriverManager.getConnection(connection.url)
+    }
+
+    private def newSession(context:Context) : Session = {
         implicit val icontext = context
 
         // Get Connection
@@ -231,13 +278,33 @@ class JdbcLoggedRunner extends AbstractRunner {
         if (connection == null)
             throw new NoSuchElementException(s"Connection '${this.connection}' not defined.")
 
-        if (!ConnectionPool.isInitialized(connection)) {
-            val url = connection.url
-            logger.info(s"Connecting via JDBC to $url")
-            DriverRegistry.register(connection.driver)
-
-            ConnectionPool.add(connection, url, connection.username, connection.password)
+        val derbyPattern = """.*\.derby\..*""".r
+        val mysqlPattern = """.*\.mysql\..*""".r
+        val postgresqlPattern = """.*\.postgresql\..*""".r
+        val adapter = connection.driver match {
+            case derbyPattern() => new DerbyAdapter
+            case mysqlPattern() => new MySQLAdapter
+            case postgresqlPattern() => new PostgreSqlAdapter
+            case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }
-        ConnectionPool.get(connection)
+
+        val session = Session.create(
+            connect(context, connection),
+            adapter)
+
+        // Create Database if not exists
+        if (!tablesCreated) {
+            using(session) {
+                try {
+                    Library.create
+                }
+                catch {
+                    case _:Exception =>
+                }
+            }
+            tablesCreated = true
+        }
+
+        session
     }
 }

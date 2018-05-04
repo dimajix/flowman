@@ -35,7 +35,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         module.environment should contain("x" -> "y")
         module.config should contain("spark.lala" -> "lolo")
     }
-    
+
     it should "be executable" in {
         val spec =
             """
@@ -68,5 +68,21 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val context = executor.context
         val runner = context.runner
         runner.execute(executor, project.jobs("default"))
+    }
+
+    it should "set the names of all jobs" in {
+        val spec =
+            """
+              |jobs:
+              |  default:
+              |    description: "Lala"
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        module.jobs.keys should contain ("default")
+        module.jobs("default").name should be ("default")
+        val project = module.toProject("default")
+        project.jobs.keys should contain ("default")
+        project.jobs("default").name should be ("default")
     }
 }

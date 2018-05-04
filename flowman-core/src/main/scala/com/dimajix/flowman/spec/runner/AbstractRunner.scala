@@ -43,8 +43,8 @@ abstract class AbstractRunner extends Runner {
         implicit val context = executor.context
 
         // Get Monitor
-        val present = check(context)
-        val token = start(context)
+        val present = check(context, job, args)
+        val token = start(context, job, args)
 
         val shutdownHook = new Thread() { override def run() : Unit = failure(context, token) }
         withShutdownHook(shutdownHook) {
@@ -93,7 +93,7 @@ abstract class AbstractRunner extends Runner {
       * @param context
       * @return
       */
-    protected def check(context:Context) = false
+    protected def check(context:Context, job:Job, args:Map[String,String]) : Boolean
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -101,7 +101,7 @@ abstract class AbstractRunner extends Runner {
       * @param context
       * @return
       */
-    protected def start(context:Context) : Object = null
+    protected def start(context:Context, job:Job, args:Map[String,String]) : Object
 
     /**
       * Marks a run as a success
@@ -109,7 +109,7 @@ abstract class AbstractRunner extends Runner {
       * @param context
       * @param token
       */
-    protected def success(context: Context, token:Object) : Unit = {}
+    protected def success(context: Context, token:Object) : Unit
 
     /**
       * Marks a run as a failure
@@ -117,7 +117,7 @@ abstract class AbstractRunner extends Runner {
       * @param context
       * @param token
       */
-    protected def failure(context: Context, token:Object) : Unit = {}
+    protected def failure(context: Context, token:Object) : Unit
 
     /**
       * Marks a run as a failure
@@ -125,7 +125,7 @@ abstract class AbstractRunner extends Runner {
       * @param context
       * @param token
       */
-    protected def aborted(context: Context, token:Object) : Unit = {}
+    protected def aborted(context: Context, token:Object) : Unit
 
     /**
       * Marks a run as being skipped
@@ -133,7 +133,7 @@ abstract class AbstractRunner extends Runner {
       * @param context
       * @param token
       */
-    protected def skipped(context: Context, token:Object) : Unit = {}
+    protected def skipped(context: Context, token:Object) : Unit
 
     private def withShutdownHook[T](shutdownHook:Thread)(block: => T) : T = {
         Runtime.getRuntime.addShutdownHook(shutdownHook)

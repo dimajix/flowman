@@ -16,8 +16,10 @@
 
 package com.dimajix.flowman.spec.output
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
@@ -28,6 +30,13 @@ import com.dimajix.flowman.spi.Scanner
 
 object Output {
     def subtypes : Seq[(String,Class[_ <: Output])] = Scanner.outputs
+
+    class NameResolver extends StdConverter[Map[String,Output],Map[String,Output]] {
+        override def convert(value: Map[String,Output]): Map[String,Output] = {
+            value.foreach(kv => kv._2._name = kv._1)
+            value
+        }
+    }
 }
 
 
@@ -40,6 +49,19 @@ object Output {
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationOutput]))
 )
 abstract class Output {
+    @JsonIgnore private var _name:String = ""
+
+    /**
+      * Returns the name of the output
+      * @return
+      */
+    def name : String = _name
+
+    /**
+      * Returns true if the output should be executed per default
+      * @param context
+      * @return
+      */
     def enabled(implicit context:Context) : Boolean
 
     /**

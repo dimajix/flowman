@@ -22,8 +22,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.TableIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
@@ -37,6 +39,10 @@ class ScopedContext(parent:Context) extends AbstractContext {
     override protected val logger: Logger = LoggerFactory.getLogger(classOf[ScopedContext])
 
     updateFrom(parent)
+
+    override def namespace : Namespace = parent.namespace
+
+    override def project : Project = parent.project
 
     /**
       * Try to retrieve the specified database connection. Performs lookups in parent context if required

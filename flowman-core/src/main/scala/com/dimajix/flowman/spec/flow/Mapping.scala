@@ -16,8 +16,10 @@
 
 package com.dimajix.flowman.spec.flow
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
@@ -30,6 +32,13 @@ import com.dimajix.flowman.spi.Scanner
 
 object Mapping {
     def subtypes : Seq[(String,Class[_ <: Mapping])] = Scanner.mappings
+
+    class NameResolver extends StdConverter[Map[String,Mapping],Map[String,Mapping]] {
+        override def convert(value: Map[String,Mapping]): Map[String,Mapping] = {
+            value.foreach(kv => kv._2._name = kv._1)
+            value
+        }
+    }
 }
 
 /**
@@ -54,6 +63,14 @@ object Mapping {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping])
 ))
 abstract class Mapping {
+    @JsonIgnore private var _name:String = ""
+
+    /**
+      * Returns the name of the output
+      * @return
+      */
+    def name : String = _name
+
     /**
       * This method should return true, if the resulting dataframe should be broadcast for map-side joins
       * @param context

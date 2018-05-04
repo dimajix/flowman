@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
@@ -48,7 +49,9 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
     updateFrom(parent)
     templateContext.put("Project", ProjectWrapper)
 
-    def project : Project = _project
+    override def namespace : Namespace = parent.namespace
+
+    override def project : Project = _project
 
     /**
       * Returns the appropriate runner for this project.

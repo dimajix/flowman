@@ -45,8 +45,11 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private val _runner = new SimpleRunner()
 
-    def namespace : Namespace = _namespace
     def profiles : Seq[String] = _profiles
+
+    override def namespace : Namespace = _namespace
+
+    override def project: Project = null
 
     /**
       * Returns the appropriate runner

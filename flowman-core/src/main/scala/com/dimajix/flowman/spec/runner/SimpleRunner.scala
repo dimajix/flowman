@@ -16,6 +16,55 @@
 
 package com.dimajix.flowman.spec.runner
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.task.Job
+
 
 class SimpleRunner extends AbstractRunner {
+    /**
+      * Performs some check, if the run is required
+      * @param context
+      * @return
+      */
+    override protected def check(context:Context, job:Job, args:Map[String,String]) : Boolean = false
+
+    /**
+      * Starts the run and returns a token, which can be anything
+      *
+      * @param context
+      * @return
+      */
+    override protected def start(context:Context, job:Job, args:Map[String,String]) : Object = null
+
+    /**
+      * Marks a run as a success
+      *
+      * @param context
+      * @param token
+      */
+    override protected def success(context: Context, token:Object) : Unit = {}
+
+    /**
+      * Marks a run as a failure
+      *
+      * @param context
+      * @param token
+      */
+    override protected def failure(context: Context, token:Object) : Unit = {}
+
+    /**
+      * Marks a run as a failure
+      *
+      * @param context
+      * @param token
+      */
+    override protected def aborted(context: Context, token:Object) : Unit = {}
+
+    /**
+      * Marks a run as being skipped
+      *
+      * @param context
+      * @param token
+      */
+    override protected def skipped(context: Context, token:Object) : Unit = {}
 }

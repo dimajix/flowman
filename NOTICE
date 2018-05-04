@@ -48,15 +48,8 @@ Velocity
   * HOMEPAGE:
     * http://velocity.apache.org/
 
-Squeryl
+Slick
   * LICENSE
-    * license/LICENSE-squeryl.txt (Apache 2.0 License)
+    * license/LICENSE-slick.txt (BSD 2-Clause Simplified License)
   * HOMEPAGE:
-    * http://squeryl.org/
-
-ScalikeJDBC
-Copyright scalikejdbc.org
-  * LICENSE:
-    * license/LICENSE-ScalikeJDBC.txt (Apache License)
-  * HOMEPAGE:
-    * http://scalikejdbc.org/
+    * http://slick.lightbend.com

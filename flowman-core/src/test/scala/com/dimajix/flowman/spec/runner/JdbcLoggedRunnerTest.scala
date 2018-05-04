@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.spec.runner
 
+import java.nio.file.Files
+import java.nio.file.Path
+
+import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -26,8 +30,19 @@ import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.task.Job
 
 
-class JdbcLoggedRunnerTest extends FlatSpec with Matchers {
+class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
+    var tempDir:Path = _
+
+    before {
+        tempDir = Files.createTempDirectory("jdbc_logged_runner_test")
+    }
+    after {
+        tempDir.toFile.listFiles().foreach(_.delete())
+        tempDir.toFile.delete()
+    }
+
     "The JdbcLoggedRunner" should "work" in {
+        val db = tempDir.resolve("mydb")
         val spec =
             """
               |kind: logged
@@ -39,7 +54,7 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers {
             .setName("job")
             .build()
         val ns = Namespace.builder()
-            .addConnection("logger", Connection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:myDB;create=true", "", ""))
+            .addConnection("logger", Connection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
             .build()
         val session = Session.builder()
             .withNamespace(ns)

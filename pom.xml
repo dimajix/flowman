@@ -22,8 +22,7 @@
         <spark-avro.version>3.0.0</spark-avro.version>
         <mysql-connector.version>6.0.6</mysql-connector.version>
         <velocity.version>1.7</velocity.version>
-        <scalikejdbc.version>3.0.2</scalikejdbc.version>
-        <squeryl.version>0.9.11</squeryl.version>
+        <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -439,15 +438,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.scalikejdbc</groupId>
-                <artifactId>scalikejdbc_${scala.api_version}</artifactId>
-                <version>${scalikejdbc.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.squeryl</groupId>
-                <artifactId>squeryl_${scala.api_version}</artifactId>
-                <version>${squeryl.version}</version>
+                <groupId>com.typesafe.slick</groupId>
+                <artifactId>slick_${scala.api_version}</artifactId>
+                <version>${slick.version}</version>
             </dependency>
 
             <dependency>

@@ -20,20 +20,19 @@ import java.security.MessageDigest
 import java.sql.SQLRecoverableException
 import java.sql.Timestamp
 import java.time.Clock
+import java.util.Properties
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import javax.xml.bind.DatatypeConverter
-import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.slf4j.LoggerFactory
-import org.squeryl.AbstractSession
-import org.squeryl.KeyedEntity
-import org.squeryl.PrimitiveTypeMode
-import org.squeryl.Schema
-import org.squeryl.Session
-import org.squeryl.adapters.DerbyAdapter
-import org.squeryl.adapters.MySQLAdapter
-import org.squeryl.adapters.PostgreSqlAdapter
-import org.squeryl.internals.DatabaseAdapter
+import slick.jdbc.DerbyProfile
+import slick.jdbc.H2Profile
+import slick.jdbc.JdbcProfile
+import slick.jdbc.MySQLProfile
+import slick.jdbc.PostgresProfile
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.Connection
@@ -49,75 +48,87 @@ object JdbcLoggedRunner {
     val STATUS_KILLED = "killed"
 }
 
+private object JdbcLoggedRepository {
+    private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
 
-private object JdbcLoggedRunnerModel extends PrimitiveTypeMode {
     case class Run (
-           id:Long,
-           namespace: String,
-           project:String,
-           job:String,
-           args_hash:String,
-           start_ts:Timestamp,
-           end_ts:Timestamp,
-           status:String
-       ) extends KeyedEntity[Long] {
+       id:Long,
+       namespace: String,
+       project:String,
+       job:String,
+       args_hash:String,
+       start_ts:Timestamp,
+       end_ts:Timestamp,
+       status:String
+   )
+}
+
+private class JdbcLoggedRepository(connection: Connection, val profile:JdbcProfile)(implicit context:Context) {
+    import profile.api._
+
+    import JdbcLoggedRepository._
+
+    private lazy val db = {
+        val url = connection.url
+        val user = connection.username
+        val password = connection.password
+        val driver = connection.driver
+        val props = new Properties()
+        Option(connection.properties).foreach(_.foreach(kv => props.setProperty(kv._1, kv._2)))
+
+        logger.info(s"Connecting via JDBC to $url")
+        Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
 
-    object Library extends Schema {
-        val runs = table[Run]("JOB_RUN")
+    class Runs(tag:Tag) extends Table[Run](tag, "JOB_RUN") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def namespace = column[String]("namespace")
+        def project = column[String]("project")
+        def job = column[String]("job")
+        def args_hash = column[String]("args_hash")
+        def start_ts = column[Timestamp]("start_ts")
+        def end_ts = column[Timestamp]("end_ts")
+        def status = column[String]("status")
 
-        on(runs)(b => declare(
-            b.id is(primaryKey, autoIncremented),
-            b.namespace defaultsTo(""),
-            b.project defaultsTo(""),
-            b.job defaultsTo(""),
-            b.args_hash defaultsTo(""),
-            b.start_ts is(),
-            b.end_ts is(),
-            b.status defaultsTo(""),
+        def idx = index("idx_jobs", (namespace, project, job, args_hash, status), unique = false)
 
-            columns(b.namespace, b.project, b.job, b.args_hash, b.status) are (indexed)
-        ))
+        def * = (id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (Run.tupled, Run.unapply)
+    }
 
-        def getStatus(run:Run) : Option[String] = {
-            from(runs)(r =>
-                where(r.id in
-                    from(runs)(r2 =>
-                        where(r2.namespace === run.namespace
-                            and r2.project === run.project
-                            and r2.job === run.job
-                            and r2.args_hash === run.args_hash
-                            and r2.status <> JdbcLoggedRunner.STATUS_SKIPPED
-                        )
-                        compute max(r2.id)
-                    )
-                )
-                select r.status
-            ).singleOption
-        }
+    val runs = TableQuery[Runs]
 
-        def insertRun(run:Run) : Run = {
-            transaction(Session.currentSession) {
-                Library.runs.insert(run)
-            }
-        }
-        def setState(run:Run) : Int = {
-            transaction(Session.currentSession) {
-                update(Library.runs)(r =>
-                    where(r.id === run.id)
-                        .set(
-                            r.end_ts := run.end_ts,
-                            r.status := run.status
-                        )
-                )
-            }
-        }
+    def create() : Unit = {
+        Await.result(db.run(runs.schema.create), Duration.Inf)
+    }
+
+    def getStatus(run:Run) : Option[String] = {
+        val q = runs.filter(_.id === runs.filter( r =>
+                    r.namespace === run.namespace
+                    && r.project === run.project
+                    && r.job === run.job
+                    && r.args_hash === run.args_hash
+                    && r.status =!= JdbcLoggedRunner.STATUS_SKIPPED
+                ).map(_.id).max
+            )
+            .map(_.status)
+        Await.result(db.run(q.result), Duration.Inf).headOption
+    }
+
+    def setStatus(run:Run) : Unit = {
+        val q = runs.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
+        Await.result(db.run(q), Duration.Inf)
+    }
+
+    def insertRun(run:Run) : Run = {
+        val q = (runs returning runs.map(_.id) into((run, id) => run.copy(id=id))) += run
+        Await.result(db.run(q), Duration.Inf)
     }
 }
 
+
 class JdbcLoggedRunner extends AbstractRunner {
+    import JdbcLoggedRepository._
     import JdbcLoggedRunner._
-    import JdbcLoggedRunnerModel._
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
 
@@ -142,8 +153,9 @@ class JdbcLoggedRunner extends AbstractRunner {
         )
         logger.info(s"Checking last state for job ${run.namespace}/${run.project}/${run.job} in state database")
         val result =
-            withSession(context) {
-                Library.getStatus(run)
+            withSession(context) { repository =>
+                //Library.getStatus(run)
+                repository.getStatus(run)
             }
 
         result match {
@@ -166,8 +178,9 @@ class JdbcLoggedRunner extends AbstractRunner {
         )
 
         logger.info(s"Writing start marker for job ${run.namespace}/${run.project}/${run.job} into state database")
-        withSession(context) {
-            Library.insertRun(run)
+        withSession(context) { repository =>
+            repository.insertRun(run)
+            //Library.insertRun(run)
         }
     }
 
@@ -208,8 +221,9 @@ class JdbcLoggedRunner extends AbstractRunner {
     private def setState(context: Context, run: Run, status:String): Unit = {
         logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        withSession(context) {
-            Library.setState(run.copy(end_ts = now, status=status))
+        withSession(context) { repository =>
+            // Library.setState(run.copy(end_ts = now, status=status))
+            repository.setStatus(run.copy(end_ts = now, status=status))
         }
     }
 
@@ -222,7 +236,7 @@ class JdbcLoggedRunner extends AbstractRunner {
       * @tparam T
       * @return
       */
-    private def withSession[T](context: Context)(query: => T) : T = {
+    private def withSession[T](context: Context)(query: JdbcLoggedRepository => T) : T = {
         implicit val icontext = context.root
 
 
@@ -239,38 +253,14 @@ class JdbcLoggedRunner extends AbstractRunner {
         }
 
         retry(retries) {
-            val session = newSession(icontext)
-            try {
-                using(session) {
-                    query
-                }
-            }
-            finally {
-                session.close
-            }
+            val repository = newRepository(icontext)
+            query(repository)
         }
     }
 
     private var tablesCreated:Boolean = false
 
-    /**
-      * Connects to a JDBC source
-      *
-      * @param context
-      * @return
-      */
-    private def connect(context: Context, connection:Connection) : java.sql.Connection = {
-        implicit val icontext = context
-
-        val url = connection.url
-        logger.info(s"Connecting via JDBC to $url")
-
-        DriverRegistry.register(connection.driver)
-
-        java.sql.DriverManager.getConnection(connection.url)
-    }
-
-    private def newSession(context:Context) : Session = {
+    private def newRepository(context: Context) : JdbcLoggedRepository = {
         implicit val icontext = context
 
         // Get Connection
@@ -279,32 +269,31 @@ class JdbcLoggedRunner extends AbstractRunner {
             throw new NoSuchElementException(s"Connection '${this.connection}' not defined.")
 
         val derbyPattern = """.*\.derby\..*""".r
+        val h2Pattern = """.*\.h2\..*""".r
         val mysqlPattern = """.*\.mysql\..*""".r
         val postgresqlPattern = """.*\.postgresql\..*""".r
-        val adapter = connection.driver match {
-            case derbyPattern() => new DerbyAdapter
-            case mysqlPattern() => new MySQLAdapter
-            case postgresqlPattern() => new PostgreSqlAdapter
+        val profile = connection.driver match {
+            case derbyPattern() => DerbyProfile
+            case h2Pattern() => H2Profile
+            case mysqlPattern() => MySQLProfile
+            case postgresqlPattern() => PostgresProfile
             case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }
 
-        val session = Session.create(
-            connect(context, connection),
-            adapter)
+        val repository = new JdbcLoggedRepository(connection, profile)
 
         // Create Database if not exists
         if (!tablesCreated) {
-            using(session) {
-                try {
-                    Library.create
-                }
-                catch {
-                    case _:Exception =>
-                }
+            try {
+                repository.create()
+            }
+            catch {
+                case _:Exception =>
             }
             tablesCreated = true
         }
 
-        session
+        repository
     }
+
 }

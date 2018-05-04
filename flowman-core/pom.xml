@@ -182,8 +182,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.squeryl</groupId>
-            <artifactId>squeryl_${scala.api_version}</artifactId>
+            <groupId>com.typesafe.slick</groupId>
+            <artifactId>slick_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

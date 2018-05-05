@@ -16,7 +16,7 @@
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
         <avro.version>1.7.6</avro.version>
-        <jackson.version>2.9.5</jackson.version>
+        <jackson.version>2.6.5</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <snakeyaml.version>1.21</snakeyaml.version>
         <spark-avro.version>3.0.0</spark-avro.version>
@@ -30,20 +30,21 @@
         <scala.api_version>2.11</scala.api_version>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <provided.scope>provided</provided.scope>
     </properties>
 
     <profiles>
         <profile>
-            <id>package</id>
+            <id>spark-2.2.1</id>
             <properties>
-                <provided.scope>provided</provided.scope>
+                <spark.version>2.2.1</spark.version>
+                <jackson.version>2.6.5</jackson.version>
             </properties>
         </profile>
         <profile>
-            <id>development</id>
+            <id>spark-2.3</id>
             <properties>
-                <provided.scope>compile</provided.scope>
+                <spark.version>2.3</spark.version>
+                <jackson.version>2.6.7</jackson.version>
             </properties>
         </profile>
     </profiles>
@@ -225,21 +226,21 @@
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-library</artifactId>
                 <version>${scala.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scalap</artifactId>
                 <version>${scala.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-reflect</artifactId>
                 <version>${scala.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -260,14 +261,14 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-core_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -280,7 +281,7 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-client</artifactId>
                 <version>${hadoop.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <artifactId>log4j</artifactId>
@@ -299,7 +300,7 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <artifactId>slf4j-log4j12</artifactId>
@@ -330,7 +331,7 @@
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
-                <scope>${provided.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

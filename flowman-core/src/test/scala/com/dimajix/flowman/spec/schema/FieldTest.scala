@@ -16,20 +16,68 @@
 
 package com.dimajix.flowman.spec.schema
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.ObjectMapper
 
 
 class FieldTest extends FlatSpec with Matchers {
-    lazy val mapper = {
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
-        mapper
+    lazy val mapper = ObjectMapper
+
+    "A Field" should "be nullable per default" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+    it should "be nullable if explicitly said so" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |nullable: true
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+    it should "not be nullable if explicitly said so" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |nullable: false
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (false)
+        result.name should be ("lala")
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, false))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
     }
 
     "A string Field" should "be deserializable" in {
@@ -42,7 +90,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.StringType)
@@ -58,7 +106,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.StringType)
@@ -80,7 +128,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.StructType]
@@ -106,7 +154,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -125,7 +173,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -144,7 +192,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -169,7 +217,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.ftype shouldBe a[ArrayType]
@@ -198,7 +246,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
@@ -215,7 +263,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Field])
+        val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.VarcharType(14))

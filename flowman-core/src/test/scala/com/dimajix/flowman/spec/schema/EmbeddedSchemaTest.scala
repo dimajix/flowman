@@ -16,22 +16,14 @@
 
 package com.dimajix.flowman.spec.schema
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.ObjectMapper
 
 
 class EmbeddedSchemaTest extends FlatSpec with Matchers {
-    lazy val mapper = {
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
-        mapper
-    }
-
     "An EmbeddedSchema" should "be parseable with explicit type" in {
         val spec =
             """
@@ -46,7 +38,7 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Schema])
+        val result = ObjectMapper.parse[Schema](spec)
         result shouldBe a[EmbeddedSchema]
         result.fields.size should be (2)
         result.fields(context)(0).name should be ("str_col")
@@ -67,7 +59,7 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.readValue(spec, classOf[Schema])
+        val result = ObjectMapper.parse[Schema](spec)
         result shouldBe a[EmbeddedSchema]
         result.fields.size should be (2)
         result.fields(context)(0).name should be ("str_col")

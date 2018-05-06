@@ -27,7 +27,9 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.schema.StringType
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.task.JobStatus
 
 
 class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
@@ -59,6 +61,40 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
-        runner.execute(session.executor, job)
+        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
+        runner.execute(session.executor, job) should be (JobStatus.SKIPPED)
+    }
+
+    it should "be parseable" in {
+        val spec =
+            """
+              |kind: logged
+              |connection: logger
+            """.stripMargin
+        val runner = ObjectMapper.parse[Runner](spec)
+        runner shouldBe a[JdbcLoggedRunner]
+    }
+
+    it should "catch exceptions" in {
+        val db = tempDir.resolve("mydb")
+        val spec =
+            """
+              |kind: logged
+              |connection: logger
+            """.stripMargin
+        val runner = ObjectMapper.parse[Runner](spec)
+
+        val job = Job.builder()
+            .setName("failingJob")
+            .addParameter("p0", StringType)
+            .build()
+        val ns = Namespace.builder()
+            .addConnection("logger", Connection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
+            .build()
+        val session = Session.builder()
+            .withNamespace(ns)
+            .build()
+        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
+        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
     }
 }

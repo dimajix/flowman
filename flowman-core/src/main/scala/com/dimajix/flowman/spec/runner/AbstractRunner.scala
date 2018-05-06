@@ -39,7 +39,7 @@ abstract class AbstractRunner extends Runner {
       * @param job
       * @return
       */
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : Boolean = {
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : JobStatus = {
         implicit val context = executor.context
 
         // Get Monitor
@@ -52,7 +52,7 @@ abstract class AbstractRunner extends Runner {
             if (present) {
                 logger.info("Everything up to date, skipping execution")
                 skipped(context, token)
-                true
+                JobStatus.SKIPPED
             }
             else {
                 runJob(executor, job, args, token)
@@ -60,31 +60,32 @@ abstract class AbstractRunner extends Runner {
         }
     }
 
-    private def runJob(executor: Executor, job:Job, args:Map[String,String], token:Object) : Boolean = {
+    private def runJob(executor: Executor, job:Job, args:Map[String,String], token:Object) : JobStatus = {
         implicit val context = executor.context
         Try {
             job.execute(executor, args)
         }
         match {
-            case Success(JobStatus.SUCCESS) =>
+            case Success(status @ JobStatus.SUCCESS) =>
                 logger.info("Successfully finished execution of Job")
                 success(context, token)
-                true
-            case Success(JobStatus.FAILURE) =>
+                status
+            case Success(status @ JobStatus.FAILURE) =>
                 logger.error("Execution of Job failed")
                 failure(context, token)
-                false
-            case Success(JobStatus.ABORTED) =>
+                status
+            case Success(status @ JobStatus.ABORTED) =>
                 logger.error("Execution of Job aborted")
                 aborted(context, token)
-                false
-            case Success(JobStatus.SKIPPED) =>
+                status
+            case Success(status @ JobStatus.SKIPPED) =>
                 logger.error("Execution of Job skipped")
                 skipped(context, token)
-                true
+                status
             case Failure(e) =>
                 logger.error("Caught exception while executing job.", e)
-                false
+                failure(context, token)
+                JobStatus.FAILURE
         }
     }
 

@@ -65,7 +65,6 @@ private object JdbcLoggedRepository {
 
 private class JdbcLoggedRepository(connection: Connection, val profile:JdbcProfile)(implicit context:Context) {
     import profile.api._
-
     import JdbcLoggedRepository._
 
     private lazy val db = {
@@ -130,7 +129,7 @@ class JdbcLoggedRunner extends AbstractRunner {
     import JdbcLoggedRepository._
     import JdbcLoggedRunner._
 
-    private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
+    override protected val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
 
     @JsonProperty(value="connection", required=true) private var _connection:String = ""
     @JsonProperty(value="retries", required=false) private var _retries:String = "3"
@@ -154,7 +153,6 @@ class JdbcLoggedRunner extends AbstractRunner {
         logger.info(s"Checking last state for job ${run.namespace}/${run.project}/${run.job} in state database")
         val result =
             withSession(context) { repository =>
-                //Library.getStatus(run)
                 repository.getStatus(run)
             }
 
@@ -180,7 +178,6 @@ class JdbcLoggedRunner extends AbstractRunner {
         logger.info(s"Writing start marker for job ${run.namespace}/${run.project}/${run.job} into state database")
         withSession(context) { repository =>
             repository.insertRun(run)
-            //Library.insertRun(run)
         }
     }
 

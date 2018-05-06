@@ -16,13 +16,16 @@
 
 package com.dimajix.flowman.tools.exec
 
+import java.io.File
 import java.util.Locale
 
 import org.apache.log4j.PropertyConfigurator
 import org.kohsuke.args4j.CmdLineParser
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.util.splitSettings
 
@@ -40,6 +43,17 @@ object Driver {
 
 
 class Driver(options:Arguments) {
+    private val logger = LoggerFactory.getLogger(classOf[Driver])
+
+    private def loadNamespace() : Namespace = {
+        Option(System.getenv("FLOWMAN_CONF_DIR"))
+            .filter(_.nonEmpty)
+            .map(confDir => new File(confDir, "default-namespace.yml"))
+            .filter(_.isFile)
+            .map(file => Namespace.read.file(file))
+            .getOrElse(Namespace.read.default())
+    }
+
     /**
       * Main method for running this command
       * @return
@@ -50,6 +64,7 @@ class Driver(options:Arguments) {
             val loader = Thread.currentThread.getContextClassLoader
             val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
             PropertyConfigurator.configure(url)
+            logger.info(s"Loaded Logging configuration from $url")
         }
 
         // Adjust Sgpark loglevel
@@ -72,7 +87,7 @@ class Driver(options:Arguments) {
         val sparkConfig = splitSettings(options.sparkConfig)
         val environment = splitSettings(options.environment)
         val session:Session = Session.builder
-            .withNamespace(Namespace.read.default)
+            .withNamespace(loadNamespace())
             .withProject(project)
             .withSparkName(options.sparkName)
             .withSparkConfig(sparkConfig.toMap)

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
+# Set Flowman directories
 export FLOWMAN_HOME=${FLOWMAN_HOME=$(readlink -f $(dirname $0)/..)}
 export FLOWMAN_CONF_DIR=${FLOWMAN_CONF_DIR=$FLOWMAN_HOME/conf}
 
-# Set basic options
+# Set basic Spark options
 : ${SPARK_MASTER:="yarn"}
 : ${SPARK_EXECUTOR_CORES:="4"}
 : ${SPARK_EXECUTOR_MEMORY:="8G"}

@@ -1,0 +1,25 @@
+name: "default"
+
+[% IF FLOWMAN_DB_DRIVER %]
+runner:
+  kind: logged
+  connection: flowman_runs
+  retries: 3
+  timeout: 1000
+
+connections:
+  flowman_runs:
+    driver: [% FLOWMAN_LOGDB_DRIVER %]
+    url: [% FLOWMAN_LOGDB_URL %]
+    username: [% FLOWMAN_LOGDB_USER %]
+    password: [% FLOWMAN_LOGDB_PASSWORD %]
+[% ELSE %]
+runner:
+  kind: simple
+[% END %]
+
+config:
+  - spark.sql.warehouse.dir=/opt/flowman/hive/warehouse
+  - hive.metastore.uris=
+  - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
+  - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter

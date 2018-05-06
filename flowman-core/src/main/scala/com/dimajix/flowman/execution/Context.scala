@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
@@ -47,8 +45,6 @@ object SettingLevel {
 }
 
 abstract class Context {
-    private val logger = LoggerFactory.getLogger(classOf[Executor])
-
     def namespace : Namespace
     def project : Project
     def root : Context

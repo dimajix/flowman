@@ -16,11 +16,15 @@
 
 package com.dimajix.flowman.spec.runner
 
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.task.Job
 
 
 class SimpleRunner extends AbstractRunner {
+    override protected val logger = LoggerFactory.getLogger(classOf[SimpleRunner])
+
     /**
       * Performs some check, if the run is required
       * @param context

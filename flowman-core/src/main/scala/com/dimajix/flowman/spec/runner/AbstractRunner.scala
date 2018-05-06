@@ -20,7 +20,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -29,7 +29,7 @@ import com.dimajix.flowman.spec.task.JobStatus
 
 
 abstract class AbstractRunner extends Runner {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
+    protected val logger:Logger
 
     /**
       * Executes a given job with the given executor. The runner will take care of

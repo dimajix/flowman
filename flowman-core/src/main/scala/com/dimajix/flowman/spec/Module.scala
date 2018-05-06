@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec
 
 import java.io.File
+import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
@@ -64,6 +65,11 @@ object Module {
           */
         def file(filename:String) : Module = {
             file(new File(filename))
+        }
+
+        def url(url:URL) : Module = {
+            logger.info(s"Reading module from url ${url.toString}")
+            ObjectMapper.read[Module](url)
         }
 
         def string(text:String) : Module = {

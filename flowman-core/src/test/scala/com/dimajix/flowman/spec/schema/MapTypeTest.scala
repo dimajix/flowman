@@ -27,7 +27,7 @@ class MapTypeTest extends FlatSpec with Matchers {
     "An MapType" should "be deserializable" in {
         val spec =
             """
-              |  type: map
+              |  kind: map
               |  keyType: String
               |  valueType: String
             """.stripMargin
@@ -43,7 +43,7 @@ class MapTypeTest extends FlatSpec with Matchers {
     it should "be deserializable with nullable elements" in {
         val spec =
             """
-              |  type: map
+              |  kind: map
               |  keyType: String
               |  valueType: String
               |  containsNull: true
@@ -60,7 +60,7 @@ class MapTypeTest extends FlatSpec with Matchers {
     it should "be deserializable with non-nullable elements" in {
         val spec =
             """
-              |  type: map
+              |  kind: map
               |  keyType: String
               |  valueType: String
               |  containsNull: false
@@ -77,11 +77,11 @@ class MapTypeTest extends FlatSpec with Matchers {
     it should "support nested container types" in {
         val spec =
             """
-              |  type: map
+              |  kind: map
               |  keyType: String
               |  containsNull: false
               |  valueType:
-              |    type: array
+              |    kind: array
               |    elementType: String
             """.stripMargin
 

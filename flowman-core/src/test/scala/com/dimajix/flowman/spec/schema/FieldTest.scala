@@ -118,7 +118,7 @@ class FieldTest extends FlatSpec with Matchers {
             """
               |name: lala
               |type:
-              |  type: struct
+              |  kind: struct
               |  fields:
               |    - name: lolo
               |      type: String
@@ -147,7 +147,7 @@ class FieldTest extends FlatSpec with Matchers {
             """
               |name: lala
               |type:
-              |  type: array
+              |  kind: array
               |  elementType: String
             """.stripMargin
 
@@ -165,7 +165,7 @@ class FieldTest extends FlatSpec with Matchers {
             """
               |name: lala
               |type:
-              |  type: array
+              |  kind: array
               |  containsNull: true
               |  elementType: String
             """.stripMargin
@@ -184,7 +184,7 @@ class FieldTest extends FlatSpec with Matchers {
             """
               |name: lala
               |type:
-              |  type: array
+              |  kind: array
               |  containsNull: false
               |  elementType: String
             """.stripMargin
@@ -204,9 +204,9 @@ class FieldTest extends FlatSpec with Matchers {
             """
               |name: lala
               |type:
-              |  type: array
+              |  kind: array
               |  elementType:
-              |    type: struct
+              |    kind: struct
               |    fields:
               |      - name: lolo
               |        type: string

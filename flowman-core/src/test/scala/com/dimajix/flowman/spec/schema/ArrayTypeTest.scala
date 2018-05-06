@@ -27,7 +27,7 @@ class ArrayTypeTest extends FlatSpec with Matchers {
     "An ArrayType" should "be deserializable" in {
         val spec =
             """
-              |  type: array
+              |  kind: array
               |  elementType: String
             """.stripMargin
 
@@ -42,7 +42,7 @@ class ArrayTypeTest extends FlatSpec with Matchers {
     it should "be deserializable with nullable elements" in {
         val spec =
             """
-              |  type: array
+              |  kind: array
               |  containsNull: true
               |  elementType: String
             """.stripMargin
@@ -58,7 +58,7 @@ class ArrayTypeTest extends FlatSpec with Matchers {
     it should "be deserializable with non-nullable elements" in {
         val spec =
             """
-              |  type: array
+              |  kind: array
               |  containsNull: false
               |  elementType: String
             """.stripMargin
@@ -74,10 +74,10 @@ class ArrayTypeTest extends FlatSpec with Matchers {
     it should "support nested Arrays" in {
         val spec =
             """
-              |  type: array
+              |  kind: array
               |  containsNull: false
               |  elementType:
-              |    type: array
+              |    kind: array
               |    elementType: String
             """.stripMargin
 

@@ -17,8 +17,10 @@
 package com.dimajix.flowman.spec
 
 import java.io.File
+import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.flow.Mapping
@@ -65,6 +67,11 @@ object Module {
             file(new File(filename))
         }
 
+        def url(url:URL) : Module = {
+            logger.info(s"Reading module from url ${url.toString}")
+            ObjectMapper.read[Module](url)
+        }
+
         def string(text:String) : Module = {
             ObjectMapper.parse[Module](text)
         }
@@ -79,9 +86,13 @@ class Module {
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
+    @JsonDeserialize(converter=classOf[Relation.NameResolver])
     @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()
+    @JsonDeserialize(converter=classOf[Mapping.NameResolver])
     @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
+    @JsonDeserialize(converter=classOf[Output.NameResolver])
     @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
+    @JsonDeserialize(converter=classOf[Job.NameResolver])
     @JsonProperty(value="jobs") private var _jobs: Map[String,Job] = Map()
 
     def profiles : Map[String,Profile] = _profiles

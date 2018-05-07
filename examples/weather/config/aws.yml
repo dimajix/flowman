@@ -3,6 +3,6 @@ config:
   - spark.hadoop.fs.s3a.access.key=$System.getenv('AWS_ACCESS_KEY_ID')
   - spark.hadoop.fs.s3a.secret.key=$System.getenv('AWS_SECRET_ACCESS_KEY')
   - spark.hadoop.fs.s3a.proxy.host=$System.getenv('AWS_PROXY_HOST')
-  - spark.hadoop.fs.s3a.proxy.port=$System.getenv('AWS_PROXY_PORT')
+  - spark.hadoop.fs.s3a.proxy.port=$System.getenv('AWS_PROXY_PORT', '-1')
   - spark.hadoop.fs.s3a.proxy.username=
   - spark.hadoop.fs.s3a.proxy.password=

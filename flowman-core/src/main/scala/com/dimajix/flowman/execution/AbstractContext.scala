@@ -32,7 +32,12 @@ import com.dimajix.flowman.spec.Connection
 
 object AbstractContext {
     private object SystemWrapper {
-        def getenv(name:String) : String = System.getenv(name)
+        def getenv(name:String) : String = {
+            Option(System.getenv(name)).getOrElse("")
+        }
+        def getenv(name:String, default:String) : String = {
+            Option(System.getenv(name)).getOrElse(default)
+        }
     }
 
     private lazy val rootContext = {
@@ -93,13 +98,13 @@ abstract class AbstractContext extends Context {
       * Returns all configuration options as a key-value map
       * @return
       */
-    override def config : Map[String,String] = _config.toMap.mapValues(_._1)
+    override def config : Map[String,String] = _config.mapValues(v => evaluate(v._1)).toMap
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    override def environment : Map[String,String] = _environment.toMap.mapValues(_._1)
+    override def environment : Map[String,String] = _environment.mapValues(_._1).toMap
 
     override def rawEnvironment : Map[String,(String, Int)] = _environment.toMap
     override def rawConfig : Map[String,(String, Int)] = _config.toMap
@@ -114,8 +119,7 @@ abstract class AbstractContext extends Context {
     def setConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
         val currentValue = _config.getOrElse(key, ("", SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
-            val finalValue = evaluate(value)
-            _config.update(key, (finalValue, settingLevel.level))
+            _config.update(key, (value, settingLevel.level))
         }
         else {
             logger.info(s"Ignoring changing final config variable $key=${currentValue._1} to '$value'")
@@ -164,7 +168,7 @@ abstract class AbstractContext extends Context {
         }
     }
 
-    def setDatabases(databases:Map[String,Connection], settingLevel: SettingLevel) : Unit = {
+    def setConnections(databases:Map[String,Connection], settingLevel: SettingLevel) : Unit = {
         databases.foreach(kv => setDatabase(kv._1, kv._2, settingLevel))
     }
     def setDatabase(name:String, database:Connection, settingLevel: SettingLevel) : Unit = {

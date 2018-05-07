@@ -48,9 +48,8 @@ Velocity
   * HOMEPAGE:
     * http://velocity.apache.org/
 
-ScalikeJDBC
-Copyright scalikejdbc.org
-  * LICENSE:
-    * license/LICENSE-ScalikeJDBC.txt (Apache License)
+Slick
+  * LICENSE
+    * license/LICENSE-slick.txt (BSD 2-Clause Simplified License)
   * HOMEPAGE:
-    * http://scalikejdbc.org/
+    * http://slick.lightbend.com

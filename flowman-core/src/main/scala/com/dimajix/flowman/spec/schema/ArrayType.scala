@@ -18,15 +18,23 @@ package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.JsonToken
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
 import org.apache.spark.sql.types.DataType
 
 
-case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED)(
+@JsonDeserialize(using=classOf[ArrayTypeDeserializer])
+case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED) (
         @JsonProperty(value="elementType") elementType:FieldType,
         @JsonProperty(value="containsNull") containsNull:Boolean = true
     ) extends ContainerType {
 
-    @JsonCreator
+    @JsonCreator(mode = JsonCreator.Mode.DEFAULT)
     def this() = { this(null, true) }
 
     override def sparkType : DataType = {
@@ -35,4 +43,30 @@ case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED)(
 
     override def parse(value:String, granularity:String) : Any = ???
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+}
+
+/*
+ * This is a workaround for Jackson versions which do not use default values
+ */
+private class ArrayTypeDeserializer(vc:Class[_]) extends StdDeserializer[ArrayType](vc) {
+    import java.io.IOException
+
+    def this() = this(null)
+
+    @throws[IOException]
+    @throws[JsonProcessingException]
+    def deserialize(jp: JsonParser, ctxt: DeserializationContext): ArrayType = {
+        var currentToken: JsonToken = jp.nextValue()
+        var elementType: FieldType = null
+        var containsNull: Boolean = true
+        while(currentToken != JsonToken.END_OBJECT) {
+            jp.getCurrentName match {
+                case "elementType" => elementType = jp.readValueAs(classOf[FieldType])
+                case "containsNull" => containsNull = jp.getBooleanValue
+                case _ => throw UnrecognizedPropertyException.from(jp, classOf[ArrayType], jp.getCurrentName, null)
+            }
+            currentToken = jp.nextValue()
+        }
+        ArrayType(elementType, containsNull)
+    }
 }

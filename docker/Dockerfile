@@ -5,6 +5,15 @@ ARG APP_ARCHIVE
 
 USER root
 
+ENV FLOMAN_HOME=/opt/flowman
+ENV PATH=$PATH:$FLOMAN_HOME/bin
+
+# Copy config files
+COPY bin/ /opt/docker/bin/
+COPY libexec/ /opt/docker/libexec/
+COPY conf/ /opt/docker/conf/flowman/
+
+
 # Copy and install Repository
 ADD target /tmp/repo/
 RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/$APP_ARCHIVE && \
@@ -12,6 +21,5 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/$APP_ARCHIVE && \
     cp -r /tmp/repo/examples /opt/flowman && \
     rm -rf /tmp/repo
 
-ENV PATH=$PATH:/opt/flowman/bin
-
+ENTRYPOINT ["/opt/docker/bin/entrypoint.sh"]
 CMD bash

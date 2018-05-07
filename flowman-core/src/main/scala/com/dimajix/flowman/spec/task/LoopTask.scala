@@ -54,10 +54,16 @@ class LoopTask extends BaseTask {
         }
 
         val job = context.getJob(this.job)
+        val run = (args:Map[String,String]) => {
+            context.runner.execute(executor, job, args) match {
+                case JobStatus.SUCCESS => true
+                case JobStatus.SKIPPED => true
+                case _ => false
+            }
+        }
 
         // Iterate by all parameters and create argument map
         val paramByName = job.parameters.map(p => (p.name, p)).toMap
-        val run = (args:Map[String,String]) => context.runner.execute(executor, job, args)
         val result = args.toSeq.foldLeft(run)((a,p) => interpolate(a, paramByName(p._1), p._2))
 
         result(Map())

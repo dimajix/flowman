@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.schema
 
 import java.io.File
+import java.net.URL
 
 import scala.collection.JavaConversions._
 
@@ -43,9 +44,11 @@ import com.dimajix.flowman.execution.Context
 
 class AvroSchema extends Schema {
     @JsonProperty(value="file", required=false) private var _file: String = _
+    @JsonProperty(value="url", required=false) private var _url: String = _
     @JsonProperty(value="spec", required=false) private var _spec: String = _
 
     def file(implicit context: Context) : String = context.evaluate(_file)
+    def url(implicit context: Context) : URL = if (_url != null && _url.nonEmpty) new URL(context.evaluate(_url)) else null
     def spec(implicit context: Context) : String = context.evaluate(_spec)
 
     override def description(implicit context: Context): String = {
@@ -57,16 +60,22 @@ class AvroSchema extends Schema {
 
     private def loadSchema(implicit context: Context) : (String, Seq[Field]) = {
         val file = this.file
+        val url = this.url
         val spec = this.spec
 
         val avroSchema = if (file != null && file.nonEmpty) {
             new org.apache.avro.Schema.Parser().parse(new File(file))
         }
+        else if (url != null) {
+            val con = url.openConnection()
+            con.setUseCaches(false)
+            new org.apache.avro.Schema.Parser().parse(con.getInputStream)
+        }
         else if (spec != null && spec.nonEmpty) {
             new org.apache.avro.Schema.Parser().parse(spec)
         }
         else {
-            throw new IllegalArgumentException("An Avro schema needs either a 'file' or a 'spec' element")
+            throw new IllegalArgumentException("An Avro schema needs either a 'file', 'url' or a 'spec' element")
         }
 
         if (avroSchema.getType != RECORD)

@@ -45,8 +45,13 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private val _runner = new SimpleRunner()
 
-    def namespace : Namespace = _namespace
     def profiles : Seq[String] = _profiles
+
+    override def namespace : Namespace = _namespace
+
+    override def project: Project = null
+
+    override def root : Context = this
 
     /**
       * Returns the appropriate runner
@@ -105,10 +110,14 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       * @return
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
-        if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Expected project name in table specifier '$identifier'")
-        val child = getProjectContext(identifier.project.get)
-        child.getConnection(ConnectionIdentifier(identifier.name, None))
+        if (identifier.project.isEmpty) {
+            val con = Option(namespace).flatMap(_.connections.get(identifier.name))
+            con.getOrElse(throw new NoSuchElementException(s"Expected project name in connection specifier '$identifier'"))
+        }
+        else {
+            val child = getProjectContext(identifier.project.get)
+            child.getConnection(ConnectionIdentifier(identifier.name, None))
+        }
     }
 
     /**
@@ -169,7 +178,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     override def withProfile(profile:Profile) : Context = {
         setConfig(profile.config, SettingLevel.NAMESPACE_PROFILE)
         setEnvironment(profile.environment, SettingLevel.NAMESPACE_PROFILE)
-        setDatabases(profile.databases, SettingLevel.NAMESPACE_PROFILE)
+        setConnections(profile.connections, SettingLevel.NAMESPACE_PROFILE)
         this
     }
 

@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.tools.exec.project
 
-import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -32,7 +32,12 @@ class RunCommand extends ActionCommand {
         val runner = context.runner
         project.jobs.forall { case (name,job) =>
             logger.info("Executing job {}", name)
-            runner.execute(executor, job)
+            val result = runner.execute(executor, job)
+            result match {
+                case JobStatus.SUCCESS => true
+                case JobStatus.SKIPPED => true
+                case _ => false
+            }
         }
     }
 }

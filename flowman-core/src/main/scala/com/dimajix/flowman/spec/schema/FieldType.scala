@@ -78,7 +78,7 @@ abstract class FieldType {
 }
 
 @JsonDeserialize
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "array", value = classOf[ArrayType]),
     new JsonSubTypes.Type(name = "map", value = classOf[MapType]),

@@ -7,6 +7,6 @@ APP_NAME="flowman-tools"
 APP_VERSION="0.1.0-SNAPSHOT"
 APP_MAIN="com.dimajix.flowman.tools.exec.Driver"
 
-APP_JAR=$basedir/lib/"$APP_NAME-$APP_VERSION.jar"
+APP_JAR=$FLOWMAN_HOME/lib/"$APP_NAME-$APP_VERSION.jar"
 
 spark_submit $APP_JAR $APP_MAIN "$@"

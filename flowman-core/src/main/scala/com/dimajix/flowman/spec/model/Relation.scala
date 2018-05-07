@@ -16,8 +16,10 @@
 
 package com.dimajix.flowman.spec.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 
@@ -32,6 +34,13 @@ import com.dimajix.flowman.spi.Scanner
 
 object Relation {
     def subtypes : Seq[(String,Class[_ <: Relation])] = Scanner.relations
+
+    class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
+        override def convert(value: Map[String,Relation]): Map[String,Relation] = {
+            value.foreach(kv => kv._2._name = kv._1)
+            value
+        }
+    }
 }
 
 /**
@@ -48,8 +57,33 @@ object Relation {
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
 abstract class Relation {
+    @JsonIgnore private var _name:String = ""
+
+    /**
+      * Returns the name of the output
+      * @return
+      */
+    def name : String = _name
+
+    /**
+      * Returns a description of the relation
+      * @param context
+      * @return
+      */
     def description(implicit context: Context) : String
+
+    /**
+      * Returns the Schema object which describes all fields of the relation
+      * @param context
+      * @return
+      */
     def schema(implicit context: Context) : Schema
+
+    /**
+      * Returns a list of fields
+      * @param context
+      * @return
+      */
     def fields(implicit context: Context) : Seq[Field] = schema.fields
 
     /**

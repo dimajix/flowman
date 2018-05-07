@@ -20,7 +20,6 @@ import java.util.NoSuchElementException
 
 import scala.collection.mutable
 
-import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
-import com.dimajix.flowman.util.SparkUtils
 
 
 private[execution] class RootExecutor(context:RootContext, sessionFactory:() => Option[SparkSession])

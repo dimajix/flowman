@@ -17,12 +17,14 @@
 package com.dimajix.flowman.spec
 
 import java.io.File
+import java.io.InputStream
+import java.net.URL
 
 import scala.reflect.ClassTag
 
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import com.fasterxml.jackson.databind.jsontype.NamedType
+import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
@@ -52,6 +54,15 @@ object ObjectMapper {
     def read[T:ClassTag](file:File) : T = {
         val ctag = implicitly[reflect.ClassTag[T]]
         mapper.readValue(file, ctag.runtimeClass.asInstanceOf[Class[T]])
+    }
+    def read[T:ClassTag](url:URL) : T = {
+        val con = url.openConnection()
+        con.setUseCaches(false)
+        read[T](con.getInputStream)
+    }
+    def read[T:ClassTag](stream:InputStream) : T = {
+        val ctag = implicitly[reflect.ClassTag[T]]
+        mapper.readValue(stream, ctag.runtimeClass.asInstanceOf[Class[T]])
     }
     def parse[T:ClassTag](spec:String) : T = {
         val ctag = implicitly[reflect.ClassTag[T]]

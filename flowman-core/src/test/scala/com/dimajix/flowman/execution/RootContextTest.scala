@@ -27,6 +27,12 @@ class RootContextTest extends FlatSpec with Matchers {
         val context = session.context
 
         context.evaluate("${System.getenv('USER')}") should be (System.getenv("USER"))
+        context.evaluate("${System.getenv('NO_SUCH_ENV')}") should be ("")
+        context.evaluate("${System.getenv('NO_SUCH_ENV', 'default')}") should be ("default")
+
+        context.evaluate("$System.getenv('USER')") should be (System.getenv("USER"))
+        context.evaluate("$System.getenv('NO_SUCH_ENV')") should be ("")
+        context.evaluate("$System.getenv('NO_SUCH_ENV', 'default')") should be ("default")
     }
 
     it should "provide access to Java Integer class" in {

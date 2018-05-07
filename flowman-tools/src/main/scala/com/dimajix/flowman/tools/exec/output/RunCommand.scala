@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.spec.task.OutputTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -57,6 +58,10 @@ class RunCommand extends ActionCommand {
         val runner = context.runner
         val result = runner.execute(executor, job)
 
-        result
+        result match {
+            case JobStatus.SUCCESS => true
+            case JobStatus.SKIPPED => true
+            case _ => false
+        }
     }
 }

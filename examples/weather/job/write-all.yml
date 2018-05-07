@@ -4,4 +4,6 @@ jobs:
     tasks:
       - kind: output
         outputs:
-          - stations-write
+          - stations-local
+          - stations-relation-file
+          - stations-relation-local

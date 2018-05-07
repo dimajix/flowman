@@ -47,7 +47,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
               |        type: Integer
               |      - name: st
               |        type:
-              |          type: struct
+              |          kind: struct
               |          fields:
               |           - name: lolo
               |             type: string
@@ -55,7 +55,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
               |             type: Integer
               |      - name: a
               |        type:
-              |          type: array
+              |          kind: array
               |          elementType: Double
             """.stripMargin
 

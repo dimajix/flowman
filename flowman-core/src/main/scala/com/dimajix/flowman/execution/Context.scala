@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.execution
 
-import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.TableIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
@@ -45,7 +45,9 @@ object SettingLevel {
 }
 
 abstract class Context {
-    private val logger = LoggerFactory.getLogger(classOf[Executor])
+    def namespace : Namespace
+    def project : Project
+    def root : Context
 
     /**
       * Evaluates a string containing expressions to be processed.

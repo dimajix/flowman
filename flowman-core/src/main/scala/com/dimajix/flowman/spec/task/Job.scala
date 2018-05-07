@@ -20,7 +20,9 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -83,6 +85,10 @@ object Job {
 
         def build() : Job = job
 
+        def setName(name:String) : Builder = {
+            job._name = name
+            this
+        }
         def setDescription(desc:String) : Builder = {
             job._description = desc
             this
@@ -110,6 +116,13 @@ object Job {
     }
 
     def builder() : Builder = new Builder
+
+    class NameResolver extends StdConverter[Map[String,Job],Map[String,Job]] {
+        override def convert(value: Map[String,Job]): Map[String,Job] = {
+            value.foreach(kv => kv._2._name = kv._1)
+            value
+        }
+    }
 }
 
 /**
@@ -118,10 +131,12 @@ object Job {
 class Job {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
+    @JsonIgnore private var _name:String = ""
     @JsonProperty(value="description") private var _description:String = ""
     @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
+    def name : String = _name
     def description(implicit context:Context) : String = context.evaluate(_description)
     def tasks : Seq[Task] = _tasks
     def parameters: Seq[JobParameter] = _parameters
@@ -149,7 +164,7 @@ class Job {
       */
     def execute(executor:Executor, args:Map[String,String]) : JobStatus = {
         implicit val context = executor.context
-        logger.info(s"Running job: '$description'")
+        logger.info(s"Running job: '$name' ($description)")
 
         // Create a new execution environment
         val jobArgs = arguments(args)

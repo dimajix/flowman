@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.task.JobStatus
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
@@ -29,5 +30,5 @@ import com.dimajix.flowman.spec.task.Job
     new JsonSubTypes.Type(name = "logged", value = classOf[JdbcLoggedRunner])
 ))
 abstract class Runner {
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : Boolean
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : JobStatus
 }

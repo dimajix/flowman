@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.util.SparkUtils
 
 
 class SessionBuilder {
@@ -100,7 +99,7 @@ class Session private[execution](
       */
 
 
-    private def createOrReuseSession() : Option[SparkSession] = {
+    private def createOrReuseSession(config:Map[String,String]) : Option[SparkSession] = {
         if(_sparkSession != null) {
             logger.info("Reusing existing Spark session")
             val newSession = _sparkSession.newSession()
@@ -110,16 +109,18 @@ class Session private[execution](
         else {
             logger.info("Creating new Spark session")
             Try {
-                val config = new SparkConf()
+                val sparkConf = new SparkConf()
                     .setAppName(_sparkName)
+                    .setAll(config.toSeq)
+                _sparkConfig.foreach(kv => sparkConf.set(kv._1,kv._2))
                 val master = System.getProperty("spark.master")
                 if (master == null || master.isEmpty) {
                     logger.info("No Spark master specified - using local[*]")
-                    config.setMaster("local[*]")
-                    config.set("spark.sql.shuffle.partitions", "16")
+                    sparkConf.setMaster("local[*]")
+                    sparkConf.set("spark.sql.shuffle.partitions", "16")
                 }
                 SparkSession.builder()
-                    .config(config)
+                    .config(sparkConf)
                     .enableHiveSupport()
                     .getOrCreate()
             }
@@ -134,8 +135,7 @@ class Session private[execution](
         }
 
     }
-    private def createSession(config:Map[String,String]) = {
-        val sparkSession = createOrReuseSession()
+    private def createSession() = {
         val mergedConfig = if (_project != null) {
             logger.info("Using project specific Spark configuration settings")
             createContext(_project).config
@@ -145,8 +145,8 @@ class Session private[execution](
             context.config
         }
 
+        val sparkSession = createOrReuseSession(mergedConfig)
         sparkSession.foreach(spark => {
-            SparkUtils.configure(spark, mergedConfig)
             spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
         })
 
@@ -155,7 +155,7 @@ class Session private[execution](
 
         sparkSession
     }
-    private lazy val sparkSession = createSession(rootContext.config)
+    private lazy val sparkSession = createSession()
 
     private lazy val rootContext : RootContext = {
         val context = new RootContext(_namespace, _profiles.toSeq)

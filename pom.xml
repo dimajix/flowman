@@ -293,6 +293,7 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-aws</artifactId>
                 <version>${hadoop.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>

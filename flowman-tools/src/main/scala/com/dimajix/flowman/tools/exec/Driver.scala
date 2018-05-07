@@ -64,11 +64,12 @@ class Driver(options:Arguments) {
             val loader = Thread.currentThread.getContextClassLoader
             val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
             PropertyConfigurator.configure(url)
-            logger.info(s"Loaded Logging configuration from $url")
+            logger.debug(s"Loaded Logging configuration from $url")
         }
 
         // Adjust Sgpark loglevel
         if (options.sparkLogging != null) {
+            logger.debug(s"Setting Spark debug level to ${options.sparkLogging}")
             val upperCased = options.sparkLogging.toUpperCase(Locale.ENGLISH)
             val l = org.apache.log4j.Level.toLevel(upperCased)
             org.apache.log4j.Logger.getLogger("org").setLevel(l)

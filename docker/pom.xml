@@ -79,7 +79,7 @@
                     <tag>${project.version}</tag>
                     <pullNewerImage>false</pullNewerImage>
                     <buildArgs>
-                        <APP_ARCHIVE>flowman-tools-${project.version}-bin.tar.gz</APP_ARCHIVE>
+                        <APP_ARCHIVE>flowman-${project.version}-bin.tar.gz</APP_ARCHIVE>
                     </buildArgs>
                 </configuration>
             </plugin>

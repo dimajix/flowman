@@ -5,15 +5,17 @@ export JAVA_HOME
 export FLOWMAN_HOME
 export FLOWMAN_CONF_DIR
 
-export HADOOP_HOME=
-export HADOOP_CONF_DIR=${HADOOP_CONF_DIR=$HADOOP_HOME/conf}
-export YARN_HOME=
-export HDFS_HOME=
-export MAPRED_HOME=
-export HIVE_HOME=
-export HIVE_CONF_DIR
+export KRB_PRINCIPAL
+export KRB_KEYTAB
 
-export SPARK_HOME=
+export SPARK_HOME
+export HADOOP_HOME
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR=$HADOOP_HOME/conf}
+export YARN_HOME
+export HDFS_HOME
+export MAPRED_HOME
+export HIVE_HOME
+export HIVE_CONF_DIR=${HIVE_CONF_DIR=$HIVE_HOME/conf}
 
 
 # Apply any proxy settings

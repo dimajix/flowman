@@ -46,11 +46,26 @@
                 <jackson.version>2.6.7</jackson.version>
             </properties>
         </profile>
+        <profile>
+            <id>CDH-5.13</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <cdh.version>cdh5.13.1</cdh.version>
+                <spark.version>2.2.0</spark.version>
+                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
+            </properties>
+        </profile>
     </profiles>
 
     <modules>
         <module>flowman-core</module>
         <module>flowman-tools</module>
+        <module>flowman-dist</module>
         <module>docker</module>
     </modules>
 

@@ -16,16 +16,23 @@
 
 package com.dimajix.flowman.spec.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.FieldValue
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.SingleValue
 
 
 class NullRelation extends BaseRelation {
+    @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
+
+    def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -35,6 +42,8 @@ class NullRelation extends BaseRelation {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        assert(partitions != null)
+
         implicit val context = executor.context
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
         val readSchema = Option(schema).getOrElse(createSchema)

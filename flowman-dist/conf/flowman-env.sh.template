@@ -1,22 +1,42 @@
 #!/usr/bin/env bash
 
-export JAVA_HOME
+# Specify Java home (just in case)
+#
+#export JAVA_HOME
 
-export FLOWMAN_HOME
-export FLOWMAN_CONF_DIR
+# Explicitly override Flowmans home. These settings are detected automatically,
+# but can be overridden
+#
+#export FLOWMAN_HOME
+#export FLOWMAN_CONF_DIR
 
-export HADOOP_HOME=
-export HADOOP_CONF_DIR=${HADOOP_CONF_DIR=$HADOOP_HOME/conf}
-export YARN_HOME=
-export HDFS_HOME=
-export MAPRED_HOME=
-export HIVE_HOME=
-export HIVE_CONF_DIR
+# Specify any environment settings and paths
+#
+#export SPARK_HOME
+#export HADOOP_HOME
+#export HADOOP_CONF_DIR=${HADOOP_CONF_DIR=$HADOOP_HOME/conf}
+#export YARN_HOME
+#export HDFS_HOME
+#export MAPRED_HOME
+#export HIVE_HOME
+#export HIVE_CONF_DIR=${HIVE_CONF_DIR=$HIVE_HOME/conf}
 
-export SPARK_HOME=
+# Set the Kerberos principal in YARN cluster
+#
+#KRB_PRINCIPAL=
+#KRB_KEYTAB=
+
+# Specify the YARN queue to use
+#
+#YARN_QUEUE=
+
+# Use a different spark-submit (for example spark2-submit in Cloudera)
+#
+#SPARK_SUBMIT=
 
 
-# Apply any proxy settings
+# Apply any proxy settings from the system environment
+#
 if [[ $PROXY_HOST != "" ]]; then
     SPARK_DRIVER_JAVA_OPTS="
         -Dhttp.proxyHost=${PROXY_HOST}
@@ -38,7 +58,8 @@ if [[ $PROXY_HOST != "" ]]; then
         $SPARK_OPTS"
 fi
 
-# Set AWS credentials if required
+# Set AWS credentials if required. You can also specify these in project config
+#
 if [[ $AWS_ACCESS_KEY_ID != "" ]]; then
     SPARK_OPTS="
         --conf spark.hadoop.fs.s3a.access.key=${AWS_ACCESS_KEY_ID}

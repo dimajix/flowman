@@ -33,12 +33,12 @@ import com.dimajix.flowman.util.SchemaUtils
 class HiveTableRelation extends BaseRelation  {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
-    @JsonProperty(value="database") private var _database: String = _
-    @JsonProperty(value="table") private var _table: String = _
+    @JsonProperty(value="database", required=false) private var _database: String = ""
+    @JsonProperty(value="table", required=true) private var _table: String = ""
     @JsonProperty(value="external", required=false) private var _external: String = "false"
-    @JsonProperty(value="location") private var _location: String = _
-    @JsonProperty(value="format") private var _format: String = _
-    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
+    @JsonProperty(value="location", required=false) private var _location: String = _
+    @JsonProperty(value="format", required=false) private var _format: String = _
+    @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
 
     def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
@@ -59,7 +59,7 @@ class HiveTableRelation extends BaseRelation  {
         implicit val context = executor.context
         val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
         val partitionNames = this.partitions.map(_.name)
-        val tableName = database + "." + table
+        val tableName = if (database.nonEmpty) database + "." + table else table
         logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
 
         def applyPartitionFilter(df:DataFrame, partitionName:String, partitionValue:FieldValue): DataFrame = {
@@ -103,7 +103,7 @@ class HiveTableRelation extends BaseRelation  {
         val create = s"CREATE $external TABLE $database.$table"
         val fields = "(\n" + schema.fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
-        val partitionBy = Option(partitions).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
+        val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
         val storedAs = Option(format).map(f => s"\nSTORED AS $f ").getOrElse("")
         val location = Option(this.location).map(l => s"\nLOCATION $l ").getOrElse("")
         val stmt = create + fields + comment + partitionBy + storedAs + location

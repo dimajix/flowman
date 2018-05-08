@@ -55,8 +55,13 @@ fi
 
 
 # Add Kerberos authentication
-if [ "$KRB_PRINCIPIAL" != "" ]; then
-    SPARK_OPTS="--principal $KRB_PRINCIPIAL --keytab $KRB_KEYTAB $SPARK_OPTS"
+if [ "$KRB_PRINCIPAL" != "" ]; then
+    SPARK_OPTS="--principal $KRB_PRINCIPAL --keytab $KRB_KEYTAB $SPARK_OPTS"
+fi
+
+# Add YARN ququq
+if [ "$YARN_QUEUE" != "" ]; then
+    SPARK_OPTS="--queue $YARN_QUEUE $SPARK_OPTS"
 fi
 
 

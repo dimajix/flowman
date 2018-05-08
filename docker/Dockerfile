@@ -18,7 +18,6 @@ COPY conf/ /opt/docker/conf/flowman/
 ADD target /tmp/repo/
 RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/$APP_ARCHIVE && \
     ln -s /opt/flowman* /opt/flowman && \
-    cp -r /tmp/repo/examples /opt/flowman && \
     rm -rf /tmp/repo
 
 ENTRYPOINT ["/opt/docker/bin/entrypoint.sh"]

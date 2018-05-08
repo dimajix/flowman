@@ -65,6 +65,7 @@
     <modules>
         <module>flowman-core</module>
         <module>flowman-tools</module>
+        <module>flowman-dist</module>
         <module>docker</module>
     </modules>
 

@@ -46,7 +46,7 @@ class InputMapping extends BaseMapping {
             })
         }
         else {
-            null
+            Map.empty[String,FieldValue]
         }
     }
 

@@ -56,6 +56,8 @@ class HiveTableRelation extends BaseRelation  {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        assert(partitions != null)
+
         implicit val context = executor.context
         val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
         val partitionNames = this.partitions.map(_.name)
@@ -69,7 +71,8 @@ class HiveTableRelation extends BaseRelation  {
         }
 
         val reader = this.reader(executor)
-        val df = partitions.foldLeft(reader.table(tableName))((df,pv) => applyPartitionFilter(df, pv._1, pv._2))
+        val tableDf = reader.table(tableName)
+        val df = partitions.foldLeft(tableDf)((df,pv) => applyPartitionFilter(df, pv._1, pv._2))
 
         SchemaUtils.applySchema(df, schema)
     }

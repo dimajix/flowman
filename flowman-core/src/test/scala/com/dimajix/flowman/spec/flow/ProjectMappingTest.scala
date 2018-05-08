@@ -45,7 +45,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.columns should be (Seq("_2" -> "int"))
         mapping.dependencies should be (Array(TableIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_1", "_2").collect()
+        val result = mapping.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_2").collect()
         result.size should be (2)
         result(0) should be (Row(12))
         result(1) should be (Row(23))

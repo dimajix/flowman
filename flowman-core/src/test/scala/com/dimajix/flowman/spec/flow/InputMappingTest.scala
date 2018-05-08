@@ -79,4 +79,70 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
     }
+
+    it should "support reading from partitions without specification" in {
+        val spec =
+            """
+              |relations:
+              |  empty:
+              |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: spart
+              |        type: string
+              |mappings:
+              |  empty:
+              |    kind: read
+              |    source: empty
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        project.relations.keys should contain("empty")
+        project.mappings.keys should contain("empty")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.createExecutor(project)
+        val df = executor.instantiate(TableIdentifier("empty"))
+        df.columns should contain("str_col")
+        df.columns should contain("int_col")
+    }
+
+    it should "support reading from partitions with specification" in {
+        val spec =
+            """
+              |relations:
+              |  empty:
+              |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: spart
+              |        type: string
+              |mappings:
+              |  empty:
+              |    kind: read
+              |    source: empty
+              |    partitions:
+              |      spart: abc
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        project.relations.keys should contain("empty")
+        project.mappings.keys should contain("empty")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.createExecutor(project)
+        val df = executor.instantiate(TableIdentifier("empty"))
+        df.columns should contain("str_col")
+        df.columns should contain("int_col")
+    }
 }

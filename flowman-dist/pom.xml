@@ -52,7 +52,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>flowman-${project.version}</finalName>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
                             <descriptors>
                                 <descriptor>src/main/assembly/assembly.xml</descriptor>
                             </descriptors>

@@ -45,16 +45,6 @@
                 <include>**/*</include>
             </includes>
         </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/target/</directory>
-            <outputDirectory>lib</outputDirectory>
-            <fileMode>0644</fileMode>
-            <directoryMode>0755</directoryMode>
-            <includes>
-                <include>${project.artifactId}-${project.version}.jar</include>
-                <!-- <include>${project.artifactId}-${project.version}-jar-with-dependencies.jar</include> -->
-            </includes>
-        </fileSet>
     </fileSets>
 
     <dependencySets>

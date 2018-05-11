@@ -16,22 +16,22 @@
 
 package com.dimajix.flowman.spi
 
+import scala.collection.mutable
+
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMatchProcessor
 
-import com.dimajix.flowman.annotation.OutputType
-import com.dimajix.flowman.annotation.RelationType
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.annotation.OutputType
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.annotation.SchemaType
+import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.model.Relation
+import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.schema.Schema
 
 
-object Scanner {
+object Registration {
     private val IGNORED_PACKAGES = Array(
         "java",
         "javax",
@@ -56,25 +56,25 @@ object Scanner {
         "com.databricks",
         "com.fasterxml"
     )
-    private var _mappings : Seq[(String,Class[_ <: Mapping])] = _
-    private var _relations : Seq[(String,Class[_ <: Relation])] = _
-    private var _outputs : Seq[(String,Class[_ <: Output])] = _
-    private var _schemas : Seq[(String,Class[_ <: Schema])] = _
+    private val _loaders:mutable.Set[ClassLoader] = mutable.Set()
 
-    private def loadSubtypes: Unit = {
+    def load() : Unit = {
+        load(Thread.currentThread.getContextClassLoader)
+    }
+    def load(cl:ClassLoader): Unit = {
         synchronized {
-            if (_relations == null) {
-                val mappings = MappingProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
-                val relations = RelationProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
-                val outputs = OutputProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
-                val schemas = SchemaProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
+            if (!_loaders.contains(cl)) {
+                MappingProvider.scan(cl)
+                RelationProvider.scan(cl)
+                OutputProvider.scan(cl)
+                SchemaProvider.scan(cl)
 
                 new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
                     .matchClassesWithAnnotation(classOf[MappingType],
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[MappingType])
-                                mappings.append((annotation.name(), aClass))
+                                Mapping.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Mapping]])
                             }
                         }
                     )
@@ -82,7 +82,7 @@ object Scanner {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[RelationType])
-                                relations.append((annotation.name(), aClass))
+                                Relation.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Relation]])
                             }
                         }
                     )
@@ -90,7 +90,7 @@ object Scanner {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[OutputType])
-                                relations.append((annotation.name(), aClass))
+                                Output.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Output]])
                             }
                         }
                     )
@@ -98,34 +98,13 @@ object Scanner {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[SchemaType])
-                                relations.append((annotation.name(), aClass))
+                                Schema.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Schema]])
                             }
                         }
                     )
                     .scan()
-                _mappings = mappings.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Mapping]]))
-                _relations = relations.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Relation]]))
-                _outputs = outputs.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Output]]))
-                _schemas = schemas.map(kv => (kv._1, kv._2.asInstanceOf[Class[_ <: Schema]]))
+                _loaders.add(cl)
             }
         }
-    }
-
-
-    def mappings : Seq[(String,Class[_ <: Mapping])] = {
-        loadSubtypes
-        _mappings
-    }
-    def relations: Seq[(String,Class[_ <: Relation])] = {
-        loadSubtypes
-        _relations
-    }
-    def outputs: Seq[(String,Class[_ <: Output])] = {
-        loadSubtypes
-        _outputs
-    }
-    def schemas: Seq[(String,Class[_ <: Schema])] = {
-        loadSubtypes
-        _schemas
     }
 }

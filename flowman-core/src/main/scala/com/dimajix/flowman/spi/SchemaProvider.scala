@@ -19,17 +19,31 @@ package com.dimajix.flowman.spi
 import java.util.ServiceLoader
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
+
+import com.dimajix.flowman.spec.schema.Schema
 
 
 object SchemaProvider {
+    private val _providers:mutable.Buffer[SchemaProvider] = mutable.Buffer()
+
+    def scan() : Unit = {
+        scan(Thread.currentThread.getContextClassLoader)
+    }
+    def scan(cl:ClassLoader) : Unit = {
+        val cl = Thread.currentThread.getContextClassLoader
+        val loader = ServiceLoader.load(classOf[SchemaProvider], cl)
+        val providers = loader.iterator().toSeq.filter(p => !_providers.contains(p))
+        providers.foreach(p => Schema.register(p.getKind, p.getImpl.asInstanceOf[Class[_ <: Schema]]))
+        _providers.appendAll(providers)
+    }
     def providers : Seq[SchemaProvider] = {
-        val loader = ServiceLoader.load(classOf[SchemaProvider])
-        loader.iterator().toSeq
+        _providers
     }
 }
 
 
 abstract class SchemaProvider {
-    def getName() : String
+    def getKind() : String
     def getImpl() : Class[_]
 }

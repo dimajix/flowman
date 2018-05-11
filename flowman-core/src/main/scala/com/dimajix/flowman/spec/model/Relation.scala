@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.model
 
+import scala.collection.mutable
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -29,11 +31,16 @@ import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SingleValue
-import com.dimajix.flowman.spi.Scanner
 
 
 object Relation {
-    def subtypes : Seq[(String,Class[_ <: Relation])] = Scanner.relations
+    private val _relations : mutable.Map[String,Class[_ <: Relation]] = mutable.Map()
+
+    def register(name:String, clazz:Class[_ <: Relation]) : Unit = {
+        _relations.update(name, clazz)
+    }
+
+    def subtypes : Seq[(String,Class[_ <: Relation])] = _relations.toSeq
 
     class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
         override def convert(value: Map[String,Relation]): Map[String,Relation] = {

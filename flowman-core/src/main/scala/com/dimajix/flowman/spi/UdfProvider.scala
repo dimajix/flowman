@@ -20,7 +20,7 @@ import java.util.ServiceLoader
 
 import scala.collection.JavaConversions._
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.UDFRegistration
 
 
 object UdfProvider {
@@ -31,5 +31,5 @@ object UdfProvider {
 }
 
 abstract class UdfProvider {
-    def register(spark:SparkSession) : Unit
+    def register(registration:UDFRegistration) : Unit
 }

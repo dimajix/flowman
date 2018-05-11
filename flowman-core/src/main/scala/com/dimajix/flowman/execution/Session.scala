@@ -152,7 +152,7 @@ class Session private[execution](
         })
 
         // Register special UDFs
-        sparkSession.foreach(session => UdfProvider.providers.foreach(_.register(session)))
+        sparkSession.foreach(session => UdfProvider.providers.foreach(_.register(session.udf)))
 
         sparkSession
     }

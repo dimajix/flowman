@@ -19,17 +19,31 @@ package com.dimajix.flowman.spi
 import java.util.ServiceLoader
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
+
+import com.dimajix.flowman.spec.model.Relation
 
 
 object RelationProvider {
+    private val _providers:mutable.Buffer[RelationProvider] = mutable.ArrayBuffer()
+
+    def scan() : Unit = {
+        scan(Thread.currentThread.getContextClassLoader)
+    }
+    def scan(cl:ClassLoader) : Unit = {
+        val cl = Thread.currentThread.getContextClassLoader
+        val loader = ServiceLoader.load(classOf[RelationProvider], cl)
+        val providers = loader.iterator().toSeq.filter(p => !_providers.contains(p))
+        providers.foreach(p => Relation.register(p.getKind, p.getImpl.asInstanceOf[Class[_ <: Relation]]))
+        _providers.appendAll(providers)
+    }
     def providers : Seq[RelationProvider] = {
-        val loader = ServiceLoader.load(classOf[RelationProvider])
-        loader.iterator().toSeq
+        _providers
     }
 }
 
 
 abstract class RelationProvider {
-    def getName() : String
+    def getKind() : String
     def getImpl() : Class[_]
 }

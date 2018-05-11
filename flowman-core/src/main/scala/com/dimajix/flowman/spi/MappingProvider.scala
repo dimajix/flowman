@@ -19,16 +19,31 @@ package com.dimajix.flowman.spi
 import java.util.ServiceLoader
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
+
+import com.dimajix.flowman.spec.flow.Mapping
 
 
 object MappingProvider {
+    private val _providers:mutable.Buffer[MappingProvider] = mutable.Buffer()
+
+    def scan() : Unit = {
+        scan(Thread.currentThread.getContextClassLoader)
+    }
+    def scan(cl:ClassLoader) : Unit = {
+        val cl = Thread.currentThread.getContextClassLoader
+        val loader = ServiceLoader.load(classOf[MappingProvider], cl)
+        val providers = loader.iterator().toSeq.filter(p => !_providers.contains(p))
+        providers.foreach(p => Mapping.register(p.getKind, p.getImpl.asInstanceOf[Class[_ <: Mapping]]))
+        _providers.appendAll(providers)
+    }
     def providers : Seq[MappingProvider] = {
-        val loader = ServiceLoader.load(classOf[MappingProvider])
-        loader.iterator().toSeq
+        _providers
     }
 }
 
-abstract class MappingProvider {
-    def getName() : String
+
+trait MappingProvider {
+    def getKind() : String
     def getImpl() : Class[_]
 }

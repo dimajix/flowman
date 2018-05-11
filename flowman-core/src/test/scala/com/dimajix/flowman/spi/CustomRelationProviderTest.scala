@@ -16,17 +16,25 @@
 
 package com.dimajix.flowman.spi
 
-import com.fasterxml.jackson.annotation.JsonTypeName
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.model.NullRelation
-
-
-@JsonTypeName("customRelation")
-class CustomRelation extends NullRelation {
-}
+import com.dimajix.flowman.annotation.RelationType
+import com.dimajix.flowman.spec.Module
 
 
-class CustomRelationProvider extends RelationProvider {
-    override def getKind() : String = "customRelation"
-    override def getImpl() : Class[_] = classOf[CustomRelation]
+
+class CustomRelationProviderTest extends FlatSpec with Matchers {
+    "A plugin" should "be used if present" in {
+        val spec =
+            """
+              |relations:
+              |  custom:
+              |    kind: customRelation
+            """.stripMargin
+        val module = Module.read.string(spec)
+        module.relations.keys should contain("custom")
+        val rel = module.relations("custom")
+        rel shouldBe a[CustomRelation]
+    }
 }

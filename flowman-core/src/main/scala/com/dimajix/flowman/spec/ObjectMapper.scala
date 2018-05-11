@@ -32,10 +32,12 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spi.Registration
 
 
 object ObjectMapper {
     def mapper : JacksonMapper = {
+        Registration.load()
         val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))

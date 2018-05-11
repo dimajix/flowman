@@ -48,11 +48,6 @@
     </fileSets>
 
     <dependencySets>
-        <!--<dependencySet>
-            <includes>
-                <include>*:*:jar</include>
-            </includes>
-        </dependencySet>-->
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>

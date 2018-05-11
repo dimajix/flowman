@@ -25,10 +25,9 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.spark.sql.SparkSession
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
-import org.scalatest.mockito.MockitoSugar
 
 
-trait LocalSparkSession extends BeforeAndAfterAll  with MockitoSugar { this:Suite =>
+trait LocalSparkSession extends BeforeAndAfterAll { this:Suite =>
     var spark: SparkSession = _
 
     override def beforeAll() : Unit = {

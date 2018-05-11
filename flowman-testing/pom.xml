@@ -54,6 +54,12 @@
             <artifactId>scalatest_${scala.api_version}</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.scalamock</groupId>
+            <artifactId>scalamock_${scala.api_version}</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>
 

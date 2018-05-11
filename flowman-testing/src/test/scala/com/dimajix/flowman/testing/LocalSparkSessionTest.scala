@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 
-class SparkSessionTest extends FlatSpec with Matchers with LocalSparkSession {
+class LocalSparkSessionTest extends FlatSpec with Matchers with LocalSparkSession {
     "A SparkSession" should "have configurable properties" in {
         spark.conf.set("spark.sql.prop1", "p1")
         spark.conf.get("spark.sql.prop1") should be ("p1")

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spi.UdfProvider
 
 
 class SessionBuilder {
@@ -151,7 +152,7 @@ class Session private[execution](
         })
 
         // Register special UDFs
-        //udf.register(sparkSession)
+        sparkSession.foreach(session => UdfProvider.providers.foreach(_.register(session)))
 
         sparkSession
     }

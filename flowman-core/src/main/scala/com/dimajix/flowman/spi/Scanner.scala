@@ -66,8 +66,8 @@ object Scanner {
             if (_relations == null) {
                 val mappings = MappingProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
                 val relations = RelationProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
-                var outputs = OutputProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
-                var schemas = SchemaProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
+                val outputs = OutputProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
+                val schemas = SchemaProvider.providers.map(p => (p.getName, p.getImpl)).toBuffer
 
                 new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
                     .matchClassesWithAnnotation(classOf[MappingType],

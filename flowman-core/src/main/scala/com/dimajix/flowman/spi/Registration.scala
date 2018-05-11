@@ -25,10 +25,12 @@ import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.annotation.OutputType
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.annotation.SchemaType
+import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.task.Task
 
 
 object Registration {
@@ -68,6 +70,7 @@ object Registration {
                 RelationProvider.scan(cl)
                 OutputProvider.scan(cl)
                 SchemaProvider.scan(cl)
+                TaskProvider.scan(cl)
 
                 new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
                     .matchClassesWithAnnotation(classOf[MappingType],
@@ -99,6 +102,14 @@ object Registration {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[SchemaType])
                                 Schema.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Schema]])
+                            }
+                        }
+                    )
+                    .matchClassesWithAnnotation(classOf[TaskType],
+                        new ClassAnnotationMatchProcessor {
+                            override def processMatch(aClass: Class[_]): Unit = {
+                                val annotation = aClass.getAnnotation(classOf[TaskType])
+                                Task.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Task]])
                             }
                         }
                     )

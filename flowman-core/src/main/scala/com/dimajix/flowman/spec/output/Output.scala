@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.output
 
-import scala.collection.mutable
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -27,19 +25,10 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Output {
-    private val _outputs : mutable.Map[String,Class[_ <: Output]] = mutable.Map()
-
-    def register(name:String, clazz:Class[_ <: Output]) : Unit = {
-        _outputs.update(name, clazz)
-    }
-
-    def subtypes : Seq[(String,Class[_ <: Output])] = {
-        _outputs.toSeq
-    }
-
+object Output extends ExtensionRegistry[Output] {
     class NameResolver extends StdConverter[Map[String,Output],Map[String,Output]] {
         override def convert(value: Map[String,Output]): Map[String,Output] = {
             value.foreach(kv => kv._2._name = kv._1)

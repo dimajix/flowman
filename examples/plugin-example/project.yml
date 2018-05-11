@@ -1,0 +1,5 @@
+name: "plugin-example"
+version: "1.0"
+
+modules:
+ - job

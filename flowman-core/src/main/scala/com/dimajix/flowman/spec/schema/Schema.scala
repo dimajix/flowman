@@ -16,22 +16,14 @@
 
 package com.dimajix.flowman.spec.schema
 
-import scala.collection.mutable
-
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Schema {
-    private val _schemas : mutable.Map[String,Class[_ <: Schema]] = mutable.Map()
-
-    def register(name:String, clazz:Class[_ <: Schema]) : Unit = {
-        _schemas.update(name, clazz)
-    }
-
-    def subtypes : Seq[(String,Class[_ <: Schema])] = _schemas.toSeq
+object Schema extends ExtensionRegistry[Schema] {
 }
 
 /**

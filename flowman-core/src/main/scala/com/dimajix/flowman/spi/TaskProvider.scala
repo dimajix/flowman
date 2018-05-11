@@ -16,14 +16,14 @@
 
 package com.dimajix.flowman.spi
 
-import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.task.Task
 
 
-object SchemaProvider extends ExtensionLoader[Schema, SchemaProvider](Schema) {
+object TaskProvider extends ExtensionLoader[Task, TaskProvider](Task) {
 }
 
 
-trait SchemaProvider extends ExtensionProvider {
+trait TaskProvider extends ExtensionProvider {
     def getKind() : String
     def getImpl() : Class[_]
 }

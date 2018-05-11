@@ -1,0 +1,5 @@
+jobs:
+  hello-world:
+    description: "Simply print 'Hello World'"
+    tasks:
+      - kind: hello-world

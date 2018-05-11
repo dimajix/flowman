@@ -29,17 +29,10 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
 import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Mapping {
-    private val _mappings : mutable.Map[String,Class[_ <: Mapping]] = mutable.Map()
-
-    def register(name:String, clazz:Class[_ <: Mapping]) : Unit = {
-        _mappings.update(name, clazz)
-    }
-
-    def subtypes : Seq[(String,Class[_ <: Mapping])] = _mappings.toSeq
-
+object Mapping extends ExtensionRegistry[Mapping] {
     class NameResolver extends StdConverter[Map[String,Mapping],Map[String,Mapping]] {
         override def convert(value: Map[String,Mapping]): Map[String,Mapping] = {
             value.foreach(kv => kv._2._name = kv._1)

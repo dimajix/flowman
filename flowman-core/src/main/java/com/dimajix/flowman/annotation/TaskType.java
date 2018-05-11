@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.annotation;
 
-import com.dimajix.flowman.spec.schema.Schema
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 
-object SchemaProvider extends ExtensionLoader[Schema, SchemaProvider](Schema) {
-}
-
-
-trait SchemaProvider extends ExtensionProvider {
-    def getKind() : String
-    def getImpl() : Class[_]
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface TaskType {
+    String name();
 }

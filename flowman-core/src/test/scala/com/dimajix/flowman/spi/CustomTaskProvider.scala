@@ -16,14 +16,7 @@
 
 package com.dimajix.flowman.spi
 
-import com.dimajix.flowman.spec.schema.Schema
 
+class CustomTaskProvider {
 
-object SchemaProvider extends ExtensionLoader[Schema, SchemaProvider](Schema) {
-}
-
-
-trait SchemaProvider extends ExtensionProvider {
-    def getKind() : String
-    def getImpl() : Class[_]
 }

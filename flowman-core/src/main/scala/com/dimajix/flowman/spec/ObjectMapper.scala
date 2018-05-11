@@ -32,6 +32,7 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.task.Task
 import com.dimajix.flowman.spi.Registration
 
 
@@ -42,6 +43,7 @@ object ObjectMapper {
         val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val schemaTypes = Schema.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val taskTypes = Task.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new JacksonMapper(new YAMLFactory())
         mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
         mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
@@ -50,6 +52,7 @@ object ObjectMapper {
         mapper.registerSubtypes(mappingTypes:_*)
         mapper.registerSubtypes(outputTypes:_*)
         mapper.registerSubtypes(schemaTypes:_*)
+        mapper.registerSubtypes(taskTypes:_*)
         mapper
     }
 

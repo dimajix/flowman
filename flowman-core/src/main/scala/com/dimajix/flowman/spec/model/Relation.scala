@@ -27,21 +27,15 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Relation {
-    private val _relations : mutable.Map[String,Class[_ <: Relation]] = mutable.Map()
-
-    def register(name:String, clazz:Class[_ <: Relation]) : Unit = {
-        _relations.update(name, clazz)
-    }
-
-    def subtypes : Seq[(String,Class[_ <: Relation])] = _relations.toSeq
-
+object Relation extends ExtensionRegistry[Relation] {
     class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
         override def convert(value: Map[String,Relation]): Map[String,Relation] = {
             value.foreach(kv => kv._2._name = kv._1)

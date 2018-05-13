@@ -64,7 +64,9 @@
 
     <modules>
         <module>flowman-core</module>
+        <module>flowman-testing</module>
         <module>flowman-tools</module>
+        <module>flowman-plugin-example</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -237,6 +239,24 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-tools</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-testing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-library</artifactId>
                 <version>${scala.version}</version>
@@ -261,6 +281,13 @@
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest_${scala.api_version}</artifactId>
                 <version>3.0.3</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>2.15.0</version>
                 <scope>test</scope>
             </dependency>
 

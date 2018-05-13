@@ -58,7 +58,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         implicit val context = session.context
 
         val job = project.jobs("loop")
@@ -82,7 +82,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         implicit val context = session.context
 
         val job = project.jobs("loop")
@@ -97,7 +97,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
             .addJob("job", loopJob)
             .build()
         val session = Session.builder().build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType)))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(JobStatus.SUCCESS)
@@ -117,7 +117,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
             .addJob("job", loopJob)
             .build()
         val session = Session.builder().build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2")))
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(JobStatus.SUCCESS)
@@ -145,7 +145,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
             .addJob("job", loopJob)
             .build()
         val session = Session.builder().build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2", "4")))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(JobStatus.SUCCESS)

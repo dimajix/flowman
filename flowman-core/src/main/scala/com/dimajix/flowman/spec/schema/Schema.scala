@@ -20,11 +20,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spi.Scanner
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Schema {
-    def subtypes : Seq[(String,Class[_ <: Schema])] = Scanner.schemas
+object Schema extends ExtensionRegistry[Schema] {
 }
 
 /**

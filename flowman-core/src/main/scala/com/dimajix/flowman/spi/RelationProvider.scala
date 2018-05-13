@@ -16,20 +16,14 @@
 
 package com.dimajix.flowman.spi
 
-import java.util.ServiceLoader
-
-import scala.collection.JavaConversions._
+import com.dimajix.flowman.spec.model.Relation
 
 
-object RelationProvider {
-    def providers : Seq[RelationProvider] = {
-        val loader = ServiceLoader.load(classOf[RelationProvider])
-        loader.iterator().toSeq
-    }
+object RelationProvider extends ExtensionLoader[Relation, RelationProvider](Relation) {
 }
 
 
-abstract class RelationProvider {
-    def getName() : String
+abstract class RelationProvider extends ExtensionProvider {
+    def getKind() : String
     def getImpl() : Class[_]
 }

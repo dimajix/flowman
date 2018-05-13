@@ -27,6 +27,6 @@ class CustomRelation extends NullRelation {
 
 
 class CustomRelationProvider extends RelationProvider {
-    override def getName() : String = "customRelation"
+    override def getKind() : String = "customRelation"
     override def getImpl() : Class[_] = classOf[CustomRelation]
 }

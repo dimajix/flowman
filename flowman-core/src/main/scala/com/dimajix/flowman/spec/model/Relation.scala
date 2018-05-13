@@ -29,12 +29,10 @@ import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SingleValue
-import com.dimajix.flowman.spi.Scanner
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Relation {
-    def subtypes : Seq[(String,Class[_ <: Relation])] = Scanner.relations
-
+object Relation extends ExtensionRegistry[Relation] {
     class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
         override def convert(value: Map[String,Relation]): Map[String,Relation] = {
             value.foreach(kv => kv._2._name = kv._1)

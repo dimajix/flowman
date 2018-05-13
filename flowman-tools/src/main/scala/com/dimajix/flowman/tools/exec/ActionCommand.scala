@@ -26,7 +26,7 @@ abstract class ActionCommand extends Command {
         super.execute(project, session)
 
         // Create project specific executor
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         val result = executeInternal(executor, project)
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured

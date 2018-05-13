@@ -22,6 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 
+/**
+ * This annotation marks a specific class as a Mapping to be used in a data flow spec. The specific Mapping itself has
+ * to derive from the Mapping class
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface MappingType {

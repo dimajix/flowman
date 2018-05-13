@@ -16,20 +16,14 @@
 
 package com.dimajix.flowman.spi
 
-import java.util.ServiceLoader
-
-import scala.collection.JavaConversions._
+import com.dimajix.flowman.spec.schema.Schema
 
 
-object SchemaProvider {
-    def providers : Seq[SchemaProvider] = {
-        val loader = ServiceLoader.load(classOf[SchemaProvider])
-        loader.iterator().toSeq
-    }
+object SchemaProvider extends ExtensionLoader[Schema, SchemaProvider](Schema) {
 }
 
 
-abstract class SchemaProvider {
-    def getName() : String
+trait SchemaProvider extends ExtensionProvider {
+    def getKind() : String
     def getImpl() : Class[_]
 }

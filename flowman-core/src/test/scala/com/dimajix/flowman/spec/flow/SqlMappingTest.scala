@@ -159,7 +159,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         implicit val icontext = executor.context
 
         val df = executor.spark.createDataFrame(Seq(

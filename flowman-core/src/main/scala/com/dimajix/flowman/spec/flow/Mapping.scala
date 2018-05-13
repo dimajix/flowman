@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.flow
 
+import scala.collection.mutable
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -27,12 +29,10 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
 import com.dimajix.flowman.spec.output.Output
-import com.dimajix.flowman.spi.Scanner
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Mapping {
-    def subtypes : Seq[(String,Class[_ <: Mapping])] = Scanner.mappings
-
+object Mapping extends ExtensionRegistry[Mapping] {
     class NameResolver extends StdConverter[Map[String,Mapping],Map[String,Mapping]] {
         override def convert(value: Map[String,Mapping]): Map[String,Mapping] = {
             value.foreach(kv => kv._2._name = kv._1)
@@ -40,6 +40,7 @@ object Mapping {
         }
     }
 }
+
 
 /**
   * Interface class for specifying a transformation (mapping)

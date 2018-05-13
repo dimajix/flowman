@@ -16,19 +16,14 @@
 
 package com.dimajix.flowman.spi
 
-import java.util.ServiceLoader
-
-import scala.collection.JavaConversions._
+import com.dimajix.flowman.spec.flow.Mapping
 
 
-object MappingProvider {
-    def providers : Seq[MappingProvider] = {
-        val loader = ServiceLoader.load(classOf[MappingProvider])
-        loader.iterator().toSeq
-    }
+object MappingProvider extends ExtensionLoader[Mapping, MappingProvider](Mapping) {
 }
 
-abstract class MappingProvider {
-    def getName() : String
+
+trait MappingProvider extends ExtensionProvider {
+    def getKind() : String
     def getImpl() : Class[_]
 }

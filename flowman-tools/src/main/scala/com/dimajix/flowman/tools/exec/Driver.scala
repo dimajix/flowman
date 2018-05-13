@@ -24,8 +24,8 @@ import org.kohsuke.args4j.CmdLineParser
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.plugin.PluginManager
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.util.splitSettings
 
@@ -45,13 +45,26 @@ object Driver {
 class Driver(options:Arguments) {
     private val logger = LoggerFactory.getLogger(classOf[Driver])
 
+    private lazy val plugins:PluginManager = {
+        val pluginDir = new File(System.getenv("FLOWMAN_HOME"), "plugins")
+        new PluginManager().withPluginDir(pluginDir)
+    }
+
+    private def loadSystemPlugins() : Unit = {
+        // TODO
+    }
+
     private def loadNamespace() : Namespace = {
-        Option(System.getenv("FLOWMAN_CONF_DIR"))
+        val ns = Option(System.getenv("FLOWMAN_CONF_DIR"))
             .filter(_.nonEmpty)
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)
             .map(file => Namespace.read.file(file))
             .getOrElse(Namespace.read.default())
+
+        // Load all plugins from Namespace
+        ns.plugins.foreach(plugins.load)
+        ns
     }
 
     /**
@@ -77,23 +90,31 @@ class Driver(options:Arguments) {
             org.apache.log4j.Logger.getLogger("hive").setLevel(l)
         }
 
+        // Check if only help is requested
         if (options.help || options.command == null) {
             new CmdLineParser(if (options.command != null) options.command else options).printUsage(System.err)
             System.err.println
             System.exit(1)
         }
 
+        // Load global Plugins, which can already be used by the Namespace
+        loadSystemPlugins()
+
+        // Load Namespace (including any plugins), afterwards also load Project
+        val ns = loadNamespace()
         val project:Project = Project.read.file(options.projectFile)
 
+        // Create Flowman Session, which also includes a Spark Session
         val sparkConfig = splitSettings(options.sparkConfig)
         val environment = splitSettings(options.environment)
         val session:Session = Session.builder
-            .withNamespace(loadNamespace())
+            .withNamespace(ns)
             .withProject(project)
             .withSparkName(options.sparkName)
             .withSparkConfig(sparkConfig.toMap)
             .withEnvironment(environment.toMap)
             .withProfiles(options.profiles)
+            .withJars(plugins.jars)
             .build()
 
         options.command.execute(project, session)

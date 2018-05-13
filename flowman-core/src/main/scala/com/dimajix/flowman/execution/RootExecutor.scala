@@ -24,7 +24,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 

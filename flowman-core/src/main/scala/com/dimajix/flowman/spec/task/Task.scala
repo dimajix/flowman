@@ -21,7 +21,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spi.ExtensionRegistry
+
+
+object Task extends ExtensionRegistry[Task] {
+}
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")

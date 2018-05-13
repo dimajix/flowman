@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec
+package com.dimajix.flowman.namespace
 
 import java.io.File
 import java.io.InputStream
@@ -23,8 +23,13 @@ import java.net.URL
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.runner.Runner
-import com.dimajix.flowman.storage.Store
+import com.dimajix.flowman.namespace.runner.Runner
+import com.dimajix.flowman.namespace.runner.SimpleRunner
+import com.dimajix.flowman.namespace.storage.Store
+import com.dimajix.flowman.spec.Connection
+import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.Profile
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.util.splitSettings
 
 
@@ -112,15 +117,18 @@ class Namespace {
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
-    @JsonProperty(value="runner") private var _runner : Runner = _
+    @JsonProperty(value="runner") private var _runner : Runner = new SimpleRunner()
+    @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
 
     def name : String = _name
 
     def config : Seq[(String,String)] = splitSettings(_config)
     def environment : Seq[(String,String)] = splitSettings(_environment)
+    def plugins : Seq[String] = _plugins
 
     def profiles : Map[String,Profile] = _profiles
     def connections : Map[String,Connection] = _connections
-    def projects : Seq[String] = ???
+    def projects : Seq[String] = _store.listProjects()
+    def store : Store = _store
     def runner : Runner = _runner
 }

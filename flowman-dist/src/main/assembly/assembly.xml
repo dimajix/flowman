@@ -45,12 +45,24 @@
                 <include>**/*</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/target/plugins</directory>
+            <outputDirectory>plugins</outputDirectory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
     </fileSets>
 
     <dependencySets>
         <dependencySet>
+            <includes>
+                <include>com.dimajix.flowman:flowman-tools</include>
+                <include>com.dimajix.flowman:flowman-core</include>
+            </includes>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
             <unpack>false</unpack>
             <scope>runtime</scope>
             <useProjectArtifact>false</useProjectArtifact>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.runner
+package com.dimajix.flowman.namespace.runner
 
 import scala.util.Failure
 import scala.util.Success

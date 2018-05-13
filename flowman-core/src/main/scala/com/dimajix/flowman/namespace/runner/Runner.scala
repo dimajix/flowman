@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.runner
+package com.dimajix.flowman.namespace.runner
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -22,6 +22,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.spi.ExtensionRegistry
+
+
+object Runner extends ExtensionRegistry[Runner] {
+}
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")

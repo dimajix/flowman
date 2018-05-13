@@ -48,7 +48,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         project.mappings.keys should contain("dedup")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
 
         executor.spark.createDataFrame(Seq(
             Record("c1_v1", "c2_v1"),

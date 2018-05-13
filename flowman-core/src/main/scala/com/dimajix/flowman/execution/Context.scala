@@ -16,10 +16,11 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
@@ -28,7 +29,6 @@ import com.dimajix.flowman.spec.TableIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
-import com.dimajix.flowman.spec.runner.Runner
 import com.dimajix.flowman.spec.task.Job
 
 case class SettingLevel(

@@ -24,8 +24,12 @@ import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMa
 import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.annotation.OutputType
 import com.dimajix.flowman.annotation.RelationType
+import com.dimajix.flowman.annotation.RunnerType
 import com.dimajix.flowman.annotation.SchemaType
+import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.namespace.runner.Runner
+import com.dimajix.flowman.namespace.storage.Store
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
@@ -33,32 +37,58 @@ import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.task.Task
 
 
+/**
+  * Helper class for loading extension points, either via Services or via class annotations
+  */
 object Registration {
     private val IGNORED_PACKAGES = Array(
         "java",
         "javax",
         "scala",
-        "org.scala",
-        "org.scalatest",
-        "org.apache",
-        "org.joda",
-        "org.slf4j",
-        "org.yaml",
-        "org.xerial",
-        "org.json4s",
-        "org.mortbay",
-        "org.codehaus",
-        "org.glassfish",
-        "org.jboss",
         "com.amazonaws",
         "com.codahale",
-        "com.sun",
-        "com.google",
-        "com.twitter",
         "com.databricks",
-        "com.fasterxml"
+        "com.fasterxml",
+        "com.google",
+        "com.sun",
+        "com.twitter",
+        "com.typesafe",
+        "net.bytebuddy",
+        "org.apache",
+        "org.codehaus",
+        "org.datanucleus",
+        "org.glassfish",
+        "org.jboss",
+        "org.joda",
+        "org.json4s",
+        "org.kohsuke",
+        "org.mortbay",
+        "org.objectweb",
+        "org.scala",
+        "org.scalatest",
+        "org.slf4j",
+        "org.xerial",
+        "org.yaml"
+    )
+    private val _providers = Seq(
+        MappingProvider,
+        RelationProvider,
+        OutputProvider,
+        SchemaProvider,
+        TaskProvider,
+        RunnerProvider,
+        StoreProvider
     )
     private val _loaders:mutable.Set[ClassLoader] = mutable.Set()
+
+    def invalidate() : Unit = {
+        invalidate(Thread.currentThread.getContextClassLoader)
+    }
+    def invalidate(cl:ClassLoader) : Unit = {
+        synchronized {
+            _loaders.remove(cl)
+        }
+    }
 
     def load() : Unit = {
         load(Thread.currentThread.getContextClassLoader)
@@ -66,13 +96,10 @@ object Registration {
     def load(cl:ClassLoader): Unit = {
         synchronized {
             if (!_loaders.contains(cl)) {
-                MappingProvider.scan(cl)
-                RelationProvider.scan(cl)
-                OutputProvider.scan(cl)
-                SchemaProvider.scan(cl)
-                TaskProvider.scan(cl)
+                _providers.foreach(_.scan(cl))
 
                 new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
+                    .overrideClassLoaders(cl)
                     .matchClassesWithAnnotation(classOf[MappingType],
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
@@ -110,6 +137,22 @@ object Registration {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[TaskType])
                                 Task.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Task]])
+                            }
+                        }
+                    )
+                    .matchClassesWithAnnotation(classOf[RunnerType],
+                        new ClassAnnotationMatchProcessor {
+                            override def processMatch(aClass: Class[_]): Unit = {
+                                val annotation = aClass.getAnnotation(classOf[RunnerType])
+                                Runner.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Runner]])
+                            }
+                        }
+                    )
+                    .matchClassesWithAnnotation(classOf[StoreType],
+                        new ClassAnnotationMatchProcessor {
+                            override def processMatch(aClass: Class[_]): Unit = {
+                                val annotation = aClass.getAnnotation(classOf[StoreType])
+                                Store.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Store]])
                             }
                         }
                     )

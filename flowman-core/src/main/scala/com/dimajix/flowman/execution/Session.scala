@@ -24,7 +24,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.UdfProvider
 
@@ -37,7 +37,13 @@ class SessionBuilder {
     private var _profiles = Set[String]()
     private var _project:Project = _
     private var _namespace:Namespace = _
+    private var _jars = Set[String]()
 
+    /**
+      * Injects an existing Spark session. If no session is provided, Flowman will create its own Spark session
+      * @param session
+      * @return
+      */
     def withSparkSession(session:SparkSession) : SessionBuilder = {
         _sparkSession = session
         this
@@ -46,33 +52,83 @@ class SessionBuilder {
         _sparkName = name
         this
     }
+
+    /**
+      * Adds Spark config variables which actually will override any variables given in specs
+      * @param config
+      * @return
+      */
     def withSparkConfig(config:Map[String,String]) : SessionBuilder = {
         _sparkConfig = _sparkConfig ++ config
         this
     }
+
+    /**
+      * Adds environment variables which actually will override any variables given in specs
+      * @param env
+      * @return
+      */
     def withEnvironment(env:Map[String,String]) : SessionBuilder = {
         _environment = _environment ++ env
         this
     }
+
+    /**
+      * Adds a Namespace to source more configuration from
+      * @param namespace
+      * @return
+      */
     def withNamespace(namespace:Namespace) : SessionBuilder = {
         _namespace = namespace
         this
     }
+
+    /**
+      * Adds a project to source more configurations from.
+      * @param project
+      * @return
+      */
     def withProject(project:Project) : SessionBuilder = {
         _project = project
         this
     }
+
+    /**
+      * Adds a new profile to be activated
+      * @param profile
+      * @return
+      */
     def withProfile(profile:String) : SessionBuilder = {
         _profiles = _profiles + profile
         this
     }
+
+    /**
+      * Adds a list of profile names to be activated. This does not remove any previously activated profile
+      * @param profile
+      * @return
+      */
     def withProfiles(profile:Seq[String]) : SessionBuilder = {
         _profiles = _profiles ++ profile
         this
     }
 
+    /**
+      * Adds JAR files to this session which will be distributed to all Spark nodes
+      * @param jars
+      * @return
+      */
+    def withJars(jars:Seq[String]) : SessionBuilder = {
+        _jars = _jars ++ jars
+        this
+    }
+
+    /**
+      * Build the Flowman session and applies all previously specified options
+      * @return
+      */
     def build() : Session = {
-        val session = new Session(_namespace, _project, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles)
+        val session = new Session(_namespace, _project, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles, _jars)
         session
     }
 }
@@ -82,6 +138,18 @@ object Session {
     def builder() = new SessionBuilder
 }
 
+/**
+  * A Flowman session is used as the starting point for executing data flows. It contains information about the
+  * Namespace, the Project and also managed a Spark session.
+  * @param _namespace
+  * @param _project
+  * @param _sparkSession
+  * @param _sparkName
+  * @param _sparkConfig
+  * @param _environment
+  * @param _profiles
+  * @param _jars
+  */
 class Session private[execution](
     _namespace:Namespace,
     _project:Project,
@@ -89,18 +157,32 @@ class Session private[execution](
     _sparkName:String,
     _sparkConfig:Map[String,String],
     _environment: Map[String,String],
-    _profiles:Set[String]
+    _profiles:Set[String],
+    _jars:Set[String]
 ) {
     private val logger = LoggerFactory.getLogger(classOf[Session])
+
+    private def sparkConfig :Map[String,String] = {
+        if (_project != null) {
+            logger.info("Using project specific Spark configuration settings")
+            getContext(_project).config
+        }
+        else {
+            logger.info("Using global Spark configuration settings")
+            context.config
+        }
+    }
+
+    private def sparkJars : Seq[String] = {
+        _jars.toSeq
+    }
 
     /**
       * Creates a new Spark Session for this DataFlow session
       *
       * @return
       */
-
-
-    private def createOrReuseSession(config:Map[String,String]) : Option[SparkSession] = {
+    private def createOrReuseSession() : Option[SparkSession] = {
         if(_sparkSession != null) {
             logger.info("Reusing existing Spark session")
             val newSession = _sparkSession.newSession()
@@ -112,7 +194,7 @@ class Session private[execution](
             Try {
                 val sparkConf = new SparkConf()
                     .setAppName(_sparkName)
-                    .setAll(config.toSeq)
+                    .setAll(sparkConfig.toSeq)
                 _sparkConfig.foreach(kv => sparkConf.set(kv._1,kv._2))
                 val master = System.getProperty("spark.master")
                 if (master == null || master.isEmpty) {
@@ -137,19 +219,13 @@ class Session private[execution](
 
     }
     private def createSession() = {
-        val mergedConfig = if (_project != null) {
-            logger.info("Using project specific Spark configuration settings")
-            createContext(_project).config
-        }
-        else {
-            logger.info("Using global Spark configuration settings")
-            context.config
-        }
-
-        val sparkSession = createOrReuseSession(mergedConfig)
+        val sparkSession = createOrReuseSession()
         sparkSession.foreach(spark => {
             spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
         })
+
+        // Distribute additional Plugin jar files
+        sparkSession.foreach(session => sparkJars.foreach(session.sparkContext.addJar))
 
         // Register special UDFs
         sparkSession.foreach(session => UdfProvider.providers.foreach(_.register(session.udf)))
@@ -178,10 +254,23 @@ class Session private[execution](
         executor
     }
 
+    /**
+      * Returns the Namespace tied to this Flowman session.
+      * @return
+      */
     def namespace : Namespace = _namespace
 
+    /**
+      * Returns the Project tied to this Flowman session.
+      * @return
+      */
     def project : Project = _project
 
+    /**
+      * Returns the Spark session tied to this Flowman session. The Spark session will either be created by the
+      * Flowman session, or was provided in the builder.
+      * @return
+      */
     def spark : SparkSession = sparkSession.get
 
     /**
@@ -203,11 +292,11 @@ class Session private[execution](
       * @param project
       * @return
       */
-    def createContext(project: Project) : Context = {
+    def getContext(project: Project) : Context = {
         rootContext.getProjectContext(project)
     }
 
-    def createExecutor(project: Project) : Executor = {
+    def getExecutor(project: Project) : Executor = {
         rootExecutor.getProjectExecutor(project)
     }
 }

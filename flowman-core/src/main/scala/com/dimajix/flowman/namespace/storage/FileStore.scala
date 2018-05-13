@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.storage
-
+package com.dimajix.flowman.namespace.storage
 
 object FileStore {
     def createNamespace(name:String) : FileStore = ???

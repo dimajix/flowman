@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.runner
+package com.dimajix.flowman.namespace.runner
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,8 +24,8 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Connection
-import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.StringType
 import com.dimajix.flowman.spec.task.Job

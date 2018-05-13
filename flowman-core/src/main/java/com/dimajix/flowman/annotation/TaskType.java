@@ -22,6 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 
+/**
+ * This annotation marks a specific class as a Task to be used in a data flow spec. The specific Task itself has
+ * to derive from the Task class
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface TaskType {

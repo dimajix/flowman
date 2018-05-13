@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec
+package com.dimajix.flowman.plugin.example
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.runner.SimpleRunner
+import com.dimajix.flowman.spec.Module
 
 
-class NamespaceTest extends FlatSpec with Matchers {
-    "A Namespace" should "be creatable from a spec" in {
+class HelloWorldTaskTest extends FlatSpec with Matchers {
+    "A HelloWorldTask" should "be deserializable" in {
         val spec =
             """
-              |environment:
-              | - lala=lolo
-              |config:
-              | - cfg1=cfg2=lala
+              |jobs:
+              |  custom:
+              |    tasks:
+              |      - kind: hello-world
             """.stripMargin
-        val ns = Namespace.read.string(spec)
-        ns.environment.size should be (1)
-        ns.config.size should be (1)
-    }
-
-    it should "provide a default Namespace" in {
-        val ns = Namespace.read.default()
-        ns should not be (null)
-        ns.name should be ("default")
-        ns.runner shouldBe a[SimpleRunner]
+        val module = Module.read.string(spec)
+        module.jobs.keys should contain("custom")
+        val job = module.jobs("custom")
+        job.tasks(0) shouldBe an[HelloWorldTask]
     }
 }

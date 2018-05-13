@@ -23,3 +23,6 @@ config:
   - hive.metastore.uris=
   - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
   - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
+
+plugins:
+  - example

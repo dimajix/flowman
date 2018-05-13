@@ -45,7 +45,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         val df = executor.instantiate(TableIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
@@ -74,7 +74,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         val df = executor.instantiate(TableIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
@@ -106,7 +106,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         val df = executor.instantiate(TableIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
@@ -140,7 +140,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.createExecutor(project)
+        val executor = session.getExecutor(project)
         val df = executor.instantiate(TableIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")

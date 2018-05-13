@@ -14,14 +14,26 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.storage
+package com.dimajix.flowman.namespace.storage
+
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.model.Relation
+import com.dimajix.flowman.spi.ExtensionRegistry
 
 
+object Store extends ExtensionRegistry[Store] {
+}
+
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "file", value = classOf[FileStore])
+))
 abstract class Store {
     def loadProject(name:String) : Project
     def storeProject(project: Project) : Unit

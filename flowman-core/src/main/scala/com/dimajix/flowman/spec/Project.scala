@@ -21,10 +21,10 @@ import java.io.File
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
-import com.dimajix.flowman.spec.runner.Runner
 import com.dimajix.flowman.spec.task.Job
 
 
@@ -47,6 +47,8 @@ object Project {
                 logger.info(s"Reading project file ${file.toString}")
                 val project = ObjectMapper.read[Project](file)
                 loadModules(project, file.getParentFile)
+                project._filename = file.getAbsoluteFile
+                project._basedir = file.getAbsoluteFile.getParentFile
                 project
             }
         }
@@ -88,6 +90,10 @@ object Project {
 
         def setName(name:String) : Builder = {
             project._name = name
+            this
+        }
+        def setDescription(desc:String) : Builder = {
+            project._description = desc
             this
         }
 
@@ -157,6 +163,7 @@ object Project {
 
 class Project {
     @JsonProperty(value="name") private var _name: String = _
+    @JsonProperty(value="description") private var _description: String = _
     @JsonProperty(value="version") private var _version: String = _
     @JsonProperty(value="modules") private var _modules: Seq[String] = Seq()
 
@@ -173,6 +180,7 @@ class Project {
     private var _jobs: Map[String,Job] = Map()
 
     def name : String = _name
+    def description : String = _description
     def version : String = _version
     def modules : Seq[String] = _modules
     def filename : File = _filename

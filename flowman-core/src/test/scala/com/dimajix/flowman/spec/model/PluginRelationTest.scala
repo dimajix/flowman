@@ -23,7 +23,7 @@ import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.annotation.RelationType
 
 
-@RelationType(name = "annotatedRelation")
+@RelationType(kind = "annotatedRelation")
 class AnnotationRelation extends NullRelation { }
 
 

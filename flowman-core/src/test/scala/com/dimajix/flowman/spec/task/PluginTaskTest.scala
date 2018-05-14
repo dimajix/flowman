@@ -24,7 +24,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Module
 
 
-@TaskType(name = "annotatedTask")
+@TaskType(kind = "annotatedTask")
 class AnnotatedTask extends BaseTask {
     override def execute(executor: Executor): Boolean = true
 }

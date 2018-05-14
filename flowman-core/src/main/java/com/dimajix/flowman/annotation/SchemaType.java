@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface SchemaType {
-    String name();
+    /**
+     * Specifies the kind of the schema which is used in data flow specifications.
+     * @return
+     */
+    String kind();
 }

@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface RunnerType {
-    String name();
+    /**
+     * Specifies the kind of the runner which is used in namespace specifications.
+     * @return
+     */
+    String kind();
 }

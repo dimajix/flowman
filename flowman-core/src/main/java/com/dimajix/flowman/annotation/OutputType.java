@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface OutputType {
-    String name();
+    /**
+     * Specifies the kind of the output which is used in data flow specifications.
+     * @return
+     */
+    String kind();
 }

@@ -104,7 +104,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[MappingType])
-                                Mapping.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Mapping]])
+                                Mapping.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Mapping]])
                             }
                         }
                     )
@@ -112,7 +112,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[RelationType])
-                                Relation.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Relation]])
+                                Relation.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Relation]])
                             }
                         }
                     )
@@ -120,7 +120,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[OutputType])
-                                Output.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Output]])
+                                Output.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Output]])
                             }
                         }
                     )
@@ -128,7 +128,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[SchemaType])
-                                Schema.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Schema]])
+                                Schema.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Schema]])
                             }
                         }
                     )
@@ -136,7 +136,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[TaskType])
-                                Task.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Task]])
+                                Task.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Task]])
                             }
                         }
                     )
@@ -144,7 +144,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[RunnerType])
-                                Runner.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Runner]])
+                                Runner.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Runner]])
                             }
                         }
                     )
@@ -152,7 +152,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[StoreType])
-                                Store.register(annotation.name(), aClass.asInstanceOf[Class[_ <: Store]])
+                                Store.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Store]])
                             }
                         }
                     )

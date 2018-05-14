@@ -21,7 +21,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.task.BaseTask
 
 
-@TaskType(name="hello-world")
+@TaskType(kind="hello-world")
 class HelloWorldTask extends BaseTask {
     /**
       * Abstract method which will perform the given task.

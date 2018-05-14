@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface TaskType {
-    String name();
+    /**
+     * Specifies the kind of the task which is used in data flow specifications.
+     * @return
+     */
+    String kind();
 }

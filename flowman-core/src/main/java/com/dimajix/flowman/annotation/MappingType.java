@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface MappingType {
-    String name();
+    /**
+     * Specifies the kind of the mapping which is used in data flow specifications.
+     * @return
+     */
+    String kind();
 }

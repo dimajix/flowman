@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface RelationType {
-    String name();
+    /**
+     * Specifies the kind of the relation which is used in data flow specifications.
+     * @return
+     */
+    String kind();
 }

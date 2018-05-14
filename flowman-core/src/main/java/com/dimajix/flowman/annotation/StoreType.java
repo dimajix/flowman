@@ -29,5 +29,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface StoreType {
-    String name();
+    /**
+     * Specifies the kind of the store which is used in namespace specifications.
+     * @return
+     */
+    String kind();
 }

@@ -14,7 +14,7 @@
     </parent>
 
     <properties>
-        <plugin.name>example</plugin.name>
+        <plugin.name>flowman-example</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
     </properties>

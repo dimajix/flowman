@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.ScopedContext
 import com.dimajix.flowman.spec.schema.FieldType
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.StringType
+import com.dimajix.flowman.util.splitSettings
 
 
 sealed abstract class JobStatus;
@@ -134,11 +135,13 @@ class Job {
     @JsonIgnore private var _name:String = ""
     @JsonProperty(value="description") private var _description:String = ""
     @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
+    @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
     def name : String = _name
     def description(implicit context:Context) : String = context.evaluate(_description)
     def tasks : Seq[Task] = _tasks
+    def environment : Seq[(String,String)] = splitSettings(_environment)
     def parameters: Seq[JobParameter] = _parameters
 
     /**
@@ -169,7 +172,7 @@ class Job {
         // Create a new execution environment
         val jobArgs = arguments(args)
         jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
-        val jobContext = new ScopedContext(context).withConfig(jobArgs)
+        val jobContext = new ScopedContext(context).withEnvironment(jobArgs).withEnvironment(environment)
         val jobExecutor = executor.withContext(jobContext)
 
         Try {

@@ -19,8 +19,29 @@ package com.dimajix.flowman.spec.task
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+
+
+object GrabEnvironmentTask {
+    var environment:Map[String,String] = Map()
+}
+
+
+@TaskType(kind = "grabenv")
+class GrabEnvironmentTask extends BaseTask {
+    /**
+      * Abstract method which will perform the given task.
+      *
+      * @param executor
+      */
+    override def execute(executor: Executor): Boolean = {
+        GrabEnvironmentTask.environment = executor.context.environment
+        true
+    }
+}
 
 
 class JobTest extends FlatSpec with Matchers {
@@ -54,6 +75,8 @@ class JobTest extends FlatSpec with Matchers {
               |      - name: p3
               |        type: Integer
               |        default: 7
+              |    tasks:
+              |      - kind: grabenv
             """.stripMargin
 
         val module = Module.read.string(spec)
@@ -63,8 +86,12 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
+
         job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
-        job.execute(executor, Map("p1" -> "v1", "p2" -> "v2")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> "7"))
+
+        job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> "7"))
     }
 
     it should "fail on undefined parameters" in {
@@ -131,5 +158,31 @@ class JobTest extends FlatSpec with Matchers {
         job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> "7"))
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> "7"))
         job.arguments(Map("p2" -> "lala")) should be (Map("p1" -> null, "p2" -> "lala", "p3" -> "7"))
+    }
+
+    it should "support environment" in {
+        val spec =
+            """
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+              |    environment:
+              |      - p2=$p1
+              |      - p3=xx${p2}yy
+              |    tasks:
+              |      - kind: grabenv
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy"))
     }
 }

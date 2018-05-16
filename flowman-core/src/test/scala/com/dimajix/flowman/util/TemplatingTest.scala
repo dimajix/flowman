@@ -17,15 +17,28 @@
 package com.dimajix.flowman.util
 
 import java.io.StringWriter
+import java.time.Month
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Session
 
 class TemplatingTest extends FlatSpec with Matchers {
     private val engine = Templating.newEngine()
     private val context = Templating.newContext()
+
+    "Integers" should "be supported as values" in {
+        context.put("int", 2)
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", "$int")
+        output.toString should be ("2")
+
+        val three = 3
+        context.put("three", three)
+        val output2 = new StringWriter()
+        engine.evaluate(context, output2, "test", "$three")
+        output2.toString should be ("3")
+    }
 
     "Timestamps" should "be supported" in {
         val output = new StringWriter()
@@ -33,14 +46,27 @@ class TemplatingTest extends FlatSpec with Matchers {
         output.toString should be ("2017-10-10 10:00:00.0")
 
         val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "$Timestamp.parse('2017-10-10 10:00:00').getTime()")
-        output2.toString should be ("1507629600000")
+        engine.evaluate(context, output2, "test", "$Timestamp.parse('2017-10-10 10:00:00').toEpochSeconds()")
+        output2.toString should be ("1507629600")
     }
 
     they should "be convertible to LocalDateTime" in {
         val output = new StringWriter()
         engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10 10:11:23').toLocalDateTime()")
         output.toString should be ("2017-10-10T10:11:23")
+    }
+
+    they should "be convertible to epochs" in {
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10 10:11:23').toEpochSeconds()")
+        output.toString should be ("1507630283")
+    }
+
+    they should "support complex operations" in {
+        context.put("ts", UtcTimestamp.of(2017, Month.JUNE, 19, 0, 0))
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", """data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
+        output.toString should be ("data/2017/06/19/1497830400.i-*.log")
     }
 
     "LocalDateTime" should "be parseable" in {

@@ -21,7 +21,7 @@ import org.scalatest.Matchers
 
 
 class PartitionUtilsTest extends FlatSpec with Matchers {
-    private def concat(partitions:Map[String,String]) : String = partitions.map{ case(k,v) => k+"="+v }.mkString(",")
+    private def concat(partitions:Map[String,Any]) : String = partitions.map{ case(k,v) => k+"="+v }.mkString(",")
 
     "PartitionUtils" should "expand correctly with flatMap" in {
         val partitions = Map("p1" -> Seq("p1v1", "p1v2"), "p2" -> Seq("p2v1", "p2v2"))

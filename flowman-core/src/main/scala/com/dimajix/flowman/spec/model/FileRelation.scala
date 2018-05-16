@@ -141,7 +141,7 @@ class FileRelation extends BaseRelation {
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
         val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
-        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName(kv._1).interpolate(kv._2).map(_.toString)))
+        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName(kv._1).interpolate(kv._2)))
         collector(executor).collect(resolvedPartitions)
     }
 

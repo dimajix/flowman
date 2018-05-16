@@ -18,17 +18,17 @@ package com.dimajix.flowman.util
 
 
 object PartitionUtils {
-    def foreach(partitions:Map[String,Iterable[String]], function:(Map[String,String]) => Unit) : Unit = {
+    def foreach(partitions:Map[String,Iterable[Any]], function:(Map[String,Any]) => Unit) : Unit = {
         flatMap(partitions, map => {function(map); Seq()})
     }
-    def flatMap[T](partitions:Map[String,Iterable[String]], function:(Map[String,String]) => Iterable[T]) : Iterable[T] = {
+    def flatMap[T](partitions:Map[String,Iterable[Any]], function:(Map[String,Any]) => Iterable[T]) : Iterable[T] = {
         flatMapPartitions(Map(), partitions, function)
     }
-    def map[T](partitions:Map[String,Iterable[String]], function:(Map[String,String]) => T) : Iterable[T] = {
+    def map[T](partitions:Map[String,Iterable[Any]], function:(Map[String,Any]) => T) : Iterable[T] = {
         flatMapPartitions(Map(), partitions, p => Some(function(p)))
     }
 
-    private def flatMapPartitions[T](headPartitions:Map[String,String], tailPartitions:Map[String,Iterable[String]], function:(Map[String,String]) => Iterable[T]) : Iterable[T] = {
+    private def flatMapPartitions[T](headPartitions:Map[String,Any], tailPartitions:Map[String,Iterable[Any]], function:(Map[String,Any]) => Iterable[T]) : Iterable[T] = {
         if (tailPartitions.nonEmpty) {
             val head = tailPartitions.head
             val tail = tailPartitions.tail

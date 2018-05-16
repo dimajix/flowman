@@ -81,7 +81,7 @@ class FileCollector(hadoopConf:Configuration) {
         this
     }
 
-    def resolve(partition:Map[String,String]) : Path = {
+    def resolve(partition:Map[String,Any]) : Path = {
         if (_pattern != null && _pattern.nonEmpty) {
             val context = templateContext
             partition.foreach(kv => context.put(kv._1, kv._2))
@@ -100,7 +100,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @param partitions
       * @return
       */
-    def collect(partitions:Map[String,Iterable[String]]) : Seq[Path] = {
+    def collect(partitions:Map[String,Iterable[Any]]) : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
@@ -108,18 +108,8 @@ class FileCollector(hadoopConf:Configuration) {
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
 
         val fs = _path.getFileSystem(hadoopConf)
-        val context = new VelocityContext()
-
-        def evaluate(string:String) = {
-            val output = new StringWriter()
-            templateEngine.evaluate(context, output, "context", string)
-            output.getBuffer.toString
-        }
-
         PartitionUtils.flatMap(partitions, p => {
-            p.foreach(kv => context.put(kv._1, kv._2))
-            val relPath = evaluate(_pattern)
-            val curPath:Path = new Path(_path, relPath)
+            val curPath:Path = resolve(p)
             val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
 
             logger.info(s"Collecting files for partition $partitions in location $curPath")

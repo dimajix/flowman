@@ -38,7 +38,7 @@ class Arguments(args:Array[String]) {
     var help: Boolean = false
     @Option(name = "-f", aliases=Array("--project"), usage = "project file", metaVar = "<project_file>")
     var projectFile: String = "project.yml"
-    @Option(name = "-p", aliases=Array("--profile"), usage = "profile to enable", metaVar = "<profile>")
+    @Option(name = "-P", aliases=Array("--profile"), usage = "profile to enable", metaVar = "<profile>")
     var profiles: Array[String] = Array()
     @Option(name = "-D", aliases=Array("--env"), usage = "sets environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()

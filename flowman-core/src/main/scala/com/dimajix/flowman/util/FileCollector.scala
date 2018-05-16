@@ -45,11 +45,8 @@ class FileCollector(hadoopConf:Configuration) {
     private var _pattern:String = ""
     private var _path:Path = _
 
-    private lazy val templateEngine = {
-        val ve = new VelocityEngine()
-        ve.init()
-        ve
-    }
+    private lazy val templateEngine = Templating.newEngine()
+    private lazy val templateContext = Templating.newContext()
 
     /**
       * Constructs a new FileCollector instance using the Hadoop configuration from the specified SparkSession
@@ -86,10 +83,10 @@ class FileCollector(hadoopConf:Configuration) {
 
     def resolve(partition:Map[String,String]) : Path = {
         if (_pattern != null && _pattern.nonEmpty) {
-            val vcontext = new VelocityContext()
-            partition.foreach(kv => vcontext.put(kv._1, kv._2))
+            val context = templateContext
+            partition.foreach(kv => context.put(kv._1, kv._2))
             val output = new StringWriter()
-            templateEngine.evaluate(vcontext, output, "context", _pattern)
+            templateEngine.evaluate(context, output, "FileCollector", _pattern)
             new Path(_path, output.getBuffer.toString)
         }
         else {

@@ -17,40 +17,20 @@
 package com.dimajix.flowman.execution
 
 import java.io.StringWriter
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.Period
 
 import scala.collection.mutable
 
 import org.apache.velocity.VelocityContext
-import org.apache.velocity.app.VelocityEngine
 import org.slf4j.Logger
 
 import com.dimajix.flowman.spec.Connection
+import com.dimajix.flowman.util.Templating
 
 
 object AbstractContext {
-    private object SystemWrapper {
-        def getenv(name:String) : String = {
-            Option(System.getenv(name)).getOrElse("")
-        }
-        def getenv(name:String, default:String) : String = {
-            Option(System.getenv(name)).getOrElse(default)
-        }
-    }
-
-    private lazy val rootContext = {
-        val context = new VelocityContext()
-        context.put("Integer", classOf[java.lang.Integer])
-        context.put("Float", classOf[java.lang.Float])
-        context.put("LocalDateTime", classOf[LocalDateTime])
-        context.put("Duration", classOf[Duration])
-        context.put("Period", classOf[Period])
-        context.put("System", SystemWrapper)
-        context
-    }
+    private lazy val rootContext = Templating.newContext()
 }
+
 
 abstract class AbstractContext extends Context {
     protected val logger:Logger
@@ -59,11 +39,7 @@ abstract class AbstractContext extends Context {
     private val _config = mutable.Map[String,(String, Int)]()
     private val _databases = mutable.Map[String, (Connection, Int)]()
 
-    private lazy val templateEngine = {
-        val ve = new VelocityEngine()
-        ve.init()
-        ve
-    }
+    private lazy val templateEngine = Templating.newEngine()
     protected lazy val templateContext = {
         val context = new VelocityContext(AbstractContext.rootContext)
         environment.foreach(kv => context.put(kv._1, kv._2))

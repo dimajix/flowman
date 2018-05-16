@@ -16,39 +16,17 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.sql.Timestamp
 import java.time.Duration
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 import org.apache.spark.sql.types.DataType
 
-
-object UtcTimestamp {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.S]").withZone(ZoneOffset.UTC)
-}
-
-/**
-  * This is a helper class which uses UTC in its "toString" method as opposed to the java.sql.Timestamp class
-  * which uses local date time
-  * @param msecs
-  */
-class UtcTimestamp(msecs:Long) extends Timestamp(msecs) {
-    import UtcTimestamp.formatter
-
-    override def toString: String = {
-        LocalDateTime.ofEpochSecond(getTime() / 1000, 0, ZoneOffset.UTC).format(formatter)
-    }
-}
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 /**
   * A FieldType that represents SQL Timestamps
   */
 case object TimestampType extends FieldType {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.S]").withZone(ZoneOffset.UTC)
-
     override def sparkType : DataType = org.apache.spark.sql.types.TimestampType
 
     /**
@@ -59,13 +37,12 @@ case object TimestampType extends FieldType {
       */
     override def parse(value:String, granularity: String) : Any = {
         if (granularity != null && granularity.nonEmpty) {
-            val msecs = LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC) * 1000l
+            val msecs = UtcTimestamp.toEpochSeconds(value) * 1000l
             val step = Duration.parse(granularity).getSeconds * 1000l
             new UtcTimestamp(msecs / step * step)
         }
         else {
-            val msecs = LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC) * 1000l
-            new UtcTimestamp(msecs)
+            UtcTimestamp.parse(value)
         }
     }
     /**
@@ -84,8 +61,8 @@ case object TimestampType extends FieldType {
                     Duration.parse(granularity).getSeconds
                 else
                     1
-                val startDate = LocalDateTime.parse(start, formatter).toEpochSecond(ZoneOffset.UTC) / step * step
-                val endDate = LocalDateTime.parse(end, formatter).toEpochSecond(ZoneOffset.UTC) / step * step
+                val startDate = UtcTimestamp.toEpochSeconds(start) / step * step
+                val endDate = UtcTimestamp.toEpochSeconds(end) / step * step
                 startDate until endDate by step map(x => new UtcTimestamp(x * 1000l))
             }
         }

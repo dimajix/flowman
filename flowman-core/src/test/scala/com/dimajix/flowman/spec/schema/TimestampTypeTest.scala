@@ -38,6 +38,7 @@ class TimestampTypeTest extends FlatSpec with Matchers {
 
     it should "be serialized as string identically" in {
         TimestampType.parse("2017-12-01 12:21:20").toString should be ("2017-12-01 12:21:20.0")
+        TimestampType.parse("2017-12-01 12:00:00").toString should be ("2017-12-01 12:00:00.0")
     }
 
     it should "support interpolation of SingleValues" in {

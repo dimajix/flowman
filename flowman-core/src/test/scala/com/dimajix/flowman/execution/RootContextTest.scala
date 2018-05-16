@@ -40,7 +40,7 @@ class RootContextTest extends FlatSpec with Matchers {
             .build()
         val context = session.context
 
-        context.evaluate("${Integer.parseInt('2')}") should be ("2")
+        context.evaluate("${Integer.parse('2')}") should be ("2")
         context.evaluate("${Integer.valueOf('2')}") should be ("2")
     }
 
@@ -49,7 +49,7 @@ class RootContextTest extends FlatSpec with Matchers {
             .build()
         val context = session.context
 
-        context.evaluate("${Float.parseFloat('2')}") should be ("2.0")
+        context.evaluate("${Float.parse('2')}") should be ("2.0")
         context.evaluate("${Float.valueOf('2')}") should be ("2.0")
     }
 

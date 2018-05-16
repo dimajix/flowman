@@ -57,4 +57,8 @@ class UtcTimestamp(msecs:Long) extends Timestamp(msecs) {
     override def toString: String = {
         LocalDateTime.ofEpochSecond(getTime() / 1000, 0, ZoneOffset.UTC).format(formatter)
     }
+
+    override def toLocalDateTime: LocalDateTime = {
+        LocalDateTime.ofEpochSecond(getTime() / 1000, 0, ZoneOffset.UTC)
+    }
 }

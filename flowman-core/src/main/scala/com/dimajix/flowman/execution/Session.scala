@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.io.File
+
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -45,10 +47,12 @@ class SessionBuilder {
       * @return
       */
     def withSparkSession(session:SparkSession) : SessionBuilder = {
+        assert(session != null)
         _sparkSession = session
         this
     }
     def withSparkName(name:String) : SessionBuilder = {
+        assert(name != null)
         _sparkName = name
         this
     }
@@ -59,6 +63,7 @@ class SessionBuilder {
       * @return
       */
     def withSparkConfig(config:Map[String,String]) : SessionBuilder = {
+        assert(config != null)
         _sparkConfig = _sparkConfig ++ config
         this
     }
@@ -69,6 +74,7 @@ class SessionBuilder {
       * @return
       */
     def withEnvironment(env:Map[String,String]) : SessionBuilder = {
+        assert(env != null)
         _environment = _environment ++ env
         this
     }
@@ -232,7 +238,7 @@ class Session private[execution](
 
         sparkSession
     }
-    private lazy val sparkSession = createSession()
+    private var sparkSession:Option[SparkSession] = null
 
     private lazy val rootContext : RootContext = {
         val context = new RootContext(_namespace, _profiles.toSeq)
@@ -250,7 +256,7 @@ class Session private[execution](
     }
 
     private lazy val rootExecutor : RootExecutor = {
-        val executor = new RootExecutor(rootContext, () => sparkSession)
+        val executor = new RootExecutor(this, rootContext)
         executor
     }
 
@@ -271,7 +277,22 @@ class Session private[execution](
       * Flowman session, or was provided in the builder.
       * @return
       */
-    def spark : SparkSession = sparkSession.get
+    def spark : SparkSession = {
+        if (sparkSession == null) {
+            synchronized {
+                if (sparkSession == null) {
+                    sparkSession = createSession()
+                }
+            }
+        }
+        sparkSession.get
+    }
+
+    /**
+      * Returns true if a SparkSession is already available
+      * @return
+      */
+    def sparkRunning: Boolean = sparkSession != null
 
     /**
      * Returns the root context of this session.

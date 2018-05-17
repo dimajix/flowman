@@ -29,8 +29,8 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-private[execution] class RootExecutor(context:RootContext, sessionFactory:() => Option[SparkSession])
-    extends AbstractExecutor(context, sessionFactory) {
+class RootExecutor(session:Session, context:Context)
+    extends AbstractExecutor(session, context) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
     private val _children = mutable.Map[String,ProjectExecutor]()
@@ -46,14 +46,14 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
      /**
       * Returns a fully qualified table as a DataFrame from a project belonging to the namespace of this executor
       *
-      * @param name
+      * @param identifier
       * @return
       */
-    override def getTable(name: TableIdentifier): DataFrame = {
-        if (name.project.isEmpty)
+    override def getTable(identifier: TableIdentifier): DataFrame = {
+        if (identifier.project.isEmpty)
             throw new NoSuchElementException("Expected project name in table specifier")
-        val child = _children.getOrElseUpdate(name.project.get, getProjectExecutor(name.project.get))
-        child.getTable(TableIdentifier(name.name, None))
+        val child = getProjectExecutor(identifier.project.get)
+        child.getTable(TableIdentifier(identifier.name, None))
     }
 
     /**
@@ -81,6 +81,10 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
       */
     override def cleanup(): Unit = {
         logger.info("Cleaning up root executor and all children")
+        if (sparkRunning) {
+            val catalog = spark.catalog
+            catalog.clearCache()
+        }
         _children.values.foreach(_.cleanup())
     }
 
@@ -93,15 +97,15 @@ private[execution] class RootExecutor(context:RootContext, sessionFactory:() => 
 
     private def createProjectExecutor(project:Project) : ProjectExecutor = {
         val pcontext = context.getProjectContext(project)
-        val executor = new ProjectExecutor(this, project, pcontext, createProjectSession(pcontext))
+        val executor = new ProjectExecutor(this, project, pcontext)
         _children.update(project.name, executor)
         executor
     }
-    private def createProjectExecutor(project:String) : ProjectExecutor = {
-        createProjectExecutor(context.loadProject(project))
-    }
-    private def createProjectSession(context: Context)() : Option[SparkSession] = {
-        logger.info("Creating new Spark session for project")
-        Option(spark) // .map(_.newSession())
+    private def createProjectExecutor(projectName:String) : ProjectExecutor = {
+        val pcontext = context.getProjectContext(projectName)
+        val project = pcontext.project
+        val executor = new ProjectExecutor(this, project, pcontext)
+        _children.update(project.name, executor)
+        executor
     }
 }

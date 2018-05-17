@@ -27,7 +27,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.ScopedContext
+import com.dimajix.flowman.execution.RootContext
+import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.spec.schema.FieldType
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.StringType
@@ -172,13 +173,14 @@ class Job {
         // Create a new execution environment
         val jobArgs = arguments(args)
         jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
-        val jobContext = new ScopedContext(context).withEnvironment(jobArgs).withEnvironment(environment)
-        val jobExecutor = executor.withContext(jobContext)
+        val jobContext = new RootContext(context).withEnvironment(jobArgs).withEnvironment(environment)
+        val jobExecutor = new RootExecutor(executor.session, jobContext)
+        val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
 
-        Try {
+        val result = Try {
             _tasks.forall { task =>
                 logger.info(s"Executing task ${task.description}")
-                task.execute(jobExecutor)
+                task.execute(projectExecutor)
             }
         } match {
             case Success(true) =>
@@ -188,9 +190,13 @@ class Job {
                 logger.error("Execution of job failed")
                 JobStatus.FAILURE
             case Failure(e) =>
-                logger.error("Execution of job failed with exception: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+                logger.error("Execution of job failed with exception: ", e)
                 JobStatus.FAILURE
         }
+
+        // Release any resources
+        jobExecutor.cleanup()
+
+        result
     }
 }

@@ -20,9 +20,10 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
 
-abstract class AbstractExecutor(_context:Context, sessionFactory:() => Option[SparkSession]) extends Executor {
+abstract class AbstractExecutor(_session:Session, _context:Context) extends Executor {
     protected val logger:Logger
-    private var _session:Option[SparkSession] = None
+
+    override def session: Session = _session
 
     /**
       * Returns the Context associated with this Executor. This context will be used for looking up
@@ -38,26 +39,11 @@ abstract class AbstractExecutor(_context:Context, sessionFactory:() => Option[Sp
       *
       * @return
       */
-    override def spark: SparkSession = {
-        if (_session.isEmpty) {
-            logger.info("Creating new local Spark session for executor")
-            _session = sessionFactory()
-            //_session.foreach(session => context.config.foreach(kv => session.conf.set(kv._1, kv._2)))
-        }
-        _session.get
-    }
+    override def spark: SparkSession = _session.spark
 
     /**
       * Returns true if a SparkSession is already available
       * @return
       */
-    override def sparkRunning: Boolean = _session.nonEmpty
-
-    /**
-      * Creates a new Executor which uses a different context
-      *
-      * @param context
-      * @return
-      */
-    override def withContext(context:Context) : Executor = new ScopedExecutor(this, context)
+    override def sparkRunning: Boolean = _session.sparkRunning
 }

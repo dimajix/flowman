@@ -45,8 +45,22 @@ object SettingLevel {
 }
 
 abstract class Context {
+    /**
+      * Returns the namespace associated with this context. Can be null
+      * @return
+      */
     def namespace : Namespace
+
+    /**
+      * Returns the project associated with this context. Can be null
+      * @return
+      */
     def project : Project
+
+    /**
+      * Returns the root context in a hierarchy of connected contexts
+      * @return
+      */
     def root : Context
 
     /**
@@ -126,4 +140,7 @@ abstract class Context {
     def withConfig(env:Map[String,String]) : Context
     def withConfig(env:Seq[(String,String)]) : Context
     def withProfile(profile:Profile) : Context
+
+    def getProjectContext(projectName:String) : Context
+    def getProjectContext(project:Project) : Context
 }

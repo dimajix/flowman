@@ -49,12 +49,23 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
     updateFrom(parent)
     templateContext.put("Project", ProjectWrapper)
 
+    /**
+      * Returns the namespace associated with this context. Can be null
+      * @return
+      */
     override def namespace : Namespace = parent.namespace
 
+    /**
+      * Returns the project associated with this context. Can be null
+      * @return
+      */
     override def project : Project = _project
 
+    /**
+      * Returns the root context in a hierarchy of connected contexts
+      * @return
+      */
     override def root : Context = parent.root
-
 
     /**
       * Returns the appropriate runner for this project.
@@ -175,5 +186,12 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
         setEnvironment(profile.environment, SettingLevel.PROJECT_PROFILE)
         setConnections(profile.connections, SettingLevel.PROJECT_PROFILE)
         this
+    }
+
+    override def getProjectContext(projectName:String) : Context = {
+        parent.getProjectContext(projectName)
+    }
+    override def getProjectContext(project:Project) : Context = {
+        parent.getProjectContext(project)
     }
 }

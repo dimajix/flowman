@@ -23,6 +23,8 @@ import com.dimajix.flowman.spec.TableIdentifier
 
 
 abstract class Executor {
+    def session: Session
+
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
       * SparkSession, but a new derived session with a separate namespace will be created.
@@ -72,12 +74,4 @@ abstract class Executor {
       * Releases any temporary tables
       */
     def cleanup() : Unit
-
-    /**
-      * Creates a new Executor which uses a different context
-      *
-      * @param context
-      * @return
-      */
-    def withContext(context:Context) : Executor
 }

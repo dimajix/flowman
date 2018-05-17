@@ -27,8 +27,8 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context, sessionFactory:() => Option[SparkSession])
-    extends AbstractExecutor(context, sessionFactory) {
+private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context)
+    extends AbstractExecutor(_parent.session, context) {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectExecutor])
     private val _tables = mutable.Map[String,DataFrame]()
 
@@ -99,7 +99,6 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
         if (sparkRunning) {
             logger.info("Cleaning up temporary tables and caches")
             val catalog = spark.catalog
-            catalog.clearCache()
             _tables.foreach(kv => catalog.dropTempView(kv._1))
             _tables.foreach(kv => kv._2.unpersist())
         }

@@ -73,7 +73,7 @@ class PluginManager {
         _plugins.update(plugin.name, plugin)
 
         // Resolve all JAR files from the plugin
-        val jarFiles = plugin.jars.map(name => new File(plugin.basedir, name).toURL).toArray
+        val jarFiles = plugin.jars.map(_.toURL).toArray
 
         // Extend classpath
         val classLoader = classOf[PluginManager].getClassLoader.asInstanceOf[URLClassLoader]
@@ -106,7 +106,7 @@ class PluginManager {
       * Returns all JARs from all loaded plugins
       * @return
       */
-    def jars : Seq[String] = {
+    def jars : Seq[File] = {
         _plugins.toSeq.flatMap(_._2.jars)
     }
 }

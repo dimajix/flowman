@@ -114,7 +114,7 @@ class Driver(options:Arguments) {
             .withSparkConfig(sparkConfig.toMap)
             .withEnvironment(environment.toMap)
             .withProfiles(options.profiles)
-            .withJars(plugins.jars)
+            .withJars(plugins.jars.map(_.toString))
             .build()
 
         options.command.execute(project, session)

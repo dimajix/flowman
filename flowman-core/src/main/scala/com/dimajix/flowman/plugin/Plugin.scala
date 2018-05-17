@@ -104,7 +104,7 @@ class Plugin {
     def filename : File = _filename
     def basedir : File = _basedir
 
-    def jars : Seq[String] = _jars
+    def jars : Seq[File] = _jars.map(name => new File(_basedir, name))
 
     def load() : Unit = ???
 }

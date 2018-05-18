@@ -20,6 +20,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
@@ -28,15 +29,19 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.util.splitSettings
 
 
 class RunCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[RunCommand])
 
+    @Argument(usage = "specifies job parameters", metaVar = "<param>=<value>")
+    var args: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
+        val args = splitSettings(this.args).toMap
         project.main.forall( name => {
             Try {
                 project.jobs(name)
@@ -46,16 +51,16 @@ class RunCommand extends ActionCommand {
                     logger.error(s"Cannot find job $name")
                     false
                 case Success(job) =>
-                    executeJob(executor, job)
+                    executeJob(executor, job, args)
             }
         })
     }
 
-    private def executeJob(executor:Executor, job:Job) : Boolean = {
+    private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
         implicit val context = executor.context
         logger.info(s"Executing job '${job.name}' (${job.description})")
         val runner = context.runner
-        val result = runner.execute(executor, job, Map(), force)
+        val result = runner.execute(executor, job, args, force)
         result match {
             case JobStatus.SUCCESS => true
             case JobStatus.SKIPPED => true

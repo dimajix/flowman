@@ -56,7 +56,7 @@ class RunCommand extends ActionCommand {
         val job = Job(Seq(task), "Perform output operations")
 
         val runner = context.runner
-        val result = runner.execute(executor, job)
+        val result = runner.execute(executor, job, Map(), true)
 
         result match {
             case JobStatus.SUCCESS => true

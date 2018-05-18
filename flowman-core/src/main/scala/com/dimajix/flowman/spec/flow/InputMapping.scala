@@ -39,11 +39,11 @@ class InputMapping extends BaseMapping {
     def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
     def partitions(implicit context:Context) : Map[String,FieldValue] = {
         if (_partitions != null) {
-            _partitions.mapValues(_ match {
+            _partitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
                 case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end))
-            })
+            }
         }
         else {
             Map.empty[String,FieldValue]

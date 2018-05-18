@@ -30,7 +30,7 @@ abstract class ActionCommand extends Command {
         val result = executeInternal(executor, project)
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured
-        executor.cleanup()
+        session.executor.cleanup()
 
         result
     }

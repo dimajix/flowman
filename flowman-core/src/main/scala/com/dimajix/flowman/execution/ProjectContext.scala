@@ -47,7 +47,7 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
     }
 
     updateFrom(parent)
-    templateContext.put("Project", ProjectWrapper)
+    templateContext.put("project", ProjectWrapper)
 
     /**
       * Returns the namespace associated with this context. Can be null

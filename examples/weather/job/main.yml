@@ -1,0 +1,8 @@
+jobs:
+  main:
+    description: "Main job"
+    tasks:
+      - kind: call
+        job: dump-all
+      - kind: call
+        job: write-all

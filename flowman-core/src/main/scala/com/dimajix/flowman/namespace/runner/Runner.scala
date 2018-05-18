@@ -35,5 +35,5 @@ object Runner extends ExtensionRegistry[Runner] {
     new JsonSubTypes.Type(name = "logged", value = classOf[JdbcLoggedRunner])
 ))
 abstract class Runner {
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : JobStatus
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus
 }

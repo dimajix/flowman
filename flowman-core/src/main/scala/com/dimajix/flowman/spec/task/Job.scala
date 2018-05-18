@@ -170,16 +170,22 @@ class Job {
         implicit val context = executor.context
         logger.info(s"Running job: '$name' ($description)")
 
-        // Create a new execution environment
+        // Create a new execution environment.
         val jobArgs = arguments(args)
         jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
+
+        // Check if the job should run isolated. This is required if arguments are specified, which could
+        // result in different DataFrames with different arguments
+        val isolated = args != null && args.nonEmpty
+
+        // Create a new execution environment.
         val jobContext = new RootContext(context).withEnvironment(jobArgs).withEnvironment(environment)
-        val jobExecutor = new RootExecutor(executor.session, jobContext)
+        val jobExecutor = new RootExecutor(executor, jobContext, isolated)
         val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
 
         val result = Try {
             _tasks.forall { task =>
-                logger.info(s"Executing task ${task.description}")
+                logger.info(s"Executing task '${task.description}'")
                 task.execute(projectExecutor)
             }
         } match {
@@ -195,7 +201,9 @@ class Job {
         }
 
         // Release any resources
-        jobExecutor.cleanup()
+        if (isolated) {
+            jobExecutor.cleanup()
+        }
 
         result
     }

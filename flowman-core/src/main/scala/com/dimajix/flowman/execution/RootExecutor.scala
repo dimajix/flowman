@@ -21,7 +21,6 @@ import java.util.NoSuchElementException
 import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.Namespace
@@ -29,19 +28,41 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-class RootExecutor(session:Session, context:Context)
+class RootExecutor private(session:Session, context:Context, sharedCache:Executor, isolated:Boolean)
     extends AbstractExecutor(session, context) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
+    private val _cache = {
+        if (sharedCache != null) {
+            if (isolated)
+                mutable.Map() ++ sharedCache.cache
+            else
+                sharedCache.cache
+        }
+        else {
+            mutable.Map[(String, String), DataFrame]()
+        }
+    }
     private val _children = mutable.Map[String,ProjectExecutor]()
     private val _namespace = context.namespace
+
+    def this(session: Session, context:Context) = {
+        this(session, context, null, true)
+    }
+    def this(parent:Executor, context:Context, isolated:Boolean) = {
+        this(parent.session, context, parent, isolated)
+    }
 
     /**
       * Returns the Namespace of the Executor
       *
       * @return
       */
-    def namespace : Namespace = _namespace
+    override def namespace : Namespace = _namespace
+
+    override def project: Project = null
+
+    override def root: Executor = this
 
      /**
       * Returns a fully qualified table as a DataFrame from a project belonging to the namespace of this executor
@@ -52,16 +73,7 @@ class RootExecutor(session:Session, context:Context)
     override def getTable(identifier: TableIdentifier): DataFrame = {
         if (identifier.project.isEmpty)
             throw new NoSuchElementException("Expected project name in table specifier")
-        val child = getProjectExecutor(identifier.project.get)
-        child.getTable(TableIdentifier(identifier.name, None))
-    }
-
-    /**
-      * Returns all tables belonging to the Root and child executors
-      * @return
-      */
-    override def tables: Map[TableIdentifier, DataFrame] = {
-        _children.values.map(_.tables).reduce(_ ++ _)
+        cache.getOrElse((identifier.project.get, identifier.name), throw new NoSuchElementException(s"Table $identifier not found"))
     }
 
     /**
@@ -87,6 +99,12 @@ class RootExecutor(session:Session, context:Context)
         }
         _children.values.foreach(_.cleanup())
     }
+
+    /**
+      * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
+      * @return
+      */
+    protected[execution] override def cache : mutable.Map[(String,String),DataFrame] = _cache
 
     def getProjectExecutor(project:Project) : ProjectExecutor = {
         _children.getOrElseUpdate(project.name, createProjectExecutor(project))

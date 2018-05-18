@@ -54,7 +54,7 @@ class RunCommand extends ActionCommand {
         val runner = context.runner
         toRun.forall(jobname => {
             val job = context.getJob(JobIdentifier.parse(jobname))
-            val result = runner.execute(executor, job)
+            val result = runner.execute(executor, job, Map(), force)
             result match {
                 case JobStatus.SUCCESS => true
                 case JobStatus.SKIPPED => true

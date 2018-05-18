@@ -19,18 +19,66 @@ package com.dimajix.flowman.execution
 import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.broadcast
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
-private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context, sessionFactory:() => Option[SparkSession])
-    extends AbstractExecutor(context, sessionFactory) {
+private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context)
+    extends AbstractExecutor(_parent.session, context) {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectExecutor])
-    private val _tables = mutable.Map[String,DataFrame]()
+
+    /**
+      * Returns the project of this executor
+      *
+      * @return
+      */
+    override def project : Project = _project
+
+    override def namespace: Namespace = _parent.namespace
+
+    override def root: Executor = _parent.root
+
+    /**
+      * Creates an instance of a table of a Dataflow, or retrieves it from cache
+      *
+      * @param tableName
+      */
+    override def instantiate(tableName: TableIdentifier) : DataFrame = {
+        if (tableName.project.forall(_ == _project.name))
+            cache.getOrElseUpdate((_project.name, tableName.name), createTable(tableName.name))
+        else
+            _parent.instantiate(tableName)
+    }
+
+    /**
+      * Cleans up the session
+      */
+    override def cleanup() : Unit = {
+    }
+
+    /**
+      * Returns a named table created by an executor. If a project is specified, Executors for other projects
+      * will be searched as well
+      *
+      * @param identifier
+      * @return
+      */
+    override def getTable(identifier: TableIdentifier): DataFrame = {
+        if (identifier.project.forall(_ == _project.name))
+            _parent.getTable(TableIdentifier(identifier.name, Some(_project.name)))
+        else
+            _parent.getTable(identifier)
+    }
+
+    /**
+      * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
+      * @return
+      */
+    protected[execution] override def cache : mutable.Map[(String,String),DataFrame] = _parent.cache
 
     /**
       * Instantiates a table and recursively all its dependencies
@@ -61,61 +109,7 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
         else
             instance
 
-        _tables.put(tableName, df)
+        cache.put((_project.name,tableName), df)
         df
-    }
-
-    /**
-      * Returns the project of this executor
-      *
-      * @return
-      */
-    def project : Project = _project
-
-    /**
-      * Returns a list of all tables of this Executor.
-      *
-      * @return
-      */
-    override def tables : Map[TableIdentifier,DataFrame] = _tables.toMap.map(kv => (TableIdentifier(kv._1, _project.name), kv._2))
-
-    /**
-      * Creates an instance of a table of a Dataflow, or retrieves it from cache
-      *
-      * @param tableName
-      */
-    override def instantiate(tableName: TableIdentifier) : DataFrame = {
-        if (tableName.project.forall(_ == _project.name))
-            _tables.getOrElseUpdate(tableName.name, createTable(tableName.name))
-        else
-            _parent.instantiate(tableName)
-    }
-
-    /**
-      * Cleans up the session
-      */
-    override def cleanup() : Unit = {
-        // Unregister all temporary tables
-        if (sparkRunning) {
-            logger.info("Cleaning up temporary tables and caches")
-            val catalog = spark.catalog
-            catalog.clearCache()
-            _tables.foreach(kv => catalog.dropTempView(kv._1))
-            _tables.foreach(kv => kv._2.unpersist())
-        }
-    }
-
-    /**
-      * Returns a named table created by an executor. If a project is specified, Executors for other projects
-      * will be searched as well
-      *
-      * @param identifier
-      * @return
-      */
-    override def getTable(identifier: TableIdentifier): DataFrame = {
-        if (identifier.project.forall(_ == _project.name))
-            _tables.getOrElse(identifier.name, throw new NoSuchElementException(s"Table ${identifier.name} not found in project ${_project.name}"))
-        else
-            _parent.getTable(identifier)
     }
 }

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.io.File
+
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -33,7 +35,7 @@ class SessionBuilder {
     private var _sparkSession: SparkSession = _
     private var _sparkName = ""
     private var _sparkConfig = Map[String,String]()
-    private var _environment = Map[String,String]()
+    private var _environment = Seq[(String,String)]()
     private var _profiles = Set[String]()
     private var _project:Project = _
     private var _namespace:Namespace = _
@@ -45,10 +47,12 @@ class SessionBuilder {
       * @return
       */
     def withSparkSession(session:SparkSession) : SessionBuilder = {
+        assert(session != null)
         _sparkSession = session
         this
     }
     def withSparkName(name:String) : SessionBuilder = {
+        assert(name != null)
         _sparkName = name
         this
     }
@@ -59,6 +63,7 @@ class SessionBuilder {
       * @return
       */
     def withSparkConfig(config:Map[String,String]) : SessionBuilder = {
+        assert(config != null)
         _sparkConfig = _sparkConfig ++ config
         this
     }
@@ -68,7 +73,8 @@ class SessionBuilder {
       * @param env
       * @return
       */
-    def withEnvironment(env:Map[String,String]) : SessionBuilder = {
+    def withEnvironment(env:Seq[(String,String)]) : SessionBuilder = {
+        assert(env != null)
         _environment = _environment ++ env
         this
     }
@@ -156,7 +162,7 @@ class Session private[execution](
     _sparkSession:SparkSession,
     _sparkName:String,
     _sparkConfig:Map[String,String],
-    _environment: Map[String,String],
+    _environment: Seq[(String,String)],
     _profiles:Set[String],
     _jars:Set[String]
 ) {
@@ -232,25 +238,25 @@ class Session private[execution](
 
         sparkSession
     }
-    private lazy val sparkSession = createSession()
+    private var sparkSession:Option[SparkSession] = null
 
     private lazy val rootContext : RootContext = {
-        val context = new RootContext(_namespace, _profiles.toSeq)
-        context.setEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
-        context.setConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
+        val builder = RootContext.builder(_namespace, _profiles.toSeq)
+            .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
+            .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
         if (_namespace != null) {
             _profiles.foreach(p => namespace.profiles.get(p).foreach { profile =>
                 logger.info(s"Applying namespace profile $p")
-                context.withProfile(profile)
+                builder.withProfile(profile)
             })
-            context.withEnvironment(namespace.environment)
-            context.withConfig(namespace.config)
+            builder.withEnvironment(namespace.environment)
+            builder.withConfig(namespace.config.toMap)
         }
-        context
+        builder.build().asInstanceOf[RootContext]
     }
 
     private lazy val rootExecutor : RootExecutor = {
-        val executor = new RootExecutor(rootContext, () => sparkSession)
+        val executor = new RootExecutor(this, rootContext)
         executor
     }
 
@@ -271,7 +277,22 @@ class Session private[execution](
       * Flowman session, or was provided in the builder.
       * @return
       */
-    def spark : SparkSession = sparkSession.get
+    def spark : SparkSession = {
+        if (sparkSession == null) {
+            synchronized {
+                if (sparkSession == null) {
+                    sparkSession = createSession()
+                }
+            }
+        }
+        sparkSession.get
+    }
+
+    /**
+      * Returns true if a SparkSession is already available
+      * @return
+      */
+    def sparkRunning: Boolean = sparkSession != null
 
     /**
      * Returns the root context of this session.

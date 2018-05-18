@@ -47,5 +47,6 @@ class SparkSessionTest extends FlatSpec with Matchers with LocalSparkSession {
         spark.conf.set("spark.sql.prop3", "p3")
         spark.conf.get("spark.sql.prop3") should be ("p3")
         an[NoSuchElementException] should be thrownBy derivedSession.conf.get("spark.sql.prop3")
+        derivedSession.stop()
     }
 }

@@ -4,8 +4,8 @@ mappings:
     source: measurements-raw
     partitions:
       year:
-        start: 2007
-        end: 2014
+        start: $start_year
+        end: $end_year
     columns:
       raw_data: String
 

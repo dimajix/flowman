@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.Module
 
 
 object GrabEnvironmentTask {
-    var environment:Map[String,String] = Map()
+    var environment:Map[String,Any] = Map()
 }
 
 
@@ -88,15 +88,86 @@ class JobTest extends FlatSpec with Matchers {
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> "7"))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7))
 
         job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (JobStatus.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> "7"))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7))
+    }
+
+    it should "support overriding global parameters" in {
+        val spec =
+            """
+              |environment:
+              |  - p1=xxx
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+              |    tasks:
+              |      - kind: grabenv
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+
+        job.execute(executor, Map("p1" -> "2")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> "2"))
+    }
+
+    it should "support typed parameters" in {
+        val spec =
+            """
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+              |        type: Integer
+              |    tasks:
+              |      - kind: grabenv
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+
+        job.execute(executor, Map("p1" -> "2")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> 2))
     }
 
     it should "fail on undefined parameters" in {
         val spec =
             """
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
+    }
+
+    it should "fail on undefined parameters, even if they are in the environment" in {
+        val spec =
+            """
+              |environment:
+              |  - p1=x
               |jobs:
               |  job:
               |    parameters:
@@ -155,9 +226,9 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
-        job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> "7"))
-        job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> "7"))
-        job.arguments(Map("p2" -> "lala")) should be (Map("p1" -> null, "p2" -> "lala", "p3" -> "7"))
+        job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> 7))
+        job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
+        job.arguments(Map("p2" -> "lala")) should be (Map("p1" -> null, "p2" -> "lala", "p3" -> 7))
     }
 
     it should "support environment" in {

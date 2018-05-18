@@ -24,6 +24,8 @@ import org.slf4j.Logger
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.RootContext
+import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
 
@@ -39,7 +41,7 @@ abstract class AbstractRunner extends Runner {
       * @param job
       * @return
       */
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map()) : JobStatus = {
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus = {
         implicit val context = executor.context
 
         // Get Monitor
@@ -49,7 +51,7 @@ abstract class AbstractRunner extends Runner {
         val shutdownHook = new Thread() { override def run() : Unit = failure(context, token) }
         withShutdownHook(shutdownHook) {
             // First check if execution is really required
-            if (present) {
+            if (present && !force) {
                 logger.info("Everything up to date, skipping execution")
                 skipped(context, token)
                 JobStatus.SKIPPED
@@ -62,8 +64,24 @@ abstract class AbstractRunner extends Runner {
 
     private def runJob(executor: Executor, job:Job, args:Map[String,String], token:Object) : JobStatus = {
         implicit val context = executor.context
-        Try {
-            job.execute(executor, args)
+
+        // Check if the job should run isolated. This is required if arguments are specified, which could
+        // result in different DataFrames with different arguments
+        val isolated = false //args != null && args.nonEmpty
+
+        // Create a new execution environment. This ensures that all DataFrames are only reused within a single job
+        // since other runs may have different parameters
+        val jobExecutor = if (isolated) {
+            val rootContext = RootContext.builder(context).build()
+            val rootExecutor = new RootExecutor(executor.session, rootContext)
+            if (context.project != null) rootExecutor.getProjectExecutor(context.project) else rootExecutor
+        }
+        else {
+            executor
+        }
+
+        val result = Try {
+            job.execute(jobExecutor, args)
         }
         match {
             case Success(status @ JobStatus.SUCCESS) =>
@@ -87,6 +105,13 @@ abstract class AbstractRunner extends Runner {
                 failure(context, token)
                 JobStatus.FAILURE
         }
+
+        // Release any resources
+        if (isolated) {
+            jobExecutor.root.cleanup()
+        }
+
+        result
     }
 
     /**

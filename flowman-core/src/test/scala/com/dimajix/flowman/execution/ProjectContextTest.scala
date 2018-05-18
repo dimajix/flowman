@@ -34,9 +34,9 @@ class ProjectContextTest extends FlatSpec with Matchers {
             .build()
 
         val context = session.getContext(project)
-        context.evaluate("${Project.basedir}") should be ("")
-        context.evaluate("${Project.filename}") should be ("")
-        context.evaluate("${Project.name}") should be ("my_project")
-        context.evaluate("${Project.version}") should be ("1.0")
+        context.evaluate("${project.basedir}") should be ("")
+        context.evaluate("${project.filename}") should be ("")
+        context.evaluate("${project.name}") should be ("my_project")
+        context.evaluate("${project.version}") should be ("1.0")
     }
 }

@@ -44,9 +44,38 @@ object SettingLevel {
     val NONE = new SettingLevel(0)
 }
 
+object Context {
+    abstract class Builder {
+        def withEnvironment(env: Seq[(String, Any)]): Builder
+        def withConfig(env:Map[String,String]) : Builder
+        def withConnections(env:Map[String,Connection]) : Builder
+        def withProfile(profile:Profile) : Builder
+
+        def withConfig(config:Map[String,String], level:SettingLevel) : Builder
+        def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder
+        def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder
+
+        def build() : Context
+    }
+}
+
 abstract class Context {
+    /**
+      * Returns the namespace associated with this context. Can be null
+      * @return
+      */
     def namespace : Namespace
+
+    /**
+      * Returns the project associated with this context. Can be null
+      * @return
+      */
     def project : Project
+
+    /**
+      * Returns the root context in a hierarchy of connected contexts
+      * @return
+      */
     def root : Context
 
     /**
@@ -110,20 +139,16 @@ abstract class Context {
       * @return
       */
     def config: Map[String, String]
+    def rawConfig : Map[String,(String, Int)]
 
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    def environment: Map[String, String]
+    def environment: Map[String, Any]
+    def rawEnvironment : Map[String,(Any, Int)]
 
-    def rawEnvironment : Map[String,(String, Int)]
-    def rawConfig : Map[String,(String, Int)]
-
-    def withEnvironment(env: Map[String, String]): Context
-    def withEnvironment(env: Seq[(String, String)]): Context
-    def withConfig(env:Map[String,String]) : Context
-    def withConfig(env:Seq[(String,String)]) : Context
-    def withProfile(profile:Profile) : Context
+    def getProjectContext(projectName:String) : Context
+    def getProjectContext(project:Project) : Context
 }

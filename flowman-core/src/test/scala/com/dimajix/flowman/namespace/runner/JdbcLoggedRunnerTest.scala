@@ -63,6 +63,7 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .build()
         runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
         runner.execute(session.executor, job) should be (JobStatus.SKIPPED)
+        runner.execute(session.executor, job, force=true) should be (JobStatus.SUCCESS)
     }
 
     it should "be parseable" in {

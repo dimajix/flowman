@@ -16,13 +16,24 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.mutable
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 
+import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TableIdentifier
 
 
 abstract class Executor {
+    def session: Session
+
+    def project : Project
+    def namespace : Namespace
+
+    def root: Executor
+
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
       * SparkSession, but a new derived session with a separate namespace will be created.
@@ -46,13 +57,6 @@ abstract class Executor {
     def context : Context
 
     /**
-      * Returns a map of all temporary tables created by this executor
-      *
-      * @return
-      */
-    def tables : Map[TableIdentifier,DataFrame]
-
-    /**
       * Returns a named table created by an executor. If a project is specified, Executors for other projects
       * will be searched as well
       *
@@ -74,10 +78,8 @@ abstract class Executor {
     def cleanup() : Unit
 
     /**
-      * Creates a new Executor which uses a different context
-      *
-      * @param context
+      * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    def withContext(context:Context) : Executor
+    protected[execution] def cache : mutable.Map[(String,String),DataFrame]
 }

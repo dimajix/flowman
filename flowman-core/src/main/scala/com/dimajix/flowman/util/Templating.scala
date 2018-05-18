@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.Period
 import java.time.ZoneOffset
+import java.time.temporal.Temporal
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
@@ -37,6 +38,7 @@ object Templating {
         def ofMinutes(minutes:Int) : Duration = Duration.ofMinutes(minutes)
         def ofSeconds(seconds:Int) : Duration = Duration.ofSeconds(seconds)
         def ofMillis(millis:Int) : Duration = Duration.ofMillis(millis)
+        def between(startInclusive: Temporal, endExclusive: Temporal) : Duration = Duration.between(startInclusive, endExclusive)
         def parse(value:String) : Duration = Duration.parse(value)
         def valueOf(value:String) : Duration = Duration.parse(value)
     }

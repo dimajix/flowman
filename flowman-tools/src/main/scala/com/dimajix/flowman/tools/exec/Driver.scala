@@ -112,9 +112,9 @@ class Driver(options:Arguments) {
             .withProject(project)
             .withSparkName(options.sparkName)
             .withSparkConfig(sparkConfig.toMap)
-            .withEnvironment(environment.toMap)
+            .withEnvironment(environment)
             .withProfiles(options.profiles)
-            .withJars(plugins.jars)
+            .withJars(plugins.jars.map(_.toString))
             .build()
 
         options.command.execute(project, session)

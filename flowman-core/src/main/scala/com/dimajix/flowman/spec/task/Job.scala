@@ -27,7 +27,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.ScopedContext
+import com.dimajix.flowman.execution.RootContext
+import com.dimajix.flowman.execution.RootExecutor
+import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.spec.schema.FieldType
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.StringType
@@ -62,7 +64,13 @@ class JobParameter {
     def description : String = _description
     def ftype : FieldType = _type
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
-    def default(implicit context:Context) : String = context.evaluate(_default)
+    def default(implicit context:Context) : Any = {
+        val v = context.evaluate(_default)
+        if (v != null)
+            ftype.parse(v)
+        else
+            null
+    }
 
     def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
         ftype.interpolate(value, granularity)
@@ -150,10 +158,10 @@ class Job {
       * @param context
       * @return
       */
-    def arguments(args:Map[String,String])(implicit context:Context) : Map[String,String] = {
+    def arguments(args:Map[String,String])(implicit context:Context) : Map[String,Any] = {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
-            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2).toString))
+            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2)))
         parameters.map(p => (p.name, p.default)).toMap ++ processedArgs
     }
 
@@ -169,16 +177,38 @@ class Job {
         implicit val context = executor.context
         logger.info(s"Running job: '$name' ($description)")
 
-        // Create a new execution environment
+        // Create a new execution environment.
         val jobArgs = arguments(args)
         jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
-        val jobContext = new ScopedContext(context).withEnvironment(jobArgs).withEnvironment(environment)
-        val jobExecutor = executor.withContext(jobContext)
 
+        // Check if the job should run isolated. This is required if arguments are specified, which could
+        // result in different DataFrames with different arguments
+        val isolated = args != null && args.nonEmpty
+
+        // Create a new execution environment.
+        val jobContext = RootContext.builder(context)
+            .withEnvironment(jobArgs.toSeq, SettingLevel.SCOPE_OVERRIDE)
+            .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
+            .build()
+        val jobExecutor = new RootExecutor(executor, jobContext, isolated)
+        val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
+
+        val result = runJob(projectExecutor)
+
+        // Release any resources
+        if (isolated) {
+            jobExecutor.cleanup()
+        }
+
+        result
+    }
+
+    private def runJob(executor:Executor) : JobStatus = {
+        implicit val context = executor.context
         Try {
             _tasks.forall { task =>
-                logger.info(s"Executing task ${task.description}")
-                task.execute(jobExecutor)
+                logger.info(s"Executing task '${task.description}'")
+                task.execute(executor)
             }
         } match {
             case Success(true) =>
@@ -188,8 +218,7 @@ class Job {
                 logger.error("Execution of job failed")
                 JobStatus.FAILURE
             case Failure(e) =>
-                logger.error("Execution of job failed with exception: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+                logger.error("Execution of job failed with exception: ", e)
                 JobStatus.FAILURE
         }
     }

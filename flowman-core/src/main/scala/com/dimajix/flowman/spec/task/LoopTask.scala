@@ -22,13 +22,17 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.schema.ArrayValue
 import com.dimajix.flowman.spec.schema.FieldValue
+import com.dimajix.flowman.spec.schema.RangeValue
+import com.dimajix.flowman.spec.schema.SingleValue
 
 
 class LoopTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[LoopTask])
 
-    @JsonProperty(value="job") private var _job:String = _
+    @JsonProperty(value="job", required=true) private var _job:String = ""
+    @JsonProperty(value="force") private var _force:String = "false"
     @JsonProperty(value="args", required=true) private var _args:Map[String,FieldValue] = Map()
 
     def this(job:String, args:Map[String,FieldValue]) = {
@@ -37,16 +41,16 @@ class LoopTask extends BaseTask {
         _args = args
     }
 
-    def job(implicit context:Context) : JobIdentifier = if (Option(_job).exists(_.nonEmpty)) JobIdentifier.parse(context.evaluate(_job)) else null
-    def args : Map[String,FieldValue] = _args
+    def job(implicit context:Context) : JobIdentifier = JobIdentifier.parse(context.evaluate(_job))
+    def args(implicit context:Context) : Map[String,FieldValue] = _args.mapValues{
+        case SingleValue(value) => SingleValue(context.evaluate(value))
+        case ArrayValue(values) => ArrayValue(values.map(context.evaluate))
+        case RangeValue(start,end) => RangeValue(context.evaluate(start), context.evaluate(end))
+    }
+    def force(implicit context: Context) : Boolean = context.evaluate(_force).toBoolean
 
     override def execute(executor:Executor) : Boolean = {
-        executeJob(executor)
-    }
-
-    private def executeJob(executor: Executor) : Boolean = {
         implicit val context = executor.context
-        logger.info(s"Running job: '${this.job}'")
 
         def interpolate(fn:Map[String,String] => Boolean, param:JobParameter, values:FieldValue) : Map[String,String] => Boolean = {
             val vals = param.ftype.interpolate(values, param.granularity).map(_.toString)
@@ -55,7 +59,8 @@ class LoopTask extends BaseTask {
 
         val job = context.getJob(this.job)
         val run = (args:Map[String,String]) => {
-            context.runner.execute(executor, job, args) match {
+            logger.info(s"Calling sub-job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+            context.runner.execute(executor, job, args, force) match {
                 case JobStatus.SUCCESS => true
                 case JobStatus.SKIPPED => true
                 case _ => false

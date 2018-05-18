@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.execution.AbstractContext.Builder
+import com.dimajix.flowman.execution.AbstractContext.Builder
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.Connection
@@ -42,6 +44,21 @@ object SettingLevel {
     val NAMESPACE_PROFILE = new SettingLevel(150)
     val NAMESPACE_SETTING = new SettingLevel(100)
     val NONE = new SettingLevel(0)
+}
+
+object Context {
+    abstract class Builder {
+        def withEnvironment(env: Seq[(String, Any)]): Builder
+        def withConfig(env:Map[String,String]) : Builder
+        def withConnections(env:Map[String,Connection]) : Builder
+        def withProfile(profile:Profile) : Builder
+
+        def withConfig(config:Map[String,String], level:SettingLevel) : Builder
+        def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder
+        def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder
+
+        def build() : Context
+    }
 }
 
 abstract class Context {
@@ -124,22 +141,15 @@ abstract class Context {
       * @return
       */
     def config: Map[String, String]
+    def rawConfig : Map[String,(String, Int)]
 
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    def environment: Map[String, String]
-
-    def rawEnvironment : Map[String,(String, Int)]
-    def rawConfig : Map[String,(String, Int)]
-
-    def withEnvironment(env: Map[String, String]): Context
-    def withEnvironment(env: Seq[(String, String)]): Context
-    def withConfig(env:Map[String,String]) : Context
-    def withConfig(env:Seq[(String,String)]) : Context
-    def withProfile(profile:Profile) : Context
+    def environment: Map[String, Any]
+    def rawEnvironment : Map[String,(Any, Int)]
 
     def getProjectContext(projectName:String) : Context
     def getProjectContext(project:Project) : Context

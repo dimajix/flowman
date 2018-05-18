@@ -40,6 +40,35 @@ class TemplatingTest extends FlatSpec with Matchers {
         output2.toString should be ("3")
     }
 
+    they should "support arithmetics" in {
+        context.put("a", 2)
+        context.put("b", 3)
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", "#set($r=$a+$b)$r")
+        output.toString should be ("5")
+    }
+
+    "Floats" should "be supported as values" in {
+        context.put("f", 2.0)
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", "$f")
+        output.toString should be ("2.0")
+
+        val three = 3.2
+        context.put("three", three)
+        val output2 = new StringWriter()
+        engine.evaluate(context, output2, "test", "$three")
+        output2.toString should be ("3.2")
+    }
+
+    they should "support arithmetics" in {
+        context.put("a", 2.0)
+        context.put("b", 3.0)
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", "#set($r=$a+$b)$r")
+        output.toString should be ("5.0")
+    }
+
     "Timestamps" should "be supported" in {
         val output = new StringWriter()
         engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10 10:00:00')")

@@ -32,7 +32,7 @@ class CallTask extends BaseTask {
 
     private def executeJob(executor: Executor) : Boolean = {
         implicit val context = executor.context
-        logger.info(s"Running job: '${this.job}'")
+        logger.info(s"Running job '${this.job}' with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
 
         val job = context.getJob(this.job)
         context.runner.execute(executor, job, args, force) match {

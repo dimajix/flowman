@@ -1,0 +1,23 @@
+jobs:
+  dump-all-years:
+    description: "Dumps some records of every year"
+    tasks:
+      - kind: loop
+        job: dump-single-year
+        args:
+          year:
+            start: 2007
+            end: 2014
+
+  dump-single-year:
+    description: "Dumps some records of a single year"
+    parameters:
+      - name: year
+        type: Integer
+    environment:
+      - start_year=${year}
+      - end_year=${year}
+    tasks:
+      - kind: dump
+        outputs:
+          - measurements-dump

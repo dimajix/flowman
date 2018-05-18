@@ -63,7 +63,7 @@ class JobParameter {
     def description : String = _description
     def ftype : FieldType = _type
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
-    def default(implicit context:Context) : String = context.evaluate(_default)
+    def default(implicit context:Context) : Any = ftype.parse(context.evaluate(_default))
 
     def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
         ftype.interpolate(value, granularity)
@@ -151,10 +151,10 @@ class Job {
       * @param context
       * @return
       */
-    def arguments(args:Map[String,String])(implicit context:Context) : Map[String,String] = {
+    def arguments(args:Map[String,String])(implicit context:Context) : Map[String,Any] = {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
-            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2).toString))
+            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2)))
         parameters.map(p => (p.name, p.default)).toMap ++ processedArgs
     }
 
@@ -179,7 +179,10 @@ class Job {
         val isolated = args != null && args.nonEmpty
 
         // Create a new execution environment.
-        val jobContext = new RootContext(context).withEnvironment(jobArgs).withEnvironment(environment)
+        val jobContext = RootContext.builder(context)
+            .withEnvironment(jobArgs.toSeq)
+            .withEnvironment(environment)
+            .build()
         val jobExecutor = new RootExecutor(executor, jobContext, isolated)
         val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
 

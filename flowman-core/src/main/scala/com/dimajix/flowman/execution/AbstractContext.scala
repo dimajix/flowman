@@ -24,18 +24,54 @@ import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
 import com.dimajix.flowman.spec.Connection
+import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.util.Templating
 
 
 object AbstractContext {
     private lazy val rootContext = Templating.newContext()
+
+    abstract class Builder extends Context.Builder {
+        private var _environment = Seq[(String,Any,SettingLevel)]()
+        private var _config = Seq[(String,String,SettingLevel)]()
+        private var _databases = Seq[(String, Connection, SettingLevel)]()
+
+        override def build() : AbstractContext = {
+            val context = createContext()
+            _environment.foreach(v => context.setEnvironment(v._1, v._2, v._3))
+            _config.foreach(v => context.setConfig(v._1, v._2, v._3))
+            _databases.foreach(v => context.setDatabase(v._1, v._2, v._3))
+            context
+        }
+
+        override def withConfig(config:Map[String,String], level:SettingLevel) : Builder = {
+            _config = _config ++ config.map(kv => (kv._1, kv._2, level))
+            this
+        }
+        override def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder = {
+            _databases = _databases ++ env.map(kv => (kv._1, kv._2, level))
+            this
+        }
+        override def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder = {
+            _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
+            this
+        }
+        protected def withProfile(profile:Profile, level:SettingLevel) : Builder = {
+            withConfig(profile.config.toMap, level)
+            withEnvironment(profile.environment, level)
+            withConnections(profile.connections, level)
+            this
+        }
+
+        protected def createContext() : AbstractContext
+    }
 }
 
 
 abstract class AbstractContext extends Context {
     protected val logger:Logger
 
-    private val _environment = mutable.Map[String,(String, Int)]()
+    private val _environment = mutable.Map[String,(Any, Int)]()
     private val _config = mutable.Map[String,(String, Int)]()
     private val _databases = mutable.Map[String, (Connection, Int)]()
 
@@ -75,24 +111,18 @@ abstract class AbstractContext extends Context {
       * @return
       */
     override def config : Map[String,String] = _config.mapValues(v => evaluate(v._1)).toMap
+    override def rawConfig : Map[String,(String, Int)] = _config.toMap
+
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    override def environment : Map[String,String] = _environment.mapValues(_._1).toMap
-
-    override def rawEnvironment : Map[String,(String, Int)] = _environment.toMap
-    override def rawConfig : Map[String,(String, Int)] = _config.toMap
+    override def environment : Map[String,Any] = _environment.mapValues(_._1).toMap
+    override def rawEnvironment : Map[String,(Any, Int)] = _environment.toMap
 
 
-    def setConfig(config:Map[String,String], settingLevel: SettingLevel) : Unit = {
-        setConfig(config.toSeq, settingLevel)
-    }
-    def setConfig(config:Seq[(String,String)], settingLevel: SettingLevel) : Unit = {
-        config.foreach(kv => setConfig(kv._1, kv._2, settingLevel))
-    }
-    def setConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
+    private def setConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
         val currentValue = _config.getOrElse(key, ("", SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
             _config.update(key, (value, settingLevel.level))
@@ -101,7 +131,7 @@ abstract class AbstractContext extends Context {
             logger.info(s"Ignoring changing final config variable $key=${currentValue._1} to '$value'")
         }
     }
-    def unsetConfig(key:String, settingLevel: SettingLevel) : Unit = {
+    private def unsetConfig(key:String, settingLevel: SettingLevel) : Unit = {
         val currentValue = _config.getOrElse(key, ("", SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
             _config.remove(key)
@@ -113,19 +143,14 @@ abstract class AbstractContext extends Context {
 
     /**
       * Updates environment variables
-      *
-      * @param env
       */
-    def setEnvironment(env:Map[String,String], settingLevel: SettingLevel) : Unit = {
-        setEnvironment(env.toSeq, settingLevel)
-    }
-    def setEnvironment(env:Seq[(String,String)], settingLevel: SettingLevel) : Unit = {
-        env.foreach(kv => setEnvironment(kv._1, kv._2, settingLevel))
-    }
-    def setEnvironment(key:String, value:String, settingLevel: SettingLevel) : Unit = {
+    private def setEnvironment(key:String, value:Any, settingLevel: SettingLevel) : Unit = {
         val currentValue = _environment.getOrElse(key, ("", SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
-            val finalValue = evaluate(value)
+            val finalValue = value match {
+                case s:String => evaluate(s)
+                case v:Any => v
+            }
             _environment.update(key, (finalValue, settingLevel.level))
             templateContext.put(key, finalValue)
         }
@@ -133,7 +158,7 @@ abstract class AbstractContext extends Context {
             logger.info(s"Ignoring changing final environment variable $key=${currentValue._1} to '$value'")
         }
     }
-    def unsetEnvironment(key:String, settingLevel: SettingLevel) : Unit = {
+    private def unsetEnvironment(key:String, settingLevel: SettingLevel) : Unit = {
         val currentValue = _environment.getOrElse(key, ("", SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
             _environment.remove(key)
@@ -144,10 +169,7 @@ abstract class AbstractContext extends Context {
         }
     }
 
-    def setConnections(databases:Map[String,Connection], settingLevel: SettingLevel) : Unit = {
-        databases.foreach(kv => setDatabase(kv._1, kv._2, settingLevel))
-    }
-    def setDatabase(name:String, database:Connection, settingLevel: SettingLevel) : Unit = {
+    private def setDatabase(name:String, database:Connection, settingLevel: SettingLevel) : Unit = {
         val currentValue = _databases.getOrElse(name, (null, SettingLevel.NONE.level))
         if (currentValue._2 <= settingLevel.level) {
             _databases.update(name, (database, settingLevel.level))

@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.Module
 
 
 object GrabEnvironmentTask {
-    var environment:Map[String,String] = Map()
+    var environment:Map[String,Any] = Map()
 }
 
 
@@ -88,10 +88,10 @@ class JobTest extends FlatSpec with Matchers {
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> "7"))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7))
 
         job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (JobStatus.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> "7"))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7))
     }
 
     it should "fail on undefined parameters" in {
@@ -155,9 +155,9 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
-        job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> "7"))
-        job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> "7"))
-        job.arguments(Map("p2" -> "lala")) should be (Map("p1" -> null, "p2" -> "lala", "p3" -> "7"))
+        job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> 7))
+        job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
+        job.arguments(Map("p2" -> "lala")) should be (Map("p1" -> null, "p2" -> "lala", "p3" -> 7))
     }
 
     it should "support environment" in {

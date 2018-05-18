@@ -4,5 +4,9 @@ jobs:
     tasks:
       - kind: call
         job: dump-all
+        force: true
+      - kind: call
+        job: dump-all-years
+        force: true
       - kind: call
         job: write-all

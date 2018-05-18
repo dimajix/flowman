@@ -72,7 +72,7 @@ abstract class AbstractRunner extends Runner {
         // Create a new execution environment. This ensures that all DataFrames are only reused within a single job
         // since other runs may have different parameters
         val jobExecutor = if (isolated) {
-            val rootContext = new RootContext(context)
+            val rootContext = RootContext.builder(context).build()
             val rootExecutor = new RootExecutor(executor.session, rootContext)
             if (context.project != null) rootExecutor.getProjectExecutor(context.project) else rootExecutor
         }

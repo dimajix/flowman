@@ -39,6 +39,38 @@ import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.task.Job
 
 
+object RootContext {
+    class Builder(_namespace:Namespace, _profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder {
+        override def withEnvironment(env: Seq[(String, Any)]): Builder = {
+            withEnvironment(env, SettingLevel.NAMESPACE_SETTING)
+            this
+        }
+        override def withConfig(config:Map[String,String]) : Builder = {
+            withConfig(config, SettingLevel.NAMESPACE_SETTING)
+            this
+        }
+        override def withConnections(connections:Map[String,Connection]) : Builder = {
+            withConnections(connections, SettingLevel.NAMESPACE_SETTING)
+            this
+        }
+        override def withProfile(profile:Profile) : Builder = {
+            withProfile(profile, SettingLevel.NAMESPACE_PROFILE)
+            this
+        }
+
+        override def createContext(): RootContext = {
+            val context = new RootContext(_namespace, _profiles)
+            if (_parent != null)
+                context.updateFrom(_parent)
+            context
+        }
+    }
+
+    def builder() = new Builder(null, Seq())
+    def builder(namespace:Namespace, profiles:Seq[String]) = new Builder(namespace, profiles)
+    def builder(parent:Context) = new Builder(parent.namespace, Seq(), parent)
+}
+
 
 class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
@@ -48,11 +80,6 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
             _namespace.runner
         else
             new SimpleRunner
-    }
-
-    def this(context:Context) = {
-        this(context.namespace, Seq())
-        updateFrom(context)
     }
 
     def profiles : Seq[String] = _profiles
@@ -151,44 +178,6 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     }
 
     /**
-      * Creates a new chained context with additional environment variables
-      * @param env
-      * @return
-      */
-    override def withEnvironment(env:Map[String,String]) : Context = {
-        withEnvironment(env.toSeq)
-    }
-    override def withEnvironment(env:Seq[(String,String)]) : Context = {
-        setEnvironment(env, SettingLevel.NAMESPACE_SETTING)
-        this
-    }
-
-    /**
-      * Creates a new chained context with additional Spark configuration variables
-      * @param env
-      * @return
-      */
-    override def withConfig(env:Map[String,String]) : Context = {
-        withConfig(env.toSeq)
-    }
-    override def withConfig(env:Seq[(String,String)]) : Context = {
-        setConfig(env, SettingLevel.NAMESPACE_SETTING)
-        this
-    }
-
-    /**
-      * Creates a new chained context with additional properties from a profile
-      * @param profile
-      * @return
-      */
-    override def withProfile(profile:Profile) : Context = {
-        setConfig(profile.config, SettingLevel.NAMESPACE_PROFILE)
-        setEnvironment(profile.environment, SettingLevel.NAMESPACE_PROFILE)
-        setConnections(profile.connections, SettingLevel.NAMESPACE_PROFILE)
-        this
-    }
-
-    /**
       * Returns the context for a specific project
       *
       * @param projectName
@@ -202,15 +191,17 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     }
 
     private def createProjectContext(project: Project) : Context = {
-        val context = new ProjectContext(this, project)
+        val builder = ProjectContext.builder(this, project)
         profiles.foreach { prof =>
                 project.profiles.get(prof).foreach { profile =>
                     logger.info(s"Applying project profile $prof")
-                    context.withProfile(profile)
+                    builder.withProfile(profile)
                 }
             }
-        context.withEnvironment(project.environment)
-            .withConfig(project.config)
+
+        val context = builder.withEnvironment(project.environment)
+            .withConfig(project.config.toMap)
+            .build()
 
         _children.update(project.name, context)
         context

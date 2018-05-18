@@ -36,7 +36,35 @@ import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.task.Job
 
 
-class ProjectContext(parent:RootContext, _project:Project) extends AbstractContext {
+object ProjectContext {
+    class Builder(_parent:Context, _project:Project) extends AbstractContext.Builder {
+        override def withEnvironment(env: Seq[(String, Any)]): Builder = {
+            withEnvironment(env, SettingLevel.PROJECT_SETTING)
+            this
+        }
+        override def withConfig(config:Map[String,String]) : Builder = {
+            withConfig(config, SettingLevel.PROJECT_SETTING)
+            this
+        }
+        override def withConnections(connections:Map[String,Connection]) : Builder = {
+            withConnections(connections, SettingLevel.PROJECT_SETTING)
+            this
+        }
+        override def withProfile(profile:Profile) : Builder = {
+            withProfile(profile, SettingLevel.PROJECT_PROFILE)
+            this
+        }
+
+        override protected def createContext(): ProjectContext = {
+            new ProjectContext(_parent, _project)
+        }
+    }
+
+    def builder(parent:Context, project:Project) = new Builder(parent, project)
+}
+
+
+class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
 
     private object ProjectWrapper {
@@ -148,44 +176,6 @@ class ProjectContext(parent:RootContext, _project:Project) extends AbstractConte
             _project.jobs.getOrElse(identifier.name, throw new NoSuchElementException(s"Job $identifier not found in project ${_project.name}"))
         else
             parent.getJob(identifier)
-    }
-
-    /**
-      * Creates a new chained context with additional environment variables
-      * @param env
-      * @return
-      */
-    override def withEnvironment(env:Map[String,String]) : Context = {
-        withEnvironment(env.toSeq)
-    }
-    override def withEnvironment(env:Seq[(String,String)]) : Context = {
-        setEnvironment(env, SettingLevel.PROJECT_SETTING)
-        this
-    }
-
-    /**
-      * Creates a new chained context with additional Spark configuration variables
-      * @param env
-      * @return
-      */
-    override def withConfig(env:Map[String,String]) : Context = {
-        withConfig(env.toSeq)
-    }
-    override def withConfig(env:Seq[(String,String)]) : Context = {
-        setConfig(env, SettingLevel.PROJECT_SETTING)
-        this
-    }
-
-    /**
-      * Creates a new chained context with additional properties from a profile
-      * @param profile
-      * @return
-      */
-    override def withProfile(profile:Profile) : Context = {
-        setConfig(profile.config, SettingLevel.PROJECT_PROFILE)
-        setEnvironment(profile.environment, SettingLevel.PROJECT_PROFILE)
-        setConnections(profile.connections, SettingLevel.PROJECT_PROFILE)
-        this
     }
 
     override def getProjectContext(projectName:String) : Context = {

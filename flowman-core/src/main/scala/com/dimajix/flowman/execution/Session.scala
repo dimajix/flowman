@@ -35,7 +35,7 @@ class SessionBuilder {
     private var _sparkSession: SparkSession = _
     private var _sparkName = ""
     private var _sparkConfig = Map[String,String]()
-    private var _environment = Map[String,String]()
+    private var _environment = Seq[(String,String)]()
     private var _profiles = Set[String]()
     private var _project:Project = _
     private var _namespace:Namespace = _
@@ -73,7 +73,7 @@ class SessionBuilder {
       * @param env
       * @return
       */
-    def withEnvironment(env:Map[String,String]) : SessionBuilder = {
+    def withEnvironment(env:Seq[(String,String)]) : SessionBuilder = {
         assert(env != null)
         _environment = _environment ++ env
         this
@@ -162,7 +162,7 @@ class Session private[execution](
     _sparkSession:SparkSession,
     _sparkName:String,
     _sparkConfig:Map[String,String],
-    _environment: Map[String,String],
+    _environment: Seq[(String,String)],
     _profiles:Set[String],
     _jars:Set[String]
 ) {
@@ -241,18 +241,18 @@ class Session private[execution](
     private var sparkSession:Option[SparkSession] = null
 
     private lazy val rootContext : RootContext = {
-        val context = new RootContext(_namespace, _profiles.toSeq)
-        context.setEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
-        context.setConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
+        val builder = RootContext.builder(_namespace, _profiles.toSeq)
+            .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
+            .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
         if (_namespace != null) {
             _profiles.foreach(p => namespace.profiles.get(p).foreach { profile =>
                 logger.info(s"Applying namespace profile $p")
-                context.withProfile(profile)
+                builder.withProfile(profile)
             })
-            context.withEnvironment(namespace.environment)
-            context.withConfig(namespace.config)
+            builder.withEnvironment(namespace.environment)
+            builder.withConfig(namespace.config.toMap)
         }
-        context
+        builder.build().asInstanceOf[RootContext]
     }
 
     private lazy val rootExecutor : RootExecutor = {

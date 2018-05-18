@@ -31,7 +31,8 @@ import com.dimajix.flowman.spec.schema.SingleValue
 class LoopTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[LoopTask])
 
-    @JsonProperty(value="job") private var _job:String = _
+    @JsonProperty(value="job", required=true) private var _job:String = ""
+    @JsonProperty(value="force") private var _force:String = "false"
     @JsonProperty(value="args", required=true) private var _args:Map[String,FieldValue] = Map()
 
     def this(job:String, args:Map[String,FieldValue]) = {
@@ -40,12 +41,13 @@ class LoopTask extends BaseTask {
         _args = args
     }
 
-    def job(implicit context:Context) : JobIdentifier = if (Option(_job).exists(_.nonEmpty)) JobIdentifier.parse(context.evaluate(_job)) else null
+    def job(implicit context:Context) : JobIdentifier = JobIdentifier.parse(context.evaluate(_job))
     def args(implicit context:Context) : Map[String,FieldValue] = _args.mapValues{
         case SingleValue(value) => SingleValue(context.evaluate(value))
         case ArrayValue(values) => ArrayValue(values.map(context.evaluate))
         case RangeValue(start,end) => RangeValue(context.evaluate(start), context.evaluate(end))
     }
+    def force(implicit context: Context) : Boolean = context.evaluate(_force).toBoolean
 
     override def execute(executor:Executor) : Boolean = {
         executeJob(executor)
@@ -62,7 +64,7 @@ class LoopTask extends BaseTask {
 
         val job = context.getJob(this.job)
         val run = (args:Map[String,String]) => {
-            context.runner.execute(executor, job, args) match {
+            context.runner.execute(executor, job, args, force) match {
                 case JobStatus.SUCCESS => true
                 case JobStatus.SKIPPED => true
                 case _ => false

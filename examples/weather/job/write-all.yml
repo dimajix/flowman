@@ -3,6 +3,7 @@ jobs:
     description: "Writes all outputs"
     tasks:
       - kind: output
+        description: Writes all station outputs to files
         outputs:
           - stations-local
           - stations-relation-file

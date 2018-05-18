@@ -94,9 +94,80 @@ class JobTest extends FlatSpec with Matchers {
         GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7))
     }
 
+    it should "support overriding global parameters" in {
+        val spec =
+            """
+              |environment:
+              |  - p1=xxx
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+              |    tasks:
+              |      - kind: grabenv
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+
+        job.execute(executor, Map("p1" -> "2")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> "2"))
+    }
+
+    it should "support typed parameters" in {
+        val spec =
+            """
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+              |        type: Integer
+              |    tasks:
+              |      - kind: grabenv
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+
+        job.execute(executor, Map("p1" -> "2")) shouldBe (JobStatus.SUCCESS)
+        GrabEnvironmentTask.environment should be (Map("p1" -> 2))
+    }
+
     it should "fail on undefined parameters" in {
         val spec =
             """
+              |jobs:
+              |  job:
+              |    parameters:
+              |      - name: p1
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val session = Session.builder().build()
+        val executor = session.executor
+        implicit val context = session.context
+
+        val job = module.jobs("job")
+        job should not be (null)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
+    }
+
+    it should "fail on undefined parameters, even if they are in the environment" in {
+        val spec =
+            """
+              |environment:
+              |  - p1=x
               |jobs:
               |  job:
               |    parameters:

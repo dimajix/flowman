@@ -3,6 +3,7 @@ jobs:
     description: "Dumps some records of every year"
     tasks:
       - kind: loop
+        description: Loop all years between 2007 and 2014
         job: dump-single-year
         args:
           year:
@@ -16,8 +17,10 @@ jobs:
         type: Integer
     environment:
       - start_year=${year}
-      - end_year=${year}
+      - end_year=#set($r=$year+1)$r
     tasks:
-      - kind: dump
-        outputs:
-          - measurements-dump
+      - kind: dump-environment
+        description: Dump current execution environment for year $start_year
+      - kind: dump-mapping
+        description: Dump measurements from year $start_year
+        input: measurements

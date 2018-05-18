@@ -3,5 +3,6 @@ jobs:
     description: "Dumps all outputs"
     tasks:
       - kind: output
+        description: Perform output operation on dumps
         outputs:
           - measurements-dump

@@ -22,7 +22,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
 
-class DumpTask extends BaseTask {
+class DumpMappingTask extends BaseTask {
     @JsonProperty(value="input", required=true) private var _input:String = _
     @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
     @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _

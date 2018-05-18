@@ -35,12 +35,12 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
     private val _cache = {
         if (sharedCache != null) {
             if (isolated)
-                mutable.Map() ++ sharedCache.cache
+                mutable.Map[(String,String),DataFrame]()
             else
                 sharedCache.cache
         }
         else {
-            mutable.Map[(String, String), DataFrame]()
+            mutable.Map[(String,String),DataFrame]()
         }
     }
     private val _children = mutable.Map[String,ProjectExecutor]()

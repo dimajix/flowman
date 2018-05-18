@@ -32,6 +32,8 @@ object Task extends ExtensionRegistry[Task] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "call", value = classOf[CallTask]),
     new JsonSubTypes.Type(name = "create-relation", value = classOf[CreateRelationTask]),
+    new JsonSubTypes.Type(name = "dump-environment", value = classOf[DumpEnvironmentTask]),
+    new JsonSubTypes.Type(name = "dump-mapping", value = classOf[DumpMappingTask]),
     new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
     new JsonSubTypes.Type(name = "output", value = classOf[OutputTask]),
     new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask])

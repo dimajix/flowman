@@ -50,12 +50,7 @@ class LoopTask extends BaseTask {
     def force(implicit context: Context) : Boolean = context.evaluate(_force).toBoolean
 
     override def execute(executor:Executor) : Boolean = {
-        executeJob(executor)
-    }
-
-    private def executeJob(executor: Executor) : Boolean = {
         implicit val context = executor.context
-        logger.info(s"Running job: '${this.job}'")
 
         def interpolate(fn:Map[String,String] => Boolean, param:JobParameter, values:FieldValue) : Map[String,String] => Boolean = {
             val vals = param.ftype.interpolate(values, param.granularity).map(_.toString)
@@ -64,6 +59,7 @@ class LoopTask extends BaseTask {
 
         val job = context.getJob(this.job)
         val run = (args:Map[String,String]) => {
+            logger.info(s"Calling sub-job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
             context.runner.execute(executor, job, args, force) match {
                 case JobStatus.SUCCESS => true
                 case JobStatus.SKIPPED => true

@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import com.dimajix.flowman.execution.AbstractContext.Builder
-import com.dimajix.flowman.execution.AbstractContext.Builder
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.Connection

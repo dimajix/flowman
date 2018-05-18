@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
+import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.spec.schema.FieldType
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.StringType
@@ -63,7 +64,13 @@ class JobParameter {
     def description : String = _description
     def ftype : FieldType = _type
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
-    def default(implicit context:Context) : Any = ftype.parse(context.evaluate(_default))
+    def default(implicit context:Context) : Any = {
+        val v = context.evaluate(_default)
+        if (v != null)
+            ftype.parse(v)
+        else
+            null
+    }
 
     def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
         ftype.interpolate(value, granularity)
@@ -180,16 +187,28 @@ class Job {
 
         // Create a new execution environment.
         val jobContext = RootContext.builder(context)
-            .withEnvironment(jobArgs.toSeq)
-            .withEnvironment(environment)
+            .withEnvironment(jobArgs.toSeq, SettingLevel.SCOPE_OVERRIDE)
+            .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()
         val jobExecutor = new RootExecutor(executor, jobContext, isolated)
         val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
 
-        val result = Try {
+        val result = runJob(projectExecutor)
+
+        // Release any resources
+        if (isolated) {
+            jobExecutor.cleanup()
+        }
+
+        result
+    }
+
+    private def runJob(executor:Executor) : JobStatus = {
+        implicit val context = executor.context
+        Try {
             _tasks.forall { task =>
                 logger.info(s"Executing task '${task.description}'")
-                task.execute(projectExecutor)
+                task.execute(executor)
             }
         } match {
             case Success(true) =>
@@ -202,12 +221,5 @@ class Job {
                 logger.error("Execution of job failed with exception: ", e)
                 JobStatus.FAILURE
         }
-
-        // Release any resources
-        if (isolated) {
-            jobExecutor.cleanup()
-        }
-
-        result
     }
 }

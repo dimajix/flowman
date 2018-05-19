@@ -35,7 +35,7 @@ case object TimestampType extends FieldType {
       * @param granularity
       * @return
       */
-    override def parse(value:String, granularity: String) : Any = {
+    override def parse(value:String, granularity: String) : UtcTimestamp = {
         if (granularity != null && granularity.nonEmpty) {
             val msecs = UtcTimestamp.toEpochSeconds(value) * 1000l
             val step = Duration.parse(granularity).getSeconds * 1000l
@@ -52,18 +52,32 @@ case object TimestampType extends FieldType {
       * @param granularity
       * @return
       */
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[UtcTimestamp] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
-            case RangeValue(start,end) => {
-                val step = if (granularity != null && granularity.nonEmpty)
-                    Duration.parse(granularity).getSeconds
-                else
-                    1
-                val startDate = UtcTimestamp.toEpochSeconds(start) / step * step
-                val endDate = UtcTimestamp.toEpochSeconds(end) / step * step
-                startDate until endDate by step map(x => new UtcTimestamp(x * 1000l))
+            case RangeValue(start,end,step) => {
+                val startDate = UtcTimestamp.toEpochSeconds(start)
+                val endDate = UtcTimestamp.toEpochSeconds(end)
+
+                val result = if (step != null && step.nonEmpty) {
+                    val range = startDate.until(endDate).by(Duration.parse(step).getSeconds)
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = Duration.parse(granularity).getSeconds
+                        range.map(_ / mod * mod).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = Duration.parse(granularity).getSeconds
+                    (startDate / mod * mod).until(endDate / mod * mod).by(mod)
+                }
+                else {
+                    startDate.until(endDate)
+                }
+                result.map(x => new UtcTimestamp(x * 1000l))
             }
         }
     }

@@ -27,9 +27,9 @@ import org.apache.spark.sql.types.DataType
 case object DateType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.DateType
 
-    override def parse(value:String, granularity: String) : Any = {
+    override def parse(value:String, granularity: String) : Date = {
         if (granularity != null && granularity.nonEmpty) {
-            val step = Duration.parse(granularity).get(ChronoUnit.SECONDS)/(24*60*60)
+            val step = Duration.parse(granularity).getSeconds/(24*60*60)
             val day = Date.valueOf(value).toLocalDate.toEpochDay / step * step
             Date.valueOf(LocalDate.ofEpochDay(day))
         }
@@ -37,18 +37,32 @@ case object DateType extends FieldType {
             Date.valueOf(value)
         }
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Date] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(v => parse(v, granularity))
-            case RangeValue(start,end) => {
-                val step = if (granularity != null && granularity.nonEmpty)
-                    Duration.parse(granularity).get(ChronoUnit.SECONDS)/(24*60*60)
-                else
-                    1
-                val startDate = Date.valueOf(start).toLocalDate.toEpochDay / step * step
-                val endDate = Date.valueOf(end).toLocalDate.toEpochDay / step * step
-                startDate until endDate by step map(x => Date.valueOf(LocalDate.ofEpochDay(x)))
+            case RangeValue(start,end,step) => {
+                val startDate = Date.valueOf(start).toLocalDate.toEpochDay
+                val endDate = Date.valueOf(end).toLocalDate.toEpochDay
+
+                val result = if (step != null && step.nonEmpty) {
+                    val range = startDate.until(endDate).by(Duration.parse(step).getSeconds / (24*60*60))
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = Duration.parse(granularity).getSeconds / (24*60*60)
+                        range.map(_ / mod * mod).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = Duration.parse(granularity).getSeconds / (24*60*60)
+                    (startDate / mod * mod).until(endDate / mod * mod).by(mod)
+                }
+                else {
+                    startDate.until(endDate)
+                }
+                result.map(x => Date.valueOf(LocalDate.ofEpochDay(x)))
             }
         }
     }

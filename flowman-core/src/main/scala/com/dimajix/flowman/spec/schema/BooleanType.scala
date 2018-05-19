@@ -22,16 +22,16 @@ import org.apache.spark.sql.types.DataType
 case object BooleanType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.BooleanType
 
-    override def parse(value:String, granularity:String) : Any = {
+    override def parse(value:String, granularity:String) : Boolean = {
         if (granularity != null && granularity.nonEmpty)
             throw new UnsupportedOperationException("Boolean types cannot have a granularity")
         value.toBoolean
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Boolean] = {
         value match {
-            case SingleValue(v) => Seq(parse(v))
-            case ArrayValue(values) => values.map(parse)
-            case RangeValue(start,end) => ???
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(v => parse(v, granularity))
+            case RangeValue(start,end,step) => ???
         }
     }
 }

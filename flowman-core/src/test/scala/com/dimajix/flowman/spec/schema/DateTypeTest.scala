@@ -24,56 +24,56 @@ import org.scalatest.Matchers
 
 class DateTypeTest extends FlatSpec with Matchers {
     "A DateType" should "parse strings" in {
-        DateType.parse("2017-12-01").asInstanceOf[Date] should be (Date.valueOf("2017-12-01"))
+        DateType.parse("2017-12-01") should be (Date.valueOf("2017-12-01"))
     }
 
     it should "support interpolation of SingleValues" in {
-        DateType.interpolate(SingleValue("2017-12-20"), null).head.asInstanceOf[Date] should be (Date.valueOf("2017-12-20"))
+        DateType.interpolate(SingleValue("2017-12-20"), null).head should be (Date.valueOf("2017-12-20"))
     }
 
     it should "support interpolation of SingleValues with granularity" in {
-        DateType.interpolate(SingleValue("2017-12-20"), "P5D").head.asInstanceOf[Date] should be (Date.valueOf("2017-12-20"))
-        DateType.interpolate(SingleValue("2017-12-21"), "P5D").head.asInstanceOf[Date] should be (Date.valueOf("2017-12-20"))
-        DateType.interpolate(SingleValue("2017-12-22"), "P5D").head.asInstanceOf[Date] should be (Date.valueOf("2017-12-20"))
-        DateType.interpolate(SingleValue("2017-12-23"), "P5D").head.asInstanceOf[Date] should be (Date.valueOf("2017-12-20"))
-        DateType.interpolate(SingleValue("2017-12-24"), "P5D").head.asInstanceOf[Date] should be (Date.valueOf("2017-12-20"))
-        DateType.interpolate(SingleValue("2017-12-25"), "P5D").head.asInstanceOf[Date] should be (Date.valueOf("2017-12-25"))
+        DateType.interpolate(SingleValue("2017-12-20"), "P5D").head should be (Date.valueOf("2017-12-20"))
+        DateType.interpolate(SingleValue("2017-12-21"), "P5D").head should be (Date.valueOf("2017-12-20"))
+        DateType.interpolate(SingleValue("2017-12-22"), "P5D").head should be (Date.valueOf("2017-12-20"))
+        DateType.interpolate(SingleValue("2017-12-23"), "P5D").head should be (Date.valueOf("2017-12-20"))
+        DateType.interpolate(SingleValue("2017-12-24"), "P5D").head should be (Date.valueOf("2017-12-20"))
+        DateType.interpolate(SingleValue("2017-12-25"), "P5D").head should be (Date.valueOf("2017-12-25"))
     }
 
     it should "support interpolation of ArrayValues" in {
         val result = DateType.interpolate(ArrayValue(Array("2017-12-10","2017-12-14")), null).toSeq
         result.size should be (2)
-        result(0).asInstanceOf[Date] should be (Date.valueOf("2017-12-10"))
-        result(1).asInstanceOf[Date] should be (Date.valueOf("2017-12-14"))
+        result(0) should be (Date.valueOf("2017-12-10"))
+        result(1) should be (Date.valueOf("2017-12-14"))
     }
 
     it should "support interpolation of ArrayValues with granularity" in {
         val result = DateType.interpolate(ArrayValue(Array("2017-12-10","2017-12-11","2017-12-12")), "P3D").toSeq
         result.size should be (3)
-        result(0).asInstanceOf[Date] should be (Date.valueOf("2017-12-08"))
-        result(1).asInstanceOf[Date] should be (Date.valueOf("2017-12-11"))
-        result(2).asInstanceOf[Date] should be (Date.valueOf("2017-12-11"))
+        result(0) should be (Date.valueOf("2017-12-08"))
+        result(1) should be (Date.valueOf("2017-12-11"))
+        result(2) should be (Date.valueOf("2017-12-11"))
     }
 
     it should "support interpolation of Ranges" in {
         val result = DateType.interpolate(RangeValue("2017-12-10","2017-12-14"), null).toSeq
         result.size should be (4)
-        result(0).asInstanceOf[Date] should be (Date.valueOf("2017-12-10"))
-        result(1).asInstanceOf[Date] should be (Date.valueOf("2017-12-11"))
-        result(3).asInstanceOf[Date] should be (Date.valueOf("2017-12-13"))
+        result(0) should be (Date.valueOf("2017-12-10"))
+        result(1) should be (Date.valueOf("2017-12-11"))
+        result(3) should be (Date.valueOf("2017-12-13"))
     }
 
     it should "support interpolation of Ranges with granularity" in {
         val result = DateType.interpolate(RangeValue("2017-12-10","2017-12-18"), "P2D").toSeq
         result.size should be (4)
-        result(0).asInstanceOf[Date] should be (Date.valueOf("2017-12-10"))
-        result(1).asInstanceOf[Date] should be (Date.valueOf("2017-12-12"))
-        result(3).asInstanceOf[Date] should be (Date.valueOf("2017-12-16"))
+        result(0) should be (Date.valueOf("2017-12-10"))
+        result(1) should be (Date.valueOf("2017-12-12"))
+        result(3) should be (Date.valueOf("2017-12-16"))
 
         val result2 = DateType.interpolate(RangeValue("2017-12-11","2017-12-19"), "P2D").toSeq
         result2.size should be (4)
-        result2(0).asInstanceOf[Date] should be (Date.valueOf("2017-12-10"))
-        result2(1).asInstanceOf[Date] should be (Date.valueOf("2017-12-12"))
-        result2(3).asInstanceOf[Date] should be (Date.valueOf("2017-12-16"))
+        result2(0) should be (Date.valueOf("2017-12-10"))
+        result2(1) should be (Date.valueOf("2017-12-12"))
+        result2(3) should be (Date.valueOf("2017-12-16"))
     }
 }

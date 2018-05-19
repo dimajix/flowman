@@ -52,20 +52,13 @@ abstract class FieldType {
     }
 
     /**
-      * Function for parsing a string as an instance of the given FieldType.
-      * @param value
-      * @return
-      */
-    def parse(value:String) : Any = parse(value, null)
-
-    /**
       * Function for parsing a string as an instance of the given FieldType. This method
       * will also take into account any granularity.
       * @param value
       * @param granularity
       * @return
       */
-    def parse(value:String, granularity:String) : Any
+    def parse(value:String, granularity:String=null) : Any
 
     /**
       * Function for interpolating a FieldValue as a sequence of the given FieldType. This method
@@ -92,7 +85,7 @@ abstract class ContainerType extends FieldType {
 private object FieldTypeDeserializer {
     private val nonDecimalNameToType = {
         Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
-            DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType)
+            DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType, DurationType)
             .map(t => t.sqlType -> t).toMap ++
         Map("int" -> IntegerType, "text" -> StringType)
     }

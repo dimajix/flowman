@@ -22,7 +22,7 @@ import org.apache.spark.sql.types.DataType
 case object FloatType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.FloatType
 
-    override def parse(value:String, granularity: String) : Any = {
+    override def parse(value:String, granularity: String) : Float = {
         if (granularity != null && granularity.nonEmpty) {
             val step = granularity.toFloat
             val v = value.toFloat
@@ -32,12 +32,28 @@ case object FloatType extends FieldType {
             value.toFloat
         }
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Float] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(v => parse(v,granularity))
-            case RangeValue(start,end) => {
-                parse(start,granularity).asInstanceOf[Float] until parse(end, granularity).asInstanceOf[Float] by granularity.toFloat
+            case RangeValue(start,end,step) => {
+                if (step != null && step.nonEmpty) {
+                    val range = start.toFloat.until(end.toFloat).by(step.toFloat)
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = granularity.toFloat
+                        range.map(x => math.floor(x / mod) * mod).map(_.toFloat).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = granularity.toFloat
+                    start.toFloat.until(end.toFloat).by(mod).map(x => math.floor(x / mod) * mod).map(_.toFloat)
+                }
+                else {
+                    start.toFloat.until(end.toFloat).by(1.0f)
+                }
             }
         }
     }

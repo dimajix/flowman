@@ -45,7 +45,7 @@ class LoopTask extends BaseTask {
     def args(implicit context:Context) : Map[String,FieldValue] = _args.mapValues{
         case SingleValue(value) => SingleValue(context.evaluate(value))
         case ArrayValue(values) => ArrayValue(values.map(context.evaluate))
-        case RangeValue(start,end) => RangeValue(context.evaluate(start), context.evaluate(end))
+        case RangeValue(start,end,step) => RangeValue(context.evaluate(start), context.evaluate(end), context.evaluate(step))
     }
     def force(implicit context: Context) : Boolean = context.evaluate(_force).toBoolean
 

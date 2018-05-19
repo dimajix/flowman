@@ -22,17 +22,17 @@ import org.scalatest.Matchers
 
 class StringTypeTest extends FlatSpec with Matchers {
     "A StringType" should "parse strings" in {
-        StringType.parse("lala").asInstanceOf[String] should be ("lala")
+        StringType.parse("lala") should be ("lala")
     }
 
     it should "support interpolation of SingleValues" in {
-        StringType.interpolate(SingleValue("lala"), null).head.asInstanceOf[String] should be ("lala")
+        StringType.interpolate(SingleValue("lala"), null).head should be ("lala")
     }
 
     it should "support interpolation of ArrayValues" in {
         val result = StringType.interpolate(ArrayValue(Array("12","27")), null).toSeq
-        result(0).asInstanceOf[String] should be ("12")
-        result(1).asInstanceOf[String] should be ("27")
+        result(0) should be ("12")
+        result(1) should be ("27")
     }
 
 }

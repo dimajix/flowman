@@ -22,21 +22,34 @@ import org.apache.spark.sql.types.DataType
 case object LongType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.LongType
 
-    override def parse(value:String, granularity: String) : Any = {
+    override def parse(value:String, granularity: String) : Long = {
         if (granularity != null && granularity.nonEmpty)
             value.toLong / granularity.toLong * granularity.toLong
         else
             value.toLong
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Long] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
-            case RangeValue(start,end) => {
-                if (granularity != null && granularity.nonEmpty)
-                    parse(start, granularity).asInstanceOf[Long] until parse(end,granularity).asInstanceOf[Long] by granularity.toLong
-                else
-                    start.toLong until end.toLong
+            case RangeValue(start,end,step) => {
+                if (step != null && step.nonEmpty) {
+                    val range = start.toLong.until(end.toLong).by(step.toLong)
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = granularity.toLong
+                        range.map(_ / mod * mod).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = granularity.toLong
+                    (start.toLong  / mod * mod).until(end.toLong / mod * mod).by(mod)
+                }
+                else {
+                    start.toLong.until(end.toLong)
+                }
             }
         }
     }

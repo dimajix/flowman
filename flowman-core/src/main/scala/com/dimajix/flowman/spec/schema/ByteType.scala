@@ -22,21 +22,34 @@ import org.apache.spark.sql.types.DataType
 case object ByteType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.ByteType
 
-    override def parse(value:String, granularity:String) : Any = {
+    override def parse(value:String, granularity:String) : Byte = {
         if (granularity != null && granularity.nonEmpty)
             (value.toByte / granularity.toByte * granularity.toByte).toByte
         else
             value.toByte
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Byte] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(v => parse(v, granularity))
-            case RangeValue(start,end) => {
-                if (granularity != null && granularity.nonEmpty)
-                    parse(start,granularity).asInstanceOf[Byte] until parse(end,granularity).asInstanceOf[Byte] by granularity.toByte map(_.toByte)
-                else
-                    start.toByte until end.toByte map(_.toByte)
+            case RangeValue(start,end,step) => {
+                if (step != null && step.nonEmpty) {
+                    val range = start.toInt.until(end.toInt).by(step.toInt)
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = granularity.toInt
+                        range.map(_ / mod * mod).distinct.map(_.toByte)
+                    }
+                    else {
+                        range.map(_.toByte)
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = granularity.toInt
+                    (start.toInt / mod * mod).until(end.toInt / mod * mod).by(mod).map(_.toByte)
+                }
+                else {
+                    start.toInt.until(end.toInt).map(_.toByte)
+                }
             }
         }
     }

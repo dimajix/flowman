@@ -38,7 +38,9 @@ object Templating {
         def ofMinutes(minutes:Int) : Duration = Duration.ofMinutes(minutes)
         def ofSeconds(seconds:Int) : Duration = Duration.ofSeconds(seconds)
         def ofMillis(millis:Int) : Duration = Duration.ofMillis(millis)
+        def between(startInclusive: UtcTimestamp, endExclusive: UtcTimestamp) : Duration = Duration.between(startInclusive.toLocalDateTime(), endExclusive.toLocalDateTime())
         def between(startInclusive: Temporal, endExclusive: Temporal) : Duration = Duration.between(startInclusive, endExclusive)
+        def between(startInclusive: String, endExclusive: String) : Duration = between(UtcTimestamp.parse(startInclusive), UtcTimestamp.parse(endExclusive))
         def parse(value:String) : Duration = Duration.parse(value)
         def valueOf(value:String) : Duration = Duration.parse(value)
     }

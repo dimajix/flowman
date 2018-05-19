@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 
 class UtcTimestampTest extends FlatSpec with Matchers {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.S]").withZone(ZoneOffset.UTC)
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm[:ss][.S]").withZone(ZoneOffset.UTC)
     def parseDateTime(value:String) = new Timestamp(LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC) * 1000l)
 
     "A UtcTimestamp" should "parse strings" in {
@@ -34,6 +34,7 @@ class UtcTimestampTest extends FlatSpec with Matchers {
         UtcTimestamp.parse("2017-12-01 12:21:20").toTimestamp() should be (new Timestamp(1512130880*1000l))
         UtcTimestamp.parse("2017-12-01 12:21:20.0").toTimestamp() should be (parseDateTime("2017-12-01 12:21:20"))
         UtcTimestamp.parse("2017-12-01 12:21:20.0").toTimestamp() should be (new Timestamp(1512130880*1000l))
+        UtcTimestamp.parse("2017-12-01 12:21").toTimestamp() should be (parseDateTime("2017-12-01 12:21"))
     }
 
     it should "be serialized as string identically" in {

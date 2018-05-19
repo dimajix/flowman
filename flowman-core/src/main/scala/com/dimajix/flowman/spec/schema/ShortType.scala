@@ -22,21 +22,34 @@ import org.apache.spark.sql.types.DataType
 case object ShortType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.ShortType
 
-    override def parse(value:String, granularity: String) : Any =  {
+    override def parse(value:String, granularity: String) : Short =  {
         if (granularity != null && granularity.nonEmpty)
             (value.toShort / granularity.toShort * granularity.toShort).toShort
         else
             value.toShort
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Short] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
-            case RangeValue(start,end) => {
-                if (granularity != null && granularity.nonEmpty)
-                    parse(start, granularity).asInstanceOf[Short] until parse(end,granularity).asInstanceOf[Short] by granularity.toShort map(_.toShort)
-                else
-                    start.toShort until end.toShort map(_.toShort)
+            case RangeValue(start,end,step) => {
+                if (step != null && step.nonEmpty) {
+                    val range = start.toInt.until(end.toInt).by(step.toInt)
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = granularity.toInt
+                        range.map(_ / mod * mod).distinct.map(_.toShort)
+                    }
+                    else {
+                        range.map(_.toShort)
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = granularity.toInt
+                    (start.toInt / mod * mod).until(end.toInt / mod * mod).by(mod).map(_.toShort)
+                }
+                else {
+                    start.toInt.until(end.toInt).map(_.toShort)
+                }
             }
         }
     }

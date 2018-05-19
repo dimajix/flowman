@@ -18,6 +18,7 @@ package com.dimajix.flowman.util
 
 import java.sql.Timestamp
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.Month
 import java.time.ZoneOffset
@@ -25,7 +26,7 @@ import java.time.format.DateTimeFormatter
 
 
 object UtcTimestamp {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.S]").withZone(ZoneOffset.UTC)
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm[:ss][.S]").withZone(ZoneOffset.UTC)
 
     def now() : UtcTimestamp = {
         val ld = LocalDateTime.now(ZoneOffset.UTC)
@@ -93,6 +94,9 @@ class UtcTimestamp(dt:LocalDateTime) {
     def getHour() : Int = dt.getHour
     def getMinute() : Int = dt.getMinute
     def getSecond() : Int = dt.getSecond
+
+    def plus(duration:Duration) : UtcTimestamp = new UtcTimestamp(dt.plus(duration))
+    def minus(duration:Duration) : UtcTimestamp = new UtcTimestamp(dt.minus(duration))
 
     def plusYears(years:Int) : UtcTimestamp = new UtcTimestamp(dt.plusYears(years))
     def plusMonths(months:Int) : UtcTimestamp = new UtcTimestamp(dt.plusMonths(months))

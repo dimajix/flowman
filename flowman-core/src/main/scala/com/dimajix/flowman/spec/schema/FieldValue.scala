@@ -46,7 +46,8 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
             case JsonNodeType.OBJECT => {
                 val start = node.get("start").asText
                 val end = node.get("end").asText
-                RangeValue(start, end)
+                val step = Option(node.get("step")).map(_.asText).orNull
+                RangeValue(start, end, step)
             }
             case _ => throw JsonMappingException.from(jp, "Wrong type for value/range")
         }
@@ -57,7 +58,7 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
 class FieldValue
 case class SingleValue(value:String) extends FieldValue { }
 case class ArrayValue(values:Array[String]) extends FieldValue { }
-case class RangeValue(start:String, end:String) extends FieldValue { }
+case class RangeValue(start:String, end:String, step:String=null) extends FieldValue { }
 
 object ArrayValue {
     def apply(values:String*) : ArrayValue = ArrayValue(values.toArray)

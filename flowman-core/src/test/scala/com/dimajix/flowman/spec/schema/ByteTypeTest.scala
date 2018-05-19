@@ -22,36 +22,36 @@ import org.scalatest.Matchers
 
 class ByteTypeTest extends FlatSpec with Matchers {
     "A ByteType" should "parse strings" in {
-        ByteType.parse("12").asInstanceOf[Byte] should be (12)
+        ByteType.parse("12") should be (12)
     }
 
     it should "support interpolation of SingleValues" in {
-        ByteType.interpolate(SingleValue("12"), null).head.asInstanceOf[Byte] should be (12)
+        ByteType.interpolate(SingleValue("12"), null).head should be (12)
     }
 
     it should "support interpolation of SingleValues with granularity" in {
-        ByteType.interpolate(SingleValue("12"), "3").head.asInstanceOf[Byte] should be (12)
-        ByteType.interpolate(SingleValue("13"), "3").head.asInstanceOf[Byte] should be (12)
-        ByteType.interpolate(SingleValue("14"), "3").head.asInstanceOf[Byte] should be (12)
-        ByteType.interpolate(SingleValue("15"), "3").head.asInstanceOf[Byte] should be (15)
+        ByteType.interpolate(SingleValue("12"), "3").head should be (12)
+        ByteType.interpolate(SingleValue("13"), "3").head should be (12)
+        ByteType.interpolate(SingleValue("14"), "3").head should be (12)
+        ByteType.interpolate(SingleValue("15"), "3").head should be (15)
     }
 
     it should "support interpolation of ArrayValues" in {
         val result = ByteType.interpolate(ArrayValue(Array("12","27")), null)
-        result.head.asInstanceOf[Byte] should be (12)
-        result.drop(1).head.asInstanceOf[Byte] should be (27)
+        result.head should be (12)
+        result.drop(1).head should be (27)
     }
 
     it should "support interpolation of Ranges" in {
         val result = ByteType.interpolate(RangeValue("12","16"), null)
-        result.map(_.asInstanceOf[Byte]).toSeq should be (Seq(12,13,14,15).map(_.toByte))
+        result.toSeq should be (Seq(12,13,14,15).map(_.toByte))
     }
 
     it should "support interpolation of Ranges with granularity" in {
         val result = ByteType.interpolate(RangeValue("12","16"), "2")
-        result.map(_.asInstanceOf[Byte]).toSeq should be (Seq(12,14).map(_.toByte))
+        result.toSeq should be (Seq(12,14).map(_.toByte))
 
         val result2 = ByteType.interpolate(RangeValue("13","17"), "2")
-        result2.map(_.asInstanceOf[Byte]).toSeq should be (Seq(12,14).map(_.toByte))
+        result2.toSeq should be (Seq(12,14).map(_.toByte))
     }
 }

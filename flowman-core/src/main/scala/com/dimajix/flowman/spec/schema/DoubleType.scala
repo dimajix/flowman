@@ -22,7 +22,7 @@ import org.apache.spark.sql.types.DataType
 case object DoubleType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.DoubleType
 
-    override def parse(value:String, granularity: String) : Any = {
+    override def parse(value:String, granularity: String) : Double = {
         if (granularity != null && granularity.nonEmpty) {
             val step = granularity.toDouble
             val v = value.toDouble
@@ -32,12 +32,28 @@ case object DoubleType extends FieldType {
             value.toDouble
         }
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
+    override def interpolate(value: FieldValue, granularity:String) : Iterable[Double] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(v => parse(v,granularity))
-            case RangeValue(start,end) => {
-                parse(start,granularity).asInstanceOf[Double] until parse(end, granularity).asInstanceOf[Double] by granularity.toDouble
+            case RangeValue(start,end,step) => {
+                if (step != null && step.nonEmpty) {
+                    val range = start.toDouble.until(end.toDouble).by(step.toDouble)
+                    if (granularity != null && granularity.nonEmpty) {
+                        val mod = granularity.toDouble
+                        range.map(x => math.floor(x / mod) * mod).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity != null && granularity.nonEmpty) {
+                    val mod = granularity.toDouble
+                    start.toDouble.until(end.toDouble).by(mod).map(x => math.floor(x / mod) * mod)
+                }
+                else {
+                    start.toDouble.until(end.toDouble).by(1.0)
+                }
             }
         }
     }

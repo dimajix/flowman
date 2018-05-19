@@ -11,14 +11,17 @@ ENV PATH=$PATH:$FLOMAN_HOME/bin
 # Copy config files
 COPY bin/ /opt/docker/bin/
 COPY libexec/ /opt/docker/libexec/
-COPY conf/ /opt/docker/conf/flowman/
 
 
 # Copy and install Repository
-ADD target /tmp/repo/
+COPY target/$APP_ARCHIVE /tmp/repo/
+COPY conf/ /tmp/repo/conf
 RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/$APP_ARCHIVE && \
     ln -s /opt/flowman* /opt/flowman && \
+    cp -a /tmp/repo/conf/* /opt/flowman/conf && \
+    chown -R root:root /opt/flowman* && \
     rm -rf /tmp/repo
+
 
 ENTRYPOINT ["/opt/docker/bin/entrypoint.sh"]
 CMD bash

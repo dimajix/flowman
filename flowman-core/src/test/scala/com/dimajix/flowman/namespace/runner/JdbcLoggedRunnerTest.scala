@@ -66,6 +66,23 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         runner.execute(session.executor, job, force=true) should be (JobStatus.SUCCESS)
     }
 
+    it should "throw an exception on missing connection" in {
+        val db = tempDir.resolve("mydb")
+        val spec =
+            """
+              |kind: logged
+              |connection: logger
+            """.stripMargin
+        val runner = ObjectMapper.parse[Runner](spec)
+
+        val job = Job.builder()
+            .setName("job")
+            .build()
+        val session = Session.builder()
+            .build()
+        a[NoSuchElementException] shouldBe thrownBy(runner.execute(session.executor, job))
+    }
+
     it should "be parseable" in {
         val spec =
             """

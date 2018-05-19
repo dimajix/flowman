@@ -75,7 +75,7 @@ private class JdbcLoggedRepository(connection: Connection, val profile:JdbcProfi
         val props = new Properties()
         Option(connection.properties).foreach(_.foreach(kv => props.setProperty(kv._1, kv._2)))
 
-        logger.info(s"Connecting via JDBC to $url")
+        logger.info(s"Connecting via JDBC to $url with driver $driver")
         Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
 

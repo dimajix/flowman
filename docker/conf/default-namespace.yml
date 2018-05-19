@@ -1,6 +1,5 @@
 name: "default"
 
-[% IF FLOWMAN_DB_DRIVER %]
 runner:
   kind: logged
   connection: flowman_runs
@@ -9,14 +8,10 @@ runner:
 
 connections:
   flowman_runs:
-    driver: [% FLOWMAN_LOGDB_DRIVER %]
-    url: [% FLOWMAN_LOGDB_URL %]
-    username: [% FLOWMAN_LOGDB_USER %]
-    password: [% FLOWMAN_LOGDB_PASSWORD %]
-[% ELSE %]
-runner:
-  kind: simple
-[% END %]
+    driver: $System.getenv('FLOWMAN_LOGDB_DRIVER')
+    url: $System.getenv('FLOWMAN_LOGDB_URL')
+    username: $System.getenv('FLOWMAN_LOGDB_USER')
+    password: $System.getenv('FLOWMAN_LOGDB_PASSWORD')
 
 config:
   - spark.sql.warehouse.dir=/opt/flowman/hive/warehouse

@@ -117,7 +117,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       */
     override def getMapping(identifier: TableIdentifier): Mapping = {
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Expected project name in mapping specifier '$identifier'")
+            throw new NoSuchElementException(s"Cannot find mapping with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
         child.getMapping(TableIdentifier(identifier.name, None))
     }
@@ -129,7 +129,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Expected project name in relation specifier '$identifier'")
+            throw new NoSuchElementException(s"Cannot find relation with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
         child.getRelation(RelationIdentifier(identifier.name, None))
     }
@@ -142,7 +142,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       */
     override def getOutput(identifier: OutputIdentifier): Output = {
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Expected project name in output specifier '$identifier'")
+            throw new NoSuchElementException(s"Cannot find output with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
         child.getOutput(OutputIdentifier(identifier.name, None))
     }
@@ -156,7 +156,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         if (identifier.project.isEmpty) {
             val con = Option(namespace).flatMap(_.connections.get(identifier.name))
-            con.getOrElse(throw new NoSuchElementException(s"Expected project name in connection specifier '$identifier'"))
+            con.getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
         }
         else {
             val child = getProjectContext(identifier.project.get)
@@ -172,7 +172,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       */
     override def getJob(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Expected project name in Job specifier '$identifier'")
+            throw new NoSuchElementException(s"Cannot find Job with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
         child.getJob(JobIdentifier(identifier.name, None))
     }

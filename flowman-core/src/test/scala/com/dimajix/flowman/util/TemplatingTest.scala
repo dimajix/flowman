@@ -27,16 +27,20 @@ class TemplatingTest extends FlatSpec with Matchers {
     private val engine = Templating.newEngine()
     private val context = Templating.newContext()
 
+    private def evaluate(text:String) : String = {
+        val output = new StringWriter()
+        engine.evaluate(context, output, "test", text)
+        output.toString
+    }
+
     "Integers" should "be supported as values" in {
         context.put("int", 2)
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$int")
+        val output = evaluate("$int")
         output.toString should be ("2")
 
         val three = 3
         context.put("three", three)
-        val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "$three")
+        val output2 = evaluate("$three")
         output2.toString should be ("3")
     }
 
@@ -70,25 +74,26 @@ class TemplatingTest extends FlatSpec with Matchers {
     }
 
     "Timestamps" should "be supported" in {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10 10:00:00')")
-        output.toString should be ("2017-10-10 10:00:00.0")
-
-        val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "$Timestamp.parse('2017-10-10 10:00:00').toEpochSeconds()")
-        output2.toString should be ("1507629600")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00')") should be ("2017-10-10T10:00:00.0")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00Z')") should be ("2017-10-10T10:00:00.0")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00+00')") should be ("2017-10-10T10:00:00.0")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00+0000')") should be ("2017-10-10T10:00:00.0")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00+01')") should be ("2017-10-10T09:00:00.0")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00+0100')") should be ("2017-10-10T09:00:00.0")
+        evaluate("$Timestamp.parse('2017-10-10T10:00:00').toEpochSeconds()") should be ("1507629600")
     }
 
     they should "be convertible to LocalDateTime" in {
         val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10 10:11:23').toLocalDateTime()")
+        engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10T10:11:23').toLocalDateTime()")
         output.toString should be ("2017-10-10T10:11:23")
     }
 
     they should "be convertible to epochs" in {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10 10:11:23').toEpochSeconds()")
-        output.toString should be ("1507630283")
+        evaluate("$Timestamp.parse('2017-10-10T10:11:23').toEpochSeconds()") should be ("1507630283")
+        evaluate("$Timestamp.parse('2017-10-10T10:11:23Z').toEpochSeconds()") should be ("1507630283")
+        evaluate("$Timestamp.parse('2017-10-10T10:11:23+00').toEpochSeconds()") should be ("1507630283")
+        evaluate("$Timestamp.parse('2017-10-10T10:11:23+0000').toEpochSeconds()") should be ("1507630283")
     }
 
     they should "support complex operations" in {
@@ -99,27 +104,14 @@ class TemplatingTest extends FlatSpec with Matchers {
     }
 
     "LocalDateTime" should "be parseable" in {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$LocalDateTime.parse('2017-10-10T10:00:00')")
-        output.toString should be ("2017-10-10T10:00")
-
-        val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "$LocalDateTime.parse('2017-10-10T10:00')")
-        output2.toString should be ("2017-10-10T10:00")
+        evaluate("$LocalDateTime.parse('2017-10-10T10:00:00')") should be ("2017-10-10T10:00")
+        evaluate("$LocalDateTime.parse('2017-10-10T10:00')") should be ("2017-10-10T10:00")
     }
 
     "Durations" should "be parseable" in {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$Duration.parse('P1D')")
-        output.toString should be ("PT24H")
-
-        val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "$Duration.ofDays(2)")
-        output2.toString should be ("PT48H")
-
-        val output3 = new StringWriter()
-        engine.evaluate(context, output3, "test", "$Duration.ofHours(7)")
-        output3.toString should be ("PT7H")
+        evaluate("$Duration.parse('P1D')") should be ("PT24H")
+        evaluate("$Duration.ofDays(2)") should be ("PT48H")
+        evaluate("$Duration.ofHours(7)") should be ("PT7H")
     }
 
     "System" should "provide access to some system variables" in {

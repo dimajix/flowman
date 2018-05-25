@@ -17,16 +17,25 @@
 package com.dimajix.flowman.util
 
 import java.sql.Timestamp
+import java.time.DateTimeException
 import java.time.DayOfWeek
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.Month
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoField
+import java.time.temporal.TemporalAccessor
+import java.time.temporal.TemporalQueries
+import java.time.temporal.TemporalQuery
 
 
 object UtcTimestamp {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm[:ss][.S]").withZone(ZoneOffset.UTC)
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm[:ss][.S][X]")
 
     def now() : UtcTimestamp = {
         val ld = LocalDateTime.now(ZoneOffset.UTC)
@@ -44,7 +53,11 @@ object UtcTimestamp {
       * @return
       */
     def parse(value:String) : UtcTimestamp = {
-        new UtcTimestamp(LocalDateTime.parse(value, formatter))
+        val query = new TemporalQuery[ZonedDateTime] {
+            def queryFrom(var1: TemporalAccessor) : ZonedDateTime =  UtcTimestamp.from(var1)
+        }
+        val dt = formatter.parse(value, query)
+        new UtcTimestamp(dt.toEpochSecond * 1000l)
     }
 
     /**
@@ -53,7 +66,29 @@ object UtcTimestamp {
       * @return
       */
     def toEpochSeconds(value:String) : Long = {
-        LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC)
+        parse(value).toEpochSeconds()
+    }
+
+    private def from(temporal: TemporalAccessor): ZonedDateTime = {
+        val zoneId = zone(temporal)
+        if (temporal.isSupported(ChronoField.INSTANT_SECONDS)) {
+            val date = LocalDate.from(temporal)
+            val time = LocalTime.from(temporal)
+            ZonedDateTime.of(date, time, zoneId).withNano(temporal.get(ChronoField.NANO_OF_SECOND))
+        }
+        else {
+            val date = LocalDate.from(temporal)
+            val time = LocalTime.from(temporal)
+            ZonedDateTime.of(date, time, zoneId)
+        }
+    }
+
+    private def zone(temporal: TemporalAccessor): ZoneId = {
+        val zone = temporal.query(TemporalQueries.zone)
+        if (zone == null)
+            ZoneOffset.UTC
+        else
+            zone
     }
 }
 

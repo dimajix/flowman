@@ -26,23 +26,33 @@ import org.scalatest.Matchers
 
 
 class UtcTimestampTest extends FlatSpec with Matchers {
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm[:ss][.S]").withZone(ZoneOffset.UTC)
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm[:ss][.S]").withZone(ZoneOffset.UTC)
     def parseDateTime(value:String) = new Timestamp(LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC) * 1000l)
 
     "A UtcTimestamp" should "parse strings" in {
-        UtcTimestamp.parse("2017-12-01 12:21:20").toTimestamp() should be (parseDateTime("2017-12-01 12:21:20"))
-        UtcTimestamp.parse("2017-12-01 12:21:20").toTimestamp() should be (new Timestamp(1512130880*1000l))
-        UtcTimestamp.parse("2017-12-01 12:21:20.0").toTimestamp() should be (parseDateTime("2017-12-01 12:21:20"))
-        UtcTimestamp.parse("2017-12-01 12:21:20.0").toTimestamp() should be (new Timestamp(1512130880*1000l))
-        UtcTimestamp.parse("2017-12-01 12:21").toTimestamp() should be (parseDateTime("2017-12-01 12:21"))
+        UtcTimestamp.parse("2017-12-01T12:21:20").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20Z").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20+00").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20+0000").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20+01").toTimestamp() should be (parseDateTime("2017-12-01T11:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20+0100").toTimestamp() should be (parseDateTime("2017-12-01T11:21:20"))
+        //UtcTimestamp.parse("2017-12-01T12:21:20+00:00").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20").toTimestamp() should be (new Timestamp(1512130880*1000l))
+        UtcTimestamp.parse("2017-12-01T12:21:20.0").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20.0+00").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20.0+0000").toTimestamp() should be (parseDateTime("2017-12-01T12:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20.0+01").toTimestamp() should be (parseDateTime("2017-12-01T11:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20.0+0100").toTimestamp() should be (parseDateTime("2017-12-01T11:21:20"))
+        UtcTimestamp.parse("2017-12-01T12:21:20.0").toTimestamp() should be (new Timestamp(1512130880*1000l))
+        UtcTimestamp.parse("2017-12-01T12:21").toTimestamp() should be (parseDateTime("2017-12-01T12:21"))
     }
 
     it should "be serialized as string identically" in {
-        UtcTimestamp.parse("2017-12-01 12:21:20").toString should be ("2017-12-01 12:21:20.0")
+        UtcTimestamp.parse("2017-12-01T12:21:20").toString should be ("2017-12-01T12:21:20.0")
     }
 
     it should "provide working accessors" in {
-        val ts = UtcTimestamp.parse("2017-12-01 12:21:20")
+        val ts = UtcTimestamp.parse("2017-12-01T12:21:20")
         ts.getYear() should be (2017)
         ts.getMonth() should be (12)
         ts.getDayOfMonth() should be (1)
@@ -52,7 +62,7 @@ class UtcTimestampTest extends FlatSpec with Matchers {
     }
 
     it should "support formatting" in {
-        val ts = UtcTimestamp.parse("2017-12-01 12:21:20")
+        val ts = UtcTimestamp.parse("2017-12-01T12:21:20")
         ts.format("yyyyMMdd HHmmss") should be("20171201 122120")
         ts.format("'data/'yyyyMMdd'T'HHmmss") should be("data/20171201T122120")
     }

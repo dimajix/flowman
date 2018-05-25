@@ -42,6 +42,18 @@ Jackson
   * HOMEPAGE:
     * https://github.com/FasterXML/jackson
 
+MariaDB Java Client
+  * LICENSE
+    * license/LICENSE-mariadb.txt (LGPL License)
+  * HOMEPAGE:
+    * https://mariadb.com
+
+Apache Derby
+  * LICENSE
+    * license/LICENSE-derby.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://db.apache.org/derby/
+
 Velocity
   * LICENSE
     * license/LICENSE-velocity.txt (Apache 2.0 License)

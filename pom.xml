@@ -19,7 +19,7 @@
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <snakeyaml.version>1.21</snakeyaml.version>
         <spark-avro.version>3.0.0</spark-avro.version>
-        <mysql-connector.version>6.0.6</mysql-connector.version>
+        <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
         <velocity.version>1.7</velocity.version>
         <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
@@ -543,9 +543,9 @@
             </dependency>
 
             <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql-connector.version}</version>
+                <groupId>org.mariadb.jdbc</groupId>
+                <artifactId>mariadb-java-client</artifactId>
+                <version>${mariadb-java-client.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

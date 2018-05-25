@@ -142,12 +142,14 @@ class Job {
 
     @JsonIgnore private var _name:String = ""
     @JsonProperty(value="description") private var _description:String = ""
+    @JsonProperty(value="logged") private var _logged:String = "true"
     @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
 
     def name : String = _name
     def description(implicit context:Context) : String = context.evaluate(_description)
+    def logged(implicit context:Context) : Boolean = context.evaluate(_logged).toBoolean
     def tasks : Seq[Task] = _tasks
     def environment : Seq[(String,String)] = splitSettings(_environment)
     def parameters: Seq[JobParameter] = _parameters

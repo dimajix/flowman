@@ -57,10 +57,10 @@ class FileRelation extends BaseRelation {
         implicit val context = executor.context
         val inputFiles = collectFiles(executor, partitions)
 
-        val reader = this.reader(executor)
-        val rawData = reader
-            .format(format)
-            .load(inputFiles.map(_.toString):_*)
+        val rawData =
+            this.reader(executor)
+                .format(format)
+                .load(inputFiles.map(_.toString): _*)
 
         SchemaUtils.applySchema(rawData, schema)
     }

@@ -31,6 +31,7 @@ import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.util.FileCollector
+import com.dimajix.flowman.util.SchemaUtils
 
 
 class LocalRelation extends BaseRelation {
@@ -66,8 +67,7 @@ class LocalRelation extends BaseRelation {
             .format(format)
             .load(inputFiles.map(_.toUri.getPath):_*)
 
-        //applySchema(rawData, requestedSchema)
-        rawData
+        SchemaUtils.applySchema(rawData, schema)
     }
 
     /**

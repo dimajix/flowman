@@ -53,16 +53,16 @@ class JdbcRelation extends BaseRelation {
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
 
-        val tableName = database + "." + table
+        val tableName = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
 
         logger.info(s"Reading data from JDBC source $tableName in database $connection")
 
         // Get Connection
-        val (db,props) = createProperties(context)
+        val (url,props) = createProperties(context)
 
         // Connect to database
         val reader = this.reader(executor)
-        val df = reader.jdbc(db.url, tableName, props)
+        val df = reader.jdbc(url, tableName, props)
         SchemaUtils.applySchema(df, schema)
     }
 
@@ -84,8 +84,8 @@ class JdbcRelation extends BaseRelation {
         val writer = df.write
                 .options(options)
 
-        val (db,props) = createProperties(context)
-        writer.jdbc(db.url, tableName, props)
+        val (url,props) = createProperties(context)
+        writer.jdbc(url, tableName, props)
     }
 
     override def create(executor:Executor) : Unit = ???
@@ -105,6 +105,6 @@ class JdbcRelation extends BaseRelation {
 
         logger.info("Connecting to jdbc source at {}", db.url)
 
-        (db,props)
+        (db.url,props)
     }
 }

@@ -61,7 +61,7 @@ class InputMapping extends BaseMapping {
         implicit val context = executor.context
         val relation = context.getRelation(source)
         val fields = columns
-        val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else null
+        val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
         relation.read(executor, schema, partitions)
     }
 

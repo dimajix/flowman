@@ -44,7 +44,16 @@ abstract class AbstractRunner extends Runner {
     def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus = {
         implicit val context = executor.context
 
-        // Get Monitor
+        if (job.logged)
+            runLogged(executor, job, args, force)
+        else
+            runUnlogged(executor, job, args)
+    }
+
+    private def runLogged(executor: Executor, job:Job, args:Map[String,String], force:Boolean) : JobStatus = {
+        implicit val context = executor.context
+
+        // Get Token
         val present = check(context, job, args)
         val token = start(context, job, args)
 
@@ -59,6 +68,31 @@ abstract class AbstractRunner extends Runner {
             else {
                 runJob(executor, job, args, token)
             }
+        }
+    }
+
+    private def runUnlogged(executor: Executor, job:Job, args:Map[String,String]) : JobStatus = {
+        implicit val context = executor.context
+
+        Try {
+            job.execute(executor, args)
+        }
+        match {
+            case Success(status @ JobStatus.SUCCESS) =>
+                logger.info("Successfully finished execution of Job")
+                status
+            case Success(status @ JobStatus.FAILURE) =>
+                logger.error("Execution of Job failed")
+                status
+            case Success(status @ JobStatus.ABORTED) =>
+                logger.error("Execution of Job aborted")
+                status
+            case Success(status @ JobStatus.SKIPPED) =>
+                logger.error("Execution of Job skipped")
+                status
+            case Failure(e) =>
+                logger.error("Caught exception while executing job.", e)
+                JobStatus.FAILURE
         }
     }
 

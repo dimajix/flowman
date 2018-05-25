@@ -39,7 +39,7 @@ class FileCollector(hadoopConf:Configuration) {
     private val logger = LoggerFactory.getLogger(classOf[FileCollector])
 
     private implicit val fileStatusOrder = new Ordering[FileStatus] {
-        def compare(x: FileStatus, y: FileStatus): Int = x compareTo y
+        def compare(x: FileStatus, y: FileStatus): Int = x.getPath compareTo y.getPath
     }
 
     private var _pattern:String = ""

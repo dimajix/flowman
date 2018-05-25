@@ -154,10 +154,10 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         if (identifier.project.isEmpty) {
-            databases.getOrElse(identifier.name, parent.getConnection(identifier))
+            databases.getOrElse(identifier.name, _project.connections.getOrElse(identifier.name, throw new NoSuchElementException(s"Connection '$identifier' not found in project ${_project.name}")))
         }
         else if (identifier.project.contains(_project.name)) {
-            databases.getOrElse(identifier.name, throw new NoSuchElementException(s"Database '$identifier' not found in project ${_project.name}"))
+            _project.connections.getOrElse(identifier.name, throw new NoSuchElementException(s"Connection '$identifier' not found in project ${_project.name}"))
         }
         else {
             parent.getConnection(identifier)

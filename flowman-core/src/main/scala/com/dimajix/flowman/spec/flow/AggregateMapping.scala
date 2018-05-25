@@ -49,7 +49,7 @@ class AggregateMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info("Aggregating table {} on dimensions {}", Array(input, dimensions.mkString(",")):_*)
+        logger.info("Aggregating table {} on dimensions {}", Array(this.input, dimensions.mkString(",")):_*)
 
         val df = input(this.input)
         val dims = dimensions.map(col)

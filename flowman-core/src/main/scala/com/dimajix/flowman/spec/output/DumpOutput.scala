@@ -28,9 +28,9 @@ import com.dimajix.flowman.spec.TableIdentifier
 class DumpOutput extends BaseOutput {
     private val logger = LoggerFactory.getLogger(classOf[DumpOutput])
 
-    @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
-    @JsonProperty(value="header", required=true) private[spec] var _header:String = "true"
-    @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
+    @JsonProperty(value="limit", required=true) private var _limit:String = "100"
+    @JsonProperty(value="header", required=true) private var _header:String = "true"
+    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = _
 
     def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
     def header(implicit context: Context) : Boolean = context.evaluate(_header).toBoolean

@@ -39,14 +39,14 @@ import com.dimajix.flowman.spec.TableIdentifier
 class LocalOutput extends RelationOutput {
     private val logger = LoggerFactory.getLogger(classOf[LocalOutput])
 
-    @JsonProperty(value="filename", required=true) private[spec] var _filename:String = _
-    @JsonProperty(value="encoding", required=true) private[spec] var _encoding:String = "UTF-8"
-    @JsonProperty(value="header", required=true) private[spec] var _header:String = _
-    @JsonProperty(value="newline", required=true) private[spec] var _newline:String = "\n"
-    @JsonProperty(value="delimiter", required=true) private[spec] var _delimiter:String = ","
-    @JsonProperty(value="quote", required=true) private[spec] var _quote:String = "\""
-    @JsonProperty(value="escape", required=true) private[spec] var _escape:String = "\\"
-    @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
+    @JsonProperty(value="filename", required=true) private var _filename:String = _
+    @JsonProperty(value="encoding", required=true) private var _encoding:String = "UTF-8"
+    @JsonProperty(value="header", required=true) private var _header:String = _
+    @JsonProperty(value="newline", required=true) private var _newline:String = "\n"
+    @JsonProperty(value="delimiter", required=true) private var _delimiter:String = ","
+    @JsonProperty(value="quote", required=true) private var _quote:String = "\""
+    @JsonProperty(value="escape", required=true) private var _escape:String = "\\"
+    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = _
 
     def filename(implicit context: Context) : String = context.evaluate(_filename)
     def encoding(implicit context: Context) : String = context.evaluate(_encoding)

@@ -31,9 +31,9 @@ class RelationOutput extends BaseOutput {
     private val logger = LoggerFactory.getLogger(classOf[RelationOutput])
 
     @JsonProperty(value="target", required=true) private var _target:String = _
-    @JsonProperty(value="mode", required=false) private[spec] var _mode:String = "overwrite"
-    @JsonProperty(value="partition", required=false) private[spec] var _partition:Map[String,String] = _
-    @JsonProperty(value="parallelism", required=false) private[spec] var _parallelism:String = "16"
+    @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
+    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = _
+    @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
 
     def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
     def mode(implicit context: Context) : String = context.evaluate(_mode)

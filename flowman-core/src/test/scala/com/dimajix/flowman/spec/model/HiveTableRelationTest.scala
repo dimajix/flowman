@@ -63,6 +63,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
               |    kind: table
               |    database: default
               |    table: lala
+              |    location: /my/location
               |    schema:
               |      kind: inline
               |      fields:
@@ -85,7 +86,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
               |    str_col string,
               |    int_col integer
               |)
-              |PARTITIONED BY (spart string)""".stripMargin)
+              |PARTITIONED BY (spart string)
+              |LOCATION '/my/location'""".stripMargin)
     }
 
     it should "support multiple partition columns" in {
@@ -121,5 +123,138 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
               |    int_col integer
               |)
               |PARTITIONED BY (spart string, ip integer)""".stripMargin)
+    }
+
+    it should "support TBLPROPERTIES" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala
+              |    properties:
+              |      lala: lolo
+              |      hive.property: TRUE
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        project.relations("t0").create(executor)
+        verify(spark).sql(
+            """CREATE  TABLE default.lala(
+              |    str_col string,
+              |    int_col integer
+              |)
+              |TBLPROPERTIES(
+              |    "lala"="lolo",
+              |    "hive.property"="TRUE"
+              |)""".stripMargin)
+    }
+
+    it should "support a format" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala
+              |    format: parquet
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        project.relations("t0").create(executor)
+        verify(spark).sql(
+            """CREATE  TABLE default.lala(
+              |    str_col string,
+              |    int_col integer
+              |)
+              |STORED AS parquet""".stripMargin)
+    }
+
+    it should "support a row format" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala
+              |    rowFormat: org.apache.hadoop.hive.serde2.avro.AvroSerDe
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        project.relations("t0").create(executor)
+        verify(spark).sql(
+            """CREATE  TABLE default.lala(
+              |    str_col string,
+              |    int_col integer
+              |)
+              |ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'""".stripMargin)
+    }
+
+    it should "support input and output format" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala
+              |    rowFormat: org.apache.hadoop.hive.serde2.avro.AvroSerDe
+              |    inputFormat: org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat
+              |    outputFormat: org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        project.relations("t0").create(executor)
+        verify(spark).sql(
+            """CREATE  TABLE default.lala(
+              |    str_col string,
+              |    int_col integer
+              |)
+              |ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+              |STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+              |OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'""".stripMargin)
     }
 }

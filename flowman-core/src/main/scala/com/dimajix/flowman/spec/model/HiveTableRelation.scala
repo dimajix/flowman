@@ -38,14 +38,22 @@ class HiveTableRelation extends BaseRelation  {
     @JsonProperty(value="external", required=false) private var _external: String = "false"
     @JsonProperty(value="location", required=false) private var _location: String = _
     @JsonProperty(value="format", required=false) private var _format: String = _
+    @JsonProperty(value="rowFormat", required=false) private var _rowFormat: String = _
+    @JsonProperty(value="inputFormat", required=false) private var _inputFormat: String = _
+    @JsonProperty(value="outputFormat", required=false) private var _outputFormat: String = _
     @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
+    @JsonProperty(value="properties", required=false) private var _properties: Map[String,String] = Map()
 
     def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
     def external(implicit context:Context) : Boolean = context.evaluate(_external).toBoolean
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context: Context) : String = context.evaluate(_format)
+    def rowFormat(implicit context: Context) : String = context.evaluate(_rowFormat)
+    def inputFormat(implicit context: Context) : String = context.evaluate(_inputFormat)
+    def outputFormat(implicit context: Context) : String = context.evaluate(_outputFormat)
     def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
+    def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -107,9 +115,13 @@ class HiveTableRelation extends BaseRelation  {
         val fields = "(\n" + schema.fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
         val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
-        val storedAs = Option(format).map(f => s"\nSTORED AS $f ").getOrElse("")
-        val location = Option(this.location).map(l => s"\nLOCATION $l ").getOrElse("")
-        val stmt = create + fields + comment + partitionBy + storedAs + location
+        val rowFormat = Option(this.rowFormat).map(f => s"\nROW FORMAT SERDE '$f'").getOrElse("")
+        val storedAs = Option(format).map(f => s"\nSTORED AS $f").getOrElse(
+            Option(inputFormat).map(f => s"\nSTORED AS INPUTFORMAT '$f'" + Option(outputFormat).map(f => s"\nOUTPUTFORMAT '$f'").getOrElse("")).getOrElse("")
+        )
+        val location = Option(this.location).map(l => s"\nLOCATION '$l'").getOrElse("")
+        val props = if (_properties.nonEmpty) "\nTBLPROPERTIES(" + this.properties.map(kv => "\n    \"" + kv._1 + "\"=\"" + kv._2 + "\"").mkString(",") + "\n)" else ""
+        val stmt = create + fields + comment + partitionBy + rowFormat + storedAs + location + props
         logger.info(s"Executing SQL statement:\n$stmt")
         executor.spark.sql(stmt)
     }

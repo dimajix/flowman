@@ -65,3 +65,9 @@ Slick
     * license/LICENSE-slick.txt (BSD 2-Clause Simplified License)
   * HOMEPAGE:
     * http://slick.lightbend.com
+
+Akka
+  * LICENSE
+    * license/LICENSE-akka.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://akka.io/

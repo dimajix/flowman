@@ -34,4 +34,9 @@ class DecimalTypeTest extends FlatSpec with Matchers {
         result.asInstanceOf[DecimalType].scale should be (4)
         result.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
     }
+
+    it should "provide the correct SQL type" in {
+        val ftype = DecimalType(10,4)
+        ftype.sqlType should be ("decimal(10,4)")
+    }
 }

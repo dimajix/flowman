@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonParser
@@ -37,8 +39,21 @@ case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED) (
     @JsonCreator(mode = JsonCreator.Mode.DEFAULT)
     def this() = { this(null, true) }
 
+    /**
+      * The Spark type to use
+      *
+      * @return
+      */
     override def sparkType : DataType = {
         org.apache.spark.sql.types.ArrayType(elementType.sparkType, containsNull)
+    }
+
+    /**
+      * Short Type Name as used in SQL and in YAML specification files
+      * @return
+      */
+    override def sqlType : String = {
+        "array<" + elementType.sqlType + ">"
     }
 
     override def parse(value:String, granularity:String) : Any = ???

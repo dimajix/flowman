@@ -49,17 +49,17 @@ abstract class Store {
     def enableProfile(name:String) : Unit
     def disableProfile(name:String) : Unit
     def loadProfile(name:String) : Profile
-    def storeProfile(name:String, Profile: Profile) : Unit
+    def storeProfile(name:String, profile: Profile) : Unit
     def removeProfile(name:String) : Unit
 
     def listRelations() : Seq[String]
-    def loadRelations() : Map[String,Profile]
+    def loadRelations() : Map[String,Relation]
     def loadRelation(name:String) : Relation
     def storeRelation(name:String, relation: Relation) : Unit
     def removeRelation(name:String) : Unit
 
     def listDatabases() : Seq[String]
-    def loadDatabases() : Map[String,Profile]
+    def loadDatabases() : Map[String,Connection]
     def loadDatabase(name:String) : Connection
     def storeDatabase(name:String, database: Connection) : Unit
     def removeDatabase(name:String) : Unit

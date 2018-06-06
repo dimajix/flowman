@@ -22,13 +22,16 @@ import org.codehaus.jackson.annotate.JsonProperty
 
 
 case class StructType(
-    @JsonProperty(value = "fields") private[schema] var fields:Seq[Field]
+    @JsonProperty(value = "fields") fields:Seq[Field]
                      ) extends ContainerType {
     def this() = { this(Seq()) }
     override def sparkType : DataType = {
         org.apache.spark.sql.types.StructType(
             fields.map(f => StructField(f.name, f.sparkType, f.nullable))
         )
+    }
+    override def sqlType : String = {
+        "struct<" + fields.map(f => f.name + ":" + f.sqlType).mkString(",") + ">"
     }
     override def parse(value:String, granularity: String) : Any = ???
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???

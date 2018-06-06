@@ -90,4 +90,9 @@ class ArrayTypeTest extends FlatSpec with Matchers {
         result.sparkType should be (org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType, true), false))
     }
 
+    it should "provide the correct SQL type" in {
+        val ftype = ArrayType(StringType, false)
+
+        ftype.sqlType should be ("array<string>")
+    }
 }

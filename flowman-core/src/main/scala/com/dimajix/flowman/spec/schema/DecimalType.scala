@@ -27,7 +27,7 @@ object DecimalType {
 }
 case class DecimalType(precision: Int, scale: Int) extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
-    override def sqlType : String = s"decimal($precision, $scale)"
+    override def sqlType : String = s"decimal($precision,$scale)"
 
     override def parse(value:String, granularity: String) : Any = ???
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???

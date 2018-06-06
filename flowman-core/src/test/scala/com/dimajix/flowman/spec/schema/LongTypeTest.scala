@@ -80,4 +80,9 @@ class LongTypeTest extends FlatSpec with Matchers {
         val result2 = LongType.interpolate(RangeValue("13","17", "3"), "2")
         result2.toSeq should be (Seq(12,16))
     }
+
+    it should "provide the correct SQL type" in {
+        val ftype = LongType
+        ftype.sqlType should be ("long")
+    }
 }

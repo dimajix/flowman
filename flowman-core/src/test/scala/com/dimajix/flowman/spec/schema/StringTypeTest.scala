@@ -35,4 +35,9 @@ class StringTypeTest extends FlatSpec with Matchers {
         result(1) should be ("27")
     }
 
+    it should "provide the correct SQL type" in {
+        val ftype = StringType
+        ftype.sqlType should be ("string")
+    }
+
 }

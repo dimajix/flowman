@@ -76,4 +76,10 @@ class DateTypeTest extends FlatSpec with Matchers {
         result2(1) should be (Date.valueOf("2017-12-12"))
         result2(3) should be (Date.valueOf("2017-12-16"))
     }
+
+    it should "provide the correct SQL type" in {
+        val ftype = DateType
+
+        ftype.sqlType should be ("date")
+    }
 }

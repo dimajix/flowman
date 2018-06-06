@@ -24,7 +24,7 @@ import com.dimajix.flowman.execution.Context
 
 
 object Field {
-    def apply(name:String, ftype:FieldType, nullable:Boolean, description:String) : Field = {
+    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String="") : Field = {
         val field = new Field()
         field._name = name
         field._type = ftype
@@ -46,6 +46,7 @@ class Field {
     def nullable : Boolean = _nullable.toBoolean
     def description(implicit context: Context) : String = context.evaluate(_description)
 
+    def sqlType : String = _type.sqlType
     def sparkType : DataType = _type.sparkType
     def sparkField : StructField = StructField(name, sparkType, nullable)
 }

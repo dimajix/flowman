@@ -165,4 +165,9 @@ class TimestampTypeTest extends FlatSpec with Matchers {
         result3(2).toTimestamp should be (parseDateTime("2017-12-14T00:00:00"))
         result3(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
     }
+
+    it should "provide the correct SQL type" in {
+        val ftype = TimestampType
+        ftype.sqlType should be ("timestamp")
+    }
 }

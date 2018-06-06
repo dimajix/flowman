@@ -80,4 +80,9 @@ class ShortTypeTest extends FlatSpec with Matchers {
         val result2 = ShortType.interpolate(RangeValue("13","17"), "2")
         result2.toSeq should be (Seq(12,14))
     }
+
+    it should "provide the correct SQL type" in {
+        val ftype = ShortType
+        ftype.sqlType should be ("short")
+    }
 }

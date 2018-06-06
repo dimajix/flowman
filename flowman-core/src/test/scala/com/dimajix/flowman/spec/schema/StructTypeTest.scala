@@ -20,25 +20,19 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 
-class BooleanTypeTest extends FlatSpec with Matchers {
-    "A BooleanType" should "parse strings" in {
-        BooleanType.parse("true") should be (true)
-        BooleanType.parse("false") should be (false)
+class StructTypeTest extends FlatSpec with Matchers {
+    "A StructType" should "provide the correct SQL type (1)" in {
+        val ftype = StructType(Seq())
+        ftype.sqlType should be ("struct<>")
     }
 
-    it should "support interpolation of SingleValues" in {
-        BooleanType.interpolate(SingleValue("true"), null).head should be (true)
+    it should "provide the correct SQL type (2)" in {
+        val ftype = StructType(Seq(Field("f0", StringType)))
+        ftype.sqlType should be ("struct<f0:string>")
     }
 
-    it should "support interpolation of ArrayValues" in {
-        val result = BooleanType.interpolate(ArrayValue(Array("true","false")), null)
-        result.head should be (true)
-        result.drop(1).head should be (false)
-    }
-
-    it should "provide the correct SQL type" in {
-        val ftype = BooleanType
-
-        ftype.sqlType should be ("boolean")
+    it should "provide the correct SQL type (3)" in {
+        val ftype = StructType(Seq(Field("f0", StringType), Field("f1", BooleanType)))
+        ftype.sqlType should be ("struct<f0:string,f1:boolean>")
     }
 }

@@ -20,25 +20,23 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 
-class BooleanTypeTest extends FlatSpec with Matchers {
-    "A BooleanType" should "parse strings" in {
-        BooleanType.parse("true") should be (true)
-        BooleanType.parse("false") should be (false)
+class FloatTypeTest extends FlatSpec with Matchers {
+    "A FloatType" should "parse strings" in {
+        FloatType.parse("1.0") should be (1.0)
     }
 
     it should "support interpolation of SingleValues" in {
-        BooleanType.interpolate(SingleValue("true"), null).head should be (true)
+        FloatType.interpolate(SingleValue("1.0"), null).head should be (1.0)
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = BooleanType.interpolate(ArrayValue(Array("true","false")), null)
-        result.head should be (true)
-        result.drop(1).head should be (false)
+        val result = FloatType.interpolate(ArrayValue("1.0", "2.0"), null).toSeq
+        result(0) should be (1.0)
+        result(1) should be (2.0)
     }
 
     it should "provide the correct SQL type" in {
-        val ftype = BooleanType
-
-        ftype.sqlType should be ("boolean")
+        val ftype = FloatType
+        ftype.sqlType should be ("float")
     }
 }

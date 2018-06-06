@@ -104,4 +104,9 @@ class IntegerTypeTest extends FlatSpec with Matchers {
         result should be (IntegerType)
         result.sparkType should be (org.apache.spark.sql.types.IntegerType)
     }
+
+    it should "provide the correct SQL type" in {
+        val ftype = IntegerType
+        ftype.sqlType should be ("integer")
+    }
 }

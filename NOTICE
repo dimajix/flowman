@@ -65,3 +65,9 @@ Slick
     * license/LICENSE-slick.txt (BSD 2-Clause Simplified License)
   * HOMEPAGE:
     * http://slick.lightbend.com
+
+json-schema:
+  * LICENSE
+    * license/LICENSE-json-schema.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    https://github.com/everit-org/json-schema

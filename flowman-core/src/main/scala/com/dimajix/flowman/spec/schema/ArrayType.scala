@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonParser

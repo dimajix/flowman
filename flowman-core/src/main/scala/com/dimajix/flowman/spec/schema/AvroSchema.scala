@@ -52,13 +52,13 @@ class AvroSchema extends Schema {
     def spec(implicit context: Context) : String = context.evaluate(_spec)
 
     override def description(implicit context: Context): String = {
-        loadSchema._1
+        loadAvroSchema.getDoc
     }
     override def fields(implicit context: Context): Seq[Field] = {
-        loadSchema._2
+        loadAvroSchema.getFields.map(fromAvroField)
     }
 
-    private def loadSchema(implicit context: Context) : (String, Seq[Field]) = {
+    private def loadAvroSchema(implicit context: Context) : org.apache.avro.Schema = {
         val file = this.file
         val url = this.url
         val spec = this.spec
@@ -81,7 +81,7 @@ class AvroSchema extends Schema {
         if (avroSchema.getType != RECORD)
             throw new UnsupportedOperationException("Unexpected Avro top level type")
 
-        (avroSchema.getDoc, avroSchema.getFields.map(fromAvroField))
+        avroSchema
     }
 
     private def fromAvroField(field: AField) : Field = {
@@ -135,7 +135,7 @@ class AvroSchema extends Schema {
                         s"This mix of union types is not supported: $other")
                 }
 
-            case other => throw new UnsupportedOperationException(s"Unsupported type $other")
+            case other => throw new UnsupportedOperationException(s"Unsupported type $other in Avro schema")
         }
     }
 }

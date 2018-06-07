@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.flowman.spec.model
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
+import com.dimajix.flowman.spec.Module
 
 
-class SequenceFileFormatTest extends FlatSpec with Matchers with LocalSparkSession {
-    "A SequenceFile" should "be readble" in {
-        val df = spark.read
-            .format("sequencefile")
-            .load("lala")
-        df should not be (null)
-    }
-
-    "Multiple SequenceFiles" should "be readble" in {
-        val df = spark.read
-            .format("sequencefile")
-            .option("path", "lala,lala2")
-            .load()
-        df should not be (null)
+class FileRelationTest extends FlatSpec with Matchers {
+    "The FileRelation" should "be parseable" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: file
+              |    format: sequencefile
+              |    location: "lala.seq"
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        project.relations.keys should contain("t0")
     }
 }

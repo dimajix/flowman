@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -41,22 +42,23 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
               |    input: p0
               |    column: _1
               |    schema:
-              |      - name: s
-              |        type: String
-              |      - name: i
-              |        type: Integer
-              |      - name: st
-              |        type:
-              |          kind: struct
-              |          fields:
-              |           - name: lolo
-              |             type: string
-              |           - name: i
-              |             type: Integer
-              |      - name: a
-              |        type:
-              |          kind: array
-              |          elementType: Double
+              |      fields:
+              |        - name: s
+              |          type: String
+              |        - name: i
+              |          type: Integer
+              |        - name: st
+              |          type:
+              |            kind: struct
+              |            fields:
+              |             - name: lolo
+              |               type: string
+              |             - name: i
+              |               type: Integer
+              |        - name: a
+              |          type:
+              |            kind: array
+              |            elementType: Double
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
@@ -84,6 +86,44 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
                 Nil
             )) ::
             StructField("a", ArrayType(DoubleType), true) ::
+            Nil
+        ))
+    }
+
+    it should "work without an explicit schema" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        project.mappings.size should be (1)
+        project.mappings.contains("m0") should be (true)
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""{"i":12,"s":"lala"}""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        val result = mapping.execute(executor, Map(TableIdentifier("p0") -> input))
+        result.count() should be (2)
+        result.schema should be (StructType(
+            StructField("a", ArrayType(DoubleType, true), true) ::
+            StructField("i", LongType, true) ::
+            StructField("s", StringType, true) ::
+            StructField("st", StructType(
+                StructField("lolo", StringType, true) ::
+                Nil
+            )) ::
             Nil
         ))
     }

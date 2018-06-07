@@ -19,6 +19,10 @@ package com.dimajix.flowman.spec.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.execution.datasources.DataSource
+import org.apache.spark.sql.execution.datasources.FileFormat
+import org.apache.spark.sql.sources.RelationProvider
+import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -57,10 +61,20 @@ class FileRelation extends BaseRelation {
         implicit val context = executor.context
         val inputFiles = collectFiles(executor, partitions)
 
-        val rawData =
-            this.reader(executor)
-                .format(format)
-                .load(inputFiles.map(_.toString): _*)
+        if (inputFiles.isEmpty)
+            throw new IllegalArgumentException("No input files found")
+
+        val reader = this.reader(executor)
+            .format(format)
+
+        // Use either load(files) or load() with a "path" option
+        val providingClass: Class[_] = DataSource.lookupDataSource(format)
+        val rawData = providingClass.newInstance() match {
+            case _:RelationProvider => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
+            case _:SchemaRelationProvider => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
+            case _:FileFormat => reader.load(inputFiles.map(_.toString): _*)
+            case _ => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
+        }
 
         SchemaUtils.applySchema(rawData, schema)
     }

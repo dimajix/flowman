@@ -24,13 +24,13 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TableIdentifier
-import com.dimajix.flowman.spec.schema.Field
+import com.dimajix.flowman.spec.schema.Schema
 
 
 class ExtractJsonMapping extends BaseMapping {
     @JsonProperty(value="input", required=true) private var _input:String = _
     @JsonProperty(value="column", required=true) private var _column:String = _
-    @JsonProperty(value="schema", required=true) private var _schema: Seq[Field] = _
+    @JsonProperty(value="schema", required=true) private var _schema: Schema = _
     @JsonProperty(value="allowComments", required=false) private var _allowComments: String = "false"
     @JsonProperty(value="allowUnquotedFieldNames", required=false) private var _allowUnquotedFieldNames: String = "false"
     @JsonProperty(value="allowSingleQuotes", required=false) private var _allowSingleQuotes: String = "true"
@@ -41,7 +41,7 @@ class ExtractJsonMapping extends BaseMapping {
 
     def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
     def column(implicit context: Context) : String = context.evaluate(_column)
-    def schema(implicit context: Context) : Seq[Field] = _schema
+    def schema(implicit context: Context) : Schema = _schema
     def allowComments(implicit context: Context) : Boolean = context.evaluate(_allowComments).toBoolean
     def allowUnquotedFieldNames(implicit context: Context) : Boolean = context.evaluate(_allowUnquotedFieldNames).toBoolean
     def allowSingleQuotes(implicit context: Context) : Boolean = context.evaluate(_allowSingleQuotes).toBoolean
@@ -70,7 +70,7 @@ class ExtractJsonMapping extends BaseMapping {
     override def execute(executor: Executor, input: Map[TableIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
         val spark = executor.spark
-        val sparkSchema = StructType(schema.map(_.sparkField))
+        val sparkSchema = Option(schema).map(schema => StructType(schema.fields.map(_.sparkField))).orNull
         val table = input(this.input)
         spark.read
             .schema(sparkSchema)

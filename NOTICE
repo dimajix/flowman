@@ -70,4 +70,10 @@ json-schema:
   * LICENSE
     * license/LICENSE-json-schema.txt (Apache 2.0 License)
   * HOMEPAGE:
-    https://github.com/everit-org/json-schema
+    * https://github.com/everit-org/json-schema
+
+Swagger
+  * LICENSE
+    * license/LICENSE-swagger.txt (Apache 2.0 License)
+  * HOMEPAGE
+    * https://swagger.io/

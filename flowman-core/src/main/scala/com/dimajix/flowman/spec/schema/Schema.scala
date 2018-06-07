@@ -34,7 +34,8 @@ object Schema extends ExtensionRegistry[Schema] {
     new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchema]),
     new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema]),
     new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchema]),
-    new JsonSubTypes.Type(name = "json", value = classOf[JsonSchema])
+    new JsonSubTypes.Type(name = "json", value = classOf[JsonSchema]),
+    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchema])
 ))
 abstract class Schema {
     def description(implicit context: Context) : String

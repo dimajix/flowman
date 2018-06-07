@@ -91,9 +91,14 @@ class Driver(options:Arguments) {
         }
 
         // Check if only help is requested
-        if (options.help || options.command == null) {
-            new CmdLineParser(if (options.command != null) options.command else options).printUsage(System.err)
-            System.err.println
+        if (options.help) {
+            options.printHelp(System.out)
+            System.exit(0)
+        }
+
+        // Check if command is otherwise incomplete
+        if (options.incomplete) {
+            options.printHelp(System.err)
             System.exit(1)
         }
 
@@ -102,7 +107,7 @@ class Driver(options:Arguments) {
 
         // Load Namespace (including any plugins), afterwards also load Project
         val ns = loadNamespace()
-        val project:Project = Project.read.file(options.projectFile)
+        val project = Project.read.file(options.projectFile)
 
         // Create Flowman Session, which also includes a Spark Session
         val sparkConfig = splitSettings(options.sparkConfig)

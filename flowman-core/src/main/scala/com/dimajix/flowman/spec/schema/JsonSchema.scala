@@ -19,10 +19,13 @@ package com.dimajix.flowman.spec.schema
 import java.io.File
 import java.io.FileInputStream
 import java.net.URL
+import java.nio.charset.Charset
+import java.nio.file.Files
 
 import scala.collection.JavaConversions._
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.commons.io.IOUtils
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
 import org.everit.json.schema.EnumSchema
@@ -36,7 +39,9 @@ import org.json.JSONTokener
 
 import com.dimajix.flowman.execution.Context
 
-
+/**
+  * This class encapsulates a data frame schema specified as a JSON schema document.
+  */
 class JsonSchema extends Schema {
     @JsonProperty(value="file", required=false) private var _file: String = _
     @JsonProperty(value="url", required=false) private var _url: String = _
@@ -46,9 +51,20 @@ class JsonSchema extends Schema {
     def url(implicit context: Context) : URL = if (_url != null && _url.nonEmpty) new URL(context.evaluate(_url)) else null
     def spec(implicit context: Context) : String = context.evaluate(_spec)
 
+    /**
+      * Returns the description of the whole schema
+      * @param context
+      * @return
+      */
     override def description(implicit context: Context): String = {
         loadJsonSchema.getDescription
     }
+
+    /**
+      * Returns the list of fields of this schema
+      * @param context
+      * @return
+      */
     override def fields(implicit context: Context): Seq[Field] = {
         fromJsonObject(loadJsonSchema.asInstanceOf[ObjectSchema]).fields
     }

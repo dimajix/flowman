@@ -61,8 +61,8 @@ class FileRelation extends BaseRelation {
         implicit val context = executor.context
         val inputFiles = collectFiles(executor, partitions)
 
-        if (inputFiles.isEmpty)
-            throw new IllegalArgumentException("No input files found")
+        //if (inputFiles.isEmpty)
+        //    throw new IllegalArgumentException("No input files found")
 
         val reader = this.reader(executor)
             .format(format)

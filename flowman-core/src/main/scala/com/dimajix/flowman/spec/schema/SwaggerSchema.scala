@@ -29,11 +29,13 @@ import io.swagger.models.Model
 import io.swagger.models.ModelImpl
 import io.swagger.models.Swagger
 import io.swagger.models.properties.ArrayProperty
+import io.swagger.models.properties.BaseIntegerProperty
 import io.swagger.models.properties.BinaryProperty
 import io.swagger.models.properties.BooleanProperty
 import io.swagger.models.properties.ByteArrayProperty
 import io.swagger.models.properties.DateProperty
 import io.swagger.models.properties.DateTimeProperty
+import io.swagger.models.properties.DecimalProperty
 import io.swagger.models.properties.DoubleProperty
 import io.swagger.models.properties.FloatProperty
 import io.swagger.models.properties.IntegerProperty
@@ -122,8 +124,10 @@ class SwaggerSchema extends Schema {
             case _:DateTimeProperty => TimestampType
             case _:FloatProperty => FloatType
             case _:DoubleProperty => DoubleType
+            case _:DecimalProperty => DoubleType
             case _:IntegerProperty => IntegerType
             case _:LongProperty => LongType
+            case _:BaseIntegerProperty => IntegerType
             case _:MapProperty => MapType(StringType, StringType)
             case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.toSeq)
             case _:StringProperty => StringType

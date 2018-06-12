@@ -51,6 +51,7 @@ class VarcharTypeTest extends FlatSpec with Matchers {
     it should "provide the correct SQL type" in {
         val ftype = VarcharType(10)
         ftype.sqlType should be ("varchar(10)")
+        ftype.typeName should be ("varchar(10)")
     }
 
 }

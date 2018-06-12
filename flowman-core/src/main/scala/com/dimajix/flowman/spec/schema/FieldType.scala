@@ -41,6 +41,13 @@ abstract class FieldType {
       */
     def sparkType : DataType
 
+    /** Name of the type used in JSON serialization. */
+    def typeName: String = {
+        this.getClass.getSimpleName
+            .stripSuffix("$").stripSuffix("Type")
+            .toLowerCase(Locale.ROOT)
+    }
+
     /**
       * Short Type Name as used in SQL and in YAML specification files
       * @return

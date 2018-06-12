@@ -38,5 +38,6 @@ class DecimalTypeTest extends FlatSpec with Matchers {
     it should "provide the correct SQL type" in {
         val ftype = DecimalType(10,4)
         ftype.sqlType should be ("decimal(10,4)")
+        ftype.typeName should be ("decimal(10,4)")
     }
 }

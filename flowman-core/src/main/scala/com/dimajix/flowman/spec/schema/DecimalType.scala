@@ -26,6 +26,7 @@ object DecimalType {
     val USER_DEFAULT: DecimalType = DecimalType(10, 0)
 }
 case class DecimalType(precision: Int, scale: Int) extends FieldType {
+    override def typeName : String = s"decimal($precision,$scale)"
     override def sparkType : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
     override def sqlType : String = s"decimal($precision,$scale)"
 

@@ -51,6 +51,7 @@ class CharTypeTest extends FlatSpec with Matchers {
     it should "provide the correct SQL type" in {
         val ftype = CharType(10)
         ftype.sqlType should be ("char(10)")
+        ftype.typeName should be ("char(10)")
     }
 
 }

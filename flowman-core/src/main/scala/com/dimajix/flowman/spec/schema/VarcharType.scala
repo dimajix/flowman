@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.DataType
   * @param length
   */
 case class VarcharType(length: Int) extends FieldType {
+    override def typeName: String = s"varchar($length)"
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
     override def sqlType : String = s"varchar($length)"
 

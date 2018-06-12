@@ -22,35 +22,35 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class VarcharTypeTest extends FlatSpec with Matchers {
+class CharTypeTest extends FlatSpec with Matchers {
     "A varchar type" should "be deserializable" in {
         val spec =
             """
-              |varchar(14)
+              |char(14)
             """.stripMargin
 
         val result = ObjectMapper.parse[FieldType](spec)
-        result.asInstanceOf[VarcharType].length should be (14)
+        result.asInstanceOf[CharType].length should be (14)
         result.sparkType should be (org.apache.spark.sql.types.StringType)
     }
 
     it should "parse strings" in {
-        VarcharType(100).parse("lala") should be ("lala")
+        CharType(100).parse("lala") should be ("lala")
     }
 
     it should "support interpolation of SingleValues" in {
-        VarcharType(100).interpolate(SingleValue("lala"), null).head should be ("lala")
+        CharType(100).interpolate(SingleValue("lala"), null).head should be ("lala")
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = VarcharType(100).interpolate(ArrayValue(Array("12","27")), null).toSeq
+        val result = CharType(100).interpolate(ArrayValue(Array("12","27")), null).toSeq
         result(0) should be ("12")
         result(1) should be ("27")
     }
 
     it should "provide the correct SQL type" in {
-        val ftype = VarcharType(10)
-        ftype.sqlType should be ("varchar(10)")
+        val ftype = CharType(10)
+        ftype.sqlType should be ("char(10)")
     }
 
 }

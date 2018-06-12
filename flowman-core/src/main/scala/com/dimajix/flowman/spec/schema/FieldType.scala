@@ -92,6 +92,7 @@ private object FieldTypeDeserializer {
 
     private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r
     private val VARCHAR = """varchar\(\s*(\d+)\s*\)""".r
+    private val CHAR = """char\(\s*(\d+)\s*\)""".r
 
     def deserialize(jp: JsonParser, ctxt: DeserializationContext): FieldType = {
         jp.getCurrentToken match {
@@ -100,6 +101,7 @@ private object FieldTypeDeserializer {
                     case "decimal" => DecimalType.USER_DEFAULT
                     case FIXED_DECIMAL (precision, scale) => DecimalType(precision.toInt, scale.toInt)
                     case VARCHAR(length) => VarcharType(length.toInt)
+                    case CHAR(length) => CharType(length.toInt)
                     case other => nonDecimalNameToType.getOrElse (
                         other,
                         throw JsonMappingException.from(jp, s"Failed to convert the JSON string '${jp.getText}' to a field type.")

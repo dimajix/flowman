@@ -19,18 +19,18 @@ package com.dimajix.flowman.spec.schema
 import org.apache.spark.sql.types.DataType
 
 /**
-  * This type represents a SQL VarChar. This type is not directly supported in Spark, but has to be mapped to a
+  * This type represents a SQL Char. This type is not directly supported in Spark, but has to be mapped to a
   * StringType instead. Nevertheless the type is still useful for schema declarations.
   *
   * @param length
   */
-case class VarcharType(length: Int) extends FieldType {
+case class CharType(length: Int) extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
-    override def sqlType : String = s"varchar($length)"
+    override def sqlType : String = s"char($length)"
 
     override def parse(value:String, granularity: String) : String = {
         if (granularity != null && granularity.nonEmpty)
-            throw new UnsupportedOperationException("Varchar types cannot have a granularity")
+            throw new UnsupportedOperationException("Char types cannot have a granularity")
         value
     }
     override def interpolate(value: FieldValue, granularity:String) : Iterable[String] = {

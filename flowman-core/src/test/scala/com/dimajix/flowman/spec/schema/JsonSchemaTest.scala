@@ -154,6 +154,5 @@ class JsonSchemaTest extends FlatSpec with Matchers {
         fields(1).name should be ("NetGrossIndicator")
         fields(1).description should be ("Indicates whether this amount is net or gross")
         fields(1).ftype should be (StringType)
-
     }
 }

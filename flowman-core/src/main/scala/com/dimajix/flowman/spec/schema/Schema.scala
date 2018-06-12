@@ -38,7 +38,18 @@ object Schema extends ExtensionRegistry[Schema] {
     new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchema])
 ))
 abstract class Schema {
+    /**
+      * Returns the description of the schema
+      * @param context
+      * @return
+      */
     def description(implicit context: Context) : String
+
+    /**
+      * Returns the list of all fields of the schema
+      * @param context
+      * @return
+      */
     def fields(implicit context: Context) : Seq[Field]
 
     /**

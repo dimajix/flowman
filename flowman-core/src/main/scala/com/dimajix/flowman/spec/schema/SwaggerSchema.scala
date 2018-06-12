@@ -16,14 +16,14 @@
 
 package com.dimajix.flowman.spec.schema
 
-import scala.collection.JavaConversions._
 import java.io.File
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.Files
 
+import scala.collection.JavaConversions._
+
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.swagger.models.ArrayModel
 import io.swagger.models.ComposedModel
 import io.swagger.models.Model
 import io.swagger.models.ModelImpl
@@ -51,6 +51,10 @@ import org.apache.commons.io.IOUtils
 import com.dimajix.flowman.execution.Context
 
 
+/**
+  * Schema implementation for reading Swagger / OpenAPI schemas. This implementation will preserve the ordering of
+  * fields.
+  */
 class SwaggerSchema extends Schema {
     @JsonProperty(value="file", required=false) private var _file: String = _
     @JsonProperty(value="url", required=false) private var _url: String = _
@@ -62,9 +66,20 @@ class SwaggerSchema extends Schema {
     def spec(implicit context: Context) : String = context.evaluate(_spec)
     def entity(implicit context: Context) : String = context.evaluate(_entity)
 
+    /**
+      * Returns the description of the schema
+      * @param context
+      * @return
+      */
     override def description(implicit context: Context): String = {
         loadSwaggerSchema.getInfo.getDescription
     }
+
+    /**
+      * Returns the list of all fields of the schema
+      * @param context
+      * @return
+      */
     override def fields(implicit context: Context): Seq[Field] = {
         val swagger = loadSwaggerSchema
         val model = Option(entity).filter(_.nonEmpty).map(e => swagger.getDefinitions()(e)).getOrElse(swagger.getDefinitions().values().head)
@@ -107,7 +122,7 @@ class SwaggerSchema extends Schema {
     }
 
     private def fromSwaggerObject(properties:Seq[(String,Property)]) : StructType = {
-        StructType(properties.sortBy(_._1).map(np => fromSwaggerProperty(np._1, np._2)))
+        StructType(properties.map(np => fromSwaggerProperty(np._1, np._2)))
     }
 
     private def fromSwaggerProperty(name:String, property:Property) : Field = {

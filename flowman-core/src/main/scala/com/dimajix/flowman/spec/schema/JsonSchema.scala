@@ -19,13 +19,10 @@ package com.dimajix.flowman.spec.schema
 import java.io.File
 import java.io.FileInputStream
 import java.net.URL
-import java.nio.charset.Charset
-import java.nio.file.Files
 
 import scala.collection.JavaConversions._
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.commons.io.IOUtils
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
 import org.everit.json.schema.EnumSchema

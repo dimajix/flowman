@@ -18,12 +18,12 @@ package com.dimajix.flowman.spec.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.SingleValue
@@ -70,7 +70,7 @@ class HiveTableRelation extends BaseRelation  {
         val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
         val partitionNames = this.partitions.map(_.name)
         val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Reading DataFrame from Hive table $tableName with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Reading DataFrame from Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
 
         def applyPartitionFilter(df:DataFrame, partitionName:String, partitionValue:FieldValue): DataFrame = {
             val field = partitionsByName(partitionName)
@@ -95,13 +95,32 @@ class HiveTableRelation extends BaseRelation  {
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         val tableName = database + "." + table
-        logger.info(s"Writing DataFrame to Hive table $tableName with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
 
-        val writer = df.write
-            .format(format)
-            .mode(mode)
-            .partitionBy(partitionNames:_*)
-        writer.saveAsTable(tableName)
+        // Add partition columns
+        val frame = partition.foldLeft(df)((f, p) => f.withColumn(p._1, lit(p._2.value)))
+
+        if (partition.nonEmpty) {
+            val spark = executor.spark
+
+            // Create temp view
+            val tempViewName = "flowman_tmp_" + System.currentTimeMillis()
+            df.createOrReplaceTempView(tempViewName)
+
+            // Insert data via SQL
+            val writeMode = if (mode == "overwrite") "OVERWRITE" else "INTO"
+            val sql =s"INSERT $writeMode TABLE $tableName PARTITION(${partition.map(kv => kv._1 + "='" + kv._2.value + "'" ).mkString(",")}) FROM $tempViewName"
+            logger.info("Executing SQL: " + sql)
+            spark.sql(sql).collect()
+
+            // Remove temp view again
+            spark.sessionState.catalog.dropTempView(tempViewName)
+        }
+        else {
+            val writer = frame.write
+                .mode(mode)
+            writer.insertInto(tableName)
+        }
     }
 
     /**

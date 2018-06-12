@@ -72,6 +72,12 @@ json-schema:
   * HOMEPAGE:
     * https://github.com/everit-org/json-schema
 
+Handy-URI-Templates:
+  * LICENSE
+    * license/LICENSE-handy-uri-templates.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://github.com/damnhandy/Handy-URI-Templates
+
 Swagger
   * LICENSE
     * license/LICENSE-swagger.txt (Apache 2.0 License)

@@ -32,21 +32,23 @@ import javax.ws.rs.Path
 
 @Api(value = "/namespaces", produces = "application/json")
 @Path("/namespaces")
-class Namespace {
+class NamespaceService {
     import Directives._
 
     def route() : server.Route = {
-        path("namespaces") {
+        pathPrefix("namespaces") {
             list() ~
             crud()
         }
     }
 
-    @ApiOperation(value = "Return list of available values for a specific dimension", nickname = "getDimensionValues", httpMethod = "POST")
+    @ApiOperation(value = "Returns all available namespaces", nickname = "getNamespaces", httpMethod = "GET")
     def list() : server.Route = {
-        get {
-            val result = ""
-            complete(HttpEntity(ContentTypes.`application/json`, result))
+        pathEnd {
+            get {
+                val result = "list_namespace"
+                complete(HttpEntity(ContentTypes.`application/json`, result))
+            }
         }
     }
 
@@ -62,7 +64,7 @@ class Namespace {
     @ApiOperation(value = "Creates a new namespaces", nickname = "createNamespace", httpMethod = "PUT")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "namespace", value = "namespace to operate on", required = true,
-            dataType = "string", paramType = "path")
+            dataType = "string", paramType = "path", defaultValue = "default")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "", response = classOf[String]),
@@ -70,16 +72,16 @@ class Namespace {
     ))
     def create(@ApiParam(hidden = true) namespace:String): server.Route = {
         put {
-            val result = ""
+            val result = "create_namespace"
             complete(HttpEntity(ContentTypes.`application/json`, result))
         }
     }
 
     @Path("/{namespace}")
-    @ApiOperation(value = "Creates a new namespaces", nickname = "describeNamespace", httpMethod = "GET")
+    @ApiOperation(value = "Describes an existing namespace", nickname = "describeNamespace", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "namespace", value = "namespace to operate on", required = true,
-            dataType = "string", paramType = "path")
+            dataType = "string", paramType = "path", defaultValue = "default")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "", response = classOf[String]),
@@ -87,16 +89,16 @@ class Namespace {
     ))
     def describe(@ApiParam(hidden = true) namespace:String) : server.Route = {
         get {
-            val result = ""
+            val result = "describe_namespace"
             complete(HttpEntity(ContentTypes.`application/json`, result))
         }
     }
 
     @Path("/{namespace}")
-    @ApiOperation(value = "Creates a new namespaces", nickname = "destroyNamespace", httpMethod = "DELETE")
+    @ApiOperation(value = "Destroys an existing namespace", nickname = "destroyNamespace", httpMethod = "DELETE")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "namespace", value = "namespace to operate on", required = true,
-            dataType = "string", paramType = "path")
+            dataType = "string", paramType = "path", defaultValue = "default")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "", response = classOf[String]),
@@ -104,7 +106,7 @@ class Namespace {
     ))
     def destroy(@ApiParam(hidden = true) namespace:String) : server.Route = {
         delete {
-            val result = ""
+            val result = "delete_namespace"
             complete(HttpEntity(ContentTypes.`application/json`, result))
         }
     }

@@ -20,9 +20,17 @@ import scala.collection.JavaConversions._
 
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
+import org.kohsuke.args4j.Option
 
 
 class Arguments(args:Array[String]) {
+    @Option(name = "-h", aliases=Array("--help"), usage = "show help")
+    var help: Boolean = false
+    @Option(name = "--host", usage = "Host to bind to")
+    var bindHost: String = "0.0.0.0"
+    @Option(name = "--port", usage = "Port to bind to")
+    var bindPort: Int = 8080
+
     parseArgs(args)
 
     private def parseArgs(args: Array[String]) {

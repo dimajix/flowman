@@ -38,11 +38,12 @@ class Main(args:Arguments) {
         val log4j = System.getProperty("log4j.configuration")
         if (log4j == null || log4j.isEmpty) {
             val loader = Thread.currentThread.getContextClassLoader
-            val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
+            val url = loader.getResource("com/dimajix/flowman/server/log4j-defaults.properties")
             PropertyConfigurator.configure(url)
             logger.debug(s"Loaded Logging configuration from $url")
         }
 
-        true
+        val server = new Server(args)
+        server.run()
     }
 }

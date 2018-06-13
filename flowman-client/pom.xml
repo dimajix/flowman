@@ -30,7 +30,6 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>

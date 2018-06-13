@@ -66,6 +66,7 @@
         <module>flowman-core</module>
         <module>flowman-testing</module>
         <module>flowman-tools</module>
+        <module>flowman-client</module>
         <module>flowman-server</module>
         <module>flowman-plugin-example</module>
         <module>flowman-dist</module>
@@ -249,6 +250,18 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -554,6 +567,13 @@
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-http_${scala.api_version}</artifactId>
                 <version>10.1.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-http-testkit_${scala.api_version}</artifactId>
+                <version>10.1.1</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>

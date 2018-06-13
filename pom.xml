@@ -20,7 +20,7 @@
         <json.version>20180130</json.version>
         <guava.version>20.0</guava.version>
         <snakeyaml.version>1.21</snakeyaml.version>
-        <spark-avro.version>3.0.0</spark-avro.version>
+        <spark-avro.version>4.0.0</spark-avro.version>
         <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
         <velocity.version>1.7</velocity.version>
         <slick.version>3.2.3</slick.version>

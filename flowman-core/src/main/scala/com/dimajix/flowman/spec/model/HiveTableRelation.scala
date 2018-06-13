@@ -16,7 +16,10 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
@@ -43,6 +46,7 @@ class HiveTableRelation extends BaseRelation  {
     @JsonProperty(value="outputFormat", required=false) private var _outputFormat: String = _
     @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
     @JsonProperty(value="properties", required=false) private var _properties: Map[String,String] = Map()
+    @JsonProperty(value="writer", required=false) private var _writer: String = "hive"
 
     def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
@@ -54,6 +58,7 @@ class HiveTableRelation extends BaseRelation  {
     def outputFormat(implicit context: Context) : String = context.evaluate(_outputFormat)
     def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
     def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
+    def writer(implicit context: Context) : String = context.evaluate(_writer).toLowerCase(Locale.ROOT)
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -93,12 +98,26 @@ class HiveTableRelation extends BaseRelation  {
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
+        if (writer == "hive")
+            writeHive(executor, df, partition, mode)
+        else if (writer == "direct")
+            writeDirect(executor, df, partition, mode)
+        else
+            throw new IllegalArgumentException("Hive relations only support write modes 'hive' and 'direct'")
+    }
+
+    /**
+      * Writes to a Hive table using Hive. This is the normal mode.
+      * @param executor
+      * @param df
+      * @param partition
+      * @param mode
+      */
+    private def writeHive(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit =  {
+        implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         val tableName = database + "." + table
         logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
-
-        // Add partition columns
-        val frame = partition.foldLeft(df)((f, p) => f.withColumn(p._1, lit(p._2.value)))
 
         if (partition.nonEmpty) {
             val spark = executor.spark
@@ -108,18 +127,61 @@ class HiveTableRelation extends BaseRelation  {
             df.createOrReplaceTempView(tempViewName)
 
             // Insert data via SQL
-            val writeMode = if (mode == "overwrite") "OVERWRITE" else "INTO"
-            val sql =s"INSERT $writeMode TABLE $tableName PARTITION(${partition.map(kv => kv._1 + "='" + kv._2.value + "'" ).mkString(",")}) FROM $tempViewName"
-            logger.info("Executing SQL: " + sql)
+            val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
+            val sql =s"INSERT $writeMode TABLE $tableName ${partitionSpec(partition)} FROM $tempViewName"
+            logger.info("Inserting records via SQL: " + sql)
             spark.sql(sql).collect()
 
             // Remove temp view again
             spark.sessionState.catalog.dropTempView(tempViewName)
         }
         else {
+            // Add partition columns
+            val frame = partition.foldLeft(df)((f, p) => f.withColumn(p._1, lit(p._2.value)))
             val writer = frame.write
                 .mode(mode)
             writer.insertInto(tableName)
+        }
+    }
+
+    /**
+      * Writes to Hive table by directly writing into the corresponding directory. This is a fallback and will not
+      * use the Hive classes for writing.
+      * @param executor
+      * @param df
+      * @param partition
+      * @param mode
+      */
+    private def writeDirect(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit =  {
+        implicit val context = executor.context
+        val partitionNames = partitions.map(_.name)
+        val tableName = database + "." + table
+        logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")} using direct mode")
+
+        if (_location == null || location.isEmpty)
+            throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
+
+        val relPath = partitionNames.map(name => (name, partition.getOrElse(name, throw new IllegalArgumentException(s"Missing value for partition '$name' in table '$tableName'"))))
+            .map(nv => nv._1 + "=" + nv._2)
+            .mkString("/")
+        val outputPath = if (relPath.nonEmpty) new Path(location, relPath) else new Path(location)
+
+        val format = this.format.toLowerCase(Locale.ROOT) match {
+            case "avro" => "com.databricks.spark.avro"
+            case _ => this.format
+        }
+
+        logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
+        val writer = this.writer(executor, df)
+        writer.format(format)
+            .mode(mode)
+            .save(outputPath.toString)
+
+        // Finally add partition
+        if (partition.nonEmpty) {
+            val sql = s"ALTER TABLE $tableName ADD IF NOT EXISTS ${partitionSpec(partition)} LOCATION '${outputPath}'"
+            logger.info("Adding partition via SQL: " + sql)
+            executor.spark.sql(sql).collect()
         }
     }
 
@@ -156,4 +218,8 @@ class HiveTableRelation extends BaseRelation  {
         executor.spark.sql(stmt)
     }
     override def migrate(executor:Executor) : Unit = ???
+
+    private def partitionSpec(partition:Map[String,SingleValue]) : String = {
+        s"PARTITION(${partition.map(kv => kv._1 + "='" + kv._2.value + "'" ).mkString(",")})"
+    }
 }

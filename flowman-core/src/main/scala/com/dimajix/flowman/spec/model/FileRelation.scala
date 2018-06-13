@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.util.FileCollector
 import com.dimajix.flowman.util.SchemaUtils
@@ -41,7 +42,7 @@ class   FileRelation extends BaseRelation {
 
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
+    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = Seq()
     @JsonProperty(value="pattern") private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
@@ -88,13 +89,14 @@ class   FileRelation extends BaseRelation {
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
 
-        val outputPath = collector(executor).resolve(partition.mapValues(_.value))
+        val parsedPartition = PartitionSchema(partitions).parse(partition).map(kv => (kv._1.name, kv._2)).toMap
+        val outputPath = collector(executor).resolve(parsedPartition)
 
         logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
 
         // Create correct schema for output
-        val writer = this.writer(executor, df)
-        writer.format(format)
+        this.writer(executor, df)
+            .format(format)
             .mode(mode)
             .save(outputPath.toString)
     }

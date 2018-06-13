@@ -39,7 +39,7 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
               |    table: avro_test
               |    format: avro
               |    location: avro_test
-              |    writer: direct
+              |    writer: spark
               |    schema:
               |      kind: inline
               |      fields:

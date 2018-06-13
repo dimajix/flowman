@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.schema
 
 import java.io.File
+import java.io.IOException
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -24,6 +25,11 @@ import java.nio.file.Files
 import scala.collection.JavaConversions._
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import io.swagger.models.ComposedModel
 import io.swagger.models.Model
 import io.swagger.models.ModelImpl
@@ -45,8 +51,15 @@ import io.swagger.models.properties.ObjectProperty
 import io.swagger.models.properties.Property
 import io.swagger.models.properties.StringProperty
 import io.swagger.models.properties.UUIDProperty
+import io.swagger.parser.Swagger20Parser
 import io.swagger.parser.SwaggerParser
+import io.swagger.parser.util.DeserializationUtils
+import io.swagger.parser.util.SwaggerDeserializationResult
+import io.swagger.parser.util.SwaggerDeserializer
+import io.swagger.util.Json
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder
+import org.apache.commons.lang3.builder.ToStringStyle
 
 import com.dimajix.flowman.execution.Context
 
@@ -84,8 +97,8 @@ class SwaggerSchema extends Schema {
         val swagger = loadSwaggerSchema
         val model = Option(entity).filter(_.nonEmpty).map(e => swagger.getDefinitions()(e)).getOrElse(swagger.getDefinitions().values().head)
 
-        if (!model.isInstanceOf[ModelImpl])
-            throw new IllegalArgumentException("Root type in Swagger must be a simple model")
+        if (!model.isInstanceOf[ModelImpl] && !model.isInstanceOf[ComposedModel])
+            throw new IllegalArgumentException("Root type in Swagger must be a simple model or composed model")
 
         fromSwaggerModel(model)
     }
@@ -109,29 +122,71 @@ class SwaggerSchema extends Schema {
             throw new IllegalArgumentException("A Swagger schema needs either a 'file', 'url' or a 'spec' element")
         }
 
-        val parser = new SwaggerParser
-        parser.parse(string)
+        convertToSwagger(string)
+    }
+
+    @throws[IOException]
+    private def convertToSwagger(data: String): Swagger = {
+        val rootNode = if (data.trim.startsWith("{")) {
+            val mapper = Json.mapper
+            mapper.readTree(data)
+        }
+        else {
+            DeserializationUtils.readYamlTree(data)
+        }
+
+        // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"
+        val possiblyUnparsableNodes = rootNode.path("definitions").elements().flatMap(_.elements())
+        possiblyUnparsableNodes.foreach(replaceAllOf)
+
+        val result = new SwaggerDeserializer().deserialize(rootNode)
+        val convertValue = result.getSwagger
+        convertValue
+    }
+
+    /**
+      * This helper method transforms the Json tree such that "allOf" inline elements will be replaced by an
+      * adequate object definition, because Swagger will not parse inline allOf elements correctly
+      * @param jsonNode
+      */
+    private def replaceAllOf(jsonNode: JsonNode) : Unit = {
+        jsonNode match {
+            case obj:ObjectNode =>
+                if (obj.get("allOf") != null) {
+                    val children = obj.get("allOf").elements()
+                    val required = children.flatMap(_.get("required").elements()).toSeq
+                    val properties = children.flatMap(_.get("properties").elements()).toSeq
+                    val desc = children.flatMap(c => Option(c.get("description"))).toSeq.headOption
+                    obj.without("allOf")
+                    obj.set("type", TextNode.valueOf("object"))
+                    obj.withArray("required").addAll(required)
+                    obj.withArray("properties").addAll(properties)
+                    desc.foreach(d => obj.set("description", d))
+                }
+            case _:JsonNode =>
+        }
+        jsonNode.elements().foreach(replaceAllOf)
     }
 
     private def fromSwaggerModel(model:Model) : Seq[Field] = {
         model match {
             case composed:ComposedModel => composed.getAllOf.flatMap(fromSwaggerModel)
             //case array:ArrayModel => Seq(fromSwaggerProperty(array.getItems))
-            case _ => fromSwaggerObject(model.getProperties.toSeq).fields
+            case _ => fromSwaggerObject(model.getProperties.toSeq, "").fields
         }
     }
 
-    private def fromSwaggerObject(properties:Seq[(String,Property)]) : StructType = {
-        StructType(properties.map(np => fromSwaggerProperty(np._1, np._2)))
+    private def fromSwaggerObject(properties:Seq[(String,Property)], prefix:String) : StructType = {
+        StructType(properties.map(np => fromSwaggerProperty(np._1, np._2, prefix)))
     }
 
-    private def fromSwaggerProperty(name:String, property:Property) : Field = {
-        Field(name, fromSwaggerType(property), !property.getRequired, property.getDescription)
+    private def fromSwaggerProperty(name:String, property:Property, prefix:String) : Field = {
+        Field(name, fromSwaggerType(property, prefix + name), !property.getRequired, property.getDescription)
     }
 
-    private def fromSwaggerType(property:Property) : FieldType = {
+    private def fromSwaggerType(property:Property, fqName:String) : FieldType = {
         property match {
-            case array:ArrayProperty => ArrayType(fromSwaggerType(array.getItems))
+            case array:ArrayProperty => ArrayType(fromSwaggerType(array.getItems, fqName + ".items"))
             case _:BinaryProperty => BinaryType
             case _:BooleanProperty => BooleanType
             case _:ByteArrayProperty => BinaryType
@@ -144,10 +199,10 @@ class SwaggerSchema extends Schema {
             case _:LongProperty => LongType
             case _:BaseIntegerProperty => IntegerType
             case _:MapProperty => MapType(StringType, StringType)
-            case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.toSeq)
+            case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.toSeq, fqName + ".")
             case _:StringProperty => StringType
             case _:UUIDProperty => StringType
-            case _ => throw new UnsupportedOperationException(s"Swagger type of field $property not supported")
+            case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")
         }
     }
 

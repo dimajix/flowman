@@ -22,22 +22,37 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class DecimalTypeTest extends FlatSpec with Matchers {
-    "A decimal type" should "be deserializable" in {
+class CharTypeTest extends FlatSpec with Matchers {
+    "A varchar type" should "be deserializable" in {
         val spec =
             """
-              |decimal(10,4)
+              |char(14)
             """.stripMargin
 
         val result = ObjectMapper.parse[FieldType](spec)
-        result.asInstanceOf[DecimalType].precision should be (10)
-        result.asInstanceOf[DecimalType].scale should be (4)
-        result.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
+        result.asInstanceOf[CharType].length should be (14)
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+    }
+
+    it should "parse strings" in {
+        CharType(100).parse("lala") should be ("lala")
+    }
+
+    it should "support interpolation of SingleValues" in {
+        CharType(100).interpolate(SingleValue("lala"), null).head should be ("lala")
+    }
+
+    it should "support interpolation of ArrayValues" in {
+        val result = CharType(100).interpolate(ArrayValue(Array("12","27")), null).toSeq
+        result(0) should be ("12")
+        result(1) should be ("27")
     }
 
     it should "provide the correct SQL type" in {
-        val ftype = DecimalType(10,4)
-        ftype.sqlType should be ("decimal(10,4)")
-        ftype.typeName should be ("decimal(10,4)")
+        val ftype = CharType(10)
+        ftype.sqlType should be ("char(10)")
+        ftype.typeName should be ("char(10)")
     }
+
 }
+

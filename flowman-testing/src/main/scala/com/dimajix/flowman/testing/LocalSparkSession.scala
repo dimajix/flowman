@@ -27,18 +27,20 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
 
 
-trait LocalSparkSession extends BeforeAndAfterAll { this:Suite =>
+trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var spark: SparkSession = _
 
     override def beforeAll() : Unit = {
+        super.beforeAll()
+
         val builder = SparkSession.builder()
             .master("local[4]")
             .config("spark.ui.enabled", "false")
             .config("spark.sql.shuffle.partitions", "8")
 
-        val tempDir = createTempDir()
         val localMetastorePath = new File(tempDir, "metastore").getCanonicalPath
         val localWarehousePath = new File(tempDir, "wharehouse").getCanonicalPath
+        val checkpointPath  = new File(tempDir, "checkpoints").getCanonicalPath
 
         // We have to mask all properties in hive-site.xml that relates to metastore
         // data source as we used a local metastore here.
@@ -52,7 +54,7 @@ trait LocalSparkSession extends BeforeAndAfterAll { this:Suite =>
         builder.config("javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=$localMetastorePath;create=true")
             .config("datanucleus.rdbms.datastoreAdapterClassName", "org.datanucleus.store.rdbms.adapter.DerbyAdapter")
             .config(ConfVars.METASTOREURIS.varname, "")
-            .config("spark.sql.streaming.checkpointLocation", createTempDir().toPath().toString)
+            .config("spark.sql.streaming.checkpointLocation", checkpointPath.toString)
             .config("spark.sql.warehouse.dir", localWarehousePath)
             .enableHiveSupport()
         spark = builder.getOrCreate()
@@ -63,40 +65,7 @@ trait LocalSparkSession extends BeforeAndAfterAll { this:Suite =>
             spark.stop()
             spark = null
         }
-    }
 
-    /**
-      * Create a directory inside the given parent directory.
-      * The directory is guaranteed to be newly created, and is not marked for automatic
-      * deletion.
-      */
-    private def createDirectory(root: String): File = {
-        var attempts = 0
-        val maxAttempts = 10
-        var dir: File = null
-        while (dir == null) {
-            attempts += 1
-            if (attempts > maxAttempts) {
-                throw new IOException(
-                    s"Failed to create a temp directory (under ${root}) after ${maxAttempts}")
-            }
-            try {
-                dir = new File(root, "spark-" + UUID.randomUUID.toString)
-                if (dir.exists() || !dir.mkdirs()) {
-                    dir = null
-                }
-            } catch { case e: SecurityException => dir = null; }
-        }
-
-        dir
-    }
-
-    /**
-      * Create a temporary directory inside the given parent directory.
-      * The directory will be automatically deleted when the VM shuts down.
-      */
-    private def createTempDir(root: String = System.getProperty("java.io.tmpdir")): File = {
-        val dir = createDirectory(root)
-        dir
+        super.afterAll()
     }
 }

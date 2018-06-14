@@ -31,7 +31,7 @@ class VarcharTypeTest extends FlatSpec with Matchers {
 
         val result = ObjectMapper.parse[FieldType](spec)
         result.asInstanceOf[VarcharType].length should be (14)
-        result.sparkType should be (org.apache.spark.sql.types.VarcharType(14))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
     }
 
     it should "parse strings" in {
@@ -51,6 +51,7 @@ class VarcharTypeTest extends FlatSpec with Matchers {
     it should "provide the correct SQL type" in {
         val ftype = VarcharType(10)
         ftype.sqlType should be ("varchar(10)")
+        ftype.typeName should be ("varchar(10)")
     }
 
 }

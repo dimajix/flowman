@@ -41,7 +41,9 @@ import org.apache.avro.{Schema => ASchema}
 
 import com.dimajix.flowman.execution.Context
 
-
+/**
+  * Schema implementation for reading Avro schemas.
+  */
 class AvroSchema extends Schema {
     @JsonProperty(value="file", required=false) private var _file: String = _
     @JsonProperty(value="url", required=false) private var _url: String = _
@@ -51,14 +53,25 @@ class AvroSchema extends Schema {
     def url(implicit context: Context) : URL = if (_url != null && _url.nonEmpty) new URL(context.evaluate(_url)) else null
     def spec(implicit context: Context) : String = context.evaluate(_spec)
 
+    /**
+      * Returns the description of the schema
+      * @param context
+      * @return
+      */
     override def description(implicit context: Context): String = {
-        loadSchema._1
-    }
-    override def fields(implicit context: Context): Seq[Field] = {
-        loadSchema._2
+        loadAvroSchema.getDoc
     }
 
-    private def loadSchema(implicit context: Context) : (String, Seq[Field]) = {
+    /**
+      * Returns the list of all fields of the schema
+      * @param context
+      * @return
+      */
+    override def fields(implicit context: Context): Seq[Field] = {
+        loadAvroSchema.getFields.map(fromAvroField)
+    }
+
+    private def loadAvroSchema(implicit context: Context) : org.apache.avro.Schema = {
         val file = this.file
         val url = this.url
         val spec = this.spec
@@ -81,7 +94,7 @@ class AvroSchema extends Schema {
         if (avroSchema.getType != RECORD)
             throw new UnsupportedOperationException("Unexpected Avro top level type")
 
-        (avroSchema.getDoc, avroSchema.getFields.map(fromAvroField))
+        avroSchema
     }
 
     private def fromAvroField(field: AField) : Field = {
@@ -135,7 +148,7 @@ class AvroSchema extends Schema {
                         s"This mix of union types is not supported: $other")
                 }
 
-            case other => throw new UnsupportedOperationException(s"Unsupported type $other")
+            case other => throw new UnsupportedOperationException(s"Unsupported type $other in Avro schema")
         }
     }
 }

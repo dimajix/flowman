@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.local.csv
+package com.dimajix.flowman.spec.model
 
-import java.io.File
-
-import org.apache.spark.sql.SaveMode
-import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
-import com.dimajix.flowman.sources.local.implicits._
+import com.dimajix.flowman.spec.Module
 
 
-class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
-    "The csv relation" should "support writing CSV files" in {
-        val df = spark.createDataFrame(Seq((1,"lala", 1.2),(2,"lolo", 2.3)))
-        df.writeLocal
-            .format("csv")
-            .option("encoding", "UTF-8")
-            .save(new File(tempDir, "lala.csv").toString, SaveMode.Overwrite)
+class FileRelationTest extends FlatSpec with Matchers {
+    "The FileRelation" should "be parseable" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: file
+              |    format: sequencefile
+              |    location: "lala.seq"
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        project.relations.keys should contain("t0")
     }
 }

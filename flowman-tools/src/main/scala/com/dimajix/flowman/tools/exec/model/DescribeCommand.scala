@@ -37,12 +37,11 @@ class DescribeCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         logger.info("Describing relation {}", tablename)
-        val context = executor.context
+        implicit val context = executor.context
 
         Try {
             val relation = context.getRelation(RelationIdentifier.parse(tablename))
-            val table = relation.read(executor, null)
-            table.describe()
+            relation.schema.printTree
         } match {
             case Success(_) =>
                 logger.info("Successfully finished describing table")

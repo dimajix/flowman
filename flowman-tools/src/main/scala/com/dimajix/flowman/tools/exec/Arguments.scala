@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.tools.exec
 
+import java.io.PrintStream
+
 import scala.collection.JavaConversions._
 
 import org.kohsuke.args4j.Argument
@@ -34,8 +36,8 @@ import com.dimajix.flowman.tools.exec.project.ProjectCommand
 
 
 class Arguments(args:Array[String]) {
-    @Option(name = "-h", aliases=Array("--help"), usage = "show help")
-    var help: Boolean = false
+    @Option(name = "-h", aliases=Array("--help"), usage = "show help", help=true)
+    var _help: Boolean = false
     @Option(name = "-f", aliases=Array("--project"), usage = "project file", metaVar = "<project_file>")
     var projectFile: String = "project.yml"
     @Option(name = "-P", aliases=Array("--profile"), usage = "profile to enable", metaVar = "<profile>")
@@ -60,6 +62,32 @@ class Arguments(args:Array[String]) {
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))
     var command:Command = _
+
+
+    /**
+      * Returns true if the command line is incomplete
+      * @return
+      */
+    def incomplete : Boolean = command == null || command.incomplete
+
+    /**
+      * Returns true if a help message is requested
+      * @return
+      */
+    def help : Boolean = _help || command == null || command.help
+
+    /**
+      * Prints a context-aware help message
+      */
+    def printHelp(out:PrintStream = System.err) : Unit = {
+        if (command != null) {
+            command.printHelp(out)
+        }
+        else {
+            new CmdLineParser(this).printUsage(out)
+            out.println
+        }
+    }
 
     parseArgs(args)
 

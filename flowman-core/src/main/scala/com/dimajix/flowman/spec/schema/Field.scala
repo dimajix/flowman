@@ -47,6 +47,7 @@ class Field {
     def description(implicit context: Context) : String = context.evaluate(_description)
 
     def sqlType : String = _type.sqlType
+    def typeName : String = _type.typeName
     def sparkType : DataType = _type.sparkType
     def sparkField : StructField = StructField(name, sparkType, nullable)
 }

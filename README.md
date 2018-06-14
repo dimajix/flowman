@@ -6,6 +6,8 @@ Flowman is a Spark based ETL tool.
 
 The Maven build will create both a packed distribution file and a Docker image.
 
+    mvn clean install -PCDH-5.13
+
 ## Installing the Packed Distribution 
 
 The packed distribution file is called `flowman-{version}-bin.tar.gz` and can be extracted at any 

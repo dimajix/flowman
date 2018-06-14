@@ -65,3 +65,21 @@ Slick
     * license/LICENSE-slick.txt (BSD 2-Clause Simplified License)
   * HOMEPAGE:
     * http://slick.lightbend.com
+
+json-schema:
+  * LICENSE
+    * license/LICENSE-json-schema.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://github.com/everit-org/json-schema
+
+Handy-URI-Templates:
+  * LICENSE
+    * license/LICENSE-handy-uri-templates.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://github.com/damnhandy/Handy-URI-Templates
+
+Swagger
+  * LICENSE
+    * license/LICENSE-swagger.txt (Apache 2.0 License)
+  * HOMEPAGE
+    * https://swagger.io/

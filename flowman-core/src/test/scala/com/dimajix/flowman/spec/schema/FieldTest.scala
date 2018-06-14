@@ -266,7 +266,24 @@ class FieldTest extends FlatSpec with Matchers {
         val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
-        result.sparkType should be (org.apache.spark.sql.types.VarcharType(14))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
         result.ftype should be (VarcharType(14))
+    }
+
+    "A char Field" should "be deserializable" in {
+        val spec =
+            """
+              |name: lala
+              |type: char(14)
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (CharType(14))
     }
 }

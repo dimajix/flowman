@@ -41,7 +41,7 @@ class DescribeCommand extends ActionCommand {
 
         Try {
             val table = executor.instantiate(TableIdentifier.parse(tablename))
-            table.describe()
+            table.printSchema()
         } match {
             case Success(_) =>
                 logger.info("Successfully finished describing table")

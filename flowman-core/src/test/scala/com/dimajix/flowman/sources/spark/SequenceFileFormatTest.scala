@@ -23,10 +23,18 @@ import com.dimajix.flowman.LocalSparkSession
 
 
 class SequenceFileFormatTest extends FlatSpec with Matchers with LocalSparkSession {
-    "A SequenceFile" should "be readble" in {
+    "A SequenceFile" should "be readable" in {
         val df = spark.read
             .format("sequencefile")
             .load("lala")
+        df should not be (null)
+    }
+
+    "Multiple SequenceFiles" should "be readable" in {
+        val df = spark.read
+            .format("sequencefile")
+            .option("path", "lala,lala2")
+            .load()
         df should not be (null)
     }
 }

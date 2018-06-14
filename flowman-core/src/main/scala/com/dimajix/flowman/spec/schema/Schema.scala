@@ -33,9 +33,65 @@ object Schema extends ExtensionRegistry[Schema] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchema]),
     new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema]),
-    new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchema])
+    new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchema]),
+    new JsonSubTypes.Type(name = "json", value = classOf[JsonSchema]),
+    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchema])
 ))
 abstract class Schema {
+    /**
+      * Returns the description of the schema
+      * @param context
+      * @return
+      */
     def description(implicit context: Context) : String
+
+    /**
+      * Returns the list of all fields of the schema
+      * @param context
+      * @return
+      */
     def fields(implicit context: Context) : Seq[Field]
+
+    /**
+      * Provides a human readable string representation of the schema
+      * @param context
+      */
+    def printTree(implicit context: Context) : Unit = {
+        println(treeString)
+    }
+    /**
+      * Provides a human readable string representation of the schema
+      * @param context
+      */
+    def treeString(implicit context: Context) : String = {
+        val builder = new StringBuilder
+        builder.append("root\n")
+        val prefix = " |"
+        fields.foreach(field => buildTreeString(field, prefix, builder))
+
+        builder.toString()
+    }
+
+    private def buildTreeString(field:Field, prefix:String, builder:StringBuilder) : Unit = {
+        builder.append(s"$prefix-- ${field.name}: ${field.typeName} (nullable = ${field.nullable})\n")
+        buildTreeString(field.ftype, s"$prefix    |", builder)
+    }
+
+    private def buildTreeString(ftype:FieldType, prefix:String, builder:StringBuilder) : Unit = {
+        ftype match {
+            case struct:StructType =>
+                struct.fields.foreach(field => buildTreeString(field, prefix, builder))
+            case map:MapType =>
+                builder.append(s"$prefix-- key: ${map.keyType.typeName}\n")
+                builder.append(s"$prefix-- value: ${map.valueType.typeName} " +
+                    s"(containsNull = ${map.containsNull})\n")
+                buildTreeString(map.keyType, s"$prefix    |", builder)
+                buildTreeString(map.valueType, s"$prefix    |", builder)
+            case array:ArrayType =>
+                builder.append(
+                    s"$prefix-- element: ${array.elementType.typeName} (containsNull = ${array.containsNull})\n")
+                buildTreeString(array.elementType, s"$prefix    |", builder)
+            case _ =>
+        }
+    }
 }

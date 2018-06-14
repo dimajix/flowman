@@ -30,7 +30,7 @@ case object TimestampType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.TimestampType
 
     /**
-      * Parses a String into a java.sql.Timestamp object. The string has to be of format "yyyy-MM-dd HH:mm:ss"
+      * Parses a String into a java.sql.Timestamp object. The string has to be of format "yyyy-MM-ddTHH:mm:ss"
       * @param value
       * @param granularity
       * @return
@@ -47,7 +47,7 @@ case object TimestampType extends FieldType {
     }
     /**
       * Parses a FieldValue into a sequence of java.sql.Timestamp objects. The fields have to be of format
-      * "yyyy-MM-dd HH:mm:ss"
+      * "yyyy-MM-ddTHH:mm:ss"
       * @param value
       * @param granularity
       * @return

@@ -21,7 +21,17 @@ import org.apache.hadoop.fs.Path
 import com.dimajix.flowman.execution.Context
 
 
-case class PartitionSchema(fields:Seq[PartitionField]) {
+object PartitionSchema {
+    def apply(fields:Seq[PartitionField]) : PartitionSchema = new PartitionSchema(fields)
+}
+
+
+/**
+  * Helper class for working with partitioned relations. The class provides convenience methods for creating the
+  * correct Hive partition specification and for creating a Hive compatible path.
+  * @param fields
+  */
+class PartitionSchema(fields:Seq[PartitionField]) {
     /**
       * Returns the list of partition names
       * @return

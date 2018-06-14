@@ -22,6 +22,23 @@ import org.apache.spark.sql.types.StructField
 
 import com.dimajix.flowman.execution.Context
 
+
+object PartitionField {
+    def apply(name:String, ftype:FieldType, description:String = null, granularity:String = null) : PartitionField = {
+        val p = new PartitionField
+        p._name = name
+        p._type = ftype
+        p._description = description
+        p._granularity = granularity
+        p
+    }
+}
+
+
+/**
+  * A PartitionField is a special field used for specifying partition columns. In addition to normal fields,
+  * it also supports interpolation, but it lacks the capability of being nullable.
+  */
 class PartitionField {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = _

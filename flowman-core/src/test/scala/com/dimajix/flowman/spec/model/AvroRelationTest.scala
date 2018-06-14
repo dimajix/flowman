@@ -31,14 +31,14 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         import spark.implicits._
 
         val spec =
-            """
+            s"""
               |relations:
               |  t0:
               |    kind: table
               |    database: default
               |    table: avro_test
               |    format: avro
-              |    location: avro_test
+              |    location: "${tempDir}/avro_test1"
               |    writer: spark
               |    schema:
               |      kind: inline
@@ -80,11 +80,11 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         import spark.implicits._
 
         val spec =
-            """
+            s"""
               |relations:
               |  t0:
               |    kind: file
-              |    location: "lala.seq"
+              |    location: "${tempDir}/avro_test2"
               |    format: com.databricks.spark.avro
               |    schema:
               |      kind: inline

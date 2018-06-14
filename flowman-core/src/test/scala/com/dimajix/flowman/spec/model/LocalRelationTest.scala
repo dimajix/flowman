@@ -30,16 +30,6 @@ import com.dimajix.flowman.spec.Module
 
 
 class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
-    var tempDir:Path = _
-
-    before {
-        tempDir = Files.createTempDirectory("local_relation_test")
-    }
-    after {
-        tempDir.toFile.listFiles().foreach(_.delete())
-        tempDir.toFile.delete()
-    }
-
     "The LocalRelation" should "be able to create local directories" in {
         val spec =
             s"""
@@ -66,7 +56,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val relation = project.relations("local")
 
         relation.create(executor)
-        new File(tempDir.toFile, "csv/test").exists() should be (true)
+        new File(tempDir, "csv/test").exists() should be (true)
 
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
@@ -74,12 +64,12 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        new File(tempDir.toFile, "csv/test/data.csv").exists() should be (false)
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
         relation.write(executor, df, Map(), "overwrite")
-        new File(tempDir.toFile, "csv/test/data.csv").exists() should be (true)
+        new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         relation.destroy(executor)
-        new File(tempDir.toFile, "csv/test").exists() should be (false)
+        new File(tempDir, "csv/test").exists() should be (false)
     }
 
     it should "also support file:/// schema" in {
@@ -107,7 +97,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val relation = project.relations("local")
 
         relation.create(executor)
-        new File(tempDir.toFile, "csv/test").exists() should be (true)
+        new File(tempDir, "csv/test").exists() should be (true)
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),
@@ -115,11 +105,11 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        new File(tempDir.toFile, "csv/test/data.csv").exists() should be (false)
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
         relation.write(executor, df, Map(), "overwrite")
-        new File(tempDir.toFile, "csv/test/data.csv").exists() should be (true)
+        new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         relation.destroy(executor)
-        new File(tempDir.toFile, "csv/test").exists() should be (false)
+        new File(tempDir, "csv/test").exists() should be (false)
     }
 }

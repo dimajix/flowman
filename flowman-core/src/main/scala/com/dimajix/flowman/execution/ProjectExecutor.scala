@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context)
@@ -47,7 +47,7 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       *
       * @param tableName
       */
-    override def instantiate(tableName: TableIdentifier) : DataFrame = {
+    override def instantiate(tableName: MappingIdentifier) : DataFrame = {
         if (tableName.project.forall(_ == _project.name))
             cache.getOrElseUpdate((_project.name, tableName.name), createTable(tableName.name))
         else
@@ -67,9 +67,9 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @param identifier
       * @return
       */
-    override def getTable(identifier: TableIdentifier): DataFrame = {
+    override def getTable(identifier: MappingIdentifier): DataFrame = {
         if (identifier.project.forall(_ == _project.name))
-            _parent.getTable(TableIdentifier(identifier.name, Some(_project.name)))
+            _parent.getTable(MappingIdentifier(identifier.name, Some(_project.name)))
         else
             _parent.getTable(identifier)
     }
@@ -91,7 +91,7 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
         implicit val icontext = context
 
         // Lookup table definition
-        val transform = context.getMapping(TableIdentifier(tableName, None))
+        val transform = context.getMapping(MappingIdentifier(tableName, None))
         if (transform == null) {
             logger.error(s"Table ${_project.name}/$tableName not found")
             throw new NoSuchElementException(s"Table ${_project.name}/$tableName not found")

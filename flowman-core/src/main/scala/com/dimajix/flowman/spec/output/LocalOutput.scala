@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 /**
@@ -58,7 +58,7 @@ class LocalOutput extends RelationOutput {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : Unit = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         logger.info("Writing local file '{}'", filename)
 

@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -97,7 +97,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         implicit val icontext = session.context
         val mapping = project.mappings("t1")
-        mapping.dependencies should be (Array(TableIdentifier("t0")))
+        mapping.dependencies should be (Array(MappingIdentifier("t0")))
     }
 
     it should "also be correct with subqueries" in {
@@ -168,7 +168,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = project.mappings("t1")
-        val result = mapping.execute(executor, Map(TableIdentifier("t0") -> df)).orderBy("_1", "_2")
+        val result = mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
         result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
         result.collect().size should be (2)
     }

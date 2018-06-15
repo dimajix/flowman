@@ -24,7 +24,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spi.ExtensionRegistry
 
 
@@ -68,7 +68,7 @@ abstract class Output {
       * @param context
       * @return
       */
-    def dependencies(implicit context: Context) : Array[TableIdentifier]
+    def dependencies(implicit context: Context) : Array[MappingIdentifier]
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -76,5 +76,5 @@ abstract class Output {
       *
       * @param executor
       */
-    def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : Unit
+    def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit
 }

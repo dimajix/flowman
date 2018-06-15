@@ -25,7 +25,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -33,7 +33,7 @@ class UnionMapping extends BaseMapping {
     @JsonProperty(value="inputs", required=true) private[spec] var _inputs:Seq[String] = _
     @JsonProperty(value="fields", required=false) private[spec] var _fields:Map[String,String] = _
 
-    def inputs(implicit context: Context) : Seq[TableIdentifier] = _inputs.map(i => TableIdentifier.parse(context.evaluate(i)))
+    def inputs(implicit context: Context) : Seq[MappingIdentifier] = _inputs.map(i => MappingIdentifier.parse(context.evaluate(i)))
     def fields(implicit context: Context) : Map[String,String] = if (_fields != null) _fields.mapValues(context.evaluate) else null
 
     /**
@@ -43,7 +43,7 @@ class UnionMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         val tables = inputs.map(input(_))
 
@@ -66,7 +66,7 @@ class UnionMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
+    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         inputs.toArray
     }
 

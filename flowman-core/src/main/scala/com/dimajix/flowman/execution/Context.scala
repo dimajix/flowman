@@ -25,7 +25,7 @@ import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
@@ -100,7 +100,7 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getMapping(identifier: TableIdentifier) : Mapping
+    def getMapping(identifier: MappingIdentifier) : Mapping
     /**
       * Returns a specific named Relation. The RelationType can either be inside this Contexts project or in a different
       * project within the same namespace

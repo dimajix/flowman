@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class DumpOutput extends BaseOutput {
@@ -37,7 +37,7 @@ class DumpOutput extends BaseOutput {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : Unit = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         val dfIn = input(this.input)
         val dfOut = if (_columns != null && _columns.nonEmpty)

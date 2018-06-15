@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -75,7 +75,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = project.mappings("m0")
-        val result = mapping.execute(executor, Map(TableIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -114,7 +114,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = project.mappings("m0")
-        val result = mapping.execute(executor, Map(TableIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("a", ArrayType(DoubleType, true), true) ::

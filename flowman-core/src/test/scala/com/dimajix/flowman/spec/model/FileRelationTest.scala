@@ -16,23 +16,49 @@
 
 package com.dimajix.flowman.spec.model
 
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.LocalSparkSession
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 
 
-class FileRelationTest extends FlatSpec with Matchers {
+class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
     "The FileRelation" should "be parseable" in {
         val spec =
             """
               |relations:
               |  t0:
               |    kind: file
-              |    format: sequencefile
-              |    location: "lala.seq"
+              |    format: csv
+              |    location: test/data/data_1.csv
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: f1
+              |          type: string
+              |        - name: f2
+              |          type: string
+              |        - name: f3
+              |          type: string
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("t0")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        val relation = project.relations("t0")
+        val df = relation.read(executor, null)
+        df.schema should be (StructType(
+            StructField("f1", StringType) ::
+            StructField("f2", StringType) ::
+            StructField("f3", StringType) ::
+            Nil
+        ))
+        df.collect()
     }
 }

@@ -23,7 +23,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 
 
@@ -39,7 +39,7 @@ class ExtractJsonMapping extends BaseMapping {
     @JsonProperty(value="allowBackslashEscapingAnyCharacter", required=false) private var _allowBackslashEscapingAnyCharacter: String = "false"
     @JsonProperty(value="allowUnquotedControlChars", required=false) private var _allowUnquotedControlChars: String = "false"
 
-    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
+    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def column(implicit context: Context) : String = context.evaluate(_column)
     def schema(implicit context: Context) : Schema = _schema
     def allowComments(implicit context: Context) : Boolean = context.evaluate(_allowComments).toBoolean
@@ -56,7 +56,7 @@ class ExtractJsonMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[TableIdentifier] = {
+    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
         Array(input)
     }
 
@@ -67,7 +67,7 @@ class ExtractJsonMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor: Executor, input: Map[TableIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
         val spark = executor.spark
         val sparkSchema = Option(schema).map(schema => StructType(schema.fields.map(_.sparkField))).orNull

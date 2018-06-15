@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -43,7 +43,7 @@ class ExplainCommand extends ActionCommand {
         logger.info("Explaining table {}", tablename)
 
         Try {
-            val table = executor.instantiate(TableIdentifier.parse(tablename))
+            val table = executor.instantiate(MappingIdentifier.parse(tablename))
             table.explain(extended)
         } match {
             case Success(_) =>

@@ -27,7 +27,7 @@ import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spi.ExtensionRegistry
 
@@ -91,7 +91,7 @@ abstract class Mapping {
       * @param context
       * @return
       */
-    def dependencies(implicit context:Context) : Array[TableIdentifier]
+    def dependencies(implicit context:Context) : Array[MappingIdentifier]
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -100,5 +100,5 @@ abstract class Mapping {
       * @param input
       * @return
       */
-    def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame
+    def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame
 }

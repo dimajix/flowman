@@ -23,13 +23,13 @@ import org.apache.spark.sql.functions.expr
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 class ExtendMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
     @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = _
 
-    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
+    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
 
     /**
@@ -39,7 +39,7 @@ class ExtendMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         val allColumns = columns
         val columnNames = allColumns.keys.toSet
@@ -85,7 +85,7 @@ class ExtendMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
+    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         Array(input)
     }
 }

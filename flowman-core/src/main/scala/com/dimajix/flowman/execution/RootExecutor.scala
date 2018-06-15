@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class RootExecutor private(session:Session, context:Context, sharedCache:Executor, isolated:Boolean)
@@ -70,7 +70,7 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
       * @param identifier
       * @return
       */
-    override def getTable(identifier: TableIdentifier): DataFrame = {
+    override def getTable(identifier: MappingIdentifier): DataFrame = {
         if (identifier.project.isEmpty)
             throw new NoSuchElementException("Expected project name in table specifier")
         cache.getOrElse((identifier.project.get, identifier.name), throw new NoSuchElementException(s"Table $identifier not found"))
@@ -81,11 +81,11 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
       *
       * @param identifier
       */
-    override def instantiate(identifier: TableIdentifier): DataFrame = {
+    override def instantiate(identifier: MappingIdentifier): DataFrame = {
         if (identifier.project.isEmpty)
             throw new NoSuchElementException("Expected project name in table specifier")
         val child = getProjectExecutor(identifier.project.get)
-        child.instantiate(TableIdentifier(identifier.name, None))
+        child.instantiate(MappingIdentifier(identifier.name, None))
     }
 
     /**

@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -43,7 +43,7 @@ class ShowCommand extends ActionCommand {
         logger.info("Showing first {} rows of table {}", limit:Any, tablename:Any)
 
         Try {
-            val table = executor.instantiate(TableIdentifier.parse((tablename)))
+            val table = executor.instantiate(MappingIdentifier.parse((tablename)))
             table.limit(limit).show(truncate = false)
         } match {
             case Success(_) =>

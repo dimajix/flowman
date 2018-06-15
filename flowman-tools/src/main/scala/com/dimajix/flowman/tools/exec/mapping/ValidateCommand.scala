@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -47,7 +47,7 @@ class ValidateCommand extends ActionCommand {
                 else
                     project.mappings.keys.toSeq
 
-            val tables = mappingNames.map(TableIdentifier.parse)
+            val tables = mappingNames.map(MappingIdentifier.parse)
             tables.forall(table => executor.instantiate(table) != null)
         } match {
             case Success(true) =>

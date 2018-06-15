@@ -23,7 +23,7 @@ import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 abstract class Executor {
@@ -63,14 +63,14 @@ abstract class Executor {
       * @param identifier
       * @return
       */
-    def getTable(identifier: TableIdentifier) : DataFrame
+    def getTable(identifier: MappingIdentifier) : DataFrame
 
     /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache
       *
       * @param identifier
       */
-    def instantiate(identifier: TableIdentifier) : DataFrame
+    def instantiate(identifier: MappingIdentifier) : DataFrame
 
     /**
       * Releases any temporary tables

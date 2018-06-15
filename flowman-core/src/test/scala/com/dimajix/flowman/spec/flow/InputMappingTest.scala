@@ -22,7 +22,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -46,7 +46,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val df = executor.instantiate(TableIdentifier("empty"))
+        val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
     }
@@ -75,7 +75,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val df = executor.instantiate(TableIdentifier("empty"))
+        val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
     }
@@ -107,7 +107,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val df = executor.instantiate(TableIdentifier("empty"))
+        val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
     }
@@ -141,7 +141,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val df = executor.instantiate(TableIdentifier("empty"))
+        val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
     }

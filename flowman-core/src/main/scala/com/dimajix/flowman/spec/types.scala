@@ -17,15 +17,15 @@
 package com.dimajix.flowman.spec
 
 
-object TableIdentifier {
+object MappingIdentifier {
     def apply(name:String) = parse(name)
-    def apply(name:String, project:String) = new TableIdentifier(name, Some(project))
-    def parse(fqName:String) : TableIdentifier= {
+    def apply(name:String, project:String) = new MappingIdentifier(name, Some(project))
+    def parse(fqName:String) : MappingIdentifier= {
         val parts = fqName.split('/')
-        new TableIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
+        new MappingIdentifier(parts.last, if (parts.size > 1) Some(parts.dropRight(1).mkString("/")) else None)
     }
 }
-case class TableIdentifier(name:String, project:Option[String]) {
+case class MappingIdentifier(name:String, project:Option[String]) {
     override def toString : String = {
         if (project.isEmpty)
             name

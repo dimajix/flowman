@@ -1,4 +1,4 @@
-FROM dimajix/spark:2.2.1
+FROM dimajix/spark:2.3.1
 MAINTAINER k.kupferschmidt@dimajix.de
 
 ARG APP_ARCHIVE

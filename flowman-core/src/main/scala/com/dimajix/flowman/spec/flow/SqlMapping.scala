@@ -25,7 +25,7 @@ import org.apache.spark.sql.catalyst.plans.logical.With
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class SqlMapping extends BaseMapping {
@@ -42,7 +42,7 @@ class SqlMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         // Register all input DataFrames as temp views
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
@@ -59,9 +59,9 @@ class SqlMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[TableIdentifier] = {
+    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
-        resolveDependencies(plan).map(TableIdentifier.parse).toArray
+        resolveDependencies(plan).map(MappingIdentifier.parse).toArray
     }
 
     private def resolveDependencies(plan:LogicalPlan) : Seq[String] = {

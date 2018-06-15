@@ -22,7 +22,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -42,7 +42,7 @@ class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         executor.spark.emptyDataFrame.createOrReplaceTempView("my_table")
 
-        val df = executor.instantiate(TableIdentifier("dummy"))
+        val df = executor.instantiate(MappingIdentifier("dummy"))
         df.count should be(0)
     }
 

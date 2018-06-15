@@ -19,14 +19,14 @@ package com.dimajix.flowman.spec.output
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 abstract class BaseOutput extends Output {
     @JsonProperty(value = "enabled", required=false) private var _enabled:String = _
     @JsonProperty(value = "input", required=true) private var _input:String = _
 
-    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
+    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
 
     override def enabled(implicit context:Context) : Boolean = if (_enabled != null) context.evaluate(_enabled).toBoolean else true
 
@@ -36,7 +36,7 @@ abstract class BaseOutput extends Output {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
+    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         val table = input
         if (table != null)
             Array(table)

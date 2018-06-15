@@ -28,7 +28,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -49,12 +49,12 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
         xfs._dimensions = Array("_1", "_2")
         xfs._aggregations = Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)")
 
-        xfs.input should be (TableIdentifier("myview"))
+        xfs.input should be (MappingIdentifier("myview"))
         xfs.dimensions should be (Array("_1", "_2"))
         xfs.aggregations should be (Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)"))
-        xfs.dependencies should be (Array(TableIdentifier("myview")))
+        xfs.dependencies should be (Array(MappingIdentifier("myview")))
 
-        val df2 = xfs.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_1", "_2")
+        val df2 = xfs.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_1", "_2")
         df2.schema should be (
             StructType(
                 StructField("_1", StringType) ::
@@ -105,7 +105,7 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
             ("c1_v2", "c2_v2", 113, 118.0)
         )).createTempView("my_table")
 
-        val df2 = executor.instantiate(TableIdentifier("t1")).orderBy("_1", "_2")
+        val df2 = executor.instantiate(MappingIdentifier("t1")).orderBy("_1", "_2")
         df2.schema should be (
             StructType(
                 StructField("_1", StringType) ::

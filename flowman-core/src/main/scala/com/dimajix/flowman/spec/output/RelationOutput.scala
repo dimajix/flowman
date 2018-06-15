@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.SingleValue
 
 
@@ -40,7 +40,7 @@ class RelationOutput extends BaseOutput {
     def partition(implicit context: Context) : Map[String,String] = if (_partition != null) _partition.mapValues(context.evaluate) else Map()
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
 
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : Unit = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         logger.info("Writing to relation '{}'", target)
         val partition = this.partition.mapValues(v => SingleValue(v))

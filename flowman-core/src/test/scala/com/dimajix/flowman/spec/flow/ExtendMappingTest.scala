@@ -23,7 +23,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -41,11 +41,11 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         xfs._input = "myview"
         xfs._columns = Map("new_f" -> "2*_2")
 
-        xfs.input should be (TableIdentifier.parse("myview"))
+        xfs.input should be (MappingIdentifier.parse("myview"))
         xfs.columns should be (Map("new_f" -> "2*_2"))
-        xfs.dependencies should be (Array(TableIdentifier.parse("myview")))
+        xfs.dependencies should be (Array(MappingIdentifier.parse("myview")))
 
-        val result = xfs.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_1").collect()
+        val result = xfs.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_1").collect()
         result.size should be (2)
         result(0) should be (Row("col1", 12, 24))
         result(1) should be (Row("col2", 23, 46))
@@ -70,7 +70,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             "f4" -> "2*f2"
         )
 
-        val result = xfs.execute(executor, Map(TableIdentifier("myview") -> df)).orderBy("_1")
+        val result = xfs.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_1")
         result.schema(0).name should be ("_1")
         result.schema(1).name should be ("_2")
         result.schema(2).name should be ("f1")
@@ -96,7 +96,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
         implicit val context = executor.context
-        a[RuntimeException] should be thrownBy xfs.execute(executor, Map(TableIdentifier("myview") -> spark.emptyDataFrame))
+        a[RuntimeException] should be thrownBy xfs.execute(executor, Map(MappingIdentifier("myview") -> spark.emptyDataFrame))
     }
 
     "An appropriate Dataflow" should "be readable from YML" in {
@@ -132,6 +132,6 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("col2", 23)
         )).createOrReplaceTempView("my_table")
 
-        val df2 = executor.instantiate(TableIdentifier("t1")).orderBy("_1", "_2")
+        val df2 = executor.instantiate(MappingIdentifier("t1")).orderBy("_1", "_2")
     }
 }

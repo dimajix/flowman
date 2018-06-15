@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class AggregateMapping extends BaseMapping {
@@ -35,7 +35,7 @@ class AggregateMapping extends BaseMapping {
     @JsonProperty(value = "aggregations", required = true) private[spec] var _aggregations:Map[String,String] = _
     @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
 
-    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
+    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def dimensions(implicit context: Context) : Seq[String] = _dimensions.map(context.evaluate)
     def aggregations(implicit context: Context) : Map[String,String] = _aggregations.mapValues(context.evaluate)
     def partitions(implicit context: Context) : Int = if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
@@ -47,7 +47,7 @@ class AggregateMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
         logger.info("Aggregating table {} on dimensions {}", Array(this.input, dimensions.mkString(",")):_*)
 
@@ -67,7 +67,7 @@ class AggregateMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[TableIdentifier] = {
+    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
         Array(input)
     }
 }

@@ -22,7 +22,7 @@ import org.apache.spark.sql.functions.col
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 
 class RepartitionMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
@@ -30,7 +30,7 @@ class RepartitionMapping extends BaseMapping {
     @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
     @JsonProperty(value = "sort", required = false) private[spec] var _sort:String = _
 
-    def input(implicit context: Context) : TableIdentifier = TableIdentifier.parse(context.evaluate(_input))
+    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) :Seq[String] = if (_columns != null) _columns.map(context.evaluate) else Seq[String]()
     def partitions(implicit context: Context) : Int= if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
     def sort(implicit context: Context) : Boolean = if (_sort == null || _sort.isEmpty) false else context.evaluate(_sort).toBoolean
@@ -42,7 +42,7 @@ class RepartitionMapping extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[TableIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         val df = input(this.input)
         val parts = partitions
@@ -59,7 +59,7 @@ class RepartitionMapping extends BaseMapping {
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[TableIdentifier] = {
+    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         Array(input)
     }
 }

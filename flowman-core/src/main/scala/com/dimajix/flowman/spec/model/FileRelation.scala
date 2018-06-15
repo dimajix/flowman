@@ -16,11 +16,14 @@
 
 package com.dimajix.flowman.spec.model
 
+import scala.util.Try
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
@@ -28,7 +31,6 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.Field
 import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
@@ -69,7 +71,7 @@ class   FileRelation extends BaseRelation {
             .format(format)
 
         // Use either load(files) or load() with a "path" option
-        val providingClass: Class[_] = DataSource.lookupDataSource(format)
+        val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
         val rawData = providingClass.newInstance() match {
             case _:RelationProvider => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
             case _:SchemaRelationProvider => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
@@ -78,6 +80,22 @@ class   FileRelation extends BaseRelation {
         }
 
         SchemaUtils.applySchema(rawData, schema)
+    }
+
+    private def lookupDataSource(provider: String, conf: SQLConf): Class[_] = {
+        // Check appropriate method, depending on Spark version
+        try {
+            // Spark 2.2.x
+            val method = DataSource.getClass.getDeclaredMethod("lookupDataSource", classOf[String])
+            method.invoke(DataSource, provider).asInstanceOf[Class[_]]
+        }
+        catch {
+            case _:NoSuchMethodException => {
+                // Spark 2.3.x
+                val method = DataSource.getClass.getDeclaredMethod("lookupDataSource", classOf[String], classOf[SQLConf])
+                method.invoke(DataSource, provider, conf).asInstanceOf[Class[_]]
+            }
+        }
     }
 
     /**

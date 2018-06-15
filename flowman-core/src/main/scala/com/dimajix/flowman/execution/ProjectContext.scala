@@ -29,7 +29,7 @@ import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TableIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
@@ -111,7 +111,7 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @param identifier
       * @return
       */
-    override def getMapping(identifier: TableIdentifier): Mapping = {
+    override def getMapping(identifier: MappingIdentifier): Mapping = {
         if (identifier.project.forall(_ == _project.name))
             _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${_project.name}"))
         else

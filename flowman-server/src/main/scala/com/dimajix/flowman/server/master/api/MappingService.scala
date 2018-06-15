@@ -31,7 +31,7 @@ import javax.ws.rs.Path
 
 
 @Api(value = "mappings", produces = "application/json")
-@Path("/namespaces/{namespace}/projects/{project}/mappings")
+@Path("/mappings/{namespace}/{project}")
 @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "namespace", value = "namespace to operate on", required = true,
         dataType = "string", paramType = "path", defaultValue = "default"),
@@ -42,13 +42,11 @@ class MappingService {
     import Directives._
 
     def route() : server.Route = {
-        pathPrefix("namespaces" / Segment) { ns =>
-            pathPrefix("projects" / Segment) { project =>
-                pathPrefix("mappings") {
-                    list(ns) ~
-                    crud(ns) ~
-                    misc(ns)
-                }
+        pathPrefix("mappings" / Segment) { ns =>
+            pathPrefix(Segment) { project =>
+                list(ns) ~
+                crud(ns) ~
+                misc(ns)
             }
         }
     }

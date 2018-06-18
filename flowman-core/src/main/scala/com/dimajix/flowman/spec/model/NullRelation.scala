@@ -46,7 +46,7 @@ class NullRelation extends BaseRelation {
 
         implicit val context = executor.context
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
-        val readSchema = Option(schema).getOrElse(createSchema)
+        val readSchema = Option(schema).getOrElse(inputSchema)
         executor.spark.createDataFrame(rdd, readSchema)
     }
 

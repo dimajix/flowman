@@ -16,14 +16,18 @@
 
 package com.dimajix.flowman.util
 
+import java.util.Locale
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.MapType
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -71,5 +75,25 @@ object SchemaUtils {
             df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)
         else
             df
+    }
+
+    /**
+      * Converts the given Spark schema to a lower case schema
+      * @param schema
+      * @return
+      */
+    def toLowerCase(schema:StructType) : StructType = {
+        StructType(schema.fields.map(toLowerCase))
+    }
+    def toLowerCase(field:StructField) : StructField = {
+        StructField(field.name.toLowerCase(Locale.ROOT), toLowerCase(field.dataType), field.nullable, field.metadata)
+    }
+    def toLowerCase(dtype:DataType) : DataType = {
+        dtype match {
+            case struct:StructType => toLowerCase(struct)
+            case array:ArrayType => ArrayType(toLowerCase(array.elementType),array.containsNull)
+            case map:MapType => MapType(toLowerCase(map.keyType), toLowerCase(map.valueType), map.valueContainsNull)
+            case dt:DataType => dt
+        }
     }
 }

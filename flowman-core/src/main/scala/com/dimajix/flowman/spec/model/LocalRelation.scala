@@ -61,7 +61,7 @@ class LocalRelation extends BaseRelation {
 
         val reader = executor.spark.readLocal.options(options)
         if (this.schema != null)
-            reader.schema(createSchema)
+            reader.schema(inputSchema)
 
         val rawData = reader
             .format(format)

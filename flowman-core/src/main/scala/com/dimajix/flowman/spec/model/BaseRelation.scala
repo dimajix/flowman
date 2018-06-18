@@ -52,7 +52,7 @@ abstract class BaseRelation extends Relation {
         implicit val context = executor.context
         val reader = executor.spark.read.options(options)
         if (_schema != null)
-            reader.schema(createSchema)
+            reader.schema(inputSchema)
 
         // Inject default values
         defaults.foreach(kv => reader.option("default." + kv._1, kv._2))
@@ -69,8 +69,7 @@ abstract class BaseRelation extends Relation {
       */
     protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
         implicit val context = executor.context
-        val outputColumns = schema.fields.map(field => df(field.name).cast(field.sparkType))
-        val outputDf = df.select(outputColumns:_*)
+        val outputDf = applySchema(df)
         outputDf.write.options(options)
     }
 
@@ -79,7 +78,17 @@ abstract class BaseRelation extends Relation {
       * @param context
       * @return
       */
-    protected def createSchema(implicit context:Context) : StructType = {
+    protected def inputSchema(implicit context:Context) : StructType = {
         StructType(schema.fields.map(_.sparkField))
+    }
+
+    /**
+      * Applies the specified schema (or maybe even transforms it)
+      * @param df
+      * @return
+      */
+    protected def applySchema(df:DataFrame)(implicit context:Context) : DataFrame = {
+        val outputColumns = schema.fields.map(field => df(field.name).cast(field.sparkType))
+        df.select(outputColumns:_*)
     }
 }

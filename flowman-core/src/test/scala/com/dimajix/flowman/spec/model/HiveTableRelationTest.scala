@@ -55,6 +55,31 @@ class HiveTableRelationTest extends FlatSpec with Matchers with MockedSparkSessi
               |)""".stripMargin)
     }
 
+    it should "support destroy" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        project.relations("t0").destroy(executor)
+        verify(spark).sql("""DROP TABLE IF EXISTS default.lala""")
+    }
+
     it should "support single partition columns" in {
         val spec =
             """

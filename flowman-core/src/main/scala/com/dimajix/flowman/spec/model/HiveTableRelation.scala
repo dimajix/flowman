@@ -27,20 +27,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.CharType
-import com.dimajix.flowman.spec.schema.DateType
-import com.dimajix.flowman.spec.schema.DoubleType
 import com.dimajix.flowman.spec.schema.FieldValue
-import com.dimajix.flowman.spec.schema.FloatType
-import com.dimajix.flowman.spec.schema.IntegerType
-import com.dimajix.flowman.spec.schema.LongType
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
-import com.dimajix.flowman.spec.schema.ShortType
 import com.dimajix.flowman.spec.schema.SingleValue
-import com.dimajix.flowman.spec.schema.StringType
-import com.dimajix.flowman.spec.schema.TimestampType
-import com.dimajix.flowman.spec.schema.VarcharType
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -223,13 +213,27 @@ class HiveTableRelation extends BaseRelation  {
       */
     override def destroy(executor:Executor) : Unit = {
         implicit val context = executor.context
-        val stmt = s"DROP TABLE $database.$table"
+        val stmt = s"DROP TABLE IF EXISTS $database.$table"
         logger.info(s"Executing SQL statement:\n$stmt")
         executor.spark.sql(stmt)
     }
     override def migrate(executor:Executor) : Unit = ???
 
+    /**
+      * Applies the specified schema and converts all field names to lowercase. This is required when directly
+      * writing into HDFS and using Hive, since Hive only supports lower-case field names.
+      * @param df
+      * @return
+      */
+    override protected def applySchema(df:DataFrame)(implicit context:Context) : DataFrame = {
+        val outputColumns = schema.fields.map(field => df(field.name))
+        val mixedCaseDf = df.select(outputColumns:_*)
+        val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
+        df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
+    }
+
     private def partitionSpec(partition:Map[String,SingleValue])(implicit context:Context) : String = {
         PartitionSchema(partitions).partitionSpec(partition)
     }
+
 }

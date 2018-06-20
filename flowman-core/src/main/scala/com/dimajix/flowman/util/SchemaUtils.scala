@@ -85,10 +85,10 @@ object SchemaUtils {
     def toLowerCase(schema:StructType) : StructType = {
         StructType(schema.fields.map(toLowerCase))
     }
-    def toLowerCase(field:StructField) : StructField = {
+    private def toLowerCase(field:StructField) : StructField = {
         StructField(field.name.toLowerCase(Locale.ROOT), toLowerCase(field.dataType), field.nullable, field.metadata)
     }
-    def toLowerCase(dtype:DataType) : DataType = {
+    private def toLowerCase(dtype:DataType) : DataType = {
         dtype match {
             case struct:StructType => toLowerCase(struct)
             case array:ArrayType => ArrayType(toLowerCase(array.elementType),array.containsNull)

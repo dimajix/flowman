@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.nio.charset.Charset
+import java.util.Base64.Encoder
 import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -31,7 +33,13 @@ import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.util.AvroSchemaUtils
 import com.dimajix.flowman.util.SchemaUtils
+
+
+object HiveTableRelation {
+    val AVRO_SCHEMA_URL = "avro.schema.url"
+}
 
 
 class HiveTableRelation extends BaseRelation  {
@@ -191,9 +199,29 @@ class HiveTableRelation extends BaseRelation  {
       */
     override def create(executor:Executor) : Unit = {
         implicit val context = executor.context
+        val spark = executor.spark
+        val properties = this.properties
+        val fields = this.fields
+
+        // Create and save Avro schema
+        import HiveTableRelation._
+        if (properties.contains(AVRO_SCHEMA_URL)) {
+            val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
+            logger.info(s"Storing Avro schema at location $avroSchemaUrl")
+            val schema = AvroSchemaUtils.toAvro(fields)
+            val path = new Path(avroSchemaUrl)
+            val fs = path.getFileSystem(spark.sparkContext.hadoopConfiguration)
+
+            // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
+            val bytes = Charset.forName("UTF-8").encode(schema.toString(true))
+            val output = fs.create(path, true)
+            output.write(bytes.array())
+            output.close()
+        }
+
         val external = if (this.external) "EXTERNAL" else ""
         val create = s"CREATE $external TABLE $database.$table"
-        val fields = "(\n" + schema.fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
+        val columns = "(\n" + fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
         val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
         val rowFormat = Option(this.rowFormat).map(f => s"\nROW FORMAT SERDE '$f'").getOrElse("")
@@ -201,10 +229,10 @@ class HiveTableRelation extends BaseRelation  {
             Option(inputFormat).map(f => s"\nSTORED AS INPUTFORMAT '$f'" + Option(outputFormat).map(f => s"\nOUTPUTFORMAT '$f'").getOrElse("")).getOrElse("")
         )
         val location = Option(this.location).map(l => s"\nLOCATION '$l'").getOrElse("")
-        val props = if (_properties.nonEmpty) "\nTBLPROPERTIES(" + this.properties.map(kv => "\n    \"" + kv._1 + "\"=\"" + kv._2 + "\"").mkString(",") + "\n)" else ""
-        val stmt = create + fields + comment + partitionBy + rowFormat + storedAs + location + props
+        val props = if (_properties.nonEmpty) "\nTBLPROPERTIES(" + properties.map(kv => "\n    \"" + kv._1 + "\"=\"" + kv._2 + "\"").mkString(",") + "\n)" else ""
+        val stmt = create + columns + comment + partitionBy + rowFormat + storedAs + location + props
         logger.info(s"Executing SQL statement:\n$stmt")
-        executor.spark.sql(stmt)
+        spark.sql(stmt)
     }
 
     /**
@@ -228,8 +256,17 @@ class HiveTableRelation extends BaseRelation  {
     override protected def applySchema(df:DataFrame)(implicit context:Context) : DataFrame = {
         val outputColumns = schema.fields.map(field => df(field.name))
         val mixedCaseDf = df.select(outputColumns:_*)
-        val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
-        df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
+        if (needsLowerCaseSchema) {
+            val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
+            df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
+        }
+        else {
+            df
+        }
+    }
+
+    private def needsLowerCaseSchema(implicit context:Context) : Boolean = {
+        false
     }
 
     private def partitionSpec(partition:Map[String,SingleValue])(implicit context:Context) : String = {

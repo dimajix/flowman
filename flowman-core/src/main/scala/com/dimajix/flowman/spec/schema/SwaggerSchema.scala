@@ -153,14 +153,14 @@ class SwaggerSchema extends Schema {
         jsonNode match {
             case obj:ObjectNode =>
                 if (obj.get("allOf") != null) {
-                    val children = obj.get("allOf").elements()
-                    val required = children.flatMap(_.get("required").elements()).toSeq
-                    val properties = children.flatMap(_.get("properties").elements()).toSeq
-                    val desc = children.flatMap(c => Option(c.get("description"))).toSeq.headOption
+                    val children = obj.get("allOf").elements().toSeq
+                    val required = children.flatMap(_.get("required").elements().toSeq)
+                    val properties = children.flatMap(_.get("properties").fields())
+                    val desc = children.flatMap(c => Option(c.get("description"))).headOption
                     obj.without("allOf")
                     obj.set("type", TextNode.valueOf("object"))
                     obj.withArray("required").addAll(required)
-                    obj.withArray("properties").addAll(properties)
+                    properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue))
                     desc.foreach(d => obj.set("description", d))
                 }
             case _:JsonNode =>

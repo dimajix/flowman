@@ -212,5 +212,22 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
         fields(1).nullable should be (true)
         fields(1).name should be ("AddressLine")
         fields(1).ftype shouldBe an[ArrayType]
+
+        val array = fields(1).ftype.asInstanceOf[ArrayType]
+        array.containsNull should be (true)
+        array.elementType shouldBe a[StructType]
+        val struct = array.elementType.asInstanceOf[StructType]
+        struct.fields.size should be (3)
+        struct.fields(0).nullable should be (false)
+        struct.fields(0).name should be ("Latin")
+        struct.fields(0).ftype should be (StringType)
+
+        struct.fields(1).nullable should be (true)
+        struct.fields(1).name should be ("LocalSpelling")
+        struct.fields(1).ftype should be (StringType)
+
+        struct.fields(2).nullable should be (false)
+        struct.fields(2).name should be ("num")
+        struct.fields(2).ftype should be (IntegerType)
     }
 }

@@ -22,24 +22,10 @@ import java.net.URL
 import scala.collection.JavaConversions._
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.avro.Schema.Type.ARRAY
-import org.apache.avro.Schema.Type.BOOLEAN
-import org.apache.avro.Schema.Type.BYTES
-import org.apache.avro.Schema.Type.DOUBLE
-import org.apache.avro.Schema.Type.ENUM
-import org.apache.avro.Schema.Type.FIXED
-import org.apache.avro.Schema.Type.FLOAT
-import org.apache.avro.Schema.Type.INT
-import org.apache.avro.Schema.Type.LONG
-import org.apache.avro.Schema.Type.MAP
-import org.apache.avro.Schema.Type.NULL
 import org.apache.avro.Schema.Type.RECORD
-import org.apache.avro.Schema.Type.STRING
-import org.apache.avro.Schema.Type.UNION
-import org.apache.avro.Schema.{Field => AField}
-import org.apache.avro.{Schema => ASchema}
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.util.AvroSchemaUtils
 
 /**
   * Schema implementation for reading Avro schemas.
@@ -68,7 +54,7 @@ class AvroSchema extends Schema {
       * @return
       */
     override def fields(implicit context: Context): Seq[Field] = {
-        loadAvroSchema.getFields.map(fromAvroField)
+        AvroSchemaUtils.fromAvro(loadAvroSchema)
     }
 
     private def loadAvroSchema(implicit context: Context) : org.apache.avro.Schema = {
@@ -91,64 +77,6 @@ class AvroSchema extends Schema {
             throw new IllegalArgumentException("An Avro schema needs either a 'file', 'url' or a 'spec' element")
         }
 
-        if (avroSchema.getType != RECORD)
-            throw new UnsupportedOperationException("Unexpected Avro top level type")
-
         avroSchema
-    }
-
-    private def fromAvroField(field: AField) : Field = {
-        val (ftype,nullable) = fromAvroType(field.schema())
-        Field(field.name(), ftype, nullable, field.doc())
-    }
-    private def fromAvroType(schema: ASchema): (FieldType,Boolean) = {
-        schema.getType match {
-            case INT => (IntegerType, false)
-            case STRING => (StringType, false)
-            case BOOLEAN => (BooleanType, false)
-            case BYTES => (BinaryType, false)
-            case DOUBLE => (DoubleType, false)
-            case FLOAT => (FloatType, false)
-            case LONG => (LongType, false)
-            case FIXED => (BinaryType, false)
-            case ENUM => (StringType, false)
-
-            case RECORD =>
-                val fields = schema.getFields.map { f =>
-                    val (schemaType,nullable) = fromAvroType(f.schema())
-                    Field(f.name, schemaType, nullable, f.doc())
-                }
-                (StructType(fields), false)
-
-            case ARRAY =>
-                val (schemaType, nullable) = fromAvroType(schema.getElementType)
-                (ArrayType(schemaType, nullable), false)
-
-            case MAP =>
-                val (schemaType, nullable) = fromAvroType(schema.getValueType)
-                (MapType(StringType, schemaType, nullable), false)
-
-            case UNION =>
-                if (schema.getTypes.exists(_.getType == NULL)) {
-                    // In case of a union with null, eliminate it and make a recursive call
-                    val remainingUnionTypes = schema.getTypes.filterNot(_.getType == NULL)
-                    if (remainingUnionTypes.size == 1) {
-                        (fromAvroType(remainingUnionTypes.get(0))._1, true)
-                    } else {
-                        (fromAvroType(ASchema.createUnion(remainingUnionTypes))._1, true)
-                    }
-                } else schema.getTypes.map(_.getType) match {
-                    case Seq(t1) =>
-                        fromAvroType(schema.getTypes.get(0))
-                    case Seq(t1, t2) if Set(t1, t2) == Set(INT, LONG) =>
-                        (LongType, false)
-                    case Seq(t1, t2) if Set(t1, t2) == Set(FLOAT, DOUBLE) =>
-                        (DoubleType, false)
-                    case other => throw new UnsupportedOperationException(
-                        s"This mix of union types is not supported: $other")
-                }
-
-            case other => throw new UnsupportedOperationException(s"Unsupported type $other in Avro schema")
-        }
     }
 }

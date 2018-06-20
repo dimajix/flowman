@@ -34,7 +34,9 @@ object Field {
     }
 }
 
-
+/**
+  * A Field represents a single entry in a Schema or a Struct.
+  */
 class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
@@ -44,10 +46,36 @@ class Field {
     def name : String = _name
     def ftype : FieldType = _type
     def nullable : Boolean = _nullable.toBoolean
-    def description(implicit context: Context) : String = context.evaluate(_description)
+    def description : String = _description
 
+    /**
+      * Returns an appropriate (Hive) SQL type for this field. These can be directly used in CREATE TABLE statements.
+      * The SQL type might also be complex, for example in the case of StructTypes
+      * @return
+      */
     def sqlType : String = _type.sqlType
+
+    /**
+      * Returns an appropriate type name to be used for pretty printing the schema as a tree. Struct types will not
+      * be resolved
+      * @return
+      */
     def typeName : String = _type.typeName
+
+    /**
+      * Returns the Spark data type used for this field
+      * @return
+      */
     def sparkType : DataType = _type.sparkType
-    def sparkField : StructField = StructField(name, sparkType, nullable)
+
+    /**
+      * Converts the field into a Spark field
+      * @return
+      */
+    def sparkField : StructField = {
+        if (_description != null && _description.nonEmpty)
+            StructField(name, sparkType, nullable).withComment(description)
+        else
+            StructField(name, sparkType, nullable)
+    }
 }

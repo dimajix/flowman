@@ -11,6 +11,21 @@ import org.apache.velocity.app.VelocityEngine
 
 
 object Templating {
+    private object StringWrapper {
+        def concat(c1:String, c2:String) : String = {
+            c1 + c2
+        }
+        def concat(c1:String, c2:String, c3:String) : String = {
+            c1 + c2 + c3
+        }
+        def concat(c1:String, c2:String, c3:String, c4:String) : String = {
+            c1 + c2 + c3 + c4
+        }
+        def concat(c1:String, c2:String, c3:String, c4:String, c5:String) : String = {
+            c1 + c2 + c3 + c4 + c5
+        }
+    }
+
     private object SystemWrapper {
         def getenv(name:String) : String = {
             Option(System.getenv(name)).getOrElse("")
@@ -74,6 +89,7 @@ object Templating {
         context.put("Duration", DurationWrapper)
         context.put("Period", PeriodWrapper)
         context.put("System", SystemWrapper)
+        context.put("String", StringWrapper)
         context
     }
 

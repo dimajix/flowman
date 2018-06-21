@@ -114,6 +114,13 @@ class TemplatingTest extends FlatSpec with Matchers {
         evaluate("$Duration.ofHours(7)") should be ("PT7H")
     }
 
+    "String" should "provide concat functions" in {
+        evaluate("$String.concat('abc','def')") should be ("abcdef")
+        evaluate("$String.concat('abc','def', 'ghi')") should be ("abcdefghi")
+        evaluate("$String.concat('abc','def', '1', '2')") should be ("abcdef12")
+        evaluate("$String.concat('abc','def', '1', '2', '3')") should be ("abcdef123")
+    }
+
     "System" should "provide access to some system variables" in {
         val output1 = new StringWriter()
         engine.evaluate(context, output1, "test", "${System.getenv('USER')}")
@@ -138,5 +145,13 @@ class TemplatingTest extends FlatSpec with Matchers {
         val output6 = new StringWriter()
         engine.evaluate(context, output6, "test","$System.getenv('NO_SUCH_ENV', 'default')")
         output6.toString should be ("default")
+
+        val output7 = new StringWriter()
+        engine.evaluate(context, output7, "test", "$System.getenv('NO_SUCH_ENV', $System.getenv('USER'))")
+        output7.toString should be (System.getenv("USER"))
+
+        val output8 = new StringWriter()
+        engine.evaluate(context, output8, "test", """$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('USER')))""")
+        output8.toString should be ("lala/" + System.getenv("USER"))
     }
 }

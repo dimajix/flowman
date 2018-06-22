@@ -17,18 +17,14 @@
 package com.dimajix.flowman
 
 import java.io.File
-import java.io.IOException
-import java.util.UUID
 
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.spark.sql.SparkSession
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
-import org.scalatest.mockito.MockitoSugar
 
 
-trait LocalSparkSession extends LocalTempDir with MockitoSugar { this:Suite =>
+trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var spark: SparkSession = _
 
     override def beforeAll() : Unit = {
@@ -60,6 +56,9 @@ trait LocalSparkSession extends LocalTempDir with MockitoSugar { this:Suite =>
             .enableHiveSupport()
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
+
+        // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown
+        spark.emptyDataFrame.count()
     }
 
     override def afterAll() : Unit = {

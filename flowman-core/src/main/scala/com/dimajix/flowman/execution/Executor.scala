@@ -18,7 +18,10 @@ package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.namespace.Namespace
@@ -41,6 +44,17 @@ abstract class Executor {
       * @return
       */
     def spark: SparkSession
+
+    /**
+      * Returns the Spark configuration
+      */
+    def sparkConf : RuntimeConfig = spark.conf
+
+    /**
+      * Returns the Hadoop configuration as used by Spark
+      * @return
+      */
+    def hadoopConf : Configuration = spark.sparkContext.hadoopConfiguration
 
     /**
       * Returns true if a SparkSession is already available

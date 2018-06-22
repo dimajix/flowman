@@ -16,6 +16,11 @@
 
 package com.dimajix.flowman
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+
 package object util {
     def splitSettings(settings: Seq[String]) : Seq[(String,String)] = {
         settings.map(splitSetting)
@@ -23,5 +28,30 @@ package object util {
     def splitSetting(setting: String) : (String,String) = {
         val sep = setting.indexOf('=')
         (setting.take(sep), setting.drop(sep + 1).trim.replaceAll("^\"|\"$","").trim)
+    }
+
+    def tryWith[A <: AutoCloseable, B](resource: A)(doWork: A => B): B = {
+        try {
+            doWork(resource)
+        }
+        finally {
+            if (resource != null) {
+                resource.close()
+            }
+        }
+    }
+
+    def TryWith[A <: AutoCloseable, B](resource: A)(doWork: A => B): Try[B] = {
+        try {
+            Success(doWork(resource))
+        }
+        catch {
+            case e: Exception => Failure(e)
+        }
+        finally {
+            if (resource != null) {
+                resource.close()
+            }
+        }
     }
 }

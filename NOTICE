@@ -83,3 +83,9 @@ Swagger
     * license/LICENSE-swagger.txt (Apache 2.0 License)
   * HOMEPAGE
     * https://swagger.io/
+
+Ganymed SSH2
+  * LICENSE
+    * license/LICENSE-ganymed-ssh2.txt (BSD License)
+  * HOMEPAGE
+    * http://www.ganymed.ethz.ch/ssh2/

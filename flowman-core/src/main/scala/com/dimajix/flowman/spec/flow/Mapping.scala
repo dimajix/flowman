@@ -67,7 +67,7 @@ abstract class Mapping {
     @JsonIgnore private var _name:String = ""
 
     /**
-      * Returns the name of the output
+      * Returns the name of the mapping
       * @return
       */
     def name : String = _name

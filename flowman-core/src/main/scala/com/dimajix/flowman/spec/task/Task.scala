@@ -42,6 +42,7 @@ object Task extends ExtensionRegistry[Task] {
     new JsonSubTypes.Type(name = "copy-file", value = classOf[CopyFileTask]),
     new JsonSubTypes.Type(name = "merge-files", value = classOf[MergeFilesTask]),
     new JsonSubTypes.Type(name = "delete-file", value = classOf[DeleteFileTask]),
+    new JsonSubTypes.Type(name = "sftp-upload", value = classOf[SftpUploadTask]),
     new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask])
 ))
 abstract class Task {

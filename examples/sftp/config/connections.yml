@@ -1,0 +1,7 @@
+connections:
+  sftp:
+    host: ${sftp_host}
+    port: ${sftp_port}
+    username: ${sftp_username}
+    password: ${sftp_password}
+    keyFile: ${sftp_keyfile}

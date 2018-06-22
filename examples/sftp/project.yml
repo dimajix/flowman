@@ -1,0 +1,6 @@
+name: "weather"
+version: "1.0"
+
+modules:
+ - job
+ - config

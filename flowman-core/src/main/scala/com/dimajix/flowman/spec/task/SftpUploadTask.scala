@@ -124,6 +124,7 @@ class SftpUploadTask extends BaseTask {
 
     private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
         logger.info(s"Uploading file '$src' to sftp remote destination '$dst'")
+        ensureDirectory(client, dst.getParent)
         tryWith(src.open()) { input =>
             val handle = client.createFile(dst.toString)
             tryWith(new SFTPOutputStream(handle)) { output =>
@@ -135,6 +136,7 @@ class SftpUploadTask extends BaseTask {
 
     private def uploadMergedFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
         logger.info(s"Uploading merged directory '$src' to sftp remote destination '$dst'")
+        ensureDirectory(client, dst.getParent)
         val handle = client.createFile(dst.toString)
         tryWith(new SFTPOutputStream(handle)) { output =>
             src.list()
@@ -151,11 +153,21 @@ class SftpUploadTask extends BaseTask {
 
     private def uploadDirectory(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
         logger.info(s"Uploading directory '$src' to sftp remote destination '$dst'")
+        ensureDirectory(client, dst)
         src.list()
             .filter(_.isFile())
             .foreach(file => {
                 uploadSingleFile(client, file, new Path(dst, file.filename()))
             })
+    }
+
+    private def ensureDirectory(client: SFTPv3Client, path: Path) : Unit = {
+        if (!exists(client, path)) {
+            if (!path.getParent().isRoot) {
+                ensureDirectory(client, path.getParent)
+            }
+            client.mkdir(path.toString, BigInt("700",8).intValue())
+        }
     }
 
     private def exists(client:SFTPv3Client, file:Path) : Boolean = {
@@ -180,7 +192,7 @@ class SftpUploadTask extends BaseTask {
 
         logger.info(s"Connecting via SFTP to $host:$port")
         val connection = new Connection(host, port)
-        val knownHosts = new PortAwareKnownHosts(new File("${user.home}/.ssh/known_hosts"))
+        val knownHosts = new PortAwareKnownHosts(new File(System.getProperty("user.home") + "/.ssh/known_hosts"))
         connection.connect(new ServerHostKeyVerifier {
             @throws[Exception]
             def verifyServerHostKey (hostname: String, port: Int, serverHostKeyAlgorithm: String, serverHostKey: Array[Byte]): Boolean = {

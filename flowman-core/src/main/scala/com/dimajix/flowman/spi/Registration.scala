@@ -21,6 +21,7 @@ import scala.collection.mutable
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMatchProcessor
 
+import com.dimajix.flowman.annotation.ConnectionType
 import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.annotation.OutputType
 import com.dimajix.flowman.annotation.RelationType
@@ -30,6 +31,7 @@ import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.namespace.storage.Store
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
@@ -77,7 +79,8 @@ object Registration {
         SchemaProvider,
         TaskProvider,
         RunnerProvider,
-        StoreProvider
+        StoreProvider,
+        ConnectionProvider
     )
     private val _loaders:mutable.Set[ClassLoader] = mutable.Set()
 
@@ -153,6 +156,14 @@ object Registration {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[StoreType])
                                 Store.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Store]])
+                            }
+                        }
+                    )
+                    .matchClassesWithAnnotation(classOf[ConnectionType],
+                        new ClassAnnotationMatchProcessor {
+                            override def processMatch(aClass: Class[_]): Unit = {
+                                val annotation = aClass.getAnnotation(classOf[ConnectionType])
+                                Connection.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Connection]])
                             }
                         }
                     )

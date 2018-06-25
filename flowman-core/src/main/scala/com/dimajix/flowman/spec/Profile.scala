@@ -16,16 +16,38 @@
 
 package com.dimajix.flowman.spec
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.util.StdConverter
 
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.util.splitSettings
 
 
+object Profile {
+    class NameResolver extends StdConverter[Map[String,Profile],Map[String,Profile]] {
+        override def convert(value: Map[String,Profile]): Map[String,Profile] = {
+            value.foreach(kv => kv._2._name = kv._1)
+            value
+        }
+    }
+}
+
+
 class Profile {
+    @JsonIgnore private var _name:String = ""
     @JsonProperty(value="enabled") private var _enabled : Boolean = true
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
+    @JsonDeserialize(converter=classOf[Connection.NameResolver])
     @JsonProperty(value="connections") private var _databases: Map[String,Connection] = Map()
+
+    /**
+      * Returns the name of the profile
+      * @return
+      */
+    def name : String = _name
 
     /**
       * Returns true if the profile is enabled

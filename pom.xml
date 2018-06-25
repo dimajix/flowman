@@ -655,6 +655,12 @@
                 <artifactId>antlr-runtime</artifactId>
                 <version>${antlr-runtime.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>ch.ethz.ganymed</groupId>
+                <artifactId>ganymed-ssh2</artifactId>
+                <version>262</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

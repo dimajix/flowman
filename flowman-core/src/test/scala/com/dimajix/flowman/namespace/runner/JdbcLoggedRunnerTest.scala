@@ -25,8 +25,8 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.namespace.Namespace
-import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.schema.StringType
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
@@ -56,7 +56,7 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .setName("job")
             .build()
         val ns = Namespace.builder()
-            .addConnection("logger", Connection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
+            .addConnection("logger", JdbcConnection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
             .build()
         val session = Session.builder()
             .withNamespace(ns)
@@ -107,7 +107,7 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .addParameter("p0", StringType)
             .build()
         val ns = Namespace.builder()
-            .addConnection("logger", Connection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
+            .addConnection("logger", JdbcConnection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
             .build()
         val session = Session.builder()
             .withNamespace(ns)

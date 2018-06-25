@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import com.dimajix.flowman.namespace.runner.Runner
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
@@ -54,6 +55,7 @@ object ObjectMapper {
         val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val schemaTypes = Schema.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val taskTypes = Task.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val connectionTypes = Connection.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new JacksonMapper(new YAMLFactory())
         mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
         mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
@@ -64,6 +66,7 @@ object ObjectMapper {
         mapper.registerSubtypes(outputTypes:_*)
         mapper.registerSubtypes(schemaTypes:_*)
         mapper.registerSubtypes(taskTypes:_*)
+        mapper.registerSubtypes(connectionTypes:_*)
         mapper
     }
 

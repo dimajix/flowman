@@ -1,0 +1,7 @@
+environment:
+  - sftp_username=$System.getenv("SFTP_USERNAME")
+  - sftp_password=$System.getenv("SFTP_PASSWORD")
+  - sftp_keyfile=$System.getenv("SFTP_KEYFILE")
+  - sftp_host=$System.getenv("SFTP_HOST")
+  - sftp_port=$System.getenv("SFTP_PORT", "22")
+  - sftp_target=$System.getenv("SFTP_TARGET", "/tmp/flowman-sftp-target")

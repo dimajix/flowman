@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec
+package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 
 
-object Connection {
+object JdbcConnection {
     def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : Connection = {
-        val connection = new Connection
+        val connection = new JdbcConnection
         connection._driver = driver
         connection._url = url
         connection._username = username
@@ -33,12 +33,13 @@ object Connection {
     }
 }
 
-class Connection {
+
+class JdbcConnection extends Connection  {
     @JsonProperty(value="driver", required=true) private var _driver:String = _
     @JsonProperty(value="url", required=true) private var _url:String = _
-    @JsonProperty(value="username", required=true) private var _username:String = _
-    @JsonProperty(value="password", required=true) private var _password:String = _
-    @JsonProperty(value="properties") private var _properties:Map[String,String] = Map()
+    @JsonProperty(value="username", required=false) private var _username:String = _
+    @JsonProperty(value="password", required=false) private var _password:String = _
+    @JsonProperty(value="properties", required=false) private var _properties:Map[String,String] = Map()
 
     def driver(implicit context: Context) : String = context.evaluate(_driver)
     def url(implicit context: Context) : String = context.evaluate(_url)

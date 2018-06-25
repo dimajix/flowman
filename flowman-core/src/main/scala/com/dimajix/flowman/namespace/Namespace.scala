@@ -21,15 +21,16 @@ import java.io.InputStream
 import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.namespace.runner.SimpleRunner
 import com.dimajix.flowman.namespace.storage.Store
-import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.util.splitSettings
 
 
@@ -116,6 +117,7 @@ class Namespace {
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
+    @JsonDeserialize(converter=classOf[Connection.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
     @JsonProperty(value="runner") private var _runner : Runner = new SimpleRunner()
     @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()

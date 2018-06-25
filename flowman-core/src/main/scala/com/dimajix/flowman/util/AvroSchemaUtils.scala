@@ -33,6 +33,7 @@ import org.apache.avro.Schema.Type.RECORD
 import org.apache.avro.Schema.Type.STRING
 import org.apache.avro.Schema.Type.UNION
 import org.apache.avro.Schema.{Field => AField}
+import org.apache.avro.SchemaBuilder
 import org.apache.avro.{Schema => ASchema}
 
 import com.dimajix.flowman.spec.schema.ArrayType
@@ -63,15 +64,19 @@ object AvroSchemaUtils {
       * @return
       */
     def toAvro(schema:Seq[Field]) : ASchema = {
-        ASchema.createRecord("topLevelRecord", null, "", false, schema.map(toAvro))
+        val record = ASchema.createRecord("topLevelRecord", null, "", false)
+        record.setFields(schema.map(toAvro))
+        record
     }
-    def toAvro(field:Field) : AField = toAvro(field, "")
-    def toAvro(field:Field, ns:String) : AField = {
+    def toAvro(field:Field) : AField = {
+        toAvro(field, "")
+    }
+    private def toAvro(field:Field, ns:String) : AField = {
         val schema = toAvro(field.ftype, ns, field.name, field.nullable)
         val default = null // if (field.nullable) NULL else null
         new AField(field.name, schema, field.description, default)
     }
-    def toAvro(ftype:FieldType, ns:String, name:String, nullable:Boolean) : ASchema = {
+    private def toAvro(ftype:FieldType, ns:String, name:String, nullable:Boolean) : ASchema = {
         val atype = ftype match {
             case ArrayType(elementType, containsNull) => ASchema.createArray(toAvro(elementType, ns, name, containsNull))
             case BinaryType => ASchema.create(BYTES)
@@ -92,7 +97,9 @@ object AvroSchemaUtils {
             case StringType => ASchema.create(STRING)
             case StructType(fields) => {
                 val nestedNs = ns + "." + name
-                ASchema.createRecord(name, null, nestedNs, false, fields.map(f => toAvro(f, nestedNs)))
+                val record = ASchema.createRecord(name, null, nestedNs, false)
+                record.setFields(fields.map(f => toAvro(f, nestedNs)))
+                record
             }
 
             //case DurationType =>
@@ -104,7 +111,7 @@ object AvroSchemaUtils {
         }
 
         if (nullable)
-            ASchema.createUnion(atype, ASchema.create(NULL))
+            ASchema.createUnion(Seq(atype, ASchema.create(NULL)))
         else
             atype
     }

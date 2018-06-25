@@ -33,6 +33,12 @@ object Templating {
         def getenv(name:String, default:String) : String = {
             Option(System.getenv(name)).getOrElse(default)
         }
+        def getProperty(name:String) : String = {
+            System.getProperty(name, "")
+        }
+        def getProperty(name:String, default:String) : String = {
+            System.getProperty(name, default)
+        }
     }
 
     private object TimestampWrapper {

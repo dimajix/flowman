@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
@@ -85,6 +86,7 @@ class Module {
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
+    @JsonDeserialize(converter=classOf[Connection.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
     @JsonDeserialize(converter=classOf[Relation.NameResolver])
     @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()

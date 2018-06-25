@@ -36,6 +36,8 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.connection
+import com.dimajix.flowman.spec.connection.SshConnection
 import com.dimajix.flowman.util.tryWith
 
 
@@ -78,7 +80,7 @@ class SftpUploadTask extends BaseTask {
 
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        val credentials = context.getConnection(this.connection)
+        val credentials = context.getConnection(this.connection).asInstanceOf[SshConnection]
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
         val fs = FileSystem(executor.hadoopConf)
@@ -184,7 +186,7 @@ class SftpUploadTask extends BaseTask {
         }
     }
 
-    private def connect(host:String, port:Int, credentials:com.dimajix.flowman.spec.Connection)(implicit context: Context) : Connection = {
+    private def connect(host:String, port:Int, credentials:SshConnection)(implicit context: Context) : Connection = {
         val username = credentials.username
         val password = credentials.password
         val keyFile = credentials.keyFile

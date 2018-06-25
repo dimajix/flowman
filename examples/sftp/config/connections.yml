@@ -1,5 +1,6 @@
 connections:
   sftp:
+    kind: sftp
     host: ${sftp_host}
     port: ${sftp_port}
     username: ${sftp_username}

@@ -23,8 +23,8 @@ import scala.collection.mutable
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
-import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.Profile
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.util.Templating
 
 

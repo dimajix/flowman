@@ -35,8 +35,9 @@ import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.task.Job
 
 
@@ -63,7 +64,7 @@ private object JdbcLoggedRepository {
    )
 }
 
-private class JdbcLoggedRepository(connection: Connection, val profile:JdbcProfile)(implicit context:Context) {
+private class JdbcLoggedRepository(connection: JdbcConnection, val profile:JdbcProfile)(implicit context:Context) {
     import profile.api._
     import JdbcLoggedRepository._
 
@@ -261,10 +262,7 @@ class JdbcLoggedRunner extends AbstractRunner {
         implicit val icontext = context
 
         // Get Connection
-        val connection = context.getConnection(this.connection)
-        if (connection == null)
-            throw new NoSuchElementException(s"Connection '${this.connection}' not defined.")
-
+        val connection = context.getConnection(this.connection).asInstanceOf[JdbcConnection]
         val derbyPattern = """.*\.derby\..*""".r
         val h2Pattern = """.*\.h2\..*""".r
         val mysqlPattern = """.*\.mysql\..*""".r

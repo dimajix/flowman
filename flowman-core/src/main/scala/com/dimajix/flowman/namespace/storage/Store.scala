@@ -19,9 +19,9 @@ package com.dimajix.flowman.namespace.storage
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
-import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spi.ExtensionRegistry
 

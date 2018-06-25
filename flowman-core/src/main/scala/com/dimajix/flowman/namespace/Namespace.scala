@@ -27,10 +27,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.namespace.runner.SimpleRunner
 import com.dimajix.flowman.namespace.storage.Store
-import com.dimajix.flowman.spec.Connection
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.util.splitSettings
 
 

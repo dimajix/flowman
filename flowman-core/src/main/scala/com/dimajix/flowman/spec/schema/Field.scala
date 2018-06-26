@@ -24,12 +24,13 @@ import com.dimajix.flowman.execution.Context
 
 
 object Field {
-    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String="") : Field = {
+    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null) : Field = {
         val field = new Field()
         field._name = name
         field._type = ftype
         field._nullable = nullable.toString
         field._description = description
+        field._default = default
         field
     }
 }
@@ -42,11 +43,13 @@ class Field {
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
     @JsonProperty(value="nullable", required = true) private var _nullable: String = "true"
     @JsonProperty(value="description", required = false) private var _description: String = _
+    @JsonProperty(value="default", required = false) private var _default: String = _
 
     def name : String = _name
     def ftype : FieldType = _type
     def nullable : Boolean = _nullable.toBoolean
     def description : String = _description
+    def default : String = _default
 
     /**
       * Returns an appropriate (Hive) SQL type for this field. These can be directly used in CREATE TABLE statements.

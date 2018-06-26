@@ -33,12 +33,19 @@ import org.apache.avro.Schema.Type.RECORD
 import org.apache.avro.Schema.Type.STRING
 import org.apache.avro.Schema.Type.UNION
 import org.apache.avro.Schema.{Field => AField}
-import org.apache.avro.SchemaBuilder
 import org.apache.avro.{Schema => ASchema}
+import org.codehaus.jackson.JsonNode
+import org.codehaus.jackson.node.BooleanNode
+import org.codehaus.jackson.node.DoubleNode
+import org.codehaus.jackson.node.IntNode
+import org.codehaus.jackson.node.LongNode
+import org.codehaus.jackson.node.NullNode
+import org.codehaus.jackson.node.TextNode
 
 import com.dimajix.flowman.spec.schema.ArrayType
 import com.dimajix.flowman.spec.schema.BinaryType
 import com.dimajix.flowman.spec.schema.BooleanType
+import com.dimajix.flowman.spec.schema.ByteType
 import com.dimajix.flowman.spec.schema.CharType
 import com.dimajix.flowman.spec.schema.DateType
 import com.dimajix.flowman.spec.schema.DecimalType
@@ -59,7 +66,8 @@ import com.dimajix.flowman.spec.schema.VarcharType
 
 object AvroSchemaUtils {
     /**
-      * Convert a list of Flowman fields to an Avro (record) schema
+      * Convert a list of Flowman fields to an Avro (record) schema. Note that this logic should be compatible
+      * to the Spark-Avro implementation!
       * @param schema
       * @return
       */
@@ -73,7 +81,7 @@ object AvroSchemaUtils {
     }
     private def toAvro(field:Field, ns:String) : AField = {
         val schema = toAvro(field.ftype, ns, field.name, field.nullable)
-        val default = null // if (field.nullable) NULL else null
+        val default = toAvroDefault(field)
         new AField(field.name, schema, field.description, default)
     }
     private def toAvro(ftype:FieldType, ns:String, name:String, nullable:Boolean) : ASchema = {
@@ -85,6 +93,8 @@ object AvroSchemaUtils {
             case VarcharType(n) => ASchema.create(STRING)
             case DoubleType => ASchema.create(DOUBLE)
             case FloatType => ASchema.create(FLOAT)
+            case ByteType => ASchema.create(INT)
+            case ShortType => ASchema.create(INT)
             case IntegerType => ASchema.create(INT)
             case LongType => ASchema.create(LONG)
             case MapType(keyType, valueType, containsNull) => {
@@ -93,7 +103,6 @@ object AvroSchemaUtils {
                 ASchema.createMap(toAvro(valueType, ns, name, containsNull))
             }
             case NullType => ASchema.create(NULL)
-            case ShortType => ASchema.create(INT)
             case StringType => ASchema.create(STRING)
             case StructType(fields) => {
                 val nestedNs = ns + "." + name
@@ -106,7 +115,6 @@ object AvroSchemaUtils {
             case TimestampType => ASchema.create(LONG)
             case DateType => ASchema.create(LONG)
             case DecimalType(p,s) => ASchema.create(STRING)
-            //case ByteType =>
             case _ => throw new IllegalArgumentException(s"Type $ftype not supported in Avro schema")
         }
 
@@ -115,9 +123,33 @@ object AvroSchemaUtils {
         else
             atype
     }
+    private def toAvroDefault(field:Field) : JsonNode = {
+        if (field.default != null) {
+            field.ftype match {
+                case StringType => new TextNode(field.default)
+                case CharType(_) => new TextNode(field.default)
+                case VarcharType(_) => new TextNode(field.default)
+                case BinaryType => new TextNode(field.default)
+                case IntegerType => new IntNode(field.default.toInt)
+                case ByteType => new IntNode(field.default.toInt)
+                case ShortType => new IntNode(field.default.toInt)
+                case LongType => new LongNode(field.default.toLong)
+                case FloatType => new DoubleNode(field.default.toDouble)
+                case DoubleType => new DoubleNode(field.default.toDouble)
+                case DecimalType(_,_) => new TextNode(field.default)
+                case BooleanType => if (field.default.toBoolean) BooleanNode.TRUE else BooleanNode.FALSE
+                case NullType => NullNode.instance
+                case _ => null
+            }
+        }
+        else {
+            null
+        }
+    }
 
     /**
-      * Convert an Avro (record) schema to a list of Flowman fields
+      * Convert an Avro (record) schema to a list of Flowman fields. Note that this logic should be
+      * compatible to from Spark-Avro implementation!
       * @param schema
       * @return
       */

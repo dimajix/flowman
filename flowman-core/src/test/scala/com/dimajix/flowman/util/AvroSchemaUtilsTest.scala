@@ -139,12 +139,33 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
               |  "name" : "topLevelRecord",
               |  "fields" : [ {
               |    "name" : "str_field",
+              |    "type" : "string"
+              |  }, {
+              |    "name" : "int_field",
+              |    "type" : [ "int", "null" ]
+              |  } ]
+              |}""".stripMargin)
+    }
+
+    it should "support doc strings" in {
+        val schema = Seq(
+            Field("str_field", StringType, false, "This is a doc"),
+            Field("int_field", IntegerType, true, "This is a nullable doc")
+        )
+
+        val result = AvroSchemaUtils.toAvro(schema)
+        result.toString(true) should be (
+            """{
+              |  "type" : "record",
+              |  "name" : "topLevelRecord",
+              |  "fields" : [ {
+              |    "name" : "str_field",
               |    "type" : "string",
-              |    "doc" : ""
+              |    "doc" : "This is a doc"
               |  }, {
               |    "name" : "int_field",
               |    "type" : [ "int", "null" ],
-              |    "doc" : ""
+              |    "doc" : "This is a nullable doc"
               |  } ]
               |}""".stripMargin)
     }

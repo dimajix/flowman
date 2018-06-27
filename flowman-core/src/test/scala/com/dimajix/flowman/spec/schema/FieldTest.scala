@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.schema
 
+import org.apache.spark.sql.types.MetadataBuilder
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -76,6 +77,46 @@ class FieldTest extends FlatSpec with Matchers {
         result.nullable should be (false)
         result.name should be ("lala")
         result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, false))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+
+    it should "support documentation" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |description: Some description
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.description should be ("Some description")
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true).withComment("Some description"))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+
+    it should "support sizes" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |size: 27
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.size should be (27)
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().putLong("size", 27).build()))
         result.sparkType should be (org.apache.spark.sql.types.StringType)
         result.ftype should be (StringType)
     }

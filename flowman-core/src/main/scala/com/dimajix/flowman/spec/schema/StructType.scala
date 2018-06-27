@@ -26,9 +26,7 @@ case class StructType(
                      ) extends ContainerType {
     def this() = { this(Seq()) }
     override def sparkType : DataType = {
-        org.apache.spark.sql.types.StructType(
-            fields.map(f => StructField(f.name, f.sparkType, f.nullable))
-        )
+        org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
     }
     override def sqlType : String = {
         "struct<" + fields.map(f => f.name + ":" + f.sqlType).mkString(",") + ">"

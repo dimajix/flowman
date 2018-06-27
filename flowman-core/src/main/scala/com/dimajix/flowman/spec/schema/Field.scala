@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StructField
 
 import com.dimajix.flowman.execution.Context
@@ -43,12 +44,14 @@ class Field {
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
     @JsonProperty(value="nullable", required = true) private var _nullable: String = "true"
     @JsonProperty(value="description", required = false) private var _description: String = _
+    @JsonProperty(value="size", required = false) private var _size: String = _
     @JsonProperty(value="default", required = false) private var _default: String = _
 
     def name : String = _name
     def ftype : FieldType = _type
     def nullable : Boolean = _nullable.toBoolean
     def description : String = _description
+    def size : Int = Option(_size).map(_.trim).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
     def default : String = _default
 
     /**
@@ -72,13 +75,13 @@ class Field {
     def sparkType : DataType = _type.sparkType
 
     /**
-      * Converts the field into a Spark field
+      * Converts the field into a Spark field including metadata containing the fields description and size
       * @return
       */
     def sparkField : StructField = {
-        if (_description != null && _description.nonEmpty)
-            StructField(name, sparkType, nullable).withComment(description)
-        else
-            StructField(name, sparkType, nullable)
+        val metadata = new MetadataBuilder()
+        Option(description).map(_.trim).filter(_.nonEmpty).foreach(d => metadata.putString("comment", d))
+        Option(size).filter(_ > 0).foreach(s => metadata.putLong("size", s))
+        StructField(name, sparkType, nullable, metadata.build())
     }
 }

@@ -17,18 +17,17 @@
 package com.dimajix.flowman.testing
 
 import java.io.File
-import java.io.IOException
-import java.util.UUID
 
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
 
 
 trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var spark: SparkSession = _
+    val conf = new SparkConf
 
     override def beforeAll() : Unit = {
         super.beforeAll()
@@ -56,6 +55,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             .config(ConfVars.METASTOREURIS.varname, "")
             .config("spark.sql.streaming.checkpointLocation", checkpointPath.toString)
             .config("spark.sql.warehouse.dir", localWarehousePath)
+            .config(conf)
             .enableHiveSupport()
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")

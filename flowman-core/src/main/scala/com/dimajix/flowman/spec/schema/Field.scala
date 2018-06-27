@@ -21,8 +21,6 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StructField
 
-import com.dimajix.flowman.execution.Context
-
 
 object Field {
     def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null, size:Option[Int] = None) : Field = {
@@ -45,8 +43,8 @@ class Field {
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
     @JsonProperty(value="nullable", required = true) private var _nullable: String = "true"
     @JsonProperty(value="description", required = false) private var _description: String = _
-    @JsonProperty(value="size", required = false) private var _size: String = _
     @JsonProperty(value="default", required = false) private var _default: String = _
+    @JsonProperty(value="size", required = false) private var _size: String = _
 
     /**
       * The name of the field

@@ -1,6 +1,6 @@
 mappings:
   measurements-raw:
-    kind: read
+    kind: read-relation
     source: measurements-raw
     partitions:
       year:

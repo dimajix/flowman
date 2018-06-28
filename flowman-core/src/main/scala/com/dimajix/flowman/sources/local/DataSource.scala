@@ -36,16 +36,15 @@ case class DataSource(spark:SparkSession,
     private val logger = LoggerFactory.getLogger(classOf[DataSource])
     private lazy val providingClass: Class[_ <: RelationProvider] = lookupDataSource(format)
 
-    def read(paths:Seq[String]) : DataFrame = {
-        val files = paths.map(new File(_))
+    def read(files:Seq[File]) : DataFrame = {
         val provider = providingClass.newInstance()
         val dataSchema = schema.getOrElse(provider.inferSchema(spark, options, files).get)
         val relation = provider.createRelation(spark, options, files, dataSchema)
         relation.read()
     }
 
-    def write(path:String, df:DataFrame, mode:SaveMode) : Unit = {
-        val files = Seq(new File(path))
+    def write(file:File, df:DataFrame, mode:SaveMode) : Unit = {
+        val files = Seq(file)
         val provider = providingClass.newInstance()
         val dataSchema = schema.getOrElse(df.schema)
         val relation = provider.createRelation(spark, options, files, dataSchema)

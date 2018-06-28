@@ -19,6 +19,11 @@ package com.dimajix.flowman.sources.local.csv
 import java.io.File
 
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
@@ -33,6 +38,28 @@ class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with Lo
         df.writeLocal
             .format("csv")
             .option("encoding", "UTF-8")
-            .save(new File(tempDir, "lala.csv").toString, SaveMode.Overwrite)
+            .save(new File(tempDir, "lala.csv"), SaveMode.Overwrite)
+    }
+
+    it should "support reading CSV files" in {
+        val df = spark.readLocal
+            .format("csv")
+            .schema(StructType(
+                StructField("int_field", IntegerType) ::
+                StructField("str_field", StringType) ::
+                StructField("double_field", DoubleType) ::
+                Nil
+            ))
+            .option("encoding", "UTF-8")
+            .load(new File(tempDir, "lala.csv"))
+        val result = df
+        result.count() should be (2)
+        val rows = result.collect()
+        rows(0).getInt(0) should be (1)
+        rows(0).getString(1) should be ("lala")
+        rows(0).getDouble(2) should be (1.2)
+        rows(1).getInt(0) should be (2)
+        rows(1).getString(1) should be ("lolo")
+        rows(1).getDouble(2) should be (2.3)
     }
 }

@@ -65,7 +65,7 @@ class LocalRelation extends BaseRelation {
 
         val rawData = reader
             .format(format)
-            .load(inputFiles.map(_.toUri.getPath):_*)
+            .load(inputFiles.map(p => new File(p.toUri)):_*)
 
         SchemaUtils.applySchema(rawData, schema)
     }
@@ -80,7 +80,8 @@ class LocalRelation extends BaseRelation {
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
         implicit val context = executor.context
 
-        val outputPath  = collector(executor).resolve(partition.mapValues(_.value)).toUri.getPath
+        val outputPath  = collector(executor).resolve(partition.mapValues(_.value))
+        val outputFile = new File(outputPath.toUri)
 
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
@@ -91,7 +92,7 @@ class LocalRelation extends BaseRelation {
 
         writer.format(format)
             .mode(mode)
-            .save(outputPath.toString)
+            .save(outputFile)
     }
 
     /**

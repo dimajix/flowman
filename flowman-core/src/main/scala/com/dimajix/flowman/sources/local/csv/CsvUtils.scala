@@ -16,29 +16,8 @@
 
 package com.dimajix.flowman.sources.local.csv
 
-import com.univocity.parsers.csv.CsvFormat
-import com.univocity.parsers.csv.CsvWriterSettings
-
 
 object CsvUtils {
-    def createWriterSettings(options:CsvOptions) : CsvWriterSettings = {
-        val format = new CsvFormat
-        format.setLineSeparator(options.newline)
-        format.setDelimiter(options.delimiter)
-        format.setQuote(options.quote)
-        format.setQuoteEscape(options.escape)
-        val settings = new CsvWriterSettings
-        settings.setFormat(format)
-        settings.setQuoteAllFields(options.quoteAll)
-        settings.setQuoteEscapingEnabled(options.escapeQuotes)
-        settings.setSkipEmptyLines(true)
-        settings.setNullValue(options.nullValue)
-        settings.setEmptyValue(options.nullValue)
-        settings.setIgnoreLeadingWhitespaces(options.ignoreLeadingWhiteSpaceFlag)
-        settings.setIgnoreTrailingWhitespaces(options.ignoreTrailingWhiteSpaceFlag)
-        settings
-    }
-
     /**
       * Helper method that converts string representation of a character to actual character.
       * It handles some Java escaped strings and throws exception if given string is longer than one
@@ -65,5 +44,33 @@ object CsvUtils {
         } else {
             throw new IllegalArgumentException(s"Delimiter cannot be more than one character: $str")
         }
+    }
+
+    /**
+      * Filter ignorable rows for CSV iterator (lines empty and starting with `comment`).
+      * This is currently being used in CSV reading path and CSV schema inference.
+      */
+    def filterCommentAndEmpty(iter: Iterator[String], options: CsvOptions): Iterator[String] = {
+        iter.filter { line =>
+            line.trim.nonEmpty && !line.startsWith(options.comment.toString)
+        }
+    }
+
+    /**
+      * Drop header line so that only data can remain.
+      * This is similar with `filterHeaderLine` above and currently being used in CSV reading path.
+      */
+    def dropHeaderLine(iter: Iterator[String], options: CsvOptions): Iterator[String] = {
+        val nonEmptyLines = if (options.isCommentSet) {
+            val commentPrefix = options.comment.toString
+            iter.dropWhile { line =>
+                line.trim.isEmpty || line.trim.startsWith(commentPrefix)
+            }
+        } else {
+            iter.dropWhile(_.trim.isEmpty)
+        }
+
+        if (nonEmptyLines.hasNext) nonEmptyLines.drop(1)
+        iter
     }
 }

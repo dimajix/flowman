@@ -21,7 +21,11 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
 
+import scala.collection.JavaConversions._
+import scala.io.Source
+
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.types.StructType
@@ -34,7 +38,10 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
 
     override def schema: StructType = mschema
 
-    override def read(): DataFrame = ???
+    override def read(): DataFrame = {
+        val rows = files.flatMap(readFile)
+        sqlContext.createDataFrame(rows.toList, schema)
+    }
 
     override def write(df: DataFrame, mode: SaveMode): Unit = {
         val outputFile = files.head
@@ -65,5 +72,11 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
             outputWriter.close()
             outputStream.close()
         }
+    }
+
+    private def readFile(file:File) : Iterator[Row] = {
+        val lines = Source.fromFile(file, options.encoding).getLines()
+        val parser = new UnivocityReader(schema, options)
+        UnivocityReader.parseIterator(lines, parser.options.headerFlag, parser, schema)
     }
 }

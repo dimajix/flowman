@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.sources.local
 
+import java.io.File
 import java.util.Locale
 
 import scala.collection.JavaConverters._
@@ -89,13 +90,13 @@ class DataFrameWriter(df:DataFrame) {
         this
     }
 
-    def save(path: String): Unit = {
+    def save(path: File): Unit = {
         save(path, mode)
     }
 
     /**
       */
-    def save(path: String, mode:SaveMode): Unit = {
+    def save(path: File, mode:SaveMode): Unit = {
         DataSource.apply(
             df.sparkSession,
             format,

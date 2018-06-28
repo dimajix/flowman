@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.sources.local
 
+import java.io.File
+
 import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.DataFrame
@@ -93,14 +95,14 @@ class DataFrameReader(spark:SparkSession) {
       * Loads input in as a `DataFrame`, for data sources that require a path (e.g. data backed by
       * a local or distributed file system).
       */
-    def load(path: String): DataFrame = {
-        option("path", path).load(Seq.empty: _*) // force invocation of `load(...varargs...)`
+    def load(path: File): DataFrame = {
+        load(Seq(path):_*) // force invocation of `load(...varargs...)`
     }
 
     /**
       * Loads input in as a `DataFrame`, for data sources that support multiple paths.
       */
-    def load(paths: String*): DataFrame = {
+    def load(paths: File*): DataFrame = {
             DataSource.apply(
                 spark,
                 format,

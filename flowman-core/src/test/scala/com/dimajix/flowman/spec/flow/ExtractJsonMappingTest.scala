@@ -55,6 +55,41 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
               |               type: string
               |             - name: i
               |               type: Integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        project.mappings.size should be (1)
+        project.mappings.contains("m0") should be (true)
+        val mapping = project.mappings("m0")
+        mapping shouldBe an[ExtractJsonMapping]
+    }
+
+    it should "work with an explicit schema" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+              |    schema:
+              |      fields:
+              |        - name: s
+              |          type: String
+              |        - name: i
+              |          type: Integer
+              |        - name: st
+              |          type:
+              |            kind: struct
+              |            fields:
+              |             - name: lolo
+              |               type: string
+              |             - name: i
+              |               type: Integer
               |        - name: a
               |          type:
               |            kind: array
@@ -79,14 +114,14 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
-            StructField("i", IntegerType, true) ::
-            StructField("st", StructType(
-                StructField("lolo", StringType, true) ::
                 StructField("i", IntegerType, true) ::
+                StructField("st", StructType(
+                    StructField("lolo", StringType, true) ::
+                        StructField("i", IntegerType, true) ::
+                        Nil
+                )) ::
+                StructField("a", ArrayType(DoubleType), true) ::
                 Nil
-            )) ::
-            StructField("a", ArrayType(DoubleType), true) ::
-            Nil
         ))
     }
 
@@ -126,5 +161,209 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             )) ::
             Nil
         ))
+    }
+
+    it should "work with invalid data" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        project.mappings.size should be (1)
+        project.mappings.contains("m0") should be (true)
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""invalid_json""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        result.count() should be (2)
+        result.schema should be (StructType(
+            StructField("_corrupt_record", StringType, true) ::
+            StructField("a", ArrayType(DoubleType, true), true) ::
+                StructField("st", StructType(
+                    StructField("lolo", StringType, true) ::
+                        Nil
+                )) ::
+                Nil
+        ))
+    }
+
+    it should "work with invalid data with explicit schema" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+              |    schema:
+              |      fields:
+              |        - name: s
+              |          type: String
+              |        - name: i
+              |          type: Integer
+              |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        project.mappings.size should be (1)
+        project.mappings.contains("m0") should be (true)
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""invalid_json""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        result.count() should be (2)
+        result.schema should be (StructType(
+            StructField("s", StringType, true) ::
+            StructField("i", IntegerType, true) ::
+            Nil
+        ))
+    }
+
+    it should "ignore records with invalid data" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+              |    parseMode: DROPMALFORMED
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""invalid_json""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        result.count() should be (1)
+        result.schema should be (StructType(
+            StructField("a", ArrayType(DoubleType, true), true) ::
+            StructField("st", StructType(
+                StructField("lolo", StringType, true) ::
+                    Nil
+            )) ::
+            Nil
+        ))
+    }
+
+    it should "ignore records with invalid data and explicit schema" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+              |    parseMode: DROPMALFORMED
+              |    schema:
+              |      fields:
+              |        - name: s
+              |          type: String
+              |        - name: i
+              |          type: Integer
+              |            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""invalid_json""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        result.count() should be (1)
+        result.schema should be (StructType(
+            StructField("s", StringType, true) ::
+            StructField("i", IntegerType, true) ::
+            Nil
+        ))
+    }
+
+    it should "fail on invalid data" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+              |    parseMode: failfast
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""invalid_json""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        an[Exception] shouldBe thrownBy(mapping.execute(executor, Map(MappingIdentifier("p0") -> input)))
+    }
+
+    it should "fail on invalid data with an explicit schema" in {
+        val spec =
+            """
+              |mappings:
+              |  m0:
+              |    kind: json-extract
+              |    input: p0
+              |    column: _1
+              |    parseMode: failfast
+              |    schema:
+              |      fields:
+              |        - name: s
+              |          type: String
+              |        - name: i
+              |          type: Integer
+              |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val input = executor.spark.createDataFrame(Seq(
+            ("""invalid_json""", 12),
+            ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
+        ))
+
+        val mapping = project.mappings("m0")
+        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        an[Exception] shouldBe thrownBy(result.count())
     }
 }

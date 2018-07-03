@@ -35,6 +35,7 @@ object Task extends ExtensionRegistry[Task] {
     new JsonSubTypes.Type(name = "destroy-relation", value = classOf[DestroyRelationTask]),
     new JsonSubTypes.Type(name = "dump-environment", value = classOf[DumpEnvironmentTask]),
     new JsonSubTypes.Type(name = "dump-mapping", value = classOf[DumpMappingTask]),
+    new JsonSubTypes.Type(name = "print", value = classOf[PrintTask]),
     new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
     new JsonSubTypes.Type(name = "output", value = classOf[OutputTask]),
     new JsonSubTypes.Type(name = "get-file", value = classOf[GetFileTask]),

@@ -58,7 +58,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the file name of the File
       * @return
       */
-    def filename() : String = {
+    def filename : String = {
         path.getName
     }
 
@@ -66,7 +66,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the parent directory of the File
       * @return
       */
-    def parent() : File = {
+    def parent : File = {
         File(fs, path.getParent)
     }
 
@@ -74,7 +74,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the absolute path
       * @return
       */
-    def abs() : File = {
+    def abs : File = {
         File(fs, path.makeQualified(fs.getUri, fs.getWorkingDirectory))
     }
 
@@ -82,7 +82,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the size of the file. Will throw an exception if the file does not exist
       * @return
       */
-    def length() : Long = {
+    def length : Long = {
         fs.getFileStatus(path).getLen
     }
 

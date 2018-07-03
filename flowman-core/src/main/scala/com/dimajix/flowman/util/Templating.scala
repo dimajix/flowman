@@ -9,8 +9,20 @@ import java.time.temporal.Temporal
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 
+import com.dimajix.flowman.fs.File
+
 
 object Templating {
+    case class FileWrapper(file:File) {
+        override def toString: String = file.toString
+
+        def getParent() : FileWrapper = FileWrapper(file.parent)
+        def getAbsPath() : FileWrapper = FileWrapper(file.abs)
+        def getFilename() : String = file.filename
+        def withSuffix(suffix:String) : FileWrapper = FileWrapper(file.withSuffix(suffix))
+        def withName(name:String) : FileWrapper = FileWrapper(file.withName(name))
+    }
+
     private object StringWrapper {
         def concat(c1:String, c2:String) : String = {
             c1 + c2

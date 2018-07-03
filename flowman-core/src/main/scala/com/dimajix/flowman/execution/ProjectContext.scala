@@ -35,6 +35,7 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.util.Templating.FileWrapper
 
 
 object ProjectContext {
@@ -69,8 +70,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
 
     private object ProjectWrapper {
-        def getBasedir() : File = _project.basedir
-        def getFilename() : File = _project.filename
+        def getBasedir() : FileWrapper = FileWrapper(_project.basedir)
+        def getFilename() : FileWrapper = FileWrapper(_project.filename)
         def getName() : String = _project.name
         def getVersion() : String = _project.version
     }

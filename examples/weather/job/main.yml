@@ -2,6 +2,13 @@ jobs:
   main:
     description: "Main job"
     tasks:
+      - kind: dump-environment
+      - kind: print
+        text:
+          - "project.name=${project.name}"
+          - "project.version=${project.version}"
+          - "project.basedir=${project.basedir}"
+          - "project.filename=${project.filename}"
       - kind: call
         job: dump-all
         force: true

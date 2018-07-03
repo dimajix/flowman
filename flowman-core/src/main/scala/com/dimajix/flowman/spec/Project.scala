@@ -45,9 +45,9 @@ object Project {
             else {
                 logger.info(s"Reading project from ${file.toString}")
                 val project = ObjectMapper.read[Project](file)
-                loadModules(project, file.parent())
-                project._filename = file.abs()
-                project._basedir = file.abs().parent()
+                loadModules(project, file.parent)
+                project._filename = file.abs
+                project._basedir = file.abs.parent
                 project
             }
         }

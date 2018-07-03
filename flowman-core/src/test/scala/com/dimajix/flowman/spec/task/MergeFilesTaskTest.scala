@@ -54,7 +54,7 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
         dest.isDirectory() should be (false)
 
         val in = dest.open()
-        val buffer = new Array[Byte](dest.length().toInt)
+        val buffer = new Array[Byte](dest.length.toInt)
         in.read(buffer)
         in.close()
 
@@ -88,7 +88,7 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
         dest.isDirectory() should be (false)
 
         val in = dest.open()
-        val buffer = new Array[Byte](dest.length().toInt)
+        val buffer = new Array[Byte](dest.length.toInt)
         in.read(buffer)
         in.close()
 

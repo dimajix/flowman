@@ -16,9 +16,11 @@
 
 package com.dimajix.flowman.execution
 
+import org.apache.hadoop.conf.Configuration
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.spec.Project
 
 
@@ -38,5 +40,21 @@ class ProjectContextTest extends FlatSpec with Matchers {
         context.evaluate("${project.filename}") should be ("")
         context.evaluate("${project.name}") should be ("my_project")
         context.evaluate("${project.version}") should be ("1.0")
+    }
+
+    it should "correctly resolve project variables" in {
+        val fs = FileSystem(new Configuration())
+        val file = fs.file("test/project/TestProject.yml")
+        val project = Project.read.file(file)
+        val session = Session.builder()
+            .build()
+
+        val context = session.getContext(project)
+        context.evaluate("${project.name}") should be ("test")
+        context.evaluate("${project.version}") should be ("1.0")
+        context.evaluate("${project.basedir}") should be (file.abs.parent.toString)
+        context.evaluate("${project.basedir.parent}") should be (file.abs.parent.parent.toString)
+        context.evaluate("${project.filename}") should be (file.abs.toString)
+        context.evaluate("${project.filename.withSuffix('lala')}") should be (file.abs.withSuffix("lala").toString)
     }
 }

@@ -160,7 +160,7 @@ class SftpUploadTask extends BaseTask {
         src.list()
             .filter(_.isFile())
             .foreach(file => {
-                uploadSingleFile(client, file, new Path(dst, file.filename()))
+                uploadSingleFile(client, file, new Path(dst, file.filename))
             })
     }
 

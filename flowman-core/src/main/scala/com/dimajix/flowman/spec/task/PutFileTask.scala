@@ -39,7 +39,7 @@ class PutFileTask extends BaseTask {
         implicit val context = executor.context
         val fs = new FileSystem(executor.hadoopConf)
         val src = fs.local(source)
-        val dst = fs.remote(target)
+        val dst = fs.file(target)
         logger.info(s"Putting local file '$src' to remote destination '$dst' (overwrite=$overwrite)")
         src.copy(dst, overwrite)
         true

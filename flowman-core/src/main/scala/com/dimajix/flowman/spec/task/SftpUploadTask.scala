@@ -85,7 +85,7 @@ class SftpUploadTask extends BaseTask {
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
         val fs = FileSystem(executor.hadoopConf)
-        val src = fs.remote(source)
+        val src = fs.file(source)
         val dst = new Path(target)
         val delimiter = Option(this.delimiter).filter(_.nonEmpty).map(_.getBytes(Charset.forName("UTF-8")))
         logger.info(s"Uploading '$src' to remote destination 'sftp://$host:$port/$dst' (overwrite=$overwrite)")

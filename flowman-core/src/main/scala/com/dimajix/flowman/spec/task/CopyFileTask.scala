@@ -38,8 +38,8 @@ class CopyFileTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
         val fs = new FileSystem(executor.hadoopConf)
-        val src = fs.remote(source)
-        val dst = fs.remote(target)
+        val src = fs.file(source)
+        val dst = fs.file(target)
         logger.info(s"Copying remote file '$src' to remote file '$dst' (overwrite=$overwrite)")
         src.copy(dst, overwrite)
         true

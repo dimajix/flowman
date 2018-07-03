@@ -168,14 +168,14 @@ class Session private[execution](
 ) {
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
-    private def sparkConfig :Map[String,String] = {
+    private def sparkConfig : Map[String,String] = {
         if (_project != null) {
             logger.info("Using project specific Spark configuration settings")
-            getContext(_project).config
+            getContext(_project).config // ++ _sparkConfig
         }
         else {
             logger.info("Using global Spark configuration settings")
-            context.config
+            context.config // ++ _sparkConfig
         }
     }
 
@@ -192,16 +192,15 @@ class Session private[execution](
         if(_sparkSession != null) {
             logger.info("Reusing existing Spark session")
             val newSession = _sparkSession.newSession()
-            _sparkConfig.foreach(kv => newSession.conf.set(kv._1,kv._2))
+            sparkConfig.foreach(kv => newSession.conf.set(kv._1,kv._2))
             Some(newSession)
         }
         else {
             logger.info("Creating new Spark session")
             Try {
-                val sparkConf = new SparkConf()
+                val sparkConf = context.sparkConf
                     .setAppName(_sparkName)
                     .setAll(sparkConfig.toSeq)
-                _sparkConfig.foreach(kv => sparkConf.set(kv._1,kv._2))
                 val master = System.getProperty("spark.master")
                 if (master == null || master.isEmpty) {
                     logger.info("No Spark master specified - using local[*]")
@@ -226,15 +225,19 @@ class Session private[execution](
     }
     private def createSession() = {
         val sparkSession = createOrReuseSession()
-        sparkSession.foreach(spark => {
+        sparkSession.foreach { spark =>
+            // Log all config properties
             spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
-        })
 
-        // Distribute additional Plugin jar files
-        sparkSession.foreach(session => sparkJars.foreach(session.sparkContext.addJar))
+            // Copy all Spark configs over to SparkConf inside the Context
+            context.sparkConf.setAll(spark.conf.getAll)
 
-        // Register special UDFs
-        sparkSession.foreach(session => UdfProvider.providers.foreach(_.register(session.udf)))
+            // Distribute additional Plugin jar files
+            sparkJars.foreach(spark.sparkContext.addJar)
+
+            // Register special UDFs
+            UdfProvider.providers.foreach(_.register(spark.udf))
+        }
 
         sparkSession
     }

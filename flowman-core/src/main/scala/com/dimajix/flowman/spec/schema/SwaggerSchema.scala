@@ -16,18 +16,15 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.io.File
 import java.io.IOException
+import java.io.StringWriter
 import java.net.URL
 import java.nio.charset.Charset
-import java.nio.file.Files
 
 import scala.collection.JavaConversions._
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import io.swagger.models.ComposedModel
@@ -51,17 +48,13 @@ import io.swagger.models.properties.ObjectProperty
 import io.swagger.models.properties.Property
 import io.swagger.models.properties.StringProperty
 import io.swagger.models.properties.UUIDProperty
-import io.swagger.parser.Swagger20Parser
-import io.swagger.parser.SwaggerParser
 import io.swagger.parser.util.DeserializationUtils
-import io.swagger.parser.util.SwaggerDeserializationResult
 import io.swagger.parser.util.SwaggerDeserializer
 import io.swagger.util.Json
 import org.apache.commons.io.IOUtils
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder
-import org.apache.commons.lang3.builder.ToStringStyle
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.fs.File
 
 
 /**
@@ -74,8 +67,8 @@ class SwaggerSchema extends Schema {
     @JsonProperty(value="spec", required=false) private var _spec: String = _
     @JsonProperty(value="entity", required=false) private var _entity: String = _
 
-    def file(implicit context: Context) : String = context.evaluate(_file)
-    def url(implicit context: Context) : URL = if (_url != null && _url.nonEmpty) new URL(context.evaluate(_url)) else null
+    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(f => File(context.hadoopConf, f)).orNull
+    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
     def spec(implicit context: Context) : String = context.evaluate(_spec)
     def entity(implicit context: Context) : String = context.evaluate(_entity)
 
@@ -108,9 +101,16 @@ class SwaggerSchema extends Schema {
         val url = this.url
         val spec = this.spec
 
-        val string = if (file != null && file.nonEmpty) {
-            val bytes = Files.readAllBytes(new File(file).toPath)
-            new String(bytes, Charset.forName("UTF-8"))
+        val string = if (file != null) {
+            val input = file.open()
+            try {
+                val writer = new StringWriter()
+                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
+                writer.toString
+            }
+            finally {
+                input.close()
+            }
         }
         else if (url != null) {
             IOUtils.toString(url)

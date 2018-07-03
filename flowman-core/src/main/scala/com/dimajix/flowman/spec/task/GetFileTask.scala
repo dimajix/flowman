@@ -38,7 +38,7 @@ class GetFileTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
         val fs = new FileSystem(executor.hadoopConf)
-        val src = fs.remote(source)
+        val src = fs.file(source)
         val dst = fs.local(target)
         logger.info(s"Retrieving remote file '$src' to local file '$dst' (overwrite=$overwrite)")
         src.copy(dst, overwrite)

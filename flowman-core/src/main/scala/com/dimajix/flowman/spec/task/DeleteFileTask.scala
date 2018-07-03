@@ -20,7 +20,7 @@ class DeleteFileTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
         val fs = new FileSystem(executor.hadoopConf)
-        val file = fs.remote(path)
+        val file = fs.file(path)
         logger.info(s"Deleting remote file '$file' (recursive=$recursive)")
         file.delete(recursive)
         true

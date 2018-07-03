@@ -30,9 +30,9 @@ case class FileSystem(conf:Configuration) {
     private val remoteFs = org.apache.hadoop.fs.FileSystem.get(conf)
     private val localFs = org.apache.hadoop.fs.FileSystem.getLocal(conf)
 
-    def remote(path:Path) : File = File(path.getFileSystem(conf), path)
-    def remote(path:String) : File = remote(new Path(path))
-    def remote(path:URI) : File = remote(new Path(path))
+    def file(path:Path) : File = File(path.getFileSystem(conf), path)
+    def file(path:String) : File = file(new Path(path))
+    def file(path:URI) : File = file(new Path(path))
 
     def local(path:Path) : File = File(localFs, path)
     def local(path:String) : File = local(new Path(path))

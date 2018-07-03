@@ -27,6 +27,7 @@ import org.apache.hadoop.io.IOUtils
 
 
 object File {
+    def empty = new File(null, null)
     def apply(conf:Configuration, path:Path) : File  = {
         File(path.getFileSystem(conf), path)
     }
@@ -42,7 +43,7 @@ object File {
   * @param path
   */
 case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
-    override def toString: String = path.toString
+    override def toString: String = if (path != null) path.toString else ""
 
     /**
       * Creates a new File object by attaching a child entry
@@ -69,12 +70,24 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
         File(fs, path.getParent)
     }
 
+    /**
+      * Returns the absolute path
+      * @return
+      */
+    def abs() : File = {
+        File(fs, path.makeQualified(fs.getUri, fs.getWorkingDirectory))
+    }
+
+    /**
+      * Returns the size of the file. Will throw an exception if the file does not exist
+      * @return
+      */
     def length() : Long = {
         fs.getFileStatus(path).getLen
     }
 
     /**
-      * Lists all directory entries
+      * Lists all directory entries. Will throw an exception if the File is not a directory
       * @return
       */
     def list() : Seq[File] = {

@@ -36,7 +36,7 @@ object Module {
         private val logger = LoggerFactory.getLogger(classOf[Module])
 
         private def loadFile(file:File) : Module = {
-            logger.info(s"Reading module file ${file.toString}")
+            logger.info(s"Reading module from ${file.toString}")
             ObjectMapper.read[Module](file)
         }
 

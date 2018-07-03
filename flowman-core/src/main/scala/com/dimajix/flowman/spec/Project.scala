@@ -43,7 +43,7 @@ object Project {
                 this.file(file / "project.yml")
             }
             else {
-                logger.info(s"Reading project file ${file.toString}")
+                logger.info(s"Reading project from ${file.toString}")
                 val project = ObjectMapper.read[Project](file)
                 loadModules(project, file.parent())
                 project._filename = file.abs()

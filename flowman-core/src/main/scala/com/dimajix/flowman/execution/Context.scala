@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.execution
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkConf
+
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.ConnectionIdentifier
@@ -151,4 +154,18 @@ abstract class Context {
 
     def getProjectContext(projectName:String) : Context
     def getProjectContext(project:Project) : Context
+
+    /**
+      * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
+      * is not necessarily the one used by the Spark Session!
+      * @return
+      */
+    def sparkConf : SparkConf
+
+    /**
+      * Returns a Hadoop Configuration object which contains all settings form the configuration. The object is not
+      * necessarily the one used by the active Spark session
+      * @return
+      */
+    def hadoopConf : Configuration
 }

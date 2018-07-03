@@ -16,15 +16,12 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.io.File
 import java.net.URL
 
-import scala.collection.JavaConversions._
-
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.avro.Schema.Type.RECORD
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.util.AvroSchemaUtils
 
 /**
@@ -35,8 +32,8 @@ class AvroSchema extends Schema {
     @JsonProperty(value="url", required=false) private var _url: String = _
     @JsonProperty(value="spec", required=false) private var _spec: String = _
 
-    def file(implicit context: Context) : String = context.evaluate(_file)
-    def url(implicit context: Context) : URL = if (_url != null && _url.nonEmpty) new URL(context.evaluate(_url)) else null
+    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(f => File(context.hadoopConf, f)).orNull
+    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
     def spec(implicit context: Context) : String = context.evaluate(_spec)
 
     /**
@@ -62,8 +59,14 @@ class AvroSchema extends Schema {
         val url = this.url
         val spec = this.spec
 
-        val avroSchema = if (file != null && file.nonEmpty) {
-            new org.apache.avro.Schema.Parser().parse(new File(file))
+        val avroSchema = if (file != null) {
+            val input = file.open()
+            try {
+                new org.apache.avro.Schema.Parser().parse(input)
+            }
+            finally {
+                input.close()
+            }
         }
         else if (url != null) {
             val con = url.openConnection()

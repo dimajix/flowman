@@ -55,13 +55,13 @@ class MergeFilesTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
         val fs = new FileSystem(executor.hadoopConf)
-        val src = fs.remote(source)
+        val src = fs.file(source)
         val dst = fs.local(target)
         val delimiter = Option(this.delimiter).map(_.getBytes(Charset.forName("UTF-8"))).filter(_.nonEmpty)
         logger.info(s"Merging remote files in '$src' to local file '$dst' (overwrite=$overwrite)")
         val output = dst.create(overwrite)
         try {
-            fs.remote(source)
+            fs.file(source)
                 .list()
                 .filter(_.isFile())
                 .foreach(file => {

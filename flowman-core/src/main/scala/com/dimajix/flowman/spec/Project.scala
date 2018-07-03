@@ -16,12 +16,10 @@
 
 package com.dimajix.flowman.spec
 
-import java.io.File
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.runner.Runner
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
@@ -42,26 +40,16 @@ object Project {
         def file(file:File) : Project = {
             if (file.isDirectory) {
                 logger.info(s"Reading project in directory ${file.toString}")
-                this.file(new File(file, "project.yml"))
+                this.file(file / "project.yml")
             }
             else {
-                logger.info(s"Reading project file ${file.toString}")
+                logger.info(s"Reading project from ${file.toString}")
                 val project = ObjectMapper.read[Project](file)
-                loadModules(project, file.getParentFile)
-                project._filename = file.getAbsoluteFile
-                project._basedir = file.getAbsoluteFile.getParentFile
+                loadModules(project, file.parent())
+                project._filename = file.abs()
+                project._basedir = file.abs().parent()
                 project
             }
-        }
-
-        /**
-          * Loads a project file
-          *
-          * @param filename
-          * @return
-          */
-        def file(filename:String) : Project = {
-            file(new File(filename))
         }
 
         def string(text:String) : Project = {
@@ -70,7 +58,7 @@ object Project {
 
         private def loadModules(project: Project, directory:File) : Unit = {
             val module = project.modules
-                .map(f => Module.read.file(new File(directory, f)))
+                .map(f => Module.read.file(directory / f))
                 .reduce((l,r) => l.merge(r))
 
             project._environment = module.environment
@@ -169,8 +157,8 @@ class Project {
     @JsonProperty(value="main") private var _main: Seq[String] = Seq("main")
     @JsonProperty(value="modules") private var _modules: Seq[String] = Seq()
 
-    private var _basedir: File = new File("")
-    private var _filename: File = new File("")
+    private var _basedir: File = File.empty
+    private var _filename: File = File.empty
 
     private var _environment: Seq[(String,String)] = Seq()
     private var _config: Seq[(String,String)] = Seq()

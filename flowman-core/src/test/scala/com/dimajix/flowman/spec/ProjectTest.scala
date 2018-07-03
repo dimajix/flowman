@@ -2,8 +2,11 @@ package com.dimajix.flowman.spec
 
 import java.io.File
 
+import org.apache.hadoop.conf.Configuration
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+
+import com.dimajix.flowman.fs.FileSystem
 
 
 class ProjectTest extends FlatSpec with Matchers {
@@ -21,12 +24,13 @@ class ProjectTest extends FlatSpec with Matchers {
     }
 
     it should "be readable from a file" in {
-        val file = new File("test/project/TestProject.yml")
+        val fs = FileSystem(new Configuration())
+        val file = fs.file("test/project/TestProject.yml")
         val project = Project.read.file(file)
         project.name should be ("test")
         project.version should be ("1.0")
-        project.filename.toString should be (file.getAbsoluteFile.toString)
-        project.basedir.toString should be (file.getAbsoluteFile.getParent.toString)
+        project.filename.toString should be (file.abs().toString)
+        project.basedir.toString should be (file.abs().parent().toString)
         project.environment should contain("x" -> "y")
         project.config should contain("spark.lala" -> "lolo")
     }

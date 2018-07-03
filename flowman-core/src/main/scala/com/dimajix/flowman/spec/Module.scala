@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.spec
 
-import java.io.File
 import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
@@ -36,7 +36,7 @@ object Module {
         private val logger = LoggerFactory.getLogger(classOf[Module])
 
         private def loadFile(file:File) : Module = {
-            logger.info(s"Reading module file ${file.toString}")
+            logger.info(s"Reading module from ${file.toString}")
             ObjectMapper.read[Module](file)
         }
 
@@ -49,7 +49,7 @@ object Module {
         def file(file:File) : Module = {
             if (file.isDirectory) {
                 logger.info(s"Reading all module files in directory ${file.toString}")
-                file.listFiles()
+                file.list()
                     .filter(_.isFile)
                     .map(f => loadFile(f))
                     .reduce((l,r) => l.merge(r))
@@ -57,15 +57,6 @@ object Module {
             else {
                 loadFile(file)
             }
-        }
-        /**
-          * Loads a single file or a whole directory (non recursibely)
-          *
-          * @param filename
-          * @return
-          */
-        def file(filename:String) : Module = {
-            file(new File(filename))
         }
 
         def url(url:URL) : Module = {

@@ -19,11 +19,12 @@ package com.dimajix.flowman.tools.exec
 import java.io.File
 import java.util.Locale
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.log4j.PropertyConfigurator
-import org.kohsuke.args4j.CmdLineParser
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.plugin.PluginManager
 import com.dimajix.flowman.spec.Project
@@ -67,6 +68,15 @@ class Driver(options:Arguments) {
         ns
     }
 
+    private def loadProject() : Project = {
+        // Create Hadoop FileSystem instance
+        val hadoopConfig = new Configuration()
+        val fs = FileSystem(hadoopConfig)
+
+        // Load Namespace (including any plugins), afterwards also load Project
+        Project.read.file(fs.local(options.projectFile))
+    }
+
     /**
       * Main method for running this command
       * @return
@@ -107,7 +117,7 @@ class Driver(options:Arguments) {
 
         // Load Namespace (including any plugins), afterwards also load Project
         val ns = loadNamespace()
-        val project = Project.read.file(options.projectFile)
+        val project = loadProject()
 
         // Create Flowman Session, which also includes a Spark Session
         val sparkConfig = splitSettings(options.sparkConfig)

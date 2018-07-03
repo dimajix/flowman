@@ -20,6 +20,9 @@ import java.util.NoSuchElementException
 
 import scala.collection.mutable
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkConf
+import org.apache.spark.deploy.SparkHadoopUtil
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.Namespace
@@ -81,6 +84,9 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
         else
             new SimpleRunner
     }
+    private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
+    private lazy val _hadoopConf = SparkHadoopUtil.get.newConfiguration(_sparkConf)
+
 
     def profiles : Seq[String] = _profiles
 
@@ -209,4 +215,8 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     private def loadProject(name: String): Project = {
         _namespace.store.loadProject(name)
     }
+
+    override def sparkConf: SparkConf = _sparkConf
+
+    override def hadoopConf: Configuration = _hadoopConf
 }

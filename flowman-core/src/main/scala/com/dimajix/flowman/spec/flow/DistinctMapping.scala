@@ -25,38 +25,35 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class DeduplicateMapping extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[DeduplicateMapping])
+class DistinctMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[DistinctMapping])
 
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Array[String] = Array()
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
 
     /**
-      * Creates an instance of the deduplication table.
+      * Returns the dependencies (i.e. names of tables in the Dataflow model)
+      *
+      * @param context
+      * @return
+      */
+    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
+        Array(input)
+    }
+
+    /**
+      * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info("Deduplicating table {} on columns {}", Array(this.input, columns.mkString(",")):_*)
+        logger.info("Filtering distinct rows from table {}", this.input)
 
         val df = input(this.input)
-        val cols = if (columns.nonEmpty) columns else df.columns.toSeq
-        df.dropDuplicates(cols)
-    }
-
-    /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @param context
-      * @return
-      */
-    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
-        Array(input)
+        df.distinct()
     }
 }

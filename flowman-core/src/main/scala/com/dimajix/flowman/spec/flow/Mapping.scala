@@ -50,6 +50,7 @@ object Mapping extends ExtensionRegistry[Mapping] {
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
+    new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMapping]),
     new JsonSubTypes.Type(name = "read", value = classOf[InputMapping]),
     new JsonSubTypes.Type(name = "read-relation", value = classOf[InputMapping]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMapping]),

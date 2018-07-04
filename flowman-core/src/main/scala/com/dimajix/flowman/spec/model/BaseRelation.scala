@@ -35,12 +35,10 @@ abstract class BaseRelation extends Relation {
     @JsonProperty(value="schema", required=false) private var _schema: Schema = _
     @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="options", required=false) private var _options:Map[String,String] = Map()
-    @JsonProperty(value="defaults", required=false) private var _defaults:Map[String,String] = Map()
 
     override def description(implicit context: Context) : String = context.evaluate(_description)
     override def schema(implicit context: Context) : Schema = _schema
     def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
-    def defaults(implicit context: Context) : Map[String,String] = _defaults.mapValues(context.evaluate)
 
     /**
       * Creates a DataFrameReader which is already configured with options and the schema is also
@@ -53,9 +51,6 @@ abstract class BaseRelation extends Relation {
         val reader = executor.spark.read.options(options)
         if (_schema != null)
             reader.schema(inputSchema)
-
-        // Inject default values
-        defaults.foreach(kv => reader.option("default." + kv._1, kv._2))
 
         reader
     }

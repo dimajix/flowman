@@ -81,7 +81,8 @@ class Field {
     def sparkField : StructField = {
         val metadata = new MetadataBuilder()
         Option(description).map(_.trim).filter(_.nonEmpty).foreach(d => metadata.putString("comment", d))
-        Option(size).filter(_ > 0).foreach(s => metadata.putLong("size", s))
+        if (default != null) metadata.putString("default", default)
+        if (size > 0) metadata.putLong("size", size)
         StructField(name, sparkType, nullable, metadata.build())
     }
 }

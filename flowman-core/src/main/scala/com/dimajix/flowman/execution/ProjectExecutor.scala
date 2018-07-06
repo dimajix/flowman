@@ -69,7 +69,7 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       */
     override def getTable(identifier: MappingIdentifier): DataFrame = {
         if (identifier.project.forall(_ == _project.name))
-            _parent.getTable(MappingIdentifier(identifier.name, Some(_project.name)))
+            _parent.getTable(MappingIdentifier(identifier.name, _project.name))
         else
             _parent.getTable(identifier)
     }

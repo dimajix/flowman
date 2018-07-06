@@ -37,7 +37,7 @@ class DescribeCommand extends ActionCommand {
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info("Describing table {}", tablename)
+        logger.info(s"Describing table '$tablename")
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse(tablename))
@@ -47,7 +47,7 @@ class DescribeCommand extends ActionCommand {
                 logger.info("Successfully finished describing table")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while describing table: {}", e)
+                logger.error(s"Caught exception while describing table: $tablename", e)
                 false
         }
     }

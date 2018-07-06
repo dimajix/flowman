@@ -25,13 +25,14 @@ import com.dimajix.flowman.execution.Context
 
 
 object Field {
-    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null) : Field = {
+    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null, size:Option[Int] = None) : Field = {
         val field = new Field()
         field._name = name
         field._type = ftype
         field._nullable = nullable.toString
         field._description = description
         field._default = default
+        field._size = size.map(_.toString).orNull
         field
     }
 }
@@ -47,11 +48,42 @@ class Field {
     @JsonProperty(value="size", required = false) private var _size: String = _
     @JsonProperty(value="default", required = false) private var _default: String = _
 
+    /**
+      * The name of the field
+      * @return
+      */
     def name : String = _name
+
+    /**
+      * The type of the field
+      * @return
+      */
     def ftype : FieldType = _type
+
+    /**
+      * Returns true if the field is nullable
+      * @return
+      */
     def nullable : Boolean = _nullable.toBoolean
+
+    /**
+      * Returns an optional description. If there is no description, null will be returned
+      * @return
+      */
     def description : String = _description
+
+    /**
+      * Returns the size of the field. The size is an optional parameter used in fixed-width file formats. It is
+      * therefore complementary to any size specification in data types (like char, varchar or decimal). If no
+      * size is specified, 0 is returned
+      * @return
+      */
     def size : Int = Option(_size).map(_.trim).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
+
+    /**
+      * Returns an optional default value as a string. If no default value is specified, null is returned instead.
+      * @return
+      */
     def default : String = _default
 
     /**

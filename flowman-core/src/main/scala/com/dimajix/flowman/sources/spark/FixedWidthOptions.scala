@@ -129,9 +129,9 @@ class FixedWidthOptions(
         FastDateFormat.getInstance(
             parameters.getOrElse("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"), timeZone, Locale.US)
 
-    val maxColumns: Int = getInt("maxColumns", 20480)
+    val maxColumns = getInt("maxColumns", 20480)
 
-    val maxCharsPerColumn: Int = getInt("maxCharsPerColumn", -1)
+    val maxCharsPerColumn = getInt("maxCharsPerColumn", -1)
 
     val inputBufferSize = 128
 

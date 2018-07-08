@@ -34,9 +34,7 @@ package com.dimajix.flowman.sources.spark
 
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.text.NumberFormat
 import java.util.Locale
-import java.util.Locale.Category
 
 import com.univocity.parsers.fixed.FixedWidthWriter
 import org.apache.commons.lang3.time.FastDateFormat
@@ -155,7 +153,7 @@ private[spark] class FixedWidthOutputWriter(
 
     private def makeConverter(field: StructField): ValueConverter = field.dataType match {
         case DateType => {
-            val format = if(field.metadata.contains("format"))
+            val format = if (field.metadata.contains("format"))
                 FastDateFormat.getInstance(field.metadata.getString("format"), Locale.US)
             else
                 options.dateFormat
@@ -192,7 +190,7 @@ private[spark] class FixedWidthOutputWriter(
                 padNumber(str, width)
         }
 
-        case dt:DecimalType => {
+        case dt: DecimalType => {
             val format = decimalFormat(field)
             val width = fieldSize(field)
 
@@ -210,9 +208,10 @@ private[spark] class FixedWidthOutputWriter(
                 padNumber(str, fieldSize)
         }
 
-        case dt: DataType =>
+        case dt: DataType => {
             (row: InternalRow, ordinal: Int) =>
                 row.get(ordinal, dt).toString
+        }
     }
 
     private def convertRow(row: InternalRow): Seq[String] = {

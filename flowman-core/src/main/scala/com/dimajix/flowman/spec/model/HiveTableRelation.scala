@@ -128,12 +128,15 @@ class HiveTableRelation extends BaseRelation  {
         val tableName = database + "." + table
         logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
 
+        // Apply output schema before writing to Hive
+        val outputDf = applySchema(df)
+
         if (partition.nonEmpty) {
             val spark = executor.spark
 
             // Create temp view
             val tempViewName = "flowman_tmp_" + System.currentTimeMillis()
-            df.createOrReplaceTempView(tempViewName)
+            outputDf.createOrReplaceTempView(tempViewName)
 
             // Insert data via SQL
             val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
@@ -146,7 +149,7 @@ class HiveTableRelation extends BaseRelation  {
         }
         else {
             // Add partition columns
-            val frame = partition.foldLeft(df)((f, p) => f.withColumn(p._1, lit(p._2.value)))
+            val frame = partition.foldLeft(outputDf)((f, p) => f.withColumn(p._1, lit(p._2.value)))
             frame.write
                 .mode(mode)
                 .options(options)

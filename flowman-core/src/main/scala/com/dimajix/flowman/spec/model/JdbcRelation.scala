@@ -82,11 +82,9 @@ class JdbcRelation extends BaseRelation {
 
         logger.info(s"Writing data to JDBC source $tableName in database $connection")
 
-        val writer = df.write
-                .options(options)
-
         val (url,props) = createProperties(context)
-        writer.jdbc(url, tableName, props)
+        this.writer(executor, df)
+            .jdbc(url, tableName, props)
     }
 
     override def create(executor:Executor) : Unit = ???

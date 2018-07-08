@@ -70,13 +70,15 @@ class   FileRelation extends BaseRelation {
         val reader = this.reader(executor)
             .format(format)
 
-        // Use either load(files) or load() with a "path" option
+        // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
+        // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
+        // underlying format implementation
         val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
         val rawData = providingClass.newInstance() match {
-            case _:RelationProvider => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
-            case _:SchemaRelationProvider => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
+            case _:RelationProvider => reader.load(inputFiles.map(_.toString).mkString(","))
+            case _:SchemaRelationProvider => reader.load(inputFiles.map(_.toString).mkString(","))
             case _:FileFormat => reader.load(inputFiles.map(_.toString): _*)
-            case _ => reader.option("path",inputFiles.map(_.toString).mkString(",")).load()
+            case _ => reader.load(inputFiles.map(_.toString).mkString(","))
         }
 
         SchemaUtils.applySchema(rawData, schema)
@@ -112,7 +114,6 @@ class   FileRelation extends BaseRelation {
 
         logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
 
-        // Create correct schema for output
         this.writer(executor, df)
             .format(format)
             .mode(mode)

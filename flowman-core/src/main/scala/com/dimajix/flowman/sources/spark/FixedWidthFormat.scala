@@ -32,9 +32,14 @@
 
 package com.dimajix.flowman.sources.spark
 
-import java.io.Writer
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.text.NumberFormat
+import java.util.Locale
+import java.util.Locale.Category
 
 import com.univocity.parsers.fixed.FixedWidthWriter
+import org.apache.commons.lang3.time.FastDateFormat
 import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
@@ -51,6 +56,11 @@ import org.apache.spark.sql.execution.datasources.TextBasedFileFormat
 import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.types.DecimalType
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.FloatType
+import org.apache.spark.sql.types.NumericType
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
 
@@ -95,22 +105,110 @@ private[spark] class FixedWidthOutputWriter(
     private val gen = new FixedWidthWriter(writer, writerSettings)
     private var printHeader = options.headerFlag
 
+    private val decimalSymbols = DecimalFormatSymbols.getInstance(Locale.ROOT)
+
     // A `ValueConverter` is responsible for converting a value of an `InternalRow` to `String`.
     // When the value is null, this converter should not be called.
     private type ValueConverter = (InternalRow, Int) => String
 
     // `ValueConverter`s for all values in the fields of the schema
     private val valueConverters: Array[ValueConverter] =
-        schema.map(_.dataType).map(makeConverter).toArray
+        schema.map(makeConverter).toArray
 
-    private def makeConverter(dataType: DataType): ValueConverter = dataType match {
-        case DateType =>
-            (row: InternalRow, ordinal: Int) =>
-                options.dateFormat.format(DateTimeUtils.toJavaDate(row.getInt(ordinal)))
+    private def padNumber(number:String, fieldSize:Int) : String = {
+        val (sign,abs) = if (number.head == '-')
+            ("-", number.tail)
+        else if (options.numbersPositiveSign)
+            ("+", number)
+        else
+            ("", number)
 
-        case TimestampType =>
+        val padding = fieldSize - sign.length - abs.length
+        if (options.numbersLeadingZeros && padding > 0)
+            sign + ("0" * padding) + abs
+        else
+            sign + abs
+    }
+
+    private def fieldSize(field:StructField) : Int = {
+        field.metadata.getLong("size").toInt
+    }
+    private def floatFormat(field:StructField) : DecimalFormat = {
+        val width = fieldSize(field)
+        if (field.metadata.contains("format"))
+            new DecimalFormat(field.metadata.getString("format"), decimalSymbols)
+        else
+            new DecimalFormat("#." + "#" * width, decimalSymbols)
+    }
+    private def decimalFormat(field:StructField) : DecimalFormat = {
+        if (field.metadata.contains("format")) {
+            new DecimalFormat(field.metadata.getString("format"), decimalSymbols)
+        }
+        else {
+            val dt = field.dataType.asInstanceOf[DecimalType]
+            if (dt.scale > 0)
+                new DecimalFormat("#" * (dt.precision - dt.scale) + "." + "0" * dt.scale, decimalSymbols)
+            else
+                new DecimalFormat("#" * dt.precision, decimalSymbols)
+        }
+    }
+
+    private def makeConverter(field: StructField): ValueConverter = field.dataType match {
+        case DateType => {
+            val format = if(field.metadata.contains("format"))
+                FastDateFormat.getInstance(field.metadata.getString("format"), Locale.US)
+            else
+                options.dateFormat
             (row: InternalRow, ordinal: Int) =>
-                options.timestampFormat.format(DateTimeUtils.toJavaTimestamp(row.getLong(ordinal)))
+                format.format(DateTimeUtils.toJavaDate(row.getInt(ordinal)))
+        }
+
+        case TimestampType => {
+            val format = if (field.metadata.contains("format"))
+                FastDateFormat.getInstance(field.metadata.getString("format"), options.timeZone, Locale.US)
+            else
+                options.timestampFormat
+            (row: InternalRow, ordinal: Int) =>
+                format.format(DateTimeUtils.toJavaTimestamp(row.getLong(ordinal)))
+        }
+
+        case FloatType => {
+            val format = floatFormat(field)
+            val width = fieldSize(field)
+
+            (row: InternalRow, ordinal: Int) =>
+                val v = row.getFloat(ordinal)
+                val str = format.format(v)
+                padNumber(str, width)
+        }
+
+        case DoubleType => {
+            val format = floatFormat(field)
+            val width = fieldSize(field)
+
+            (row: InternalRow, ordinal: Int) =>
+                val v = row.getDouble(ordinal)
+                val str = format.format(v)
+                padNumber(str, width)
+        }
+
+        case dt:DecimalType => {
+            val format = decimalFormat(field)
+            val width = fieldSize(field)
+
+            (row: InternalRow, ordinal: Int) =>
+                val v = row.getDecimal(ordinal, dt.precision, dt.scale).toJavaBigDecimal
+                val str = format.format(v)
+                padNumber(str, width)
+        }
+
+        case dt: NumericType => {
+            val fieldSize = field.metadata.getLong("size").toInt
+
+            (row: InternalRow, ordinal: Int) =>
+                val str = row.get(ordinal, dt).toString
+                padNumber(str, fieldSize)
+        }
 
         case dt: DataType =>
             (row: InternalRow, ordinal: Int) =>

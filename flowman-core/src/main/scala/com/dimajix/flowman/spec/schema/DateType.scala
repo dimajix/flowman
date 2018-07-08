@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.schema
 import java.sql.Date
 import java.time.Duration
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 import org.apache.spark.sql.types.DataType
 

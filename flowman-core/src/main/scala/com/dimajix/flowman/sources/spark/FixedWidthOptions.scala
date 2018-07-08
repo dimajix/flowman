@@ -95,21 +95,23 @@ class FixedWidthOptions(
         }
     }
 
-    val charset = parameters.getOrElse("encoding",
+    val charset: String = parameters.getOrElse("encoding",
         parameters.getOrElse("charset", StandardCharsets.UTF_8.name()))
 
-    val headerFlag = getBool("header")
+    val headerFlag: Boolean = getBool("header")
 
-    val alignment = FieldAlignment.valueOf(parameters.getOrElse("alignment", "left").toUpperCase(Locale.ROOT))
+    val alignment: FieldAlignment = FieldAlignment.valueOf(parameters.getOrElse("alignment", "left").toUpperCase(Locale.ROOT))
 
     // For write, both options were `true` by default. We leave it as `true` for
     // backwards compatibility.
-    val ignoreLeadingWhiteSpaceFlagInWrite = getBool("ignoreLeadingWhiteSpace", default = true)
-    val ignoreTrailingWhiteSpaceFlagInWrite = getBool("ignoreTrailingWhiteSpace", default = true)
+    val ignoreLeadingWhiteSpaceFlagInWrite: Boolean = getBool("ignoreLeadingWhiteSpace", default = true)
+    val ignoreTrailingWhiteSpaceFlagInWrite: Boolean = getBool("ignoreTrailingWhiteSpace", default = true)
 
-    val nullValue = parameters.getOrElse("nullValue", "")
-    val padding = getChar("padding", '\0')
+    val nullValue: String = parameters.getOrElse("nullValue", "")
+    val padding: Char = getChar("padding", '\0')
 
+    val numbersLeadingZeros: Boolean = getBool("numbersLeadingZeros", default=false)
+    val numbersPositiveSign: Boolean = getBool("numbersPositiveSign", default=false)
 
     val compressionCodec: Option[String] = {
         val name = parameters.get("compression").orElse(parameters.get("codec"))
@@ -127,9 +129,9 @@ class FixedWidthOptions(
         FastDateFormat.getInstance(
             parameters.getOrElse("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"), timeZone, Locale.US)
 
-    val maxColumns = getInt("maxColumns", 20480)
+    val maxColumns: Int = getInt("maxColumns", 20480)
 
-    val maxCharsPerColumn = getInt("maxCharsPerColumn", -1)
+    val maxCharsPerColumn: Int = getInt("maxCharsPerColumn", -1)
 
     val inputBufferSize = 128
 

@@ -36,7 +36,13 @@ class SequenceFileRelation(val context: SQLContext, val files: String) extends B
     ))
 
     override def buildScan: RDD[Row] = {
-        val input = context.sparkContext.sequenceFile(files, classOf[Text], classOf[Text])
-        input.map(t => RowFactory.create(t._1.toString, t._2.toString))
+        // Avoid exception when list of files is empty
+        if (files.isEmpty) {
+            context.emptyDataFrame.rdd
+        }
+        else {
+            val input = context.sparkContext.sequenceFile(files, classOf[Text], classOf[Text])
+            input.map(t => RowFactory.create(t._1.toString, t._2.toString))
+        }
     }
 }

@@ -36,19 +36,22 @@ class DescribeCommand extends ActionCommand {
     var tablename: String = ""
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info("Describing relation {}", tablename)
         implicit val context = executor.context
+        logger.info(s"Describing relation '$tablename'")
 
         Try {
             val relation = context.getRelation(RelationIdentifier.parse(tablename))
-            relation.schema.printTree
+            val schema = relation.schema
+            if (schema == null)
+                logger.error(s"Relation '$tablename' does not provide an explicit schema")
+            else
+                schema.printTree
         } match {
             case Success(_) =>
-                logger.info("Successfully finished describing table")
+                logger.info("Successfully finished describing relation")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while describing table: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+                logger.error(s"Caught exception while describing relation '$tablename':", e)
                 false
         }
     }

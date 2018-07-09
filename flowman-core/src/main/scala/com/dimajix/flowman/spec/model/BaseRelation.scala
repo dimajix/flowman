@@ -83,7 +83,14 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def applySchema(df:DataFrame)(implicit context:Context) : DataFrame = {
-        val outputColumns = schema.fields.map(field => df(field.name).cast(field.sparkType))
-        df.select(outputColumns:_*)
+        if (_schema != null) {
+            val outputColumns = schema.fields
+                .map(_.sparkField)
+                .map(field => df(field.name).cast(field.dataType).as(field.name, field.metadata))
+            df.select(outputColumns: _*)
+        }
+        else {
+            df
+        }
     }
 }

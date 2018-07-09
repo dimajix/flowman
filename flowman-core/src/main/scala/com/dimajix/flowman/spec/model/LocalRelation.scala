@@ -86,8 +86,7 @@ class LocalRelation extends BaseRelation {
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
         // Create correct schema for output
-        val outputColumns = schema.fields.map(field => df(field.name).cast(field.sparkType))
-        val outputDf = df.select(outputColumns:_*)
+        val outputDf = applySchema(df)
         val writer = outputDf.writeLocal.options(options)
 
         writer.format(format)

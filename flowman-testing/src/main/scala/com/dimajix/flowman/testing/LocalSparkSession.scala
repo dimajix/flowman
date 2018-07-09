@@ -21,12 +21,14 @@ import java.io.File
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.scalatest.Suite
 
 
 trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var spark: SparkSession = _
+    var sc: SparkContext = _
     val conf = new SparkConf
 
     override def beforeAll() : Unit = {
@@ -59,11 +61,16 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             .enableHiveSupport()
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
+        sc = spark.sparkContext
+
+        // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown
+        spark.emptyDataFrame.count()
     }
     override def afterAll() : Unit = {
         if (spark != null) {
             spark.stop()
             spark = null
+            sc = null
         }
 
         super.afterAll()

@@ -21,17 +21,16 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StructField
 
-import com.dimajix.flowman.execution.Context
-
 
 object Field {
-    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null, size:Option[Int] = None) : Field = {
+    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null, size:Option[Int] = None, format:String=null) : Field = {
         val field = new Field()
         field._name = name
         field._type = ftype
         field._nullable = nullable.toString
         field._description = description
         field._default = default
+        field._format = format
         field._size = size.map(_.toString).orNull
         field
     }
@@ -45,8 +44,9 @@ class Field {
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
     @JsonProperty(value="nullable", required = true) private var _nullable: String = "true"
     @JsonProperty(value="description", required = false) private var _description: String = _
-    @JsonProperty(value="size", required = false) private var _size: String = _
     @JsonProperty(value="default", required = false) private var _default: String = _
+    @JsonProperty(value="size", required = false) private var _size: String = _
+    @JsonProperty(value="format", required = false) private var _format: String = _
 
     /**
       * The name of the field
@@ -87,6 +87,13 @@ class Field {
     def default : String = _default
 
     /**
+      * Returns an optional format specification as a string. The format specification can be used by relations or
+      * file formats, for example to specify the date and time formats
+      * @return
+      */
+    def format : String = _format
+
+    /**
       * Returns an appropriate (Hive) SQL type for this field. These can be directly used in CREATE TABLE statements.
       * The SQL type might also be complex, for example in the case of StructTypes
       * @return
@@ -113,7 +120,8 @@ class Field {
     def sparkField : StructField = {
         val metadata = new MetadataBuilder()
         Option(description).map(_.trim).filter(_.nonEmpty).foreach(d => metadata.putString("comment", d))
-        if (default != null) metadata.putString("default", default)
+        Option(default).foreach(d => metadata.putString("default", d))
+        Option(format).filter(_.nonEmpty).foreach(f => metadata.putString("format", f))
         if (size > 0) metadata.putLong("size", size)
         StructField(name, sparkType, nullable, metadata.build())
     }

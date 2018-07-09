@@ -1,5 +1,5 @@
 /*
- * Adapted for fixed width format 2018 Kaya Kupferschmidt
+ * Copyright 2018 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

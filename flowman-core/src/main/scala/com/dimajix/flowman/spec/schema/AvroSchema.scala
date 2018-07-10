@@ -32,7 +32,7 @@ class AvroSchema extends Schema {
     @JsonProperty(value="url", required=false) private var _url: String = _
     @JsonProperty(value="spec", required=false) private var _spec: String = _
 
-    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(f => File(context.hadoopConf, f)).orNull
+    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
     def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
     def spec(implicit context: Context) : String = context.evaluate(_spec)
 

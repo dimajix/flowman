@@ -32,22 +32,22 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
-    @Argument(usage = "specifies the table to describe", metaVar = "<tablename>", required = true)
+    @Argument(usage = "specifies the mapping to describe", metaVar = "<tablename>", required = true)
     var tablename: String = ""
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Describing table '$tablename")
+        logger.info(s"Describing mapping '$tablename")
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse(tablename))
             table.printSchema()
         } match {
             case Success(_) =>
-                logger.info("Successfully finished describing table")
+                logger.info("Successfully finished describing mapping")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while describing table: $tablename", e)
+                logger.error(s"Caught exception while describing mapping: $tablename", e)
                 false
         }
     }

@@ -25,6 +25,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.namespace.runner.SimpleRunner
@@ -86,6 +87,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     }
     private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
     private lazy val _hadoopConf = SparkHadoopUtil.get.newConfiguration(_sparkConf)
+    private lazy val _fs = new FileSystem(_hadoopConf)
 
 
     def profiles : Seq[String] = _profiles
@@ -215,6 +217,8 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
     private def loadProject(name: String): Project = {
         _namespace.store.loadProject(name)
     }
+
+    override def fs : FileSystem = _fs
 
     override def sparkConf: SparkConf = _sparkConf
 

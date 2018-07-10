@@ -186,7 +186,4 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override def getProjectContext(project:Project) : Context = {
         parent.getProjectContext(project)
     }
-
-    override def sparkConf : SparkConf = root.sparkConf
-    override def hadoopConf : Configuration = root.hadoopConf
 }

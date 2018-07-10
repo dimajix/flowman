@@ -19,6 +19,7 @@ package com.dimajix.flowman.execution
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
 
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.ConnectionIdentifier
@@ -154,6 +155,12 @@ abstract class Context {
 
     def getProjectContext(projectName:String) : Context
     def getProjectContext(project:Project) : Context
+
+    /**
+      * Returns the FileSystem as configured in Hadoop
+      * @return
+      */
+    def fs : FileSystem
 
     /**
       * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object

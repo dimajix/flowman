@@ -6,7 +6,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 
 
-class DumpEnvironmentTask extends BaseTask {
+class ShowEnvironmentTask extends BaseTask {
     @JsonProperty(value="variables", required=true) private var _variables:Seq[String] = Seq()
 
     def variables(implicit context: Context) : Seq[String] = _variables.map(context.evaluate)

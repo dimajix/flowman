@@ -20,9 +20,12 @@ import java.io.StringWriter
 
 import scala.collection.mutable
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkConf
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.util.Templating
@@ -121,6 +124,9 @@ abstract class AbstractContext extends Context {
     override def environment : Map[String,Any] = _environment.mapValues(_._1).toMap
     override def rawEnvironment : Map[String,(Any, Int)] = _environment.toMap
 
+    override def fs: FileSystem = root.fs
+    override def sparkConf : SparkConf = root.sparkConf
+    override def hadoopConf : Configuration = root.hadoopConf
 
     private def setConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
         val currentValue = _config.getOrElse(key, ("", SettingLevel.NONE.level))

@@ -40,17 +40,17 @@ class ShowCommand extends ActionCommand {
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info("Showing first {} rows of table {}", limit:Any, tablename:Any)
+        logger.info(s"Showing first $limit rows of mapping $tablename")
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse((tablename)))
             table.limit(limit).show(truncate = false)
         } match {
             case Success(_) =>
-                logger.info("Successfully finished dumping table")
+                logger.info("Successfully finished dumping mapping")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while dumping table: {}", e)
+                logger.error(s"Caught exception while dumping mapping '$tablename", e)
                 false
         }
     }

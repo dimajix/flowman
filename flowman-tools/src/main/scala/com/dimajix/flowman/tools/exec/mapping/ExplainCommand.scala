@@ -35,22 +35,22 @@ class ExplainCommand extends ActionCommand {
 
     @Option(name="-e", aliases=Array("--extended"), required = false)
     var extended: Boolean = false
-    @Argument(usage = "specifies the table to explain", metaVar = "<tablename>", required = true)
+    @Argument(usage = "specifies the mapping to explain", metaVar = "<tablename>", required = true)
     var tablename: String = ""
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info("Explaining table {}", tablename)
+        logger.info(s"Explaining mapping $tablename")
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse(tablename))
             table.explain(extended)
         } match {
             case Success(_) =>
-                logger.info("Successfully finished explaining table")
+                logger.info("Successfully finished explaining mapping")
                 true
             case Failure(e) =>
-                logger.error("Caught exception while explaining table: {}", e)
+                logger.error(s"Caught exception while explaining mapping '$tablename", e)
                 false
         }
     }

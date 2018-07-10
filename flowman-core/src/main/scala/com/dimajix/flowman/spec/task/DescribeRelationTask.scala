@@ -17,29 +17,31 @@
 package com.dimajix.flowman.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.RelationIdentifier
 
-class DumpMappingTask extends BaseTask {
-    @JsonProperty(value="input", required=true) private var _input:String = _
-    @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
-    @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
 
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
-    def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
+class DescribeRelationTask extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[DescribeRelationTask])
+
+    @JsonProperty(value="relation", required=true) private var _relation:String = _
+
+    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
 
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        val dfIn = executor.instantiate(this.input)
-        val dfOut = if (_columns != null && _columns.nonEmpty)
-            dfIn.select(columns.map(c => dfIn(c)):_*)
-        else
-            dfIn
+        val identifier = this.relation
+        logger.info(s"Describing relation '$identifier'")
 
-        dfOut.show(limit)
+        val relation = context.getRelation(identifier)
+        val schema = relation.schema
+        if (schema == null)
+            logger.error(s"Relation '$identifier' does not provide an explicit schema")
+        else
+            schema.printTree
         true
     }
 }

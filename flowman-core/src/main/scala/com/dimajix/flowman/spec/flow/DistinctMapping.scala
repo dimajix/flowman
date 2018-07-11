@@ -51,7 +51,7 @@ class DistinctMapping extends BaseMapping {
       */
     override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info("Filtering distinct rows from table {}", this.input)
+        logger.info(s"Filtering distinct rows from table ${this.input}")
 
         val df = input(this.input)
         df.distinct()

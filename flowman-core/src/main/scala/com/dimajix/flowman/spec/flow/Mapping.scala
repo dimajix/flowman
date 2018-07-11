@@ -57,6 +57,7 @@ object Mapping extends ExtensionRegistry[Mapping] {
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMapping]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
+    new JsonSubTypes.Type(name = "join", value = classOf[JoinMapping]),
     new JsonSubTypes.Type(name = "json-extract", value = classOf[ExtractJsonMapping]),
     new JsonSubTypes.Type(name = "json-unpack", value = classOf[UnpackJsonMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),

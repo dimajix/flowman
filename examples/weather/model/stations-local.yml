@@ -3,7 +3,7 @@ relations:
     kind: local
     format: csv
     location: "file:///tmp/weather-local/isd-history/"
-    filename: "stations.csv"
+    pattern: "stations.csv"
     options:
       sep: ","
       encoding: "UTF-8"

@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.model
 
-import scala.util.Try
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame

@@ -7,7 +7,23 @@
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+
     <name>flowman-root</name>
+    <inceptionYear>2018</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <url>https://github.com/dimajix/flowman</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/dimajix/flowman/issues</url>
+    </issueManagement>
 
     <properties>
         <hadoop.version>2.8.3</hadoop.version>

@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -25,6 +26,8 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class FilterMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[FilterMapping])
+
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "condition", required = true) private var _condition:String = _
 
@@ -50,6 +53,8 @@ class FilterMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
+        logger.info(s"Filtering mapping '$input' with condition $condition")
+
         val df = input(this.input)
         df.filter(condition)
     }

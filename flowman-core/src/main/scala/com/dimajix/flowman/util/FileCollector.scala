@@ -145,6 +145,5 @@ class FileCollector(hadoopConf:Configuration) {
             else
                 Seq()
         }
-
     }
 }

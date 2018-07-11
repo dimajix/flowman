@@ -40,9 +40,9 @@ class LocalRelation extends BaseRelation {
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
     @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
-    @JsonProperty(value="filename") private var _filename: String = _
+    @JsonProperty(value="pattern") private var _pattern: String = _
 
-    def filename(implicit context:Context) : String = context.evaluate(_filename)
+    def pattern(implicit context:Context) : String = context.evaluate(_pattern)
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context:Context) : String = context.evaluate(_format)
     def partitions : Seq[PartitionField] = _partitions
@@ -102,8 +102,9 @@ class LocalRelation extends BaseRelation {
       */
     override def create(executor: Executor): Unit =  {
         implicit val context = executor.context
-        logger.info(s"Creating local directory '$localLocation' for local file relation")
-        val path = new File(localLocation)
+        val dir = localDirectory
+        logger.info(s"Creating local directory '$dir' for local file relation")
+        val path = new File(dir)
         path.mkdirs()
     }
 
@@ -115,8 +116,9 @@ class LocalRelation extends BaseRelation {
       */
     override def destroy(executor: Executor): Unit = {
         implicit val context = executor.context
-        logger.info(s"Removing local directory '$localLocation' of local file relation")
-        val root = new File(localLocation)
+        val dir = localDirectory
+        logger.info(s"Removing local directory '$dir' of local file relation")
+        val root = new File(dir)
 
         def delete(file:File): Unit = {
             if (file.exists()) {
@@ -163,7 +165,7 @@ class LocalRelation extends BaseRelation {
         implicit val context = executor.context
         if (partitions == null)
             throw new NullPointerException("Partitioned data source requires partition values to be defined")
-        if (filename == null || filename.isEmpty)
+        if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
         val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
@@ -180,8 +182,18 @@ class LocalRelation extends BaseRelation {
         val path = new Path("file:///" + localLocation)
         new FileCollector(executor.spark)
             .path(path)
-            .pattern(filename)
+            .pattern(pattern)
     }
 
     private def localLocation(implicit context: Context) = new Path(location).toUri.getPath
+    private def localDirectory(implicit context: Context) = {
+        val location = localLocation
+        val pattern = this.pattern
+        if (pattern != null && pattern.nonEmpty) {
+            new Path(location).toUri.getPath
+        }
+        else {
+            new Path(location).getParent.toUri.getPath
+        }
+    }
 }

@@ -37,7 +37,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
               |  local:
               |    kind: local
               |    location: $tempDir/csv/test
-              |    filename: data.csv
+              |    pattern: data.csv
               |    format: csv
               |    schema:
               |      kind: inline
@@ -57,11 +57,54 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
 
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
                 ("lolo", 2)
             ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
+        relation.write(executor, df, Map(), "overwrite")
+        new File(tempDir, "csv/test/data.csv").exists() should be (true)
+
+        relation.destroy(executor)
+        new File(tempDir, "csv/test").exists() should be (false)
+    }
+
+    it should "work without a pattern" in {
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: local
+               |    location: $tempDir/csv/test/data.csv
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+        val relation = project.relations("local")
+
+        relation.create(executor)
+        new File(tempDir, "csv/test").exists() should be (true)
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
@@ -79,7 +122,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
                |  local:
                |    kind: local
                |    location: file:///$tempDir/csv/test
-               |    filename: data.csv
+               |    pattern: data.csv
                |    format: csv
                |    schema:
                |      kind: inline
@@ -98,6 +141,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),

@@ -6,6 +6,8 @@ import java.time.Period
 import java.time.ZoneOffset
 import java.time.temporal.Temporal
 
+import scala.collection.mutable
+
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 
@@ -13,6 +15,8 @@ import com.dimajix.flowman.fs.File
 
 
 object Templating {
+    private val classes = mutable.Map[String,Class[_]]()
+
     case class FileWrapper(file:File) {
         override def toString: String = file.toString
 
@@ -97,7 +101,15 @@ object Templating {
         def valueOf(value:String) : Float = java.lang.Float.parseFloat(value)
     }
 
+    def addClass(name:String, aClass:Class[_]) : Unit = {
+        classes.update(name, aClass)
+    }
 
+
+    /**
+      * Creates a new VelocityContext with all templating objects preregistered in the context
+      * @return
+      */
     def newContext() : VelocityContext = {
         val context = new VelocityContext()
         context.put("Integer", IntegerWrapper)
@@ -108,9 +120,17 @@ object Templating {
         context.put("Period", PeriodWrapper)
         context.put("System", SystemWrapper)
         context.put("String", StringWrapper)
+
+        // Add instances of all custom classses
+        classes.foreach { case (name, cls) => context.put(name, cls.newInstance()) }
+
         context
     }
 
+    /**
+      * Creates a new VelocityEngine
+      * @return
+      */
     def newEngine() : VelocityEngine = {
         val ve = new VelocityEngine()
         ve.init()

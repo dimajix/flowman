@@ -22,8 +22,20 @@ import java.time.Month
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.annotation.TemplateObject
+import com.dimajix.flowman.spi.Registration
+
+
+object TemplatingTest {
+    @TemplateObject(name="SomeObject")
+    class SomeObject {
+        def upper(s:String) : String = s.toUpperCase
+    }
+}
+
 
 class TemplatingTest extends FlatSpec with Matchers {
+    Registration.load()
     private val engine = Templating.newEngine()
     private val context = Templating.newContext()
 
@@ -153,5 +165,9 @@ class TemplatingTest extends FlatSpec with Matchers {
         val output8 = new StringWriter()
         engine.evaluate(context, output8, "test", """$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('USER')))""")
         output8.toString should be ("lala/" + System.getenv("USER"))
+    }
+
+    "The Templating systeM" should "support new classes via annotation" in {
+        evaluate("${SomeObject.upper('Hello World')}") should be ("HELLO WORLD")
     }
 }

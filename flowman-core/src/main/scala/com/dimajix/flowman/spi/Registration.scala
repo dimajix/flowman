@@ -29,6 +29,7 @@ import com.dimajix.flowman.annotation.RunnerType
 import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.namespace.storage.Store
 import com.dimajix.flowman.spec.connection.Connection
@@ -37,6 +38,7 @@ import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.output.Output
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.task.Task
+import com.dimajix.flowman.util.Templating
 
 
 /**
@@ -164,6 +166,14 @@ object Registration {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[ConnectionType])
                                 Connection.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Connection]])
+                            }
+                        }
+                    )
+                    .matchClassesWithAnnotation(classOf[TemplateObject],
+                        new ClassAnnotationMatchProcessor {
+                            override def processMatch(aClass: Class[_]): Unit = {
+                                val annotation = aClass.getAnnotation(classOf[TemplateObject])
+                                Templating.addClass(annotation.name(), aClass)
                             }
                         }
                     )

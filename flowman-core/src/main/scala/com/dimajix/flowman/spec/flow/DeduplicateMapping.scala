@@ -38,14 +38,16 @@ class DeduplicateMapping extends BaseMapping {
       * Creates an instance of the deduplication table.
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info("Deduplicating table {} on columns {}", Array(this.input, columns.mkString(",")):_*)
+        val input = this.input
+        val columns = this.columns
+        logger.info(s"Deduplicating mapping '$input' on columns ${columns.mkString(",")}")
 
-        val df = input(this.input)
+        val df = tables(input)
         val cols = if (columns.nonEmpty) columns else df.columns.toSeq
         df.dropDuplicates(cols)
     }

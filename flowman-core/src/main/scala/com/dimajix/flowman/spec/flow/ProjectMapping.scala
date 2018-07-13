@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -27,6 +28,8 @@ import com.dimajix.flowman.util.SchemaUtils
 
 
 class ProjectMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
+
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
     @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = Map()
 
@@ -37,12 +40,16 @@ class ProjectMapping extends BaseMapping {
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        val df = input(this.input)
+        val columns = this.columns
+        val input = this.input
+        logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
+
+        val df = tables(input)
         val cols = columns.map(nv => col(nv._1).cast(SchemaUtils.mapType(nv._2)))
         df.select(cols:_*)
     }

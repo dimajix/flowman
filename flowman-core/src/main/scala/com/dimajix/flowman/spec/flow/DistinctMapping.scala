@@ -46,14 +46,15 @@ class DistinctMapping extends BaseMapping {
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info(s"Filtering distinct rows from table ${this.input}")
+        val input = this.input
+        logger.info(s"Filtering distinct rows from mapping '$input'")
 
-        val df = input(this.input)
+        val df = tables(input)
         df.distinct()
     }
 }

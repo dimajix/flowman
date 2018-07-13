@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -26,6 +27,8 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class SortMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[SortMapping])
+
     @JsonProperty(value = "input", required = true) private var _input:String = _
     @JsonProperty(value = "columns", required = true) private var _columns:Seq[Map[String,String]] = Seq()
 
@@ -36,12 +39,16 @@ class SortMapping extends BaseMapping {
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        val df = input(this.input)
+        val input = this.input
+        val columns = this.columns
+        logger.info(s"Sorting mapping '$input' by columns ${columns.mkString(",")}")
+
+        val df = tables(input)
         val cols = columns.map(nv =>
             if (nv._2.toLowerCase == "desc")
                 col(nv._1).desc

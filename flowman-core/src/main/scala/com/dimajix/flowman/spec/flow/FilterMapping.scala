@@ -48,14 +48,16 @@ class FilterMapping extends BaseMapping {
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        logger.info(s"Filtering mapping '$input' with condition $condition")
+        val condition = this.condition
+        val input = this.input
+        logger.info(s"Filtering mapping '$input' with condition '$condition'")
 
-        val df = input(this.input)
+        val df = tables(input)
         df.filter(condition)
     }
 }

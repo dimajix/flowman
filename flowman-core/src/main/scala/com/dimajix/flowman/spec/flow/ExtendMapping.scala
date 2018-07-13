@@ -40,13 +40,14 @@ class ExtendMapping extends BaseMapping {
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        val allColumns = columns
+        val allColumns = this.columns
         val columnNames = allColumns.keys.toSet
+        val input = this.input
 
         logger.info(s"Extending mapping '$input' with columns ${columnNames.mkString("[",",","]")}")
 
@@ -81,7 +82,7 @@ class ExtendMapping extends BaseMapping {
         }
 
         // Now that we have a field order, we can transform the DataFrame
-        val table = input(this.input)
+        val table = tables(input)
         orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
     }
 

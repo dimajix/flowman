@@ -72,29 +72,31 @@ class JoinMapping extends BaseMapping {
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
-
-        val expression = this.expression
         val inputs = this.inputs
+        val expression = this.expression
+        val columns = this.columns
+        val mode = this.mode
+
         if (expression != null && expression.nonEmpty) {
-            logger.info(s"Joining mappings ${input.mkString(",")} on $expression with type $mode")
+            logger.info(s"Joining mappings ${inputs.mkString(",")} on '$expression' with type $mode")
             if (inputs.size != 2) {
                 logger.error("Joining using an expression only supports exactly two inputs")
                 throw new IllegalArgumentException("Joining using an expression only supports exactly two inputs")
             }
             val left = inputs(0)
             val right = inputs(1)
-            val leftDf = input(left).as(left.name)
-            val rightDf = input(right).as(right.name)
+            val leftDf = tables(left).as(left.name)
+            val rightDf = tables(right).as(right.name)
             leftDf.join(rightDf, expr(expression), mode)
         }
         else {
-            logger.info(s"Joining mappings ${input.mkString(",")} on columns ${columns.mkString("[",",","]")} with type $mode")
-            inputs.map(input.apply).reduceLeft((l, r) => l.join(r, columns, mode))
+            logger.info(s"Joining mappings ${inputs.mkString(",")} on columns ${columns.mkString("[",",","]")} with type $mode")
+            inputs.map(tables.apply).reduceLeft((l, r) => l.join(r, columns, mode))
         }
     }
 }

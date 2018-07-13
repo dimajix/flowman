@@ -17,6 +17,12 @@ Apache Spark
   * HOMEPAGE:
     * http://spark.apache.org/
 
+Apache Avro
+  * LICENSE
+    * license/LICENSE-avro.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * http://avro.apache.org/
+
 Spark Avro
   * LICENSE
     * license/LICENSE-spark-avro.txt (Apache 2.0 License)

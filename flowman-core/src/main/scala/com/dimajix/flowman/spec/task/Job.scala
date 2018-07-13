@@ -36,7 +36,7 @@ import com.dimajix.flowman.spec.schema.StringType
 import com.dimajix.flowman.util.splitSettings
 
 
-sealed abstract class JobStatus;
+sealed abstract class JobStatus
 object JobStatus {
     case object SUCCESS extends JobStatus
     case object FAILURE extends JobStatus
@@ -60,10 +60,36 @@ class JobParameter {
         _default = value
     }
 
+    /**
+      * Returns the name of the paramter
+      * @return
+      */
+
     def name : String = _name
+    /**
+      * Returns the optional description of the paramter
+      * @return
+      */
     def description : String = _description
+
+    /**
+      * Returns the data type of the parameter
+      * @return
+      */
     def ftype : FieldType = _type
+
+    /**
+      * Returns the string representation of the granularity of the parameter.
+      * @param context
+      * @return
+      */
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
+
+    /**
+      * Returns an optional default value of the parameter
+      * @param context
+      * @return
+      */
     def default(implicit context:Context) : Any = {
         val v = context.evaluate(_default)
         if (v != null)
@@ -72,9 +98,22 @@ class JobParameter {
             null
     }
 
+    /**
+      * Interpolates a given FieldValue returning all values as an Iterable
+      * @param value
+      * @param context
+      * @return
+      */
     def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
         ftype.interpolate(value, granularity)
     }
+
+    /**
+      * Pasres a string representing a single value for the parameter
+      * @param value
+      * @param context
+      * @return
+      */
     def parse(value:String)(implicit context:Context) : Any = {
         ftype.parse(value)
     }
@@ -146,11 +185,15 @@ class Job {
     @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
+    @JsonProperty(value="failure") private var _failure:Seq[Task] = Seq()
+    @JsonProperty(value="cleanup") private var _cleanup:Seq[Task] = Seq()
 
     def name : String = _name
     def description(implicit context:Context) : String = context.evaluate(_description)
     def logged(implicit context:Context) : Boolean = context.evaluate(_logged).toBoolean
     def tasks : Seq[Task] = _tasks
+    def failure : Seq[Task] = _failure
+    def cleanup : Seq[Task] = _cleanup
     def environment : Seq[(String,String)] = splitSettings(_environment)
     def parameters: Seq[JobParameter] = _parameters
 
@@ -163,7 +206,7 @@ class Job {
     def arguments(args:Map[String,String])(implicit context:Context) : Map[String,Any] = {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
-            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter ${kv._1} not defined for job")).parse(kv._2)))
+            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter '${kv._1}' not defined for job '$name'")).parse(kv._2)))
         parameters.map(p => (p.name, p.default)).toMap ++ processedArgs
     }
 
@@ -181,7 +224,7 @@ class Job {
 
         // Create a new execution environment.
         val jobArgs = arguments(args)
-        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter ${p._1} not defined"))
+        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '$name'"))
 
         // Check if the job should run isolated. This is required if arguments are specified, which could
         // result in different DataFrames with different arguments
@@ -207,21 +250,49 @@ class Job {
 
     private def runJob(executor:Executor) : JobStatus = {
         implicit val context = executor.context
-        Try {
-            _tasks.forall { task =>
-                logger.info(s"Executing task '${task.description}'")
-                task.execute(executor)
-            }
-        } match {
+        val result = runTasks(executor, _tasks)
+
+        // Execute failure action
+        result match {
+            case Success(false) | Failure(_) =>
+                logger.info(s"Running failure tasks for job '$name'")
+                runTasks(executor, _failure)
+            case Success(_) =>
+        }
+
+        // Execute cleanup actions
+        logger.info(s"Running cleanup tasks for job '$name'")
+        runTasks(executor, _cleanup) match {
+            case Success(true) =>
+                logger.info(s"Successfully executed all cleanup tasks of job '$name'")
+            case Success(false) | Failure(_) =>
+                logger.error(s"Execution of cleanup tasks failed for job '$name'")
+        }
+
+        result match {
             case Success(true) =>
                 logger.info("Successfully executed job")
                 JobStatus.SUCCESS
-            case Success(false) =>
-                logger.error("Execution of job failed")
-                JobStatus.FAILURE
-            case Failure(e) =>
-                logger.error("Execution of job failed with exception: ", e)
+            case Success(false) | Failure(_) =>
+                logger.error(s"Execution of job '$name' failed")
                 JobStatus.FAILURE
         }
+    }
+
+    private def runTasks(executor:Executor, tasks:Seq[Task]) : Try[Boolean] = {
+        implicit val context = executor.context
+        val result = Try {
+            tasks.forall { task =>
+                logger.info(s"Executing task '${task.description}'")
+                task.execute(executor)
+            }
+        }
+        result match {
+            case Failure(e) =>
+                logger.error("Execution of task failed with exception: ", e)
+            case _ =>
+                logger.info(s"Successfully executed all tasks of jon '$name'")
+        }
+        result
     }
 }

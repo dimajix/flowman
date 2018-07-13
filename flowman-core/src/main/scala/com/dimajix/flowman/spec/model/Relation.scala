@@ -49,6 +49,8 @@ object Relation extends ExtensionRegistry[Relation] {
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
+    new JsonSubTypes.Type(name = "hive-table", value = classOf[HiveTableRelation]),
+    new JsonSubTypes.Type(name = "hive-view", value = classOf[HiveViewRelation]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),

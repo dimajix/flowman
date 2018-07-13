@@ -40,12 +40,15 @@ class RelationOutput extends BaseOutput {
     def partition(implicit context: Context) : Map[String,String] = if (_partition != null) _partition.mapValues(context.evaluate) else Map()
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
 
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
-        logger.info("Writing to relation '{}'", target)
         val partition = this.partition.mapValues(v => SingleValue(v))
+        val target = this.target
+        val input = this.input
+
+        logger.info(s"Writing mapping '$input' to relation '$target' into partition $partition")
         val relation = context.getRelation(target)
-        val table = input(this.input).coalesce(parallelism)
+        val table = tables(input).coalesce(parallelism)
         relation.write(executor, table, partition, mode)
     }
 }

@@ -151,11 +151,11 @@ object Project {
 
 
 class Project {
-    @JsonProperty(value="name") private var _name: String = _
-    @JsonProperty(value="description") private var _description: String = _
-    @JsonProperty(value="version") private var _version: String = _
-    @JsonProperty(value="main") private var _main: Seq[String] = Seq("main")
-    @JsonProperty(value="modules") private var _modules: Seq[String] = Seq()
+    @JsonProperty(value="name", required = true) private var _name: String = _
+    @JsonProperty(value="description", required = false) private var _description: String = _
+    @JsonProperty(value="version", required = false) private var _version: String = _
+    @JsonProperty(value="main", required = false) private var _main: Seq[String] = Seq("main")
+    @JsonProperty(value="modules", required = true) private var _modules: Seq[String] = Seq()
 
     private var _basedir: File = File.empty
     private var _filename: File = File.empty

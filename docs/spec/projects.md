@@ -1,3 +1,8 @@
+---
+layout: page
+title: Flowman Projects Definition
+permalink: /spec/projects.html
+---
 # Flowman Projects
 
 

@@ -35,33 +35,42 @@ class UnionMapping extends BaseMapping {
 
     @JsonProperty(value="inputs", required=true) private[spec] var _inputs:Seq[String] = _
     @JsonProperty(value="columns", required=false) private[spec] var _columns:Map[String,String] = _
+    @JsonProperty(value="distinct", required=false) var _distinct:String = "false"
 
     def inputs(implicit context: Context) : Seq[MappingIdentifier] = _inputs.map(i => MappingIdentifier.parse(context.evaluate(i)))
     def columns(implicit context: Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
+    def distinct(implicit context: Context) : Boolean = context.evaluate(_distinct).toBoolean
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        val tables = inputs.map(input(_))
+        val inputs = this.inputs
+        val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
         val fields = this.columns
-        val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else getCommonSchema(tables)
-        logger.info(s"Creating union from mappings ${input.keys.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
+        val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else getCommonSchema(dfs)
+        logger.info(s"Creating union from mappings ${inputs.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
 
         // Project all tables onto common schema
-        val projectedTables = tables.map(table =>
+        val projectedTables = dfs.map(table =>
             projectTable(table, schema)
         )
 
         // Now create a union of all tables
-        projectedTables.reduce((l,r) => l.union(r))
+        val union = projectedTables.reduce((l,r) => l.union(r))
+
+        // Optionally perform distinct operation
+        if (distinct)
+            union.distinct()
+        else
+            union
     }
 
     /**

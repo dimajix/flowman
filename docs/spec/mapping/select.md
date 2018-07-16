@@ -1,3 +1,8 @@
+---
+layout: page
+title: Flowman Select Mapping
+permalink: /spec/mapping/select.html
+---
 # Select Mapping
 
 ## Example

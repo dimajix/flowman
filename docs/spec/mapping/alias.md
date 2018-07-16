@@ -1,3 +1,8 @@
+---
+layout: page
+title: Flowman Alias Mapping
+permalink: /spec/mapping/alias.html
+---
 # Alias Mapping
 
 

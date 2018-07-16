@@ -1,3 +1,8 @@
+---
+layout: page
+title: Flowman Mapping Specification
+permalink: /spec/mapping/index.html
+---
 # Flowman Mapping Specification
 
 Flowman uses the notion of `mappings` in order to specify the data flow and all data 
@@ -86,46 +91,46 @@ values are
 Flowman supports different kinds of operations, the following list gives you an exhaustive
 overview of all mappings implemented by Flowman
 
-* [`aggregate`](aggregate.md): 
-Use an [Aggregation](aggregate.md) mapping to perform aggregations for creating cubes
+* [`aggregate`](aggregate.html): 
+Use an [Aggregation](aggregate.html) mapping to perform aggregations for creating cubes
 
-* [`alias`](alias.md): 
-Use an [Alias](alias.md) to provide a new name to an existing mapping
+* [`alias`](alias.html): 
+Use an [Alias](alias.html) to provide a new name to an existing mapping
 
-* [`deduplicate`](deduplicate.md): 
-Use a [Deduplicate](deduplicate.md) mapping for deduplicating records based on specific columns
+* [`deduplicate`](deduplicate.html): 
+Use a [Deduplicate](deduplicate.html) mapping for deduplicating records based on specific columns
 
-* [`distinct`](distinct.md): 
-Use a [Distinct](distinct.md) mapping for removing duplicates based on all columns
+* [`distinct`](distinct.html): 
+Use a [Distinct](distinct.html) mapping for removing duplicates based on all columns
 
-* [`extend`](extend.md): 
-With [Extend](extend.md) you can add new columns to a mapping
+* [`extend`](extend.html): 
+With [Extend](extend.html) you can add new columns to a mapping
 
-* [`filter`](filter.md): 
-Use [Filter](filter.md) to apply filter logic (essentially a `WHERE` condition)
+* [`filter`](filter.html): 
+Use [Filter](filter.html) to apply filter logic (essentially a `WHERE` condition)
 
-* [`join`](join.md): 
-Use a [Join](join.md) to merge two mappings based on a common key or a join condition
+* [`join`](join.html): 
+Use a [Join](join.html) to merge two mappings based on a common key or a join condition
 
-* [`json-extract`](json-extract.md): 
-[Extract columns from JSON](json-extract.md) for transforming raw JSON data into structured data 
+* [`json-extract`](json-extract.html): 
+[Extract columns from JSON](json-extract.html) for transforming raw JSON data into structured data 
 
-* [`json-unpack`](json-unpack.md): 
-[Unpack JSON columns](json-unpack.md) for extracting individual columns containing raw JSON data.
+* [`json-unpack`](json-unpack.html): 
+[Unpack JSON columns](json-unpack.html) for extracting individual columns containing raw JSON data.
 
-* [`project`](project.md): 
-Using [Projections](project.md) you can apply a schema with a fixed order of fields and data types
+* [`project`](project.html): 
+Using [Projections](project.html) you can apply a schema with a fixed order of fields and data types
 
-* [`read` / `read-relation`](read.md):
-A [Read](read.md) mapping reads in data from a relation.
+* [`read` / `read-relation`](read.html):
+A [Read](read.html) mapping reads in data from a relation.
  
-* [`repartition`](repartition.md):
-* [`project`](project.md):
-* [`select`](select.md):
-* [`sort`](sort.md):
-* [`sql`](sql.md): An [SQL](sql.md) mapping allows to specify any SQL statement supported by
+* [`repartition`](repartition.html):
+* [`project`](project.html):
+* [`select`](select.html):
+* [`sort`](sort.html):
+* [`sql`](sql.html): An [SQL](sql.html) mapping allows to specify any SQL statement supported by
 Spark SQL. You can reference any other mapping as tables within the statement.
 
-* [`union`](union.md):
-With a [Union](union.md) mapping, all records of multiple mappings can be appended to a single 
+* [`union`](union.html):
+With a [Union](union.html) mapping, all records of multiple mappings can be appended to a single 
 new mapping. Essentially works like a SQL `UNION ALL`. 

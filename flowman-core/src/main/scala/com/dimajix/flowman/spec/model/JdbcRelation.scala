@@ -78,7 +78,7 @@ class JdbcRelation extends BaseRelation {
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
 
-        val tableName = database + "." + table
+        val tableName = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
 
         logger.info(s"Writing data to JDBC source $tableName in database $connection")
 

@@ -1,3 +1,8 @@
+---
+layout: page
+title: Flowman Distinct Mapping
+permalink: /spec/mapping/distinct.html
+---
 # Distinct Mapping
 
 
@@ -6,6 +11,8 @@
 ```
 
 ## Fields
+* `kind` **(mandatory)** *(type: string)*: `distinct`
+* `input` **(mandatory)** *(type: string)*:
 
 
 ## Description

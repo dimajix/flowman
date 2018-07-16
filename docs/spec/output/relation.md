@@ -1,3 +1,8 @@
+---
+layout: page
+title: Flowman Relation Output
+permalink: /spec/output/relation.html
+---
 # Relation Output
 
 The relation output operation probably is the most important and common output operation. It 

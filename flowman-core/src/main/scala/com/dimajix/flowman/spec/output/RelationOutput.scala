@@ -32,12 +32,12 @@ class RelationOutput extends BaseOutput {
 
     @JsonProperty(value="target", required=true) private var _target:String = _
     @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
-    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = _
+    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = Map()
     @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
 
     def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
     def mode(implicit context: Context) : String = context.evaluate(_mode)
-    def partition(implicit context: Context) : Map[String,String] = if (_partition != null) _partition.mapValues(context.evaluate) else Map()
+    def partition(implicit context: Context) : Map[String,String] = _partition.mapValues(context.evaluate)
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
 
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {

@@ -36,20 +36,15 @@ class InputMapping extends BaseMapping {
 
     @JsonProperty(value = "source", required = true) private var _source:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
-    @JsonProperty(value = "partitions", required=false) private var _partitions:Map[String,FieldValue] = _
+    @JsonProperty(value = "partitions", required=false) private var _partitions:Map[String,FieldValue] = Map()
 
     def source(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_source))
     def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
     def partitions(implicit context:Context) : Map[String,FieldValue] = {
-        if (_partitions != null) {
-            _partitions.mapValues {
-                case v: SingleValue => SingleValue(context.evaluate(v.value))
-                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
-            }
-        }
-        else {
-            Map.empty[String,FieldValue]
+        _partitions.mapValues {
+            case v: SingleValue => SingleValue(context.evaluate(v.value))
+            case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
+            case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
         }
     }
 

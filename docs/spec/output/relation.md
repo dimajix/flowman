@@ -24,24 +24,24 @@ outputs:
 
 ## Fields
 
-* `kind` **(mandatory)** *(string)*: `relation`
+* `kind` **(mandatory)** *(type: string)*: `relation`
 
-* `input` **(mandatory)** *(string)*: 
+* `input` **(mandatory)** *(type: string)*: 
 Specifies the name of the input mapping to be written
 
-* `target` **(mandatory)** *(string)*: 
+* `target` **(mandatory)** *(type: string)*: 
 Specifies the name of the relation to write to
 
-* `mode` **(optional)** *(string)* *(default=overwrite)*: 
+* `mode` **(optional)** *(type: string)* *(default=overwrite)*: 
 Specifies the behavior when data or table or partition already exists. Options include:
   * `overwrite`: overwrite the existing data.
   * `append`: append the data.
   * `ignore`: ignore the operation (i.e. no-op).
   * `error` or `errorifexists`: throw an exception at runtime . 
 
-* `partition` **(optional)** *(map:string)* *(default=empty)*:
+* `partition` **(optional)** *(type: map:string)* *(default=empty)*:
 
-* `parallelism` **(optional)** *(integer)* *(default=16)*:
+* `parallelism` **(optional)** *(type: integer)* *(default=16)*:
 This specifies the parallelism to be used when writing data. The parallelism equals the number
 of files being generated in HDFS output and also equals the maximum number of threads that
 are used in total in all Spark executors to produce the output.

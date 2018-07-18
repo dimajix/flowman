@@ -121,6 +121,46 @@ class FieldTest extends FlatSpec with Matchers {
         result.ftype should be (StringType)
     }
 
+    it should "support default values" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |default: 27
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.default should be ("27")
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().putString("default", "27").build()))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+
+    it should "support empty default values" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |default:
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.default should be ("")
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().putString("default", "").build()))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+
     "A string Field" should "be deserializable" in {
         val spec =
             """

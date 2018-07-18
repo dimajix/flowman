@@ -11,8 +11,8 @@ permalink: /spec/mapping/aggregate.html
 
 ## Fields
 
-* `kind` **(mandatory)** *(string)*: `alias`
-* `input` **(mandatory)** *(string)*:
+* `kind` **(mandatory)** *(type: string)*: `alias`
+* `input` **(mandatory)** *(type: string)*:
 
 
 ## Description

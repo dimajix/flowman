@@ -21,6 +21,8 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StringType
 
 
 class PartitionSchemaTest extends FlatSpec with Matchers {

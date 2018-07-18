@@ -22,8 +22,8 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.FieldValue
-import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
 
 
 class ProvidedRelation extends BaseRelation {

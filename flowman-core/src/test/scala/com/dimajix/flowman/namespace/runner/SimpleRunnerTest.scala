@@ -21,9 +21,9 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.StringType
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.types.StringType
 
 
 class SimpleRunnerTest extends FlatSpec with Matchers {

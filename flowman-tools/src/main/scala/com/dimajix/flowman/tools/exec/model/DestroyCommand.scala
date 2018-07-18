@@ -29,7 +29,7 @@ import com.dimajix.flowman.tools.exec.output.RunCommand
 
 
 class DestroyCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[RunCommand])
+    private val logger = LoggerFactory.getLogger(classOf[DestroyCommand])
 
     @Argument(usage = "specifies relations to destroy", metaVar = "<relation>")
     var relations: Array[String] = Array()

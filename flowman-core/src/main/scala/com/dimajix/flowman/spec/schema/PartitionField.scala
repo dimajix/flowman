@@ -21,6 +21,8 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FieldValue
 
 
 object PartitionField {

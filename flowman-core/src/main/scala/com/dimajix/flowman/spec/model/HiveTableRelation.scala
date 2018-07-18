@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.model
 
-import java.nio.charset.Charset
-import java.util.Base64.Encoder
 import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -29,11 +27,11 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
-import com.dimajix.flowman.spec.schema.SingleValue
-import com.dimajix.flowman.util.AvroSchemaUtils
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SchemaWriter
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -211,15 +209,9 @@ class HiveTableRelation extends BaseRelation  {
         if (properties.contains(AVRO_SCHEMA_URL)) {
             val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
             logger.info(s"Storing Avro schema at location $avroSchemaUrl")
-            val schema = AvroSchemaUtils.toAvro(fields)
-            val path = new Path(avroSchemaUrl)
-            val fs = path.getFileSystem(spark.sparkContext.hadoopConfiguration)
-
-            // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
-            val bytes = Charset.forName("UTF-8").encode(schema.toString(true))
-            val output = fs.create(path, true)
-            output.write(bytes.array())
-            output.close()
+            new SchemaWriter(fields)
+                .format("avro")
+                .save(executor.context.fs.file(avroSchemaUrl))
         }
 
         val external = if (this.external) "EXTERNAL" else ""

@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.types.SingleValue
 
 
 class RelationOutput extends BaseOutput {

@@ -27,8 +27,8 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
-import com.dimajix.flowman.spec.schema.SingleValue
-import com.dimajix.flowman.spec.schema.FieldValue
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 

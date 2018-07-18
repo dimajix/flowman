@@ -34,6 +34,16 @@ import org.json.JSONTokener
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.NullType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.VarcharType
 
 /**
   * This class encapsulates a data frame schema specified as a JSON schema document.

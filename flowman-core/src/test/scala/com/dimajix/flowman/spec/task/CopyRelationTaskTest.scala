@@ -26,7 +26,8 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.types.SingleValue
+
 
 class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession {
     "A CopyRelationTask" should "support configuration via YML" in {

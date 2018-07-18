@@ -19,10 +19,10 @@ package com.dimajix.flowman.spec
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.schema.ArrayValue
-import com.dimajix.flowman.spec.schema.FieldValue
-import com.dimajix.flowman.spec.schema.RangeValue
-import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.types.ArrayValue
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.RangeValue
+import com.dimajix.flowman.types.SingleValue
 
 
 class ValueOrRangeTest extends FlatSpec with Matchers {

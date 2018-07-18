@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.types.StringType
 
 
 class AvroSchemaTest extends FlatSpec with Matchers {

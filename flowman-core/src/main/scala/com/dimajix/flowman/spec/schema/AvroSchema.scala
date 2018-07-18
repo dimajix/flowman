@@ -22,7 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.fs.File
-import com.dimajix.flowman.util.AvroSchemaUtils
+import com.dimajix.flowman.types.AvroSchemaUtils
+import com.dimajix.flowman.types.Field
+
 
 /**
   * Schema implementation for reading Avro schemas.

@@ -3,6 +3,7 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.types.Field
 
 
 object EmbeddedSchema {

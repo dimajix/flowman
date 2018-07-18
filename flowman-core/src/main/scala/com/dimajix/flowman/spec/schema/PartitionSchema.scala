@@ -19,6 +19,17 @@ package com.dimajix.flowman.spec.schema
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.VarcharType
+import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.FloatType
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.ShortType
+import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.TimestampType
 
 
 object PartitionSchema {

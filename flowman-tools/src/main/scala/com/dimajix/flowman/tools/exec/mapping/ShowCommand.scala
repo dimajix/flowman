@@ -35,12 +35,12 @@ class ShowCommand extends ActionCommand {
 
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 10
-    @Argument(usage = "specifies the table to show", metaVar = "<tablename>", required = true)
+    @Argument(usage = "specifies the mapping to show", metaVar = "<mapping>", required = true)
     var tablename: String = ""
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Showing first $limit rows of mapping $tablename")
+        logger.info(s"Showing first $limit rows of mapping '$tablename'")
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse((tablename)))

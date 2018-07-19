@@ -15,9 +15,8 @@ mappings:
 ```
 
 ## Fields
-
 * `kind` **(mandatory)** *(string)*: `alias`
 * `input` **(mandatory)** *(string)*:
 
-
 ## Description
+An alias mapping simply provides an additional name to the input mapping.

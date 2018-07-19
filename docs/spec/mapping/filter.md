@@ -17,8 +17,18 @@ mappings:
 ## Fields
 * `kind` **(mandatory)** *(type: string)*: `filter`
 * `input` **(mandatory)** *(type: string)*:
+Specifies the name of the input mapping to be filtered.
+
 * `condition` **(mandatory)** *(type: string)*:
+Specifies the condition as a SQL expression to filter on
 
 
 ## Description
-The `filter` mapping essentially corresponds to a SQL `WHERE` or `HAVING` clause.
+The `filter` mapping essentially corresponds to a SQL `WHERE` or `HAVING` clause. The example
+above would be equivalent to the following SQL statement:
+```
+SELECT
+    *
+FROM facts_all
+WHERE special_flag=TRUE
+```

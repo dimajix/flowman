@@ -6,6 +6,8 @@ permalink: /spec/connection/jdbc.html
 # JDBC Connections
 
 ## Example
+```
+```
 
 ## Fields
 

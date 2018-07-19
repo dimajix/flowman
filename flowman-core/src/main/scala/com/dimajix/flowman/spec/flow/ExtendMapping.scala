@@ -26,12 +26,20 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
+object ExtendMapping {
+    def apply(input:String, columns:Map[String,String]) : ExtendMapping = {
+        val result = new ExtendMapping
+        result._input = input
+        result._columns = columns
+        result
+    }
+}
 
 class ExtendMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ExtendMapping])
 
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = _
+    @JsonProperty(value = "input", required = true) private var _input:String = _
+    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = Map()
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)

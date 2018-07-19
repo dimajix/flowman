@@ -28,8 +28,8 @@ import com.dimajix.flowman.spec.MappingIdentifier
 class DeduplicateMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DeduplicateMapping])
 
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Array[String] = Array()
+    @JsonProperty(value = "input", required = true) private var _input:String = _
+    @JsonProperty(value = "columns", required = true) private var _columns:Seq[String] = Seq()
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)

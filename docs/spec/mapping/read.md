@@ -22,10 +22,10 @@ mappings:
 
 ## Fields
 
-* `kind` **(mandatory)** *(string)*: `read` or `read-relation`
-* `source` **(mandatory)** *(string)*:
-* `partitions` **(optional)** *(map:partition)*:
-* `columns` **(optional)** *(map:data_type)*:
+* `kind` **(mandatory)** *(type: string)*: `read` or `read-relation`
+* `source` **(mandatory)** *(type: string)*:
+* `partitions` **(optional)** *(type: map:partition)*:
+* `columns` **(optional)** *(type: map:data_type)* *(default: empty):
 
 
 ## Description

@@ -40,7 +40,7 @@ class ExplainCommand extends ActionCommand {
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Explaining mapping $tablename")
+        logger.info(s"Explaining mapping '$tablename'")
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse(tablename))

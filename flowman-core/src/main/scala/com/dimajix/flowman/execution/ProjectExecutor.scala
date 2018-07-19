@@ -20,6 +20,7 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.broadcast
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.Namespace
@@ -87,24 +88,31 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @return
       */
     private def createTable(tableName: String): DataFrame = {
-        logger.info(s"Creating instance of table ${_project.name}/$tableName")
         implicit val icontext = context
 
         // Lookup table definition
         val transform = context.getMapping(MappingIdentifier(tableName, None))
         if (transform == null) {
-            logger.error(s"Table ${_project.name}/$tableName not found")
-            throw new NoSuchElementException(s"Table ${_project.name}/$tableName not found")
+            logger.error(s"Mapping '${_project.name}/$tableName' not found")
+            throw new NoSuchElementException(s"Mapping '${_project.name}/$tableName' not found")
         }
 
         // Ensure all dependencies are instantiated
-        logger.info(s"Ensuring dependencies for table ${_project.name}/$tableName")
+        logger.info(s"Ensuring dependencies for mapping '${_project.name}/$tableName'")
         val dependencies = transform.dependencies.map(d => (d, instantiate(d))).toMap
 
         // Process table and register result as temp table
-        logger.info(s"Instantiating table ${_project.name}/$tableName")
-        val instance = transform.execute(this, dependencies).persist(transform.cache)
-        val df = if (transform.broadcast)
+        val doBroadcast = transform.broadcast
+        val cacheLevel = transform.cache
+        logger.info(s"Instantiating table for mapping '${_project.name}/$tableName' (broadcast=$doBroadcast, cache=$cacheLevel)")
+        val instance = transform.execute(this, dependencies)
+
+        // Optionally cache the DataFrame
+        if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
+            instance.persist(cacheLevel)
+
+        // Optionally mark DataFrame to be broadcasted
+        val df = if (doBroadcast)
             broadcast(instance)
         else
             instance

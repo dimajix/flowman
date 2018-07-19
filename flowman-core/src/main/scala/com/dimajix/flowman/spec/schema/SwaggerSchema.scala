@@ -55,21 +55,29 @@ import org.apache.commons.io.IOUtils
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.BinaryType
+import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FloatType
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.MapType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.TimestampType
 
 
 /**
   * Schema implementation for reading Swagger / OpenAPI schemas. This implementation will preserve the ordering of
   * fields.
   */
-class SwaggerSchema extends Schema {
-    @JsonProperty(value="file", required=false) private var _file: String = _
-    @JsonProperty(value="url", required=false) private var _url: String = _
-    @JsonProperty(value="spec", required=false) private var _spec: String = _
+class SwaggerSchema extends ExternalSchema {
     @JsonProperty(value="entity", required=false) private var _entity: String = _
 
-    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
-    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
-    def spec(implicit context: Context) : String = context.evaluate(_spec)
     def entity(implicit context: Context) : String = context.evaluate(_entity)
 
     /**
@@ -97,31 +105,7 @@ class SwaggerSchema extends Schema {
     }
 
     private def loadSwaggerSchema(implicit context: Context) : Swagger = {
-        val file = this.file
-        val url = this.url
-        val spec = this.spec
-
-        val string = if (file != null) {
-            val input = file.open()
-            try {
-                val writer = new StringWriter()
-                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                writer.toString
-            }
-            finally {
-                input.close()
-            }
-        }
-        else if (url != null) {
-            IOUtils.toString(url)
-        }
-        else if (spec != null && spec.nonEmpty) {
-            spec
-        }
-        else {
-            throw new IllegalArgumentException("A Swagger schema needs either a 'file', 'url' or a 'spec' element")
-        }
-
+        val string = loadSchema(context)
         convertToSwagger(string)
     }
 

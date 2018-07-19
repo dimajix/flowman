@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.from_json
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -41,6 +42,8 @@ object UnpackJsonMapping {
 
 
 class UnpackJsonMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[UnpackJsonMapping])
+
     @JsonProperty(value="input", required=true) private var _input:String = _
     @JsonProperty(value="columns", required=true) private var _columns:Seq[ColumnMapping] = Seq()
     @JsonProperty(value="corruptedColumn", required=false) private var _corruptedColumn: String = "_corrupt_record"
@@ -77,12 +80,16 @@ class UnpackJsonMapping extends BaseMapping {
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
         implicit val context = executor.context
-        val table = input(this.input)
+        val input = this.input
+        val columns = this.columns
+        logger.info(s"Unpacking JSON columns $columns from mapping '$input'")
+
+        val table = tables(input)
         val options = Map(
             "columnNameOfCorruptRecord" ->  corruptedColumn,
             "allowComments" ->  allowComments.toString,

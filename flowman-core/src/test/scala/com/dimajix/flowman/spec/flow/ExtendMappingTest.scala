@@ -37,10 +37,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         implicit val context = executor.context
 
-        val xfs = new ExtendMapping
-        xfs._input = "myview"
-        xfs._columns = Map("new_f" -> "2*_2")
-
+        val xfs = ExtendMapping("myview", Map("new_f" -> "2*_2"))
         xfs.input should be (MappingIdentifier.parse("myview"))
         xfs.columns should be (Map("new_f" -> "2*_2"))
         xfs.dependencies should be (Array(MappingIdentifier.parse("myview")))
@@ -61,13 +58,13 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         implicit val context = executor.context
 
-        val xfs = new ExtendMapping
-        xfs._input = "myview"
-        xfs._columns = Map(
-            "f1" -> "2*_2",
-            "f2" -> "2*f1",
-            "f3" -> "2*f4 + f2",
-            "f4" -> "2*f2"
+        val xfs = ExtendMapping( "myview",
+            Map(
+                "f1" -> "2*_2",
+                "f2" -> "2*f1",
+                "f3" -> "2*f4 + f2",
+                "f4" -> "2*f2"
+            )
         )
 
         val result = xfs.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_1")
@@ -84,13 +81,13 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "detect dependency cycles" in {
-        val xfs = new ExtendMapping
-        xfs._input = "myview"
-        xfs._columns = Map(
-            "f1" -> "2*_2",
-            "f2" -> "2*f1",
-            "f3" -> "2*f4 + f2",
-            "f4" -> "2*f3"
+        val xfs = ExtendMapping("myview",
+            Map(
+                "f1" -> "2*_2",
+                "f2" -> "2*f1",
+                "f3" -> "2*f4 + f2",
+                "f4" -> "2*f3"
+            )
         )
 
         val session = Session.builder().withSparkSession(spark).build()
@@ -133,5 +130,6 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )).createOrReplaceTempView("my_table")
 
         val df2 = executor.instantiate(MappingIdentifier("t1")).orderBy("_1", "_2")
+        df2 should not be (null)
     }
 }

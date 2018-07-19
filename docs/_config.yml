@@ -1,0 +1,10 @@
+# Site settings
+title: Flowman
+email: k.kupferschmidt@dimajix.de
+description: > # this means to ignore newlines until "baseurl:"
+  Flowman, the Spark based ETL tool
+baseurl: "" # the subpath of your site, e.g. /blog/
+github_username:  dimajix
+
+# Build settings
+markdown: kramdown

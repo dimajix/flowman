@@ -25,11 +25,11 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.Field
-import com.dimajix.flowman.spec.schema.FieldValue
 import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.spec.schema.SingleValue
 import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
 
 
 object Relation extends ExtensionRegistry[Relation] {
@@ -49,6 +49,8 @@ object Relation extends ExtensionRegistry[Relation] {
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
+    new JsonSubTypes.Type(name = "hive-table", value = classOf[HiveTableRelation]),
+    new JsonSubTypes.Type(name = "hive-view", value = classOf[HiveViewRelation]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),

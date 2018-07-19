@@ -27,9 +27,9 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.connection.JdbcConnection
-import com.dimajix.flowman.spec.schema.StringType
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.types.StringType
 
 
 class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {

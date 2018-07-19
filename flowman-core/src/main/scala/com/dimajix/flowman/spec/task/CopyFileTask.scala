@@ -44,5 +44,4 @@ class CopyFileTask extends BaseTask {
         src.copy(dst, overwrite)
         true
     }
-
 }

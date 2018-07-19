@@ -144,6 +144,7 @@ class SftpUploadTask extends BaseTask {
         tryWith(new SFTPOutputStream(handle)) { output =>
             src.list()
                 .filter(_.isFile())
+                .sortBy(_.toString)
                 .foreach { file =>
                     tryWith(file.open()) { input =>
                         IOUtils.copyBytes(input, output, 16384)

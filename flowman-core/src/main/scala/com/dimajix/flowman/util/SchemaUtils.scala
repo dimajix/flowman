@@ -34,9 +34,7 @@ import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
 
-/**
-  * Created by kaya on 08.02.17.
-  */
+
 object SchemaUtils {
     def mapType(typeName:String) : DataType  = {
         typeName.toLowerCase() match {

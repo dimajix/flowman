@@ -28,8 +28,8 @@ import com.dimajix.flowman.spec.MappingIdentifier
 class DeduplicateMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DeduplicateMapping])
 
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Array[String] = Array()
+    @JsonProperty(value = "input", required = true) private var _input:String = _
+    @JsonProperty(value = "columns", required = true) private var _columns:Seq[String] = Seq()
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
@@ -38,14 +38,16 @@ class DeduplicateMapping extends BaseMapping {
       * Creates an instance of the deduplication table.
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info("Deduplicating table {} on columns {}", Array(this.input, columns.mkString(",")):_*)
+        val input = this.input
+        val columns = this.columns
+        logger.info(s"Deduplicating mapping '$input' on columns ${columns.mkString(",")}")
 
-        val df = input(this.input)
+        val df = tables(input)
         val cols = if (columns.nonEmpty) columns else df.columns.toSeq
         df.dropDuplicates(cols)
     }

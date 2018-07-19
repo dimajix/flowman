@@ -16,24 +16,35 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.io.StringWriter
+import java.net.URL
+import java.nio.charset.Charset
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.With
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class SqlMapping extends BaseMapping {
-    @JsonProperty("sql") private[spec] var _sql:String = _
-    @JsonProperty("file") private[spec] var _file:String = _
+    private val logger = LoggerFactory.getLogger(classOf[SqlMapping])
+
+    @JsonProperty(value="sql", required=false) private var _sql:String = _
+    @JsonProperty(value="file", required=false) private var _file:String = _
+    @JsonProperty(value="url", required=false) private var _url: String = _
 
     def sql(implicit context: Context) : String = context.evaluate(_sql)
-    def file(implicit context: Context) : String = context.evaluate(_file)
+    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
+    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -44,10 +55,13 @@ class SqlMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
+        val statement = this.statement
+        logger.info(s"Executing SQL statement $statement")
+
         // Register all input DataFrames as temp views
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
         // Execute query
-        val result = executor.spark.sql(sql)
+        val result = executor.spark.sql(statement)
         // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
         input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
         result
@@ -80,5 +94,31 @@ class SqlMapping extends BaseMapping {
             .toSet
         val tables = plan.collect { case p:UnresolvedRelation if !cteNames.contains(p.tableName) => p.tableName }.toArray
         tables ++ cteDependencies
+    }
+
+    private def statement(implicit context: Context) : String = {
+        val sql = this.sql
+        val url = this.url
+        val file = this.file
+        if (sql != null && sql.nonEmpty) {
+            sql
+        }
+        else if (file != null) {
+            val input = file.open()
+            try {
+                val writer = new StringWriter()
+                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
+                writer.toString
+            }
+            finally {
+                input.close()
+            }
+        }
+        else if (url != null) {
+            IOUtils.toString(url)
+        }
+        else {
+            throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")
+        }
     }
 }

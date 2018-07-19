@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.task
 
-import org.mockito.Mockito.when
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
@@ -25,10 +25,10 @@ import org.scalatest.mockito.MockitoSugar
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.schema.ArrayValue
-import com.dimajix.flowman.spec.schema.IntegerType
-import com.dimajix.flowman.spec.schema.RangeValue
-import com.dimajix.flowman.spec.schema.StringType
+import com.dimajix.flowman.types.ArrayValue
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.RangeValue
+import com.dimajix.flowman.types.StringType
 
 
 class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {

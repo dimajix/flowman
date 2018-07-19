@@ -21,6 +21,10 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 
 class JsonSchemaTest extends FlatSpec with Matchers {
     "An JsonSchema" should "be declarable inline" in {

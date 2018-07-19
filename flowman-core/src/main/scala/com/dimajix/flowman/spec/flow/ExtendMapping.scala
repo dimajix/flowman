@@ -26,12 +26,20 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
+object ExtendMapping {
+    def apply(input:String, columns:Map[String,String]) : ExtendMapping = {
+        val result = new ExtendMapping
+        result._input = input
+        result._columns = columns
+        result
+    }
+}
 
 class ExtendMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ExtendMapping])
 
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = _
+    @JsonProperty(value = "input", required = true) private var _input:String = _
+    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = Map()
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
@@ -40,13 +48,14 @@ class ExtendMapping extends BaseMapping {
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        val allColumns = columns
+        val allColumns = this.columns
         val columnNames = allColumns.keys.toSet
+        val input = this.input
 
         logger.info(s"Extending mapping '$input' with columns ${columnNames.mkString("[",",","]")}")
 
@@ -81,7 +90,7 @@ class ExtendMapping extends BaseMapping {
         }
 
         // Now that we have a field order, we can transform the DataFrame
-        val table = input(this.input)
+        val table = tables(input)
         orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
     }
 

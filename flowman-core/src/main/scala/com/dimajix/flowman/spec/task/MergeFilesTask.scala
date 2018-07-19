@@ -64,6 +64,7 @@ class MergeFilesTask extends BaseTask {
             fs.file(source)
                 .list()
                 .filter(_.isFile())
+                .sortBy(_.toString)
                 .foreach(file => {
                     val input = file.open()
                     try {

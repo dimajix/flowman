@@ -22,6 +22,7 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.NullType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -30,34 +31,46 @@ import com.dimajix.flowman.util.SchemaUtils
 
 
 class UnionMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[UnionMapping])
+
     @JsonProperty(value="inputs", required=true) private[spec] var _inputs:Seq[String] = _
-    @JsonProperty(value="fields", required=false) private[spec] var _fields:Map[String,String] = _
+    @JsonProperty(value="columns", required=false) private[spec] var _columns:Map[String,String] = _
+    @JsonProperty(value="distinct", required=false) var _distinct:String = "false"
 
     def inputs(implicit context: Context) : Seq[MappingIdentifier] = _inputs.map(i => MappingIdentifier.parse(context.evaluate(i)))
-    def fields(implicit context: Context) : Map[String,String] = if (_fields != null) _fields.mapValues(context.evaluate) else null
+    def columns(implicit context: Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
+    def distinct(implicit context: Context) : Boolean = context.evaluate(_distinct).toBoolean
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
-        val tables = inputs.map(input(_))
+        val inputs = this.inputs
+        val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
-        val fields = this.fields
-        val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else getCommonSchema(tables)
+        val fields = this.columns
+        val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else getCommonSchema(dfs)
+        logger.info(s"Creating union from mappings ${inputs.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
 
         // Project all tables onto common schema
-        val projectedTables = tables.map(table =>
+        val projectedTables = dfs.map(table =>
             projectTable(table, schema)
         )
 
         // Now create a union of all tables
-        projectedTables.reduce((l,r) => l.union(r))
+        val union = projectedTables.reduce((l,r) => l.union(r))
+
+        // Optionally perform distinct operation
+        if (distinct)
+            union.distinct()
+        else
+            union
     }
 
     /**

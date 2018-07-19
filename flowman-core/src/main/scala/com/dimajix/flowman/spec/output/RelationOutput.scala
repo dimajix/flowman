@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.schema.SingleValue
+import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.types.SingleValue
 
 
 class RelationOutput extends BaseOutput {
@@ -32,20 +32,23 @@ class RelationOutput extends BaseOutput {
 
     @JsonProperty(value="target", required=true) private var _target:String = _
     @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
-    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = _
+    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = Map()
     @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
 
     def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
     def mode(implicit context: Context) : String = context.evaluate(_mode)
-    def partition(implicit context: Context) : Map[String,String] = if (_partition != null) _partition.mapValues(context.evaluate) else Map()
+    def partition(implicit context: Context) : Map[String,String] = _partition.mapValues(context.evaluate)
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
 
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
-        logger.info("Writing to relation '{}'", target)
         val partition = this.partition.mapValues(v => SingleValue(v))
+        val target = this.target
+        val input = this.input
+
+        logger.info(s"Writing mapping '$input' to relation '$target' into partition $partition")
         val relation = context.getRelation(target)
-        val table = input(this.input).coalesce(parallelism)
+        val table = tables(input).coalesce(parallelism)
         relation.write(executor, table, partition, mode)
     }
 }

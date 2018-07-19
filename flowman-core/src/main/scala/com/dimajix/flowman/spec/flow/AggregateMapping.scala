@@ -44,14 +44,16 @@ class AggregateMapping extends BaseMapping {
       * Creates an instance of the aggregated table.
       *
       * @param executor
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        logger.info("Aggregating table {} on dimensions {}", Array(this.input, dimensions.mkString(",")):_*)
+        val input = this.input
+        val dimensions = this.dimensions
+        logger.info(s"Aggregating mapping '$input' on dimensions ${dimensions.mkString(",")}")
 
-        val df = input(this.input)
+        val df = tables(input)
         val dims = dimensions.map(col)
         val aggs = aggregations.map(kv => expr(kv._2).as(kv._1))
         val parts = partitions

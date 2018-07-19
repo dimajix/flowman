@@ -35,16 +35,24 @@ class ShowCommand extends ActionCommand {
 
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 10
-    @Argument(usage = "specifies the mapping to show", metaVar = "<mapping>", required = true)
+    @Argument(index=0, usage="specifies the mapping to show", metaVar="<mapping>", required=true)
     var tablename: String = ""
+    @Argument(index=1, usage="specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
+    var columns: String = ""
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         logger.info(s"Showing first $limit rows of mapping '$tablename'")
 
+        val columns = this.columns.split(",").filter(_.nonEmpty)
+
         Try {
             val table = executor.instantiate(MappingIdentifier.parse((tablename)))
-            table.limit(limit).show(truncate = false)
+            val projection = if (columns.nonEmpty)
+                table.select(columns.map(name => table(name)):_*)
+            else
+                table
+            projection.limit(limit).show(truncate = false)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping mapping")

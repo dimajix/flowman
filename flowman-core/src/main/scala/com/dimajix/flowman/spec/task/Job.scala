@@ -290,8 +290,10 @@ class Job {
         result match {
             case Failure(e) =>
                 logger.error("Execution of task failed with exception: ", e)
-            case _ =>
-                logger.info(s"Successfully executed all tasks of jon '$name'")
+            case Success(false) =>
+                logger.error("Execution of task failed with an error")
+            case Success(true) =>
+                logger.info(s"Successfully executed all tasks of job '$name'")
         }
         result
     }

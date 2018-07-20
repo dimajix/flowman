@@ -35,11 +35,6 @@ object Module {
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Module])
 
-        private def loadFile(file:File) : Module = {
-            logger.info(s"Reading module from ${file.toString}")
-            ObjectMapper.read[Module](file)
-        }
-
         /**
           * Loads a single file or a whole directory (non recursibely)
           *
@@ -47,6 +42,24 @@ object Module {
           * @return
           */
         def file(file:File) : Module = {
+            if (!file.isAbsolute()) {
+                readFile(file.absolute)
+            }
+            else {
+                readFile(file)
+            }
+        }
+
+        def url(url:URL) : Module = {
+            logger.info(s"Reading module from url ${url.toString}")
+            ObjectMapper.read[Module](url)
+        }
+
+        def string(text:String) : Module = {
+            ObjectMapper.parse[Module](text)
+        }
+
+        private def readFile(file:File) : Module = {
             if (file.isDirectory) {
                 logger.info(s"Reading all module files in directory ${file.toString}")
                 file.list()
@@ -59,13 +72,9 @@ object Module {
             }
         }
 
-        def url(url:URL) : Module = {
-            logger.info(s"Reading module from url ${url.toString}")
-            ObjectMapper.read[Module](url)
-        }
-
-        def string(text:String) : Module = {
-            ObjectMapper.parse[Module](text)
+        private def loadFile(file:File) : Module = {
+            logger.info(s"Reading module from ${file.toString}")
+            ObjectMapper.read[Module](file)
         }
     }
 

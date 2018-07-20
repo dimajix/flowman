@@ -38,6 +38,19 @@ object Project {
           * @return
           */
         def file(file:File) : Project = {
+            if (!file.isAbsolute()) {
+                readFile(file.absolute)
+            }
+            else {
+                readFile(file)
+            }
+        }
+
+        def string(text:String) : Project = {
+            ObjectMapper.parse[Project](text)
+        }
+
+        private def readFile(file:File) : Project = {
             if (file.isDirectory) {
                 logger.info(s"Reading project in directory ${file.toString}")
                 this.file(file / "project.yml")
@@ -46,14 +59,10 @@ object Project {
                 logger.info(s"Reading project from ${file.toString}")
                 val project = ObjectMapper.read[Project](file)
                 loadModules(project, file.parent)
-                project._filename = file.abs
-                project._basedir = file.abs.parent
+                project._filename = file.absolute
+                project._basedir = file.absolute.parent
                 project
             }
-        }
-
-        def string(text:String) : Project = {
-            ObjectMapper.parse[Project](text)
         }
 
         private def loadModules(project: Project, directory:File) : Unit = {

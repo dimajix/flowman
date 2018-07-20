@@ -52,9 +52,9 @@ class ProjectContextTest extends FlatSpec with Matchers {
         val context = session.getContext(project)
         context.evaluate("${project.name}") should be ("test")
         context.evaluate("${project.version}") should be ("1.0")
-        context.evaluate("${project.basedir}") should be (file.abs.parent.toString)
-        context.evaluate("${project.basedir.parent}") should be (file.abs.parent.parent.toString)
-        context.evaluate("${project.filename}") should be (file.abs.toString)
-        context.evaluate("${project.filename.withSuffix('lala')}") should be (file.abs.withSuffix("lala").toString)
+        context.evaluate("${project.basedir}") should be (file.absolute.parent.toString)
+        context.evaluate("${project.basedir.parent}") should be (file.absolute.parent.parent.toString)
+        context.evaluate("${project.filename}") should be (file.absolute.toString)
+        context.evaluate("${project.filename.withSuffix('lala')}") should be (file.absolute.withSuffix("lala").toString)
     }
 }

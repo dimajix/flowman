@@ -21,7 +21,7 @@ object Templating {
         override def toString: String = file.toString
 
         def getParent() : FileWrapper = FileWrapper(file.parent)
-        def getAbsPath() : FileWrapper = FileWrapper(file.abs)
+        def getAbsPath() : FileWrapper = FileWrapper(file.absolute)
         def getFilename() : String = file.filename
         def withSuffix(suffix:String) : FileWrapper = FileWrapper(file.withSuffix(suffix))
         def withName(name:String) : FileWrapper = FileWrapper(file.withName(name))

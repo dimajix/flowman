@@ -74,7 +74,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the absolute path
       * @return
       */
-    def abs : File = {
+    def absolute : File = {
         File(fs, path.makeQualified(fs.getUri, fs.getWorkingDirectory))
     }
 
@@ -196,6 +196,14 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       */
     def isFile() : Boolean = {
         fs.isFile(path)
+    }
+
+    /**
+      * Returns true if the File is an absolute path
+      * @return
+      */
+    def isAbsolute() : Boolean = {
+        path.isAbsolute
     }
 
     /**

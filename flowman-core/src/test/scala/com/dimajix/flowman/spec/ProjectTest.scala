@@ -29,8 +29,8 @@ class ProjectTest extends FlatSpec with Matchers {
         val project = Project.read.file(file)
         project.name should be ("test")
         project.version should be ("1.0")
-        project.filename.toString should be (file.abs.toString)
-        project.basedir.toString should be (file.abs.parent.toString)
+        project.filename.toString should be (file.absolute.toString)
+        project.basedir.toString should be (file.absolute.parent.toString)
         project.environment should contain("x" -> "y")
         project.config should contain("spark.lala" -> "lolo")
     }

@@ -1,0 +1,5 @@
+name: ${plugin.name}
+description: Example plugin
+version: ${plugin.version}
+isolation: false
+jars: ${plugin.jar}

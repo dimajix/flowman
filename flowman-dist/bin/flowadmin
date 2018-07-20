@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+basedir=$(readlink -f $(dirname $0)/..)
+source $basedir/libexec/flowman-common.sh
+
+APP_NAME="flowman-tools"
+APP_VERSION="${project.version}"
+APP_MAIN="com.dimajix.flowman.tools.admin.Driver"
+
+APP_JAR=$FLOWMAN_HOME/lib/"$APP_NAME-$APP_VERSION.jar"
+
+spark_submit $APP_JAR $APP_MAIN "$@"

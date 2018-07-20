@@ -1,0 +1,2 @@
+com.dimajix.flowman.sources.spark.SequenceFileFormat
+com.dimajix.flowman.sources.spark.FixedWidthFormat

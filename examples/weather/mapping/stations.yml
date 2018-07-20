@@ -1,0 +1,4 @@
+mappings:
+  stations:
+    kind: read-relation
+    source: stations-raw

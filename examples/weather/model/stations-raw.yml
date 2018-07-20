@@ -1,0 +1,35 @@
+relations:
+  stations-raw:
+    kind: file
+    format: csv
+    location: "s3a://dimajix-training/data/weather/isd-history/"
+    options:
+      sep: ","
+      encoding: "UTF-8"
+      quote: "\""
+      header: "true"
+    schema:
+      kind: embedded
+      fields:
+        - name: usaf
+          type: STRING
+        - name: wban
+          type: STRING
+        - name: name
+          type: STRING
+        - name: country
+          type: STRING
+        - name: state
+          type: STRING
+        - name: icao
+          type: STRING
+        - name: latitude
+          type: FLOAT
+        - name: longitude
+          type: FLOAT
+        - name: elevation
+          type: FLOAT
+        - name: date_begin
+          type: STRING
+        - name: date_end
+          type: STRING

@@ -57,11 +57,12 @@ class InputMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        val relation = context.getRelation(source)
+        val source = this.source
         val fields = this.columns
         val partitions = this.partitions
+        val relation = context.getRelation(source)
         val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
-        logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Reading from relation '$source' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
         relation.read(executor, schema, partitions)
     }

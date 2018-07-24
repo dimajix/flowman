@@ -108,15 +108,15 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
         logger.info(s"Instantiating table for mapping '${_project.name}/$tableName' (broadcast=$doBroadcast, cache='$cacheDesc')")
         val instance = transform.execute(this, dependencies)
 
-        // Optionally cache the DataFrame
-        if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
-            instance.persist(cacheLevel)
-
         // Optionally mark DataFrame to be broadcasted
         val df = if (doBroadcast)
             broadcast(instance)
         else
             instance
+
+        // Optionally cache the DataFrame
+        if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
+            df.persist(cacheLevel)
 
         cache.put((_project.name,tableName), df)
         df

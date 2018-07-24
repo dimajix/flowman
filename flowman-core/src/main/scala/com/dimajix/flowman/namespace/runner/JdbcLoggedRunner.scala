@@ -41,18 +41,10 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.task.Job
 
 
-object JdbcLoggedRunner {
-    val STATUS_SUCCESS = "success"
-    val STATUS_FAILED = "failed"
-    val STATUS_RUNNING = "running"
-    val STATUS_SKIPPED = "skipped"
-    val STATUS_KILLED = "killed"
-}
-
 private object JdbcLoggedRepository {
     private val logger = LoggerFactory.getLogger(classOf[JdbcLoggedRunner])
 
-    case class Run (
+    case class JobRun(
        id:Long,
        namespace: String,
        project:String,
@@ -62,6 +54,12 @@ private object JdbcLoggedRepository {
        end_ts:Timestamp,
        status:String
    )
+
+    case class JobArgument(
+        job_id:Long,
+        name:String,
+        value:String
+    )
 }
 
 private class JdbcLoggedRepository(connection: JdbcConnection, val profile:JdbcProfile)(implicit context:Context) {
@@ -80,7 +78,7 @@ private class JdbcLoggedRepository(connection: JdbcConnection, val profile:JdbcP
         Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
 
-    class Runs(tag:Tag) extends Table[Run](tag, "JOB_RUN") {
+    class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def namespace = column[String]("namespace")
         def project = column[String]("project")
@@ -92,17 +90,28 @@ private class JdbcLoggedRepository(connection: JdbcConnection, val profile:JdbcP
 
         def idx = index("idx_jobs", (namespace, project, job, args_hash, status), unique = false)
 
-        def * = (id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (Run.tupled, Run.unapply)
+        def * = (id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
     }
 
-    val runs = TableQuery[Runs]
+    class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
+        def job_id = column[Long]("job_id")
+        def name = column[String]("name")
+        def value = column[String]("value")
+
+        def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
+        def pk = primaryKey("pk", (job_id, name))
+    }
+
+    val jobRuns = TableQuery[JobRuns]
+    val jobArgs = TableQuery[JobArguments]
 
     def create() : Unit = {
-        Await.result(db.run(runs.schema.create), Duration.Inf)
+        Await.result(db.run(jobRuns.schema.create), Duration.Inf)
+        Await.result(db.run(jobArgs.schema.create), Duration.Inf)
     }
 
-    def getStatus(run:Run) : Option[String] = {
-        val q = runs.filter(_.id === runs.filter( r =>
+    def getStatus(run:JobRun) : Option[String] = {
+        val q = jobRuns.filter(_.id === jobRuns.filter(r =>
                     r.namespace === run.namespace
                     && r.project === run.project
                     && r.job === run.job
@@ -114,14 +123,37 @@ private class JdbcLoggedRepository(connection: JdbcConnection, val profile:JdbcP
         Await.result(db.run(q.result), Duration.Inf).headOption
     }
 
-    def setStatus(run:Run) : Unit = {
-        val q = runs.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
+    def setStatus(run:JobRun) : Unit = {
+        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
         Await.result(db.run(q), Duration.Inf)
     }
 
-    def insertRun(run:Run) : Run = {
-        val q = (runs returning runs.map(_.id) into((run, id) => run.copy(id=id))) += run
-        Await.result(db.run(q), Duration.Inf)
+    def insertRun(run:JobRun, args:Map[String,String]) : JobRun = {
+        val runQuery = (jobRuns returning jobRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
+        val runResult = Await.result(db.run(runQuery), Duration.Inf)
+
+        val runArgs = args.map(kv => JobArgument(runResult.id, kv._1, kv._2))
+        val argsQuery = jobArgs ++= runArgs
+        Await.result(db.run(argsQuery), Duration.Inf)
+
+        runResult
+    }
+}
+
+
+object JdbcLoggedRunner {
+    val STATUS_SUCCESS = "success"
+    val STATUS_FAILED = "failed"
+    val STATUS_RUNNING = "running"
+    val STATUS_SKIPPED = "skipped"
+    val STATUS_KILLED = "killed"
+
+    def apply(connection:String, retries:Int=3, timeout:Int=1000) : JdbcLoggedRunner = {
+        val runner = new JdbcLoggedRunner
+        runner._connection = connection
+        runner._retries = retries.toString
+        runner._timeout = timeout.toString
+        runner
     }
 }
 
@@ -141,7 +173,7 @@ class JdbcLoggedRunner extends AbstractRunner {
     def timeout(implicit context: Context) : Int = context.evaluate(_timeout).toInt
 
     protected override def check(context:Context, job:Job, args:Map[String,String]) : Boolean = {
-        val run =  Run(
+        val run =  JobRun(
             0,
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
@@ -165,7 +197,7 @@ class JdbcLoggedRunner extends AbstractRunner {
 
     protected override def start(context:Context, job:Job, args:Map[String,String]) : Object = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        val run =  Run(
+        val run =  JobRun(
             0,
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
@@ -178,27 +210,27 @@ class JdbcLoggedRunner extends AbstractRunner {
 
         logger.info(s"Writing start marker for job ${run.namespace}/${run.project}/${run.job} into state database")
         withSession(context) { repository =>
-            repository.insertRun(run)
+            repository.insertRun(run, args)
         }
     }
 
     protected override def success(context: Context, token:Object) : Unit = {
-        val run = token.asInstanceOf[Run]
+        val run = token.asInstanceOf[JobRun]
         setState(context, run, STATUS_SUCCESS)
     }
 
     protected override def failure(context: Context, token:Object) : Unit = {
-        val run = token.asInstanceOf[Run]
+        val run = token.asInstanceOf[JobRun]
         setState(context, run, STATUS_FAILED)
     }
 
     protected override def aborted(context: Context, token:Object) : Unit = {
-        val run = token.asInstanceOf[Run]
+        val run = token.asInstanceOf[JobRun]
         setState(context, run, STATUS_KILLED)
     }
 
     protected override def skipped(context: Context, token:Object) : Unit = {
-        val run = token.asInstanceOf[Run]
+        val run = token.asInstanceOf[JobRun]
         setState(context, run, STATUS_SKIPPED)
     }
 
@@ -216,7 +248,7 @@ class JdbcLoggedRunner extends AbstractRunner {
       * @param run
       * @param status
       */
-    private def setState(context: Context, run: Run, status:String): Unit = {
+    private def setState(context: Context, run: JobRun, status:String): Unit = {
         logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession(context) { repository =>

@@ -36,7 +36,18 @@ abstract class BaseRelation extends Relation {
     @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="options", required=false) private var _options:Map[String,String] = Map()
 
+    /**
+      * Returns a description for the relation
+      * @param context
+      * @return
+      */
     override def description(implicit context: Context) : String = context.evaluate(_description)
+
+    /**
+      * Returns the schema of the relation
+      * @param context
+      * @return
+      */
     override def schema(implicit context: Context) : Schema = _schema
     def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
 

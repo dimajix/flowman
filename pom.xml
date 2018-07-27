@@ -8,7 +8,7 @@
     <artifactId>flowman-root</artifactId>
     <version>0.2.0-SNAPSHOT</version>
 
-    <name>flowman-root</name>
+    <name>Flowman root pom</name>
     <inceptionYear>2018</inceptionYear>
 
     <licenses>
@@ -128,7 +128,8 @@
         <module>flowman-core</module>
         <module>flowman-testing</module>
         <module>flowman-tools</module>
-        <module>flowman-plugin-example</module>
+        <module>flowman-plugins/example</module>
+        <module>flowman-plugins/hbase</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -412,6 +413,20 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-annotations</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-auth</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
@@ -439,7 +454,50 @@
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-client</artifactId>
                 <version>${hbase.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-annotations</artifactId>
+                <version>${hbase.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-common</artifactId>
+                <version>${hbase.version}</version>
+                <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.jboss.netty</groupId>
+                        <artifactId>netty</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.jruby</groupId>
+                        <artifactId>jruby-complete</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-protocol</artifactId>
+                <version>${hbase.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -473,31 +531,9 @@
 
             <dependency>
                 <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-common</artifactId>
+                <artifactId>hbase-testing-util</artifactId>
                 <version>${hbase.version}</version>
-                <scope>provided</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jruby</groupId>
-                        <artifactId>jruby-complete</artifactId>
-                    </exclusion>
-                </exclusions>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -550,6 +586,27 @@
                 <groupId>com.databricks</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark-avro.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.htrace</groupId>
+                <artifactId>htrace-core4</artifactId>
+                <version>4.0.1-incubating</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.htrace</groupId>
+                <artifactId>htrace-core</artifactId>
+                <version>3.2.0-incubating</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.hortonworks</groupId>
+                <artifactId>shc-core</artifactId>
+                <version>1.1.1-2.1-s_${scala.api_version}</version>
                 <scope>compile</scope>
             </dependency>
 

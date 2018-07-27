@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-dist</artifactId>
-    <name>flowman-dist</name>
+    <name>Flowman Distribution</name>
     <packaging>pom</packaging>
 
     <parent>
@@ -55,6 +55,14 @@
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-example</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>target</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-hbase</artifactId>
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>
                                     <classifier>bin</classifier>

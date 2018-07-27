@@ -3,18 +3,18 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>flowman-plugin-example</artifactId>
-    <name>flowman-plugin-example</name>
+    <artifactId>flowman-plugin-hbase</artifactId>
+    <name>Flowman HBase plugin</name>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
         <version>0.2.0-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <relativePath>../..</relativePath>
     </parent>
 
     <properties>
-        <plugin.name>flowman-example</plugin.name>
+        <plugin.name>flowman-hbase</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
     </properties>
@@ -59,21 +59,69 @@
         </dependency>
 
         <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-testing</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-protocol</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.htrace</groupId>
+            <artifactId>htrace-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.htrace</groupId>
+            <artifactId>htrace-core4</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hortonworks</groupId>
+            <artifactId>shc-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-testing-util</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.api_version}</artifactId>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.scalamock</groupId>
             <artifactId>scalamock_${scala.api_version}</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

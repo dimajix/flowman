@@ -32,6 +32,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.SchemaUtils
 
 
 object HBaseRelation {
@@ -114,11 +115,13 @@ class HBaseRelation extends Relation {
         logger.info(s"Reading from HBase table '$namespace.$table'")
 
         val options = hbaseOptions
-        executor.spark
+        val df = executor.spark
             .read
             .options(options)
             .format("org.apache.spark.sql.execution.datasources.hbase")
             .load()
+
+        SchemaUtils.applySchema(df, schema)
     }
 
     /**
@@ -135,6 +138,7 @@ class HBaseRelation extends Relation {
         val options = hbaseOptions
         df.write
             .options(options)
+            .mode(mode)
             .format("org.apache.spark.sql.execution.datasources.hbase")
             .save()
     }

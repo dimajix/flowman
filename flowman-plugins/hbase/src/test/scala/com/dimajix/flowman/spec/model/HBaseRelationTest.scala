@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.ConnectionFactory
 import org.apache.hadoop.hbase.client.Get
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.datasources.hbase.SparkHBaseConf
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lit
@@ -100,7 +101,15 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
         }
     }
 
-    it should "support reading from" in {
+    it should "support reading without a Schema" in {
+        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.column("f", "col1", "col_1")))
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val df = relation.read(executor, null, Map())
+        df.printSchema()
+        val rows = df.sort("pk").collect()
+
+        rows.toSeq should be((1 until 10).map(i => Row(i.toString, (2*i).toString)))
     }
 }

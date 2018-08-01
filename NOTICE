@@ -11,6 +11,12 @@ Apache Hadoop
   * HOMEPAGE:
     * http://hadoop.apache.org/
 
+Apache HBase
+  * LICENSE
+    * license/LICENSE-hbase.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * http://hbase.apache.org/
+
 Apache Spark
   * LICENSE
     * license/LICENSE-spark.txt (Apache 2.0 License)
@@ -28,6 +34,12 @@ Spark Avro
     * license/LICENSE-spark-avro.txt (Apache 2.0 License)
   * HOMEPAGE:
     * https://github.com/databricks/spark-avro
+
+Spark HBase Connector
+  * LICENSE
+    * license/LICENSE-shc.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://github.com/hortonworks-spark/shc
 
 Log4j
   * LICENSE

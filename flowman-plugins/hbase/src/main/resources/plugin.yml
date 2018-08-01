@@ -1,0 +1,12 @@
+name: ${plugin.name}
+description: Flowman HBase plugin
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ - shc-core-1.1.1-2.1-s_2.11.jar
+ - hbase-client-${hbase.version}.jar
+ - hbase-common-${hbase.version}.jar
+ - hbase-protocol-${hbase.version}.jar
+ - htrace-core-3.2.0-incubating.jar
+ - htrace-core4-4.0.1-incubating.jar

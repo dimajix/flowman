@@ -107,7 +107,6 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
         val df = relation.read(executor, null, Map())
-        df.printSchema()
         val rows = df.sort("pk").collect()
 
         rows.toSeq should be((1 until 10).map(i => Row(i.toString, (2*i).toString)))

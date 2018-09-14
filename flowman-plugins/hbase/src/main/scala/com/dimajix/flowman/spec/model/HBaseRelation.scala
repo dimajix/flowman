@@ -17,7 +17,9 @@
 package com.dimajix.flowman.spec.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.hbase.client.Scan
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseRelation => ShcRelation}
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseTableCatalog => ShcCatalog}
 import org.apache.spark.sql.types.StructType
@@ -36,6 +38,17 @@ import com.dimajix.flowman.util.SchemaUtils
 
 
 object HBaseRelation {
+    def supportsRead() : Boolean = {
+        try {
+            val method = classOf[Scan].getDeclaredMethod("setCaching", Integer.TYPE)
+            method.getReturnType == classOf[Scan]
+        }
+        catch {
+            case _:NoSuchMethodException => false
+        }
+    }
+
+
     class Column {
         @JsonProperty(value="family", required = true) private[HBaseRelation] var _family: String = _
         @JsonProperty(value="column", required = true) private[HBaseRelation] var _column: String = _

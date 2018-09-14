@@ -46,6 +46,7 @@
         <log4j.version>1.2.17</log4j.version>
         <antlr.version>2.7.7</antlr.version>
         <antlr-runtime.version>3.4</antlr-runtime.version>
+        <protobuf.version>2.5.0</protobuf.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <commons-codec.version>1.10</commons-codec.version>
@@ -142,6 +143,25 @@
                 <commons-lang.version>2.4</commons-lang.version>
             </properties>
         </profile>
+        <profile>
+            <id>CDH-5.15</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <cdh.version>cdh5.15.1</cdh.version>
+                <spark.version>2.3.0.cloudera3</spark.version>
+                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
+                <hbase.version>1.2.0-${cdh.version}</hbase.version>
+                <avro.version>1.7.6-${cdh.version}</avro.version>
+                <guava.version>12.0.1</guava.version>
+                <jackson.version>2.6.7</jackson.version>
+                <commons-lang.version>2.6</commons-lang.version>
+            </properties>
+        </profile>
     </profiles>
 
     <modules>
@@ -158,6 +178,10 @@
         <repository>
             <id>maven-central</id>
             <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>hortonworks</id>
+            <url>http://repo.hortonworks.com/content/repositories/releases/</url>
         </repository>
         <repository>
             <id>jitpack.io</id>
@@ -433,7 +457,6 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
-<<<<<<< HEAD
                 <artifactId>hadoop-aws</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
@@ -476,8 +499,6 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
-=======
->>>>>>> 0.1.1
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
@@ -503,7 +524,13 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
-<<<<<<< HEAD
+                <artifactId>hadoop-yarn-api</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-minicluster</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>test</scope>
@@ -515,11 +542,6 @@
                 <version>${hadoop.version}</version>
                 <scope>test</scope>
                 <type>test-jar</type>
-=======
-                <artifactId>hadoop-aws</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>provided</scope>
->>>>>>> 0.1.1
             </dependency>
 
             <dependency>
@@ -619,6 +641,13 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

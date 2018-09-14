@@ -102,6 +102,9 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
     }
 
     it should "support reading without a Schema" in {
+        if (!HBaseRelation.supportsRead())
+            cancel()
+        
         val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.column("f", "col1", "col_1")))
 
         val session = Session.builder().withSparkSession(spark).build()

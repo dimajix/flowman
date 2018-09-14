@@ -178,6 +178,10 @@
             <url>http://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
+            <id>hortonworks</id>
+            <url>http://repo.hortonworks.com/content/repositories/releases/</url>
+        </repository>
+        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>

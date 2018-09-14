@@ -1,5 +1,0 @@
-name: ${plugin.name}
-description: Flowman example plugin
-version: ${plugin.version}
-isolation: false
-jars: ${plugin.jar}

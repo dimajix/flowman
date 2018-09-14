@@ -7,7 +7,6 @@
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
     <version>0.2.0-SNAPSHOT</version>
-
     <name>Flowman root pom</name>
     <inceptionYear>2018</inceptionYear>
 
@@ -29,6 +28,7 @@
         <hadoop.version>2.8.4</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
         <spark.version>2.3.1</spark.version>
+        <aws.version>1.11.95</aws.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
         <avro.version>1.7.7</avro.version>
@@ -55,6 +55,8 @@
         <commons-compiler.version>3.0.0</commons-compiler.version>
         <commons-cli.version>1.2</commons-cli.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
+        <httpclient.version>4.5.2</httpclient.version>
+        <httpcore.version>4.4.4</httpcore.version>
         <swagger-parser.version>1.0.36</swagger-parser.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -431,6 +433,7 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
+<<<<<<< HEAD
                 <artifactId>hadoop-aws</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
@@ -473,6 +476,8 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
+=======
+>>>>>>> 0.1.1
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
@@ -498,6 +503,7 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
+<<<<<<< HEAD
                 <artifactId>hadoop-minicluster</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>test</scope>
@@ -509,6 +515,11 @@
                 <version>${hadoop.version}</version>
                 <scope>test</scope>
                 <type>test-jar</type>
+=======
+                <artifactId>hadoop-aws</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+>>>>>>> 0.1.1
             </dependency>
 
             <dependency>
@@ -627,6 +638,7 @@
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
                 <version>${joda.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -813,6 +825,21 @@
                 <artifactId>commons-validator</artifactId>
                 <version>${commons-validator.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>${httpcore.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity</artifactId>

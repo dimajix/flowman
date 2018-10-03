@@ -22,6 +22,10 @@ import java.util.Locale
 import com.dimajix.flowman.fs.File
 
 
+/**
+  * Helper class for exporting flowman schema definitions to files
+  * @param fields
+  */
 class SchemaWriter(fields:Seq[Field]) {
     /**
       * Specifies the input data format format.
@@ -31,27 +35,27 @@ class SchemaWriter(fields:Seq[Field]) {
         this
     }
 
-    def save(path: File) = {
+    def save(path: File): Unit = {
         writer(path)
     }
 
-    private def writer = format.toLowerCase(Locale.ROOT) match {
-        case "spark" => saveAsSpark _
-        case "avro" => saveAsAvro _
+    private def writer : File => Unit = format.toLowerCase(Locale.ROOT) match {
+        case "spark" => saveAsSpark
+        case "avro" => saveAsAvro
         case _ => throw new IllegalArgumentException(s"Schema format $format not supported for export")
     }
 
-    private def saveAsAvro(file:File) = {
+    private def saveAsAvro(file:File) : Unit = {
         val schema = AvroSchemaUtils.toAvro(fields)
         writeSchemaFile(file, schema.toString(true))
     }
 
-    private def saveAsSpark(file:File) = {
+    private def saveAsSpark(file:File) : Unit = {
         val schema = SparkSchemaUtils.toSpark(fields)
         writeSchemaFile(file, schema.json)
     }
 
-    private def writeSchemaFile(file:File, schema:String) = {
+    private def writeSchemaFile(file:File, schema:String) : Unit = {
         // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
         val bytes = Charset.forName("UTF-8").encode(schema)
         val output = file.create(true)

@@ -29,7 +29,7 @@ class SparkSchema extends ExternalSchema {
       * @param context
       * @return
       */
-    override def description(implicit context: Context): String = {
+    protected override def loadDescription(implicit context: Context): String = {
         ""
     }
 
@@ -38,13 +38,21 @@ class SparkSchema extends ExternalSchema {
       * @param context
       * @return
       */
-    override def fields(implicit context: Context): Seq[Field] = {
-        val schema = loadSparkSchema(context)
-        SparkSchemaUtils.fromSpark(schema)
+    protected override def loadFields(implicit context: Context): Seq[Field] = {
+        SparkSchemaUtils.fromSpark(sprkSchema)
     }
 
-    private def loadSparkSchema(context: Context) : org.apache.spark.sql.types.StructType = {
-        val json = loadSchema(context)
-         DataType.fromJson(json).asInstanceOf[org.apache.spark.sql.types.StructType]
+    /**
+      * Load and cache Spark schema from external source
+      * @param context
+      * @return
+      */
+    private def sprkSchema(implicit context: Context) : org.apache.spark.sql.types.StructType = {
+        if (cachedSparkSchema == null) {
+            val json = loadSchemaSpec(context)
+            cachedSparkSchema = DataType.fromJson(json).asInstanceOf[org.apache.spark.sql.types.StructType]
+        }
+        cachedSparkSchema
     }
+    private var cachedSparkSchema : org.apache.spark.sql.types.StructType = _
 }

@@ -85,8 +85,8 @@ class SwaggerSchema extends ExternalSchema {
       * @param context
       * @return
       */
-    override def description(implicit context: Context): String = {
-        loadSwaggerSchema.getInfo.getDescription
+    protected override def loadDescription(implicit context: Context): String = {
+        swaggerSchema.getInfo.getDescription
     }
 
     /**
@@ -94,8 +94,8 @@ class SwaggerSchema extends ExternalSchema {
       * @param context
       * @return
       */
-    override def fields(implicit context: Context): Seq[Field] = {
-        val swagger = loadSwaggerSchema
+    protected override def loadFields(implicit context: Context): Seq[Field] = {
+        val swagger = swaggerSchema
         val model = Option(entity).filter(_.nonEmpty).map(e => swagger.getDefinitions()(e)).getOrElse(swagger.getDefinitions().values().head)
 
         if (!model.isInstanceOf[ModelImpl] && !model.isInstanceOf[ComposedModel])
@@ -104,10 +104,19 @@ class SwaggerSchema extends ExternalSchema {
         fromSwaggerModel(model)
     }
 
-    private def loadSwaggerSchema(implicit context: Context) : Swagger = {
-        val string = loadSchema(context)
-        convertToSwagger(string)
+    /**
+      * Load and cache Swagger schema from external source
+      * @param context
+      * @return
+      */
+    private def swaggerSchema(implicit context: Context) : Swagger = {
+        if (cachedSwaggerSchema == null) {
+            val string = loadSchemaSpec(context)
+            cachedSwaggerSchema = convertToSwagger(string)
+        }
+        cachedSwaggerSchema
     }
+    private var cachedSwaggerSchema : Swagger = _
 
     @throws[IOException]
     private def convertToSwagger(data: String): Swagger = {

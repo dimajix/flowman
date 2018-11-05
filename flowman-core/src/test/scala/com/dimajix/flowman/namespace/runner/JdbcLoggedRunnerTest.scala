@@ -115,4 +115,24 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         runner.execute(session.executor, job) should be (JobStatus.FAILURE)
         runner.execute(session.executor, job) should be (JobStatus.FAILURE)
     }
+
+    it should "support parameters" in {
+        val db = tempDir.resolve("mydb")
+        val job = Job.builder()
+            .setName("job")
+            .addParameter("p1", StringType)
+            .build()
+        val ns = Namespace.builder()
+            .addConnection("logger", JdbcConnection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
+            .build()
+        val session = Session.builder()
+            .withNamespace(ns)
+            .build()
+
+        val runner = JdbcLoggedRunner("logger")
+        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (JobStatus.SUCCESS)
+        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (JobStatus.SKIPPED)
+        runner.execute(session.executor, job, Map("p1" -> "v2")) should be (JobStatus.SUCCESS)
+        runner.execute(session.executor, job, Map("p1" -> "v2"), force=true) should be (JobStatus.SUCCESS)
+    }
 }

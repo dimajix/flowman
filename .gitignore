@@ -2,5 +2,7 @@
 *.iml
 velocity.log*
 derby.log
+dependency-reduced-pom.xml
 metastore_db/
-*/target/
+**/target/
+

@@ -16,11 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.net.URL
-
 import scala.collection.JavaConversions._
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
 import org.everit.json.schema.EnumSchema
@@ -28,12 +25,12 @@ import org.everit.json.schema.NullSchema
 import org.everit.json.schema.NumberSchema
 import org.everit.json.schema.ObjectSchema
 import org.everit.json.schema.StringSchema
+import org.everit.json.schema.loader.SchemaLoader
 import org.everit.json.schema.{Schema => JSchema}
 import org.json.JSONObject
 import org.json.JSONTokener
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.DoubleType
@@ -48,22 +45,14 @@ import com.dimajix.flowman.types.VarcharType
 /**
   * This class encapsulates a data frame schema specified as a JSON schema document.
   */
-class JsonSchema extends Schema {
-    @JsonProperty(value="file", required=false) private var _file: String = _
-    @JsonProperty(value="url", required=false) private var _url: String = _
-    @JsonProperty(value="spec", required=false) private var _spec: String = _
-
-    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
-    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
-    def spec(implicit context: Context) : String = context.evaluate(_spec)
-
+class JsonSchema extends ExternalSchema {
     /**
       * Returns the description of the whole schema
       * @param context
       * @return
       */
-    override def description(implicit context: Context): String = {
-        loadJsonSchema.getDescription
+    protected override def loadDescription(implicit context: Context): String = {
+        jsonSchema.getDescription
     }
 
     /**
@@ -71,43 +60,27 @@ class JsonSchema extends Schema {
       * @param context
       * @return
       */
-    override def fields(implicit context: Context): Seq[Field] = {
-        fromJsonObject(loadJsonSchema.asInstanceOf[ObjectSchema]).fields
+    protected override def loadFields(implicit context: Context): Seq[Field] = {
+        fromJsonObject(jsonSchema.asInstanceOf[ObjectSchema]).fields
     }
 
-    private def loadJsonSchema(implicit context: Context) : JSchema = {
-        import org.everit.json.schema.loader.SchemaLoader
-        val file = this.file
-        val url = this.url
-        val spec = this.spec
+    /**
+      * Load and cache JSON schema from external source
+      * @param context
+      * @return
+      */
+    private def jsonSchema(implicit context: Context) : JSchema = {
+        if (cachedJsonSchema == null) {
+            val spec = loadSchemaSpec
 
-        val rawSchema = if (file != null) {
-            val input = file.open()
-            try {
-                new JSONObject(new JSONTokener(input))
-            }
-            finally {
-                input.close()
-            }
+            val rawSchema = new JSONObject(new JSONTokener(spec))
+            cachedJsonSchema = SchemaLoader.load(rawSchema)
+            if (!cachedJsonSchema.isInstanceOf[ObjectSchema])
+                throw new UnsupportedOperationException("Unexpected JSON top level type")
         }
-        else if (url != null) {
-            val con = url.openConnection()
-            con.setUseCaches(false)
-            new JSONObject(new JSONTokener(con.getInputStream))
-        }
-        else if (spec != null && spec.nonEmpty) {
-            new JSONObject(new JSONTokener(spec))
-        }
-        else {
-            throw new IllegalArgumentException("A JSON schema needs either a 'file', 'url' or a 'spec' element")
-        }
-
-        val schema = SchemaLoader.load(rawSchema)
-        if (!schema.isInstanceOf[ObjectSchema])
-            throw new UnsupportedOperationException("Unexpected JSON top level type")
-
-        schema
+        cachedJsonSchema
     }
+    private var cachedJsonSchema : JSchema = _
 
     private def fromJsonObject(obj:ObjectSchema) : StructType = {
         val requiredProperties = obj.getRequiredProperties.toSet

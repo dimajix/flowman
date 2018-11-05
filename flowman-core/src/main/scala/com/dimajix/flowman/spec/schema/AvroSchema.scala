@@ -16,12 +16,7 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.net.URL
-
-import com.fasterxml.jackson.annotation.JsonProperty
-
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.types.AvroSchemaUtils
 import com.dimajix.flowman.types.Field
 
@@ -29,22 +24,14 @@ import com.dimajix.flowman.types.Field
 /**
   * Schema implementation for reading Avro schemas.
   */
-class AvroSchema extends Schema {
-    @JsonProperty(value="file", required=false) private var _file: String = _
-    @JsonProperty(value="url", required=false) private var _url: String = _
-    @JsonProperty(value="spec", required=false) private var _spec: String = _
-
-    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
-    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
-    def spec(implicit context: Context) : String = context.evaluate(_spec)
-
+class AvroSchema extends ExternalSchema {
     /**
       * Returns the description of the schema
       * @param context
       * @return
       */
-    override def description(implicit context: Context): String = {
-        loadAvroSchema.getDoc
+    protected override def loadDescription(implicit context: Context): String = {
+        avroSchema.getDoc
     }
 
     /**
@@ -52,36 +39,21 @@ class AvroSchema extends Schema {
       * @param context
       * @return
       */
-    override def fields(implicit context: Context): Seq[Field] = {
-        AvroSchemaUtils.fromAvro(loadAvroSchema)
+    protected override def loadFields(implicit context: Context): Seq[Field] = {
+        AvroSchemaUtils.fromAvro(avroSchema)
     }
 
-    private def loadAvroSchema(implicit context: Context) : org.apache.avro.Schema = {
-        val file = this.file
-        val url = this.url
-        val spec = this.spec
-
-        val avroSchema = if (file != null) {
-            val input = file.open()
-            try {
-                new org.apache.avro.Schema.Parser().parse(input)
-            }
-            finally {
-                input.close()
-            }
+    /**
+      * Load and cache Avro schema from external source
+      * @param context
+      * @return
+      */
+    private def avroSchema(implicit context: Context) : org.apache.avro.Schema = {
+        if (cachedAvroSchema == null) {
+            val spec = loadSchemaSpec
+            cachedAvroSchema = new org.apache.avro.Schema.Parser().parse(spec)
         }
-        else if (url != null) {
-            val con = url.openConnection()
-            con.setUseCaches(false)
-            new org.apache.avro.Schema.Parser().parse(con.getInputStream)
-        }
-        else if (spec != null && spec.nonEmpty) {
-            new org.apache.avro.Schema.Parser().parse(spec)
-        }
-        else {
-            throw new IllegalArgumentException("An Avro schema needs either a 'file', 'url' or a 'spec' element")
-        }
-
-        avroSchema
+        cachedAvroSchema
     }
+    private var cachedAvroSchema : org.apache.avro.Schema = _
 }

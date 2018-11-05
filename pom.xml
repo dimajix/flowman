@@ -38,6 +38,7 @@
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>12.0</guava.version>
         <snakeyaml.version>1.21</snakeyaml.version>
+        <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
         <velocity.version>1.7</velocity.version>
@@ -689,6 +690,13 @@
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark-avro.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.opencsv</groupId>
+                <artifactId>opencsv</artifactId>
+                <version>${opencsv.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

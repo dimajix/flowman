@@ -14,10 +14,19 @@ want to run Flowman in a complex environment with Kerberos.
 
 ## Build for Custom Spark Version
 
-Per default, dataflow will be built for fairly recent versions of Spark (2.2.1 as of this writing) and
-Hadoop (2.8.3). But of course you can also build for a different version
+Per default, dataflow will be built for fairly recent versions of Spark (2.3.2 as of this writing) and
+Hadoop (2.8.3). But of course you can also build for a different version by either using a profile
+    
+    mvn install -Pspark2.2 -Phadoop2.7
+    
+This will always select the latest bugfix version within the minor version. You can also specify
+versions explicitly as follows:    
 
     mvn install -Dspark.version=2.2.1 -Dhadoop.version=2.7.3
+        
+Note that using profiles is the preferred way, as this gurantees that also dependencies are selected
+using the correct version.
+
         
 ## Building for Cloudera
 

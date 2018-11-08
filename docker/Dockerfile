@@ -18,7 +18,8 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist-${project.
     ln -s /opt/flowman* /opt/flowman && \
     cp -a /tmp/repo/conf/* /opt/flowman/conf && \
     chown -R root:root /opt/flowman* && \
-    rm -rf /tmp/repo
+    rm -rf /tmp/repo && \
+    chmod a+x /opt/docker/bin/*
 
 
 ENTRYPOINT ["/opt/docker/bin/entrypoint.sh"]

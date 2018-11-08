@@ -6,7 +6,7 @@
     <packaging>pom</packaging>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0-SNAPSHOT</version>
     <name>Flowman root pom</name>
     <inceptionYear>2018</inceptionYear>
 
@@ -27,13 +27,14 @@
     <properties>
         <hadoop.version>2.8.4</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.3.2</spark.version>
+        <spark.version>2.4.0</spark.version>
         <aws.version>1.11.95</aws.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
         <avro.version>1.7.7</avro.version>
         <jackson.version>2.6.7</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
+        <json4s.version>3.2.11</json4s.version>
         <json.version>20180130</json.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>12.0</guava.version>
@@ -81,6 +82,14 @@
             <properties>
                 <spark.version>2.3.2</spark.version>
                 <jackson.version>2.6.7</jackson.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-2.4</id>
+            <properties>
+                <spark.version>2.4.0</spark.version>
+                <jackson.version>2.6.7</jackson.version>
+                <avro.version>1.8.2</avro.version>
             </properties>
         </profile>
         <profile>
@@ -441,6 +450,21 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-hive_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-avro_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.databricks</groupId>
+                <artifactId>spark-avro_${scala.api_version}</artifactId>
+                <version>${spark-avro.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -546,92 +570,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-client</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-annotations</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-common</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jruby</groupId>
-                        <artifactId>jruby-complete</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-protocol</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-server</artifactId>
-                <version>${hbase.version}</version>
-                <scope>provided</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jruby</groupId>
-                        <artifactId>jruby-complete</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-testing-util</artifactId>
-                <version>${hbase.version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>commons-collections</groupId>
                 <artifactId>commons-collections</artifactId>
                 <version>3.2.1</version>
@@ -686,38 +624,10 @@
             </dependency>
 
             <dependency>
-                <groupId>com.databricks</groupId>
-                <artifactId>spark-avro_${scala.api_version}</artifactId>
-                <version>${spark-avro.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>net.sf.opencsv</groupId>
                 <artifactId>opencsv</artifactId>
                 <version>${opencsv.version}</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.htrace</groupId>
-                <artifactId>htrace-core4</artifactId>
-                <version>4.0.1-incubating</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.htrace</groupId>
-                <artifactId>htrace-core</artifactId>
-                <version>3.2.0-incubating</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.hortonworks</groupId>
-                <artifactId>shc-core</artifactId>
-                <version>1.1.1-2.1-s_${scala.api_version}</version>
-                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -774,6 +684,13 @@
                 <artifactId>jackson-dataformat-yaml</artifactId>
                 <version>${jackson.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-jackson_${scala.api_version}</artifactId>
+                <version>${json4s.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

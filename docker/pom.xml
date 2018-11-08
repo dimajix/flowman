@@ -35,19 +35,36 @@
                 <executions>
                     <execution>
                         <id>copy-resources</id>
-                        <phase>validate</phase>
+                        <phase>process-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <outputDirectory>${basedir}/target/build</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>../flowman-dist/target</directory>
                                     <includes>
-                                        <include>*.tar.gz</include>
+                                        <include>flowman-dist-${project.version}-bin.tar.gz</include>
                                     </includes>
                                     <filtering>false</filtering>
+                                </resource>
+                                <resource>
+                                    <directory>.</directory>
+                                    <includes>
+                                        <include>bin/*</include>
+                                        <include>conf/*</include>
+                                        <include>libexec/*</include>
+                                    </includes>
+                                    <filtering>false</filtering>
+                                </resource>
+                                <resource>
+                                    <directory>.</directory>
+                                    <includes>
+                                        <include>Dockerfile</include>
+                                        <include>docker-compose.yml</include>
+                                    </includes>
+                                    <filtering>true</filtering>
                                 </resource>
                             </resources>
                         </configuration>
@@ -68,12 +85,10 @@
                 </executions>
                 <configuration>
                     <repository>dimajix/flowman</repository>
+                    <contextDirectory>target/build</contextDirectory>
                     <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
                     <tag>${project.version}</tag>
                     <pullNewerImage>false</pullNewerImage>
-                    <buildArgs>
-                        <APP_ARCHIVE>flowman-dist-${project.version}-bin.tar.gz</APP_ARCHIVE>
-                    </buildArgs>
                 </configuration>
             </plugin>
         </plugins>

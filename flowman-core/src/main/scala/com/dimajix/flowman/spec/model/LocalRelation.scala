@@ -34,7 +34,7 @@ import com.dimajix.flowman.util.FileCollector
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class LocalRelation extends BaseRelation {
+class LocalRelation extends SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
 
     @JsonProperty(value="location") private var _location: String = _
@@ -86,7 +86,7 @@ class LocalRelation extends BaseRelation {
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
         // Create correct schema for output
-        val outputDf = applySchema(df)
+        val outputDf = applyOutputSchema(df)
         val writer = outputDf.writeLocal.options(options)
 
         writer.format(format)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.spark.sources.fixedwidth
 
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.ByteType

@@ -19,9 +19,9 @@ package com.dimajix.flowman.spec.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseRelation => ShcRelation}
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseTableCatalog => ShcCatalog}
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -34,6 +34,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -84,10 +85,9 @@ object HBaseRelation {
 
 
 @RelationType(kind = "hbase")
-class HBaseRelation extends Relation {
+class HBaseRelation extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[HBaseRelation])
 
-    @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="namespace", required = true) private var _namespace:String = "default"
     @JsonProperty(value="table", required = true) private var _table:String = _
     @JsonProperty(value="rowKey", required = true) private var _rowKey:String = _
@@ -99,19 +99,12 @@ class HBaseRelation extends Relation {
     def columns(implicit context: Context) : Seq[HBaseRelation.Column] = _columns
 
     /**
-      * Returns a description for the relation
-      * @param context
-      * @return
-      */
-    override def description(implicit context: Context) : String = context.evaluate(_description)
-
-    /**
       * Returns the schema of the relation
       * @param context
       * @return
       */
     override def schema(implicit context: Context) : Schema = {
-        val fields = columns.map(c => Field(c.alias, c.dtype, description=c.description))
+        val fields = Field(rowKey, StringType, nullable = false) +: columns.map(c => Field(c.alias, c.dtype, description=c.description))
         EmbeddedSchema(fields)
     }
 
@@ -128,8 +121,7 @@ class HBaseRelation extends Relation {
         logger.info(s"Reading from HBase table '$namespace.$table'")
 
         val options = hbaseOptions
-        val df = executor.spark
-            .read
+        val df = this.reader(executor)
             .options(options)
             .format("org.apache.spark.sql.execution.datasources.hbase")
             .load()
@@ -149,7 +141,7 @@ class HBaseRelation extends Relation {
         logger.info(s"Writing to HBase table '$namespace.$table'")
 
         val options = hbaseOptions
-        df.write
+        this.writer(executor, df)
             .options(options)
             .mode(mode)
             .format("org.apache.spark.sql.execution.datasources.hbase")
@@ -178,6 +170,24 @@ class HBaseRelation extends Relation {
       * @param executor
       */
     override def migrate(executor: Executor): Unit = ???
+
+    /**
+     * Return null, because SHC does not support explicit schemas on read
+     * @param context
+     * @return
+     */
+    override protected def inputSchema(implicit context:Context) : StructType = null
+
+    /**
+     * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
+     * @param context
+     * @return
+     */
+    override protected def outputSchema(implicit context:Context) : StructType = {
+        val fields = StructField(rowKey, org.apache.spark.sql.types.StringType, nullable = false) +:
+            columns.map(c => StructField(c.alias, c.dtype.sparkType))
+        StructType(fields)
+    }
 
     private def hbaseOptions(implicit context: Context) = {
         val keySpec = Seq(s""""$rowKey":{"cf":"rowkey", "col":"$rowKey", "type":"string"}""")

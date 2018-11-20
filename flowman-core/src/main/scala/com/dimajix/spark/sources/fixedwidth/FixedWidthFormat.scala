@@ -30,7 +30,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.spark.sources.fixedwidth
 
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols

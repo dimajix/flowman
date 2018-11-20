@@ -26,7 +26,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class ProvidedRelation extends BaseRelation {
+class ProvidedRelation extends SchemaRelation {
     @JsonProperty(value="table") private var _table: String = _
 
     def table(implicit context:Context) : String = context.evaluate(_table)

@@ -37,7 +37,7 @@ import com.dimajix.flowman.util.FileCollector
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class FileRelation extends BaseRelation {
+class FileRelation extends SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
     @JsonProperty(value="location") private var _location: String = _

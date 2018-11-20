@@ -22,31 +22,19 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.types.ArrayValue
-import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.RangeValue
-import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class InputMapping extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[InputMapping])
+class ReadStreamMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
 
     @JsonProperty(value = "source", required = true) private var _source:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
-    @JsonProperty(value = "partitions", required=false) private var _partitions:Map[String,FieldValue] = Map()
 
     def source(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_source))
     def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
-    def partitions(implicit context:Context) : Map[String,FieldValue] = {
-        _partitions.mapValues {
-            case v: SingleValue => SingleValue(context.evaluate(v.value))
-            case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-            case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
-        }
-    }
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -59,12 +47,11 @@ class InputMapping extends BaseMapping {
         implicit val context = executor.context
         val source = this.source
         val fields = this.columns
-        val partitions = this.partitions
         val relation = context.getRelation(source)
         val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
-        logger.info(s"Reading from relation '$source' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Reading from streaming relation '$source'")
 
-        relation.read(executor, schema, partitions)
+        relation.readStream(executor, schema)
     }
 
     /**

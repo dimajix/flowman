@@ -37,6 +37,13 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
         }
     }
 
+    def withTempDir(f: File => Unit): Unit = {
+        val dir = createTempDir().getCanonicalFile
+        try f(dir) finally {
+            deleteRecursively(dir)
+        }
+    }
+
     /**
       * Create a directory inside the given parent directory.
       * The directory is guaranteed to be newly created, and is not marked for automatic

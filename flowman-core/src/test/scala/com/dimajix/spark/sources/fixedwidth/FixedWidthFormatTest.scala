@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.spark.sources.fixedwidth
 
 import java.sql.Date
 import java.sql.Timestamp
@@ -30,9 +30,9 @@ import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.MetadataBuilder
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.TimestampType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers

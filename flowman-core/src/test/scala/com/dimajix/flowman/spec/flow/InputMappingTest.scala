@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The InputMapping" should "be able to read from a NullRelation" in {
+    "The ReadRelationMapping" should "be able to read from a NullRelation" in {
         val spec =
             """
               |relations:

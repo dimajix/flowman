@@ -20,7 +20,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.streaming.OutputMode
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
@@ -103,6 +106,22 @@ abstract class Relation {
       * @param partition - destination partition
       */
     def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:String = "OVERWRITE") : Unit
+
+    /**
+      * Reads data from a streaming source
+      * @param executor
+      * @param schema
+      * @return
+      */
+    def readStream(executor:Executor, schema:StructType) : DataFrame = ???
+
+    /**
+      * Writes data to a streaming sink
+      * @param executor
+      * @param df
+      * @return
+      */
+    def writeStream(executor:Executor, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The

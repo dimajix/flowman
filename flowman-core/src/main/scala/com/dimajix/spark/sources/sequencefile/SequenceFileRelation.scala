@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.spark.sources.sequencefile
 
 import org.apache.hadoop.io.Text
 import org.apache.spark.rdd.RDD

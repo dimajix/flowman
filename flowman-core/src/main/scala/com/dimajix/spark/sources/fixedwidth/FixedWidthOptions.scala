@@ -30,7 +30,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.spark.sources.fixedwidth
 
 import java.nio.charset.StandardCharsets
 import java.util.Locale

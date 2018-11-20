@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.spark
+package com.dimajix.spark.sources.sequencefile
+
+import scala.collection.immutable.Map
 
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.sources.RelationProvider
-import scala.collection.immutable.Map
 
 
 class SequenceFileFormat extends DataSourceRegister with RelationProvider {

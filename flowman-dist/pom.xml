@@ -104,6 +104,14 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-plugin-example</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-plugin-hbase</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-plugin-kafka</artifactId>
+        </dependency>
     </dependencies>
 </project>
 

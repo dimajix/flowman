@@ -1,0 +1,8 @@
+name: ${plugin.name}
+description: Flowman Kafka plugin
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ - kafka-clients-${kafka.version}.jar
+ - spark-sql-kafka-0-10_${scala.api_version}-${spark.version}.jar

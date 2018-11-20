@@ -31,7 +31,7 @@
         <aws.version>1.11.95</aws.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
-        <avro.version>1.7.7</avro.version>
+        <avro.version>1.8.2</avro.version>
         <jackson.version>2.6.7</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <json4s.version>3.2.11</json4s.version>
@@ -75,6 +75,7 @@
             <properties>
                 <spark.version>2.2.1</spark.version>
                 <jackson.version>2.6.5</jackson.version>
+                <avro.version>1.7.7</avro.version>
             </properties>
         </profile>
         <profile>
@@ -82,6 +83,7 @@
             <properties>
                 <spark.version>2.3.2</spark.version>
                 <jackson.version>2.6.7</jackson.version>
+                <avro.version>1.7.7</avro.version>
             </properties>
         </profile>
         <profile>

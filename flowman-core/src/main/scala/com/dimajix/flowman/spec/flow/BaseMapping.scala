@@ -26,8 +26,10 @@ import com.dimajix.flowman.execution.Context
   */
 abstract class BaseMapping extends Mapping {
     @JsonProperty("broadcast") private[spec] var _broadcast:String = "false"
+    @JsonProperty("checkpoint") private[spec] var _checkpoint:String = "false"
     @JsonProperty("cache") private[spec] var _cache:String = "NONE"
 
     def broadcast(implicit context: Context) : Boolean = context.evaluate(_broadcast).toBoolean
+    def checkpoint(implicit context: Context) : Boolean = context.evaluate(_checkpoint).toBoolean
     def cache(implicit context: Context) : StorageLevel = StorageLevel.fromString(context.evaluate(_cache))
 }

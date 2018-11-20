@@ -83,6 +83,13 @@ abstract class Mapping {
     def broadcast(implicit context: Context) : Boolean
 
     /**
+      * This method should return true, if the resulting dataframe should be checkpointed
+      * @param context
+      * @return
+      */
+    def checkpoint(implicit context: Context) : Boolean
+
+    /**
       * Returns the desired storage level. Default should be StorageLevel.NONE
       * @param context
       * @return

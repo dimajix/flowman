@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.runner
+package com.dimajix.flowman.execution
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
-import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Runner extends ExtensionRegistry[Runner] {
-}
-
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "simple", value = classOf[SimpleRunner]),
-    new JsonSubTypes.Type(name = "logged", value = classOf[JdbcLoggedRunner])
-))
 abstract class Runner {
     def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus
 }

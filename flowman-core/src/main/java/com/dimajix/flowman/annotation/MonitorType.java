@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.annotation;
 
-import com.dimajix.flowman.namespace.runner.Runner
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 
-object RunnerProvider extends ExtensionLoader[Runner, RunnerProvider](Runner) {
-}
-
-trait RunnerProvider extends ExtensionProvider {
-    def getKind() : String
-    def getImpl() : Class[_]
+/**
+ * This annotation marks a specific class as a Monitor to be used as part of a Namespace. The specific Monitor itself has
+ * to derive from the Monitor class
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface MonitorType {
+    /**
+     * Specifies the kind of the monitor which is used in namespace specifications.
+     * @return
+     */
+    String kind();
 }

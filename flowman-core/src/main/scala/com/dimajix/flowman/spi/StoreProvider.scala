@@ -19,7 +19,7 @@ package com.dimajix.flowman.spi
 import com.dimajix.flowman.namespace.storage.Store
 
 
-object StoreProvider extends ExtensionLoader[Store, RunnerProvider](Store) {
+object StoreProvider extends ExtensionLoader[Store, MonitorProvider](Store) {
 }
 
 

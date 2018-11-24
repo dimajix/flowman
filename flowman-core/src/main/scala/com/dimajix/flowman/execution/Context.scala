@@ -21,7 +21,6 @@ import org.apache.spark.SparkConf
 
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.namespace.Namespace
-import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.OutputIdentifier

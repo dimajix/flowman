@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.runner
+package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.task.Job
 
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.runner
+package com.dimajix.flowman.execution
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,16 +23,15 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.namespace.Namespace
-import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.namespace.monitor.JdbcMonitor
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.types.StringType
 
 
-class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
+class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
     var tempDir:Path = _
 
     before {
@@ -43,15 +42,8 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         tempDir.toFile.delete()
     }
 
-    "The JdbcLoggedRunner" should "work" in {
+    "The JdbcMonitor" should "work" in {
         val db = tempDir.resolve("mydb")
-        val spec =
-            """
-              |kind: logged
-              |connection: logger
-            """.stripMargin
-        val runner = ObjectMapper.parse[Runner](spec)
-
         val job = Job.builder()
             .setName("job")
             .build()
@@ -61,47 +53,36 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
+
+        val monitor = JdbcMonitor("logger")
+        val runner = new MonitoredRunner(monitor)
         runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
         runner.execute(session.executor, job) should be (JobStatus.SKIPPED)
         runner.execute(session.executor, job, force=true) should be (JobStatus.SUCCESS)
     }
 
-    it should "throw an exception on missing connection" in {
+    it should "be used in a Session" in {
         val db = tempDir.resolve("mydb")
-        val spec =
-            """
-              |kind: logged
-              |connection: logger
-            """.stripMargin
-        val runner = ObjectMapper.parse[Runner](spec)
-
+        val monitor = JdbcMonitor("logger")
         val job = Job.builder()
             .setName("job")
             .build()
-        val session = Session.builder()
+        val ns = Namespace.builder()
+            .addConnection("logger", JdbcConnection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
+            .setMonitor(monitor)
             .build()
-        a[NoSuchElementException] shouldBe thrownBy(runner.execute(session.executor, job))
-    }
+        val session = Session.builder()
+            .withNamespace(ns)
+            .build()
 
-    it should "be parseable" in {
-        val spec =
-            """
-              |kind: logged
-              |connection: logger
-            """.stripMargin
-        val runner = ObjectMapper.parse[Runner](spec)
-        runner shouldBe a[JdbcLoggedRunner]
+        val runner = session.runner
+        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
+        runner.execute(session.executor, job) should be (JobStatus.SKIPPED)
+        runner.execute(session.executor, job, force=true) should be (JobStatus.SUCCESS)
     }
 
     it should "catch exceptions" in {
         val db = tempDir.resolve("mydb")
-        val spec =
-            """
-              |kind: logged
-              |connection: logger
-            """.stripMargin
-        val runner = ObjectMapper.parse[Runner](spec)
-
         val job = Job.builder()
             .setName("failingJob")
             .addParameter("p0", StringType)
@@ -112,6 +93,9 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
+
+        val monitor = JdbcMonitor("logger")
+        val runner = new MonitoredRunner(monitor)
         runner.execute(session.executor, job) should be (JobStatus.FAILURE)
         runner.execute(session.executor, job) should be (JobStatus.FAILURE)
     }
@@ -129,7 +113,8 @@ class JdbcLoggedRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val runner = JdbcLoggedRunner("logger")
+        val monitor = JdbcMonitor("logger")
+        val runner = new MonitoredRunner(monitor)
         runner.execute(session.executor, job, Map("p1" -> "v1")) should be (JobStatus.SUCCESS)
         runner.execute(session.executor, job, Map("p1" -> "v1")) should be (JobStatus.SKIPPED)
         runner.execute(session.executor, job, Map("p1" -> "v2")) should be (JobStatus.SUCCESS)

@@ -1,7 +1,7 @@
 name: "default"
 
-runner:
-  kind: logged
+monitor:
+  kind: jdbc
   connection: flowman_runs
   retries: 3
   timeout: 1000

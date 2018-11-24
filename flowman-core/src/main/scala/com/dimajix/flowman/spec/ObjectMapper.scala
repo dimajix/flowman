@@ -28,7 +28,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import com.dimajix.flowman.fs.File
-import com.dimajix.flowman.namespace.runner.Runner
+import com.dimajix.flowman.namespace.monitor.Monitor
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
@@ -49,7 +49,7 @@ object ObjectMapper {
       */
     def mapper : JacksonMapper = {
         Registration.load()
-        val runnerTypes = Runner.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val monitorTypes = Monitor.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))
@@ -60,7 +60,7 @@ object ObjectMapper {
         mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
         mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
         mapper.registerModule(DefaultScalaModule)
-        mapper.registerSubtypes(runnerTypes:_*)
+        mapper.registerSubtypes(monitorTypes:_*)
         mapper.registerSubtypes(relationTypes:_*)
         mapper.registerSubtypes(mappingTypes:_*)
         mapper.registerSubtypes(outputTypes:_*)

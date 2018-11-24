@@ -24,8 +24,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.runner.Runner
-import com.dimajix.flowman.namespace.runner.SimpleRunner
+import com.dimajix.flowman.namespace.monitor.Monitor
+import com.dimajix.flowman.namespace.monitor.NullMonitor
 import com.dimajix.flowman.namespace.storage.Store
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.Profile
@@ -44,8 +44,8 @@ object Namespace {
             namespace._name = name
             this
         }
-        def setRunner(runner:Runner) : Builder = {
-            namespace._runner = runner
+        def setMonitor(monitor: Monitor) : Builder = {
+            namespace._monitor = monitor
             this
         }
 
@@ -119,7 +119,7 @@ class Namespace {
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonDeserialize(converter=classOf[Connection.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
-    @JsonProperty(value="runner") private var _runner : Runner = new SimpleRunner()
+    @JsonProperty(value="monitor") private var _monitor : Monitor = new NullMonitor()
     @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
 
     def name : String = _name
@@ -132,5 +132,5 @@ class Namespace {
     def connections : Map[String,Connection] = _connections
     def projects : Seq[String] = _store.listProjects()
     def store : Store = _store
-    def runner : Runner = _runner
+    def monitor : Monitor = _monitor
 }

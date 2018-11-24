@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.runner
+package com.dimajix.flowman.execution
 
 import scala.util.Failure
 import scala.util.Success
@@ -22,10 +22,6 @@ import scala.util.Try
 
 import org.slf4j.Logger
 
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.RootContext
-import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
 

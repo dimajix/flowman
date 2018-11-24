@@ -23,14 +23,15 @@ import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMa
 
 import com.dimajix.flowman.annotation.ConnectionType
 import com.dimajix.flowman.annotation.MappingType
+import com.dimajix.flowman.annotation.MonitorType
 import com.dimajix.flowman.annotation.OutputType
 import com.dimajix.flowman.annotation.RelationType
-import com.dimajix.flowman.annotation.RunnerType
 import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
-import com.dimajix.flowman.namespace.runner.Runner
+import com.dimajix.flowman.execution.Runner
+import com.dimajix.flowman.namespace.monitor.Monitor
 import com.dimajix.flowman.namespace.storage.Store
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
@@ -80,7 +81,7 @@ object Registration {
         OutputProvider,
         SchemaProvider,
         TaskProvider,
-        RunnerProvider,
+        MonitorProvider,
         StoreProvider,
         ConnectionProvider
     )
@@ -145,11 +146,11 @@ object Registration {
                             }
                         }
                     )
-                    .matchClassesWithAnnotation(classOf[RunnerType],
+                    .matchClassesWithAnnotation(classOf[MonitorType],
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[RunnerType])
-                                Runner.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Runner]])
+                                val annotation = aClass.getAnnotation(classOf[MonitorType])
+                                Monitor.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Monitor]])
                             }
                         }
                     )

@@ -14,48 +14,44 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.runner
+package com.dimajix.flowman.namespace.monitor
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
-import com.dimajix.flowman.types.StringType
 
 
-class SimpleRunnerTest extends FlatSpec with Matchers {
-    "The SimpleRunner" should "work" in {
-        val runner = new SimpleRunner
+class NullMonitorTest extends FlatSpec with Matchers {
+    "The NullMonitor" should "work" in {
         val job = Job.builder()
             .setName("job")
             .build()
-        val session = Session.builder()
+        val ns = Namespace.builder()
             .build()
-        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
-        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
+        val session = Session.builder()
+            .withNamespace(ns)
+            .build()
+
+        val monitor = new NullMonitor
+        monitor.check(session.context, job, Map()) should be(false)
+        val token = monitor.start(session.context, job, Map())
+        monitor.check(session.context, job, Map()) should be(false)
+        monitor.success(session.context, token)
+        monitor.check(session.context, job, Map()) should be(false)
     }
 
     it should "be parseable" in {
         val spec =
             """
-              |kind: simple
+              |kind: null
             """.stripMargin
-        val runner = ObjectMapper.parse[Runner](spec)
-        runner shouldBe a[SimpleRunner]
+
+        val monitor = ObjectMapper.parse[Monitor](spec)
+        monitor shouldBe a[NullMonitor]
     }
 
-    it should "catch exceptions" in {
-        val runner = new SimpleRunner
-        val job = Job.builder()
-            .setName("job")
-            .addParameter("p1", StringType)
-            .build()
-        val session = Session.builder()
-            .build()
-        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
-        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
-    }
 }

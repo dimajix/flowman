@@ -19,7 +19,7 @@ package com.dimajix.flowman.namespace
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.namespace.runner.SimpleRunner
+import com.dimajix.flowman.namespace.monitor.NullMonitor
 
 
 class NamespaceTest extends FlatSpec with Matchers {
@@ -40,6 +40,6 @@ class NamespaceTest extends FlatSpec with Matchers {
         val ns = Namespace.read.default()
         ns should not be (null)
         ns.name should be ("default")
-        ns.runner shouldBe a[SimpleRunner]
+        ns.monitor shouldBe a[NullMonitor]
     }
 }

@@ -97,6 +97,9 @@ Use an [Aggregation](aggregate.html) mapping to perform aggregations for creatin
 * [`alias`](alias.html): 
 Use an [Alias](alias.html) to provide a new name to an existing mapping
 
+* [`coalesce`](coalesce.html):
+Reduces the number of Spark partitions by logically merging partitions together.  
+
 * [`deduplicate`](deduplicate.html): 
 Use a [Deduplicate](deduplicate.html) mapping for deduplicating records based on specific columns
 
@@ -124,6 +127,10 @@ Using [Projections](project.html) you can apply a schema with a fixed order of f
 * [`read` / `read-relation`](read.html):
 A [Read](read.html) mapping reads in data from a relation.
  
+* [`rebalance`](rebalance.html):
+Shuffles data to produce a specified amount of Spark partitions with an approximately equal number
+of records.
+
 * [`repartition`](repartition.html):
 * [`project`](project.html):
 * [`select`](select.html):

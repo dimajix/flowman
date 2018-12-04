@@ -49,6 +49,7 @@ object Mapping extends ExtensionRegistry[Mapping] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
+    new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMapping]),
     new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMapping]),
@@ -63,6 +64,7 @@ object Mapping extends ExtensionRegistry[Mapping] {
     new JsonSubTypes.Type(name = "json-unpack", value = classOf[UnpackJsonMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMapping]),
+    new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMapping]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping])

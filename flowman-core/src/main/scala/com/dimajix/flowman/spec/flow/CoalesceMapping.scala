@@ -24,16 +24,12 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
-class RepartitionMapping extends BaseMapping {
+class CoalesceMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Seq[String] = _
     @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
-    @JsonProperty(value = "sort", required = false) private[spec] var _sort:String = _
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) :Seq[String] = if (_columns != null) _columns.map(context.evaluate) else Seq[String]()
     def partitions(implicit context: Context) : Int= if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
-    def sort(implicit context: Context) : Boolean = if (_sort == null || _sort.isEmpty) false else context.evaluate(_sort).toBoolean
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -46,12 +42,7 @@ class RepartitionMapping extends BaseMapping {
         implicit val context = executor.context
         val df = input(this.input)
         val parts = partitions
-        val cols = columns.map(col)
-        val repartitioned = if (parts > 0) df.repartition(parts, cols:_*) else df.repartition(cols:_*)
-        if (sort)
-            repartitioned.sortWithinPartitions(cols:_*)
-        else
-            repartitioned
+        df.coalesce(parts)
     }
 
     /**

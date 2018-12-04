@@ -34,21 +34,28 @@ class RelationOutput extends BaseOutput {
     @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
     @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = Map()
     @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
+    @JsonProperty(value="rebalance", required=false) private var _rebalance:String = "false"
 
     def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
     def mode(implicit context: Context) : String = context.evaluate(_mode)
     def partition(implicit context: Context) : Map[String,String] = _partition.mapValues(context.evaluate)
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
+    def rebalance(implicit context: Context) : Boolean = context.evaluate(_rebalance).toBoolean
 
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))
+        val rebalance = this.rebalance
         val target = this.target
         val input = this.input
 
         logger.info(s"Writing mapping '$input' to relation '$target' into partition $partition")
         val relation = context.getRelation(target)
-        val table = tables(input).coalesce(parallelism)
+        val table = if (rebalance)
+            tables(input).repartition(parallelism)
+        else
+            tables(input).coalesce(parallelism)
+
         relation.write(executor, table, partition, mode)
     }
 }

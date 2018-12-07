@@ -64,6 +64,22 @@ class TemplatingTest extends FlatSpec with Matchers {
         output.toString should be ("5")
     }
 
+    they should "be parseable" in {
+        context.put("one_val", 1)
+        context.put("two_val", 2)
+        context.put("one_str", "1")
+        context.put("two_str", "2")
+        evaluate("$Integer.parse(1)") should be ("1")
+        evaluate("$Integer.parse(2)") should be ("2")
+        evaluate("$Integer.parse('1')") should be ("1")
+        evaluate("$Integer.parse('2')") should be ("2")
+        evaluate("$Integer.parse($one_val)") should be ("1")
+        evaluate("$Integer.parse($two_val)") should be ("2")
+        evaluate("$Integer.parse($one_str)") should be ("1")
+        evaluate("$Integer.parse($two_str)") should be ("2")
+    }
+
+
     "Floats" should "be supported as values" in {
         context.put("f", 2.0)
         val output = new StringWriter()
@@ -77,12 +93,73 @@ class TemplatingTest extends FlatSpec with Matchers {
         output2.toString should be ("3.2")
     }
 
+    they should "be parseable" in {
+        context.put("one_int", 1)
+        context.put("two_int", 2)
+        context.put("one_float", 1.0f)
+        context.put("two_float", 2.0f)
+        context.put("one_dbl", 1.2)
+        context.put("two_dbl", 2.2)
+        context.put("one_str", "1.2")
+        context.put("two_str", "2.2")
+        evaluate("$Float.parse(1)") should be ("1.0")
+        evaluate("$Float.parse(2)") should be ("2.0")
+        evaluate("$Float.parse(1.2)") should be ("1.2")
+        evaluate("$Float.parse(2.2)") should be ("2.2")
+        evaluate("$Float.parse('1')") should be ("1.0")
+        evaluate("$Float.parse('2')") should be ("2.0")
+        evaluate("$Float.parse($one_int)") should be ("1.0")
+        evaluate("$Float.parse($two_int)") should be ("2.0")
+        evaluate("$Float.parse($one_float)") should be ("1.0")
+        evaluate("$Float.parse($two_float)") should be ("2.0")
+        evaluate("$Float.parse($one_dbl)") should be ("1.2")
+        evaluate("$Float.parse($two_dbl)") should be ("2.2")
+        evaluate("$Float.parse($one_str)") should be ("1.2")
+        evaluate("$Float.parse($two_str)") should be ("2.2")
+    }
+
     they should "support arithmetics" in {
         context.put("a", 2.0)
         context.put("b", 3.0)
         val output = new StringWriter()
         engine.evaluate(context, output, "test", "#set($r=$a+$b)$r")
         output.toString should be ("5.0")
+    }
+
+    "Booleans" should "be supported as values" in {
+        context.put("true_val", true)
+        context.put("false_val", false)
+        evaluate("#if(true)1#{else}2#end") should be ("1")
+        evaluate("#if(false)1#{else}2#end") should be ("2")
+        evaluate("#if(${true_val})1#{else}2#end") should be ("1")
+        evaluate("#if(${false_val})1#{else}2#end") should be ("2")
+        evaluate("true") should be ("true")
+        evaluate("false") should be ("false")
+        evaluate("$true_val") should be ("true")
+        evaluate("$false_val") should be ("false")
+    }
+
+    they should "be parseable" in {
+        context.put("true_val", true)
+        context.put("false_val", false)
+        context.put("true_str", "true")
+        context.put("false_str", "false")
+        evaluate("$Boolean.parse(true)") should be ("true")
+        evaluate("$Boolean.parse(false)") should be ("false")
+        evaluate("$Boolean.parse('true')") should be ("true")
+        evaluate("$Boolean.parse('false')") should be ("false")
+        evaluate("$Boolean.parse($true_val)") should be ("true")
+        evaluate("$Boolean.parse($false_val)") should be ("false")
+        evaluate("$Boolean.parse($true_str)") should be ("true")
+        evaluate("$Boolean.parse($false_str)") should be ("false")
+    }
+
+    they should "support arithmetics" in {
+        context.put("true_val", true)
+        context.put("false_val", false)
+        evaluate("#set($r=$true_val && $true_val)$r") should be ("true")
+        evaluate("#set($r=$false_val && $true_val)$r") should be ("false")
+        evaluate("#set($r=$false_val || $true_val)$r") should be ("true")
     }
 
     "Timestamps" should "be supported" in {
@@ -121,9 +198,31 @@ class TemplatingTest extends FlatSpec with Matchers {
     }
 
     "Durations" should "be parseable" in {
+        context.put("one_int", 1)
+        context.put("two_int", 2)
+        context.put("one_str", "1")
+        context.put("two_str", "2")
         evaluate("$Duration.parse('P1D')") should be ("PT24H")
         evaluate("$Duration.ofDays(2)") should be ("PT48H")
         evaluate("$Duration.ofHours(7)") should be ("PT7H")
+        evaluate("$Duration.ofDays($one_int)") should be ("PT24H")
+        evaluate("$Duration.ofHours($two_int)") should be ("PT2H")
+        evaluate("$Duration.ofDays($one_str)") should be ("PT24H")
+        evaluate("$Duration.ofHours($two_str)") should be ("PT2H")
+    }
+
+    "Periods" should "be parseable" in {
+        context.put("one_int", 1)
+        context.put("two_int", 2)
+        context.put("one_str", "1")
+        context.put("two_str", "2")
+        evaluate("$Period.parse('P1D')") should be ("P1D")
+        evaluate("$Period.ofDays(2)") should be ("P2D")
+        evaluate("$Period.ofWeeks(7)") should be ("P49D")
+        evaluate("$Period.ofDays($one_int)") should be ("P1D")
+        evaluate("$Period.ofWeeks($two_int)") should be ("P14D")
+        evaluate("$Period.ofDays($one_str)") should be ("P1D")
+        evaluate("$Period.ofWeeks($two_str)") should be ("P14D")
     }
 
     "String" should "provide concat functions" in {

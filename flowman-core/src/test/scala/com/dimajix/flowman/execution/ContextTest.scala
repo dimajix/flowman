@@ -70,4 +70,20 @@ class ContextTest extends FlatSpec with Matchers {
         context.evaluate("#set($r=$a+$b)$r") should be ("5")
         context.evaluate("$r") should be ("5")
     }
+
+    it should "support boolean values" in {
+        val context = RootContext.builder()
+            .withEnvironment(Seq(("true_val", true)), SettingLevel.NONE)
+            .withEnvironment(Seq(("true_str", "true")), SettingLevel.NONE)
+            .withEnvironment(Seq(("false_val", false)), SettingLevel.NONE)
+            .withEnvironment(Seq(("false_str", "false")), SettingLevel.NONE)
+            .build()
+        context.evaluate("#if(true)1#{else}2#end") should be ("1")
+        context.evaluate("#if(false)1#{else}2#end") should be ("2")
+        context.evaluate("#if(${no_val})1#{else}2#end") should be ("2")
+        context.evaluate("#if(${true_val})1#{else}2#end") should be ("1")
+        context.evaluate("#if(${false_val})1#{else}2#end") should be ("2")
+        context.evaluate("#if(${true_str})1#{else}2#end") should be ("1")
+        context.evaluate("#if(${false_str})1#{else}2#end") should be ("1")
+    }
 }

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.spark.sources.empty
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.sources.{BaseRelation, TableScan}
+import org.apache.spark.sql.types.StructType
 
-import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+class NullRelation(val context: SQLContext, val schema:StructType) extends BaseRelation with TableScan {
+    override def sqlContext: SQLContext = context
 
-
-class BlackholeOutput extends BaseOutput {
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
-        implicit val context = executor.context
-        input(this.input).write.format("null").save()
-    }
+    override def buildScan(): RDD[Row] = context.sparkContext.emptyRDD
 }

@@ -1,2 +1,3 @@
 com.dimajix.spark.sources.sequencefile.SequenceFileFormat
 com.dimajix.spark.sources.fixedwidth.FixedWidthFormat
+com.dimajix.spark.sources.empty.NullFormat

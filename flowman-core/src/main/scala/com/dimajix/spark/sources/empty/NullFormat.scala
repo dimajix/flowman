@@ -37,7 +37,7 @@ class NullFormat extends DataSourceRegister with SchemaRelationProvider with Cre
     }
 
     override def createRelation(sqlContext: SQLContext, mode: SaveMode, parameters: Map[String, String], data: DataFrame): BaseRelation = {
-        data.foreach(row => row)
+        data.foreach(_ => ())
         new NullRelation(sqlContext, data.schema)
     }
 }

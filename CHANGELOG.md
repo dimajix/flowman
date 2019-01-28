@@ -1,6 +1,8 @@
 # Version xxx
 
 * Add support for Spark 2.4.0
+* Add null format for Spark
+* Add deployment
 
 
 # Version 0.1.2 - 2018-11-05

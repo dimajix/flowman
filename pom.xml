@@ -8,6 +8,8 @@
     <artifactId>flowman-root</artifactId>
     <version>0.2.0-SNAPSHOT</version>
     <name>Flowman root pom</name>
+    <description>A Spark based ETL tool</description>
+    <url>http://flowman.io</url>
     <inceptionYear>2018</inceptionYear>
 
     <licenses>
@@ -17,12 +19,35 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <name>Kaya Kupferschmidt</name>
+            <email>k.kupferschmidt@dimajix.de</email>
+            <organization>dimajix</organization>
+            <organizationUrl>https://www.dimajix.com</organizationUrl>
+        </developer>
+    </developers>
+
     <scm>
-        <url>https://github.com/dimajix/flowman</url>
+        <connection>scm:git:git://github.com/dimajix/flowman.git</connection>
+        <developerConnection>scm:git:ssh://github.com:dimajix/flowman.git</developerConnection>
+        <url>https://github.com/dimajix/flowman/tree/master</url>
     </scm>
     <issueManagement>
         <url>https://github.com/dimajix/flowman/issues</url>
     </issueManagement>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <hadoop.version>2.8.4</hadoop.version>
@@ -259,7 +284,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.3.2</version>
+                    <version>3.4.6</version>
                     <executions>
                         <execution>
                             <id>scala-compile-first</id>
@@ -274,6 +299,12 @@
                             <phase>process-test-resources</phase>
                             <goals>
                                 <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>doc-jar</goal>
                             </goals>
                         </execution>
                     </executions>
@@ -302,6 +333,11 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.7.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -360,8 +396,73 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.4.6</version>
+                <configuration>
+                    <jvmArgs>
+                        <jvmArg>-Xms64m</jvmArg>
+                        <jvmArg>-Xmx1024m</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.amashchenko.maven.plugin</groupId>
+                <artifactId>gitflow-maven-plugin</artifactId>
+                <version>1.11.0</version>
+                <configuration>
+                    <!-- optional configuration -->
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencyManagement>

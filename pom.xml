@@ -6,7 +6,7 @@
     <packaging>pom</packaging>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0-SNAPSHOT</version>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
     <url>http://flowman.io</url>

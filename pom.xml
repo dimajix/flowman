@@ -247,7 +247,7 @@
                 <configuration>
                     <installProject>false</installProject>
                     <verbose>true</verbose>
-                    <versionDigitToIncrement>2</versionDigitToIncrement>
+                    <versionDigitToIncrement>1</versionDigitToIncrement>
                     <pushRemote>false</pushRemote>
                     <gitFlowConfig>
                         <productionBranch>master</productionBranch>

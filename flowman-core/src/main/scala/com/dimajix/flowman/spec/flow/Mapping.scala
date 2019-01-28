@@ -49,10 +49,12 @@ object Mapping extends ExtensionRegistry[Mapping] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
+    new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMapping]),
-    new JsonSubTypes.Type(name = "read", value = classOf[InputMapping]),
-    new JsonSubTypes.Type(name = "read-relation", value = classOf[InputMapping]),
+    new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMapping]),
+    new JsonSubTypes.Type(name = "read-relation", value = classOf[ReadRelationMapping]),
+    new JsonSubTypes.Type(name = "read-stream", value = classOf[ReadStreamMapping]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMapping]),
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMapping]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
@@ -62,6 +64,7 @@ object Mapping extends ExtensionRegistry[Mapping] {
     new JsonSubTypes.Type(name = "json-unpack", value = classOf[UnpackJsonMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMapping]),
+    new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMapping]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping])
@@ -81,6 +84,13 @@ abstract class Mapping {
       * @return
       */
     def broadcast(implicit context: Context) : Boolean
+
+    /**
+      * This method should return true, if the resulting dataframe should be checkpointed
+      * @param context
+      * @return
+      */
+    def checkpoint(implicit context: Context) : Boolean
 
     /**
       * Returns the desired storage level. Default should be StorageLevel.NONE

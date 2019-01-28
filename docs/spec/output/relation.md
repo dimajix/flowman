@@ -46,5 +46,9 @@ This specifies the parallelism to be used when writing data. The parallelism equ
 of files being generated in HDFS output and also equals the maximum number of threads that
 are used in total in all Spark executors to produce the output.
 
+* `rebalance` **(optional)** *(type: bool)* *(default=false)*:
+Enables rebalancing the size of all partitions by introducing an additional internal shuffle
+operation. Each partition will contain approximately the same number of records.
+
 
 ## Description

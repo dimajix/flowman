@@ -42,7 +42,7 @@ class ProvidedMapping extends BaseMapping {
     }
 
     /**
-      * Returns the dependencies of this mapping, which are empty for an InputMapping
+      * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
       *
       * @param context
       * @return

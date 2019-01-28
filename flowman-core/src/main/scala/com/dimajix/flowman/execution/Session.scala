@@ -168,6 +168,20 @@ class Session private[execution](
 ) {
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
+    private val _monitor = {
+        if (_namespace != null && _namespace.monitor != null)
+            _namespace.monitor
+        else
+            null
+    }
+    private val _runner = {
+        if (_monitor  != null)
+            new MonitoredRunner(_monitor)
+        else
+            new SimpleRunner
+    }
+
+
     private def sparkConfig : Map[String,String] = {
         if (_project != null) {
             logger.info("Using project specific Spark configuration settings")
@@ -245,6 +259,7 @@ class Session private[execution](
 
     private lazy val rootContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
+            .withRunner(_runner)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
         if (_namespace != null) {
@@ -274,6 +289,13 @@ class Session private[execution](
       * @return
       */
     def project : Project = _project
+
+    /**
+      * Returns the appropriate runner
+      *
+      * @return
+      */
+    def runner : Runner = _runner
 
     /**
       * Returns the Spark session tied to this Flowman session. The Spark session will either be created by the

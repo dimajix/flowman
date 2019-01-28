@@ -33,3 +33,15 @@ using the correct version.
 The Maven project also contains preconfigured profiles for Cloudera.
 
     mvn install -PCDH-5.13        
+
+
+# Releasing
+
+## Releasing
+
+## Deploying to Central Repository
+
+Both snapshot and release versions can be deployed to Sonatype, which in turn is mirrored by the Maven Central
+Repository.
+
+    mvn deploy

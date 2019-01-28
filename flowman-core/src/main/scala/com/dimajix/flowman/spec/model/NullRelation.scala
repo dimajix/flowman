@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class NullRelation extends BaseRelation {
+class NullRelation extends SchemaRelation {
     @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
 
     def partitions(implicit context: Context) : Seq[PartitionField] = _partitions

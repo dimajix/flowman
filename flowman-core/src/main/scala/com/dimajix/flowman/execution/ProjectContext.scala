@@ -16,13 +16,9 @@
 
 package com.dimajix.flowman.execution
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.namespace.Namespace
-import com.dimajix.flowman.namespace.runner.Runner
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
@@ -66,6 +62,12 @@ object ProjectContext {
 }
 
 
+/**
+  * Execution context for a specific Flowman project. This will resolve all resources within the project
+  * or (if the resource is fully qualified) walks up into the parent context.
+  * @param parent
+  * @param _project
+  */
 class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
 

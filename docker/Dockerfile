@@ -1,7 +1,5 @@
-FROM dimajix/spark:2.3.1
+FROM dimajix/spark:${spark.version}
 MAINTAINER k.kupferschmidt@dimajix.de
-
-ARG APP_ARCHIVE
 
 USER root
 
@@ -14,13 +12,14 @@ COPY libexec/ /opt/docker/libexec/
 
 
 # Copy and install Repository
-COPY target/$APP_ARCHIVE /tmp/repo/
+COPY flowman-dist-${project.version}-bin.tar.gz /tmp/repo/
 COPY conf/ /tmp/repo/conf
-RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/$APP_ARCHIVE && \
+RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist-${project.version}-bin.tar.gz && \
     ln -s /opt/flowman* /opt/flowman && \
     cp -a /tmp/repo/conf/* /opt/flowman/conf && \
     chown -R root:root /opt/flowman* && \
-    rm -rf /tmp/repo
+    rm -rf /tmp/repo && \
+    chmod a+x /opt/docker/bin/*
 
 
 ENTRYPOINT ["/opt/docker/bin/entrypoint.sh"]

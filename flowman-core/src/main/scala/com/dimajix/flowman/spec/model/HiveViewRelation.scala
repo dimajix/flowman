@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class HiveViewRelation extends BaseRelation {
+class HiveViewRelation extends SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
     @JsonProperty(value="database") private var _database: String = _

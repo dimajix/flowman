@@ -25,6 +25,6 @@ import com.dimajix.flowman.spec.MappingIdentifier
 class BlackholeOutput extends BaseOutput {
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
-        input(this.input).count()
+        input(this.input).write.format("null").save()
     }
 }

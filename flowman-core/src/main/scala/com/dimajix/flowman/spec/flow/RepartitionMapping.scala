@@ -53,6 +53,7 @@ class RepartitionMapping extends BaseMapping {
         else
             repartitioned
     }
+
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *

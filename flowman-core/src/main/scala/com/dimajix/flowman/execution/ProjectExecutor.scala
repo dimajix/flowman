@@ -103,22 +103,29 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
 
         // Process table and register result as temp table
         val doBroadcast = transform.broadcast
+        val doCheckpoint = transform.checkpoint
         val cacheLevel = transform.cache
         val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
         logger.info(s"Instantiating table for mapping '${_project.name}/$tableName' (broadcast=$doBroadcast, cache='$cacheDesc')")
         val instance = transform.execute(this, dependencies)
 
-        // Optionally mark DataFrame to be broadcasted
-        val df = if (doBroadcast)
-            broadcast(instance)
+        // Optionally checkpoint DataFrame
+        val df1 = if (doCheckpoint)
+            instance.checkpoint(false)
         else
             instance
 
+        // Optionally mark DataFrame to be broadcasted
+        val df2 = if (doBroadcast)
+            broadcast(df1)
+        else
+            df1
+
         // Optionally cache the DataFrame
         if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
-            df.persist(cacheLevel)
+            df2.persist(cacheLevel)
 
-        cache.put((_project.name,tableName), df)
-        df
+        cache.put((_project.name,tableName), df2)
+        df2
     }
 }

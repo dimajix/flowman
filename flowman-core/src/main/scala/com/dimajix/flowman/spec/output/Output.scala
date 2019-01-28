@@ -44,7 +44,8 @@ object Output extends ExtensionRegistry[Output] {
     new JsonSubTypes.Type(name = "count", value = classOf[CountOutput]),
     new JsonSubTypes.Type(name = "dump", value = classOf[DumpOutput]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalOutput]),
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationOutput]))
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationOutput]),
+    new JsonSubTypes.Type(name = "stream", value = classOf[StreamOutput]))
 )
 abstract class Output {
     @JsonIgnore private var _name:String = ""

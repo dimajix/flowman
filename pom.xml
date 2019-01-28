@@ -6,8 +6,10 @@
     <packaging>pom</packaging>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
     <name>Flowman root pom</name>
+    <description>A Spark based ETL tool</description>
+    <url>http://flowman.io</url>
     <inceptionYear>2018</inceptionYear>
 
     <licenses>
@@ -17,23 +19,48 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <name>Kaya Kupferschmidt</name>
+            <email>k.kupferschmidt@dimajix.de</email>
+            <organization>dimajix</organization>
+            <organizationUrl>https://www.dimajix.com</organizationUrl>
+        </developer>
+    </developers>
+
     <scm>
-        <url>https://github.com/dimajix/flowman</url>
+        <connection>scm:git:git://github.com/dimajix/flowman.git</connection>
+        <developerConnection>scm:git:ssh://github.com:dimajix/flowman.git</developerConnection>
+        <url>https://github.com/dimajix/flowman/tree/master</url>
     </scm>
     <issueManagement>
         <url>https://github.com/dimajix/flowman/issues</url>
     </issueManagement>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <hadoop.version>2.8.4</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.3.2</spark.version>
+        <spark.version>2.4.0</spark.version>
         <aws.version>1.11.95</aws.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
-        <avro.version>1.7.7</avro.version>
+        <avro.version>1.8.2</avro.version>
+        <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
+        <json4s.version>3.2.11</json4s.version>
         <json.version>20180130</json.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>12.0</guava.version>
@@ -74,6 +101,8 @@
             <properties>
                 <spark.version>2.2.1</spark.version>
                 <jackson.version>2.6.5</jackson.version>
+                <avro.version>1.7.7</avro.version>
+                <kafka.version>0.10.0.1</kafka.version>
             </properties>
         </profile>
         <profile>
@@ -81,6 +110,17 @@
             <properties>
                 <spark.version>2.3.2</spark.version>
                 <jackson.version>2.6.7</jackson.version>
+                <avro.version>1.7.7</avro.version>
+                <kafka.version>0.10.0.1</kafka.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-2.4</id>
+            <properties>
+                <spark.version>2.4.0</spark.version>
+                <jackson.version>2.6.7</jackson.version>
+                <avro.version>1.8.2</avro.version>
+                <kafka.version>2.0.0</kafka.version>
             </properties>
         </profile>
         <profile>
@@ -170,6 +210,7 @@
         <module>flowman-testing</module>
         <module>flowman-tools</module>
         <module>flowman-plugins/example</module>
+        <module>flowman-plugins/kafka</module>
         <module>flowman-plugins/hbase</module>
         <module>flowman-dist</module>
         <module>docker</module>
@@ -198,6 +239,30 @@
     </pluginRepositories>
 
     <build>
+        <plugins>
+            <plugin>
+                <groupId>com.amashchenko.maven.plugin</groupId>
+                <artifactId>gitflow-maven-plugin</artifactId>
+                <version>1.11.0</version>
+                <configuration>
+                    <installProject>false</installProject>
+                    <verbose>true</verbose>
+                    <versionDigitToIncrement>1</versionDigitToIncrement>
+                    <pushRemote>false</pushRemote>
+                    <gitFlowConfig>
+                        <productionBranch>master</productionBranch>
+                        <developmentBranch>develop</developmentBranch>
+                        <featureBranchPrefix>feature/</featureBranchPrefix>
+                        <releaseBranchPrefix>release/</releaseBranchPrefix>
+                        <hotfixBranchPrefix>hotfix/</hotfixBranchPrefix>
+                        <supportBranchPrefix>support/</supportBranchPrefix>
+                        <versionTagPrefix></versionTagPrefix>
+                        <origin>github</origin>
+                    </gitFlowConfig>
+                </configuration>
+            </plugin>
+        </plugins>
+
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -243,7 +308,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.3.2</version>
+                    <version>3.4.6</version>
                     <executions>
                         <execution>
                             <id>scala-compile-first</id>
@@ -258,6 +323,12 @@
                             <phase>process-test-resources</phase>
                             <goals>
                                 <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>doc-jar</goal>
                             </goals>
                         </execution>
                     </executions>
@@ -286,6 +357,11 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.7.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -344,9 +420,61 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.4.6</version>
+                <configuration>
+                    <jvmArgs>
+                        <jvmArg>-Xms64m</jvmArg>
+                        <jvmArg>-Xmx1024m</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <dependencyManagement>
         <dependencies>
@@ -371,6 +499,18 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-example</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-hbase</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-kafka</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -441,6 +581,60 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-hive_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-avro_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-core_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-catalyst_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.databricks</groupId>
+                <artifactId>spark-avro_${scala.api_version}</artifactId>
+                <version>${spark-avro.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -546,92 +740,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-client</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-annotations</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-common</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jruby</groupId>
-                        <artifactId>jruby-complete</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-protocol</artifactId>
-                <version>${hbase.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-server</artifactId>
-                <version>${hbase.version}</version>
-                <scope>provided</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jruby</groupId>
-                        <artifactId>jruby-complete</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-testing-util</artifactId>
-                <version>${hbase.version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>commons-collections</groupId>
                 <artifactId>commons-collections</artifactId>
                 <version>3.2.1</version>
@@ -686,38 +794,10 @@
             </dependency>
 
             <dependency>
-                <groupId>com.databricks</groupId>
-                <artifactId>spark-avro_${scala.api_version}</artifactId>
-                <version>${spark-avro.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>net.sf.opencsv</groupId>
                 <artifactId>opencsv</artifactId>
                 <version>${opencsv.version}</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.htrace</groupId>
-                <artifactId>htrace-core4</artifactId>
-                <version>4.0.1-incubating</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.htrace</groupId>
-                <artifactId>htrace-core</artifactId>
-                <version>3.2.0-incubating</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.hortonworks</groupId>
-                <artifactId>shc-core</artifactId>
-                <version>1.1.1-2.1-s_${scala.api_version}</version>
-                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -774,6 +854,13 @@
                 <artifactId>jackson-dataformat-yaml</artifactId>
                 <version>${jackson.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-jackson_${scala.api_version}</artifactId>
+                <version>${json4s.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

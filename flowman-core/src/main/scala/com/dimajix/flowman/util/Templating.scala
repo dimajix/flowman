@@ -66,15 +66,21 @@ object Templating {
     private object LocalDateTimeWrapper {
         def parse(value:String) : LocalDateTime = LocalDateTime.parse(value)
         def valueOf(value:String) : LocalDateTime = LocalDateTime.parse(value)
-        def ofEpochSeconds(epoch:Int) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
+        def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)
+        def ofEpochSeconds(epoch:Long) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
     }
 
     private object DurationWrapper {
-        def ofDays(days:Int) : Duration = Duration.ofDays(days)
-        def ofHours(hours:Int) : Duration = Duration.ofHours(hours)
-        def ofMinutes(minutes:Int) : Duration = Duration.ofMinutes(minutes)
-        def ofSeconds(seconds:Int) : Duration = Duration.ofSeconds(seconds)
-        def ofMillis(millis:Int) : Duration = Duration.ofMillis(millis)
+        def ofDays(days:String) : Duration = Duration.ofDays(days.toLong)
+        def ofDays(days:Long) : Duration = Duration.ofDays(days)
+        def ofHours(hours:String) : Duration = Duration.ofHours(hours.toLong)
+        def ofHours(hours:Long) : Duration = Duration.ofHours(hours)
+        def ofMinutes(minutes:String) : Duration = Duration.ofMinutes(minutes.toLong)
+        def ofMinutes(minutes:Long) : Duration = Duration.ofMinutes(minutes)
+        def ofSeconds(seconds:String) : Duration = Duration.ofSeconds(seconds.toLong)
+        def ofSeconds(seconds:Long) : Duration = Duration.ofSeconds(seconds)
+        def ofMillis(millis:String) : Duration = Duration.ofMillis(millis.toLong)
+        def ofMillis(millis:Long) : Duration = Duration.ofMillis(millis)
         def between(startInclusive: UtcTimestamp, endExclusive: UtcTimestamp) : Duration = Duration.between(startInclusive.toLocalDateTime(), endExclusive.toLocalDateTime())
         def between(startInclusive: Temporal, endExclusive: Temporal) : Duration = Duration.between(startInclusive, endExclusive)
         def between(startInclusive: String, endExclusive: String) : Duration = between(UtcTimestamp.parse(startInclusive), UtcTimestamp.parse(endExclusive))
@@ -83,22 +89,38 @@ object Templating {
     }
 
     private object PeriodWrapper {
+        def ofYears(years:String) : Period = Period.ofYears(years.toInt)
         def ofYears(years:Int) : Period = Period.ofYears(years)
+        def ofMonths(months:String) : Period = Period.ofMonths(months.toInt)
         def ofMonths(months:Int) : Period = Period.ofMonths(months)
+        def ofWeeks(weeks:String) : Period = Period.ofWeeks(weeks.toInt)
         def ofWeeks(weeks:Int) : Period = Period.ofWeeks(weeks)
+        def ofDays(days:String) : Period = Period.ofDays(days.toInt)
         def ofDays(days:Int) : Period = Period.ofDays(days)
         def parse(value:String) : Period = Period.parse(value)
         def valueOf(value:String) : Period = Period.parse(value)
     }
 
+    private object BooleanWrapper {
+        def parse(value:Boolean) : Boolean = value
+        def parse(value:String) : Boolean = java.lang.Boolean.parseBoolean(value)
+        def valueOf(value:String) : Boolean = java.lang.Boolean.parseBoolean(value)
+    }
+
     private object IntegerWrapper {
+        def parse(value:Integer) : Int = value
+        def valueOf(value:Integer) : Int = value
         def parse(value:String) : Int = java.lang.Integer.parseInt(value)
         def valueOf(value:String) : Int = java.lang.Integer.parseInt(value)
     }
 
     private object FloatWrapper {
-        def parse(value:String) : Float = java.lang.Float.parseFloat(value)
-        def valueOf(value:String) : Float = java.lang.Float.parseFloat(value)
+        def parse(value:Integer) : Double = value.toDouble
+        def valueOf(value:Integer) : Double = value.toDouble
+        def parse(value:Double) : Double = value
+        def valueOf(value:Double) : Double = value
+        def parse(value:String) : Double = java.lang.Double.parseDouble(value)
+        def valueOf(value:String) : Double = java.lang.Double.parseDouble(value)
     }
 
     def addClass(name:String, aClass:Class[_]) : Unit = {
@@ -112,6 +134,7 @@ object Templating {
       */
     def newContext() : VelocityContext = {
         val context = new VelocityContext()
+        context.put("Boolean", BooleanWrapper)
         context.put("Integer", IntegerWrapper)
         context.put("Float", FloatWrapper)
         context.put("LocalDateTime", LocalDateTimeWrapper)

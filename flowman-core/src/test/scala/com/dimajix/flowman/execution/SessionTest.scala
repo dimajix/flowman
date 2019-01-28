@@ -34,6 +34,12 @@ class SessionTest extends FlatSpec with Matchers {
         session.context should not be (null)
     }
 
+    it should "contain a valid runner" in {
+        val session = Session.builder()
+            .build()
+        session.runner should not be (null)
+    }
+
     it should "apply configs in correct order" in {
         val spec =
             """

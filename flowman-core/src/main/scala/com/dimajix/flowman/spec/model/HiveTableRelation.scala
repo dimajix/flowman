@@ -40,7 +40,7 @@ object HiveTableRelation {
 }
 
 
-class HiveTableRelation extends BaseRelation  {
+class HiveTableRelation extends SchemaRelation  {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
     @JsonProperty(value="database", required=false) private var _database: String = ""
@@ -127,7 +127,7 @@ class HiveTableRelation extends BaseRelation  {
         logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
 
         // Apply output schema before writing to Hive
-        val outputDf = applySchema(df)
+        val outputDf = applyOutputSchema(df)
 
         if (partition.nonEmpty) {
             val spark = executor.spark
@@ -248,7 +248,7 @@ class HiveTableRelation extends BaseRelation  {
       * @param df
       * @return
       */
-    override protected def applySchema(df:DataFrame)(implicit context:Context) : DataFrame = {
+    override protected def applyOutputSchema(df:DataFrame)(implicit context:Context) : DataFrame = {
         val outputColumns = schema.fields.map(field => df(field.name))
         val mixedCaseDf = df.select(outputColumns:_*)
         if (needsLowerCaseSchema) {

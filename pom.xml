@@ -245,7 +245,20 @@
                 <artifactId>gitflow-maven-plugin</artifactId>
                 <version>1.11.0</version>
                 <configuration>
-                    <!-- optional configuration -->
+                    <installProject>false</installProject>
+                    <verbose>true</verbose>
+                    <versionDigitToIncrement>2</versionDigitToIncrement>
+                    <pushRemote>false</pushRemote>
+                    <gitFlowConfig>
+                        <productionBranch>master</productionBranch>
+                        <developmentBranch>develop</developmentBranch>
+                        <featureBranchPrefix>feature/</featureBranchPrefix>
+                        <releaseBranchPrefix>release/</releaseBranchPrefix>
+                        <hotfixBranchPrefix>hotfix/</hotfixBranchPrefix>
+                        <supportBranchPrefix>support/</supportBranchPrefix>
+                        <versionTagPrefix></versionTagPrefix>
+                        <origin>github</origin>
+                    </gitFlowConfig>
                 </configuration>
             </plugin>
         </plugins>

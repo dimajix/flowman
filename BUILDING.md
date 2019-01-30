@@ -44,4 +44,6 @@ The Maven project also contains preconfigured profiles for Cloudera.
 Both snapshot and release versions can be deployed to Sonatype, which in turn is mirrored by the Maven Central
 Repository.
 
-    mvn deploy
+    mvn gitflow:release
+    mvn deploy 
+    mvn nexus-staging:close -DskipTests -DstagingRepositoryId=comdimajixflowman-1001

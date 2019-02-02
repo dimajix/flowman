@@ -46,6 +46,15 @@ abstract class AbstractRunner extends Runner {
             runUnlogged(executor, job, args)
     }
 
+    /**
+      * Runs the given job in a logged way. This means that appropriate methods will be called on job start, finish
+      * and failures
+      * @param executor
+      * @param job
+      * @param args
+      * @param force
+      * @return
+      */
     private def runLogged(executor: Executor, job:Job, args:Map[String,String], force:Boolean) : JobStatus = {
         implicit val context = executor.context
 
@@ -67,6 +76,13 @@ abstract class AbstractRunner extends Runner {
         }
     }
 
+    /**
+      * Runs a job without logging.
+      * @param executor
+      * @param job
+      * @param args
+      * @return
+      */
     private def runUnlogged(executor: Executor, job:Job, args:Map[String,String]) : JobStatus = {
         implicit val context = executor.context
 

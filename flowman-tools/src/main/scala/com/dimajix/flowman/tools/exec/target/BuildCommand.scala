@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.output
+package com.dimajix.flowman.tools.exec.target
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -24,15 +24,15 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
-import com.dimajix.flowman.spec.task.OutputTask
+import com.dimajix.flowman.spec.task.BuildTargetTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
-class RunCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[RunCommand])
+class BuildCommand extends ActionCommand {
+    private val logger = LoggerFactory.getLogger(classOf[BuildCommand])
 
-    @Argument(usage = "specifies outputs to process", metaVar = "<output>")
-    var outputs: Array[String] = Array()
+    @Argument(usage = "specifies target to process", metaVar = "<target>")
+    var targets: Array[String] = Array()
     @Option(name = "-a", aliases=Array("--all"), usage = "runs all outputs, even the disabled ones")
     var all: Boolean = false
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
@@ -41,18 +41,18 @@ class RunCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
-        logger.info("Processing outputs {}", if (outputs != null) outputs.mkString(",") else "all")
+        logger.info("Processing outputs {}", if (targets != null) targets.mkString(",") else "all")
 
         // Then execute output operations
         val toRun =
             if (all)
-                project.outputs.keys.toSeq
-            else if (outputs.nonEmpty)
-                outputs.toSeq
+                project.targets.keys.toSeq
+            else if (targets.nonEmpty)
+                targets.toSeq
             else
-                project.outputs.filter(_._2.enabled).keys.toSeq
+                project.targets.filter(_._2.enabled).keys.toSeq
 
-        val task = OutputTask(toRun, s"Execute outputs ${toRun.mkString(",")}")
+        val task = BuildTargetTask(toRun, s"Execute targets ${toRun.mkString(",")}")
         val job = Job(Seq(task), "Perform output operations")
 
         val runner = context.runner

@@ -12,7 +12,7 @@ the physical location or connection, the format and so on.
 ## Example
 
 ```
-outputs:
+targets:
   stations:
     kind: relation
     input: stations-mapping

@@ -21,25 +21,25 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.OutputIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 
 
-object OutputTask {
+object BuildTargetTask {
     def apply(outputs:Seq[String], description:String) = {
-        val task = new OutputTask
-        task._outputs = outputs
+        val task = new BuildTargetTask
+        task._targets = outputs
         task._description = description
         task
     }
 }
 
 
-class OutputTask extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[OutputTask])
+class BuildTargetTask extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
 
-    @JsonProperty(value="outputs", required=true) private var _outputs:Seq[String] = Seq()
+    @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
 
-    def outputs(implicit context: Context) : Seq[OutputIdentifier] = _outputs.map(i => OutputIdentifier.parse(context.evaluate(i)))
+    def targets(implicit context: Context) : Seq[TargetIdentifier] = _targets.map(i => TargetIdentifier.parse(context.evaluate(i)))
 
     /**
       * Executes all outputs defined in this task
@@ -49,21 +49,21 @@ class OutputTask extends BaseTask {
       */
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        outputs.foreach(o => executeOutput(executor, o))
+        targets.foreach(o => executeTarget(executor, o))
         true
     }
 
-    private def executeOutput(executor: Executor, identifier:OutputIdentifier) : Boolean = {
+    private def executeTarget(executor: Executor, identifier:TargetIdentifier) : Boolean = {
         implicit val context = executor.context
-        val output = context.getOutput(identifier)
+        val target = context.getTarget(identifier)
 
-        logger.info("Resolving dependencies for output '{}'", identifier.toString)
-        val dependencies = output.dependencies
+        logger.info("Resolving dependencies for target '{}'", identifier.toString)
+        val dependencies = target.dependencies
             .map(d => (d, executor.instantiate(d)))
             .toMap
 
-        logger.info("Executing output '{}'", identifier.toString)
-        output.execute(executor, dependencies)
+        logger.info("Executing target '{}'", identifier.toString)
+        target.execute(executor, dependencies)
         true
     }
 }

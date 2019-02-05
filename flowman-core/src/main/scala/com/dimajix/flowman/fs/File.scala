@@ -126,7 +126,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
     }
 
     /**
-      * Copies the file to a different file. The target file may reside on a different file system
+      * Copies the file to a different file. The relation file may reside on a different file system
       * @param dst
       * @param overwrite
       */
@@ -134,7 +134,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
         if (!overwrite && dst.isFile())
             throw new IOException("Target $dst already exists")
 
-        // Append file name if target is a directory
+        // Append file name if relation is a directory
         val dstFile = if (dst.isDirectory())
             dst / path.getName
         else

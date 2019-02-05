@@ -25,7 +25,7 @@ import com.dimajix.flowman.spec.task.DestroyRelationTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.tools.exec.ActionCommand
-import com.dimajix.flowman.tools.exec.output.RunCommand
+import com.dimajix.flowman.tools.exec.target.BuildCommand
 
 
 class DestroyCommand extends ActionCommand {

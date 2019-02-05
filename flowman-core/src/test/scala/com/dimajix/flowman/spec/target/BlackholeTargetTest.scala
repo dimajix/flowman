@@ -1,4 +1,4 @@
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
@@ -9,13 +9,13 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 
 
-class BlackholeOutputTest extends FlatSpec with Matchers with LocalSparkSession{
-    "A Blackhole Output" should "be writeable" in {
+class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
+    "A Blackhole Target" should "be writeable" in {
         val spark = this.spark
 
         val spec =
             s"""
-               |outputs:
+               |targets:
                |  out:
                |    kind: blackhole
                |    input: some_table
@@ -25,7 +25,7 @@ class BlackholeOutputTest extends FlatSpec with Matchers with LocalSparkSession{
         val executor = session.getExecutor(project)
         implicit val context  = executor.context
 
-        val output = project.outputs("out")
+        val output = project.targets("out")
         output.execute(executor, Map(MappingIdentifier("some_table") -> spark.emptyDataFrame))
     }
 }

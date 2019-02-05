@@ -16,10 +16,10 @@
 
 package com.dimajix.flowman.spi
 
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 
 
-object OutputProvider extends ExtensionLoader[Output, OutputProvider](Output) {
+object OutputProvider extends ExtensionLoader[Target, OutputProvider](Target) {
 }
 
 

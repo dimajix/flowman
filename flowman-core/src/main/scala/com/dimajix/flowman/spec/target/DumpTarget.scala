@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
@@ -25,8 +25,8 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class DumpOutput extends BaseOutput {
-    private val logger = LoggerFactory.getLogger(classOf[DumpOutput])
+class DumpTarget extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[DumpTarget])
 
     @JsonProperty(value="limit", required=true) private var _limit:String = "100"
     @JsonProperty(value="header", required=true) private var _header:String = "true"

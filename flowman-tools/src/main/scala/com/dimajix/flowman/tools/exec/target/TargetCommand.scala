@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.output
+package com.dimajix.flowman.tools.exec.target
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand
@@ -27,12 +27,12 @@ import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
 
 
-class OutputCommand extends NestedCommand {
+class TargetCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="task",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="validate",impl=classOf[ValidateCommand]),
-        new SubCommand(name="run",impl=classOf[RunCommand])
+        new SubCommand(name="build",impl=classOf[BuildCommand])
     ))
     override var command:Command = _
 

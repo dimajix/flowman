@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
@@ -28,9 +28,9 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spi.ExtensionRegistry
 
 
-object Output extends ExtensionRegistry[Output] {
-    class NameResolver extends StdConverter[Map[String,Output],Map[String,Output]] {
-        override def convert(value: Map[String,Output]): Map[String,Output] = {
+object Target extends ExtensionRegistry[Target] {
+    class NameResolver extends StdConverter[Map[String,Target],Map[String,Target]] {
+        override def convert(value: Map[String,Target]): Map[String,Target] = {
             value.foreach(kv => kv._2._name = kv._1)
             value
         }
@@ -40,14 +40,14 @@ object Output extends ExtensionRegistry[Output] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeOutput]),
-    new JsonSubTypes.Type(name = "count", value = classOf[CountOutput]),
-    new JsonSubTypes.Type(name = "dump", value = classOf[DumpOutput]),
-    new JsonSubTypes.Type(name = "local", value = classOf[LocalOutput]),
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationOutput]),
-    new JsonSubTypes.Type(name = "stream", value = classOf[StreamOutput]))
+    new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTarget]),
+    new JsonSubTypes.Type(name = "count", value = classOf[CountTarget]),
+    new JsonSubTypes.Type(name = "dump", value = classOf[DumpTarget]),
+    new JsonSubTypes.Type(name = "local", value = classOf[LocalTarget]),
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTarget]),
+    new JsonSubTypes.Type(name = "stream", value = classOf[StreamTarget]))
 )
-abstract class Output {
+abstract class Target {
     @JsonIgnore private var _name:String = ""
 
     /**

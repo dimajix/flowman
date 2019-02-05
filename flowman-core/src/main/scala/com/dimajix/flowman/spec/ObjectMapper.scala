@@ -32,7 +32,7 @@ import com.dimajix.flowman.namespace.monitor.Monitor
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.task.Task
 import com.dimajix.flowman.spi.Registration
@@ -52,7 +52,7 @@ object ObjectMapper {
         val monitorTypes = Monitor.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val outputTypes = Output.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val outputTypes = Target.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val schemaTypes = Schema.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val taskTypes = Task.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val connectionTypes = Connection.subtypes.map(kv => new NamedType(kv._2, kv._1))

@@ -2,7 +2,7 @@ jobs:
   dump-all:
     description: "Dumps all outputs"
     tasks:
-      - kind: output
-        description: Perform output operation on dumps
-        outputs:
+      - kind: build-target
+        description: Perform target operation on dumps
+        targets:
           - measurements-dump

@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import org.apache.spark.sql.DataFrame
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class BlackholeOutput extends BaseOutput {
+class CountTarget extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[CountTarget])
+
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
-        input(this.input).write.format("null").save()
+        val count = input(this.input).count()
+        System.out.println(s"Table $input contains $count records")
     }
 }

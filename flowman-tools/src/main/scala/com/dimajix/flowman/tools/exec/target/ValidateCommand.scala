@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.output
+package com.dimajix.flowman.tools.exec.target
 
 import scala.util.Failure
 import scala.util.Success
@@ -45,13 +45,13 @@ class ValidateCommand extends ActionCommand {
         Try {
             val outputNames =
                 if (all)
-                    project.outputs.keys.toSeq
+                    project.targets.keys.toSeq
                 else if (outputs.nonEmpty)
                     outputs.toSeq
                 else
-                    project.outputs.filter(_._2.enabled).keys.toSeq
+                    project.targets.filter(_._2.enabled).keys.toSeq
 
-            val tables = outputNames.map(project.outputs).flatMap(_.dependencies)
+            val tables = outputNames.map(project.targets).flatMap(_.dependencies)
             tables.forall(table => executor.instantiate(table) != null)
         } match {
             case Success(true) =>

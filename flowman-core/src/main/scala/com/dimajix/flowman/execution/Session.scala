@@ -361,21 +361,10 @@ class Session private[execution](
     }
 
     /**
-      * Returns a new detached Flowman Session sharing the same Spark Context.
-      * @param namespace
-      * @param project
+      * Returns a new detached Flowman Session for the same namespace and project sharing the same Spark Context.
       * @return
       */
-    def newSession(namespace: Namespace, project:Project) : Session = {
-        new Session(
-            namespace,
-            project,
-            () => spark.newSession(),
-            _sparkName,
-            _sparkConfig:Map[String,String],
-            _environment: Seq[(String,String)],
-            _profiles:Set[String],
-            Set()
-        )
+    def newSession() : Session = {
+        newSession(_project)
     }
 }

@@ -1,4 +1,4 @@
-package com.dimajix.flowman.tools.exec.output
+package com.dimajix.flowman.tools.exec.target
 
 import org.slf4j.LoggerFactory
 
@@ -12,7 +12,7 @@ class ListCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         val context = executor.context
-        project.outputs.keys.foreach(println)
+        project.targets.keys.foreach(println)
         true
     }
 

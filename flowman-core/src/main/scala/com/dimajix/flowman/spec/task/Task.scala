@@ -40,7 +40,7 @@ object Task extends ExtensionRegistry[Task] {
     new JsonSubTypes.Type(name = "show-environment", value = classOf[ShowEnvironmentTask]),
     new JsonSubTypes.Type(name = "print", value = classOf[PrintTask]),
     new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
-    new JsonSubTypes.Type(name = "output", value = classOf[OutputTask]),
+    new JsonSubTypes.Type(name = "build-target", value = classOf[BuildTargetTask]),
     new JsonSubTypes.Type(name = "get-file", value = classOf[GetFileTask]),
     new JsonSubTypes.Type(name = "put-file", value = classOf[PutFileTask]),
     new JsonSubTypes.Type(name = "copy-file", value = classOf[CopyFileTask]),

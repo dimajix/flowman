@@ -26,11 +26,11 @@ import com.dimajix.flowman.spec.task.CreateRelationTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.tools.exec.ActionCommand
-import com.dimajix.flowman.tools.exec.output.RunCommand
+import com.dimajix.flowman.tools.exec.target.BuildCommand
 
 
 class CreateCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[RunCommand])
+    private val logger = LoggerFactory.getLogger(classOf[BuildCommand])
 
     @Argument(usage = "specifies relations to create", metaVar = "<relation>")
     var relations: Array[String] = Array()

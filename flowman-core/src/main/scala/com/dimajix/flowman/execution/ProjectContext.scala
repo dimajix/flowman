@@ -22,14 +22,14 @@ import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.OutputIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.util.Templating.FileWrapper
 
@@ -143,11 +143,11 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @param identifier
       * @return
       */
-    override def getOutput(identifier: OutputIdentifier): Output = {
+    override def getTarget(identifier: TargetIdentifier): Target = {
         if (identifier.project.forall(_ == _project.name))
-            _project.outputs.getOrElse(identifier.name, throw new NoSuchElementException(s"Output '$identifier' not found in project ${_project.name}"))
+            _project.targets.getOrElse(identifier.name, throw new NoSuchElementException(s"Target '$identifier' not found in project ${_project.name}"))
         else
-            parent.getOutput(identifier)
+            parent.getTarget(identifier)
     }
 
     /**

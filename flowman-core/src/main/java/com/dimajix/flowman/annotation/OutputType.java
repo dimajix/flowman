@@ -23,8 +23,8 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a Output to be used in a data flow spec. The specific Output itself has
- * to derive from the Output class
+ * This annotation marks a specific class as a Target to be used in a data flow spec. The specific Target itself has
+ * to derive from the Target class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})

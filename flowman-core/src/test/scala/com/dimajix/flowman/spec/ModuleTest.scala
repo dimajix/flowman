@@ -43,7 +43,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |  empty:
               |    kind: null
               |
-              |outputs:
+              |targets:
               |  blackhole:
               |    kind: blackhole
               |    input: input
@@ -59,8 +59,8 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |jobs:
               |  default:
               |    tasks:
-              |      - kind: output
-              |        outputs: blackhole
+              |      - kind: build-target
+              |        targets: blackhole
             """.stripMargin
         val project = Module.read.string(spec).toProject("default")
         val session = Session.builder().withSparkSession(spark).build()

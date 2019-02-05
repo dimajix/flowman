@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
@@ -27,16 +27,16 @@ import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.types.SingleValue
 
 
-class RelationOutput extends BaseOutput {
-    private val logger = LoggerFactory.getLogger(classOf[RelationOutput])
+class RelationTarget extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
 
-    @JsonProperty(value="target", required=true) private var _target:String = _
+    @JsonProperty(value="relation", required=true) private var _relation:String = _
     @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
     @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = Map()
     @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
     @JsonProperty(value="rebalance", required=false) private var _rebalance:String = "false"
 
-    def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
+    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
     def mode(implicit context: Context) : String = context.evaluate(_mode)
     def partition(implicit context: Context) : Map[String,String] = _partition.mapValues(context.evaluate)
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
@@ -46,7 +46,7 @@ class RelationOutput extends BaseOutput {
         implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rebalance = this.rebalance
-        val target = this.target
+        val target = this.relation
         val input = this.input
 
         logger.info(s"Writing mapping '$input' to relation '$target' into partition $partition")

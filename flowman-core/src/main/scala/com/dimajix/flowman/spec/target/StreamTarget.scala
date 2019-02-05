@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import java.util.Locale
 
@@ -30,16 +30,16 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 
 
-class StreamOutput extends BaseOutput {
-    private val logger = LoggerFactory.getLogger(classOf[StreamOutput])
+class StreamTarget extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
     private lazy val ts =  System.currentTimeMillis()
 
-    @JsonProperty(value="target", required=true) private var _target:String = _
+    @JsonProperty(value="relatiom", required=true) private var _relation:String = _
     @JsonProperty(value="mode", required=false) private var _mode:String = OutputMode.Update().toString
     @JsonProperty(value="checkpointLocation", required=false) private var _checkpointLocation:String = _
     @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
 
-    def target(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
+    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
     def mode(implicit context: Context) : OutputMode = context.evaluate(_mode).toUpperCase(Locale.ROOT) match {
         case "APPEND" => OutputMode.Append()
         case "COMPLETE" => OutputMode.Complete()
@@ -62,7 +62,7 @@ class StreamOutput extends BaseOutput {
       */
     override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): Unit = {
         implicit var context = executor.context
-        val target = this.target
+        val target = this.relation
         val input = this.input
         val mode = this.mode
         val checkpointLocation = this.checkpointLocation

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import java.io.File
 import java.io.FileOutputStream
@@ -36,8 +36,8 @@ import com.dimajix.flowman.spec.MappingIdentifier
 /**
   * This class will provide output to the local filesystem of the driver.
   */
-class LocalOutput extends RelationOutput {
-    private val logger = LoggerFactory.getLogger(classOf[LocalOutput])
+class LocalTarget extends RelationTarget {
+    private val logger = LoggerFactory.getLogger(classOf[LocalTarget])
 
     @JsonProperty(value="filename", required=true) private var _filename:String = _
     @JsonProperty(value="encoding", required=true) private var _encoding:String = "UTF-8"

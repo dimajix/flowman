@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.output
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -22,7 +22,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-abstract class BaseOutput extends Output {
+abstract class BaseTarget extends Target {
     @JsonProperty(value = "enabled", required=false) private var _enabled:String = _
     @JsonProperty(value = "input", required=true) private var _input:String = _
 

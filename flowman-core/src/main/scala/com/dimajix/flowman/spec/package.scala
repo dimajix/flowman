@@ -19,7 +19,7 @@ package com.dimajix.flowman
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
 
@@ -27,12 +27,12 @@ package object spec {
     type MappingIdentifier = Identifier[Mapping]
     type ConnectionIdentifier = Identifier[Connection]
     type RelationIdentifier = Identifier[Relation]
-    type OutputIdentifier = Identifier[Output]
+    type TargetIdentifier = Identifier[Target]
     type JobIdentifier = Identifier[Job]
 
     object MappingIdentifier extends IdentifierFactory[Mapping]
     object ConnectionIdentifier extends IdentifierFactory[Connection]
     object RelationIdentifier extends IdentifierFactory[Relation]
-    object OutputIdentifier extends IdentifierFactory[Output]
+    object TargetIdentifier extends IdentifierFactory[Target]
     object JobIdentifier extends IdentifierFactory[Job]
 }

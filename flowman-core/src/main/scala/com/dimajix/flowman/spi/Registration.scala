@@ -36,7 +36,7 @@ import com.dimajix.flowman.namespace.storage.Store
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.task.Task
 import com.dimajix.flowman.util.Templating
@@ -126,7 +126,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[OutputType])
-                                Output.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Output]])
+                                Target.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Target]])
                             }
                         }
                     )

@@ -29,15 +29,15 @@ import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.OutputIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
 
@@ -141,16 +141,16 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
     }
 
     /**
-      * Returns a fully qualified output from a project belonging to the namespace of this executor
+      * Returns a fully qualified target from a project belonging to the namespace of this executor
       *
       * @param identifier
       * @return
       */
-    override def getOutput(identifier: OutputIdentifier): Output = {
+    override def getTarget(identifier: TargetIdentifier): Target = {
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find output with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
-        child.getOutput(OutputIdentifier(identifier.name, None))
+        child.getTarget(TargetIdentifier(identifier.name, None))
     }
 
     /**

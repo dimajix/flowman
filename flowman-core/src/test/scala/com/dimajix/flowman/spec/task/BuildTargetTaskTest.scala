@@ -21,15 +21,15 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.OutputIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 
 
-class OutputTaskTest extends FlatSpec with Matchers {
-    "The OutputTask" should "support string assignments from code" in {
+class BuildTargetTaskTest extends FlatSpec with Matchers {
+    "The BuildTargetTask" should "support string assignments from code" in {
         val session = Session.builder().build()
         implicit val context = session.context
-        val task = OutputTask(Seq("lala"), "test")
-        task.outputs should equal(Seq(OutputIdentifier("lala",None)))
+        val task = BuildTargetTask(Seq("lala"), "test")
+        task.targets should equal(Seq(TargetIdentifier("lala",None)))
     }
     it should "support configuration via YML" in {
         val spec =
@@ -38,8 +38,8 @@ class OutputTaskTest extends FlatSpec with Matchers {
               |  dump:
               |    description: "Runs all outputs"
               |    tasks:
-              |      - kind: output
-              |        outputs:
+              |      - kind: build-target
+              |        targets:
               |          - measurements
             """.stripMargin
         val module = Module.read.string(spec)
@@ -48,7 +48,7 @@ class OutputTaskTest extends FlatSpec with Matchers {
         module.jobs.size should be (1)
         val job = module.jobs("dump")
         job.tasks.size should be (1)
-        val task = job.tasks(0).asInstanceOf[OutputTask]
-        task.outputs.size should be (1)
+        val task = job.tasks(0).asInstanceOf[BuildTargetTask]
+        task.targets.size should be (1)
     }
 }

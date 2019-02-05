@@ -137,7 +137,7 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     }
 
     /**
-      * Returns a specific named OutputType. The OutputType can either be inside this Contexts project or in a different
+      * Returns a specific named TargetType. The TargetType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier

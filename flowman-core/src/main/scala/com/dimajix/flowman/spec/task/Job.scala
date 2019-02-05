@@ -199,7 +199,7 @@ class Job {
     def parameters: Seq[JobParameter] = _parameters
 
     /**
-      * Determine final arguments of this job, by performing granularity adjustments atc
+      * Determine final arguments of this job, by performing granularity adjustments etc
       * @param args
       * @param context
       * @return

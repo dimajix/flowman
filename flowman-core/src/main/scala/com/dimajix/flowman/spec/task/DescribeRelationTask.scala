@@ -24,6 +24,15 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 
 
+object DescribeRelationTask {
+    def apply(relation:String) : DescribeRelationTask = {
+        val task = new DescribeRelationTask
+        task._relation = relation
+        task
+    }
+}
+
+
 class DescribeRelationTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeRelationTask])
 

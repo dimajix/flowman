@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.task.DescribeRelationTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -36,16 +36,10 @@ class DescribeCommand extends ActionCommand {
     var tablename: String = ""
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
-        logger.info(s"Describing relation '$tablename'")
+        val task = DescribeRelationTask(tablename)
 
         Try {
-            val relation = context.getRelation(RelationIdentifier.parse(tablename))
-            val schema = relation.schema
-            if (schema == null)
-                logger.error(s"Relation '$tablename' does not provide an explicit schema")
-            else
-                schema.printTree
+            task.execute(executor)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished describing relation")

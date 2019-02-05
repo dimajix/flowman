@@ -24,16 +24,25 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
+object DescribeMappingTask {
+    def apply(mapping:String) : DescribeMappingTask = {
+        val task = new DescribeMappingTask
+        task._mapping = mapping
+        task
+    }
+}
+
+
 class DescribeMappingTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
-    @JsonProperty(value="input", required=true) private var _input:String = _
+    @JsonProperty(value="mapping", required=true) private var _mapping:String = _
 
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
+    def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
 
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        val identifier = this.input
+        val identifier = this.mapping
         logger.info(s"Describing mapping '$identifier")
 
         val df = executor.instantiate(identifier)

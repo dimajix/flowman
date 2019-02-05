@@ -24,41 +24,30 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-object ShowMappingTask {
-    def apply(mapping:String, columns:Seq[String], limit:Int) : ShowMappingTask = {
-        val task = new ShowMappingTask
+object CountMappingTask {
+    def apply(mapping:String) : CountMappingTask = {
+        val task = new CountMappingTask
         task._mapping = mapping
-        task._columns = columns
-        task._limit = limit.toString
         task
     }
 }
 
 
-class ShowMappingTask extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[ShowMappingTask])
+class CountMappingTask extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
     @JsonProperty(value="mapping", required=true) private var _mapping:String = _
-    @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
-    @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
 
     def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
-    def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
-    def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        val limit = this.limit
         val identifier = this.mapping
-        logger.info(s"Showing first $limit rows of mapping '$identifier'")
+        logger.info(s"Counting records in mapping '$identifier")
 
         val table = executor.instantiate(identifier)
-        val projection = if (_columns != null && _columns.nonEmpty)
-            table.select(columns.map(c => table(c)):_*)
-        else
-            table
-
-        projection.show(limit, truncate = false)
+        val count = table.count()
+        println(s"Mapping '$identifier' has $count records")
         true
     }
 }

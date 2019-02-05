@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.annotation;
 
-import com.dimajix.flowman.spec.target.Target
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 
-object OutputProvider extends ExtensionLoader[Target, OutputProvider](Target) {
-}
-
-
-trait OutputProvider extends ExtensionProvider {
-    def getKind() : String
-    def getImpl() : Class[_]
+/**
+ * This annotation marks a specific class as a Target to be used in a data flow spec. The specific Target itself has
+ * to derive from the Target class
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface TargetType {
+    /**
+     * Specifies the kind of the output which is used in data flow specifications.
+     * @return
+     */
+    String kind();
 }

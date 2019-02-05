@@ -113,7 +113,7 @@ abstract class Context {
       */
     def getRelation(identifier: RelationIdentifier): Relation
     /**
-      * Returns a specific named Target. The OutputType can either be inside this Contexts project or in a different
+      * Returns a specific named Target. The TargetType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier

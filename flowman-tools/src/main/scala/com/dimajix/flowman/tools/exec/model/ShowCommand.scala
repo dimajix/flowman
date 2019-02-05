@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.task.ShowRelationTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -36,24 +37,17 @@ class ShowCommand extends ActionCommand {
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required=false)
     var limit: Int = 10
     @Argument(index=0, usage="specifies the relation to show", metaVar="<relation>", required=true)
-    var tablename: String = ""
+    var relation: String = ""
     @Argument(index=1, usage = "specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
     var columns: String = ""
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info("Showing first {} rows of relation {}", limit:Any, tablename:Any)
-        val context = executor.context
         val columns = this.columns.split(",").filter(_.nonEmpty)
+        val task = ShowRelationTask(relation, columns, limit)
 
         Try {
-            val relation = context.getRelation(RelationIdentifier.parse(tablename))
-            val table = relation.read(executor, null)
-            val projection = if (columns.nonEmpty)
-                table.select(columns.map(name => table(name)):_*)
-            else
-                table
-            projection.limit(limit).show(truncate = false)
+            task.execute(executor)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping relation")

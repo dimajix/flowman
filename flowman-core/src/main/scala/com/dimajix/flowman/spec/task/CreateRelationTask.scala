@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 
+
 object CreateRelationTask {
     def apply(relations:Seq[String]) : CreateRelationTask = {
         val task = new CreateRelationTask

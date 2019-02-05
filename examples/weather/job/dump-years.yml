@@ -23,4 +23,4 @@ jobs:
         description: Dump current execution environment for year $start_year
       - kind: show-mapping
         description: Dump measurements from year $start_year
-        input: measurements
+        mapping: measurements

@@ -21,13 +21,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.RelationIdentifier
 
 
-object ShowMappingTask {
-    def apply(mapping:String, columns:Seq[String], limit:Int) : ShowMappingTask = {
-        val task = new ShowMappingTask
-        task._mapping = mapping
+object ShowRelationTask {
+    def apply(mapping:String, columns:Seq[String], limit:Int) : ShowRelationTask = {
+        val task = new ShowRelationTask
+        task._relation = mapping
         task._columns = columns
         task._limit = limit.toString
         task
@@ -35,24 +35,25 @@ object ShowMappingTask {
 }
 
 
-class ShowMappingTask extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[ShowMappingTask])
+class ShowRelationTask extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[ShowRelationTask])
 
-    @JsonProperty(value="mapping", required=true) private var _mapping:String = _
+    @JsonProperty(value="relation", required=true) private var _relation:String = _
     @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
     @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
 
-    def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
+    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
     def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
         val limit = this.limit
-        val identifier = this.mapping
-        logger.info(s"Showing first $limit rows of mapping '$identifier'")
+        val identifier = this.relation
+        logger.info(s"Showing first $limit rows of relation '$identifier'")
 
-        val table = executor.instantiate(identifier)
+        val relation = context.getRelation(identifier)
+        val table = relation.read(executor, null)
         val projection = if (_columns != null && _columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else
@@ -61,4 +62,5 @@ class ShowMappingTask extends BaseTask {
         projection.show(limit, truncate = false)
         true
     }
+
 }

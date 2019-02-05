@@ -62,6 +62,14 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-azure</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>target</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-example</artifactId>
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>
@@ -119,6 +127,10 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-plugin-aws</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-plugin-azure</artifactId>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>

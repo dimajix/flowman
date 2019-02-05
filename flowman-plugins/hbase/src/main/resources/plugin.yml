@@ -1,5 +1,5 @@
 name: ${plugin.name}
-description: Flowman HBase plugin
+description: ${project.name}
 version: ${plugin.version}
 isolation: false
 jars:

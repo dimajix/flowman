@@ -54,6 +54,7 @@
         <hbase.version>1.2.0</hbase.version>
         <spark.version>2.4.0</spark.version>
         <aws.version>1.10.6</aws.version>
+        <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
         <avro.version>1.8.2</avro.version>
@@ -211,6 +212,7 @@
         <module>flowman-tools</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
+        <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
         <module>flowman-plugins/hbase</module>
         <module>flowman-dist</module>
@@ -512,6 +514,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-aws</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-azure</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

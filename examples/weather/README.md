@@ -10,4 +10,4 @@ Since we will read from S3, you need some valid S3 credentials
 
 ## Executing outputs
 
-    flowexec -f examples/weather output run
+    flowexec -f examples/weather target build

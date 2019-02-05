@@ -1,13 +1,12 @@
 # Preparing the Environment
 
-Since we will read from S3, you need some valid S3 credentials
-    AWS_ACCESS_KEY_ID=your_aws_key
-    AWS_SECRET_ACCESS_KEY=your_aws_secret
-    AWS_PROXY_HOST=
-    AWS_PROXY_PORT=
+SFTP_USERNAME=<username to login>
+SFTP_PASSWORD=<password>
+SFTP_KEYFILE=<ssh key file>
+SFTP_HOST=<hostname>
+SFTP_TARGET=<target directory on sftp server>
+
 
 # Using flowman
 
-## Executing outputs
-
-    flowexec -f examples/weather output run
+    flowexec -f examples/sftp-upload project run

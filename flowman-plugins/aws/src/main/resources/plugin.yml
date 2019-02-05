@@ -1,0 +1,7 @@
+name: ${plugin.name}
+description: Flowman AWS plugin
+version: ${plugin.version}
+isolation: false
+jars:
+ - hadoop-aws-${hadoop.version}.jar
+ - aws-java-sdk-s3-${aws.version}.jar

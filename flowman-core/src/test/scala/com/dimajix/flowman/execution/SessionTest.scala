@@ -87,4 +87,15 @@ class SessionTest extends FlatSpec with Matchers {
         session.executor should not equal(newSession.executor)
         session.runner should not equal(newSession.runner)
     }
+
+    it should "set all Spark configs" in {
+        val session = Session.builder()
+            .withSparkConfig(Map("spark.lala" -> "lolo"))
+            .build()
+
+        val newSession = session.newSession(null)
+
+        session.spark.conf.get("spark.lala") should be ("lolo")
+        newSession.spark.conf.get("spark.lala") should be ("lolo")
+    }
 }

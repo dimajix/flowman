@@ -53,7 +53,7 @@ class BuildCommand extends ActionCommand {
                 project.targets.filter(_._2.enabled).keys.toSeq
 
         val task = BuildTargetTask(toRun, s"Execute targets ${toRun.mkString(",")}")
-        val job = Job(Seq(task), "Perform output operations")
+        val job = Job(Seq(task), "build-targets", "Perform output operations")
 
         val runner = context.runner
         val result = runner.execute(executor, job, Map(), true)

@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.namespace.Namespace
@@ -202,6 +203,12 @@ class Session private[execution](
         val injectedSession = _sparkSession()
         if (injectedSession != null) {
             logger.info("Reusing provided Spark session")
+            // Set all session properties that can be changed in an existing session
+            sparkConfig.foreach { case (key, value) =>
+                if (!SQLConf.staticConfKeys.contains(key)) {
+                    injectedSession.conf.set(key, value)
+                }
+            }
             injectedSession
         }
         else {
@@ -215,22 +222,17 @@ class Session private[execution](
                 sparkConf.setMaster("local[*]")
                 sparkConf.set("spark.sql.shuffle.partitions", "16")
             }
-            val spark = SparkSession.builder()
+            SparkSession.builder()
                 .config(sparkConf)
                 .enableHiveSupport()
                 .getOrCreate()
-
-            // Distribute additional Plugin jar files
-            sparkJars.foreach(spark.sparkContext.addJar)
-
-            spark
         }
     }
     private def createSession() : SparkSession = {
         val spark = createOrReuseSession()
 
-        // Set all Spark Session specific configurations
-        sparkConfig.foreach(kv => spark.conf.set(kv._1,kv._2))
+        // Distribute additional Plugin jar files
+        sparkJars.foreach(spark.sparkContext.addJar)
 
         // Log all config properties
         spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }

@@ -121,9 +121,10 @@ class JobParameter {
 
 
 object Job {
-    def apply(tasks:Seq[Task], description:String) : Job = {
+    def apply(tasks:Seq[Task], name:String, description:String) : Job = {
         val job = new Job
         job._tasks = tasks
+        job._name = name
         job._description = description
         job
     }

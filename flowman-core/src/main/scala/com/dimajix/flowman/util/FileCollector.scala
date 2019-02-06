@@ -102,19 +102,7 @@ class FileCollector(hadoopConf:Configuration) {
       */
     def collect(partitions:Map[String,Iterable[Any]]) : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
-        if (_path == null || _path.toString.isEmpty)
-            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
-        if (_pattern == null)
-            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
-
-        val fs = _path.getFileSystem(hadoopConf)
-        PartitionUtils.flatMap(partitions, p => {
-            val curPath:Path = resolve(p)
-            val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
-
-            logger.info(s"Collecting files for partition $partitions in location $curPath")
-            collectPath(fs, curPath)
-        }).toSeq
+        flatMap(partitions)(collectPath)
     }
 
     /**
@@ -124,21 +112,112 @@ class FileCollector(hadoopConf:Configuration) {
       */
     def collect() : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        map(collectPath)
+    }
+
+    /**
+      * Deletes all files and directories from the given partitions
+      *
+      * @param partitions
+      * @return
+      */
+    def delete(partitions:Map[String,Iterable[Any]]) : Unit = {
+        logger.info(s"Deleting files in location ${_path} with pattern '${_pattern}'")
+        foreach(partitions)(deletePath)
+    }
+
+    /**
+      * Deletes files from the configured directory. Does not perform partition resolution
+      *
+      * @return
+      */
+    def delete() : Unit = {
+        logger.info(s"Deleting files in location ${_path} with pattern '${_pattern}'")
+        foreach(deletePath _)
+    }
+
+    /**
+      * FlatMaps all partitions using the given function
+      * @param partitions
+      * @param fn
+      * @tparam T
+      * @return
+      */
+    def flatMap[T](partitions:Map[String,Iterable[Any]])(fn:(FileSystem,Path) => Seq[T]) : Seq[T] = {
+        if (_path == null || _path.toString.isEmpty)
+            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
+        if (_pattern == null)
+            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+
+        val fs = _path.getFileSystem(hadoopConf)
+        PartitionUtils.flatMap(partitions, p => {
+            val curPath:Path = resolve(p)
+            val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
+            fn(fs, curPath)
+        }).toSeq
+    }
+
+    /**
+      * Maps all partitions using the given function
+      * @param partitions
+      * @param fn
+      * @tparam T
+      * @return
+      */
+    def map[T](partitions:Map[String,Iterable[Any]])(fn:(FileSystem,Path) => T) : Seq[T] = {
+        if (_path == null || _path.toString.isEmpty)
+            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
+        if (_pattern == null)
+            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+
+        val fs = _path.getFileSystem(hadoopConf)
+        PartitionUtils.map(partitions, p => {
+            val curPath:Path = resolve(p)
+            val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
+            fn(fs, curPath)
+        }).toSeq
+    }
+
+    def map[T](fn:(FileSystem,Path) => T) : T = {
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting files")
 
         val fs = _path.getFileSystem(hadoopConf)
         val curPath:Path = if (_pattern != null && _pattern.nonEmpty) new Path(_path, _pattern) else _path
-        collectPath(fs, curPath)
+        fn(fs,curPath)
     }
+
+    def foreach(partitions:Map[String,Iterable[Any]])(fn:(FileSystem,Path) => Unit) : Unit = {
+        map(partitions)(fn)
+    }
+
+    def foreach(fn:(FileSystem,Path) => Unit) : Unit = {
+        map(fn)
+    }
+
+    private def deletePath(fs:FileSystem, path:Path) : Unit = {
+        if (fs.isDirectory(path)) {
+            logger.info(s"Deleting directory $path")
+            fs.delete(path, true)
+        }
+        else {
+            logger.info(s"Deleting file(s) $path")
+            val files = fs.globStatus(path)
+            if (files != null)
+                files.foreach(f => fs.delete(f.getPath, true))
+        }
+    }
+
 
     private def collectPath(fs:FileSystem, path:Path) = {
         if (fs.isDirectory(path)) {
             // If path is a directory, simply list all files
+            logger.info(s"Collecting files in directory $path")
             fs.listStatus(path).sorted.map(_.getPath).toSeq
         }
         else {
             // Otherwise assume a file pattern and try to glob all files
+            logger.info(s"Collecting file(s) $path")
             val files = fs.globStatus(path)
             if (files != null)
                 files.sorted.map(_.getPath).toSeq

@@ -50,7 +50,7 @@ class HiveViewRelation extends SchemaRelation {
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
         val tableName = database + "." + view
-        logger.info(s"Reading DataFrame from Hive view $tableName")
+        logger.info(s"Reading from Hive view $tableName")
 
         val reader = this.reader(executor)
         val df = reader.table(tableName)
@@ -58,6 +58,12 @@ class HiveViewRelation extends SchemaRelation {
     }
 
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
+
+    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = {
+        implicit val context = executor.context
+        val tableName = database + "." + view
+        logger.info(s"Cleaning from Hive view $tableName (no-op)")
+    }
 
     override def create(executor:Executor) : Unit = ???
     override def destroy(executor:Executor) : Unit = ???

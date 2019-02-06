@@ -108,6 +108,13 @@ abstract class Relation {
     def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:String = "OVERWRITE") : Unit
 
     /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    def clean(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : Unit
+
+    /**
       * Reads data from a streaming source
       * @param executor
       * @param schema

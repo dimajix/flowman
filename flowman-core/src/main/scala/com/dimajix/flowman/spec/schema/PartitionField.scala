@@ -19,10 +19,9 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
-
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types._
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionField {
@@ -57,4 +56,22 @@ class PartitionField {
 
     def parse(value: String)(implicit context: Context) : Any = _type.parse(value, granularity)
     def interpolate(value: FieldValue)(implicit context: Context) : Iterable[Any] = _type.interpolate(value, granularity)
+
+    def spec(value:String)(implicit context: Context) : String = {
+        spec(parse(value))
+    }
+    def spec(value:Any) : String = {
+        ftype match {
+            case IntegerType => name + "=" + value
+            case LongType => name + "=" + value
+            case ShortType => name + "=" + value
+            case FloatType => name + "=" + value
+            case DoubleType => name + "=" + value
+            case DateType => name + "='" + value + "'"
+            case StringType => name + "='" + value + "'"
+            case CharType(_) => name + "='" + value + "'"
+            case VarcharType(_) => name + "='" + value + "'"
+            case TimestampType => name + "=" + value.asInstanceOf[UtcTimestamp].toEpochSeconds()
+        }
+    }
 }

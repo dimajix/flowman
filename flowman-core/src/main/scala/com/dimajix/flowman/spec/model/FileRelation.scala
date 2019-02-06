@@ -119,6 +119,38 @@ class FileRelation extends SchemaRelation {
     }
 
     /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    def clean(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : Unit = {
+        implicit val context = executor.context
+        if (location == null || location.isEmpty)
+            throw new IllegalArgumentException("location needs to be defined for cleaning files")
+
+        if (this.partitions != null && this.partitions.nonEmpty)
+            cleanPartitionedFiles(executor, partitions)
+        else
+            cleanUnpartitionedFiles(executor)
+    }
+
+    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+        implicit val context = executor.context
+        if (partitions == null)
+            throw new NullPointerException("Partitioned data source requires partition values to be defined")
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
+        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
+        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+        collector(executor).delete(resolvedPartitions)
+    }
+
+    private def cleanUnpartitionedFiles(executor: Executor) = {
+        collector(executor).delete()
+    }
+
+    /**
       * This method will create the given directory as specified in "location"
       * @param executor
       */
@@ -141,6 +173,7 @@ class FileRelation extends SchemaRelation {
         val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         fs.delete(path, true)
     }
+
     override def migrate(executor:Executor) : Unit = ???
 
     /**

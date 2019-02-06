@@ -17,19 +17,9 @@
 package com.dimajix.flowman.spec.schema
 
 import org.apache.hadoop.fs.Path
-
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.types.CharType
-import com.dimajix.flowman.types.VarcharType
-import com.dimajix.flowman.types.DateType
-import com.dimajix.flowman.types.DoubleType
-import com.dimajix.flowman.types.FloatType
-import com.dimajix.flowman.types.IntegerType
-import com.dimajix.flowman.types.LongType
-import com.dimajix.flowman.types.ShortType
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.types.StringType
-import com.dimajix.flowman.types.TimestampType
+import com.dimajix.flowman.types._
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionSchema {
@@ -71,7 +61,7 @@ class PartitionSchema(fields:Seq[PartitionField]) {
     }
 
     /**
-      * Constructs a SQL partition specification from the given partisions
+      * Constructs a SQL partition specification from the given partitions
       * @param partition
       * @param context
       * @return
@@ -80,18 +70,7 @@ class PartitionSchema(fields:Seq[PartitionField]) {
         val partitions = fields.map(p => (p.name, p)).toMap
         val partitionValues = partition.map(kv => {
             val p = partitions.getOrElse(kv._1, throw new IllegalArgumentException(s"Column '${kv._1}' not defined as partition column"))
-            p.ftype match {
-                case IntegerType => kv._1 + "=" + p.parse(kv._2.value)
-                case LongType => kv._1 + "=" + p.parse(kv._2.value)
-                case ShortType => kv._1 + "=" + p.parse(kv._2.value)
-                case FloatType => kv._1 + "=" + p.parse(kv._2.value)
-                case DoubleType => kv._1 + "=" + p.parse(kv._2.value)
-                case DateType => kv._1 + "='" + p.parse(kv._2.value) + "'"
-                case StringType => kv._1 + "='" + kv._2.value + "'"
-                case CharType(_) => kv._1 + "='" + kv._2.value + "'"
-                case VarcharType(_) => kv._1 + "='" + kv._2.value + "'"
-                case TimestampType => kv._1 + "=" + TimestampType.parse(kv._2.value, p.granularity).toEpochSeconds()
-            }
+            p.spec(kv._2.value)
         })
         s"PARTITION(${partitionValues.mkString(",")})"
     }

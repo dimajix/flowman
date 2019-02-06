@@ -55,6 +55,10 @@ class ProvidedRelation extends SchemaRelation {
         throw new UnsupportedOperationException("Writing into provided tables not supported")
     }
 
+    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = {
+        throw new UnsupportedOperationException("Cleaning provided tables not supported")
+    }
+
     override def create(executor: Executor): Unit = {
         throw new UnsupportedOperationException("Creating provided tables not supported")
     }

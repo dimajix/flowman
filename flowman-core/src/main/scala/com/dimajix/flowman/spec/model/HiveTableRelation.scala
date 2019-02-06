@@ -24,7 +24,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -32,7 +31,7 @@ import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.util.{PartitionUtils, SchemaUtils}
 
 
 object HiveTableRelation {
@@ -82,7 +81,7 @@ class HiveTableRelation extends SchemaRelation  {
         val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
         val partitionNames = this.partitions.map(_.name)
         val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Reading DataFrame from Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Reading from Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
 
         def applyPartitionFilter(df:DataFrame, partitionName:String, partitionValue:FieldValue): DataFrame = {
             val field = partitionsByName(partitionName)
@@ -124,7 +123,7 @@ class HiveTableRelation extends SchemaRelation  {
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         val tableName = database + "." + table
-        logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Writing to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(df)
@@ -167,7 +166,7 @@ class HiveTableRelation extends SchemaRelation  {
         implicit val context = executor.context
         val partitionSchema = PartitionSchema(partitions)
         val tableName = database + "." + table
-        logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")} using direct mode")
+        logger.info(s"Writing to Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")} using direct mode")
 
         if (_location == null || location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -190,6 +189,33 @@ class HiveTableRelation extends SchemaRelation  {
         if (partition.nonEmpty) {
             val sql = s"ALTER TABLE $tableName ADD IF NOT EXISTS ${partitionSpec(partition)} LOCATION '${outputPath}'"
             logger.info("Adding partition via SQL: " + sql)
+            executor.spark.sql(sql).collect()
+        }
+    }
+
+    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = {
+        implicit val context = executor.context
+
+        val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
+        val partitionNames = this.partitions.map(_.name)
+        val tableName = if (database.nonEmpty) database + "." + table else table
+        logger.info(s"Cleaning Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+
+        if (partitions.nonEmpty) {
+            val resolvedPartitions = partitions.map(kv => (kv._1, partitionsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+            PartitionUtils.map(resolvedPartitions, partition => {
+                val partitionValues = partition.map(kv => {
+                    val p = partitionsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Column '${kv._1}' not defined as partition column"))
+                    p.spec(kv._2)
+                })
+                val sql = s"ALTER TABLE $tableName DROP IF EXISTS PARTITION(${partitionValues.mkString(",")})"
+                logger.info("Dropping table partition via SQL: " + sql)
+                executor.spark.sql(sql).collect()
+            })
+        }
+        else {
+            val sql = s"TRUNCATE TABLE $tableName"
+            logger.info("Truncating table via SQL: " + sql)
             executor.spark.sql(sql).collect()
         }
     }

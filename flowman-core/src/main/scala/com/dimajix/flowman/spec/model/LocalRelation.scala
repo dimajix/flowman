@@ -94,6 +94,34 @@ class LocalRelation extends SchemaRelation {
             .save(outputFile)
     }
 
+    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = {
+        implicit val context = executor.context
+        if (location == null || location.isEmpty)
+            throw new IllegalArgumentException("location needs to be defined for cleaning files")
+
+        val inputFiles =
+            if (this.partitions != null && this.partitions.nonEmpty)
+                cleanPartitionedFiles(executor, partitions)
+            else
+                cleanUnpartitionedFiles(executor)
+    }
+
+    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+        implicit val context = executor.context
+        if (partitions == null)
+            throw new NullPointerException("Partitioned data source requires partition values to be defined")
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
+        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
+        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+        collector(executor).delete(resolvedPartitions)
+    }
+
+    private def cleanUnpartitionedFiles(executor: Executor) = {
+        collector(executor).delete()
+    }
+
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed

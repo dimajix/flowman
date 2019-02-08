@@ -42,7 +42,7 @@ class RelationTarget extends BaseTarget {
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
     def rebalance(implicit context: Context) : Boolean = context.evaluate(_rebalance).toBoolean
 
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rebalance = this.rebalance
@@ -57,5 +57,15 @@ class RelationTarget extends BaseTarget {
             tables(input).coalesce(parallelism)
 
         relation.write(executor, table, partition, mode)
+    }
+
+    override def clean(executor: Executor): Unit = {
+        implicit var context = executor.context
+        val partition = this.partition.mapValues(v => SingleValue(v))
+        val target = this.relation
+
+        logger.info(s"Cleaning partition $partition of relation '$target'")
+        val relation = context.getRelation(target)
+        relation.clean(executor, partition)
     }
 }

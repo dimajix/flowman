@@ -33,11 +33,17 @@ object PartitionSchema {
   * @param fields
   */
 class PartitionSchema(fields:Seq[PartitionField]) {
+    private val partitionsByName = fields.map(p => (p.name, p)).toMap
+
     /**
       * Returns the list of partition names
       * @return
       */
     def names : Seq[String] = fields.map(_.name)
+
+    def get(name:String) : PartitionField = {
+        partitionsByName.getOrElse(name, throw new IllegalArgumentException(s"Partition ${name}e not defined"))
+    }
 
     /**
       * Parses a given partition
@@ -45,7 +51,7 @@ class PartitionSchema(fields:Seq[PartitionField]) {
       * @return
       */
     def parse(partition:Map[String,SingleValue])(implicit context:Context) : Seq[(PartitionField,Any)] = {
-        fields.map(field => (field, field.parse(partition.getOrElse(field.name, throw new IllegalArgumentException(s"Missing value for partition '$field.name'")).value)))
+        fields.map(field => (field, field.parse(partition.getOrElse(field.name, throw new IllegalArgumentException(s"Missing value for partition '${field.name}'")).value)))
     }
 
     /**
@@ -73,5 +79,15 @@ class PartitionSchema(fields:Seq[PartitionField]) {
             p.spec(kv._2.value)
         })
         s"PARTITION(${partitionValues.mkString(",")})"
+    }
+
+    /**
+      * Resolves the given map of partition values to a map of interpolates values
+      * @param partitions
+      * @param context
+      * @return
+      */
+    def resolve(partitions: Map[String, FieldValue])(implicit context:Context) : Map[String,Iterable[Any]] = {
+        partitions.map(kv => (kv._1, get(kv._1).interpolate(kv._2)))
     }
 }

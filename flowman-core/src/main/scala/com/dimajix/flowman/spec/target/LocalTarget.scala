@@ -58,7 +58,7 @@ class LocalTarget extends RelationTarget {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         logger.info("Writing local file '{}'", filename)
 
@@ -90,5 +90,15 @@ class LocalTarget extends RelationTarget {
         writer.close()
         outputWriter.close()
         outputStream.close()
+    }
+
+    override def clean(executor: Executor): Unit = {
+        implicit var context = executor.context
+        logger.info("Cleaning local file '{}'", filename)
+
+        val outputFile = new File(filename)
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
     }
 }

@@ -123,7 +123,7 @@ class FileRelation extends SchemaRelation {
       * @param executor
       * @param partitions
       */
-    def clean(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : Unit = {
+    override def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
         implicit val context = executor.context
         if (location == null || location.isEmpty)
             throw new IllegalArgumentException("location needs to be defined for cleaning files")
@@ -141,8 +141,7 @@ class FileRelation extends SchemaRelation {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
-        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+        val resolvedPartitions = PartitionSchema(this.partitions).resolve(partitions)
         collector(executor).delete(resolvedPartitions)
     }
 
@@ -206,8 +205,7 @@ class FileRelation extends SchemaRelation {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
-        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+        val resolvedPartitions = PartitionSchema(this.partitions).resolve(partitions)
         collector(executor).collect(resolvedPartitions)
     }
 

@@ -78,13 +78,12 @@ class HiveTableRelation extends SchemaRelation  {
         assert(partitions != null)
 
         implicit val context = executor.context
-        val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
-        val partitionNames = this.partitions.map(_.name)
+        val partitionSchema = PartitionSchema(this.partitions)
         val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Reading from Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Reading from Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")}")
 
         def applyPartitionFilter(df:DataFrame, partitionName:String, partitionValue:FieldValue): DataFrame = {
-            val field = partitionsByName(partitionName)
+            val field = partitionSchema.get(partitionName)
             val values = field.interpolate(partitionValue).toSeq
             df.filter(df(partitionName).isin(values:_*))
         }
@@ -193,20 +192,18 @@ class HiveTableRelation extends SchemaRelation  {
         }
     }
 
-    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = {
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         implicit val context = executor.context
 
-        val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
-        val partitionNames = this.partitions.map(_.name)
+        val partitionSchema = PartitionSchema(this.partitions)
         val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Cleaning Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Cleaning Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")}")
 
         if (partitions.nonEmpty) {
-            val resolvedPartitions = partitions.map(kv => (kv._1, partitionsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+            val resolvedPartitions = partitionSchema.resolve(partitions)
             PartitionUtils.map(resolvedPartitions, partition => {
                 val partitionValues = partition.map(kv => {
-                    val p = partitionsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Column '${kv._1}' not defined as partition column"))
-                    p.spec(kv._2)
+                    partitionSchema.get(kv._1).spec(kv._2)
                 })
                 val sql = s"ALTER TABLE $tableName DROP IF EXISTS PARTITION(${partitionValues.mkString(",")})"
                 logger.info("Dropping table partition via SQL: " + sql)

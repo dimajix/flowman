@@ -112,7 +112,7 @@ abstract class Relation {
       * @param executor
       * @param partitions
       */
-    def clean(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : Unit
+    def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit
 
     /**
       * Reads data from a streaming source

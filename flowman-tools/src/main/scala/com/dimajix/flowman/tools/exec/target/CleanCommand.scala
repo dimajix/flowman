@@ -22,24 +22,24 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.task.CleanTargetTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobStatus
-import com.dimajix.flowman.spec.task.BuildTargetTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
-class BuildCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[BuildCommand])
+class CleanCommand extends ActionCommand {
+    private val logger = LoggerFactory.getLogger(classOf[CleanCommand])
 
-    @Argument(usage = "specifies target(s) to build", metaVar = "<target>")
+    @Argument(usage = "specifies target(s) to clean", metaVar = "<target>")
     var targets: Array[String] = Array()
-    @Option(name = "-a", aliases=Array("--all"), usage = "builds all targets, even the disabled ones")
+    @Option(name = "-a", aliases=Array("--all"), usage = "cleans all outputs, even the disabled ones")
     var all: Boolean = false
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
-        logger.info("Processing outputs {}", if (targets != null) targets.mkString(",") else "all")
+        logger.info("Cleaning outputs {}", if (targets != null) targets.mkString(",") else "all")
 
         // Then build output operations
         val toRun =
@@ -50,8 +50,8 @@ class BuildCommand extends ActionCommand {
             else
                 project.targets.filter(_._2.enabled).keys.toSeq
 
-        val task = BuildTargetTask(toRun, s"Building targets ${toRun.mkString(",")}")
-        val job = Job(Seq(task), "build-targets", "Build targets")
+        val task = CleanTargetTask(toRun, s"Cleaning targets ${toRun.mkString(",")}")
+        val job = Job(Seq(task), "clean-targets", "Clean targets")
 
         val runner = context.runner
         val result = runner.execute(executor, job, Map(), true)

@@ -77,5 +77,12 @@ abstract class Target {
       *
       * @param executor
       */
-    def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit
+    def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit
+
+    /**
+      * Cleans up a specific target
+      *
+      * @param executor
+      */
+    def clean(executor:Executor) : Unit
 }

@@ -26,6 +26,6 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
         implicit val context  = executor.context
 
         val output = project.targets("out")
-        output.execute(executor, Map(MappingIdentifier("some_table") -> spark.emptyDataFrame))
+        output.build(executor, Map(MappingIdentifier("some_table") -> spark.emptyDataFrame))
     }
 }

@@ -87,7 +87,7 @@ class JdbcRelation extends BaseRelation {
             .jdbc(url, tableName, props)
     }
 
-    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = ???
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
     override def create(executor:Executor) : Unit = ???
     override def destroy(executor:Executor) : Unit = ???

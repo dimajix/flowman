@@ -59,7 +59,7 @@ class HiveViewRelation extends SchemaRelation {
 
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
 
-    override def clean(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): Unit = {
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         implicit val context = executor.context
         val tableName = database + "." + view
         logger.info(s"Cleaning from Hive view $tableName (no-op)")

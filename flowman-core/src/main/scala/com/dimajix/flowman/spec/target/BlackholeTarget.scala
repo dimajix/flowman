@@ -23,8 +23,12 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class BlackholeTarget extends BaseTarget {
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         input(this.input).write.format("null").save()
+    }
+
+    override def clean(executor: Executor): Unit = {
+
     }
 }

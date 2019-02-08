@@ -37,7 +37,7 @@ class DumpTarget extends BaseTarget {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         val dfIn = input(this.input)
         val dfOut = if (_columns != null && _columns.nonEmpty)
@@ -50,5 +50,9 @@ class DumpTarget extends BaseTarget {
             println(dfOut.columns.mkString(","))
         }
         result.foreach(record => println(record.mkString(",")))
+    }
+
+    override def clean(executor: Executor): Unit = {
+
     }
 }

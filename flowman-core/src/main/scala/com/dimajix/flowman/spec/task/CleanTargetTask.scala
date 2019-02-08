@@ -24,9 +24,9 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TargetIdentifier
 
 
-object BuildTargetTask {
-    def apply(outputs:Seq[String], description:String) : BuildTargetTask = {
-        val task = new BuildTargetTask
+object CleanTargetTask {
+    def apply(outputs:Seq[String], description:String) : CleanTargetTask = {
+        val task = new CleanTargetTask
         task._targets = outputs
         task._description = description
         task
@@ -34,7 +34,7 @@ object BuildTargetTask {
 }
 
 
-class BuildTargetTask extends BaseTask {
+class CleanTargetTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
 
     @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
@@ -57,13 +57,8 @@ class BuildTargetTask extends BaseTask {
         implicit val context = executor.context
         val target = context.getTarget(identifier)
 
-        logger.info("Resolving dependencies for target '{}'", identifier.toString)
-        val dependencies = target.dependencies
-            .map(d => (d, executor.instantiate(d)))
-            .toMap
-
-        logger.info("Executing target '{}'", identifier.toString)
-        target.build(executor, dependencies)
+        logger.info("Cleaning target '{}'", identifier.toString)
+        target.clean(executor)
         true
     }
 }

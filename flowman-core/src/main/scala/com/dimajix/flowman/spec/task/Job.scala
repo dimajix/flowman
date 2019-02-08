@@ -142,6 +142,10 @@ object Job {
             job._description = desc
             this
         }
+        def setLogged(boolean: Boolean) : Builder = {
+            job._logged = boolean.toString
+            this
+        }
         def setParameters(params:Seq[JobParameter]) : Builder = {
             job._parameters = params
             this

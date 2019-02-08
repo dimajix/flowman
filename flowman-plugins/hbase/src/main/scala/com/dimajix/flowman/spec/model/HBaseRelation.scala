@@ -16,13 +16,21 @@
 
 package com.dimajix.flowman.spec.model
 
+import scala.xml.XML
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.TableName
+import org.apache.hadoop.hbase.client.ConnectionFactory
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.execution.datasources.hbase.HBaseRelation
+import org.apache.spark.sql.execution.datasources.hbase.SparkHBaseConf
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseRelation => ShcRelation}
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseTableCatalog => ShcCatalog}
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.annotation.RelationType
@@ -148,6 +156,19 @@ class HBaseRelation extends BaseRelation {
             .save()
     }
 
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        implicit val context = executor.context
+        val namespace = this.namespace
+        val table = this.table
+        logger.info(s"Truncating to HBase table '$namespace.$table'")
+
+        val config = hbaseConf
+        val connection = ConnectionFactory.createConnection(config)
+        val admin = connection.getAdmin()
+        admin.truncateTable(TableName.valueOf(namespace + ":" + table), false)
+        admin.close()
+    }
+
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
@@ -206,5 +227,15 @@ class HBaseRelation extends BaseRelation {
             ShcCatalog.newTable -> "5"
         )
 
+    }
+
+    private def hbaseConf(implicit context:Context) = {
+        val cFile = "/etc/hbase/conf/hbase-site.xml"
+        val conf = HBaseConfiguration.create
+        val xmlFile = XML.loadFile(cFile)
+        (xmlFile \\ "property").foreach(
+            x => conf.set((x \ "name").text, (x \ "value").text)
+        )
+        conf
     }
 }

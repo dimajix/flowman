@@ -68,7 +68,7 @@ class SqlMapping extends BaseMapping {
     }
 
     /**
-      * Resolves all dependencies required to execute the SQL
+      * Resolves all dependencies required to build the SQL
       *
       * @param context
       * @return

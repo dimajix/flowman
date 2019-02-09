@@ -25,8 +25,8 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class DumpTarget extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[DumpTarget])
+class ConsoleTarget extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[ConsoleTarget])
 
     @JsonProperty(value="limit", required=true) private var _limit:String = "100"
     @JsonProperty(value="header", required=true) private var _header:String = "true"
@@ -37,6 +37,12 @@ class DumpTarget extends BaseTarget {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
+    /**
+      * Build the "console" target by dumping records to stdout
+      *
+      * @param executor
+      * @param input
+      */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         val dfIn = input(this.input)
@@ -52,6 +58,10 @@ class DumpTarget extends BaseTarget {
         result.foreach(record => println(record.mkString(",")))
     }
 
+    /**
+      * Clean operation of dump essentially is a no-op
+      * @param executor
+      */
     override def clean(executor: Executor): Unit = {
 
     }

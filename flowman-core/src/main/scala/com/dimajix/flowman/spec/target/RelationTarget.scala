@@ -42,6 +42,12 @@ class RelationTarget extends BaseTarget {
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
     def rebalance(implicit context: Context) : Boolean = context.evaluate(_rebalance).toBoolean
 
+    /**
+      * Builds the target using the given input tables
+      *
+      * @param executor
+      * @param tables
+      */
     override def build(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))
@@ -59,6 +65,10 @@ class RelationTarget extends BaseTarget {
         relation.write(executor, table, partition, mode)
     }
 
+    /**
+      * Cleans the target. This will remove any data in the target for the current partition
+      * @param executor
+      */
     override def clean(executor: Executor): Unit = {
         implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))

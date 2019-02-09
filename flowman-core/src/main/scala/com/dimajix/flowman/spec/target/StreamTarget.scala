@@ -73,6 +73,11 @@ class StreamTarget extends BaseTarget {
         relation.writeStream(executor, table, mode, checkpointLocation)
     }
 
+    /**
+      * Clean up streaming target. Actually this method delegates the work to the relation target
+      *
+      * @param executor
+      */
     override def clean(executor: Executor): Unit = {
         implicit var context = executor.context
         val target = this.relation

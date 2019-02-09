@@ -28,6 +28,10 @@ class BlackholeTarget extends BaseTarget {
         input(this.input).write.format("null").save()
     }
 
+    /**
+      * "Cleaning" a blackhole essentially is a no-op
+      * @param executor
+      */
     override def clean(executor: Executor): Unit = {
 
     }

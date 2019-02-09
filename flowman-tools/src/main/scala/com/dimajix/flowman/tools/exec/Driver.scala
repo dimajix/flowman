@@ -19,6 +19,10 @@ package com.dimajix.flowman.tools.exec
 import java.io.File
 import java.util.Locale
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.log4j.PropertyConfigurator
 import org.slf4j.LoggerFactory
@@ -33,12 +37,25 @@ import com.dimajix.flowman.util.splitSettings
 
 object Driver {
     def main(args: Array[String]) : Unit = {
-        // First create driver, so can already process arguments
-        val options = new Arguments(args)
-        val driver = new Driver(options)
+        Try {
+            val options = new Arguments(args)
 
-        val result = driver.run()
-        System.exit(if (result) 0 else 1)
+            // Check if only help is requested
+            if (options.help) {
+                options.printHelp(System.out)
+                true
+            }
+
+            else {
+                val driver = new Driver(options)
+                driver.run()
+            }
+        }
+        match {
+            case Success (true) => System.exit(0)
+            case Success (false) => System.exit(1)
+            case Failure(exception) => System.err.println(exception.getMessage)
+        }
     }
 }
 
@@ -73,15 +90,11 @@ class Driver(options:Arguments) {
         val hadoopConfig = new Configuration()
         val fs = FileSystem(hadoopConfig)
 
-        // Load Namespace (including any plugins), afterwards also load Project
+        // Load Project
         Project.read.file(fs.local(options.projectFile))
     }
 
-    /**
-      * Main method for running this command
-      * @return
-      */
-    def run() : Boolean = {
+    private def setupLogging() : Unit = {
         val log4j = System.getProperty("log4j.configuration")
         if (log4j == null || log4j.isEmpty) {
             val loader = Thread.currentThread.getContextClassLoader
@@ -90,7 +103,7 @@ class Driver(options:Arguments) {
             logger.debug(s"Loaded Logging configuration from $url")
         }
 
-        // Adjust Sgpark loglevel
+        // Adjust Spark logging level
         if (options.sparkLogging != null) {
             logger.debug(s"Setting Spark debug level to ${options.sparkLogging}")
             val upperCased = options.sparkLogging.toUpperCase(Locale.ENGLISH)
@@ -99,18 +112,14 @@ class Driver(options:Arguments) {
             org.apache.log4j.Logger.getLogger("akka").setLevel(l)
             org.apache.log4j.Logger.getLogger("hive").setLevel(l)
         }
+    }
 
-        // Check if only help is requested
-        if (options.help) {
-            options.printHelp(System.out)
-            System.exit(0)
-        }
-
-        // Check if command is otherwise incomplete
-        if (options.incomplete) {
-            options.printHelp(System.err)
-            System.exit(1)
-        }
+    /**
+      * Main method for running this command
+      * @return
+      */
+    def run() : Boolean = {
+        setupLogging()
 
         // Load global Plugins, which can already be used by the Namespace
         loadSystemPlugins()

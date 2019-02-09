@@ -32,6 +32,10 @@ class CountTarget extends BaseTarget {
         System.out.println(s"Table $input contains $count records")
     }
 
+    /**
+      * Cleaning a count target is a no-op
+      * @param executor
+      */
     override def clean(executor: Executor): Unit = {
 
     }

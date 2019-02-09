@@ -58,6 +58,12 @@ class LocalTarget extends RelationTarget {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
+    /**
+      * Build the target by writing a file to the local file system of the driver
+      *
+      * @param executor
+      * @param input
+      */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
         logger.info("Writing local file '{}'", filename)
@@ -92,6 +98,11 @@ class LocalTarget extends RelationTarget {
         outputStream.close()
     }
 
+    /**
+      * Cleans the target by removing the target file from the local file system
+      *
+      * @param executor
+      */
     override def clean(executor: Executor): Unit = {
         implicit var context = executor.context
         logger.info("Cleaning local file '{}'", filename)

@@ -42,7 +42,7 @@ object Target extends ExtensionRegistry[Target] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTarget]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTarget]),
-    new JsonSubTypes.Type(name = "dump", value = classOf[DumpTarget]),
+    new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTarget]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTarget]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTarget]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTarget]))

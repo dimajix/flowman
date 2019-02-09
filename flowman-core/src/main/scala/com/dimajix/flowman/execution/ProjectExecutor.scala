@@ -49,6 +49,8 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @param tableName
       */
     override def instantiate(tableName: MappingIdentifier) : DataFrame = {
+        require(tableName != null && tableName.nonEmpty)
+
         if (tableName.project.forall(_ == _project.name))
             cache.getOrElseUpdate((_project.name, tableName.name), createTable(tableName.name))
         else
@@ -69,6 +71,8 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @return
       */
     override def getTable(identifier: MappingIdentifier): DataFrame = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _parent.getTable(MappingIdentifier(identifier.name, _project.name))
         else

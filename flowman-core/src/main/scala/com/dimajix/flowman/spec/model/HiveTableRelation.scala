@@ -75,7 +75,8 @@ class HiveTableRelation extends SchemaRelation  {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        assert(partitions != null)
+        require(executor != null)
+        require(partitions != null)
 
         implicit val context = executor.context
         val partitionSchema = PartitionSchema(this.partitions)
@@ -102,6 +103,10 @@ class HiveTableRelation extends SchemaRelation  {
       * @param partition - destination partition
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partition != null)
+
         implicit val context = executor.context
         if (writer == "hive")
             writeHive(executor, df, partition, mode)
@@ -193,6 +198,9 @@ class HiveTableRelation extends SchemaRelation  {
     }
 
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        require(executor != null)
+        require(partitions != null)
+
         implicit val context = executor.context
 
         val partitionSchema = PartitionSchema(this.partitions)
@@ -222,6 +230,8 @@ class HiveTableRelation extends SchemaRelation  {
       * @param executor
       */
     override def create(executor:Executor) : Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
         val spark = executor.spark
         val properties = this.properties
@@ -258,6 +268,8 @@ class HiveTableRelation extends SchemaRelation  {
       * @param executor
       */
     override def destroy(executor:Executor) : Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
         val stmt = s"DROP TABLE IF EXISTS $database.$table"
         logger.info(s"Executing SQL statement:\n$stmt")

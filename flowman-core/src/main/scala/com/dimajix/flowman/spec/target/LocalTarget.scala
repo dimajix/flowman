@@ -66,13 +66,16 @@ class LocalTarget extends RelationTarget {
       */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
-        logger.info("Writing local file '{}'", filename)
+        val outputFilename = this.filename
+        val inputMapping = this.input
+        logger.info(s"Writing mapping '$inputMapping' to local file '$outputFilename'")
 
-        val dfIn = input(this.input)
+        val dfIn = input(inputMapping)
         val cols = if (_columns != null && _columns.nonEmpty) columns else dfIn.columns.toSeq
         val dfOut = dfIn.select(cols.map(c => dfIn(c).cast(StringType)):_*)
 
-        val outputFile = new File(filename)
+        val outputFile = new File(outputFilename)
+        outputFile.getParentFile.mkdirs()
         outputFile.createNewFile
         val outputStream = new FileOutputStream(outputFile)
         val outputWriter = new OutputStreamWriter(outputStream, encoding)

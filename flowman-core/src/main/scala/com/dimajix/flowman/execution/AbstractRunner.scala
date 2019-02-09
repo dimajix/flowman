@@ -38,6 +38,9 @@ abstract class AbstractRunner extends Runner {
       * @return
       */
     def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus = {
+        require(executor != null)
+        require(args != null)
+
         implicit val context = executor.context
 
         if (job.logged)

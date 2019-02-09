@@ -131,7 +131,7 @@ class Driver(options:Arguments) {
         // Create Flowman Session, which also includes a Spark Session
         val sparkConfig = splitSettings(options.sparkConfig)
         val environment = splitSettings(options.environment)
-        val session:Session = Session.builder
+        val session = Session.builder
             .withNamespace(ns)
             .withProject(project)
             .withSparkName(options.sparkName)

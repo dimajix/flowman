@@ -116,6 +116,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getMapping(identifier: MappingIdentifier): Mapping = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${_project.name}"))
         else
@@ -130,6 +132,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation '$identifier' not found in project ${_project.name}"))
         else
@@ -144,6 +148,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getTarget(identifier: TargetIdentifier): Target = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.targets.getOrElse(identifier.name, throw new NoSuchElementException(s"Target '$identifier' not found in project ${_project.name}"))
         else
@@ -157,6 +163,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty) {
             databases.getOrElse(identifier.name, _project.connections.getOrElse(identifier.name, throw new NoSuchElementException(s"Connection '$identifier' not found in project ${_project.name}")))
         }
@@ -176,6 +184,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getJob(identifier: JobIdentifier): Job = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.jobs.getOrElse(identifier.name, throw new NoSuchElementException(s"Job $identifier not found in project ${_project.name}"))
         else
@@ -183,9 +193,11 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     }
 
     override def getProjectContext(projectName:String) : Context = {
+        require(projectName != null && projectName.nonEmpty)
         parent.getProjectContext(projectName)
     }
     override def getProjectContext(project:Project) : Context = {
+        require(project != null)
         parent.getProjectContext(project)
     }
 }

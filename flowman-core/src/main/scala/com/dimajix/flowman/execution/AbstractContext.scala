@@ -48,18 +48,23 @@ object AbstractContext {
         }
 
         override def withConfig(config:Map[String,String], level:SettingLevel) : Builder = {
+            require(config != null)
             _config = _config ++ config.map(kv => (kv._1, kv._2, level))
             this
         }
         override def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder = {
+            require(env != null)
             _databases = _databases ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
         override def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder = {
+            require(env != null)
             _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
         protected def withProfile(profile:Profile, level:SettingLevel) : Builder = {
+            require(profile != null)
+            require(level != null)
             withConfig(profile.config.toMap, level)
             withEnvironment(profile.environment, level)
             withConnections(profile.connections, level)

@@ -17,8 +17,7 @@
 package com.dimajix.flowman.spec.model
 
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
+import java.nio.file.Paths
 
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
@@ -31,12 +30,13 @@ import com.dimajix.flowman.spec.Module
 
 class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
     "The LocalRelation" should "be able to create local directories" in {
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
         val spec =
             s"""
               |relations:
               |  local:
               |    kind: local
-              |    location: $tempDir/csv/test
+              |    location: $outputPath
               |    pattern: data.csv
               |    format: csv
               |    schema:
@@ -55,9 +55,10 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         implicit val context = executor.context
         val relation = project.relations("local")
 
+        outputPath.toFile.exists() should be (false)
         relation.create(executor)
-        new File(tempDir, "csv/test").exists() should be (true)
-        new File(tempDir, "csv/test/data.csv").exists() should be (false)
+        outputPath.toFile.exists() should be (true)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
 
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
@@ -65,12 +66,16 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        new File(tempDir, "csv/test/data.csv").exists() should be (false)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
         relation.write(executor, df, Map(), "overwrite")
-        new File(tempDir, "csv/test/data.csv").exists() should be (true)
+        outputPath.resolve("data.csv").toFile.exists() should be (true)
+
+        relation.clean(executor)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        outputPath.toFile.exists() should be (true)
 
         relation.destroy(executor)
-        new File(tempDir, "csv/test").exists() should be (false)
+        outputPath.toFile.exists() should be (false)
     }
 
     it should "work without a pattern" in {

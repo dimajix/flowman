@@ -122,6 +122,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getMapping(identifier: MappingIdentifier): Mapping = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find mapping with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -134,6 +136,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find relation with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -147,6 +151,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getTarget(identifier: TargetIdentifier): Target = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find output with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -160,6 +166,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty) {
             val con = Option(namespace).flatMap(_.connections.get(identifier.name))
             con.getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
@@ -177,6 +185,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getJob(identifier: JobIdentifier): Job = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find Job with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -190,9 +200,11 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getProjectContext(projectName:String) : Context = {
+        require(projectName != null && projectName.nonEmpty)
         _children.getOrElseUpdate(projectName, createProjectContext(loadProject(projectName)))
     }
     override def getProjectContext(project:Project) : Context = {
+        require(project != null)
         _children.getOrElseUpdate(project.name, createProjectContext(project))
     }
 

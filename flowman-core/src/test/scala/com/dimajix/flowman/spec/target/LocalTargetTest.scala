@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.nio.file.Paths
+
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -25,24 +27,36 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 
 
-class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
-    "A Blackhole Target" should "be buildable" in {
+class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
+    "A LocalTarget" should "be buildable" in {
         val spark = this.spark
+        val outputPath = Paths.get(tempDir.toString, "local-target", "data.csv")
 
         val spec =
             s"""
                |targets:
                |  out:
-               |    kind: blackhole
+               |    kind: local
                |    input: some_table
+               |    filename: $outputPath
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
         val executor = session.getExecutor(project)
-        implicit val context  = executor.context
 
+        import spark.implicits._
+        val data = Seq(("v1", 12), ("v2", 23)).toDF()
         val output = project.targets("out")
-        output.build(executor, Map(MappingIdentifier("some_table") -> spark.emptyDataFrame))
+
+        outputPath.toFile.exists() should be (false)
+        output.build(executor, Map(MappingIdentifier("some_table") -> data))
+        outputPath.toFile.exists() should be (true)
+
+        outputPath.toFile.exists() should be (true)
         output.clean(executor)
+        outputPath.toFile.exists() should be (false)
     }
+
 }

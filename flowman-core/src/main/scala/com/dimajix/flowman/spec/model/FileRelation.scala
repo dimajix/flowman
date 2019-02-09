@@ -59,6 +59,9 @@ class FileRelation extends SchemaRelation {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(executor != null)
+        require(partitions != null)
+
         implicit val context = executor.context
         val inputFiles = collectFiles(executor, partitions)
 
@@ -105,6 +108,9 @@ class FileRelation extends SchemaRelation {
       * @param partition - destination partition
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        require(executor != null)
+        require(partition != null)
+
         implicit val context = executor.context
 
         val parsedPartition = PartitionSchema(partitions).parse(partition).map(kv => (kv._1.name, kv._2)).toMap
@@ -124,6 +130,9 @@ class FileRelation extends SchemaRelation {
       * @param partitions
       */
     override def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
+        require(executor != null)
+        require(partitions != null)
+
         implicit val context = executor.context
         if (location == null || location.isEmpty)
             throw new IllegalArgumentException("location needs to be defined for cleaning files")
@@ -136,8 +145,6 @@ class FileRelation extends SchemaRelation {
 
     private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
         implicit val context = executor.context
-        if (partitions == null)
-            throw new NullPointerException("Partitioned data source requires partition values to be defined")
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 

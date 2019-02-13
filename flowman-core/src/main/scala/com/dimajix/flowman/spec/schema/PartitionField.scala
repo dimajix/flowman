@@ -25,6 +25,14 @@ import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionField {
+    def fromSpark(field:org.apache.spark.sql.types.StructField) : PartitionField = {
+        PartitionField(
+            field.name,
+            FieldType.of(field.dataType),
+            field.getComment().orNull
+        )
+    }
+
     def apply(name:String, ftype:FieldType, description:String = null, granularity:String = null) : PartitionField = {
         val p = new PartitionField
         p._name = name

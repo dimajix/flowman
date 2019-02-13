@@ -17,9 +17,9 @@
 package com.dimajix.flowman.spec.schema
 
 import org.apache.hadoop.fs.Path
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.types._
-import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionSchema {
@@ -46,12 +46,21 @@ class PartitionSchema(fields:Seq[PartitionField]) {
     }
 
     /**
-      * Parses a given partition
+      * Parses a given partition and returns an ordered sequence of partition columns and values
       * @param partition
       * @return
       */
-    def parse(partition:Map[String,SingleValue])(implicit context:Context) : Seq[(PartitionField,Any)] = {
+    def parseSeq(partition:Map[String,SingleValue])(implicit context:Context) : Seq[(PartitionField,Any)] = {
         fields.map(field => (field, field.parse(partition.getOrElse(field.name, throw new IllegalArgumentException(s"Missing value for partition '${field.name}'")).value)))
+    }
+
+    /**
+      * Parses a given partition and returns map from partition names to values
+      * @param partition
+      * @return
+      */
+    def parseMap(partition:Map[String,SingleValue])(implicit context:Context) : Map[String,Any] = {
+        parseSeq(partition).map(kv => (kv._1.name, kv._2)).toMap
     }
 
     /**
@@ -61,7 +70,7 @@ class PartitionSchema(fields:Seq[PartitionField]) {
       * @return
       */
     def partitionPath(root:Path, partition:Map[String,SingleValue])(implicit context:Context) : Path = {
-        parse(partition)
+        parseSeq(partition)
             .map(nv => nv._1.name + "=" + nv._2)
             .foldLeft(root)((path, segment) => new Path(path, segment))
     }

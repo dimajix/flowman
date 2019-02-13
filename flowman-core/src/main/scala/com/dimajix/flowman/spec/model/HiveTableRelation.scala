@@ -21,9 +21,11 @@ import java.util.Locale
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -31,7 +33,9 @@ import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.{PartitionUtils, SchemaUtils}
+import com.dimajix.flowman.util.HiveCatalog
+import com.dimajix.flowman.util.PartitionUtils
+import com.dimajix.flowman.util.SchemaUtils
 
 
 object HiveTableRelation {
@@ -65,6 +69,8 @@ class HiveTableRelation extends SchemaRelation  {
     def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
     def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
     def writer(implicit context: Context) : String = context.evaluate(_writer).toLowerCase(Locale.ROOT)
+
+    def tableIdentifier(implicit context: Context) : TableIdentifier = new TableIdentifier(table, Option(database))
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -191,37 +197,35 @@ class HiveTableRelation extends SchemaRelation  {
 
         // Finally add Hive partition
         if (partition.nonEmpty) {
-            val sql = s"ALTER TABLE $tableName ADD IF NOT EXISTS ${partitionSpec(partition)} LOCATION '${outputPath}'"
-            logger.info("Adding partition via SQL: " + sql)
-            executor.spark.sql(sql).collect()
+            val catalog = new HiveCatalog(executor.spark)
+            catalog.addOrReplacePartition(tableIdentifier, partitionSchema.parseMap(partition), outputPath)
         }
     }
 
+    /**
+      * Cleans either individual partitions (for partitioned tables) or truncates a whole table
+      *
+      * @param executor
+      * @param partitions
+      */
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
         require(partitions != null)
 
         implicit val context = executor.context
-
-        val partitionSchema = PartitionSchema(this.partitions)
         val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Cleaning Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")}")
+        logger.info(s"Creating Hive relation '$name' with table $tableName")
 
+        val catalog = new HiveCatalog(executor.spark)
         if (partitions.nonEmpty) {
+            val partitionSchema = PartitionSchema(this.partitions)
             val resolvedPartitions = partitionSchema.resolve(partitions)
             PartitionUtils.map(resolvedPartitions, partition => {
-                val partitionValues = partition.map(kv => {
-                    partitionSchema.get(kv._1).spec(kv._2)
-                })
-                val sql = s"ALTER TABLE $tableName DROP IF EXISTS PARTITION(${partitionValues.mkString(",")})"
-                logger.info("Dropping table partition via SQL: " + sql)
-                executor.spark.sql(sql).collect()
+                catalog.dropPartition(tableIdentifier, partition)
             })
         }
         else {
-            val sql = s"TRUNCATE TABLE $tableName"
-            logger.info("Truncating table via SQL: " + sql)
-            executor.spark.sql(sql).collect()
+            catalog.truncateTable(tableIdentifier)
         }
     }
 
@@ -236,6 +240,8 @@ class HiveTableRelation extends SchemaRelation  {
         val spark = executor.spark
         val properties = this.properties
         val fields = this.fields
+        val tableName = if (database.nonEmpty) database + "." + table else table
+        logger.info(s"Creating Hive relation '$name' with table $tableName")
 
         // Create and save Avro schema
         import HiveTableRelation._
@@ -248,7 +254,7 @@ class HiveTableRelation extends SchemaRelation  {
         }
 
         val external = if (this.external) "EXTERNAL" else ""
-        val create = s"CREATE $external TABLE $database.$table"
+        val create = s"CREATE $external TABLE $tableName"
         val columns = "(\n" + fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
         val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
@@ -271,9 +277,11 @@ class HiveTableRelation extends SchemaRelation  {
         require(executor != null)
 
         implicit val context = executor.context
-        val stmt = s"DROP TABLE IF EXISTS $database.$table"
-        logger.info(s"Executing SQL statement:\n$stmt")
-        executor.spark.sql(stmt)
+        val tableName = if (database.nonEmpty) database + "." + table else table
+        logger.info(s"Destroying Hive relation '$name' with table '$tableName'")
+
+        val catalog = new HiveCatalog(executor.spark)
+        catalog.dropTable(tableIdentifier)
     }
     override def migrate(executor:Executor) : Unit = ???
 
@@ -302,5 +310,4 @@ class HiveTableRelation extends SchemaRelation  {
     private def partitionSpec(partition:Map[String,SingleValue])(implicit context:Context) : String = {
         PartitionSchema(partitions).partitionSpec(partition)
     }
-
 }

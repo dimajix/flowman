@@ -113,7 +113,7 @@ class FileRelation extends SchemaRelation {
 
         implicit val context = executor.context
 
-        val parsedPartition = PartitionSchema(partitions).parse(partition).map(kv => (kv._1.name, kv._2)).toMap
+        val parsedPartition = PartitionSchema(partitions).parseMap(partition)
         val outputPath = collector(executor).resolve(parsedPartition)
 
         logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")

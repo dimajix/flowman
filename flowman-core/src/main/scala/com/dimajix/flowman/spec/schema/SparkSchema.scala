@@ -20,7 +20,7 @@ import org.apache.spark.sql.types.DataType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.SparkSchemaUtils
+import com.dimajix.flowman.types.SchemaConverter
 
 
 class SparkSchema extends ExternalSchema {
@@ -39,7 +39,7 @@ class SparkSchema extends ExternalSchema {
       * @return
       */
     protected override def loadFields(implicit context: Context): Seq[Field] = {
-        SparkSchemaUtils.fromSpark(sprkSchema)
+        Field.of(sprkSchema)
     }
 
     /**

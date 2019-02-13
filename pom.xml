@@ -61,7 +61,7 @@
         <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
-        <json4s.version>3.2.11</json4s.version>
+        <json4s.version>3.5.3</json4s.version>
         <json.version>20180130</json.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>12.0</guava.version>
@@ -104,6 +104,7 @@
                 <jackson.version>2.6.5</jackson.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
+                <json4s.version>3.2.11</json4s.version>
             </properties>
         </profile>
         <profile>
@@ -113,6 +114,7 @@
                 <jackson.version>2.6.7</jackson.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
+                <json4s.version>3.2.11</json4s.version>
             </properties>
         </profile>
         <profile>
@@ -122,6 +124,7 @@
                 <jackson.version>2.6.7</jackson.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
+                <json4s.version>3.5.3</json4s.version>
             </properties>
         </profile>
         <profile>

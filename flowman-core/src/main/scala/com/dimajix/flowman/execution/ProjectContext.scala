@@ -22,16 +22,16 @@ import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.util.Templating.FileWrapper
+import com.dimajix.flowman.templating.FileWrapper
 
 
 object ProjectContext {
@@ -63,7 +63,7 @@ object ProjectContext {
 
 
 /**
-  * Execution context for a specific Flowman project. This will resolve all resources within the project
+  * Execution context for a specific Flowman project. This will interpolate all resources within the project
   * or (if the resource is fully qualified) walks up into the parent context.
   * @param parent
   * @param _project

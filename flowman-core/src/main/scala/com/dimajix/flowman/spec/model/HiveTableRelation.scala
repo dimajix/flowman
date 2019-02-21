@@ -33,8 +33,6 @@ import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.HiveCatalog
-import com.dimajix.flowman.util.PartitionUtils
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -175,13 +173,14 @@ class HiveTableRelation extends SchemaRelation  {
     private def writeSpark(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit =  {
         implicit val context = executor.context
         val partitionSchema = PartitionSchema(partitions)
+        val partitionSpec = partitionSchema.spec(partition)
         val tableName = database + "." + table
         logger.info(s"Writing to Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")} using direct mode")
 
         if (_location == null || location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
 
-        val outputPath = partitionSchema.partitionPath(new Path(location), partition)
+        val outputPath = partitionSpec.path(new Path(location), partitionSchema.names)
 
         // Perform Hive => Spark format mapping
         val format = this.format.toLowerCase(Locale.ROOT) match {
@@ -197,8 +196,8 @@ class HiveTableRelation extends SchemaRelation  {
 
         // Finally add Hive partition
         if (partition.nonEmpty) {
-            val catalog = new HiveCatalog(executor.spark)
-            catalog.addOrReplacePartition(tableIdentifier, partitionSchema.parseMap(partition), outputPath)
+            val catalog = executor.catalog
+            catalog.addOrReplacePartition(tableIdentifier, partitionSpec, outputPath)
         }
     }
 
@@ -214,15 +213,14 @@ class HiveTableRelation extends SchemaRelation  {
 
         implicit val context = executor.context
         val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Creating Hive relation '$name' with table $tableName")
+        logger.info(s"Cleaning Hive relation '$name' with table $tableName")
 
-        val catalog = new HiveCatalog(executor.spark)
+        val catalog = executor.catalog
         if (partitions.nonEmpty) {
             val partitionSchema = PartitionSchema(this.partitions)
-            val resolvedPartitions = partitionSchema.resolve(partitions)
-            PartitionUtils.map(resolvedPartitions, partition => {
-                catalog.dropPartition(tableIdentifier, partition)
-            })
+            partitionSchema.interpolate(partitions).foreach(spec =>
+                catalog.dropPartition(tableIdentifier, spec)
+            )
         }
         else {
             catalog.truncateTable(tableIdentifier)
@@ -280,7 +278,7 @@ class HiveTableRelation extends SchemaRelation  {
         val tableName = if (database.nonEmpty) database + "." + table else table
         logger.info(s"Destroying Hive relation '$name' with table '$tableName'")
 
-        val catalog = new HiveCatalog(executor.spark)
+        val catalog = executor.catalog
         catalog.dropTable(tableIdentifier)
     }
     override def migrate(executor:Executor) : Unit = ???
@@ -308,6 +306,6 @@ class HiveTableRelation extends SchemaRelation  {
     }
 
     private def partitionSpec(partition:Map[String,SingleValue])(implicit context:Context) : String = {
-        PartitionSchema(partitions).partitionSpec(partition)
+        PartitionSchema(partitions).expr(partition)
     }
 }

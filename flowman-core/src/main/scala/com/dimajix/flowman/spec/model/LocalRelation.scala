@@ -123,7 +123,7 @@ class LocalRelation extends SchemaRelation {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val resolvedPartitions = PartitionSchema(this.partitions).resolve(partitions)
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector(executor).delete(resolvedPartitions)
     }
 
@@ -207,7 +207,7 @@ class LocalRelation extends SchemaRelation {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val resolvedPartitions = PartitionSchema(this.partitions).resolve(partitions)
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector(executor).collect(resolvedPartitions)
     }
 

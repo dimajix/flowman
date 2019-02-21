@@ -25,9 +25,10 @@ import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
-import org.apache.velocity.VelocityContext
-import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.templating.Velocity
 
 
 /**
@@ -45,8 +46,8 @@ class FileCollector(hadoopConf:Configuration) {
     private var _pattern:String = ""
     private var _path:Path = _
 
-    private lazy val templateEngine = Templating.newEngine()
-    private lazy val templateContext = Templating.newContext()
+    private lazy val templateEngine = Velocity.newEngine()
+    private lazy val templateContext = Velocity.newContext()
 
     /**
       * Constructs a new FileCollector instance using the Hadoop configuration from the specified SparkSession
@@ -81,7 +82,13 @@ class FileCollector(hadoopConf:Configuration) {
         this
     }
 
+    def resolve(partition:PartitionSpec) : Path = {
+        resolve(partition.toSeq)
+    }
     def resolve(partition:Map[String,Any]) : Path = {
+        resolve(partition.toSeq)
+    }
+    def resolve(partition:Seq[(String,Any)]) : Path = {
         if (_pattern != null && _pattern.nonEmpty) {
             val context = templateContext
             partition.foreach(kv => context.put(kv._1, kv._2))
@@ -100,7 +107,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @param partitions
       * @return
       */
-    def collect(partitions:Map[String,Iterable[Any]]) : Seq[Path] = {
+    def collect(partitions:Iterable[PartitionSpec]) : Seq[Path] = {
         logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
         flatMap(partitions)(collectPath)
     }
@@ -121,7 +128,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @param partitions
       * @return
       */
-    def delete(partitions:Map[String,Iterable[Any]]) : Unit = {
+    def delete(partitions:Iterable[PartitionSpec]) : Unit = {
         logger.info(s"Deleting files in location ${_path} with pattern '${_pattern}'")
         foreach(partitions)(deletePath)
     }
@@ -143,18 +150,14 @@ class FileCollector(hadoopConf:Configuration) {
       * @tparam T
       * @return
       */
-    def flatMap[T](partitions:Map[String,Iterable[Any]])(fn:(FileSystem,Path) => Seq[T]) : Seq[T] = {
+    def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(FileSystem,Path) => Iterable[T]) : Seq[T] = {
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
         if (_pattern == null)
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
 
         val fs = _path.getFileSystem(hadoopConf)
-        PartitionUtils.flatMap(partitions, p => {
-            val curPath:Path = resolve(p)
-            val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
-            fn(fs, curPath)
-        }).toSeq
+        partitions.flatMap(p => fn(fs, resolve(p))).toSeq
     }
 
     /**
@@ -164,18 +167,14 @@ class FileCollector(hadoopConf:Configuration) {
       * @tparam T
       * @return
       */
-    def map[T](partitions:Map[String,Iterable[Any]])(fn:(FileSystem,Path) => T) : Seq[T] = {
+    def map[T](partitions:Iterable[PartitionSpec])(fn:(FileSystem,Path) => T) : Seq[T] = {
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
         if (_pattern == null)
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
 
         val fs = _path.getFileSystem(hadoopConf)
-        PartitionUtils.map(partitions, p => {
-            val curPath:Path = resolve(p)
-            val partitions = p.map { case(k,v) => k + "=" + v }.mkString(",")
-            fn(fs, curPath)
-        }).toSeq
+        partitions.map(p => fn(fs, resolve(p))).toSeq
     }
 
     def map[T](fn:(FileSystem,Path) => T) : T = {
@@ -187,7 +186,7 @@ class FileCollector(hadoopConf:Configuration) {
         fn(fs,curPath)
     }
 
-    def foreach(partitions:Map[String,Iterable[Any]])(fn:(FileSystem,Path) => Unit) : Unit = {
+    def foreach(partitions:Iterable[PartitionSpec])(fn:(FileSystem,Path) => Unit) : Unit = {
         map(partitions)(fn)
     }
 
@@ -209,7 +208,7 @@ class FileCollector(hadoopConf:Configuration) {
     }
 
 
-    private def collectPath(fs:FileSystem, path:Path) = {
+    private def collectPath(fs:FileSystem, path:Path) : Seq[Path] = {
         if (fs.isDirectory(path)) {
             // If path is a directory, simply list all files
             logger.info(s"Collecting files in directory $path")

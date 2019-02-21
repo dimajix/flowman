@@ -14,45 +14,45 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.util
+package com.dimajix.flowman.catalog
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
+import org.apache.spark.sql.execution.command.CreateTableCommand
+import org.apache.spark.sql.execution.command.DropTableCommand
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 
 
-class HiveCatalog(spark:SparkSession) {
-    private val logger = LoggerFactory.getLogger(classOf[HiveCatalog])
+class SparkCatalog(spark:SparkSession) extends Catalog {
+    private val logger = LoggerFactory.getLogger(classOf[SparkCatalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
+
+    @Override
+    def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
+        require(table != null)
+        val cmd = CreateTableCommand(table, ignoreIfExists)
+        cmd.run(spark)
+    }
 
     /**
       * Returns true if the specified Hive table actually exists
       * @param table
       * @return
       */
+    @Override
     def tableExists(table:TableIdentifier) : Boolean = {
         require(table != null)
         // "SHOW TABLES IN training LIKE 'weather_raw'"
         catalog.tableExists(table)
-    }
-    /**
-      * Returns the storage location of a single partition of a Hive table
-      * @param table
-      * @param partition
-      * @return
-      */
-    def partitionExists(table:TableIdentifier, partition:Map[String,Any]) : Boolean = {
-        require(table != null)
-        require(partition != null && partition.nonEmpty)
-        catalog.getPartition(table, partition.mapValues(_.toString)) != null
     }
 
     /**
@@ -60,6 +60,7 @@ class HiveCatalog(spark:SparkSession) {
       * @param table
       * @return
       */
+    @Override
     def getTableLocation(table:TableIdentifier) : Path = {
         require(table != null)
         // "DESCRIBE FORMATTED training.weather_raw"
@@ -67,34 +68,10 @@ class HiveCatalog(spark:SparkSession) {
     }
 
     /**
-      * Returns the storage location of a single partition of a Hive table
-      * @param table
-      * @param partition
-      * @return
-      */
-    def getPartitionLocation(table:TableIdentifier, partition:Map[String,Any]) : Path = {
-        require(table != null)
-        require(partition != null && partition.nonEmpty)
-        // "DESCRIBE FORMATTED training.weather_raw PARTITION(year=2005, station='x')"
-        new Path(catalog.getPartition(table, partition.mapValues(_.toString)).location)
-    }
-
-    /**
-      * Returns the partition schema of a Hive table. If the table is not partitioned, an empty schema will be returned
-      * @param table
-      * @return
-      */
-    def getPartitionSchema(table:TableIdentifier) : PartitionSchema = {
-        require(table != null)
-        // "DESCRIBE FORMATTED training.weather_raw"
-        val schema = catalog.getTableMetadata(table).partitionSchema
-        PartitionSchema(schema.fields.map(field => PartitionField.fromSpark(field)))
-    }
-
-    /**
       * Drops a whole table including all partitions and all files
       * @param table
       */
+    @Override
     def dropTable(table:TableIdentifier) : Unit = {
         require(table != null)
         if (tableExists(table)) {
@@ -108,7 +85,8 @@ class HiveCatalog(spark:SparkSession) {
             // Delete table itself
             val location = getTableLocation(table)
             deleteLocation(location)
-            spark.sql("DROP TABLE " + table).collect()
+            val cmd = DropTableCommand(table, false, false, true)
+            cmd.run(spark)
         }
     }
 
@@ -116,6 +94,7 @@ class HiveCatalog(spark:SparkSession) {
       * Truncates a table by either removing the corresponding file or by dropping all partitions
       * @param table
       */
+    @Override
     def truncateTable(table:TableIdentifier) : Unit = {
         require(table != null)
         logger.info(s"Truncating Hive table $table")
@@ -124,8 +103,48 @@ class HiveCatalog(spark:SparkSession) {
         truncateLocation(location)
 
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            dropPartitions(table, catalog.listPartitions(table).map(p => p.parameters))
+            dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.parameters)))
         }
+    }
+
+    /**
+      * Returns the storage location of a single partition of a Hive table
+      * @param table
+      * @param partition
+      * @return
+      */
+    @Override
+    def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
+        require(table != null)
+        require(partition != null && partition.nonEmpty)
+        catalog.getPartition(table, partition.mapValues(_.toString)) != null
+    }
+
+    /**
+      * Returns the storage location of a single partition of a Hive table
+      * @param table
+      * @param partition
+      * @return
+      */
+    @Override
+    def getPartitionLocation(table:TableIdentifier, partition:PartitionSpec) : Path = {
+        require(table != null)
+        require(partition != null && partition.nonEmpty)
+        // "DESCRIBE FORMATTED training.weather_raw PARTITION(year=2005, station='x')"
+        new Path(catalog.getPartition(table, partition.mapValues(_.toString)).location)
+    }
+
+    /**
+      * Returns the partition schema of a Hive table. If the table is not partitioned, an empty schema will be returned
+      * @param table
+      * @return
+      */
+    @Override
+    def getPartitionSchema(table:TableIdentifier) : PartitionSchema = {
+        require(table != null)
+        // "DESCRIBE FORMATTED training.weather_raw"
+        val schema = catalog.getTableMetadata(table).partitionSchema
+        PartitionSchema(schema.fields.map(field => PartitionField.fromSpark(field)))
     }
 
     /**
@@ -134,11 +153,13 @@ class HiveCatalog(spark:SparkSession) {
       * @param partition
       * @param location
       */
-    def addPartition(table:TableIdentifier, partition:Map[String,Any], location:Path) : Unit = {
+    @Override
+    def addPartition(table:TableIdentifier, partition:PartitionSpec, location:Path) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
-        val cmd = new AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString), Some(location.toString))), false)
+        logger.info(s"Adding partition $partition to table '$table'")
+        val cmd = AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString), Some(location.toString))), false)
         cmd.run(spark)
     }
 
@@ -148,16 +169,17 @@ class HiveCatalog(spark:SparkSession) {
       * @param partition
       * @param location
       */
-    def addOrReplacePartition(table:TableIdentifier, partition:Map[String,Any], location:Path) : Unit = {
+    @Override
+    def addOrReplacePartition(table:TableIdentifier, partition:PartitionSpec, location:Path) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
 
         val cmd = if (partitionExists(table, partition)) {
-            new AlterTableSetLocationCommand(table, Some(partition.mapValues(_.toString)), location.toString)
+            AlterTableSetLocationCommand(table, Some(partition.mapValues(_.toString)), location.toString)
         }
         else {
-            new AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString), Some(location.toString))), false)
+            AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString), Some(location.toString))), false)
         }
         cmd.run(spark)
     }
@@ -167,7 +189,8 @@ class HiveCatalog(spark:SparkSession) {
       * @param table
       * @param partition
       */
-    def truncatePartition(table:TableIdentifier, partition:Map[String,Any]) : Unit = {
+    @Override
+    def truncatePartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         logger.info(s"Truncating partition $partition of Hive table $table")
@@ -180,13 +203,15 @@ class HiveCatalog(spark:SparkSession) {
       * @param table
       * @param partition
       */
-    def dropPartition(table:TableIdentifier, partition:Map[String,Any]) : Unit = {
+    @Override
+    def dropPartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         dropPartitions(table, Seq(partition))
     }
 
-    def dropPartitions(table:TableIdentifier, partitions:Seq[Map[String,Any]]) : Unit = {
+    @Override
+    def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec]) : Unit = {
         require(table != null)
         require(partitions != null)
         logger.info(s"Dropping partitions $partitions of Hive table $table")

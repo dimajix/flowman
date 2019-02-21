@@ -28,11 +28,11 @@ import org.slf4j.Logger
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.util.Templating
+import com.dimajix.flowman.templating.Velocity
 
 
 object AbstractContext {
-    private lazy val rootContext = Templating.newContext()
+    private lazy val rootContext = Velocity.newContext()
 
     abstract class Builder extends Context.Builder {
         private var _environment = Seq[(String,Any,SettingLevel)]()
@@ -83,7 +83,7 @@ abstract class AbstractContext extends Context {
     private val _config = mutable.Map[String,(String, Int)]()
     private val _databases = mutable.Map[String, (Connection, Int)]()
 
-    private lazy val templateEngine = Templating.newEngine()
+    private lazy val templateEngine = Velocity.newEngine()
     protected lazy val templateContext = {
         val context = new VelocityContext(AbstractContext.rootContext)
         environment.foreach(kv => context.put(kv._1, kv._2))

@@ -38,7 +38,7 @@ import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Task
-import com.dimajix.flowman.util.Templating
+import com.dimajix.flowman.templating.Velocity
 
 
 /**
@@ -173,7 +173,7 @@ object Registration {
                         new ClassAnnotationMatchProcessor {
                             override def processMatch(aClass: Class[_]): Unit = {
                                 val annotation = aClass.getAnnotation(classOf[TemplateObject])
-                                Templating.addClass(annotation.name(), aClass)
+                                Velocity.addClass(annotation.name(), aClass)
                             }
                         }
                     )

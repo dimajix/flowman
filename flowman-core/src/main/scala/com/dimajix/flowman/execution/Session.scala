@@ -20,6 +20,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.SparkCatalog
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.monitor.Monitor
 import com.dimajix.flowman.spec.Project
@@ -65,7 +67,8 @@ class SessionBuilder {
 
     /**
       * Adds Spark config variables which actually will override any variables given in specs
-      * @param config
+      * @param key
+      * @param value
       * @return
       */
     def withSparkConfig(key:String,value:String) : SessionBuilder = {
@@ -302,6 +305,9 @@ class Session private[execution](
         executor
     }
 
+    private lazy val _catalog = new SparkCatalog(spark)
+
+
     def monitor : Monitor = _monitor
 
     /**
@@ -338,6 +344,8 @@ class Session private[execution](
         }
         sparkSession
     }
+
+    def catalog : Catalog = _catalog
 
     /**
       * Returns true if a SparkSession is already available

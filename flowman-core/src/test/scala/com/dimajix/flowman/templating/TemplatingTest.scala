@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.util
+package com.dimajix.flowman.templating
 
 import java.io.StringWriter
 import java.time.Month
@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spi.Registration
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object TemplatingTest {
@@ -36,8 +37,8 @@ object TemplatingTest {
 
 class TemplatingTest extends FlatSpec with Matchers {
     Registration.load()
-    private val engine = Templating.newEngine()
-    private val context = Templating.newContext()
+    private val engine = Velocity.newEngine()
+    private val context = Velocity.newContext()
 
     private def evaluate(text:String) : String = {
         val output = new StringWriter()
@@ -266,7 +267,7 @@ class TemplatingTest extends FlatSpec with Matchers {
         output8.toString should be ("lala/" + System.getenv("USER"))
     }
 
-    "The Templating systeM" should "support new classes via annotation" in {
+    "The Velocity systeM" should "support new classes via annotation" in {
         evaluate("${SomeObject.upper('Hello World')}") should be ("HELLO WORLD")
     }
 }

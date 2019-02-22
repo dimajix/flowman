@@ -29,13 +29,13 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-object Relation extends ExtensionRegistry[Relation] {
+object Relation extends TypeRegistry[Relation] {
     class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
         override def convert(value: Map[String,Relation]): Map[String,Relation] = {
             value.foreach(kv => kv._2._name = kv._1)
@@ -106,6 +106,13 @@ abstract class Relation {
       * @param partition - destination partition
       */
     def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:String = "OVERWRITE") : Unit
+
+    /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit
 
     /**
       * Reads data from a streaming source

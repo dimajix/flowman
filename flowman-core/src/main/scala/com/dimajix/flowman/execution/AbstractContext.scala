@@ -28,11 +28,11 @@ import org.slf4j.Logger
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.util.Templating
+import com.dimajix.flowman.templating.Velocity
 
 
 object AbstractContext {
-    private lazy val rootContext = Templating.newContext()
+    private lazy val rootContext = Velocity.newContext()
 
     abstract class Builder extends Context.Builder {
         private var _environment = Seq[(String,Any,SettingLevel)]()
@@ -48,18 +48,23 @@ object AbstractContext {
         }
 
         override def withConfig(config:Map[String,String], level:SettingLevel) : Builder = {
+            require(config != null)
             _config = _config ++ config.map(kv => (kv._1, kv._2, level))
             this
         }
         override def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder = {
+            require(env != null)
             _databases = _databases ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
         override def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder = {
+            require(env != null)
             _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
         protected def withProfile(profile:Profile, level:SettingLevel) : Builder = {
+            require(profile != null)
+            require(level != null)
             withConfig(profile.config.toMap, level)
             withEnvironment(profile.environment, level)
             withConnections(profile.connections, level)
@@ -78,7 +83,7 @@ abstract class AbstractContext extends Context {
     private val _config = mutable.Map[String,(String, Int)]()
     private val _databases = mutable.Map[String, (Connection, Int)]()
 
-    private lazy val templateEngine = Templating.newEngine()
+    private lazy val templateEngine = Velocity.newEngine()
     protected lazy val templateContext = {
         val context = new VelocityContext(AbstractContext.rootContext)
         environment.foreach(kv => context.put(kv._1, kv._2))

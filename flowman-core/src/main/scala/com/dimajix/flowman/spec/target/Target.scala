@@ -25,10 +25,10 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Target extends ExtensionRegistry[Target] {
+object Target extends TypeRegistry[Target] {
     class NameResolver extends StdConverter[Map[String,Target],Map[String,Target]] {
         override def convert(value: Map[String,Target]): Map[String,Target] = {
             value.foreach(kv => kv._2._name = kv._1)
@@ -42,7 +42,7 @@ object Target extends ExtensionRegistry[Target] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTarget]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTarget]),
-    new JsonSubTypes.Type(name = "dump", value = classOf[DumpTarget]),
+    new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTarget]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTarget]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTarget]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTarget]))
@@ -77,5 +77,12 @@ abstract class Target {
       *
       * @param executor
       */
-    def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit
+    def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit
+
+    /**
+      * Cleans up a specific target
+      *
+      * @param executor
+      */
+    def clean(executor:Executor) : Unit
 }

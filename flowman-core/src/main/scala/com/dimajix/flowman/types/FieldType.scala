@@ -30,6 +30,32 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.apache.spark.sql.types.DataType
 
 
+object FieldType {
+    def of(dataType:org.apache.spark.sql.types.DataType) : FieldType = {
+        dataType match {
+            case org.apache.spark.sql.types.ShortType => ShortType
+            case org.apache.spark.sql.types.IntegerType => IntegerType
+            case org.apache.spark.sql.types.LongType => LongType
+            case org.apache.spark.sql.types.FloatType => FloatType
+            case org.apache.spark.sql.types.DoubleType => DoubleType
+            case d:org.apache.spark.sql.types.DecimalType => DecimalType(d.precision, d.scale)
+            case org.apache.spark.sql.types.StringType => StringType
+            case org.apache.spark.sql.types.ByteType => ByteType
+            case org.apache.spark.sql.types.BinaryType => BinaryType
+            case org.apache.spark.sql.types.BooleanType => BooleanType
+            case org.apache.spark.sql.types.CharType(n) => CharType(n)
+            case org.apache.spark.sql.types.VarcharType(n) => VarcharType(n)
+            case org.apache.spark.sql.types.TimestampType => TimestampType
+            case org.apache.spark.sql.types.DateType => DateType
+            case org.apache.spark.sql.types.CalendarIntervalType => CalendarIntervalType
+            case org.apache.spark.sql.types.ArrayType(dt, n) => ArrayType(FieldType.of(dt), n)
+            case org.apache.spark.sql.types.StructType(fields) => StructType(fields.map(Field.of))
+            case org.apache.spark.sql.types.MapType(k,v,n) => MapType(FieldType.of(k), FieldType.of(v), n)
+        }
+    }
+}
+
+
 @JsonDeserialize(using=classOf[FieldTypeDeserializer])
 abstract class FieldType {
     /**

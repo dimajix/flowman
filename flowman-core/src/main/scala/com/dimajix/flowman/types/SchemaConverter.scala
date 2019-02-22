@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
-
-import com.dimajix.flowman.spec.schema.Schema
+package com.dimajix.flowman.types
 
 
-object SchemaProvider extends ExtensionLoader[Schema, SchemaProvider](Schema) {
-}
-
-
-trait SchemaProvider extends ExtensionProvider {
-    def getKind() : String
-    def getImpl() : Class[_]
+object SchemaConverter {
+    def toSpark(schema:Seq[Field]) : org.apache.spark.sql.types.StructType = {
+        org.apache.spark.sql.types.StructType(schema.map(_.sparkField))
+    }
 }

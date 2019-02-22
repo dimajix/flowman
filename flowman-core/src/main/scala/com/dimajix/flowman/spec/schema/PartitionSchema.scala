@@ -18,18 +18,9 @@ package com.dimajix.flowman.spec.schema
 
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.types.CharType
-import com.dimajix.flowman.types.VarcharType
-import com.dimajix.flowman.types.DateType
-import com.dimajix.flowman.types.DoubleType
-import com.dimajix.flowman.types.FloatType
-import com.dimajix.flowman.types.IntegerType
-import com.dimajix.flowman.types.LongType
-import com.dimajix.flowman.types.ShortType
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.types.StringType
-import com.dimajix.flowman.types.TimestampType
+import com.dimajix.flowman.types._
 
 
 object PartitionSchema {
@@ -42,57 +33,69 @@ object PartitionSchema {
   * correct Hive partition specification and for creating a Hive compatible path.
   * @param fields
   */
-class PartitionSchema(fields:Seq[PartitionField]) {
+class PartitionSchema(val fields:Seq[PartitionField]) {
+    private val partitionsByName = fields.map(p => (p.name, p)).toMap
+
     /**
       * Returns the list of partition names
       * @return
       */
     def names : Seq[String] = fields.map(_.name)
 
-    /**
-      * Parses a given partition
-      * @param partition
-      * @return
-      */
-    def parse(partition:Map[String,SingleValue])(implicit context:Context) : Seq[(PartitionField,Any)] = {
-        fields.map(field => (field, field.parse(partition.getOrElse(field.name, throw new IllegalArgumentException(s"Missing value for partition '$field.name'")).value)))
+    def get(name:String) : PartitionField = {
+        partitionsByName.getOrElse(name, throw new IllegalArgumentException(s"Partition $name not defined"))
     }
 
     /**
-      * Constructs a partition path from the specified partitions.
+      * Parses a given partition and returns a PartitionSpec
+      * @param partition
+      * @return
+      */
+    def spec(partition:Map[String,SingleValue])(implicit context:Context) : PartitionSpec = {
+        val map = fields
+            .map(field => (field, partition.getOrElse(field.name, throw new IllegalArgumentException(s"Missing value for partition '${field.name}'")).value))
+            .map{ case (field,value) => (field.name, field.parse(value)) }
+            .toMap
+        PartitionSpec(map)
+    }
+
+    /**
+      * Creates a SQL PARTITION expression
+      * @param partition
+      * @return
+      */
+    def expr(partition:Map[String,SingleValue])(implicit context:Context) : String = {
+        spec(partition).expr(names)
+    }
+
+    /**
+      * Returns a Hadoop path constructed from the partition values
       * @param root
       * @param partition
       * @return
       */
-    def partitionPath(root:Path, partition:Map[String,SingleValue])(implicit context:Context) : Path = {
-        parse(partition)
-            .map(nv => nv._1.name + "=" + nv._2)
-            .foldLeft(root)((path, segment) => new Path(path, segment))
+    def path(root:Path, partition:Map[String,SingleValue])(implicit context:Context) : Path = {
+        spec(partition).path(root, names)
     }
 
     /**
-      * Constructs a SQL partition specification from the given partisions
-      * @param partition
+      * Interpolates the given map of partition values to a map of interpolates values
+      * @param partitions
       * @param context
       * @return
       */
-    def partitionSpec(partition:Map[String,SingleValue])(implicit context:Context) : String = {
-        val partitions = fields.map(p => (p.name, p)).toMap
-        val partitionValues = partition.map(kv => {
-            val p = partitions.getOrElse(kv._1, throw new IllegalArgumentException(s"Column '${kv._1}' not defined as partition column"))
-            p.ftype match {
-                case IntegerType => kv._1 + "=" + p.parse(kv._2.value)
-                case LongType => kv._1 + "=" + p.parse(kv._2.value)
-                case ShortType => kv._1 + "=" + p.parse(kv._2.value)
-                case FloatType => kv._1 + "=" + p.parse(kv._2.value)
-                case DoubleType => kv._1 + "=" + p.parse(kv._2.value)
-                case DateType => kv._1 + "='" + p.parse(kv._2.value) + "'"
-                case StringType => kv._1 + "='" + kv._2.value + "'"
-                case CharType(_) => kv._1 + "='" + kv._2.value + "'"
-                case VarcharType(_) => kv._1 + "='" + kv._2.value + "'"
-                case TimestampType => kv._1 + "=" + TimestampType.parse(kv._2.value, p.granularity).toEpochSeconds()
+    def interpolate(partitions: Map[String, FieldValue])(implicit context:Context) : Iterable[PartitionSpec] = {
+        val values = fields.map { field =>
+            field.name -> field.interpolate(partitions(field.name))
+        }
+
+        def recurse(head:Seq[(String,Any)], tail:Seq[(String,Iterable[Any])]) : Iterable[PartitionSpec] = {
+            tail match {
+                case th :: tt => th._2.flatMap(elem => recurse(head :+ (th._1, elem), tt))
+                case Seq() => Some(PartitionSpec(head.toMap))
             }
-        })
-        s"PARTITION(${partitionValues.mkString(",")})"
+        }
+
+        recurse(Seq(), values)
     }
 }

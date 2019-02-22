@@ -20,7 +20,11 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.types.ArrayValue
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 
@@ -29,17 +33,40 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
     "The PartitionSchema" should "provide partition column names" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),
-            PartitionField("p2", StringType)
+            PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
         partitionSchema.names should be (Seq("p1", "p2"))
     }
 
+    it should "interpolate partition values" in {
+        val partitionColumns = Seq(
+            PartitionField("p1", StringType),
+            PartitionField("p2", IntegerType)
+        )
+        val partitionSchema = PartitionSchema(partitionColumns)
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+        val partitions = Map(
+            "p1" -> ArrayValue("lala", "lolo"),
+            "p2" -> RangeValue("123", "127", "2")
+        )
+
+        val all = partitionSchema.interpolate(partitions)
+        all.toSeq should be (Seq(
+            PartitionSpec(Map("p1" -> "lala", "p2" -> 123)),
+            PartitionSpec(Map("p1" -> "lala", "p2" -> 125)),
+            PartitionSpec(Map("p1" -> "lolo", "p2" -> 123)),
+            PartitionSpec(Map("p1" -> "lolo", "p2" -> 125))
+        ))
+    }
+
     it should "provide a Hive partition spec" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),
-            PartitionField("p2", StringType)
+            PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
@@ -47,15 +74,15 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         implicit val context = session.context
         val partitions = Map(
             "p1" -> SingleValue("lala"),
-            "p2" -> SingleValue("lolo")
+            "p2" -> SingleValue("123")
         )
-        partitionSchema.partitionSpec(partitions) should be ("PARTITION(p1='lala',p2='lolo')")
+        partitionSchema.expr(partitions) should be ("PARTITION(p1='lala',p2=123)")
     }
 
     it should "provide a Hive compatible path" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),
-            PartitionField("p2", StringType)
+            PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
@@ -63,8 +90,8 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         implicit val context = session.context
         val partitions = Map(
             "p1" -> SingleValue("lala"),
-            "p2" -> SingleValue("lolo")
+            "p2" -> SingleValue("123")
         )
-        partitionSchema.partitionPath(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=lolo"))
+        partitionSchema.path(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=123"))
     }
 }

@@ -28,7 +28,7 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 
 
 class ModelCommand extends NestedCommand {
-    @Argument(required=true,index=0,metaVar="task",usage="the subcommand to run",handler=classOf[SubCommandHandler])
+    @Argument(required=true,index=0,metaVar="subcommand",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="create",impl=classOf[CreateCommand]),
         new SubCommand(name="describe",impl=classOf[DescribeCommand]),

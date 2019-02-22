@@ -22,16 +22,16 @@ import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.util.Templating.FileWrapper
+import com.dimajix.flowman.templating.FileWrapper
 
 
 object ProjectContext {
@@ -63,7 +63,7 @@ object ProjectContext {
 
 
 /**
-  * Execution context for a specific Flowman project. This will resolve all resources within the project
+  * Execution context for a specific Flowman project. This will interpolate all resources within the project
   * or (if the resource is fully qualified) walks up into the parent context.
   * @param parent
   * @param _project
@@ -116,6 +116,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getMapping(identifier: MappingIdentifier): Mapping = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${_project.name}"))
         else
@@ -130,6 +132,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation '$identifier' not found in project ${_project.name}"))
         else
@@ -144,6 +148,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getTarget(identifier: TargetIdentifier): Target = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.targets.getOrElse(identifier.name, throw new NoSuchElementException(s"Target '$identifier' not found in project ${_project.name}"))
         else
@@ -157,6 +163,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty) {
             databases.getOrElse(identifier.name, _project.connections.getOrElse(identifier.name, throw new NoSuchElementException(s"Connection '$identifier' not found in project ${_project.name}")))
         }
@@ -176,6 +184,8 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def getJob(identifier: JobIdentifier): Job = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _project.jobs.getOrElse(identifier.name, throw new NoSuchElementException(s"Job $identifier not found in project ${_project.name}"))
         else
@@ -183,9 +193,11 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     }
 
     override def getProjectContext(projectName:String) : Context = {
+        require(projectName != null && projectName.nonEmpty)
         parent.getProjectContext(projectName)
     }
     override def getProjectContext(project:Project) : Context = {
+        require(project != null)
         parent.getProjectContext(project)
     }
 }

@@ -34,6 +34,23 @@ object Field {
         field._size = size.map(_.toString).orNull
         field
     }
+
+    def of(field:org.apache.spark.sql.types.StructField) : Field = {
+        val ftype = FieldType.of(field.dataType)
+        val description = field.getComment().orNull
+        val size = if (field.metadata.contains("size")) Some(field.metadata.getLong("size").toInt) else None
+        val default = if (field.metadata.contains("default")) field.metadata.getString("default") else null
+        val format = if (field.metadata.contains("format")) field.metadata.getString("format") else null
+        Field(field.name, ftype, field.nullable, description, default, size, format)
+    }
+
+    def of(schema:org.apache.spark.sql.types.StructType) : Seq[Field] = {
+        of(schema.fields)
+    }
+
+    def of(fields:Seq[org.apache.spark.sql.types.StructField]) : Seq[Field] = {
+        fields.map(Field.of)
+    }
 }
 
 /**

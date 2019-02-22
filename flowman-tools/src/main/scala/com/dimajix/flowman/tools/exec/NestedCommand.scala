@@ -28,12 +28,6 @@ abstract class NestedCommand extends Command {
     var command:Command
 
     /**
-      * Returns true if the command line is incomplete
-      * @return
-      */
-    override def incomplete : Boolean = command == null || command.incomplete
-
-    /**
       * Returns true if a help message is requested
       * @return
       */

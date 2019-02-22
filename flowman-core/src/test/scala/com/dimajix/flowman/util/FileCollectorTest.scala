@@ -24,6 +24,8 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.TimestampType
 
@@ -75,10 +77,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.FEBRUARY, 2, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "P1D")
+        val days = TimestampType.interpolate(range, "P1D")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (8)
     }
@@ -87,10 +90,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "P1D")
+        val days = TimestampType.interpolate(range, "P1D")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (0)
     }
@@ -99,10 +103,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 1, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "P1D")
+        val days = TimestampType.interpolate(range, "P1D")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (0)
     }
@@ -111,10 +116,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 6, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "P1D")
+        val days = TimestampType.interpolate(range, "P1D")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (2)
         files(0).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
@@ -125,10 +131,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 6, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "P1D")
+        val days = TimestampType.interpolate(range, "P1D")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""$ts.format("'data/'yyyy/MM/dd")""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (2)
         files(0).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
@@ -139,10 +146,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 1, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 2, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "PT1H")
+        val days = TimestampType.interpolate(range, "PT1H")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (1)
         files(0).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
@@ -152,10 +160,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 2, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "PT1H")
+        val days = TimestampType.interpolate(range, "PT1H")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (3)
         files(0).toString should be(workingDirectory.toString + "/data/2016/01/03/01.seq")
@@ -167,10 +176,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 3, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "PT1H")
+        val days = TimestampType.interpolate(range, "PT1H")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (4)
         files(0).toString should be(workingDirectory.toString + "/data/2016/01/03/01.seq")
@@ -183,10 +193,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 0)
         val lastDate = UtcTimestamp.of(2017, Month.JUNE, 19, 23, 59)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "PT15M")
+        val days = TimestampType.interpolate(range, "PT15M")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (6)
         files(0).toString should be(workingDirectory.toString + "/data/2017/06/19/1497830400.i-02255f88.rtb-imp.log")
@@ -201,10 +212,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 15)
         val lastDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 45)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "PT15M")
+        val days = TimestampType.interpolate(range, "PT15M")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (2)
         files(0).toString should be(workingDirectory.toString + "/data/2017/06/19/1497831300.i-02255f88.rtb-imp.log")
@@ -215,10 +227,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val firstDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 15)
         val lastDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 44)
         val range = RangeValue(firstDate.toString, lastDate.toString)
-        val partitions = TimestampType.interpolate(range, "PT15M")
+        val days = TimestampType.interpolate(range, "PT15M")
+        val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
-        val files = collector.collect(Map("ts" -> partitions))
+        val files = collector.collect(partitions)
 
         files.size should be (1)
         files(0).toString should be(workingDirectory.toString + "/data/2017/06/19/1497831300.i-02255f88.rtb-imp.log")

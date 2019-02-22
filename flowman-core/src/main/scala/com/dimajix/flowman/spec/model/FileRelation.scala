@@ -59,6 +59,9 @@ class FileRelation extends SchemaRelation {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(executor != null)
+        require(partitions != null)
+
         implicit val context = executor.context
         val inputFiles = collectFiles(executor, partitions)
 
@@ -105,10 +108,13 @@ class FileRelation extends SchemaRelation {
       * @param partition - destination partition
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        require(executor != null)
+        require(partition != null)
+
         implicit val context = executor.context
 
-        val parsedPartition = PartitionSchema(partitions).parse(partition).map(kv => (kv._1.name, kv._2)).toMap
-        val outputPath = collector(executor).resolve(parsedPartition)
+        val partitionSpec = PartitionSchema(partitions).spec(partition)
+        val outputPath = collector(executor).resolve(partitionSpec.toMap)
 
         logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
 
@@ -116,6 +122,38 @@ class FileRelation extends SchemaRelation {
             .format(format)
             .mode(mode)
             .save(outputPath.toString)
+    }
+
+    /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    override def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
+        require(executor != null)
+        require(partitions != null)
+
+        implicit val context = executor.context
+        if (location == null || location.isEmpty)
+            throw new IllegalArgumentException("location needs to be defined for cleaning files")
+
+        if (this.partitions != null && this.partitions.nonEmpty)
+            cleanPartitionedFiles(executor, partitions)
+        else
+            cleanUnpartitionedFiles(executor)
+    }
+
+    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+        implicit val context = executor.context
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        collector(executor).delete(resolvedPartitions)
+    }
+
+    private def cleanUnpartitionedFiles(executor: Executor) = {
+        collector(executor).delete()
     }
 
     /**
@@ -141,6 +179,7 @@ class FileRelation extends SchemaRelation {
         val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         fs.delete(path, true)
     }
+
     override def migrate(executor:Executor) : Unit = ???
 
     /**
@@ -173,8 +212,7 @@ class FileRelation extends SchemaRelation {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
-        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector(executor).collect(resolvedPartitions)
     }
 

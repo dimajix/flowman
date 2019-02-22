@@ -63,13 +63,6 @@ class Arguments(args:Array[String]) {
     ))
     var command:Command = _
 
-
-    /**
-      * Returns true if the command line is incomplete
-      * @return
-      */
-    def incomplete : Boolean = command == null || command.incomplete
-
     /**
       * Returns true if a help message is requested
       * @return
@@ -98,10 +91,9 @@ class Arguments(args:Array[String]) {
         }
         catch {
             case e: CmdLineException => {
-                System.err.println(e.getMessage)
                 e.getParser.printUsage(System.err)
                 System.err.println
-                System.exit(1)
+                throw e
             }
         }
     }

@@ -23,10 +23,10 @@ import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Store extends ExtensionRegistry[Store] {
+object Store extends TypeRegistry[Store] {
 }
 
 

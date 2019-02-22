@@ -20,6 +20,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.monitor.Monitor
 import com.dimajix.flowman.spec.Project
@@ -42,12 +44,12 @@ class SessionBuilder {
       * @return
       */
     def withSparkSession(session:SparkSession) : SessionBuilder = {
-        assert(session != null)
+        require(session != null)
         _sparkSession = session
         this
     }
     def withSparkName(name:String) : SessionBuilder = {
-        assert(name != null)
+        require(name != null)
         _sparkName = name
         this
     }
@@ -58,8 +60,21 @@ class SessionBuilder {
       * @return
       */
     def withSparkConfig(config:Map[String,String]) : SessionBuilder = {
-        assert(config != null)
+        require(config != null)
         _sparkConfig = _sparkConfig ++ config
+        this
+    }
+
+    /**
+      * Adds Spark config variables which actually will override any variables given in specs
+      * @param key
+      * @param value
+      * @return
+      */
+    def withSparkConfig(key:String,value:String) : SessionBuilder = {
+        require(key != null)
+        require(value != null)
+        _sparkConfig = _sparkConfig.updated(key, value)
         this
     }
 
@@ -69,8 +84,20 @@ class SessionBuilder {
       * @return
       */
     def withEnvironment(env:Seq[(String,String)]) : SessionBuilder = {
-        assert(env != null)
+        require(env != null)
         _environment = _environment ++ env
+        this
+    }
+
+    /**
+      * Adds environment variables which actually will override any variables given in specs
+      * @param env
+      * @return
+      */
+    def withEnvironment(key:String,value:String) : SessionBuilder = {
+        require(key != null)
+        require(value != null)
+        _environment = _environment :+ (key -> value)
         this
     }
 
@@ -100,17 +127,19 @@ class SessionBuilder {
       * @return
       */
     def withProfile(profile:String) : SessionBuilder = {
+        require(profile != null)
         _profiles = _profiles + profile
         this
     }
 
     /**
       * Adds a list of profile names to be activated. This does not remove any previously activated profile
-      * @param profile
+      * @param profiles
       * @return
       */
-    def withProfiles(profile:Seq[String]) : SessionBuilder = {
-        _profiles = _profiles ++ profile
+    def withProfiles(profiles:Seq[String]) : SessionBuilder = {
+        require(profiles != null)
+        _profiles = _profiles ++ profiles
         this
     }
 
@@ -120,6 +149,7 @@ class SessionBuilder {
       * @return
       */
     def withJars(jars:Seq[String]) : SessionBuilder = {
+        require(jars != null)
         _jars = _jars ++ jars
         this
     }
@@ -163,6 +193,13 @@ class Session private[execution](
                                         _profiles:Set[String],
                                         _jars:Set[String]
                                     ) {
+    require(_jars != null)
+    require(_environment != null)
+    require(_profiles != null)
+    require(_sparkSession != null)
+    require(_sparkName != null)
+    require(_sparkConfig != null)
+
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
     private val _monitor = {
@@ -268,6 +305,9 @@ class Session private[execution](
         executor
     }
 
+    private lazy val _catalog = new Catalog(spark)
+
+
     def monitor : Monitor = _monitor
 
     /**
@@ -304,6 +344,8 @@ class Session private[execution](
         }
         sparkSession
     }
+
+    def catalog : Catalog = _catalog
 
     /**
       * Returns true if a SparkSession is already available

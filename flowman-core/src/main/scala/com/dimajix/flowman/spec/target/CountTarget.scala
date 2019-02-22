@@ -26,9 +26,17 @@ import com.dimajix.flowman.spec.MappingIdentifier
 class CountTarget extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CountTarget])
 
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         val count = input(this.input).count()
         System.out.println(s"Table $input contains $count records")
+    }
+
+    /**
+      * Cleaning a count target is a no-op
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+
     }
 }

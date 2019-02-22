@@ -28,8 +28,9 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SchemaWriter
-import com.dimajix.flowman.types.SparkSchemaUtils
+import com.dimajix.flowman.types.SchemaConverter
 
 
 class ExportSchemaCommand extends ActionCommand {
@@ -47,7 +48,7 @@ class ExportSchemaCommand extends ActionCommand {
 
         Try {
             val table = executor.instantiate(MappingIdentifier.parse(tablename))
-            val schema = SparkSchemaUtils.fromSpark(table.schema)
+            val schema = Field.of(table.schema)
             val file = executor.context.fs.local(filename)
             new SchemaWriter(schema).format(format).save(file)
         } match {

@@ -42,7 +42,7 @@ class ProjectContextTest extends FlatSpec with Matchers {
         context.evaluate("${project.version}") should be ("1.0")
     }
 
-    it should "correctly resolve project variables" in {
+    it should "correctly interpolate project variables" in {
         val fs = FileSystem(new Configuration())
         val file = fs.file("test/project/TestProject.yml")
         val project = Project.read.file(file)

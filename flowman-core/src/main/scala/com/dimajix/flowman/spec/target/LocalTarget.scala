@@ -58,15 +58,24 @@ class LocalTarget extends RelationTarget {
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
 
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    /**
+      * Build the target by writing a file to the local file system of the driver
+      *
+      * @param executor
+      * @param input
+      */
+    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit var context = executor.context
-        logger.info("Writing local file '{}'", filename)
+        val outputFilename = this.filename
+        val inputMapping = this.input
+        logger.info(s"Writing mapping '$inputMapping' to local file '$outputFilename'")
 
-        val dfIn = input(this.input)
+        val dfIn = input(inputMapping)
         val cols = if (_columns != null && _columns.nonEmpty) columns else dfIn.columns.toSeq
         val dfOut = dfIn.select(cols.map(c => dfIn(c).cast(StringType)):_*)
 
-        val outputFile = new File(filename)
+        val outputFile = new File(outputFilename)
+        outputFile.getParentFile.mkdirs()
         outputFile.createNewFile
         val outputStream = new FileOutputStream(outputFile)
         val outputWriter = new OutputStreamWriter(outputStream, encoding)
@@ -90,5 +99,20 @@ class LocalTarget extends RelationTarget {
         writer.close()
         outputWriter.close()
         outputStream.close()
+    }
+
+    /**
+      * Cleans the target by removing the target file from the local file system
+      *
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+        implicit var context = executor.context
+        logger.info("Cleaning local file '{}'", filename)
+
+        val outputFile = new File(filename)
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
     }
 }

@@ -21,10 +21,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Connection extends ExtensionRegistry[Connection] {
+object Connection extends TypeRegistry[Connection] {
     class NameResolver extends StdConverter[Map[String, Connection], Map[String, Connection]] {
         override def convert(value: Map[String, Connection]): Map[String, Connection] = {
             value.foreach(kv => kv._2._name = kv._1)

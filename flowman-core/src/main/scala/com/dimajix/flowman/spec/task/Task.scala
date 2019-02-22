@@ -21,10 +21,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Task extends ExtensionRegistry[Task] {
+object Task extends TypeRegistry[Task] {
 }
 
 

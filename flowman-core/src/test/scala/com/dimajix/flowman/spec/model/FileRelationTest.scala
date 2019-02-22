@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.nio.file.Paths
+
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -34,8 +36,8 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
               |relations:
               |  t0:
               |    kind: file
-              |    format: csv
               |    location: test/data/data_1.csv
+              |    format: csv
               |    schema:
               |      kind: embedded
               |      fields:
@@ -60,5 +62,54 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             Nil
         ))
         df.collect()
+    }
+
+    it should "be able to create local directories" in {
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: file
+               |    location: file://$outputPath
+               |    pattern: data.csv
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+        val relation = project.relations("local")
+
+        outputPath.toFile.exists() should be (false)
+        relation.create(executor)
+        outputPath.toFile.exists() should be (true)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        relation.write(executor, df, Map(), "overwrite")
+        outputPath.resolve("data.csv").toFile.exists() should be (true)
+
+        relation.clean(executor)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        outputPath.toFile.exists() should be (true)
+
+        relation.destroy(executor)
+        outputPath.toFile.exists() should be (false)
     }
 }

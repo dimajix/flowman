@@ -38,7 +38,7 @@ import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Task
-import com.dimajix.flowman.util.Templating
+import com.dimajix.flowman.templating.Velocity
 
 
 /**
@@ -74,17 +74,18 @@ object Registration {
         "org.xerial",
         "org.yaml"
     )
-    private val _providers = Seq(
-        MappingProvider,
-        RelationProvider,
-        TargetProvider,
-        SchemaProvider,
-        TaskProvider,
-        MonitorProvider,
-        StoreProvider,
-        ConnectionProvider
-    )
     private val _loaders:mutable.Set[ClassLoader] = mutable.Set()
+    private val _types = Seq(
+        (classOf[MappingType], (clazz:Class[_]) => Mapping.register(clazz.getAnnotation(classOf[MappingType]).kind(), clazz.asInstanceOf[Class[_ <: Mapping]])),
+        (classOf[RelationType], (clazz:Class[_]) => Relation.register(clazz.getAnnotation(classOf[RelationType]).kind(), clazz.asInstanceOf[Class[_ <: Relation]])),
+        (classOf[TargetType], (clazz:Class[_]) => Target.register(clazz.getAnnotation(classOf[TargetType]).kind(), clazz.asInstanceOf[Class[_ <: Target]])),
+        (classOf[SchemaType], (clazz:Class[_]) => Schema.register(clazz.getAnnotation(classOf[SchemaType]).kind(), clazz.asInstanceOf[Class[_ <: Schema]])),
+        (classOf[TaskType], (clazz:Class[_]) => Task.register(clazz.getAnnotation(classOf[TaskType]).kind(), clazz.asInstanceOf[Class[_ <: Task]])),
+        (classOf[MonitorType], (clazz:Class[_]) => Monitor.register(clazz.getAnnotation(classOf[MonitorType]).kind(), clazz.asInstanceOf[Class[_ <: Monitor]])),
+        (classOf[StoreType], (clazz:Class[_]) => Store.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: Store]])),
+        (classOf[ConnectionType], (clazz:Class[_]) => Connection.register(clazz.getAnnotation(classOf[ConnectionType]).kind(), clazz.asInstanceOf[Class[_ <: Connection]])),
+        (classOf[TemplateObject], (clazz:Class[_]) => Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz))
+    )
 
     def invalidate() : Unit = {
         invalidate(Thread.currentThread.getContextClassLoader)
@@ -101,83 +102,20 @@ object Registration {
     def load(cl:ClassLoader): Unit = {
         synchronized {
             if (!_loaders.contains(cl)) {
-                _providers.foreach(_.scan(cl))
-
-                new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
+                val scanner = new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
                     .overrideClassLoaders(cl)
-                    .matchClassesWithAnnotation(classOf[MappingType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[MappingType])
-                                Mapping.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Mapping]])
+
+                _types.foldLeft(scanner)((scanner, typ) =>
+                        scanner.matchClassesWithAnnotation(typ._1,
+                            new ClassAnnotationMatchProcessor {
+                                override def processMatch(aClass: Class[_]): Unit = {
+                                    typ._2(aClass)
+                                }
                             }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[RelationType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[RelationType])
-                                Relation.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Relation]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[TargetType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[TargetType])
-                                Target.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Target]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[SchemaType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[SchemaType])
-                                Schema.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Schema]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[TaskType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[TaskType])
-                                Task.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Task]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[MonitorType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[MonitorType])
-                                Monitor.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Monitor]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[StoreType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[StoreType])
-                                Store.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Store]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[ConnectionType],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[ConnectionType])
-                                Connection.register(annotation.kind(), aClass.asInstanceOf[Class[_ <: Connection]])
-                            }
-                        }
-                    )
-                    .matchClassesWithAnnotation(classOf[TemplateObject],
-                        new ClassAnnotationMatchProcessor {
-                            override def processMatch(aClass: Class[_]): Unit = {
-                                val annotation = aClass.getAnnotation(classOf[TemplateObject])
-                                Templating.addClass(annotation.name(), aClass)
-                            }
-                        }
+                        )
                     )
                     .scan()
+
                 _loaders.add(cl)
             }
         }

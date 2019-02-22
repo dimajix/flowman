@@ -60,7 +60,7 @@ class StreamTarget extends BaseTarget {
       *
       * @param executor
       */
-    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): Unit = {
+    override def build(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): Unit = {
         implicit var context = executor.context
         val target = this.relation
         val input = this.input
@@ -71,5 +71,19 @@ class StreamTarget extends BaseTarget {
         val relation = context.getRelation(target)
         val table = tables(input).coalesce(parallelism)
         relation.writeStream(executor, table, mode, checkpointLocation)
+    }
+
+    /**
+      * Clean up streaming target. Actually this method delegates the work to the relation target
+      *
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+        implicit var context = executor.context
+        val target = this.relation
+
+        logger.info(s"Cleaining streaming relation '$target'")
+        val relation = context.getRelation(target)
+        relation.clean(executor)
     }
 }

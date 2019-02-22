@@ -133,6 +133,10 @@ class KafkaRelation extends BaseRelation {
             .save()
     }
 
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        throw new UnsupportedOperationException("Cleaning Kafka topics is not supported")
+    }
+
     /**
       * Reads data from a streaming source
       *

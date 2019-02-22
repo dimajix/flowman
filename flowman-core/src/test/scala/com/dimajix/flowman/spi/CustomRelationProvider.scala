@@ -16,17 +16,10 @@
 
 package com.dimajix.flowman.spi
 
-import com.fasterxml.jackson.annotation.JsonTypeName
-
+import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.spec.model.NullRelation
 
 
-@JsonTypeName("customRelation")
+@RelationType(kind="customRelation")
 class CustomRelation extends NullRelation {
-}
-
-
-class CustomRelationProvider extends RelationProvider {
-    override def getKind() : String = "customRelation"
-    override def getImpl() : Class[_] = classOf[CustomRelation]
 }

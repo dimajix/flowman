@@ -25,10 +25,10 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Target extends ExtensionRegistry[Target] {
+object Target extends TypeRegistry[Target] {
     class NameResolver extends StdConverter[Map[String,Target],Map[String,Target]] {
         override def convert(value: Map[String,Target]): Map[String,Target] = {
             value.foreach(kv => kv._2._name = kv._1)

@@ -29,13 +29,13 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-object Relation extends ExtensionRegistry[Relation] {
+object Relation extends TypeRegistry[Relation] {
     class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
         override def convert(value: Map[String,Relation]): Map[String,Relation] = {
             value.foreach(kv => kv._2._name = kv._1)

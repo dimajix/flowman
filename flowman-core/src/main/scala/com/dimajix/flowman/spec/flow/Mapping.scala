@@ -29,10 +29,10 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Mapping extends ExtensionRegistry[Mapping] {
+object Mapping extends TypeRegistry[Mapping] {
     class NameResolver extends StdConverter[Map[String,Mapping],Map[String,Mapping]] {
         override def convert(value: Map[String,Mapping]): Map[String,Mapping] = {
             value.foreach(kv => kv._2._name = kv._1)

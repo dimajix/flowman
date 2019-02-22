@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StructType
 
 
-object Schema extends ExtensionRegistry[Schema] {
+object Schema extends TypeRegistry[Schema] {
 }
 
 /**

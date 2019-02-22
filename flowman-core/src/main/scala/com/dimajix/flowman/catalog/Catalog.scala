@@ -31,6 +31,18 @@ abstract class Catalog {
     def tableExists(table:TableIdentifier) : Boolean
 
 
+    /**
+      * Returns information about a Hive table
+      * @param table
+      * @return
+      */
+    def getTable(table:TableIdentifier) : CatalogTable
+
+    /**
+      * Creates a new table from a detailed definition
+      * @param table
+      * @param ignoreIfExists
+      */
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit
 
     /**

@@ -36,6 +36,11 @@ class SparkCatalog(spark:SparkSession) extends Catalog {
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
 
+    /**
+      * Creates a new table from a detailed definition
+      * @param table
+      * @param ignoreIfExists
+      */
     @Override
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
         require(table != null)
@@ -53,6 +58,18 @@ class SparkCatalog(spark:SparkSession) extends Catalog {
         require(table != null)
         // "SHOW TABLES IN training LIKE 'weather_raw'"
         catalog.tableExists(table)
+    }
+
+    /**
+      * Returns information about a Hive table
+      * @param table
+      * @return
+      */
+    @Override
+    def getTable(table:TableIdentifier) : CatalogTable = {
+        require(table != null)
+        // "DESCRIBE FORMATTED training.weather_raw"
+        catalog.getTableMetadata(table)
     }
 
     /**

@@ -24,13 +24,10 @@ import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.ConnectionFactory
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.execution.datasources.hbase.HBaseRelation
-import org.apache.spark.sql.execution.datasources.hbase.SparkHBaseConf
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseRelation => ShcRelation}
 import org.apache.spark.sql.execution.datasources.hbase.{HBaseTableCatalog => ShcCatalog}
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.annotation.RelationType

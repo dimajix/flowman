@@ -21,7 +21,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.catalog.SparkCatalog
+import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.namespace.monitor.Monitor
 import com.dimajix.flowman.spec.Project
@@ -305,7 +305,7 @@ class Session private[execution](
         executor
     }
 
-    private lazy val _catalog = new SparkCatalog(spark)
+    private lazy val _catalog = new Catalog(spark)
 
 
     def monitor : Monitor = _monitor

@@ -23,7 +23,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.DestroyRelationTask
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.tools.exec.ActionCommand
 import com.dimajix.flowman.tools.exec.target.BuildCommand
 
@@ -48,12 +48,12 @@ class DestroyCommand extends ActionCommand {
         val task = DestroyRelationTask(toRun)
         val job = Job(Seq(task), "destroy-relations", "Destroy relations")
 
-        val runner = context.runner
+        val runner = executor.runner
         val result = runner.execute(executor, job)
 
         result match {
-            case JobStatus.SUCCESS => true
-            case JobStatus.SKIPPED => true
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
             case _ => false
         }
     }

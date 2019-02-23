@@ -30,8 +30,8 @@ import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
-import com.dimajix.flowman.namespace.monitor.Monitor
-import com.dimajix.flowman.namespace.storage.Store
+import com.dimajix.flowman.spec.state.StateStoreProvider
+import com.dimajix.flowman.spec.storage.Store
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
@@ -81,7 +81,7 @@ object Registration {
         (classOf[TargetType], (clazz:Class[_]) => Target.register(clazz.getAnnotation(classOf[TargetType]).kind(), clazz.asInstanceOf[Class[_ <: Target]])),
         (classOf[SchemaType], (clazz:Class[_]) => Schema.register(clazz.getAnnotation(classOf[SchemaType]).kind(), clazz.asInstanceOf[Class[_ <: Schema]])),
         (classOf[TaskType], (clazz:Class[_]) => Task.register(clazz.getAnnotation(classOf[TaskType]).kind(), clazz.asInstanceOf[Class[_ <: Task]])),
-        (classOf[MonitorType], (clazz:Class[_]) => Monitor.register(clazz.getAnnotation(classOf[MonitorType]).kind(), clazz.asInstanceOf[Class[_ <: Monitor]])),
+        (classOf[MonitorType], (clazz:Class[_]) => StateStoreProvider.register(clazz.getAnnotation(classOf[MonitorType]).kind(), clazz.asInstanceOf[Class[_ <: StateStoreProvider]])),
         (classOf[StoreType], (clazz:Class[_]) => Store.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: Store]])),
         (classOf[ConnectionType], (clazz:Class[_]) => Connection.register(clazz.getAnnotation(classOf[ConnectionType]).kind(), clazz.asInstanceOf[Class[_ <: Connection]])),
         (classOf[TemplateObject], (clazz:Class[_]) => Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz))

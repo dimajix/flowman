@@ -31,7 +31,7 @@ import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 
 
-class Catalog(spark:SparkSession) {
+class Catalog(val spark:SparkSession) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
@@ -41,7 +41,6 @@ class Catalog(spark:SparkSession) {
       * @param table
       * @param ignoreIfExists
       */
-    @Override
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
         require(table != null)
         val cmd = CreateTableCommand(table, ignoreIfExists)
@@ -53,7 +52,6 @@ class Catalog(spark:SparkSession) {
       * @param table
       * @return
       */
-    @Override
     def tableExists(table:TableIdentifier) : Boolean = {
         require(table != null)
         // "SHOW TABLES IN training LIKE 'weather_raw'"
@@ -65,7 +63,6 @@ class Catalog(spark:SparkSession) {
       * @param table
       * @return
       */
-    @Override
     def getTable(table:TableIdentifier) : CatalogTable = {
         require(table != null)
         // "DESCRIBE FORMATTED training.weather_raw"
@@ -77,7 +74,6 @@ class Catalog(spark:SparkSession) {
       * @param table
       * @return
       */
-    @Override
     def getTableLocation(table:TableIdentifier) : Path = {
         require(table != null)
         // "DESCRIBE FORMATTED training.weather_raw"
@@ -88,7 +84,6 @@ class Catalog(spark:SparkSession) {
       * Drops a whole table including all partitions and all files
       * @param table
       */
-    @Override
     def dropTable(table:TableIdentifier) : Unit = {
         require(table != null)
         if (tableExists(table)) {

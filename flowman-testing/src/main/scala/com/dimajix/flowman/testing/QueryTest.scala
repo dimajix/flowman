@@ -76,7 +76,7 @@ trait QueryTest { this:Assertions =>
         Row.fromSeq(row.toSeq.map {
             case null => null
             case d: java.math.BigDecimal => BigDecimal(d)
-            // Convert array to Seq for easy equality check.
+            // Convert array to Seq for easy equality checkJob.
             case b: Array[_] => b.toSeq
             case r: Row => prepareRow(r)
             case o => o

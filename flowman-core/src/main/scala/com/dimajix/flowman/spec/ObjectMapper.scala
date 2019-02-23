@@ -28,7 +28,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import com.dimajix.flowman.fs.File
-import com.dimajix.flowman.namespace.monitor.Monitor
+import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
@@ -49,7 +49,7 @@ object ObjectMapper {
       */
     def mapper : JacksonMapper = {
         Registration.load()
-        val monitorTypes = Monitor.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val monitorTypes = StateStoreProvider.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val relationTypes = Relation.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = Mapping.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val outputTypes = Target.subtypes.map(kv => new NamedType(kv._2, kv._1))

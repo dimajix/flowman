@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
 import com.dimajix.flowman.spec.task.BuildTargetTask
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -53,12 +53,12 @@ class BuildCommand extends ActionCommand {
         val task = BuildTargetTask(toRun, s"Building targets ${toRun.mkString(",")}")
         val job = Job(Seq(task), "build-targets", "Build targets")
 
-        val runner = context.runner
+        val runner = executor.runner
         val result = runner.execute(executor, job, Map(), true)
 
         result match {
-            case JobStatus.SUCCESS => true
-            case JobStatus.SKIPPED => true
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
             case _ => false
         }
     }

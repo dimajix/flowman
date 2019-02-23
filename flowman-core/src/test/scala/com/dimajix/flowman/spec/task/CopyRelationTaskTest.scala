@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.SingleValue
 
 
@@ -102,7 +103,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
         targetFilename.exists() should be (false)
         val job = project.jobs("main")
         job should not be (null)
-        job.execute(executor, Map()) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map()) shouldBe (Status.SUCCESS)
         targetFilename.exists() should be (true)
         targetFilename.isFile() should be (true)
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.monitor
+package com.dimajix.flowman.state
 
 import java.security.MessageDigest
 import java.sql.SQLRecoverableException
@@ -25,7 +25,6 @@ import java.util.Properties
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 import slick.jdbc.DerbyProfile
@@ -34,46 +33,41 @@ import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
 
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.connection.JdbcConnection
-import com.dimajix.flowman.spec.task.Job
 
-
-private object JdbcMonitorRepository {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcMonitor])
+private object JdbcHistoryRepository {
+    private val logger = LoggerFactory.getLogger(classOf[JdbcHistoryRepository])
 
     case class JobRun(
-                         id:Long,
-                         namespace: String,
-                         project:String,
-                         job:String,
-                         args_hash:String,
-                         start_ts:Timestamp,
-                         end_ts:Timestamp,
-                         status:String
-                     )
+         id:Long,
+         namespace: String,
+         project:String,
+         job:String,
+         args_hash:String,
+         start_ts:Timestamp,
+         end_ts:Timestamp,
+         status:String
+     )
 
     case class JobArgument(
-                              job_id:Long,
-                              name:String,
-                              value:String
-                          )
+        job_id:Long,
+        name:String,
+        value:String
+    )
 }
 
-private class JdbcMonitorRepository(connection: JdbcConnection, val profile:JdbcProfile)(implicit context:Context) {
+
+private class JdbcHistoryRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) {
     import profile.api._
 
-    import JdbcMonitorRepository._
+    import JdbcHistoryRepository._
 
     private lazy val db = {
         val url = connection.url
-        val user = connection.username
+        val user = connection.user
         val password = connection.password
         val driver = connection.driver
         val props = new Properties()
-        Option(connection.properties).foreach(_.foreach(kv => props.setProperty(kv._1, kv._2)))
-
+        connection.properties.foreach((kv) => props.setProperty(kv._1, kv._2))
         logger.info(s"Connecting via JDBC to $url with driver $driver")
         Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
@@ -116,7 +110,7 @@ private class JdbcMonitorRepository(connection: JdbcConnection, val profile:Jdbc
                 && r.project === run.project
                 && r.job === run.job
                 && r.args_hash === run.args_hash
-                && r.status =!= JdbcMonitor.STATUS_SKIPPED
+                && r.status =!= Status.SKIPPED.value
         ).map(_.id).max
         )
             .map(_.status)
@@ -141,101 +135,116 @@ private class JdbcMonitorRepository(connection: JdbcConnection, val profile:Jdbc
 }
 
 
-object JdbcMonitor {
-    val STATUS_SUCCESS = "success"
-    val STATUS_FAILED = "failed"
-    val STATUS_RUNNING = "running"
-    val STATUS_SKIPPED = "skipped"
-    val STATUS_KILLED = "killed"
-
-    def apply(connection:String, retries:Int=3, timeout:Int=1000) : JdbcMonitor = {
-        val runner = new JdbcMonitor
-        runner._connection = connection
-        runner._retries = retries.toString
-        runner._timeout = timeout.toString
-        runner
-    }
+object JdbcStateStore {
+    case class Connection(
+        url:String,
+        driver:String,
+        user:String = "",
+        password:String = "",
+        properties: Map[String,String] = Map()
+    )
 }
 
 
-class JdbcMonitor extends Monitor {
-    import JdbcMonitor._
-    import JdbcMonitorRepository._
+class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateStore {
+    import com.dimajix.flowman.state.JdbcHistoryRepository.JobRun
 
-    private val logger = LoggerFactory.getLogger(classOf[JdbcMonitor])
+    private val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])
 
-    @JsonProperty(value="connection", required=true) private var _connection:String = ""
-    @JsonProperty(value="retries", required=false) private var _retries:String = "3"
-    @JsonProperty(value="timeout", required=false) private var _timeout:String = "1000"
-
-    def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
-    def retries(implicit context: Context) : Int = context.evaluate(_retries).toInt
-    def timeout(implicit context: Context) : Int = context.evaluate(_timeout).toInt
-
-    override def check(context:Context, job:Job, args:Map[String,String]) : Boolean = {
+    /**
+      * Performs some checkJob, if the run is required
+      * @param job
+      * @return
+      */
+    override def checkJob(job:JobInstance) : Boolean = {
         val run =  JobRun(
             0,
-            Option(context.namespace).map(_.name).getOrElse(""),
-            Option(context.project).map(_.name).getOrElse(""),
-            job.name,
-            hashArgs(job, args),
+            Option(job.namespace).getOrElse(""),
+            Option(job.project).getOrElse(""),
+            job.job,
+            hashArgs(job),
             null,
             null,
             null
         )
         logger.info(s"Checking last state for job ${run.namespace}/${run.project}/${run.job} in state database")
         val result =
-            withSession(context) { repository =>
+            withSession { repository =>
                 repository.getStatus(run)
             }
 
         result match {
-            case Some(status) => status == STATUS_SUCCESS
+            case Some(status) => status == Status.SUCCESS.value
             case None => false
         }
     }
 
-    override def start(context:Context, job:Job, args:Map[String,String]) : Object = {
+    /**
+      * Starts the run and returns a token, which can be anything
+      * @param job
+      * @return
+      */
+    override def startJob(job:JobInstance) : Object = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  JobRun(
             0,
-            Option(context.namespace).map(_.name).getOrElse(""),
-            Option(context.project).map(_.name).getOrElse(""),
-            job.name,
-            hashArgs(job, args),
+            Option(job.namespace).getOrElse(""),
+            Option(job.project).getOrElse(""),
+            job.job,
+            hashArgs(job),
             now,
             new Timestamp(0),
-            STATUS_RUNNING
+            Status.RUNNING.value
         )
 
-        logger.info(s"Writing start marker for job ${run.namespace}/${run.project}/${run.job} into state database")
-        withSession(context) { repository =>
-            repository.insertRun(run, args)
+        logger.info(s"Writing startJob marker for job ${run.namespace}/${run.project}/${run.job} into state database")
+        withSession { repository =>
+            repository.insertRun(run, job.args)
         }
     }
 
-    override def success(context: Context, token:Object) : Unit = {
+    /**
+      * Marks a run as a success
+      *
+      * @param token
+      */
+    override def success(token:Object) : Unit = {
         val run = token.asInstanceOf[JobRun]
-        setState(context, run, STATUS_SUCCESS)
+        setState(run, Status.SUCCESS)
     }
 
-    override def failure(context: Context, token:Object) : Unit = {
+    /**
+      * Marks a run as a failure
+      *
+      * @param token
+      */
+    override def failure(token:Object) : Unit = {
         val run = token.asInstanceOf[JobRun]
-        setState(context, run, STATUS_FAILED)
+        setState(run, Status.FAILED)
     }
 
-    override def aborted(context: Context, token:Object) : Unit = {
+    /**
+      * Marks a run as a failure
+      *
+      * @param token
+      */
+    override def aborted(token:Object) : Unit = {
         val run = token.asInstanceOf[JobRun]
-        setState(context, run, STATUS_KILLED)
+        setState(run, Status.ABORTED)
     }
 
-    override def skipped(context: Context, token:Object) : Unit = {
+    /**
+      * Marks a run as being skipped
+      *
+      * @param token
+      */
+    override def skipped(token:Object) : Unit = {
         val run = token.asInstanceOf[JobRun]
-        setState(context, run, STATUS_SKIPPED)
+        setState(run, Status.SKIPPED)
     }
 
-    private def hashArgs(job:Job, args:Map[String,String]) : String = {
-        val strArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(",")
+    private def hashArgs(job:JobInstance) : String = {
+        val strArgs = job.args.map(kv => kv._1 + "=" + kv._2).mkString(",")
         val bytes = strArgs.getBytes("UTF-8")
         val digest = MessageDigest.getInstance("MD5").digest(bytes)
         DatatypeConverter.printHexBinary(digest).toUpperCase()
@@ -244,16 +253,15 @@ class JdbcMonitor extends Monitor {
     /**
       * Sets the final state for a specific run
       *
-      * @param context
       * @param run
       * @param status
       */
-    private def setState(context: Context, run: JobRun, status:String): Unit = {
+    private def setState(run: JobRun, status:Status): Unit = {
         logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        withSession(context) { repository =>
+        withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setStatus(run.copy(end_ts = now, status=status))
+            repository.setStatus(run.copy(end_ts = now, status=status.value))
         }
     }
 
@@ -261,14 +269,11 @@ class JdbcMonitor extends Monitor {
     /**
       * Performs some a task with a JDBC session, also automatically performing retries and timeouts
       *
-      * @param context
       * @param query
       * @tparam T
       * @return
       */
-    private def withSession[T](context: Context)(query: JdbcMonitorRepository => T) : T = {
-        implicit val icontext = context.root
-
+    private def withSession[T](query: JdbcHistoryRepository => T) : T = {
         def retry[T](n:Int)(fn: => T) : T = {
             try {
                 fn
@@ -282,18 +287,15 @@ class JdbcMonitor extends Monitor {
         }
 
         retry(retries) {
-            val repository = newRepository(icontext)
+            val repository = newRepository()
             query(repository)
         }
     }
 
     private var tablesCreated:Boolean = false
 
-    private def newRepository(context: Context) : JdbcMonitorRepository = {
-        implicit val icontext = context.root
-
+    private def newRepository() : JdbcHistoryRepository = {
         // Get Connection
-        val connection = context.getConnection(this.connection).asInstanceOf[JdbcConnection]
         val derbyPattern = """.*\.derby\..*""".r
         val h2Pattern = """.*\.h2\..*""".r
         val mysqlPattern = """.*\.mysql\..*""".r
@@ -306,7 +308,7 @@ class JdbcMonitor extends Monitor {
             case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }
 
-        val repository = new JdbcMonitorRepository(connection, profile)
+        val repository = new JdbcHistoryRepository(connection, profile)
 
         // Create Database if not exists
         if (!tablesCreated) {

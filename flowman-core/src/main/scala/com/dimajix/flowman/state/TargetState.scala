@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.storage
+package com.dimajix.flowman.state
 
-object FileStore {
-    def createNamespace(name:String) : FileStore = ???
-    def openNamespace(name:String) : FileStore = ???
-    def removeNamespace(name:String) : Unit = ???
-}
-
-
-abstract class FileStore extends Store {
+class TargetState(status:Status) {
 
 }

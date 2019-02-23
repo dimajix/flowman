@@ -2,7 +2,7 @@ relations:
   stations-local:
     kind: local
     format: csv
-    location: "file:///tmp/weather-local/isd-history/"
+    location: "file:///tmp/weather-local/isd-state/"
     pattern: "stations.csv"
     options:
       sep: ","

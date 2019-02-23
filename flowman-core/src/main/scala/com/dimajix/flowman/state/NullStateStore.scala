@@ -14,71 +14,52 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace.monitor
-
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+package com.dimajix.flowman.state
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spi.TypeRegistry
 
 
-
-object Monitor extends TypeRegistry[Monitor] {
-}
-
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "null", value = classOf[NullMonitor]),
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcMonitor])
-))
-abstract class Monitor {
+class NullStateStore extends StateStore {
     /**
-      * Performs some check, if the run is required
-      * @param context
+      * Performs some checkJob, if the run is required
+      * @param job
       * @return
       */
-    def check(context:Context, job:Job, args:Map[String,String]) : Boolean
+    override def checkJob(job:JobInstance) : Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
-      *
-      * @param context
+      * @param job
       * @return
       */
-    def start(context:Context, job:Job, args:Map[String,String]) : Object
+    override def startJob(job:JobInstance) : Object = null
 
     /**
       * Marks a run as a success
       *
-      * @param context
       * @param token
       */
-    def success(context: Context, token:Object) : Unit
+    override def success(token:Object) : Unit = {}
 
     /**
       * Marks a run as a failure
       *
-      * @param context
       * @param token
       */
-    def failure(context: Context, token:Object) : Unit
+    override def failure(token:Object) : Unit = {}
 
     /**
       * Marks a run as a failure
       *
-      * @param context
       * @param token
       */
-    def aborted(context: Context, token:Object) : Unit
+    override def aborted(token:Object) : Unit = {}
 
     /**
       * Marks a run as being skipped
       *
-      * @param context
       * @param token
       */
-    def skipped(context: Context, token:Object) : Unit
+    override def skipped(token:Object) : Unit = {}
 }

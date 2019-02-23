@@ -25,6 +25,7 @@ import org.scalatest.mockito.MockitoSugar
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.RangeValue
@@ -52,7 +53,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
               |          p1: xyz
               |          p2: [abc, xyz]
               |          p3:
-              |            start: 1
+              |            startJob: 1
               |            end: 3
             """.stripMargin
 
@@ -62,7 +63,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         implicit val context = session.context
 
         val job = project.jobs("loop")
-        job.execute(executor, Map()) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map()) shouldBe (Status.SUCCESS)
     }
 
     it should "fail on undefined parameters" in {
@@ -86,7 +87,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         implicit val context = session.context
 
         val job = project.jobs("loop")
-        job.execute(executor, Map()) shouldBe (JobStatus.FAILURE)
+        job.execute(executor, Map()) shouldBe (Status.FAILED)
     }
 
     it should "loop as expected with a single parameter" in {
@@ -100,8 +101,8 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val executor = session.getExecutor(project)
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType)))
-        when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 
         loopTask.execute(executor)
 
@@ -120,12 +121,12 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val executor = session.getExecutor(project)
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2")))
-        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "4"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "6"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "2"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "4"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "6"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "4"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "6"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "2"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "4"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2", "p2" -> "6"))).thenReturn(Status.SUCCESS)
 
         loopTask.execute(executor)
 
@@ -148,8 +149,8 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val executor = session.getExecutor(project)
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2", "4")))
-        when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(JobStatus.SUCCESS)
-        when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(JobStatus.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
+        when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 
         loopTask.execute(executor)
 

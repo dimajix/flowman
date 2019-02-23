@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.state.Status
 
 
 class CallTask extends BaseTask {
@@ -51,9 +52,9 @@ class CallTask extends BaseTask {
         logger.info(s"Calling sub-job '${this.job}' with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
 
         val job = context.getJob(this.job)
-        context.runner.execute(executor, job, args, force) match {
-            case JobStatus.SUCCESS => true
-            case JobStatus.SKIPPED => true
+        executor.runner.execute(executor, job, args, force) match {
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
             case _ => false
         }
     }

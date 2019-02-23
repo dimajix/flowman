@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.fs.FileSystem
-import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.plugin.PluginManager
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.util.splitSettings
 

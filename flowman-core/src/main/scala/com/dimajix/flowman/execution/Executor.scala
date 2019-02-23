@@ -25,9 +25,9 @@ import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 
 
 abstract class Executor {
@@ -37,6 +37,13 @@ abstract class Executor {
     def namespace : Namespace
 
     def root: Executor
+
+    /**
+      * Returns the appropriate runner
+      *
+      * @return
+      */
+    def runner : Runner
 
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global

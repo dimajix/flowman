@@ -17,7 +17,7 @@
 package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.state.Status
 
 
 /**
@@ -35,5 +35,5 @@ abstract class Runner {
       * @param force
       * @return
       */
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : Status
 }

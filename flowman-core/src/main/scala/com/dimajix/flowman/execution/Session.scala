@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.namespace.Namespace
-import com.dimajix.flowman.namespace.monitor.Monitor
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.UdfProvider
 
@@ -202,15 +202,15 @@ class Session private[execution](
 
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
-    private val _monitor = {
+    private val _history = {
         if (_namespace != null && _namespace.monitor != null)
             _namespace.monitor
         else
             null
     }
     private val _runner = {
-        if (_monitor  != null)
-            new MonitoredRunner(_monitor)
+        if (_history  != null)
+            new MonitoredRunner(_history.createStateStore(this))
         else
             new SimpleRunner
     }
@@ -286,7 +286,6 @@ class Session private[execution](
 
     private lazy val rootContext : Context = {
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
-            .withRunner(_runner)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
         if (_namespace != null) {
@@ -297,7 +296,7 @@ class Session private[execution](
             builder.withEnvironment(namespace.environment)
             builder.withConfig(namespace.config.toMap)
         }
-        builder.build().asInstanceOf[RootContext]
+        builder.build()
     }
 
     private lazy val rootExecutor : RootExecutor = {
@@ -308,7 +307,7 @@ class Session private[execution](
     private lazy val _catalog = new Catalog(spark)
 
 
-    def monitor : Monitor = _monitor
+    def monitor : StateStoreProvider = _history
 
     /**
       * Returns the Namespace tied to this Flowman session.

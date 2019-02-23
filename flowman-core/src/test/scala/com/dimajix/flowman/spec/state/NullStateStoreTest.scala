@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace
+package com.dimajix.flowman.spec.state
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.namespace.monitor.NullMonitor
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.task.Job
 
 
-class NamespaceTest extends FlatSpec with Matchers {
-    "A Namespace" should "be creatable from a spec" in {
+class NullStateStoreTest extends FlatSpec with Matchers {
+    "The NullStateStoreProvider" should "be parseable" in {
         val spec =
             """
-              |environment:
-              | - lala=lolo
-              |config:
-              | - cfg1=cfg2=lala
+              |kind: null
             """.stripMargin
-        val ns = Namespace.read.string(spec)
-        ns.environment.size should be (1)
-        ns.config.size should be (1)
+
+        val monitor = ObjectMapper.parse[StateStoreProvider](spec)
+        monitor shouldBe a[NullStateStoreProvider]
     }
 
-    it should "provide a default Namespace" in {
-        val ns = Namespace.read.default()
-        ns should not be (null)
-        ns.name should be ("default")
-        ns.monitor shouldBe a[NullMonitor]
-    }
 }

@@ -18,10 +18,10 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -98,15 +98,6 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
       * @return
       */
     override def root : Context = parent.root
-
-    /**
-      * Returns the appropriate runner for this project.
-      *
-      * @return
-      */
-    override def runner : Runner = {
-        parent.runner
-    }
 
     /**
       * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different

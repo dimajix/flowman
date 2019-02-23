@@ -44,7 +44,7 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
                 ArrayValue(values.toArray)
             }
             case JsonNodeType.OBJECT => {
-                val start = node.get("start").asText
+                val start = node.get("startJob").asText
                 val end = node.get("end").asText
                 val step = Option(node.get("step")).map(_.asText).orNull
                 RangeValue(start, end, step)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.namespace
+package com.dimajix.flowman.spec
 
 import java.io.File
 import java.io.InputStream
@@ -24,13 +24,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.monitor.Monitor
-import com.dimajix.flowman.namespace.monitor.NullMonitor
-import com.dimajix.flowman.namespace.storage.Store
-import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.Profile
-import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.state.StateStoreProvider
+import com.dimajix.flowman.spec.state.NullStateStoreProvider
+import com.dimajix.flowman.spec.storage.Store
 import com.dimajix.flowman.util.splitSettings
 
 
@@ -44,7 +41,7 @@ object Namespace {
             namespace._name = name
             this
         }
-        def setMonitor(monitor: Monitor) : Builder = {
+        def setStateStore(monitor: StateStoreProvider) : Builder = {
             namespace._monitor = monitor
             this
         }
@@ -119,7 +116,7 @@ class Namespace {
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonDeserialize(converter=classOf[Connection.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
-    @JsonProperty(value="monitor") private var _monitor : Monitor = new NullMonitor()
+    @JsonProperty(value="statestore") private var _monitor : StateStoreProvider = new NullStateStoreProvider()
     @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
 
     def name : String = _name
@@ -132,5 +129,5 @@ class Namespace {
     def connections : Map[String,Connection] = _connections
     def projects : Seq[String] = _store.listProjects()
     def store : Store = _store
-    def monitor : Monitor = _monitor
+    def monitor : StateStoreProvider = _monitor
 }

@@ -22,4 +22,8 @@ case class TargetInstance(
     target:String,
     partitions:Map[String,String] = Map()
 ) {
+    require(namespace != null)
+    require(project != null)
+    require(target != null)
+    require(partitions != null)
 }

@@ -23,6 +23,12 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 class BlackholeTarget extends BaseTarget {
+    /**
+      * Abstract method which will perform the output operation. All required tables need to be
+      * registered as temporary tables in the Spark session before calling the execute method.
+      *
+      * @param executor
+      */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         input(this.input).write.format("null").save()

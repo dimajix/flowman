@@ -203,8 +203,8 @@ class Job {
       */
     def instance(args:Map[String,String])(implicit context: Context) : JobInstance = {
         JobInstance(
-            Option(context.namespace).map(_.name).orNull,
-            Option(context.project).map(_.name).orNull,
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
             name,
             args
         )

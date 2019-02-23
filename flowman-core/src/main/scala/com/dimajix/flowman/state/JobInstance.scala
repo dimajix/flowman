@@ -22,4 +22,8 @@ case class JobInstance(
     job:String,
     args:Map[String,String] = Map()
 ) {
+    require(namespace != null)
+    require(project != null)
+    require(job != null)
+    require(args != null)
 }

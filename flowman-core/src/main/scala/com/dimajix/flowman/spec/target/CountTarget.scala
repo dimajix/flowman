@@ -26,6 +26,12 @@ import com.dimajix.flowman.spec.MappingIdentifier
 class CountTarget extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CountTarget])
 
+    /**
+      * Build the "count" target by printing the number of records onto the console
+      *
+      * @param executor
+      * @param input
+      */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
         implicit val context = executor.context
         val count = input(this.input).count()

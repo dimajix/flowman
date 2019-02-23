@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.state
 
-class TargetState(status:Status) {
+import java.time.ZonedDateTime
 
-}
+class TargetState(
+     status:Status,
+     startDateTime:Option[ZonedDateTime] = None,
+     endDateTime:Option[ZonedDateTime] = None
+)

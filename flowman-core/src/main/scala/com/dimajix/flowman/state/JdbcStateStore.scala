@@ -20,6 +20,7 @@ import java.security.MessageDigest
 import java.sql.SQLRecoverableException
 import java.sql.Timestamp
 import java.time.Clock
+import java.time.ZoneId
 import java.util.Properties
 
 import scala.concurrent.Await
@@ -34,8 +35,8 @@ import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
 
 
-private object JdbcHistoryRepository {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcHistoryRepository])
+private object JdbcJobRepository {
+    private val logger = LoggerFactory.getLogger(classOf[JdbcJobRepository])
 
     case class JobRun(
          id:Long,
@@ -56,10 +57,10 @@ private object JdbcHistoryRepository {
 }
 
 
-private class JdbcHistoryRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) {
+private class JdbcJobRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) {
     import profile.api._
 
-    import JdbcHistoryRepository._
+    import JdbcJobRepository._
 
     private lazy val db = {
         val url = connection.url
@@ -104,7 +105,7 @@ private class JdbcHistoryRepository(connection: JdbcStateStore.Connection, val p
         Await.result(db.run(jobArgs.schema.create), Duration.Inf)
     }
 
-    def getStatus(run:JobRun) : Option[String] = {
+    def getJobState(run:JobRun) : Option[JobState] = {
         val q = jobRuns.filter(_.id === jobRuns.filter(r =>
             r.namespace === run.namespace
                 && r.project === run.project
@@ -113,11 +114,16 @@ private class JdbcHistoryRepository(connection: JdbcStateStore.Connection, val p
                 && r.status =!= Status.SKIPPED.value
         ).map(_.id).max
         )
-            .map(_.status)
-        Await.result(db.run(q.result), Duration.Inf).headOption
+        Await.result(db.run(q.result), Duration.Inf)
+            .headOption
+            .map(state => JobState(
+                Status.ofString(state.status),
+                Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+            ))
     }
 
-    def setStatus(run:JobRun) : Unit = {
+    def setJobStatus(run:JobRun) : Unit = {
         val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
         Await.result(db.run(q), Duration.Inf)
     }
@@ -147,16 +153,11 @@ object JdbcStateStore {
 
 
 class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateStore {
-    import com.dimajix.flowman.state.JdbcHistoryRepository.JobRun
+    import com.dimajix.flowman.state.JdbcJobRepository.JobRun
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])
 
-    /**
-      * Performs some checkJob, if the run is required
-      * @param job
-      * @return
-      */
-    override def checkJob(job:JobInstance) : Boolean = {
+    override def getState(job: JobInstance): Option[JobState] = {
         val run =  JobRun(
             0,
             Option(job.namespace).getOrElse(""),
@@ -168,13 +169,21 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             null
         )
         logger.info(s"Checking last state for job ${run.namespace}/${run.project}/${run.job} in state database")
-        val result =
-            withSession { repository =>
-                repository.getStatus(run)
-            }
+        withSession { repository =>
+            repository.getJobState(run)
+        }
+    }
 
-        result match {
-            case Some(status) => status == Status.SUCCESS.value
+    /**
+      * Performs some checkJob, if the run is required
+      * @param job
+      * @return
+      */
+    override def checkJob(job:JobInstance) : Boolean = {
+        val state = getState(job).map(_.status)
+        state match {
+            case Some(Status.SUCCESS) => true
+            case Some(_) => false
             case None => false
         }
     }
@@ -208,63 +217,23 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       *
       * @param token
       */
-    override def success(token:Object) : Unit = {
+    override def finishJob(token:Object, status: Status) : Unit = {
         val run = token.asInstanceOf[JobRun]
-        setState(run, Status.SUCCESS)
+        logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
+
+        val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
+        withSession{ repository =>
+            // Library.setState(run.copy(end_ts = now, status=status))
+            repository.setJobStatus(run.copy(end_ts = now, status=status.value))
+        }
     }
 
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    override def failure(token:Object) : Unit = {
-        val run = token.asInstanceOf[JobRun]
-        setState(run, Status.FAILED)
-    }
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    override def aborted(token:Object) : Unit = {
-        val run = token.asInstanceOf[JobRun]
-        setState(run, Status.ABORTED)
-    }
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param token
-      */
-    override def skipped(token:Object) : Unit = {
-        val run = token.asInstanceOf[JobRun]
-        setState(run, Status.SKIPPED)
-    }
-
-    private def hashArgs(job:JobInstance) : String = {
+     private def hashArgs(job:JobInstance) : String = {
         val strArgs = job.args.map(kv => kv._1 + "=" + kv._2).mkString(",")
         val bytes = strArgs.getBytes("UTF-8")
         val digest = MessageDigest.getInstance("MD5").digest(bytes)
         DatatypeConverter.printHexBinary(digest).toUpperCase()
     }
-
-    /**
-      * Sets the final state for a specific run
-      *
-      * @param run
-      * @param status
-      */
-    private def setState(run: JobRun, status:Status): Unit = {
-        logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
-        val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        withSession{ repository =>
-            // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setStatus(run.copy(end_ts = now, status=status.value))
-        }
-    }
-
 
     /**
       * Performs some a task with a JDBC session, also automatically performing retries and timeouts
@@ -273,7 +242,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @tparam T
       * @return
       */
-    private def withSession[T](query: JdbcHistoryRepository => T) : T = {
+    private def withSession[T](query: JdbcJobRepository => T) : T = {
         def retry[T](n:Int)(fn: => T) : T = {
             try {
                 fn
@@ -294,7 +263,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
 
     private var tablesCreated:Boolean = false
 
-    private def newRepository() : JdbcHistoryRepository = {
+    private def newRepository() : JdbcJobRepository = {
         // Get Connection
         val derbyPattern = """.*\.derby\..*""".r
         val h2Pattern = """.*\.h2\..*""".r
@@ -308,7 +277,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }
 
-        val repository = new JdbcHistoryRepository(connection, profile)
+        val repository = new JdbcJobRepository(connection, profile)
 
         // Create Database if not exists
         if (!tablesCreated) {

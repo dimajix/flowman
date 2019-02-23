@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.state.StateStore
 import com.dimajix.flowman.state.JobInstance
+import com.dimajix.flowman.state.Status
 
 
 /**
@@ -55,7 +56,7 @@ class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
       * @param token
       */
     protected override def success(context: Context, token:Object) : Unit = {
-        monitor.success(token)
+        monitor.finishJob(token, Status.SUCCESS)
     }
 
     /**
@@ -64,7 +65,7 @@ class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
       * @param token
       */
     protected override def failure(context: Context, token:Object) : Unit = {
-        monitor.failure(token)
+        monitor.finishJob(token, Status.FAILED)
     }
 
     /**
@@ -74,7 +75,7 @@ class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
       * @param token
       */
     protected override def aborted(context: Context, token:Object) : Unit = {
-        monitor.aborted(token)
+        monitor.finishJob(token, Status.ABORTED)
     }
 
     /**
@@ -84,6 +85,6 @@ class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
       * @param token
       */
     protected override def skipped(context: Context, token:Object) : Unit = {
-        monitor.skipped(token)
+        monitor.finishJob(token, Status.SKIPPED)
     }
 }

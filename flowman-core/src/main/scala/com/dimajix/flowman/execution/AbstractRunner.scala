@@ -103,6 +103,9 @@ abstract class AbstractRunner extends Runner {
             case Success(status @ Status.FAILED) =>
                 logger.error("Execution of Job failed")
                 status
+            case Success(status @ Status.UNKNOWN) =>
+                logger.error("Execution of Job in unknown state. Assuming failure")
+                status
             case Success(status @ Status.ABORTED) =>
                 logger.error("Execution of Job aborted")
                 status
@@ -146,6 +149,10 @@ abstract class AbstractRunner extends Runner {
                 status
             case Success(status @ Status.FAILED) =>
                 logger.error("Execution of Job failed")
+                failure(context, token)
+                status
+            case Success(status @ Status.UNKNOWN) =>
+                logger.error("Execution of Job in unknown state. Assuming failure")
                 failure(context, token)
                 status
             case Success(status @ Status.ABORTED) =>

@@ -36,7 +36,6 @@ class ConsoleTarget extends BaseTarget {
     def header(implicit context: Context) : Boolean = context.evaluate(_header).toBoolean
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
-
     /**
       * Build the "console" target by dumping records to stdout
       *

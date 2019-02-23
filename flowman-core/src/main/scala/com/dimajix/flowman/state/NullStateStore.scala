@@ -22,6 +22,13 @@ import com.dimajix.flowman.spec.task.Job
 
 class NullStateStore extends StateStore {
     /**
+      * Returns the state of a job
+      * @param job
+      * @return
+      */
+    def getState(job:JobInstance) : Option[JobState] = None
+
+    /**
       * Performs some checkJob, if the run is required
       * @param job
       * @return
@@ -36,30 +43,9 @@ class NullStateStore extends StateStore {
     override def startJob(job:JobInstance) : Object = null
 
     /**
-      * Marks a run as a success
-      *
+      * Sets the status of a job after it has been started
       * @param token
+      * @param status
       */
-    override def success(token:Object) : Unit = {}
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    override def failure(token:Object) : Unit = {}
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    override def aborted(token:Object) : Unit = {}
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param token
-      */
-    override def skipped(token:Object) : Unit = {}
+    override def finishJob(token:Object, status:Status) : Unit = {}
 }

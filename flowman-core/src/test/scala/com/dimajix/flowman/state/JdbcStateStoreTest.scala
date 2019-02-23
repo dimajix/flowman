@@ -46,10 +46,67 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         val job = JobInstance("default", "p1", "j1")
 
         monitor.checkJob(job) should be(false)
+        monitor.getState(job) should be (None)
         val token = monitor.startJob(job)
         monitor.checkJob(job) should be(false)
-        monitor.success(token)
+        monitor.getState(job).map(_.status) should be (Some(Status.RUNNING))
+        monitor.finishJob(token, Status.SUCCESS)
         monitor.checkJob(job) should be(true)
+        monitor.getState(job).map(_.status) should be (Some(Status.SUCCESS))
+    }
+
+    it should "return failed on failures" in {
+        val db = tempDir.resolve("mydb")
+        val connection = JdbcStateStore.Connection(
+            url = "jdbc:derby:" + db + ";create=true",
+            driver = "org.apache.derby.jdbc.EmbeddedDriver"
+        )
+        val monitor = new JdbcStateStore(connection)
+
+        val job = JobInstance("default", "p1", "j1")
+
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job) should be (None)
+        val token = monitor.startJob(job)
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job).map(_.status) should be (Some(Status.RUNNING))
+        monitor.finishJob(token, Status.SUCCESS)
+        monitor.checkJob(job) should be(true)
+        monitor.getState(job).map(_.status) should be (Some(Status.SUCCESS))
+
+        val token2 = monitor.startJob(job)
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job).map(_.status) should be (Some(Status.RUNNING))
+        monitor.finishJob(token2, Status.FAILED)
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job).map(_.status) should be (Some(Status.FAILED))
+    }
+
+    it should "return success on skipped" in {
+        val db = tempDir.resolve("mydb")
+        val connection = JdbcStateStore.Connection(
+            url = "jdbc:derby:" + db + ";create=true",
+            driver = "org.apache.derby.jdbc.EmbeddedDriver"
+        )
+        val monitor = new JdbcStateStore(connection)
+
+        val job = JobInstance("default", "p1", "j1")
+
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job) should be (None)
+        val token = monitor.startJob(job)
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job).map(_.status) should be (Some(Status.RUNNING))
+        monitor.finishJob(token, Status.SUCCESS)
+        monitor.checkJob(job) should be(true)
+        monitor.getState(job).map(_.status) should be (Some(Status.SUCCESS))
+
+        val token2 = monitor.startJob(job)
+        monitor.checkJob(job) should be(false)
+        monitor.getState(job).map(_.status) should be (Some(Status.RUNNING))
+        monitor.finishJob(token2, Status.SKIPPED)
+        monitor.checkJob(job) should be(true)
+        monitor.getState(job).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support parameters" in {
@@ -65,7 +122,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
         val token = monitor.startJob(job.copy(args = Map("p1" -> "v1")))
         monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
-        monitor.success(token)
+        monitor.finishJob(token, Status.SUCCESS)
         monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(true)
         monitor.checkJob(job.copy(args = Map("p1" -> "v2"))) should be(false)
         monitor.checkJob(job.copy(args = Map("p2" -> "v1"))) should be(false)

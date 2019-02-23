@@ -3,6 +3,13 @@ package com.dimajix.flowman.state
 
 abstract class StateStore {
     /**
+      * Returns the state of a job
+      * @param job
+      * @return
+      */
+    def getState(job:JobInstance) : Option[JobState]
+
+    /**
       * Performs some checkJob, if the run is required
       * @param job
       * @return
@@ -17,31 +24,9 @@ abstract class StateStore {
     def startJob(job:JobInstance) : Object
 
     /**
-      * Marks a run as a success
-      *
+      * Sets the status of a job after it has been started
       * @param token
+      * @param status
       */
-    def success(token:Object) : Unit
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    def failure(token:Object) : Unit
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    def aborted(token:Object) : Unit
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param token
-      */
-    def skipped(token:Object) : Unit
-
+    def finishJob(token:Object, status:Status) : Unit
 }

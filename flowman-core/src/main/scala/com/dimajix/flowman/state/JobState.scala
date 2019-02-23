@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.state
 
+import java.time.ZonedDateTime
 
-case class JobState(status:Status) {
-}
+case class JobState(
+   status:Status,
+   startDateTime:Option[ZonedDateTime] = None,
+   endDateTime:Option[ZonedDateTime] = None
+)

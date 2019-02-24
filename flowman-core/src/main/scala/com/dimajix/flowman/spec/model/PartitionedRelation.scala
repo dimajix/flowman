@@ -64,6 +64,6 @@ trait PartitionedRelation { this:Relation =>
             df.withColumn(partitionName, lit(value))
         }
 
-        partitions.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
+        partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
     }
 }

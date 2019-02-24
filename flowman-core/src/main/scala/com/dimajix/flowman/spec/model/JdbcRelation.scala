@@ -16,10 +16,14 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.sql.Connection
 import java.util.Properties
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcOptionsInWrite
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -30,6 +34,7 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.util.tryWith
 
 
 class JdbcRelation extends BaseRelation with PartitionedRelation {
@@ -45,6 +50,8 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
     def database(implicit context:Context) : String = context.evaluate(_database)
     def table(implicit context:Context) : String = context.evaluate(_table)
 
+    def fqTable(implicit context:Context) : String = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
+
     /**
       * Reads the configured table from the source
       * @param executor
@@ -54,7 +61,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
 
-        val tableName = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
+        val tableName = fqTable
         logger.info(s"Reading data from JDBC source $tableName in database $connection using partition values ${partitions}")
 
         // Get Connection
@@ -78,8 +85,8 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         implicit val context = executor.context
 
-        val tableName = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
-
+        val connection = this.connection
+        val tableName = fqTable
         logger.info(s"Writing data to JDBC source $tableName in database $connection")
 
         // Get Connection
@@ -88,13 +95,54 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
         // Write partition into DataBase
         val dfExt = addPartition(df, partition)
         this.writer(executor, dfExt)
+            .mode(mode)
             .jdbc(url, tableName, props)
     }
 
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
+    /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        implicit val context = executor.context
+        if (partitions.isEmpty) {
+            logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $fqTable")
+            withConnection { (con, options) =>
+                JdbcUtils.truncateTable(con, options)
+            }
+        }
+        else {
+            ???
+        }
+    }
 
-    override def create(executor:Executor) : Unit = ???
-    override def destroy(executor:Executor) : Unit = ???
+    /**
+      * This method will physically create the corresponding relation in the target JDBC database.
+      * @param executor
+      */
+    override def create(executor:Executor) : Unit = {
+        implicit val context = executor.context
+        logger.info(s"Creating jdbc relation $name, this will create jdbc table $fqTable")
+        withConnection{ (con,options) =>
+            val df = executor.spark.createDataFrame(executor.spark.sparkContext.emptyRDD[Row], schema.sparkSchema)
+            JdbcUtils.createTable(con, df, options)
+        }
+    }
+
+    /**
+      * This method will physically destroy the corresponding relation in the target JDBC database.
+      * @param executor
+      */
+    override def destroy(executor:Executor) : Unit = {
+        implicit val context = executor.context
+        val tableName = fqTable
+        logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableName")
+        withConnection{ (con,options) =>
+            JdbcUtils.dropTable(con, tableName, options)
+        }
+    }
+
     override def migrate(executor:Executor) : Unit = ???
 
     private def createProperties(implicit context: Context) = {
@@ -111,5 +159,18 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
         logger.info("Connecting to jdbc source at {}", db.url)
 
         (db.url,props)
+    }
+
+    private def withConnection[T](fn:(Connection,JdbcOptionsInWrite) => T)(implicit context: Context) : T = {
+        val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
+        val options = new JdbcOptionsInWrite(db.url, fqTable, db.properties ++ properties)
+        val connectionFactory = JdbcUtils.createConnectionFactory(options)
+        val conn = connectionFactory()
+        try {
+            fn(conn, options)
+        }
+        finally {
+            conn.close()
+        }
     }
 }

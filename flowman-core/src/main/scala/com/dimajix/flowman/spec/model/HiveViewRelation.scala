@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class HiveViewRelation extends SchemaRelation {
+class HiveViewRelation extends BaseRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
     @JsonProperty(value="database") private var _database: String = _

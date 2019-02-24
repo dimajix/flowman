@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class NullRelation extends SchemaRelation {
+class NullRelation extends BaseRelation with SchemaRelation {
     @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
 
     def partitions(implicit context: Context) : Seq[PartitionField] = _partitions

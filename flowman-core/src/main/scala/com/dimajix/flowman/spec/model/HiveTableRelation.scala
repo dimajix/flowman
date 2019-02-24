@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,11 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
@@ -45,7 +43,7 @@ object HiveTableRelation {
 }
 
 
-class HiveTableRelation extends SchemaRelation {
+class HiveTableRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
     @JsonProperty(value = "database", required = false) private var _database: String = ""
@@ -56,32 +54,19 @@ class HiveTableRelation extends SchemaRelation {
     @JsonProperty(value = "rowFormat", required = false) private var _rowFormat: String = _
     @JsonProperty(value = "inputFormat", required = false) private var _inputFormat: String = _
     @JsonProperty(value = "outputFormat", required = false) private var _outputFormat: String = _
-    @JsonProperty(value = "partitions", required = false) private var _partitions: Seq[PartitionField] = Seq()
     @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
     @JsonProperty(value = "writer", required = false) private var _writer: String = "hive"
 
     def database(implicit context: Context): String = context.evaluate(_database)
-
     def table(implicit context: Context): String = context.evaluate(_table)
-
     def external(implicit context: Context): Boolean = context.evaluate(_external).toBoolean
-
     def location(implicit context: Context): String = context.evaluate(_location)
-
     def format(implicit context: Context): String = context.evaluate(_format)
-
     def rowFormat(implicit context: Context): String = context.evaluate(_rowFormat)
-
     def inputFormat(implicit context: Context): String = context.evaluate(_inputFormat)
-
     def outputFormat(implicit context: Context): String = context.evaluate(_outputFormat)
-
-    def partitions(implicit context: Context): Seq[PartitionField] = _partitions
-
     def properties(implicit context: Context): Map[String, String] = _properties.mapValues(context.evaluate)
-
     def writer(implicit context: Context): String = context.evaluate(_writer).toLowerCase(Locale.ROOT)
-
     def tableIdentifier(implicit context: Context): TableIdentifier = new TableIdentifier(table, Option(database))
 
     /**
@@ -97,20 +82,12 @@ class HiveTableRelation extends SchemaRelation {
         require(partitions != null)
 
         implicit val context = executor.context
-        val partitionSchema = PartitionSchema(this.partitions)
-        val tableName = if (database.nonEmpty) database + "." + table
-        else table
-        logger.info(s"Reading from Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")}")
-
-        def applyPartitionFilter(df: DataFrame, partitionName: String, partitionValue: FieldValue): DataFrame = {
-            val field = partitionSchema.get(partitionName)
-            val values = field.interpolate(partitionValue).toSeq
-            df.filter(df(partitionName).isin(values: _*))
-        }
+        val tableName = if (database.nonEmpty) database + "." + table else table
+        logger.info(s"Reading from Hive table '$tableName' using partition values $partitions")
 
         val reader = this.reader(executor)
         val tableDf = reader.table(tableName)
-        val df = partitions.foldLeft(tableDf)((df, pv) => applyPartitionFilter(df, pv._1, pv._2))
+        val df = filterPartition(tableDf, partitions)
 
         SchemaUtils.applySchema(df, schema)
     }
@@ -171,8 +148,7 @@ class HiveTableRelation extends SchemaRelation {
             outputDf.createOrReplaceTempView(tempViewName)
 
             // Insert data via SQL
-            val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE"
-            else "INTO"
+            val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
             val sql = s"INSERT $writeMode TABLE $tableName ${partitionSpec(partition)} FROM $tempViewName"
             logger.info("Inserting records via SQL: " + sql)
             spark.sql(sql).collect()
@@ -181,9 +157,7 @@ class HiveTableRelation extends SchemaRelation {
             spark.sessionState.catalog.dropTempView(tempViewName)
         }
         else {
-            // Add partition columns
-            val frame = partition.foldLeft(outputDf)((f, p) => f.withColumn(p._1, lit(p._2.value)))
-            frame.write
+            outputDf.write
                 .mode(mode)
                 .options(options)
                 .insertInto(tableName)
@@ -204,11 +178,7 @@ class HiveTableRelation extends SchemaRelation {
         val partitionSchema = PartitionSchema(partitions)
         val partitionSpec = partitionSchema.spec(partition)
         val tableName = database + "." + table
-        logger
-            .info(s"Writing to Hive table '$tableName' with partitions ${
-                partitionSchema.names
-                    .mkString(",")
-            } using direct mode")
+        logger.info(s"Writing to Hive table '$tableName' with partition values $partitionSpec using direct mode")
 
         if (_location == null || location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")

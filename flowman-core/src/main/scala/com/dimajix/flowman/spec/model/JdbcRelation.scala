@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class JdbcRelation extends BaseRelation {
+class JdbcRelation extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
-    @JsonProperty(value="connection") private var _connection: String = _
-    @JsonProperty(value="properties") private var _properties:Map[String,String] = Map()
-    @JsonProperty(value="database") private var _database: String = _
-    @JsonProperty(value="table") private var _table: String = _
+    @JsonProperty(value = "connection", required = true) private var _connection: String = _
+    @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
+    @JsonProperty(value = "database", required = true) private var _database: String = _
+    @JsonProperty(value = "table", required = true) private var _table: String = _
 
     def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
     def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
@@ -55,15 +55,15 @@ class JdbcRelation extends BaseRelation {
         implicit val context = executor.context
 
         val tableName = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
-
-        logger.info(s"Reading data from JDBC source $tableName in database $connection")
+        logger.info(s"Reading data from JDBC source $tableName in database $connection using partition values ${partitions}")
 
         // Get Connection
         val (url,props) = createProperties(context)
 
         // Connect to database
         val reader = this.reader(executor)
-        val df = reader.jdbc(url, tableName, props)
+        val tableDf = reader.jdbc(url, tableName, props)
+        val df = filterPartition(tableDf, partitions)
         SchemaUtils.applySchema(df, schema)
     }
 
@@ -82,8 +82,12 @@ class JdbcRelation extends BaseRelation {
 
         logger.info(s"Writing data to JDBC source $tableName in database $connection")
 
+        // Get Connection
         val (url,props) = createProperties(context)
-        this.writer(executor, df)
+
+        // Write partition into DataBase
+        val dfExt = addPartition(df, partition)
+        this.writer(executor, dfExt)
             .jdbc(url, tableName, props)
     }
 

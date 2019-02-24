@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.sources.local.implicits._
-import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -35,18 +34,16 @@ import com.dimajix.flowman.util.FileCollector
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class LocalRelation extends SchemaRelation {
+class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
 
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
     @JsonProperty(value="pattern") private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context:Context) : String = context.evaluate(_format)
-    def partitions : Seq[PartitionField] = _partitions
 
     /**
       * Reads data from the relation, possibly from specific partitions

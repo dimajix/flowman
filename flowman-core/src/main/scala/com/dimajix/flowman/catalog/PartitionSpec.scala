@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.catalog
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils
 
@@ -70,15 +71,28 @@ case class PartitionSpec(values:Map[String,Any]) {
       * @return
       */
     def expr(columns:Seq[String]) : String = {
-        def fieldSpec(name: String, value:Any) : String = {
-            value match {
-                case s:String => name + "='" + s + "'"
-                case ts:UtcTimestamp => name + "=" + ts.toEpochSeconds()
-                case v:Any => name + "=" + v
-            }
-        }
         val partitionValues = columns
-            .map(field => fieldSpec(field, values.getOrElse(field, throw new IllegalArgumentException(s"Column ${field} not defined"))))
+            .map(field => fieldSpec(field, values.getOrElse(field, throw new IllegalArgumentException(s"Column $field not defined"))))
         s"PARTITION(${partitionValues.mkString(",")})"
+    }
+
+    /**
+      * Returns a SQL condition to be used in a WHERE clause
+      * @return
+      */
+    def condition : String = {
+        values.map{ case (key,value) =>  fieldSpec(key,value) }.mkString(" AND ")
+    }
+
+    private def escapeSql(value: String): String = {
+        if (value == null) null
+        else StringUtils.replace(value, "'", "''")
+    }
+    private def fieldSpec(name: String, value:Any) : String = {
+        value match {
+            case s:String => name + "='" + escapeSql(s) + "'"
+            case ts:UtcTimestamp => name + "=" + ts.toEpochSeconds()
+            case v:Any => name + "=" + v
+        }
     }
 }

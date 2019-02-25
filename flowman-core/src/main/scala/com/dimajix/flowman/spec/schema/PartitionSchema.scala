@@ -16,11 +16,13 @@
 
 package com.dimajix.flowman.spec.schema
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.types._
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionSchema {
@@ -76,6 +78,30 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
       */
     def path(root:Path, partition:Map[String,SingleValue])(implicit context:Context) : Path = {
         spec(partition).path(root, names)
+    }
+
+    /**
+      * Returns an SQL condition to be used in a SQL WHERE clause that identifies the partition
+      * @param partitions
+      * @return
+      */
+    def condition(partitions: Map[String, FieldValue])(implicit context:Context) : String = {
+        def escapeSql(value: String): String = {
+            if (value == null) "NULL"
+            else StringUtils.replace(value, "'", "''")
+        }
+        def valueSql(value:Any) : String = {
+            value match {
+                case s:String => "'" + escapeSql(s) + "'"
+                case ts:UtcTimestamp => ts.toEpochSeconds().toString
+                case v:Any =>  v.toString
+            }
+        }
+        def fieldSql(field:PartitionField) : String = {
+            field.name + " IN (" + field.interpolate(partitions(field.name)).map(valueSql).mkString(",") + ")"
+        }
+
+        fields.map(fieldSql).mkString(" AND ")
     }
 
     /**

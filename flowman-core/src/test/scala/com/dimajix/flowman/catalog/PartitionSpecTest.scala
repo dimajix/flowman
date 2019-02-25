@@ -46,4 +46,13 @@ class PartitionSpecTest extends FlatSpec with Matchers {
         val partitions = Seq("p1", "p2")
         partitionSpec.path(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=123"))
     }
+
+    it should "create SQL compatible conditions" in {
+        val partitionSpec = PartitionSpec(Map(
+            "p1" -> "lala",
+            "p2" -> 123
+        ))
+
+        partitionSpec.condition should be ("p1='lala' AND p2=123")
+    }
 }

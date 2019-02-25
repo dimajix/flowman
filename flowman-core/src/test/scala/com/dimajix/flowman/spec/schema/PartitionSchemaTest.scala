@@ -79,6 +79,22 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         partitionSchema.expr(partitions) should be ("PARTITION(p1='lala',p2=123)")
     }
 
+    it should "provide an SQL condition" in {
+        val partitionColumns = Seq(
+            PartitionField("p1", StringType),
+            PartitionField("p2", IntegerType)
+        )
+        val partitionSchema = PartitionSchema(partitionColumns)
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+        val partitions = Map(
+            "p1" -> SingleValue("lala"),
+            "p2" -> ArrayValue("123", "456")
+        )
+        partitionSchema.condition(partitions) should be ("p1 IN ('lala') AND p2 IN (123,456)")
+    }
+
     it should "provide a Hive compatible path" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),

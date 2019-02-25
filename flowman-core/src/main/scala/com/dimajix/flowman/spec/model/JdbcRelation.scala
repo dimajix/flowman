@@ -17,11 +17,16 @@
 package com.dimajix.flowman.spec.model
 
 import java.sql.Connection
+import java.sql.Statement
+import java.util.Locale
 import java.util.Properties
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcOptionsInWrite
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.types.StructType
@@ -31,13 +36,13 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
+import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
-import com.dimajix.flowman.util.tryWith
 
 
-class JdbcRelation extends BaseRelation with PartitionedRelation {
+class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
     @JsonProperty(value = "connection", required = true) private var _connection: String = _
@@ -62,7 +67,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
         implicit val context = executor.context
 
         val tableName = fqTable
-        logger.info(s"Reading data from JDBC source $tableName in database $connection using partition values ${partitions}")
+        logger.info(s"Reading data from JDBC source $tableName in database $connection using partition values $partitions")
 
         // Get Connection
         val (url,props) = createProperties(context)
@@ -94,9 +99,44 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
 
         // Write partition into DataBase
         val dfExt = addPartition(df, partition)
-        this.writer(executor, dfExt)
-            .mode(mode)
-            .jdbc(url, tableName, props)
+
+        if (partitions.isEmpty) {
+            // Write partition into DataBase
+            this.writer(executor, dfExt)
+                .mode(mode)
+                .jdbc(url, tableName, props)
+        }
+        else {
+            def writePartition(): Unit = {
+                this.writer(executor, dfExt)
+                    .mode(SaveMode.Append)
+                    .jdbc(url, tableName, props)
+            }
+
+            mode.toLowerCase(Locale.ROOT) match {
+                case "overwrite" =>
+                    val partitionSchema = PartitionSchema(partitions)
+                    val condition = partitionSchema.condition(partition)
+                    val query = "DELETE FROM " + fqTable + " WHERE " + condition
+                    executeUpdate(query)
+                    writePartition()
+                case "append" =>
+                    writePartition()
+                case "ignore" =>
+                    if (!checkPartition(partition)) {
+                        writePartition()
+                    }
+                case "error" | "errorifexists" | "default" =>
+                    if (!checkPartition(partition)) {
+                        writePartition()
+                    }
+                    else {
+                        throw new PartitionAlreadyExistsException(database, table, partition.mapValues(_.value))
+                    }
+                case _ => throw new IllegalArgumentException(s"Unknown save mode: $mode. " +
+                    "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
+            }
+        }
     }
 
     /**
@@ -113,7 +153,11 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
             }
         }
         else {
-            ???
+            logger.info(s"Cleaning partitions of jdbc relation $name, this will clean jdbc table $fqTable")
+            val partitionSchema = PartitionSchema(this.partitions)
+            val condition = partitionSchema.condition(partitions)
+            val query = "DROP FROM " + fqTable + " WHERE " + condition
+            executeUpdate(query)
         }
     }
 
@@ -171,6 +215,42 @@ class JdbcRelation extends BaseRelation with PartitionedRelation {
         }
         finally {
             conn.close()
+        }
+    }
+
+    private def withStatement[T](fn:(Statement,JdbcOptionsInWrite) => T)(implicit context: Context) : T = {
+        withConnection { (con, options) =>
+            val statement = con.createStatement()
+            try {
+                statement.setQueryTimeout(options.queryTimeout)
+                fn(statement, options)
+            }
+            finally {
+                statement.close()
+            }
+        }
+    }
+
+
+    private def executeUpdate(query:String)(implicit context: Context) : Unit = {
+        logger.debug(s"Executing SQL statement $query")
+        withStatement { (statement, _) =>
+            statement.executeUpdate(query)
+        }
+    }
+
+    private def checkPartition(partition:Map[String,SingleValue])(implicit context: Context) : Boolean = {
+        val partitionSchema = PartitionSchema(this.partitions)
+        val condition = partitionSchema.condition(partition)
+        val query = "SELECT * FROM " + fqTable + " WHERE " + condition + " LIMIT 1"
+        withStatement{ (statement, _) =>
+            val result = statement.executeQuery(query)
+            try {
+                result.next()
+            }
+            finally {
+                result.close()
+            }
         }
     }
 }

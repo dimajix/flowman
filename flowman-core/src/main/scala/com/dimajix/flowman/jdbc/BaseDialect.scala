@@ -113,7 +113,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         }.mkString(",\n")
         val createTableOptions = ""
 
-        s"CREATE TABLE $table ($strSchema) $createTableOptions"
+        s"CREATE TABLE ${dialect.quote(table.identifier)} ($strSchema) $createTableOptions"
     }
 
     override def tableExists(table: TableIdentifier) : String = {
@@ -127,7 +127,7 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
     }
 
     override def eq(column: String, value: Any): String = {
-        column + " = " + dialect.literal(value)
+        column + "=" + dialect.literal(value)
     }
 
     override def partition(partition: PartitionSpec): String = {

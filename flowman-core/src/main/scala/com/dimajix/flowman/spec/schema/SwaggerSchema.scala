@@ -91,7 +91,7 @@ class SwaggerSchema extends ExternalSchema {
 
         CachedSchema(
             fromSwaggerModel(model),
-            swagger.getInfo.getDescription
+            Option(swagger.getInfo).map(_.getDescription).orNull
         )
     }
 

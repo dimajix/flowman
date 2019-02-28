@@ -40,6 +40,7 @@ object SqlDialects {
     private[this] var dialects = List[SqlDialect]()
 
     registerDialect(HiveDialect)
+    registerDialect(DerbyDialect)
 
     /**
       * Fetch the JdbcDialect class corresponding to a given database url.

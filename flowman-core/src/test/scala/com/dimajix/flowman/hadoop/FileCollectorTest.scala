@@ -19,6 +19,7 @@ package com.dimajix.flowman.hadoop
 import java.time.Month
 
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
@@ -31,7 +32,7 @@ import com.dimajix.flowman.util.UtcTimestamp
 
 class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     var hadoopConf:org.apache.hadoop.conf.Configuration = _
-    var fileSystem: FileSystem = _
+    var fileSystem: HadoopFileSystem = _
     var workingDirectory:Path = _
 
     override def beforeAll: Unit = {

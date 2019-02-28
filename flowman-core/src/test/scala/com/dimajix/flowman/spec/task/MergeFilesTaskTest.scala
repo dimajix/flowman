@@ -23,7 +23,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.fs.FileSystem
+import com.dimajix.flowman.hadoop.FileSystem
 
 
 class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {

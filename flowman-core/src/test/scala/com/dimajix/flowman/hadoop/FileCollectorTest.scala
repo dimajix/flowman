@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.util
+package com.dimajix.flowman.hadoop
 
 import java.time.Month
 
-import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.TimestampType
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {

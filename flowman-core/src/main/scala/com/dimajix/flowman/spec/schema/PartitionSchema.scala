@@ -62,49 +62,6 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
     }
 
     /**
-      * Creates a SQL PARTITION expression
-      * @param partition
-      * @return
-      */
-    def expr(partition:Map[String,SingleValue])(implicit context:Context) : String = {
-        spec(partition).expr(names)
-    }
-
-    /**
-      * Returns a Hadoop path constructed from the partition values
-      * @param root
-      * @param partition
-      * @return
-      */
-    def path(root:Path, partition:Map[String,SingleValue])(implicit context:Context) : Path = {
-        spec(partition).path(root, names)
-    }
-
-    /**
-      * Returns an SQL condition to be used in a SQL WHERE clause that identifies the partition
-      * @param partitions
-      * @return
-      */
-    def condition(partitions: Map[String, FieldValue])(implicit context:Context) : String = {
-        def escapeSql(value: String): String = {
-            if (value == null) "NULL"
-            else StringUtils.replace(value, "'", "''")
-        }
-        def valueSql(value:Any) : String = {
-            value match {
-                case s:String => "'" + escapeSql(s) + "'"
-                case ts:UtcTimestamp => ts.toEpochSeconds().toString
-                case v:Any =>  v.toString
-            }
-        }
-        def fieldSql(field:PartitionField) : String = {
-            field.name + " IN (" + field.interpolate(partitions(field.name)).map(valueSql).mkString(",") + ")"
-        }
-
-        fields.map(fieldSql).mkString(" AND ")
-    }
-
-    /**
       * Interpolates the given map of partition values to a map of interpolates values
       * @param partitions
       * @param context

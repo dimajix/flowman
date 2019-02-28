@@ -25,7 +25,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.FileSystem
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.fs
+package com.dimajix.flowman.hadoop
 
 import java.net.URI
 
@@ -27,7 +27,6 @@ import org.apache.hadoop.fs.Path
   * @param conf
   */
 case class FileSystem(conf:Configuration) {
-    private val remoteFs = org.apache.hadoop.fs.FileSystem.get(conf)
     private val localFs = org.apache.hadoop.fs.FileSystem.getLocal(conf)
 
     def file(path:Path) : File = File(path.getFileSystem(conf), path)

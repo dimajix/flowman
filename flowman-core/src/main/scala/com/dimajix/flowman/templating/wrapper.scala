@@ -22,7 +22,7 @@ import java.time.Period
 import java.time.ZoneOffset
 import java.time.temporal.Temporal
 
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.util.UtcTimestamp
 
 case class FileWrapper(file:File) {

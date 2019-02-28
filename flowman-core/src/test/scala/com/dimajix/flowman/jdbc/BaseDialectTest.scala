@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.catalog
+package com.dimajix.flowman.jdbc
 
-import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.schema.PartitionField
-import com.dimajix.flowman.spec.schema.PartitionSchema
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.catalog.PartitionSpec
 
-class PartitionSpecTest extends FlatSpec with Matchers {
-    "The PartitionSpec" should "provide a Hive compatible path" in {
+class BaseDialectTest extends FlatSpec with Matchers {
+    "The BaseDialect" should "create PARTITION spects" in {
+        val dialect = NoopDialect
         val partitionSpec = PartitionSpec(Map(
             "p1" -> "lala",
-            "p2" -> 123
+            "p2" -> 12
         ))
+        dialect.expr.partition(partitionSpec) should be ("PARTITION(p1='lala',p2=12)")
+    }
 
-        val partitions = Seq("p1", "p2")
-        partitionSpec.path(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=123"))
+    it should "provide appropriate IN expression" in {
+        val dialect = NoopDialect
+        dialect.expr.in("col", Seq()) should be ("col IN ()")
+        dialect.expr.in("col", Seq(1)) should be ("col IN (1)")
+        dialect.expr.in("col", Seq(1,7)) should be ("col IN (1,7)")
+        dialect.expr.in("col", Seq("left","right")) should be ("col IN ('left','right')")
     }
 }

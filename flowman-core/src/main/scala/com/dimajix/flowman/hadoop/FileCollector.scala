@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.util
+package com.dimajix.flowman.hadoop
 
 import java.io.StringWriter
 
@@ -22,7 +22,7 @@ import scala.math.Ordering
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
-import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
@@ -150,7 +150,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @tparam T
       * @return
       */
-    def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(FileSystem,Path) => Iterable[T]) : Seq[T] = {
+    def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Seq[T] = {
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
         if (_pattern == null)
@@ -167,7 +167,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @tparam T
       * @return
       */
-    def map[T](partitions:Iterable[PartitionSpec])(fn:(FileSystem,Path) => T) : Seq[T] = {
+    def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Seq[T] = {
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
         if (_pattern == null)
@@ -177,7 +177,7 @@ class FileCollector(hadoopConf:Configuration) {
         partitions.map(p => fn(fs, resolve(p))).toSeq
     }
 
-    def map[T](fn:(FileSystem,Path) => T) : T = {
+    def map[T](fn:(HadoopFileSystem,Path) => T) : T = {
         if (_path == null || _path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting files")
 
@@ -186,15 +186,15 @@ class FileCollector(hadoopConf:Configuration) {
         fn(fs,curPath)
     }
 
-    def foreach(partitions:Iterable[PartitionSpec])(fn:(FileSystem,Path) => Unit) : Unit = {
+    def foreach(partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Unit) : Unit = {
         map(partitions)(fn)
     }
 
-    def foreach(fn:(FileSystem,Path) => Unit) : Unit = {
+    def foreach(fn:(HadoopFileSystem,Path) => Unit) : Unit = {
         map(fn)
     }
 
-    private def deletePath(fs:FileSystem, path:Path) : Unit = {
+    private def deletePath(fs:HadoopFileSystem, path:Path) : Unit = {
         if (fs.isDirectory(path)) {
             logger.info(s"Deleting directory $path")
             fs.delete(path, true)
@@ -208,7 +208,7 @@ class FileCollector(hadoopConf:Configuration) {
     }
 
 
-    private def collectPath(fs:FileSystem, path:Path) : Seq[Path] = {
+    private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
         if (fs.isDirectory(path)) {
             // If path is a directory, simply list all files
             logger.info(s"Collecting files in directory $path")

@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping

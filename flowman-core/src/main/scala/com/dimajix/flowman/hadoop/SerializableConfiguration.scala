@@ -1,4 +1,4 @@
-package com.dimajix.flowman.util
+package com.dimajix.flowman.hadoop
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more

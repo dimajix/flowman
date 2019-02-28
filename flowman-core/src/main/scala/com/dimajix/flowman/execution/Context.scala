@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
 
-import com.dimajix.flowman.fs.FileSystem
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier

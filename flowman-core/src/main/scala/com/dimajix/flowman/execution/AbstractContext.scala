@@ -25,7 +25,7 @@ import org.apache.spark.SparkConf
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
-import com.dimajix.flowman.fs.FileSystem
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.templating.Velocity

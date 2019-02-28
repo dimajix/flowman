@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.schema
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.AvroSchemaUtils
-import com.dimajix.flowman.types.Field
 
 
 /**
@@ -30,30 +30,12 @@ class AvroSchema extends ExternalSchema {
       * @param context
       * @return
       */
-    protected override def loadDescription(implicit context: Context): String = {
-        avroSchema.getDoc
+    protected override def loadSchema(implicit context: Context): CachedSchema = {
+        val spec = loadSchemaSpec
+        val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
+        CachedSchema(
+            AvroSchemaUtils.fromAvro(avroSchema),
+            avroSchema.getDoc
+        )
     }
-
-    /**
-      * Returns the list of all fields of the schema
-      * @param context
-      * @return
-      */
-    protected override def loadFields(implicit context: Context): Seq[Field] = {
-        AvroSchemaUtils.fromAvro(avroSchema)
-    }
-
-    /**
-      * Load and cache Avro schema from external source
-      * @param context
-      * @return
-      */
-    private def avroSchema(implicit context: Context) : org.apache.avro.Schema = {
-        if (cachedAvroSchema == null) {
-            val spec = loadSchemaSpec
-            cachedAvroSchema = new org.apache.avro.Schema.Parser().parse(spec)
-        }
-        cachedAvroSchema
-    }
-    private var cachedAvroSchema : org.apache.avro.Schema = _
 }

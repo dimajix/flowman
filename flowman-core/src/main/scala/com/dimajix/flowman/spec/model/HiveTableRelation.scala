@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
@@ -82,11 +83,10 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         require(partitions != null)
 
         implicit val context = executor.context
-        val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Reading from Hive table '$tableName' using partition values $partitions")
+        logger.info(s"Reading from Hive table $tableIdentifier using partition values $partitions")
 
         val reader = this.reader(executor)
-        val tableDf = reader.table(tableName)
+        val tableDf = reader.table(tableIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
 
         SchemaUtils.applySchema(df, schema)
@@ -124,8 +124,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
     private def writeHive(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
-        val tableName = database + "." + table
-        logger.info(s"Writing to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Writing to Hive table $tableIdentifier with partitions ${partitionNames.mkString(",")}")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(df)
@@ -149,7 +148,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
 
             // Insert data via SQL
             val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
-            val sql = s"INSERT $writeMode TABLE $tableName ${partitionSpec(partition)} FROM $tempViewName"
+            val sql = s"INSERT $writeMode TABLE $tableIdentifier ${partitionSpec(partition)} FROM $tempViewName"
             logger.info("Inserting records via SQL: " + sql)
             spark.sql(sql).collect()
 
@@ -160,7 +159,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
             outputDf.write
                 .mode(mode)
                 .options(options)
-                .insertInto(tableName)
+                .insertInto(tableIdentifier.unquotedString)
         }
     }
 
@@ -177,8 +176,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         implicit val context = executor.context
         val partitionSchema = PartitionSchema(partitions)
         val partitionSpec = partitionSchema.spec(partition)
-        val tableName = database + "." + table
-        logger.info(s"Writing to Hive table '$tableName' with partition values $partitionSpec using direct mode")
+        logger.info(s"Writing to Hive table $tableIdentifier with partition values $partitionSpec using direct mode")
 
         if (_location == null || location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -215,9 +213,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         require(partitions != null)
 
         implicit val context = executor.context
-        val tableName = if (database.nonEmpty) database + "." + table
-        else table
-        logger.info(s"Cleaning Hive relation '$name' with table $tableName")
+        logger.info(s"Cleaning Hive relation '$name' with table $tableIdentifier")
 
         val catalog = executor.catalog
         if (partitions.nonEmpty) {
@@ -305,9 +301,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         require(executor != null)
 
         implicit val context = executor.context
-        val tableName = if (database.nonEmpty) database + "." + table
-        else table
-        logger.info(s"Destroying Hive relation '$name' with table '$tableName'")
+        logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
 
         val catalog = executor.catalog
         catalog.dropTable(tableIdentifier)
@@ -338,7 +332,14 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         false
     }
 
+    /**
+      * Creates a SQL PARTITION expression
+      * @param partition
+      * @return
+      */
     private def partitionSpec(partition: Map[String, SingleValue])(implicit context: Context): String = {
-        PartitionSchema(partitions).expr(partition)
+        val schema = PartitionSchema(partitions)
+        val spec = schema.spec(partition)
+        HiveDialect.expr.partition(spec)
     }
 }

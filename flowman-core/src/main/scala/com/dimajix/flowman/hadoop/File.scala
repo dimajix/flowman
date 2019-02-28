@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.fs
+package com.dimajix.flowman.hadoop
 
 import java.io.IOException
 

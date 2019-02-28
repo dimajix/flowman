@@ -22,21 +22,24 @@ import java.util.Locale
 import java.util.Properties
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcOptionsInWrite
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.jdbc.SqlDialect
+import com.dimajix.flowman.jdbc.SqlDialects
+import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
-import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
@@ -56,6 +59,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     def table(implicit context:Context) : String = context.evaluate(_table)
 
     def fqTable(implicit context:Context) : String = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
+    def tableIdentifier(implicit context: Context) : TableIdentifier = TableIdentifier(table, Option(database))
 
     /**
       * Reads the configured table from the source
@@ -66,15 +70,14 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         implicit val context = executor.context
 
-        val tableName = fqTable
-        logger.info(s"Reading data from JDBC source $tableName in database $connection using partition values $partitions")
+        logger.info(s"Reading data from JDBC source $tableIdentifier in database $connection using partition values $partitions")
 
         // Get Connection
         val (url,props) = createProperties(context)
 
         // Connect to database
         val reader = this.reader(executor)
-        val tableDf = reader.jdbc(url, tableName, props)
+        val tableDf = reader.jdbc(url, tableIdentifier.unquotedString, props)
         val df = filterPartition(tableDf, partitions)
         SchemaUtils.applySchema(df, schema)
     }
@@ -91,11 +94,11 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         implicit val context = executor.context
 
         val connection = this.connection
-        val tableName = fqTable
-        logger.info(s"Writing data to JDBC source $tableName in database $connection")
+        logger.info(s"Writing data to JDBC source $tableIdentifier in database $connection")
 
         // Get Connection
         val (url,props) = createProperties(context)
+        val dialect = SqlDialects.get(url)
 
         // Write partition into DataBase
         val dfExt = addPartition(df, partition)
@@ -104,21 +107,22 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
             // Write partition into DataBase
             this.writer(executor, dfExt)
                 .mode(mode)
-                .jdbc(url, tableName, props)
+                .jdbc(url, tableIdentifier.unquotedString, props)
         }
         else {
             def writePartition(): Unit = {
                 this.writer(executor, dfExt)
                     .mode(SaveMode.Append)
-                    .jdbc(url, tableName, props)
+                    .jdbc(url, tableIdentifier.unquotedString, props)
             }
 
             mode.toLowerCase(Locale.ROOT) match {
                 case "overwrite" =>
-                    val partitionSchema = PartitionSchema(partitions)
-                    val condition = partitionSchema.condition(partition)
-                    val query = "DELETE FROM " + fqTable + " WHERE " + condition
-                    executeUpdate(query)
+                    withStatement { (statement, _) =>
+                        val condition = partitionCondition(dialect, partition)
+                        val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
+                        statement.executeUpdate(query)
+                    }
                     writePartition()
                 case "append" =>
                     writePartition()
@@ -147,17 +151,19 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         implicit val context = executor.context
         if (partitions.isEmpty) {
-            logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $fqTable")
+            logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $tableIdentifier")
             withConnection { (con, options) =>
-                JdbcUtils.truncateTable(con, options)
+                JdbcUtils.truncateTable(con, tableIdentifier, options)
             }
         }
         else {
-            logger.info(s"Cleaning partitions of jdbc relation $name, this will clean jdbc table $fqTable")
-            val partitionSchema = PartitionSchema(this.partitions)
-            val condition = partitionSchema.condition(partitions)
-            val query = "DROP FROM " + fqTable + " WHERE " + condition
-            executeUpdate(query)
+            logger.info(s"Cleaning partitions of jdbc relation $name, this will clean jdbc table $tableIdentifier")
+            withStatement { (statement, options) =>
+                val dialect = SqlDialects.get(options.url)
+                val condition = partitionCondition(dialect, partitions)
+                val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
+                statement.executeUpdate(query)
+            }
         }
     }
 
@@ -167,10 +173,15 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
       */
     override def create(executor:Executor) : Unit = {
         implicit val context = executor.context
-        logger.info(s"Creating jdbc relation $name, this will create jdbc table $fqTable")
+        logger.info(s"Creating jdbc relation $name, this will create jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
-            val df = executor.spark.createDataFrame(executor.spark.sparkContext.emptyRDD[Row], schema.sparkSchema)
-            JdbcUtils.createTable(con, df, options)
+            val table = TableDefinition(
+                tableIdentifier,
+                schema.fields,
+                schema.description,
+                schema.primaryKey
+            )
+            JdbcUtils.createTable(con, table, options)
         }
     }
 
@@ -180,10 +191,9 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
       */
     override def destroy(executor:Executor) : Unit = {
         implicit val context = executor.context
-        val tableName = fqTable
-        logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableName")
+        logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
-            JdbcUtils.dropTable(con, tableName, options)
+            JdbcUtils.dropTable(con, tableIdentifier, options)
         }
     }
 
@@ -207,9 +217,8 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
 
     private def withConnection[T](fn:(Connection,JdbcOptionsInWrite) => T)(implicit context: Context) : T = {
         val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
-        val options = new JdbcOptionsInWrite(db.url, fqTable, db.properties ++ properties)
-        val connectionFactory = JdbcUtils.createConnectionFactory(options)
-        val conn = connectionFactory()
+        val options = new JdbcOptionsInWrite(db.url, tableIdentifier.unquotedString, db.properties ++ properties)
+        val conn = JdbcUtils.createConnection(options)
         try {
             fn(conn, options)
         }
@@ -231,19 +240,11 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         }
     }
 
-
-    private def executeUpdate(query:String)(implicit context: Context) : Unit = {
-        logger.debug(s"Executing SQL statement $query")
-        withStatement { (statement, _) =>
-            statement.executeUpdate(query)
-        }
-    }
-
     private def checkPartition(partition:Map[String,SingleValue])(implicit context: Context) : Boolean = {
-        val partitionSchema = PartitionSchema(this.partitions)
-        val condition = partitionSchema.condition(partition)
-        val query = "SELECT * FROM " + fqTable + " WHERE " + condition + " LIMIT 1"
-        withStatement{ (statement, _) =>
+        withStatement{ (statement, options) =>
+            val dialect = SqlDialects.get(options.url)
+            val condition = partitionCondition(dialect, partition)
+            val query = "SELECT * FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition + " LIMIT 1"
             val result = statement.executeQuery(query)
             try {
                 result.next()
@@ -252,5 +253,12 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
                 result.close()
             }
         }
+    }
+
+    private def partitionCondition(dialect:SqlDialect, partitions: Map[String, FieldValue])(implicit context: Context) : String = {
+        this.partitions.map(field =>
+            dialect.expr.in(field.name, field.interpolate(partitions(field.name)))
+        )
+        .mkString(" AND ")
     }
 }

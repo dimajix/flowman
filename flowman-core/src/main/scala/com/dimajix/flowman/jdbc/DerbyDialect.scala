@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.jdbc
 
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.types.BooleanType
@@ -27,7 +28,17 @@ import com.dimajix.flowman.types.StringType
 
 
 object DerbyDialect extends BaseDialect {
+    private object Statements extends DerbyStatements(this)
+
     override def canHandle(url: String): Boolean = url.startsWith("jdbc:derby")
+
+    /**
+      * Quotes the identifier. This is used to put quotes around the identifier in case the column
+      * name is a reserved keyword, or in case it contains characters that require quotes (e.g. space).
+      */
+    override def quoteIdentifier(colName: String): String = {
+        s"""$colName"""
+    }
 
     override def getJdbcType(dt: FieldType): Option[JdbcType] = dt match {
         case StringType => Option(JdbcType("CLOB", java.sql.Types.CLOB))
@@ -40,4 +51,12 @@ object DerbyDialect extends BaseDialect {
         case _ => super.getJdbcType(dt)
     }
 
+    override def statement : SqlStatements = Statements
+}
+
+
+class DerbyStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
+    override def firstRow(table: TableIdentifier, condition:String) : String = {
+        s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
+    }
 }

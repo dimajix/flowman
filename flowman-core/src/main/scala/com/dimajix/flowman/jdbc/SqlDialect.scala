@@ -44,10 +44,25 @@ abstract class SqlDialect {
       */
     def quoteIdentifier(colName: String): String
 
+    /**
+      * Quotes a table name including the optional database prefix
+      * @param table
+      * @return
+      */
     def quote(table:TableIdentifier) : String
 
+    /**
+      * Escapes a String literal to be used in SQL statements
+      * @param value
+      * @return
+      */
     def escape(value: String): String
 
+    /**
+      * Creates an SQL literal from a given value
+      * @param value
+      * @return
+      */
     def literal(value:Any) : String
 
     def statement : SqlStatements

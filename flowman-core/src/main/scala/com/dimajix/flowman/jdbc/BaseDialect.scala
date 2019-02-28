@@ -74,6 +74,11 @@ abstract class BaseDialect extends SqlDialect {
         s""""$colName""""
     }
 
+    /**
+      * Quotes a table name including the optional database prefix
+      * @param table
+      * @return
+      */
     override def quote(table:TableIdentifier) : String = {
         if (table.database.isDefined)
             quoteIdentifier(table.database.get) + "." + quoteIdentifier(table.table)
@@ -81,11 +86,21 @@ abstract class BaseDialect extends SqlDialect {
             quoteIdentifier(table.table)
     }
 
+    /**
+      * Escapes a String literal to be used in SQL statements
+      * @param value
+      * @return
+      */
     override def escape(value: String): String = {
         if (value == null) null
         else StringUtils.replace(value, "'", "''")
     }
 
+    /**
+      * Creates an SQL literal from a given value
+      * @param value
+      * @return
+      */
     override def literal(value:Any) : String = {
         value match {
             case s:String => "'" + escape(s) + "'"
@@ -119,7 +134,12 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     override def tableExists(table: TableIdentifier) : String = {
         s"SELECT * FROM ${dialect.quote(table)} WHERE 1=0"
     }
+
+    override def firstRow(table: TableIdentifier, condition:String) : String = {
+        s"SELECT * FROM ${dialect.quote(table)} WHERE $condition LIMIT 1"
+    }
 }
+
 
 class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
     override def in(column: String, values: Iterable[Any]): String = {

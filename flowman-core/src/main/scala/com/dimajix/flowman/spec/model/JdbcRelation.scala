@@ -23,7 +23,6 @@ import java.util.Properties
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
@@ -33,7 +32,6 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -75,8 +73,8 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         // Get Connection
         val (url,props) = createProperties(context)
 
-        // Connect to database
-        val reader = this.reader(executor)
+        // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
+        val reader = executor.spark.read.options(options)
         val tableDf = reader.jdbc(url, tableIdentifier.unquotedString, props)
         val df = filterPartition(tableDf, partitions)
         SchemaUtils.applySchema(df, schema)
@@ -103,7 +101,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         // Write partition into DataBase
         val dfExt = addPartition(df, partition)
 
-        if (partitions.isEmpty) {
+        if (partition.isEmpty) {
             // Write partition into DataBase
             this.writer(executor, dfExt)
                 .mode(mode)
@@ -177,7 +175,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         withConnection{ (con,options) =>
             val table = TableDefinition(
                 tableIdentifier,
-                schema.fields,
+                schema.fields ++ partitions.map(_.field),
                 schema.description,
                 schema.primaryKey
             )
@@ -199,12 +197,42 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
 
     override def migrate(executor:Executor) : Unit = ???
 
+    /**
+      * Creates a Spark schema from the list of fields.
+      * @param context
+      * @return
+      */
+    override protected def inputSchema(implicit context:Context) : StructType = {
+        val schema = this.schema
+        if (schema != null) {
+            StructType(schema.fields.map(_.sparkField) ++ partitions.map(_.sparkField))
+        }
+        else {
+            null
+        }
+    }
+
+    /**
+      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
+      * @param context
+      * @return
+      */
+    override protected def outputSchema(implicit context:Context) : StructType = {
+        val schema = this.schema
+        if (schema != null) {
+            StructType(schema.fields.map(_.sparkField) ++ partitions.map(_.sparkField))
+        }
+        else {
+            null
+        }
+    }
+
     private def createProperties(implicit context: Context) = {
         // Get Connection
         val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
         val props = new Properties()
-        props.setProperty("user", db.username)
-        props.setProperty("password", db.password)
+        Option(db.username).foreach(props.setProperty("user", _))
+        Option(db.password).foreach(props.setProperty("password", _))
         props.setProperty("driver", db.driver)
 
         db.properties.foreach(kv => props.setProperty(kv._1, kv._2))
@@ -241,17 +269,10 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     }
 
     private def checkPartition(partition:Map[String,SingleValue])(implicit context: Context) : Boolean = {
-        withStatement{ (statement, options) =>
+        withConnection{ (connection, options) =>
             val dialect = SqlDialects.get(options.url)
             val condition = partitionCondition(dialect, partition)
-            val query = "SELECT * FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition + " LIMIT 1"
-            val result = statement.executeQuery(query)
-            try {
-                result.next()
-            }
-            finally {
-                result.close()
-            }
+            !JdbcUtils.emptyResult(connection, tableIdentifier, condition, options)
         }
     }
 

@@ -23,4 +23,6 @@ abstract class SqlStatements {
     def create(table: TableDefinition): String
 
     def tableExists(table: TableIdentifier) : String
+
+    def firstRow(table: TableIdentifier, condition:String) : String
 }

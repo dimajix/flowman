@@ -31,6 +31,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.types.SingleValue
 
 
 class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -90,6 +91,13 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.getExecutor(project)
         val relation = project.relations("t0")
 
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
         }
@@ -98,16 +106,37 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         withDatabase(driver, url) { statement =>
             val result = statement.executeQuery("SELECT * FROM lala_001")
             val meta = result.getMetaData
-            meta.getColumnName(1) should be ("str_col")
-            meta.getColumnName(2) should be ("int_col")
+            meta.getColumnName(1) should be ("STR_COL")
+            meta.getColumnName(2) should be ("INT_COL")
             result.next() should be (false)
         }
 
-        // TODO: Write records
+        relation.read(executor, null).count() should be (0)
 
-        // TODO: Read records
+        // Write records
+        relation.write(executor, df, mode="overwrite")
+        relation.read(executor, null).count() should be (2)
 
-        // TODO: Write modes (append, overwrite, ignore, fail)
+        // Append records
+        relation.write(executor, df, mode="append")
+        relation.read(executor, null).count() should be (4)
+
+
+        // Try write records
+        relation.write(executor, df, mode="ignore")
+        relation.read(executor, null).count() should be (4)
+
+        relation.clean(executor)
+        relation.read(executor, null).count() should be (0)
+
+        relation.write(executor, df, mode="ignore")
+        relation.read(executor, null).count() should be (0)
+
+
+        // Try write records
+        an[Exception] shouldBe thrownBy(relation.write(executor, df, mode="error"))
+        relation.read(executor, null).count() should be (0)
+
 
         relation.destroy(executor)
         withDatabase(driver, url) { statement =>
@@ -115,10 +144,125 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         }
     }
 
-    // TODO: Read /Write existing table without schema
+    it should "support partitioned tables" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
 
-    // TODO: Partitioned table
-    //  * Create
-    //  * Write modes (append, overwrite, ignore, fail)
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |relations:
+               |  t0:
+               |    kind: jdbc
+               |    description: "This is a test table"
+               |    connection: c0
+               |    table: lala_001
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |        - name: p_col
+               |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        val relation = project.relations("t0")
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+
+        withDatabase(driver, url) { statement =>
+            an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
+        }
+
+        relation.create(executor)
+        withDatabase(driver, url) { statement =>
+            val result = statement.executeQuery("SELECT * FROM lala_001")
+            val meta = result.getMetaData
+            meta.getColumnName(1) should be ("STR_COL")
+            meta.getColumnName(2) should be ("INT_COL")
+            meta.getColumnName(3) should be ("P_COL")
+            result.next() should be (false)
+        }
+
+        relation.read(executor, null).count() should be (0)
+
+        // Write records
+        relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("1")))
+        relation.read(executor, null).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("1")))
+        relation.read(executor, null).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("2")))
+        relation.read(executor, null).count() should be (4)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        // Append records
+        relation.write(executor, df, mode="append", partition=Map("p_col" -> SingleValue("1")))
+        relation.read(executor, null).count() should be (6)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        // Try write records
+        relation.write(executor, df, mode="ignore", partition=Map("p_col" -> SingleValue("1")))
+        relation.read(executor, null).count() should be (6)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        // Try write records
+        relation.write(executor, df, mode="ignore", partition=Map("p_col" -> SingleValue("3")))
+        relation.read(executor, null).count() should be (8)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        // Try write records
+        an[Exception] shouldBe thrownBy(relation.write(executor, df, mode="error"))
+        relation.read(executor, null).count() should be (8)
+
+        // Clean table
+        relation.clean(executor, Map("p_col" -> SingleValue("2")))
+        relation.read(executor, null).count() should be (6)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(executor, null, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        // Clean table
+        relation.clean(executor)
+        relation.read(executor, null).count() should be (0)
+        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (0)
+        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+
+        relation.destroy(executor)
+        withDatabase(driver, url) { statement =>
+            an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
+        }
+    }
 }

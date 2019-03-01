@@ -129,7 +129,7 @@ class Catalog(val spark:SparkSession) {
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
-        catalog.getPartition(table, partition.mapValues(_.toString)) != null
+        catalog.getPartition(table, partition.mapValues(_.toString).toMap) != null
     }
 
     /**
@@ -143,7 +143,7 @@ class Catalog(val spark:SparkSession) {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         // "DESCRIBE FORMATTED training.weather_raw PARTITION(year=2005, station='x')"
-        new Path(catalog.getPartition(table, partition.mapValues(_.toString)).location)
+        new Path(catalog.getPartition(table, partition.mapValues(_.toString).toMap).location)
     }
 
     /**
@@ -171,7 +171,7 @@ class Catalog(val spark:SparkSession) {
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
         logger.info(s"Adding partition $partition to table '$table'")
-        val cmd = AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString), Some(location.toString))), false)
+        val cmd = AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString).toMap, Some(location.toString))), false)
         cmd.run(spark)
     }
 
@@ -188,10 +188,10 @@ class Catalog(val spark:SparkSession) {
         require(location != null && location.toString.nonEmpty)
 
         val cmd = if (partitionExists(table, partition)) {
-            AlterTableSetLocationCommand(table, Some(partition.mapValues(_.toString)), location.toString)
+            AlterTableSetLocationCommand(table, Some(partition.mapValues(_.toString).toMap), location.toString)
         }
         else {
-            AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString), Some(location.toString))), false)
+            AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString).toMap, Some(location.toString))), false)
         }
         cmd.run(spark)
     }
@@ -227,7 +227,7 @@ class Catalog(val spark:SparkSession) {
         require(table != null)
         require(partitions != null)
         logger.info(s"Dropping partitions $partitions of Hive table $table")
-        val cmd = new AlterTableDropPartitionCommand(table, partitions.map(_.mapValues(_.toString)), true, true, false)
+        val cmd = new AlterTableDropPartitionCommand(table, partitions.map(_.mapValues(_.toString).toMap), true, true, false)
         cmd.run(spark)
         //partitions.foreach(partition => {
         //    val p = catalog.getPartition(table, partition.mapValues(_.toString))

@@ -37,7 +37,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.SshConnection
-import com.dimajix.flowman.util.tryWith
+import com.dimajix.common.tryWith
 
 
 object SftpUploadTask {

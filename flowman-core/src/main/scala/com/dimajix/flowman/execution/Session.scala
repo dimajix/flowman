@@ -91,7 +91,8 @@ class SessionBuilder {
 
     /**
       * Adds environment variables which actually will override any variables given in specs
-      * @param env
+      * @param key
+      * @param value
       * @return
       */
     def withEnvironment(key:String,value:String) : SessionBuilder = {

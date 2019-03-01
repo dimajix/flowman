@@ -30,12 +30,12 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
+import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.state.JobInstance
 import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StringType
-import com.dimajix.flowman.util.splitSettings
 
 
 class JobParameter {

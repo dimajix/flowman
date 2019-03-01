@@ -38,6 +38,7 @@ import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
+import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
@@ -277,9 +278,11 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     }
 
     private def partitionCondition(dialect:SqlDialect, partitions: Map[String, FieldValue])(implicit context: Context) : String = {
-        this.partitions.map(field =>
-            dialect.expr.in(field.name, field.interpolate(partitions(field.name)))
-        )
+        val partitionSchema = PartitionSchema(this.partitions)
+        partitions.map { case (name, value) =>
+            val field = partitionSchema.get(name)
+            dialect.expr.in(field.name, field.interpolate(value))
+        }
         .mkString(" AND ")
     }
 }

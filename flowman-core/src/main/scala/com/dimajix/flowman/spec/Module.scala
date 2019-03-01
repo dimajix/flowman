@@ -28,7 +28,6 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.util.splitSettings
 
 
 object Module {

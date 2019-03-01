@@ -36,4 +36,14 @@ class PartitionSpecTest extends FlatSpec with Matchers {
         val partitions = Seq("p1", "p2")
         partitionSpec.path(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=123"))
     }
+
+    it should "be case insensitive" in {
+        val partitionSpec = PartitionSpec(Map(
+            "P1" -> "lala",
+            "p2" -> 123
+        ))
+
+        val partitions = Seq("p1", "P2")
+        partitionSpec.path(new Path("/lala"), partitions) should be (new Path("/lala/P1=lala/p2=123"))
+    }
 }

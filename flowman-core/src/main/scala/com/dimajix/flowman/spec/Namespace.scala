@@ -28,7 +28,6 @@ import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.state.NullStateStoreProvider
 import com.dimajix.flowman.spec.storage.Store
-import com.dimajix.flowman.util.splitSettings
 
 
 object Namespace {

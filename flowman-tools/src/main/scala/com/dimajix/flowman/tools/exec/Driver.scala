@@ -32,7 +32,7 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.plugin.PluginManager
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.util.splitSettings
+import com.dimajix.flowman.spec.splitSettings
 
 
 object Driver {

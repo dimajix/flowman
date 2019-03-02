@@ -62,7 +62,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
     it should "be readable from a range definition value" in {
         val spec =
             """
-              |startJob: "someValue"
+              |start: "someValue"
               |end: "secondValue"
             """.stripMargin
 
@@ -75,7 +75,7 @@ class ValueOrRangeTest extends FlatSpec with Matchers {
     it should "be readable from an unquoted range definition value" in {
         val spec =
             """
-              |startJob: someValue
+              |start: someValue
               |end: secondValue
             """.stripMargin
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,13 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
             }
             case JsonNodeType.ARRAY => {
                 val values = 0 until node.size map(node.get(_).asText)
-                ArrayValue(values.toArray)
+                ArrayValue(values)
             }
             case JsonNodeType.OBJECT => {
-                val start = node.get("startJob").asText
-                val end = node.get("end").asText
+                val start = Option(node.get("start")).map(_.asText)
+                    .getOrElse(throw JsonMappingException.from(jp, "Missing 'start' value for RangeValue"))
+                val end = Option(node.get("end")).map(_.asText)
+                    .getOrElse(throw JsonMappingException.from(jp, "Missing 'end' value for RangeValue"))
                 val step = Option(node.get("step")).map(_.asText).orNull
                 RangeValue(start, end, step)
             }
@@ -56,10 +58,18 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
 
 @JsonDeserialize(using=classOf[FieldValueDeserializer])
 class FieldValue
-case class SingleValue(value:String) extends FieldValue { }
-case class ArrayValue(values:Array[String]) extends FieldValue { }
-case class RangeValue(start:String, end:String, step:String=null) extends FieldValue { }
+case class SingleValue(value:String) extends FieldValue {
+    require(value != null)
+}
+case class ArrayValue(values:Seq[String]) extends FieldValue {
+    require(values != null)
+}
+case class RangeValue(start:String, end:String, step:String=null) extends FieldValue {
+    require(start != null)
+    require(end != null)
+}
 
 object ArrayValue {
-    def apply(values:String*) : ArrayValue = ArrayValue(values.toArray)
+    def apply(first: String) : ArrayValue = ArrayValue(Seq(first))
+    def apply(first: String, values:String*) : ArrayValue = ArrayValue(first +: values)
 }

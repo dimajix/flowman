@@ -53,7 +53,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
               |          p1: xyz
               |          p2: [abc, xyz]
               |          p3:
-              |            startJob: 1
+              |            start: 1
               |            end: 3
             """.stripMargin
 

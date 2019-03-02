@@ -112,6 +112,11 @@ class FileCollector(hadoopConf:Configuration) {
         flatMap(partitions)(collectPath)
     }
 
+    def collect(partition:PartitionSpec) : Seq[Path] = {
+        logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        map(partition)(collectPath)
+    }
+
     /**
       * Collects files from the configured directory. Does not perform partition resolution
       *
@@ -175,6 +180,16 @@ class FileCollector(hadoopConf:Configuration) {
 
         val fs = _path.getFileSystem(hadoopConf)
         partitions.map(p => fn(fs, resolve(p))).toSeq
+    }
+
+    def map[T](partition:PartitionSpec)(fn:(HadoopFileSystem,Path) => T) : T = {
+        if (_path == null || _path.toString.isEmpty)
+            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
+        if (_pattern == null)
+            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+
+        val fs = _path.getFileSystem(hadoopConf)
+        fn(fs, resolve(partition))
     }
 
     def map[T](fn:(HadoopFileSystem,Path) => T) : T = {

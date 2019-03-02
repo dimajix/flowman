@@ -23,6 +23,7 @@ import com.dimajix.common.MapIgnoreCase
 
 
 object PartitionSpec {
+    def apply() : PartitionSpec = new PartitionSpec(MapIgnoreCase())
     def apply(values:Seq[(String,Any)]) : PartitionSpec = new PartitionSpec(MapIgnoreCase(values))
     def apply(values:Map[String,Any]) : PartitionSpec = new PartitionSpec(MapIgnoreCase(values))
 }

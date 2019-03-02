@@ -22,11 +22,13 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.internal.SQLConf
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
@@ -60,26 +62,31 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
 
         implicit val context = executor.context
-        val inputFiles = collectFiles(executor, partitions)
+        val data = mapFiles(executor, partitions) { (partition, paths) =>
+            logger.info(s"Reading partition $partition with files $paths")
+            //if (inputFiles.isEmpty)
+            //    throw new IllegalArgumentException("No input files found")
 
-        //if (inputFiles.isEmpty)
-        //    throw new IllegalArgumentException("No input files found")
+            val pathNames = paths.map(_.toString)
+            val reader = this.reader(executor)
+                .format(format)
 
-        val reader = this.reader(executor)
-            .format(format)
+            // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
+            // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
+            // underlying format implementation
+            val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
+            val df = providingClass.newInstance() match {
+                case _: RelationProvider => reader.load(pathNames.mkString(","))
+                case _: SchemaRelationProvider => reader.load(pathNames.mkString(","))
+                case _: FileFormat => reader.load(pathNames: _*)
+                case _ => reader.load(pathNames.mkString(","))
+            }
 
-        // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
-        // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
-        // underlying format implementation
-        val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
-        val rawData = providingClass.newInstance() match {
-            case _:RelationProvider => reader.load(inputFiles.map(_.toString).mkString(","))
-            case _:SchemaRelationProvider => reader.load(inputFiles.map(_.toString).mkString(","))
-            case _:FileFormat => reader.load(inputFiles.map(_.toString): _*)
-            case _ => reader.load(inputFiles.map(_.toString).mkString(","))
+            // Add partitions values as columns
+            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, lit(p._2)))
         }
-
-        SchemaUtils.applySchema(rawData, schema)
+        val allData = data.reduce(_ union _)
+        SchemaUtils.applySchema(allData, schema)
     }
 
     private def lookupDataSource(provider: String, conf: SQLConf): Class[_] = {
@@ -186,35 +193,31 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
       * @param partitions
       * @return
       */
-    private def collectFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+    private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         implicit val context = executor.context
         if (location == null || location.isEmpty)
             throw new IllegalArgumentException("location needs to be defined for reading files")
 
-        val inputFiles =
-            if (this.partitions != null && this.partitions.nonEmpty)
-                collectPartitionedFiles(executor, partitions)
-            else
-                collectUnpartitionedFiles(executor)
-
-        // Print all files that we found
-        inputFiles.foreach(f => logger.info("Reading input file {}", f.toString))
-        inputFiles
+        if (this.partitions != null && this.partitions.nonEmpty)
+            mapPartitionedFiles(executor, partitions)(fn)
+        else
+            Seq(mapUnpartitionedFiles(executor)(fn))
     }
 
-    private def collectPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+    private def mapPartitionedFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         implicit val context = executor.context
         if (partitions == null)
             throw new NullPointerException("Partitioned data source requires partition values to be defined")
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
+        val collector = this.collector(executor)
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector(executor).collect(resolvedPartitions)
+        resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
-    private def collectUnpartitionedFiles(executor: Executor) = {
-        collector(executor).collect()
+    private def mapUnpartitionedFiles[T](executor: Executor)(fn:(PartitionSpec,Seq[Path]) => T) : T = {
+        fn(PartitionSpec(), collector(executor).collect())
     }
 
     private def collector(executor: Executor) = {

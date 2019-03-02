@@ -24,6 +24,7 @@ import scala.collection.Seq
 
 
 object MapIgnoreCase {
+    def apply[T]() : MapIgnoreCase[T] = new MapIgnoreCase[T](Map())
     def apply[T](map:Map[String,T]) : MapIgnoreCase[T] = {
         new MapIgnoreCase[T](map.map(kv => kv._1.toLowerCase(Locale.ROOT) -> (kv._1, kv._2)))
     }

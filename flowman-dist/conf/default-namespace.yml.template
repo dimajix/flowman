@@ -21,3 +21,8 @@ config:
 
 plugins:
   - flowman-example
+  - flowman-hbase
+  - flowman-aws
+  - flowman-azure
+  - flowman-kafka
+  - flowman-impala

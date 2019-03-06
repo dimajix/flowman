@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.spec.catalog.CatalogProvider
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.state.NullStateStoreProvider
@@ -44,7 +45,10 @@ object Namespace {
             namespace._monitor = monitor
             this
         }
-
+        def setCatalog(catalog: CatalogProvider) : Builder = {
+            namespace._catalog = catalog
+            this
+        }
         def setEnvironment(env:Seq[(String,String)]) : Builder = {
             namespace._environment = env.map(kv => kv._1 + "=" + kv._2)
             this
@@ -109,6 +113,7 @@ object Namespace {
 
 class Namespace {
     @JsonProperty(value="store") private var _store: Store = _
+    @JsonProperty(value="catalog") private var _catalog: CatalogProvider = _
     @JsonProperty(value="name") private var _name: String = "default"
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
@@ -128,5 +133,6 @@ class Namespace {
     def connections : Map[String,Connection] = _connections
     def projects : Seq[String] = _store.listProjects()
     def store : Store = _store
+    def catalog : CatalogProvider = _catalog
     def monitor : StateStoreProvider = _monitor
 }

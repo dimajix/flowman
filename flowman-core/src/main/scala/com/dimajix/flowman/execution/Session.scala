@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.Project
@@ -305,7 +306,15 @@ class Session private[execution](
         executor
     }
 
-    private lazy val _catalog = new Catalog(spark)
+    private lazy val _externalCatalog : ExternalCatalog = {
+        if (_namespace != null && _namespace.catalog != null) {
+            _namespace.catalog.createCatalog(this)
+        }
+        else {
+            null
+        }
+    }
+    private lazy val _catalog = new Catalog(spark, _externalCatalog)
 
 
     def monitor : StateStoreProvider = _history
@@ -345,6 +354,10 @@ class Session private[execution](
         sparkSession
     }
 
+    /**
+      * Returns a Catalog for managing Hive tables
+      * @return
+      */
     def catalog : Catalog = _catalog
 
     /**

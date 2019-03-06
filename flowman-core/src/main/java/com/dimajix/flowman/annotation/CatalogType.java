@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.catalog
+package com.dimajix.flowman.annotation;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-
-import com.dimajix.flowman.catalog.ExternalCatalog
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spi.TypeRegistry
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 
-object CatalogProvider extends TypeRegistry[CatalogProvider] {
-}
-
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
-@JsonSubTypes(value = Array())
-abstract class CatalogProvider {
-    def createCatalog(session:Session) : ExternalCatalog
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface CatalogType {
+    /**
+     * Specifies the kind of the catalog which is used in namespace specifications.
+     * @return
+     */
+    String kind();
 }

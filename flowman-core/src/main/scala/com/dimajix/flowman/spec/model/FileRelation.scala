@@ -32,6 +32,7 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -63,7 +64,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
 
         implicit val context = executor.context
         val data = mapFiles(executor, partitions) { (partition, paths) =>
-            logger.info(s"Reading partition $partition with files $paths")
+            paths.foreach(p => logger.info(s"Reading from ${HiveDialect.expr.partition(partition)} file $p"))
             //if (inputFiles.isEmpty)
             //    throw new IllegalArgumentException("No input files found")
 

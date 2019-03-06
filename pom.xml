@@ -218,6 +218,7 @@
         <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
         <module>flowman-plugins/hbase</module>
+        <module>flowman-plugins/impala</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -541,6 +542,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-kafka</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-impala</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

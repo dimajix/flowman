@@ -31,7 +31,7 @@ import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 
 
-class Catalog(val spark:SparkSession) {
+class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = null) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
@@ -45,6 +45,10 @@ class Catalog(val spark:SparkSession) {
         require(table != null)
         val cmd = CreateTableCommand(table, ignoreIfExists)
         cmd.run(spark)
+
+        if (externalCatalog != null) {
+            externalCatalog.createTable(table)
+        }
     }
 
     /**
@@ -99,6 +103,10 @@ class Catalog(val spark:SparkSession) {
             deleteLocation(location)
             val cmd = DropTableCommand(table, false, false, true)
             cmd.run(spark)
+
+            if (externalCatalog != null) {
+                externalCatalog.dropTable(catalogTable)
+            }
         }
     }
 
@@ -116,6 +124,10 @@ class Catalog(val spark:SparkSession) {
 
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
             dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.parameters)))
+        }
+
+        if (externalCatalog != null) {
+            externalCatalog.truncateTable(catalogTable)
         }
     }
 
@@ -171,8 +183,15 @@ class Catalog(val spark:SparkSession) {
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
         logger.info(s"Adding partition $partition to table '$table'")
-        val cmd = AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString).toMap, Some(location.toString))), false)
+        val sparkPartition = partition.mapValues(_.toString).toMap
+        val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
         cmd.run(spark)
+
+        if (externalCatalog != null) {
+            val catalogTable = catalog.getTableMetadata(table)
+            val catalogPartition = catalog.getPartition(table, sparkPartition)
+            externalCatalog.addPartition(catalogTable, catalogPartition)
+        }
     }
 
     /**
@@ -187,13 +206,27 @@ class Catalog(val spark:SparkSession) {
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
 
-        val cmd = if (partitionExists(table, partition)) {
-            AlterTableSetLocationCommand(table, Some(partition.mapValues(_.toString).toMap), location.toString)
+        val sparkPartition = partition.mapValues(_.toString).toMap
+        if (partitionExists(table, partition)) {
+            val cmd = AlterTableSetLocationCommand(table, Some(sparkPartition), location.toString)
+            cmd.run(spark)
+
+            if (externalCatalog != null) {
+                val catalogTable = catalog.getTableMetadata(table)
+                val catalogPartition = catalog.getPartition(table, sparkPartition)
+                externalCatalog.alterPartition(catalogTable, catalogPartition)
+            }
         }
         else {
-            AlterTableAddPartitionCommand(table, Seq((partition.mapValues(_.toString).toMap, Some(location.toString))), false)
+            val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
+            cmd.run(spark)
+
+            if (externalCatalog != null) {
+                val catalogTable = catalog.getTableMetadata(table)
+                val catalogPartition = catalog.getPartition(table, sparkPartition)
+                externalCatalog.addPartition(catalogTable, catalogPartition)
+            }
         }
-        cmd.run(spark)
     }
 
     /**
@@ -205,9 +238,17 @@ class Catalog(val spark:SparkSession) {
     def truncatePartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
+
         logger.info(s"Truncating partition $partition of Hive table $table")
         val location = getPartitionLocation(table, partition)
         truncateLocation(location)
+
+        if (externalCatalog != null) {
+            val sparkPartition = partition.mapValues(_.toString).toMap
+            val catalogTable = catalog.getTableMetadata(table)
+            val catalogPartition = catalog.getPartition(table, sparkPartition)
+            externalCatalog.truncatePartition(catalogTable, catalogPartition)
+        }
     }
 
     /**
@@ -226,9 +267,11 @@ class Catalog(val spark:SparkSession) {
     def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec]) : Unit = {
         require(table != null)
         require(partitions != null)
+
         logger.info(s"Dropping partitions $partitions of Hive table $table")
         val cmd = new AlterTableDropPartitionCommand(table, partitions.map(_.mapValues(_.toString).toMap), true, true, false)
         cmd.run(spark)
+
         //partitions.foreach(partition => {
         //    val p = catalog.getPartition(table, partition.mapValues(_.toString))
         //    if (p != null) {
@@ -236,6 +279,15 @@ class Catalog(val spark:SparkSession) {
         //        deleteLocation(location)
         //    }
         //}
+
+        if (externalCatalog != null) {
+            val catalogTable = catalog.getTableMetadata(table)
+            partitions.foreach { partition =>
+                val sparkPartition = partition.mapValues(_.toString).toMap
+                val catalogPartition = catalog.getPartition(table, sparkPartition)
+                externalCatalog.dropPartition(catalogTable, catalogPartition)
+            }
+        }
     }
 
     private def truncateLocation(location:Path): Unit = {

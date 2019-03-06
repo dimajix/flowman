@@ -19,40 +19,23 @@ package com.dimajix.flowman.spec.schema
 import org.apache.spark.sql.types.DataType
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.SchemaConverter
 
 
 class SparkSchema extends ExternalSchema {
-    /**
-      * Returns the description of the schema
-      * @param context
-      * @return
-      */
-    protected override def loadDescription(implicit context: Context): String = {
-        ""
-    }
-
     /**
       * Returns the list of all fields of the schema
       * @param context
       * @return
       */
-    protected override def loadFields(implicit context: Context): Seq[Field] = {
-        Field.of(sprkSchema)
-    }
+    protected override def loadSchema(implicit context: Context): CachedSchema = {
+        val json = loadSchemaSpec(context)
+        val sparkSchema = DataType.fromJson(json).asInstanceOf[org.apache.spark.sql.types.StructType]
 
-    /**
-      * Load and cache Spark schema from external source
-      * @param context
-      * @return
-      */
-    private def sprkSchema(implicit context: Context) : org.apache.spark.sql.types.StructType = {
-        if (cachedSparkSchema == null) {
-            val json = loadSchemaSpec(context)
-            cachedSparkSchema = DataType.fromJson(json).asInstanceOf[org.apache.spark.sql.types.StructType]
-        }
-        cachedSparkSchema
+        CachedSchema(
+            Field.of(sparkSchema),
+            ""
+        )
     }
-    private var cachedSparkSchema : org.apache.spark.sql.types.StructType = _
 }

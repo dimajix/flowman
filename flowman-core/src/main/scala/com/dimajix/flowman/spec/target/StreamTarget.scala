@@ -34,7 +34,7 @@ class StreamTarget extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
     private lazy val ts =  System.currentTimeMillis()
 
-    @JsonProperty(value="relatiom", required=true) private var _relation:String = _
+    @JsonProperty(value="relation", required=true) private var _relation:String = _
     @JsonProperty(value="mode", required=false) private var _mode:String = OutputMode.Update().toString
     @JsonProperty(value="checkpointLocation", required=false) private var _checkpointLocation:String = _
     @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"

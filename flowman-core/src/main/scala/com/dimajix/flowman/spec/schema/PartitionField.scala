@@ -59,6 +59,8 @@ class PartitionField {
     def description(implicit context: Context) : String = context.evaluate(_description)
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
 
+    def field(implicit context: Context) : Field = Field(name, ftype, false, description)
+
     def sparkType : DataType = _type.sparkType
     def sparkField : StructField = StructField(name, sparkType, false)
 

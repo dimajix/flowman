@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.state.TargetInstance
 
 
 abstract class BaseTarget extends Target {
@@ -29,6 +30,19 @@ abstract class BaseTarget extends Target {
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
 
     override def enabled(implicit context:Context) : Boolean = if (_enabled != null) context.evaluate(_enabled).toBoolean else true
+
+    /**
+      * Returns an instance representing this target with the context
+      * @param context
+      * @return
+      */
+    override def instance(implicit context: Context) : TargetInstance = {
+        TargetInstance(
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
+            name
+        )
+    }
 
     /**
       * Returns the dependencies of this mapping, which is exactly one input table

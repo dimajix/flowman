@@ -16,11 +16,16 @@
 
 package com.dimajix.flowman.spec.schema
 
+import java.util.Locale
+
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.types._
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionSchema {
@@ -34,7 +39,7 @@ object PartitionSchema {
   * @param fields
   */
 class PartitionSchema(val fields:Seq[PartitionField]) {
-    private val partitionsByName = fields.map(p => (p.name, p)).toMap
+    private val partitionsByName = MapIgnoreCase(fields.map(p => (p.name, p)))
 
     /**
       * Returns the list of partition names
@@ -42,6 +47,11 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
       */
     def names : Seq[String] = fields.map(_.name)
 
+    /**
+      * Returns a partition field with the specified name. Note that the case (upper/lower) is ignored
+      * @param name
+      * @return
+      */
     def get(name:String) : PartitionField = {
         partitionsByName.getOrElse(name, throw new IllegalArgumentException(s"Partition $name not defined"))
     }
@@ -52,30 +62,11 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
       * @return
       */
     def spec(partition:Map[String,SingleValue])(implicit context:Context) : PartitionSpec = {
-        val map = fields
-            .map(field => (field, partition.getOrElse(field.name, throw new IllegalArgumentException(s"Missing value for partition '${field.name}'")).value))
-            .map{ case (field,value) => (field.name, field.parse(value)) }
-            .toMap
+        val map = partition.map { case (name,value) =>
+                val field = get(name)
+                field.name -> field.parse(value.value)
+            }
         PartitionSpec(map)
-    }
-
-    /**
-      * Creates a SQL PARTITION expression
-      * @param partition
-      * @return
-      */
-    def expr(partition:Map[String,SingleValue])(implicit context:Context) : String = {
-        spec(partition).expr(names)
-    }
-
-    /**
-      * Returns a Hadoop path constructed from the partition values
-      * @param root
-      * @param partition
-      * @return
-      */
-    def path(root:Path, partition:Map[String,SingleValue])(implicit context:Context) : Path = {
-        spec(partition).path(root, names)
     }
 
     /**
@@ -85,14 +76,20 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
       * @return
       */
     def interpolate(partitions: Map[String, FieldValue])(implicit context:Context) : Iterable[PartitionSpec] = {
-        val values = fields.map { field =>
-            field.name -> field.interpolate(partitions(field.name))
-        }
+        val values = partitions.map { case (name,value) =>
+                val field = get(name)
+                field.name -> field.interpolate(value)
+            }
+            .toSeq
 
         def recurse(head:Seq[(String,Any)], tail:Seq[(String,Iterable[Any])]) : Iterable[PartitionSpec] = {
-            tail match {
-                case th :: tt => th._2.flatMap(elem => recurse(head :+ (th._1, elem), tt))
-                case Seq() => Some(PartitionSpec(head.toMap))
+            if (tail.nonEmpty) {
+                val th = tail.head
+                val tt = tail.tail
+                th._2.flatMap(elem => recurse(head :+ (th._1, elem), tt))
+            }
+            else {
+                Some(PartitionSpec(head.toMap))
             }
         }
 

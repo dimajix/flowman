@@ -35,8 +35,8 @@ object JdbcConnection {
 
 
 class JdbcConnection extends Connection  {
-    @JsonProperty(value="driver", required=true) private var _driver:String = _
-    @JsonProperty(value="url", required=true) private var _url:String = _
+    @JsonProperty(value="driver", required=true) private var _driver:String = ""
+    @JsonProperty(value="url", required=true) private var _url:String = ""
     @JsonProperty(value="username", required=false) private var _username:String = _
     @JsonProperty(value="password", required=false) private var _password:String = _
     @JsonProperty(value="properties", required=false) private var _properties:Map[String,String] = Map()

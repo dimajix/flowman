@@ -24,9 +24,18 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field
 
+
+object ExternalSchema {
+    case class CachedSchema(
+        fields:Seq[Field],
+        description: String,
+        primaryKey: Seq[String] = Seq()
+    )
+}
 
 /**
   * Helper class for external schemas which are stored in files or at URLs
@@ -46,12 +55,8 @@ abstract class ExternalSchema extends Schema {
       * @return
       */
     override def description(implicit context: Context): String = {
-        if (cachedDescription == null) {
-            cachedDescription = loadDescription
-        }
-        cachedDescription
+        cache.description
     }
-    private var cachedDescription: String = _
 
     /**
       * Returns the list of all fields of the schema. This list will be cached once and for ever
@@ -59,26 +64,27 @@ abstract class ExternalSchema extends Schema {
       * @return
       */
     override def fields(implicit context: Context): Seq[Field] = {
-        if (cachedFields == null) {
-            cachedFields = loadFields
-        }
-        cachedFields
+        cache.fields
     }
-    private var cachedFields: Seq[Field] = _
+
+    override def primaryKey(implicit context: Context): Seq[String] = {
+        cache.primaryKey
+    }
+
+    private def cache(implicit context: Context) : CachedSchema = {
+        if (cachedSchema == null) {
+            cachedSchema = loadSchema
+        }
+        cachedSchema
+    }
+    private var cachedSchema:CachedSchema = _
 
     /**
-      * Load description from external source. This has to be provided by derived classes
+      * Loads the real schema from external source. This has to be provided by derived classes
       * @param context
       * @return
       */
-    protected def loadDescription(implicit context: Context): String
-
-    /**
-      * Load list of fields from external source. This has to be provided by derived classes
-      * @param context
-      * @return
-      */
-    protected def loadFields(implicit context: Context): Seq[Field]
+    protected def loadSchema(implicit context: Context): CachedSchema
 
     /**
       * Loads the raw schema definition from the external resource (file or URL)

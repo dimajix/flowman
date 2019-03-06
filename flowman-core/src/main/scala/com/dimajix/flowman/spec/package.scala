@@ -24,6 +24,14 @@ import com.dimajix.flowman.spec.task.Job
 
 
 package object spec {
+    def splitSettings(settings: Seq[String]) : Seq[(String,String)] = {
+        settings.map(splitSetting)
+    }
+    def splitSetting(setting: String) : (String,String) = {
+        val sep = setting.indexOf('=')
+        (setting.take(sep), setting.drop(sep + 1).trim.replaceAll("^\"|\"$","").trim)
+    }
+
     type MappingIdentifier = Identifier[Mapping]
     type ConnectionIdentifier = Identifier[Connection]
     type RelationIdentifier = Identifier[Relation]

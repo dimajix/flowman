@@ -1,13 +1,13 @@
 name: "default"
 
-monitor:
+statestore:
   kind: jdbc
-  connection: flowman_runs
+  connection: flowman_state
   retries: 3
   timeout: 1000
 
 connections:
-  flowman_runs:
+  flowman_state:
     driver: $System.getenv('FLOWMAN_LOGDB_DRIVER')
     url: $System.getenv('FLOWMAN_LOGDB_URL')
     username: $System.getenv('FLOWMAN_LOGDB_USER')
@@ -21,3 +21,8 @@ config:
 
 plugins:
   - flowman-example
+  - flowman-hbase
+  - flowman-aws
+  - flowman-azure
+  - flowman-kafka
+  - flowman-impala

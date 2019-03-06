@@ -29,10 +29,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.fs.File
-import com.dimajix.flowman.fs.FileSystem
-import com.dimajix.flowman.util.tryWith
-import com.dimajix.flowman.util.TryWith
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.common.tryWith
+import com.dimajix.common.TryWith
 
 
 class CompareFilesTask extends BaseTask {

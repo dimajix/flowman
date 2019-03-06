@@ -25,11 +25,11 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.FileSystem
-import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -43,8 +43,6 @@ import com.dimajix.flowman.spec.task.Job
 
 object RootContext {
     class Builder(_namespace:Namespace, _profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder {
-        private var _runner:Runner = new SimpleRunner()
-
         override def withEnvironment(env: Seq[(String, Any)]): Builder = {
             withEnvironment(env, SettingLevel.NAMESPACE_SETTING)
             this
@@ -61,13 +59,9 @@ object RootContext {
             withProfile(profile, SettingLevel.NAMESPACE_PROFILE)
             this
         }
-        def withRunner(runner:Runner) : Builder = {
-            _runner = runner
-            this
-        }
 
         override def createContext(): RootContext = {
-            val context = new RootContext(_runner, _namespace, _profiles)
+            val context = new RootContext(_namespace, _profiles)
             if (_parent != null)
                 context.updateFrom(_parent)
             context
@@ -80,7 +74,7 @@ object RootContext {
 }
 
 
-class RootContext private[execution](_runner:Runner, _namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
+class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
@@ -107,13 +101,6 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def root : Context = this
-
-    /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    override def runner : Runner = _runner
 
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this executor

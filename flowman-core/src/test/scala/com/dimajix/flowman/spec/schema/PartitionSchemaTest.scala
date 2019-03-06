@@ -40,6 +40,28 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         partitionSchema.names should be (Seq("p1", "p2"))
     }
 
+    it should "create a spec" in {
+        val partitionColumns = Seq(
+            PartitionField("P1", StringType),
+            PartitionField("p2", IntegerType)
+        )
+        val partitionSchema = PartitionSchema(partitionColumns)
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+        val partitions = Map(
+            "p1" -> SingleValue("lala"),
+            "p2" -> SingleValue("123")
+        )
+
+        val spec = partitionSchema.spec(partitions)
+        spec("p1") should be ("lala")
+        spec("P1") should be ("lala")
+        spec("p2") should be (123)
+        spec("P2") should be (123)
+        spec.toMap should be (Map("P1" -> "lala", "p2" -> 123))
+    }
+
     it should "interpolate partition values" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),
@@ -63,35 +85,18 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         ))
     }
 
-    it should "provide a Hive partition spec" in {
+    it should "be case insensitive" in {
         val partitionColumns = Seq(
-            PartitionField("p1", StringType),
+            PartitionField("P1", StringType),
             PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-        val partitions = Map(
-            "p1" -> SingleValue("lala"),
-            "p2" -> SingleValue("123")
-        )
-        partitionSchema.expr(partitions) should be ("PARTITION(p1='lala',p2=123)")
-    }
+        partitionSchema.get("p1").name should be ("P1")
+        partitionSchema.get("P1").name should be ("P1")
+        partitionSchema.get("p2").name should be ("p2")
+        partitionSchema.get("P2").name should be ("p2")
 
-    it should "provide a Hive compatible path" in {
-        val partitionColumns = Seq(
-            PartitionField("p1", StringType),
-            PartitionField("p2", IntegerType)
-        )
-        val partitionSchema = PartitionSchema(partitionColumns)
-
-        val session = Session.builder().build()
-        implicit val context = session.context
-        val partitions = Map(
-            "p1" -> SingleValue("lala"),
-            "p2" -> SingleValue("123")
-        )
-        partitionSchema.path(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=123"))
+        partitionSchema.names should be (Seq("P1", "p2"))
     }
 }

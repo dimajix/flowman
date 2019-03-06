@@ -18,18 +18,18 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.state.JobInstance
 
 
 class SimpleRunner extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[SimpleRunner])
 
     /**
-      * Performs some check, if the run is required
+      * Performs some checkJob, if the run is required
       * @param context
       * @return
       */
-    override protected def check(context:Context, job:Job, args:Map[String,String]) : Boolean = false
+    override protected def check(context:Context, job:JobInstance) : Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -37,7 +37,7 @@ class SimpleRunner extends AbstractRunner {
       * @param context
       * @return
       */
-    override protected def start(context:Context, job:Job, args:Map[String,String]) : Object = null
+    override protected def start(context:Context, job:JobInstance) : Object = null
 
     /**
       * Marks a run as a success

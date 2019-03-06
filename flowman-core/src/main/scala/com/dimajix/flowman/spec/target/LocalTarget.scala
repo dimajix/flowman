@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.state.TargetInstance
 
 
 /**
@@ -57,6 +58,20 @@ class LocalTarget extends RelationTarget {
     def escape(implicit context: Context) : String = context.evaluate(_escape)
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
+
+    /**
+      * Returns an instance representing this target with the context
+      * @param context
+      * @return
+      */
+    override def instance(implicit context: Context) : TargetInstance = {
+        TargetInstance(
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
+            name,
+            Map("filename" -> filename)
+        )
+    }
 
     /**
       * Build the target by writing a file to the local file system of the driver

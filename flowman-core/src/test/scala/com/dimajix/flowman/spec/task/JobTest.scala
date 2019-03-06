@@ -23,6 +23,7 @@ import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.state.Status
 
 
 object GrabEnvironmentTask {
@@ -87,10 +88,10 @@ class JobTest extends FlatSpec with Matchers {
         val job = module.jobs("job")
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7))
 
-        job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
         GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7))
     }
 
@@ -115,7 +116,7 @@ class JobTest extends FlatSpec with Matchers {
         val job = module.jobs("job")
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "2")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
         GrabEnvironmentTask.environment should be (Map("p1" -> "2"))
     }
 
@@ -139,7 +140,7 @@ class JobTest extends FlatSpec with Matchers {
         val job = module.jobs("job")
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "2")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
         GrabEnvironmentTask.environment should be (Map("p1" -> 2))
     }
 
@@ -159,7 +160,7 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
     }
 
@@ -181,7 +182,7 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
     }
 
@@ -201,7 +202,7 @@ class JobTest extends FlatSpec with Matchers {
 
         val job = module.jobs("job")
         job should not be (null)
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map()))
     }
 
@@ -253,7 +254,7 @@ class JobTest extends FlatSpec with Matchers {
         val job = module.jobs("job")
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (JobStatus.SUCCESS)
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy"))
     }
 }

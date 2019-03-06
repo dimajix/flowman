@@ -17,9 +17,6 @@
 package com.dimajix.flowman.spec.schema
 
 import java.io.IOException
-import java.io.StringWriter
-import java.net.URL
-import java.nio.charset.Charset
 
 import scala.collection.JavaConversions._
 
@@ -51,10 +48,9 @@ import io.swagger.models.properties.UUIDProperty
 import io.swagger.parser.util.DeserializationUtils
 import io.swagger.parser.util.SwaggerDeserializer
 import io.swagger.util.Json
-import org.apache.commons.io.IOUtils
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
@@ -81,42 +77,23 @@ class SwaggerSchema extends ExternalSchema {
     def entity(implicit context: Context) : String = context.evaluate(_entity)
 
     /**
-      * Returns the description of the schema
-      * @param context
-      * @return
-      */
-    protected override def loadDescription(implicit context: Context): String = {
-        swaggerSchema.getInfo.getDescription
-    }
-
-    /**
       * Returns the list of all fields of the schema
       * @param context
       * @return
       */
-    protected override def loadFields(implicit context: Context): Seq[Field] = {
-        val swagger = swaggerSchema
+    protected override def loadSchema(implicit context: Context): CachedSchema = {
+        val string = loadSchemaSpec(context)
+        val swagger = convertToSwagger(string)
         val model = Option(entity).filter(_.nonEmpty).map(e => swagger.getDefinitions()(e)).getOrElse(swagger.getDefinitions().values().head)
 
         if (!model.isInstanceOf[ModelImpl] && !model.isInstanceOf[ComposedModel])
             throw new IllegalArgumentException("Root type in Swagger must be a simple model or composed model")
 
-        fromSwaggerModel(model)
+        CachedSchema(
+            fromSwaggerModel(model),
+            Option(swagger.getInfo).map(_.getDescription).orNull
+        )
     }
-
-    /**
-      * Load and cache Swagger schema from external source
-      * @param context
-      * @return
-      */
-    private def swaggerSchema(implicit context: Context) : Swagger = {
-        if (cachedSwaggerSchema == null) {
-            val string = loadSchemaSpec(context)
-            cachedSwaggerSchema = convertToSwagger(string)
-        }
-        cachedSwaggerSchema
-    }
-    private var cachedSwaggerSchema : Swagger = _
 
     @throws[IOException]
     private def convertToSwagger(data: String): Swagger = {
@@ -198,5 +175,4 @@ class SwaggerSchema extends ExternalSchema {
             case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")
         }
     }
-
 }

@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
+import com.dimajix.flowman.state.TargetInstance
 
 
 object Target extends TypeRegistry[Target] {
@@ -62,6 +63,13 @@ abstract class Target {
       * @return
       */
     def enabled(implicit context:Context) : Boolean
+
+    /**
+      * Returns an instance representing this target with the context
+      * @param context
+      * @return
+      */
+    def instance(implicit context: Context) : TargetInstance
 
     /**
       * Returns the dependencies of this mapping, which is exactly one input table

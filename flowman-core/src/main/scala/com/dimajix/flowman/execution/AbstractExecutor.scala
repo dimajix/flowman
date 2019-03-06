@@ -34,6 +34,13 @@ abstract class AbstractExecutor(_session:Session, _context:Context) extends Exec
     override def context: Context = _context
 
     /**
+      * Returns the appropriate runner
+      *
+      * @return
+      */
+    override def runner: Runner = session.runner
+
+    /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
       * SparkSession, but a new derived session with a separate namespace will be created.
       *

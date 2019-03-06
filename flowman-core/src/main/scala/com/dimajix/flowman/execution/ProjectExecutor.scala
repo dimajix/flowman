@@ -23,9 +23,9 @@ import org.apache.spark.sql.functions.broadcast
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 
 
 private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context)

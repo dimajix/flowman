@@ -92,6 +92,14 @@
                                     <classifier>bin</classifier>
                                     <outputDirectory>target</outputDirectory>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-impala</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>target</outputDirectory>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -143,6 +151,10 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-plugin-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-plugin-impala</artifactId>
         </dependency>
     </dependencies>
 </project>

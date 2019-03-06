@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.state.TargetInstance
 import com.dimajix.flowman.types.SingleValue
 
 
@@ -41,6 +42,20 @@ class RelationTarget extends BaseTarget {
     def partition(implicit context: Context) : Map[String,String] = _partition.mapValues(context.evaluate)
     def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
     def rebalance(implicit context: Context) : Boolean = context.evaluate(_rebalance).toBoolean
+
+    /**
+      * Returns an instance representing this target with the context
+      * @param context
+      * @return
+      */
+    override def instance(implicit context: Context) : TargetInstance = {
+        TargetInstance(
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
+            name,
+            partition
+        )
+    }
 
     /**
       * Builds the target using the given input tables

@@ -23,9 +23,9 @@ import scala.collection.mutable
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 
 
 class RootExecutor private(session:Session, context:Context, sharedCache:Executor, isolated:Boolean)

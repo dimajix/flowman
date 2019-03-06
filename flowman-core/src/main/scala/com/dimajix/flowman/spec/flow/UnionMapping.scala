@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
@@ -85,7 +87,7 @@ class UnionMapping extends BaseMapping {
 
     private def getCommonSchema(tables:Seq[DataFrame])(implicit context: Context) = {
         def commonField(newField:StructField, fields:Map[String,StructField]) = {
-            val existingField = fields.getOrElse(newField.name, newField)
+            val existingField = fields.getOrElse(newField.name.toLowerCase(Locale.ROOT), newField)
             val nullable = existingField.nullable || newField.nullable
             val dataType = if (existingField.dataType == NullType) newField.dataType else existingField.dataType
             StructField(newField.name, dataType, nullable)
@@ -93,12 +95,12 @@ class UnionMapping extends BaseMapping {
         val allColumns = tables.foldLeft(Map[String,StructField]())((columns, table) => {
             val tableColumns = table
                 .schema
-                .map(field => field.name -> commonField(field, columns)).toMap
+                .map(field => field.name.toLowerCase(Locale.ROOT) -> commonField(field, columns)).toMap
             columns ++ tableColumns
         })
 
         // Create a common schema from collected columns
-        StructType(allColumns.values.toSeq.sortBy(_.name))
+        StructType(allColumns.values.toSeq.sortBy(_.name.toLowerCase(Locale.ROOT)))
     }
 
     private def projectTable(table:DataFrame, schema:StructType) = {

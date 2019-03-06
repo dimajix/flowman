@@ -2,7 +2,7 @@ relations:
   stations-file:
     kind: file
     format: csv
-    location: "file:///tmp/weather-file/isd-history/"
+    location: "file:///tmp/weather-file/isd-state/"
     options:
       sep: ","
       encoding: "UTF-8"

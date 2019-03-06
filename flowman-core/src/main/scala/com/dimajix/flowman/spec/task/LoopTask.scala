@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
@@ -60,9 +61,9 @@ class LoopTask extends BaseTask {
         val job = context.getJob(this.job)
         val run = (args:Map[String,String]) => {
             logger.info(s"Calling sub-job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-            context.runner.execute(executor, job, args, force) match {
-                case JobStatus.SUCCESS => true
-                case JobStatus.SKIPPED => true
+            executor.runner.execute(executor, job, args, force) match {
+                case Status.SUCCESS => true
+                case Status.SKIPPED => true
                 case _ => false
             }
         }

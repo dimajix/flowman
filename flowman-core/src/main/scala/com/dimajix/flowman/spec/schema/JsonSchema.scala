@@ -31,6 +31,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.DoubleType
@@ -51,36 +52,19 @@ class JsonSchema extends ExternalSchema {
       * @param context
       * @return
       */
-    protected override def loadDescription(implicit context: Context): String = {
-        jsonSchema.getDescription
-    }
+    protected override def loadSchema(implicit context: Context): CachedSchema = {
+        val spec = loadSchemaSpec
 
-    /**
-      * Returns the list of fields of this schema
-      * @param context
-      * @return
-      */
-    protected override def loadFields(implicit context: Context): Seq[Field] = {
-        fromJsonObject(jsonSchema.asInstanceOf[ObjectSchema]).fields
-    }
+        val rawSchema = new JSONObject(new JSONTokener(spec))
+        val jsonSchema = SchemaLoader.load(rawSchema)
+        if (!jsonSchema.isInstanceOf[ObjectSchema])
+            throw new UnsupportedOperationException("Unexpected JSON top level type")
 
-    /**
-      * Load and cache JSON schema from external source
-      * @param context
-      * @return
-      */
-    private def jsonSchema(implicit context: Context) : JSchema = {
-        if (cachedJsonSchema == null) {
-            val spec = loadSchemaSpec
-
-            val rawSchema = new JSONObject(new JSONTokener(spec))
-            cachedJsonSchema = SchemaLoader.load(rawSchema)
-            if (!cachedJsonSchema.isInstanceOf[ObjectSchema])
-                throw new UnsupportedOperationException("Unexpected JSON top level type")
-        }
-        cachedJsonSchema
+        CachedSchema(
+            fromJsonObject(jsonSchema.asInstanceOf[ObjectSchema]).fields,
+            jsonSchema.getDescription
+        )
     }
-    private var cachedJsonSchema : JSchema = _
 
     private def fromJsonObject(obj:ObjectSchema) : StructType = {
         val requiredProperties = obj.getRequiredProperties.toSet

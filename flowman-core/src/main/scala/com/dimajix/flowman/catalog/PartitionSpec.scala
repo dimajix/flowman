@@ -19,18 +19,23 @@ package com.dimajix.flowman.catalog
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils
 
-import com.dimajix.flowman.types.TimestampType
-import com.dimajix.flowman.util.UtcTimestamp
+import com.dimajix.common.MapIgnoreCase
 
 
 object PartitionSpec {
-    def apply(values:Seq[(String,Any)]) : PartitionSpec = new PartitionSpec(values.toMap)
+    def apply() : PartitionSpec = new PartitionSpec(MapIgnoreCase())
+    def apply(values:Seq[(String,Any)]) : PartitionSpec = new PartitionSpec(MapIgnoreCase(values))
+    def apply(values:Map[String,Any]) : PartitionSpec = new PartitionSpec(MapIgnoreCase(values))
 }
 
 
-case class PartitionSpec(values:Map[String,Any]) {
+case class PartitionSpec(values:MapIgnoreCase[Any]) {
     def toSeq : Seq[(String,Any)] = values.toSeq
-    def toMap : Map[String,Any] = values
+    def toMap : Map[String,Any] = values.toMap
+
+    def apply(name:String) : Any = values(name)
+
+    def get(name:String) : Option[Any] = values.get(name)
 
     /**
       * Returns true if the partition specification is empty
@@ -50,7 +55,7 @@ case class PartitionSpec(values:Map[String,Any]) {
       * @tparam T
       * @return
       */
-    def mapValues[T](fn:(Any) => T) : Map[String,T] = values.mapValues(fn)
+    def mapValues[T](fn:(Any) => T) : MapIgnoreCase[T] = values.mapValues(fn)
 
     /**
       * Returns a Hadoop path constructed from the partition values
@@ -59,26 +64,8 @@ case class PartitionSpec(values:Map[String,Any]) {
       */
     def path(root:Path, columns:Seq[String]) : Path = {
         columns
-            .map(col => (col, values(col)))
+            .map(col => values.getKeyValue(col))
             .map(nv => ExternalCatalogUtils.getPartitionPathString(nv._1, nv._2.toString))
             .foldLeft(root)((path, segment) => new Path(path, segment))
-    }
-
-    /**
-      * Creates a SQL PARTITION expression
-      * @param columns
-      * @return
-      */
-    def expr(columns:Seq[String]) : String = {
-        def fieldSpec(name: String, value:Any) : String = {
-            value match {
-                case s:String => name + "='" + s + "'"
-                case ts:UtcTimestamp => name + "=" + ts.toEpochSeconds()
-                case v:Any => name + "=" + v
-            }
-        }
-        val partitionValues = columns
-            .map(field => fieldSpec(field, values.getOrElse(field, throw new IllegalArgumentException(s"Column ${field} not defined"))))
-        s"PARTITION(${partitionValues.mkString(",")})"
     }
 }

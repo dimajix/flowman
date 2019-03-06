@@ -59,6 +59,13 @@ abstract class Schema {
     def fields(implicit context: Context) : Seq[Field]
 
     /**
+      * Returns the list of primary keys. Can be empty of no PK is available
+      * @param context
+      * @return
+      */
+    def primaryKey(implicit context: Context) : Seq[String]
+
+    /**
       * Returns a Spark schema for this schema
       * @param context
       * @return

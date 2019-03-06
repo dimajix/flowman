@@ -42,7 +42,7 @@ class ImpalaCatalogProvider extends CatalogProvider {
                 jdbc.url,
                 "",
                 -1,
-                jdbc.driver,
+                if (jdbc.driver != null && jdbc.driver.nonEmpty) jdbc.driver else ImpalaExternalCatalog.IMPALA_DEFAULT_DRIVER,
                 jdbc.username,
                 jdbc.password,
                 jdbc.properties
@@ -51,7 +51,7 @@ class ImpalaCatalogProvider extends CatalogProvider {
                 "",
                 impala.host,
                 impala.port,
-                impala.driver,
+                if (impala.driver != null && impala.driver.nonEmpty) impala.driver else ImpalaExternalCatalog.IMPALA_DEFAULT_DRIVER,
                 impala.username,
                 impala.password,
                 impala.properties

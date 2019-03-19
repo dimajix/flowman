@@ -56,6 +56,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
         val relation = project.relations("t0")
+        relation.kind should be ("file")
         val df = relation.read(executor, null)
         df.schema should be (StructType(
             StructField("f1", StringType) ::

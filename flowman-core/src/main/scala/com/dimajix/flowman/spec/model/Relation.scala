@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
@@ -28,6 +29,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.Resource
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
@@ -47,7 +49,7 @@ object Relation extends TypeRegistry[Relation] {
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
@@ -59,14 +61,36 @@ object Relation extends TypeRegistry[Relation] {
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
 ))
-abstract class Relation {
+abstract class Relation extends Resource {
     @JsonIgnore private var _name:String = ""
 
+    @JsonProperty(value="kind", required = true) private var _kind: String = _
+    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
+
     /**
-      * Returns the name of the output
+      * Returns the name of the relation
       * @return
       */
-    def name : String = _name
+    final override def name : String = _name
+
+    /**
+      * Returns the category of this resource
+      * @return
+      */
+    final override def category: String = "relation"
+
+    /**
+      * Returns the specific kind of this resource
+      * @return
+      */
+    final override def kind: String = _kind
+
+    /**
+      * Returns a map of user defined labels
+      * @param context
+      * @return
+      */
+    final override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
 
     /**
       * Returns a description of the relation

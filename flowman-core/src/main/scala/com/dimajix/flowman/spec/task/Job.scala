@@ -30,6 +30,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
+import com.dimajix.flowman.spec.Resource
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.state.JobInstance
 import com.dimajix.flowman.state.Status
@@ -175,10 +176,11 @@ object Job {
 /**
   * A Job represents a collection of individual tasks. Jobs can be logged by appropriate runners.
   */
-class Job {
+class Job extends Resource {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
     @JsonIgnore private var _name:String = ""
+    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
     @JsonProperty(value="description") private var _description:String = ""
     @JsonProperty(value="logged") private var _logged:String = "true"
     @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
@@ -187,7 +189,11 @@ class Job {
     @JsonProperty(value="failure") private var _failure:Seq[Task] = Seq()
     @JsonProperty(value="cleanup") private var _cleanup:Seq[Task] = Seq()
 
-    def name : String = _name
+    override def name : String = _name
+    override def category: String = "job"
+    override def kind : String = "job"
+    override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
+
     def description(implicit context:Context) : String = context.evaluate(_description)
     def logged(implicit context:Context) : Boolean = context.evaluate(_logged).toBoolean
     def tasks : Seq[Task] = _tasks

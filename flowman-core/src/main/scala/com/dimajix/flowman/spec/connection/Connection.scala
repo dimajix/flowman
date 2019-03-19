@@ -17,10 +17,13 @@
 package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.Resource
 import com.dimajix.flowman.spi.TypeRegistry
 
 
@@ -34,14 +37,40 @@ object Connection extends TypeRegistry[Connection] {
 }
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[JdbcConnection])
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[JdbcConnection], visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcConnection]),
     new JsonSubTypes.Type(name = "ssh", value = classOf[SshConnection]),
     new JsonSubTypes.Type(name = "sftp", value = classOf[SshConnection])
 ))
-class Connection {
+abstract class Connection extends Resource {
     @JsonIgnore private var _name:String = ""
 
-    def name : String = _name
+    @JsonProperty(value="kind", required = true) private var _kind: String = _
+    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
+
+    /**
+      * Returns the category of this resource
+      * @return
+      */
+    final override def category: String = "connection"
+
+    /**
+      * Returns the specific kind of this resource
+      * @return
+      */
+    final override def kind: String = _kind
+
+    /**
+      * Returns the name of the connection
+      * @return
+      */
+    final override def name : String = _name
+
+    /**
+      * Returns a map of user defined labels
+      * @param context
+      * @return
+      */
+    final override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
 }

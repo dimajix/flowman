@@ -26,7 +26,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcOptionsInWrite
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -244,9 +244,9 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         (db.url,props)
     }
 
-    private def withConnection[T](fn:(Connection,JdbcOptionsInWrite) => T)(implicit context: Context) : T = {
+    private def withConnection[T](fn:(Connection,JDBCOptions) => T)(implicit context: Context) : T = {
         val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
-        val options = new JdbcOptionsInWrite(db.url, tableIdentifier.unquotedString, db.properties ++ properties)
+        val options = new JDBCOptions(db.url, tableIdentifier.unquotedString, db.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)
         try {
             fn(conn, options)
@@ -256,11 +256,11 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         }
     }
 
-    private def withStatement[T](fn:(Statement,JdbcOptionsInWrite) => T)(implicit context: Context) : T = {
+    private def withStatement[T](fn:(Statement,JDBCOptions) => T)(implicit context: Context) : T = {
         withConnection { (con, options) =>
             val statement = con.createStatement()
             try {
-                statement.setQueryTimeout(options.queryTimeout)
+                statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
                 fn(statement, options)
             }
             finally {

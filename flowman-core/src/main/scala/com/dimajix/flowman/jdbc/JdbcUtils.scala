@@ -25,6 +25,12 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 
 object JdbcUtils {
+    def queryTimeout(options: JDBCOptions) : Int = {
+        // This is not very efficient, but in Spark 2.2 we cannot access parameters
+        options.asProperties.getProperty("queryTimeout", "0").toInt
+    }
+
+
     def createConnection(options: JDBCOptions) : Connection = {
         val factory = org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory(options)
         factory()
@@ -39,7 +45,7 @@ object JdbcUtils {
         Try {
             val statement = conn.prepareStatement(dialect.statement.tableExists(table))
             try {
-                statement.setQueryTimeout(options.queryTimeout)
+                statement.setQueryTimeout(queryTimeout(options))
                 statement.executeQuery()
             } finally {
                 statement.close()
@@ -52,7 +58,7 @@ object JdbcUtils {
         val sql = dialect.statement.firstRow(table, condition)
         val statement = conn.createStatement
         try {
-            statement.setQueryTimeout(options.queryTimeout)
+            statement.setQueryTimeout(queryTimeout(options))
             val result = statement.executeQuery(sql)
             try {
                 !result.next()
@@ -70,7 +76,7 @@ object JdbcUtils {
         val sql = dialect.statement.create(table)
         val statement = conn.createStatement
         try {
-            statement.setQueryTimeout(options.queryTimeout)
+            statement.setQueryTimeout(queryTimeout(options))
             statement.executeUpdate(sql)
         } finally {
             statement.close()
@@ -81,7 +87,7 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
         val statement = conn.createStatement
         try {
-            statement.setQueryTimeout(options.queryTimeout)
+            statement.setQueryTimeout(queryTimeout(options))
             statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
         } finally {
             statement.close()
@@ -92,7 +98,7 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
         val statement = conn.createStatement
         try {
-            statement.setQueryTimeout(options.queryTimeout)
+            statement.setQueryTimeout(queryTimeout(options))
             statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
         } finally {
             statement.close()

@@ -21,26 +21,28 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spi.ExtensionRegistry
+import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Task extends ExtensionRegistry[Task] {
+object Task extends TypeRegistry[Task] {
 }
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "call", value = classOf[CallTask]),
+    new JsonSubTypes.Type(name = "count-mapping", value = classOf[CountMappingTask]),
     new JsonSubTypes.Type(name = "create-relation", value = classOf[CreateRelationTask]),
     new JsonSubTypes.Type(name = "destroy-relation", value = classOf[DestroyRelationTask]),
     new JsonSubTypes.Type(name = "describe-relation", value = classOf[DescribeRelationTask]),
     new JsonSubTypes.Type(name = "copy-relation", value = classOf[CopyRelationTask]),
     new JsonSubTypes.Type(name = "show-mapping", value = classOf[ShowMappingTask]),
+    new JsonSubTypes.Type(name = "show-relation", value = classOf[ShowRelationTask]),
     new JsonSubTypes.Type(name = "describe-mapping", value = classOf[DescribeMappingTask]),
     new JsonSubTypes.Type(name = "show-environment", value = classOf[ShowEnvironmentTask]),
     new JsonSubTypes.Type(name = "print", value = classOf[PrintTask]),
     new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
-    new JsonSubTypes.Type(name = "output", value = classOf[OutputTask]),
+    new JsonSubTypes.Type(name = "build-target", value = classOf[BuildTargetTask]),
     new JsonSubTypes.Type(name = "get-file", value = classOf[GetFileTask]),
     new JsonSubTypes.Type(name = "put-file", value = classOf[PutFileTask]),
     new JsonSubTypes.Type(name = "copy-file", value = classOf[CopyFileTask]),

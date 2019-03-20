@@ -19,13 +19,20 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
-
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types._
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionField {
+    def fromSpark(field:org.apache.spark.sql.types.StructField) : PartitionField = {
+        PartitionField(
+            field.name,
+            FieldType.of(field.dataType),
+            field.getComment().orNull
+        )
+    }
+
     def apply(name:String, ftype:FieldType, description:String = null, granularity:String = null) : PartitionField = {
         val p = new PartitionField
         p._name = name
@@ -51,6 +58,8 @@ class PartitionField {
     def ftype : FieldType = _type
     def description(implicit context: Context) : String = context.evaluate(_description)
     def granularity(implicit context: Context) : String = context.evaluate(_granularity)
+
+    def field(implicit context: Context) : Field = Field(name, ftype, false, description)
 
     def sparkType : DataType = _type.sparkType
     def sparkField : StructField = StructField(name, sparkType, false)

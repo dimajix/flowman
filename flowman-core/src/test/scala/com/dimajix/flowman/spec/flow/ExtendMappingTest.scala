@@ -48,7 +48,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         result(1) should be (Row("col2", 23, 46))
     }
 
-    it should "correctly resolve dependencies" in {
+    it should "correctly interpolate dependencies" in {
         val df = spark.createDataFrame(Seq(
             ("col1", 12),
             ("col2", 23)

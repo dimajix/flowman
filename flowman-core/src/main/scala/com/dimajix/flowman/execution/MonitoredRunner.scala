@@ -18,34 +18,73 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.monitor.Monitor
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.state.StateStore
+import com.dimajix.flowman.state.JobInstance
+import com.dimajix.flowman.state.Status
 
 
-class MonitoredRunner(monitor:Monitor) extends AbstractRunner {
+/**
+  * This implementation of the Runner interface provides monitoring via calling appropriate methods in
+  * a StateStoreProvider
+  * @param monitor
+  */
+class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[MonitoredRunner])
 
-    protected override def check(context:Context, job:Job, args:Map[String,String]) : Boolean = {
-        monitor.check(context, job, args)
+    /**
+      * Performs some checkJob, if the run is required
+      * @param job
+      * @return
+      */
+    protected override def check(context: Context, job:JobInstance) : Boolean = {
+        monitor.checkJob(job)
     }
 
-    protected override def start(context:Context, job:Job, args:Map[String,String]) : Object = {
-        monitor.start(context, job, args)
+    /**
+      * Starts the run and returns a token, which can be anything
+      *
+      * @param job
+      * @return
+      */
+    protected override def start(context: Context, job:JobInstance) : Object = {
+        monitor.startJob(job)
     }
 
+    /**
+      * Marks a run as a success
+      *
+      * @param token
+      */
     protected override def success(context: Context, token:Object) : Unit = {
-        monitor.success(context, token)
+        monitor.finishJob(token, Status.SUCCESS)
     }
 
+    /**
+      * Marks a run as a failure
+      *
+      * @param token
+      */
     protected override def failure(context: Context, token:Object) : Unit = {
-        monitor.failure(context, token)
+        monitor.finishJob(token, Status.FAILED)
     }
 
+    /**
+      * Marks a run as a failure
+      *
+      * @param context
+      * @param token
+      */
     protected override def aborted(context: Context, token:Object) : Unit = {
-        monitor.aborted(context, token)
+        monitor.finishJob(token, Status.ABORTED)
     }
 
+    /**
+      * Marks a run as being skipped
+      *
+      * @param context
+      * @param token
+      */
     protected override def skipped(context: Context, token:Object) : Unit = {
-        monitor.skipped(context, token)
+        monitor.finishJob(token, Status.SKIPPED)
     }
 }

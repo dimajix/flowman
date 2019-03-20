@@ -24,8 +24,8 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.task.CountMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -33,21 +33,19 @@ class CountCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[CountCommand])
 
     @Argument(usage = "specifies the mapping to count", metaVar = "<mapping>", required = true)
-    var tablename: String = ""
+    var mapping: String = ""
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Counting rows of mapping '$tablename'")
+        val task = CountMappingTask(mapping)
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse((tablename)))
-            val count = table.count()
-            println(s"Mapping '$tablename' has $count records")
+            task.execute(executor)
         } match {
             case Success(_) =>
                 logger.info("Successfully counted  mapping")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while counting mapping '$tablename", e)
+                logger.error(s"Caught exception while counting mapping '$mapping", e)
                 false
         }
     }

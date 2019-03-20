@@ -34,10 +34,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.fs.FileSystem
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.SshConnection
-import com.dimajix.flowman.util.tryWith
+import com.dimajix.common.tryWith
 
 
 object SftpUploadTask {
@@ -125,7 +125,7 @@ class SftpUploadTask extends BaseTask {
         true
     }
 
-    private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
+    private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path) : Unit = {
         logger.info(s"Uploading file '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst.getParent)
         tryWith(src.open()) { input =>
@@ -137,7 +137,7 @@ class SftpUploadTask extends BaseTask {
         }
     }
 
-    private def uploadMergedFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
+    private def uploadMergedFile(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
         logger.info(s"Uploading merged directory '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst.getParent)
         val handle = client.createFile(dst.toString)
@@ -155,7 +155,7 @@ class SftpUploadTask extends BaseTask {
         client.closeFile(handle)
     }
 
-    private def uploadDirectory(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
+    private def uploadDirectory(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path) : Unit = {
         logger.info(s"Uploading directory '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst)
         src.list()

@@ -31,7 +31,7 @@ connections:
 mappings:   
     ...
 
-outputs:
+targets:
     ...
 
 jobs:
@@ -160,12 +160,12 @@ for example you can use the same name `measurements-raw` as a relation, a mappin
 output.
  
 
-### `outputs` Section
+### `targets` Section
 
-The `outputs` section contains a map of named output operations like writing to files, 
+The `targets` section contains a map of named output operations like writing to files, 
 relations or simply dumping the contents of a mapping on the console. For example
 ```
-outputs:
+targets:
   measurements-dump:
     kind: dump
     enabled: false

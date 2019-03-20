@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.OutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+
 
 object CreateRelationTask {
     def apply(relations:Seq[String]) : CreateRelationTask = {

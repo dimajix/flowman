@@ -19,19 +19,19 @@ package com.dimajix.flowman.execution
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
 
-import com.dimajix.flowman.fs.FileSystem
-import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.OutputIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
 case class SettingLevel(
@@ -113,13 +113,13 @@ abstract class Context {
       */
     def getRelation(identifier: RelationIdentifier): Relation
     /**
-      * Returns a specific named Output. The OutputType can either be inside this Contexts project or in a different
+      * Returns a specific named Target. The TargetType can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
-    def getOutput(identifier: OutputIdentifier): Output
+    def getTarget(identifier: TargetIdentifier): Target
     /**
       * Returns a specific named Job. The JobType can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -128,13 +128,6 @@ abstract class Context {
       * @return
       */
     def getJob(identifier: JobIdentifier): Job
-
-    /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    def runner : Runner
 
     /**
       * Returns all configuration options as a key-value map

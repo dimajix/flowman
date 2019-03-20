@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.nio.file.Paths
+
+import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -25,6 +28,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.types.SingleValue
 
 
 class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -34,8 +38,8 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
               |relations:
               |  t0:
               |    kind: file
-              |    format: csv
               |    location: test/data/data_1.csv
+              |    format: csv
               |    schema:
               |      kind: embedded
               |      fields:
@@ -52,6 +56,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
         val relation = project.relations("t0")
+        relation.kind should be ("file")
         val df = relation.read(executor, null)
         df.schema should be (StructType(
             StructField("f1", StringType) ::
@@ -60,5 +65,120 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             Nil
         ))
         df.collect()
+    }
+
+    it should "be able to create local directories" in {
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: file
+               |    location: file://$outputPath
+               |    pattern: data.csv
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+        val relation = project.relations("local")
+
+        outputPath.toFile.exists() should be (false)
+        relation.create(executor)
+        outputPath.toFile.exists() should be (true)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        relation.write(executor, df, Map(), "overwrite")
+        outputPath.resolve("data.csv").toFile.exists() should be (true)
+
+        relation.clean(executor)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        outputPath.toFile.exists() should be (true)
+
+        relation.destroy(executor)
+        outputPath.toFile.exists() should be (false)
+    }
+
+    it should "support partitions" in {
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: file
+               |    location: file://$outputPath
+               |    pattern: p_col=$$p_col
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |        - name: p_col
+               |          type: integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+        val relation = project.relations("local")
+
+        outputPath.toFile.exists() should be (false)
+        relation.create(executor)
+        outputPath.toFile.exists() should be (true)
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        relation.write(executor, df, Map("p_col" -> SingleValue("2")), "overwrite")
+
+        val df_p1 = relation.read(executor, null, Map("p_col" -> SingleValue("1")))
+        df_p1.count() should be (0)
+        df_p1.schema should be (StructType(
+            StructField("str_col", StringType, true) ::
+            StructField("int_col", IntegerType, true) ::
+            StructField("p_col", IntegerType, false) ::
+            Nil
+        ))
+        val df_p2 = relation.read(executor, null, Map("p_col" -> SingleValue("2")))
+        df_p2.count() should be (2)
+        df_p1.schema should be (StructType(
+            StructField("str_col", StringType, true) ::
+            StructField("int_col", IntegerType, true) ::
+            StructField("p_col", IntegerType, false) ::
+            Nil
+        ))
+
+        relation.clean(executor)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        outputPath.toFile.exists() should be (true)
+
+        relation.destroy(executor)
+        outputPath.toFile.exists() should be (false)
     }
 }

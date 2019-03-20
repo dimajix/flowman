@@ -1,0 +1,7 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - hadoop-azure-${hadoop.version}.jar
+ - azure-storage-${azure.version}.jar

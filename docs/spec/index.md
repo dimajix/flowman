@@ -26,7 +26,7 @@ Flowman has a couple of different main entities, which are documented seperately
 
 * [Mappings](mapping/index.html): Documentation of available data transformations
 * [Relations](relation/index.html): Documentation of available data sources and sinks
-* [Outputs](output/index.html): Documentation of available output operations
+* [Targets](target/index.html): Documentation of available output targets
 * [Schema](schema/index.html): Documentation of available schema descriptions
 * [Connections](connection/index.html): Documentation of connection specifications
 * [Jobs & Tasks](job/index.html): Documentation of creating jobs and executing tasks

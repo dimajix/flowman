@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,26 +26,24 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.sources.local.implicits._
-import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.FileCollector
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class LocalRelation extends SchemaRelation {
+class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
 
     @JsonProperty(value="location") private var _location: String = _
     @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = _
     @JsonProperty(value="pattern") private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context:Context) : String = context.evaluate(_format)
-    def partitions : Seq[PartitionField] = _partitions
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -56,9 +54,13 @@ class LocalRelation extends SchemaRelation {
       * @return
       */
     override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
-        implicit val context = executor.context
-        val inputFiles = collectFiles(executor, partitions)
+        require(executor != null)
+        require(partitions != null)
 
+        implicit val context = executor.context
+        logger.info(s"Reading from local location '$location' (partitions=$partitions)")
+
+        val inputFiles = collectFiles(executor, partitions)
         val reader = executor.spark.readLocal.options(options)
         if (this.schema != null)
             reader.schema(inputSchema)
@@ -78,6 +80,10 @@ class LocalRelation extends SchemaRelation {
       * @param partition - destination partition
       */
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partition != null)
+
         implicit val context = executor.context
 
         val outputPath  = collector(executor).resolve(partition.mapValues(_.value))
@@ -94,6 +100,34 @@ class LocalRelation extends SchemaRelation {
             .save(outputFile)
     }
 
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        require(executor != null)
+        require(partitions != null)
+
+        implicit val context = executor.context
+        if (location == null || location.isEmpty)
+            throw new IllegalArgumentException("location needs to be defined for cleaning files")
+
+        val inputFiles =
+            if (this.partitions != null && this.partitions.nonEmpty)
+                cleanPartitionedFiles(executor, partitions)
+            else
+                cleanUnpartitionedFiles(executor)
+    }
+
+    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+        implicit val context = executor.context
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        collector(executor).delete(resolvedPartitions)
+    }
+
+    private def cleanUnpartitionedFiles(executor: Executor) = {
+        collector(executor).delete()
+    }
+
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
@@ -101,6 +135,8 @@ class LocalRelation extends SchemaRelation {
       * @param executor
       */
     override def create(executor: Executor): Unit =  {
+        require(executor != null)
+
         implicit val context = executor.context
         val dir = localDirectory
         logger.info(s"Creating local directory '$dir' for local file relation")
@@ -115,6 +151,8 @@ class LocalRelation extends SchemaRelation {
       * @param executor
       */
     override def destroy(executor: Executor): Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
         val dir = localDirectory
         logger.info(s"Removing local directory '$dir' of local file relation")
@@ -163,13 +201,10 @@ class LocalRelation extends SchemaRelation {
 
     private def collectPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) : Seq[Path] = {
         implicit val context = executor.context
-        if (partitions == null)
-            throw new NullPointerException("Partitioned data source requires partition values to be defined")
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
-        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName(kv._1).interpolate(kv._2)))
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector(executor).collect(resolvedPartitions)
     }
 

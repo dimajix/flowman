@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class ProvidedRelation extends SchemaRelation {
+class ProvidedRelation extends BaseRelation with SchemaRelation {
     @JsonProperty(value="table") private var _table: String = _
 
     def table(implicit context:Context) : String = context.evaluate(_table)
@@ -53,6 +53,10 @@ class ProvidedRelation extends SchemaRelation {
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
         throw new UnsupportedOperationException("Writing into provided tables not supported")
+    }
+
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        throw new UnsupportedOperationException("Cleaning provided tables not supported")
     }
 
     override def create(executor: Executor): Unit = {

@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.Configuration
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.fs.FileSystem
+import com.dimajix.flowman.hadoop.FileSystem
 
 
 class ProjectTest extends FlatSpec with Matchers {

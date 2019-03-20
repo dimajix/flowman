@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.task.ShowMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -42,17 +43,11 @@ class ShowCommand extends ActionCommand {
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Showing first $limit rows of mapping '$tablename'")
-
         val columns = this.columns.split(",").filter(_.nonEmpty)
+        val task = ShowMappingTask(tablename, columns, limit)
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse((tablename)))
-            val projection = if (columns.nonEmpty)
-                table.select(columns.map(name => table(name)):_*)
-            else
-                table
-            projection.limit(limit).show(truncate = false)
+            task.execute(executor)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping mapping")

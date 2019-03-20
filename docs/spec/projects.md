@@ -24,7 +24,7 @@ modules:
  - config
  - model
  - mapping
- - output
+ - target
  - job
 ```
 

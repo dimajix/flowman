@@ -17,29 +17,48 @@
 package com.dimajix.flowman.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
+
+object ShowMappingTask {
+    def apply(mapping:String, columns:Seq[String], limit:Int) : ShowMappingTask = {
+        val task = new ShowMappingTask
+        task._mapping = mapping
+        task._columns = columns
+        task._limit = limit.toString
+        task
+    }
+}
+
+
 class ShowMappingTask extends BaseTask {
-    @JsonProperty(value="input", required=true) private var _input:String = _
+    private val logger = LoggerFactory.getLogger(classOf[ShowMappingTask])
+
+    @JsonProperty(value="mapping", required=true) private var _mapping:String = _
     @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
     @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
 
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
+    def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
     def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
     def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        val dfIn = executor.instantiate(this.input)
-        val dfOut = if (_columns != null && _columns.nonEmpty)
-            dfIn.select(columns.map(c => dfIn(c)):_*)
-        else
-            dfIn
+        val limit = this.limit
+        val identifier = this.mapping
+        logger.info(s"Showing first $limit rows of mapping '$identifier'")
 
-        dfOut.show(limit)
+        val table = executor.instantiate(identifier)
+        val projection = if (_columns != null && _columns.nonEmpty)
+            table.select(columns.map(c => table(c)):_*)
+        else
+            table
+
+        projection.show(limit, truncate = false)
         true
     }
 }

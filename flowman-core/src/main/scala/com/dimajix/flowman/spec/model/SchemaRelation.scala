@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,14 @@ import com.dimajix.flowman.spec.schema.Schema
 /**
   * Common base implementation for the Relation interface class. It contains a couple of common properties.
   */
-abstract class SchemaRelation extends BaseRelation {
-    @JsonProperty(value="schema", required=false) private var _schema: Schema = _
+trait SchemaRelation { this: Relation =>
+    @JsonProperty(value = "schema", required = false) private var _schema: Schema = _
 
     /**
       * Returns the schema of the relation
+      *
       * @param context
       * @return
       */
-    override def schema(implicit context: Context) : Schema = _schema
+    override def schema(implicit context: Context): Schema = _schema
 }

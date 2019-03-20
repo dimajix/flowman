@@ -19,7 +19,7 @@ package com.dimajix.flowman.types
 import java.nio.charset.Charset
 import java.util.Locale
 
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
 
 
 /**
@@ -51,7 +51,7 @@ class SchemaWriter(fields:Seq[Field]) {
     }
 
     private def saveAsSpark(file:File) : Unit = {
-        val schema = SparkSchemaUtils.toSpark(fields)
+        val schema = SchemaConverter.toSpark(fields)
         writeSchemaFile(file, schema.json)
     }
 

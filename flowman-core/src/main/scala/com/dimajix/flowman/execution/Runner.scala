@@ -17,9 +17,23 @@
 package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.state.Status
 
 
+/**
+  * This class wraps the execution of Jobs and is responsible for appropriate exception handling (for example
+  * logging or storing information about failed jobs into a database)
+  */
 abstract class Runner {
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : JobStatus
+    /**
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
+      * @param executor
+      * @param job
+      * @param args
+      * @param force
+      * @return
+      */
+    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : Status
 }

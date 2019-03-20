@@ -19,11 +19,11 @@ package com.dimajix.flowman.spec
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
 
@@ -76,7 +76,7 @@ object Project {
             project._connections = module.connections
             project._relations = module.relations
             project._mappings = module.mappings
-            project._outputs = module.outputs
+            project._targets = module.targets
             project._jobs = module.jobs
         }
     }
@@ -135,12 +135,12 @@ object Project {
             project._mappings = project._mappings + (name -> mapping)
             this
         }
-        def setOutputs(outputs:Map[String,Output]) : Builder = {
-            project._outputs = outputs
+        def setTargets(outputs:Map[String,Target]) : Builder = {
+            project._targets = outputs
             this
         }
-        def addOutput(name:String, output:Output) : Builder = {
-            project._outputs = project._outputs + (name -> output)
+        def addTarget(name:String, target:Target) : Builder = {
+            project._targets = project._targets + (name -> target)
             this
         }
         def setJobs(jobs:Map[String,Job]) : Builder = {
@@ -175,7 +175,7 @@ class Project {
     private var _connections: Map[String,Connection] = Map()
     private var _relations: Map[String,Relation] = Map()
     private var _mappings: Map[String,Mapping] = Map()
-    private var _outputs: Map[String,Output] = Map()
+    private var _targets: Map[String,Target] = Map()
     private var _jobs: Map[String,Job] = Map()
 
     def name : String = _name
@@ -193,7 +193,7 @@ class Project {
     def relations : Map[String,Relation] = _relations
     def connections : Map[String,Connection] = _connections
     def mappings : Map[String,Mapping] = _mappings
-    def outputs : Map[String,Output] = _outputs
+    def targets : Map[String,Target] = _targets
     def jobs : Map[String,Job] = _jobs
 }
 

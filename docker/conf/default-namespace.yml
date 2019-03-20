@@ -1,13 +1,13 @@
 name: "default"
 
-monitor:
+statestore:
   kind: jdbc
-  connection: flowman_runs
+  connection: flowman_state
   retries: 3
   timeout: 1000
 
 connections:
-  flowman_runs:
+  flowman_state:
     driver: $System.getenv('FLOWMAN_LOGDB_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
     url: $System.getenv('FLOWMAN_LOGDB_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/logdb;create=true'))
     username: $System.getenv('FLOWMAN_LOGDB_USER', '')
@@ -20,6 +20,9 @@ config:
   - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
 plugins:
+  - flowman-aws
+  - flowman-azure
   - flowman-example
   - flowman-hbase
   - flowman-kafka
+  - flowman-impala

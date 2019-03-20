@@ -33,6 +33,8 @@ class IdentifierFactory[T] {
     }
 }
 case class Identifier[T](name:String, project:Option[String]) {
+    def nonEmpty : Boolean = name.nonEmpty
+
     override def toString : String = {
         if (project.isEmpty)
             name

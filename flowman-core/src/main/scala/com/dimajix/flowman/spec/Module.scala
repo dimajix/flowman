@@ -22,13 +22,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.util.splitSettings
 
 
 object Module {
@@ -92,8 +91,8 @@ class Module {
     @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()
     @JsonDeserialize(converter=classOf[Mapping.NameResolver])
     @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
-    @JsonDeserialize(converter=classOf[Output.NameResolver])
-    @JsonProperty(value="outputs") private var _outputs: Map[String,Output] = Map()
+    @JsonDeserialize(converter=classOf[Target.NameResolver])
+    @JsonProperty(value="targets") private var _targets: Map[String,Target] = Map()
     @JsonDeserialize(converter=classOf[Job.NameResolver])
     @JsonProperty(value="jobs") private var _jobs: Map[String,Job] = Map()
 
@@ -101,7 +100,7 @@ class Module {
     def relations : Map[String,Relation] = _relations
     def connections : Map[String,Connection] = _connections
     def mappings : Map[String,Mapping] = _mappings
-    def outputs : Map[String,Output] = _outputs
+    def targets : Map[String,Target] = _targets
     def jobs : Map[String,Job] = _jobs
 
     /**
@@ -131,7 +130,7 @@ class Module {
         result._connections = _connections ++ other._connections
         result._relations = _relations ++ other._relations
         result._mappings = _mappings ++ other._mappings
-        result._outputs = _outputs ++ other._outputs
+        result._targets = _targets ++ other._targets
         result._profiles = _profiles ++ other._profiles
         result._jobs = _jobs ++ other._jobs
         result
@@ -152,7 +151,7 @@ class Module {
                 .setConnections(connections)
                 .setRelations(relations)
                 .setMappings(mappings)
-                .setOutputs(outputs)
+                .setTargets(targets)
                 .setJobs(jobs)
                 .build()
     }

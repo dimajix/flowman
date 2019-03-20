@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.net.URI
 import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
@@ -40,70 +44,66 @@ object HiveTableRelation {
 }
 
 
-class HiveTableRelation extends SchemaRelation  {
+class HiveTableRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
-    @JsonProperty(value="database", required=false) private var _database: String = ""
-    @JsonProperty(value="table", required=true) private var _table: String = ""
-    @JsonProperty(value="external", required=false) private var _external: String = "false"
-    @JsonProperty(value="location", required=false) private var _location: String = _
-    @JsonProperty(value="format", required=false) private var _format: String = _
-    @JsonProperty(value="rowFormat", required=false) private var _rowFormat: String = _
-    @JsonProperty(value="inputFormat", required=false) private var _inputFormat: String = _
-    @JsonProperty(value="outputFormat", required=false) private var _outputFormat: String = _
-    @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
-    @JsonProperty(value="properties", required=false) private var _properties: Map[String,String] = Map()
-    @JsonProperty(value="writer", required=false) private var _writer: String = "hive"
+    @JsonProperty(value = "database", required = false) private var _database: String = ""
+    @JsonProperty(value = "table", required = true) private var _table: String = ""
+    @JsonProperty(value = "external", required = false) private var _external: String = "false"
+    @JsonProperty(value = "location", required = false) private var _location: String = _
+    @JsonProperty(value = "format", required = false) private var _format: String = _
+    @JsonProperty(value = "rowFormat", required = false) private var _rowFormat: String = _
+    @JsonProperty(value = "inputFormat", required = false) private var _inputFormat: String = _
+    @JsonProperty(value = "outputFormat", required = false) private var _outputFormat: String = _
+    @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
+    @JsonProperty(value = "writer", required = false) private var _writer: String = "hive"
 
-    def database(implicit context:Context) : String = context.evaluate(_database)
-    def table(implicit context:Context) : String = context.evaluate(_table)
-    def external(implicit context:Context) : Boolean = context.evaluate(_external).toBoolean
-    def location(implicit context:Context) : String = context.evaluate(_location)
-    def format(implicit context: Context) : String = context.evaluate(_format)
-    def rowFormat(implicit context: Context) : String = context.evaluate(_rowFormat)
-    def inputFormat(implicit context: Context) : String = context.evaluate(_inputFormat)
-    def outputFormat(implicit context: Context) : String = context.evaluate(_outputFormat)
-    def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
-    def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
-    def writer(implicit context: Context) : String = context.evaluate(_writer).toLowerCase(Locale.ROOT)
+    def database(implicit context: Context): String = context.evaluate(_database)
+    def table(implicit context: Context): String = context.evaluate(_table)
+    def external(implicit context: Context): Boolean = context.evaluate(_external).toBoolean
+    def location(implicit context: Context): String = context.evaluate(_location)
+    def format(implicit context: Context): String = context.evaluate(_format)
+    def rowFormat(implicit context: Context): String = context.evaluate(_rowFormat)
+    def inputFormat(implicit context: Context): String = context.evaluate(_inputFormat)
+    def outputFormat(implicit context: Context): String = context.evaluate(_outputFormat)
+    def properties(implicit context: Context): Map[String, String] = _properties.mapValues(context.evaluate)
+    def writer(implicit context: Context): String = context.evaluate(_writer).toLowerCase(Locale.ROOT)
+    def tableIdentifier(implicit context: Context): TableIdentifier = new TableIdentifier(table, Option(database))
 
     /**
       * Reads data from the relation, possibly from specific partitions
       *
       * @param executor
-      * @param schema - the schema to read. If none is specified, all available columns will be read
+      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        assert(partitions != null)
+    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue] = Map()): DataFrame = {
+        require(executor != null)
+        require(partitions != null)
 
         implicit val context = executor.context
-        val partitionsByName = this.partitions.map(p => (p.name, p)).toMap
-        val partitionNames = this.partitions.map(_.name)
-        val tableName = if (database.nonEmpty) database + "." + table else table
-        logger.info(s"Reading DataFrame from Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
-
-        def applyPartitionFilter(df:DataFrame, partitionName:String, partitionValue:FieldValue): DataFrame = {
-            val field = partitionsByName(partitionName)
-            val values = field.interpolate(partitionValue).toSeq
-            df.filter(df(partitionName).isin(values:_*))
-        }
+        logger.info(s"Reading from Hive table $tableIdentifier using partition values $partitions")
 
         val reader = this.reader(executor)
-        val tableDf = reader.table(tableName)
-        val df = partitions.foldLeft(tableDf)((df,pv) => applyPartitionFilter(df, pv._1, pv._2))
+        val tableDf = reader.table(tableIdentifier.unquotedString)
+        val df = filterPartition(tableDf, partitions)
 
         SchemaUtils.applySchema(df, schema)
     }
 
     /**
       * Writes data into the relation, possibly into a specific partition
+      *
       * @param executor
-      * @param df - dataframe to write
+      * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partition != null)
+
         implicit val context = executor.context
         if (writer == "hive")
             writeHive(executor, df, partition, mode)
@@ -115,16 +115,16 @@ class HiveTableRelation extends SchemaRelation  {
 
     /**
       * Writes to a Hive table using Hive. This is the normal mode.
+      *
       * @param executor
       * @param df
       * @param partition
       * @param mode
       */
-    private def writeHive(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit =  {
+    private def writeHive(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
-        val tableName = database + "." + table
-        logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Writing to Hive table $tableIdentifier with partitions ${partitionNames.mkString(",")}")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(df)
@@ -132,13 +132,23 @@ class HiveTableRelation extends SchemaRelation  {
         if (partition.nonEmpty) {
             val spark = executor.spark
 
+            /*
+            val cmd = InsertIntoTable(
+                table = UnresolvedRelation(TableIdentifier(table, Option(database))),
+                partition = Map.empty[String, Option[String]],
+                query = df.queryExecution.logical,
+                overwrite = mode.toLowerCase(Locale.ROOT) == "overwrite",
+                ifPartitionNotExists = false)
+            spark.sessionState.executePlan(cmd)
+            */
+
             // Create temp view
             val tempViewName = "flowman_tmp_" + System.currentTimeMillis()
             outputDf.createOrReplaceTempView(tempViewName)
 
             // Insert data via SQL
             val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
-            val sql =s"INSERT $writeMode TABLE $tableName ${partitionSpec(partition)} FROM $tempViewName"
+            val sql = s"INSERT $writeMode TABLE $tableIdentifier ${partitionSpec(partition)} FROM $tempViewName"
             logger.info("Inserting records via SQL: " + sql)
             spark.sql(sql).collect()
 
@@ -146,33 +156,32 @@ class HiveTableRelation extends SchemaRelation  {
             spark.sessionState.catalog.dropTempView(tempViewName)
         }
         else {
-            // Add partition columns
-            val frame = partition.foldLeft(outputDf)((f, p) => f.withColumn(p._1, lit(p._2.value)))
-            frame.write
+            outputDf.write
                 .mode(mode)
                 .options(options)
-                .insertInto(tableName)
+                .insertInto(tableIdentifier.unquotedString)
         }
     }
 
     /**
       * Writes to Hive table by directly writing into the corresponding directory. This is a fallback and will not
       * use the Hive classes for writing.
+      *
       * @param executor
       * @param df
       * @param partition
       * @param mode
       */
-    private def writeSpark(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit =  {
+    private def writeSpark(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
         implicit val context = executor.context
         val partitionSchema = PartitionSchema(partitions)
-        val tableName = database + "." + table
-        logger.info(s"Writing DataFrame to Hive table '$tableName' with partitions ${partitionSchema.names.mkString(",")} using direct mode")
+        val partitionSpec = partitionSchema.spec(partition)
+        logger.info(s"Writing to Hive table $tableIdentifier with partition values $partitionSpec using direct mode")
 
         if (_location == null || location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
 
-        val outputPath = partitionSchema.partitionPath(new Path(location), partition)
+        val outputPath = partitionSpec.path(new Path(location), partitionSchema.names)
 
         // Perform Hive => Spark format mapping
         val format = this.format.toLowerCase(Locale.ROOT) match {
@@ -188,21 +197,50 @@ class HiveTableRelation extends SchemaRelation  {
 
         // Finally add Hive partition
         if (partition.nonEmpty) {
-            val sql = s"ALTER TABLE $tableName ADD IF NOT EXISTS ${partitionSpec(partition)} LOCATION '${outputPath}'"
-            logger.info("Adding partition via SQL: " + sql)
-            executor.spark.sql(sql).collect()
+            val catalog = executor.catalog
+            catalog.addOrReplacePartition(tableIdentifier, partitionSpec, outputPath)
+        }
+    }
+
+    /**
+      * Cleans either individual partitions (for partitioned tables) or truncates a whole table
+      *
+      * @param executor
+      * @param partitions
+      */
+    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        require(executor != null)
+        require(partitions != null)
+
+        implicit val context = executor.context
+        logger.info(s"Cleaning Hive relation '$name' with table $tableIdentifier")
+
+        val catalog = executor.catalog
+        if (partitions.nonEmpty) {
+            val partitionSchema = PartitionSchema(this.partitions)
+            partitionSchema.interpolate(partitions).foreach(spec =>
+                catalog.dropPartition(tableIdentifier, spec)
+            )
+        }
+        else {
+            catalog.truncateTable(tableIdentifier)
         }
     }
 
     /**
       * Creates a Hive table by executing the appropriate DDL
+      *
       * @param executor
       */
-    override def create(executor:Executor) : Unit = {
+    override def create(executor: Executor): Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
-        val spark = executor.spark
         val properties = this.properties
         val fields = this.fields
+        val tableIdentifier = this.tableIdentifier
+        val format = this.format
+        logger.info(s"Creating Hive relation '$name' with table $tableIdentifier")
 
         // Create and save Avro schema
         import HiveTableRelation._
@@ -214,8 +252,31 @@ class HiveTableRelation extends SchemaRelation  {
                 .save(executor.context.fs.file(avroSchemaUrl))
         }
 
+        val catalogTable = CatalogTable(
+            identifier = tableIdentifier,
+            tableType = if (external) CatalogTableType.EXTERNAL
+            else CatalogTableType.MANAGED,
+            storage = CatalogStorageFormat(
+                Option(location).map(new URI(_)),
+                Option(inputFormat),
+                Option(outputFormat),
+                Option(rowFormat),
+                true,
+                Map()
+            ),
+            provider = if (format != null && format.nonEmpty) Some(format)
+            else Some("hive"),
+            schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
+            partitionColumnNames = partitions.map(_.name),
+            properties = properties,
+            comment = Option(description)
+        )
+
+        val catalog = executor.catalog
+        catalog.createTable(catalogTable, false)
+        /*
         val external = if (this.external) "EXTERNAL" else ""
-        val create = s"CREATE $external TABLE $database.$table"
+        val create = s"CREATE $external TABLE $tableName"
         val columns = "(\n" + fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
         val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
@@ -228,29 +289,36 @@ class HiveTableRelation extends SchemaRelation  {
         val stmt = create + columns + comment + partitionBy + rowFormat + storedAs + location + props
         logger.info(s"Executing SQL statement:\n$stmt")
         spark.sql(stmt)
+        */
     }
 
     /**
       * Destroys the Hive table by executing an appropriate DROP statement
+      *
       * @param executor
       */
-    override def destroy(executor:Executor) : Unit = {
+    override def destroy(executor: Executor): Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
-        val stmt = s"DROP TABLE IF EXISTS $database.$table"
-        logger.info(s"Executing SQL statement:\n$stmt")
-        executor.spark.sql(stmt)
+        logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
+
+        val catalog = executor.catalog
+        catalog.dropTable(tableIdentifier)
     }
-    override def migrate(executor:Executor) : Unit = ???
+
+    override def migrate(executor: Executor): Unit = ???
 
     /**
       * Applies the specified schema and converts all field names to lowercase. This is required when directly
       * writing into HDFS and using Hive, since Hive only supports lower-case field names.
+      *
       * @param df
       * @return
       */
-    override protected def applyOutputSchema(df:DataFrame)(implicit context:Context) : DataFrame = {
+    override protected def applyOutputSchema(df: DataFrame)(implicit context: Context): DataFrame = {
         val outputColumns = schema.fields.map(field => df(field.name))
-        val mixedCaseDf = df.select(outputColumns:_*)
+        val mixedCaseDf = df.select(outputColumns: _*)
         if (needsLowerCaseSchema) {
             val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
             df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
@@ -260,12 +328,18 @@ class HiveTableRelation extends SchemaRelation  {
         }
     }
 
-    private def needsLowerCaseSchema(implicit context:Context) : Boolean = {
+    private def needsLowerCaseSchema(implicit context: Context): Boolean = {
         false
     }
 
-    private def partitionSpec(partition:Map[String,SingleValue])(implicit context:Context) : String = {
-        PartitionSchema(partitions).partitionSpec(partition)
+    /**
+      * Creates a SQL PARTITION expression
+      * @param partition
+      * @return
+      */
+    private def partitionSpec(partition: Map[String, SingleValue])(implicit context: Context): String = {
+        val schema = PartitionSchema(partitions)
+        val spec = schema.spec(partition)
+        HiveDialect.expr.partition(spec)
     }
-
 }

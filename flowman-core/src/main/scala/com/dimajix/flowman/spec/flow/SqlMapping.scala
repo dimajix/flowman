@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
@@ -68,7 +68,7 @@ class SqlMapping extends BaseMapping {
     }
 
     /**
-      * Resolves all dependencies required to execute the SQL
+      * Resolves all dependencies required to build the SQL
       *
       * @param context
       * @return

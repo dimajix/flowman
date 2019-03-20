@@ -23,9 +23,9 @@ import org.apache.spark.sql.functions.broadcast
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 
 
 private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context)
@@ -49,6 +49,8 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @param tableName
       */
     override def instantiate(tableName: MappingIdentifier) : DataFrame = {
+        require(tableName != null && tableName.nonEmpty)
+
         if (tableName.project.forall(_ == _project.name))
             cache.getOrElseUpdate((_project.name, tableName.name), createTable(tableName.name))
         else
@@ -69,6 +71,8 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @return
       */
     override def getTable(identifier: MappingIdentifier): DataFrame = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.forall(_ == _project.name))
             _parent.getTable(MappingIdentifier(identifier.name, _project.name))
         else

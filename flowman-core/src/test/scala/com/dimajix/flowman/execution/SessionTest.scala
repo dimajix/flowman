@@ -40,6 +40,14 @@ class SessionTest extends FlatSpec with Matchers {
         session.runner should not be (null)
     }
 
+    it should "create a valid Spark session" in {
+        val session = Session.builder()
+            .build()
+        session.sparkRunning should be (false)
+        session.spark should not be (null)
+        session.sparkRunning should be (true)
+    }
+
     it should "apply configs in correct order" in {
         val spec =
             """
@@ -59,5 +67,35 @@ class SessionTest extends FlatSpec with Matchers {
         session.spark.conf.get("spark.lolo") should be ("lolo_cmdline")
         session.spark.conf.get("spark.lili") should be ("lili_project")
         session.spark.stop()
+    }
+
+    it should "create new detached Sessions" in {
+        val session = Session.builder()
+            .build()
+        session.sparkRunning should be (false)
+
+        val newSession = session.newSession(null)
+        session.sparkRunning should be (false)
+        newSession.sparkRunning should be (false)
+
+        newSession.spark should not be (null)
+        session.sparkRunning should be (true)
+        newSession.sparkRunning should be (true)
+
+        session.spark should not equal(newSession.spark)
+        session.context should not equal(newSession.context)
+        session.executor should not equal(newSession.executor)
+        session.runner should not equal(newSession.runner)
+    }
+
+    it should "set all Spark configs" in {
+        val session = Session.builder()
+            .withSparkConfig(Map("spark.lala" -> "lolo"))
+            .build()
+
+        val newSession = session.newSession(null)
+
+        session.spark.conf.get("spark.lala") should be ("lolo")
+        newSession.spark.conf.get("spark.lala") should be ("lolo")
     }
 }

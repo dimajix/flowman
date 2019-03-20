@@ -1,0 +1,6 @@
+targets:
+  measurements-dump:
+    kind: console
+    enabled: false
+    input: measurements
+    limit: 100

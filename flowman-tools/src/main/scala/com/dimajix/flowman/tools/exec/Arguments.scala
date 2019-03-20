@@ -31,7 +31,7 @@ import org.kohsuke.args4j.spi.SubCommands
 import com.dimajix.flowman.tools.exec.job.JobCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
-import com.dimajix.flowman.tools.exec.output.OutputCommand
+import com.dimajix.flowman.tools.exec.target.TargetCommand
 import com.dimajix.flowman.tools.exec.project.ProjectCommand
 
 
@@ -58,17 +58,10 @@ class Arguments(args:Array[String]) {
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
-        new SubCommand(name="output",impl=classOf[OutputCommand]),
+        new SubCommand(name="target",impl=classOf[TargetCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))
     var command:Command = _
-
-
-    /**
-      * Returns true if the command line is incomplete
-      * @return
-      */
-    def incomplete : Boolean = command == null || command.incomplete
 
     /**
       * Returns true if a help message is requested
@@ -98,10 +91,9 @@ class Arguments(args:Array[String]) {
         }
         catch {
             case e: CmdLineException => {
-                System.err.println(e.getMessage)
                 e.getParser.printUsage(System.err)
                 System.err.println
-                System.exit(1)
+                throw e
             }
         }
     }

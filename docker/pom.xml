@@ -10,26 +10,12 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.2.0</version>
+        <version>0.3.0</version>
         <relativePath>..</relativePath>
     </parent>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>default-test-jar</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>

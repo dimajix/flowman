@@ -25,26 +25,24 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.FileSystem
-import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.OutputIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.output.Output
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
 
 object RootContext {
     class Builder(_namespace:Namespace, _profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder {
-        private var _runner:Runner = new SimpleRunner()
-
         override def withEnvironment(env: Seq[(String, Any)]): Builder = {
             withEnvironment(env, SettingLevel.NAMESPACE_SETTING)
             this
@@ -61,13 +59,9 @@ object RootContext {
             withProfile(profile, SettingLevel.NAMESPACE_PROFILE)
             this
         }
-        def withRunner(runner:Runner) : Builder = {
-            _runner = runner
-            this
-        }
 
         override def createContext(): RootContext = {
-            val context = new RootContext(_runner, _namespace, _profiles)
+            val context = new RootContext(_namespace, _profiles)
             if (_parent != null)
                 context.updateFrom(_parent)
             context
@@ -80,7 +74,7 @@ object RootContext {
 }
 
 
-class RootContext private[execution](_runner:Runner, _namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
+class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
     override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
@@ -109,19 +103,14 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
     override def root : Context = this
 
     /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    override def runner : Runner = _runner
-
-    /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this executor
       *
       * @param identifier
       * @return
       */
     override def getMapping(identifier: MappingIdentifier): Mapping = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find mapping with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -134,6 +123,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getRelation(identifier: RelationIdentifier): Relation = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find relation with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -141,16 +132,18 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
     }
 
     /**
-      * Returns a fully qualified output from a project belonging to the namespace of this executor
+      * Returns a fully qualified target from a project belonging to the namespace of this executor
       *
       * @param identifier
       * @return
       */
-    override def getOutput(identifier: OutputIdentifier): Output = {
+    override def getTarget(identifier: TargetIdentifier): Target = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find output with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
-        child.getOutput(OutputIdentifier(identifier.name, None))
+        child.getTarget(TargetIdentifier(identifier.name, None))
     }
 
     /**
@@ -160,6 +153,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty) {
             val con = Option(namespace).flatMap(_.connections.get(identifier.name))
             con.getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
@@ -177,6 +172,8 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getJob(identifier: JobIdentifier): Job = {
+        require(identifier != null && identifier.nonEmpty)
+
         if (identifier.project.isEmpty)
             throw new NoSuchElementException(s"Cannot find Job with name '$identifier'")
         val child = getProjectContext(identifier.project.get)
@@ -190,9 +187,11 @@ class RootContext private[execution](_runner:Runner, _namespace:Namespace, _prof
       * @return
       */
     override def getProjectContext(projectName:String) : Context = {
+        require(projectName != null && projectName.nonEmpty)
         _children.getOrElseUpdate(projectName, createProjectContext(loadProject(projectName)))
     }
     override def getProjectContext(project:Project) : Context = {
+        require(project != null)
         _children.getOrElseUpdate(project.name, createProjectContext(project))
     }
 

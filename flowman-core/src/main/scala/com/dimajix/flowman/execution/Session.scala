@@ -16,17 +16,15 @@
 
 package com.dimajix.flowman.execution
 
-import java.io.File
-
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
-import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.namespace.Namespace
+import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.ExternalCatalog
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.UdfProvider
 
@@ -47,12 +45,12 @@ class SessionBuilder {
       * @return
       */
     def withSparkSession(session:SparkSession) : SessionBuilder = {
-        assert(session != null)
+        require(session != null)
         _sparkSession = session
         this
     }
     def withSparkName(name:String) : SessionBuilder = {
-        assert(name != null)
+        require(name != null)
         _sparkName = name
         this
     }
@@ -63,8 +61,21 @@ class SessionBuilder {
       * @return
       */
     def withSparkConfig(config:Map[String,String]) : SessionBuilder = {
-        assert(config != null)
+        require(config != null)
         _sparkConfig = _sparkConfig ++ config
+        this
+    }
+
+    /**
+      * Adds Spark config variables which actually will override any variables given in specs
+      * @param key
+      * @param value
+      * @return
+      */
+    def withSparkConfig(key:String,value:String) : SessionBuilder = {
+        require(key != null)
+        require(value != null)
+        _sparkConfig = _sparkConfig.updated(key, value)
         this
     }
 
@@ -74,8 +85,21 @@ class SessionBuilder {
       * @return
       */
     def withEnvironment(env:Seq[(String,String)]) : SessionBuilder = {
-        assert(env != null)
+        require(env != null)
         _environment = _environment ++ env
+        this
+    }
+
+    /**
+      * Adds environment variables which actually will override any variables given in specs
+      * @param key
+      * @param value
+      * @return
+      */
+    def withEnvironment(key:String,value:String) : SessionBuilder = {
+        require(key != null)
+        require(value != null)
+        _environment = _environment :+ (key -> value)
         this
     }
 
@@ -105,17 +129,19 @@ class SessionBuilder {
       * @return
       */
     def withProfile(profile:String) : SessionBuilder = {
+        require(profile != null)
         _profiles = _profiles + profile
         this
     }
 
     /**
       * Adds a list of profile names to be activated. This does not remove any previously activated profile
-      * @param profile
+      * @param profiles
       * @return
       */
-    def withProfiles(profile:Seq[String]) : SessionBuilder = {
-        _profiles = _profiles ++ profile
+    def withProfiles(profiles:Seq[String]) : SessionBuilder = {
+        require(profiles != null)
+        _profiles = _profiles ++ profiles
         this
     }
 
@@ -125,6 +151,7 @@ class SessionBuilder {
       * @return
       */
     def withJars(jars:Seq[String]) : SessionBuilder = {
+        require(jars != null)
         _jars = _jars ++ jars
         this
     }
@@ -134,7 +161,7 @@ class SessionBuilder {
       * @return
       */
     def build() : Session = {
-        val session = new Session(_namespace, _project, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles, _jars)
+        val session = new Session(_namespace, _project, () => _sparkSession, _sparkName, _sparkConfig, _environment, _profiles, _jars)
         session
     }
 }
@@ -144,9 +171,11 @@ object Session {
     def builder() = new SessionBuilder
 }
 
+
 /**
   * A Flowman session is used as the starting point for executing data flows. It contains information about the
   * Namespace, the Project and also managed a Spark session.
+  *
   * @param _namespace
   * @param _project
   * @param _sparkSession
@@ -157,26 +186,33 @@ object Session {
   * @param _jars
   */
 class Session private[execution](
-    _namespace:Namespace,
-    _project:Project,
-    _sparkSession:SparkSession,
-    _sparkName:String,
-    _sparkConfig:Map[String,String],
-    _environment: Seq[(String,String)],
-    _profiles:Set[String],
-    _jars:Set[String]
-) {
+                                        _namespace:Namespace,
+                                        _project:Project,
+                                        _sparkSession:() => SparkSession,
+                                        _sparkName:String,
+                                        _sparkConfig:Map[String,String],
+                                        _environment: Seq[(String,String)],
+                                        _profiles:Set[String],
+                                        _jars:Set[String]
+                                    ) {
+    require(_jars != null)
+    require(_environment != null)
+    require(_profiles != null)
+    require(_sparkSession != null)
+    require(_sparkName != null)
+    require(_sparkConfig != null)
+
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
-    private val _monitor = {
+    private val _history = {
         if (_namespace != null && _namespace.monitor != null)
             _namespace.monitor
         else
             null
     }
     private val _runner = {
-        if (_monitor  != null)
-            new MonitoredRunner(_monitor)
+        if (_history  != null)
+            new MonitoredRunner(_history.createStateStore(this))
         else
             new SimpleRunner
     }
@@ -202,64 +238,56 @@ class Session private[execution](
       *
       * @return
       */
-    private def createOrReuseSession() : Option[SparkSession] = {
-        if(_sparkSession != null) {
-            logger.info("Reusing existing Spark session")
-            val newSession = _sparkSession.newSession()
-            sparkConfig.foreach(kv => newSession.conf.set(kv._1,kv._2))
-            Some(newSession)
+    private def createOrReuseSession() : SparkSession = {
+        val injectedSession = _sparkSession()
+        if (injectedSession != null) {
+            logger.info("Reusing provided Spark session")
+            // Set all session properties that can be changed in an existing session
+            sparkConfig.foreach { case (key, value) =>
+                if (!SQLConf.staticConfKeys.contains(key)) {
+                    injectedSession.conf.set(key, value)
+                }
+            }
+            injectedSession
         }
         else {
             logger.info("Creating new Spark session")
-            Try {
-                val sparkConf = context.sparkConf
-                    .setAppName(_sparkName)
-                    .setAll(sparkConfig.toSeq)
-                val master = System.getProperty("spark.master")
-                if (master == null || master.isEmpty) {
-                    logger.info("No Spark master specified - using local[*]")
-                    sparkConf.setMaster("local[*]")
-                    sparkConf.set("spark.sql.shuffle.partitions", "16")
-                }
-                SparkSession.builder()
-                    .config(sparkConf)
-                    .enableHiveSupport()
-                    .getOrCreate()
+            val sparkConf = context.sparkConf
+                .setAppName(_sparkName)
+                .setAll(sparkConfig.toSeq)
+            val master = System.getProperty("spark.master")
+            if (master == null || master.isEmpty) {
+                logger.info("No Spark master specified - using local[*]")
+                sparkConf.setMaster("local[*]")
+                sparkConf.set("spark.sql.shuffle.partitions", "16")
             }
-            match {
-                case Success(session) =>
-                    logger.info("Successfully created Spark Session")
-                    Some(session)
-                case Failure(e) =>
-                    logger.error("Failed to create Spark Session.", e)
-                    None
-            }
+            SparkSession.builder()
+                .config(sparkConf)
+                .enableHiveSupport()
+                .getOrCreate()
         }
-
     }
-    private def createSession() = {
-        val sparkSession = createOrReuseSession()
-        sparkSession.foreach { spark =>
-            // Log all config properties
-            spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
+    private def createSession() : SparkSession = {
+        val spark = createOrReuseSession()
 
-            // Copy all Spark configs over to SparkConf inside the Context
-            context.sparkConf.setAll(spark.conf.getAll)
+        // Distribute additional Plugin jar files
+        sparkJars.foreach(spark.sparkContext.addJar)
 
-            // Distribute additional Plugin jar files
-            sparkJars.foreach(spark.sparkContext.addJar)
+        // Log all config properties
+        spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
 
-            // Register special UDFs
-            UdfProvider.providers.foreach(_.register(spark.udf))
-        }
+        // Copy all Spark configs over to SparkConf inside the Context
+        context.sparkConf.setAll(spark.conf.getAll)
 
-        sparkSession
+        // Register special UDFs
+        UdfProvider.providers.foreach(_.register(spark.udf))
+
+        spark
     }
-    private var sparkSession:Option[SparkSession] = null
+    private var sparkSession:SparkSession = null
 
-    private lazy val rootContext : RootContext = {
+    private lazy val rootContext : Context = {
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
-            .withRunner(_runner)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
         if (_namespace != null) {
@@ -270,13 +298,26 @@ class Session private[execution](
             builder.withEnvironment(namespace.environment)
             builder.withConfig(namespace.config.toMap)
         }
-        builder.build().asInstanceOf[RootContext]
+        builder.build()
     }
 
     private lazy val rootExecutor : RootExecutor = {
         val executor = new RootExecutor(this, rootContext)
         executor
     }
+
+    private lazy val _externalCatalog : ExternalCatalog = {
+        if (_namespace != null && _namespace.catalog != null) {
+            _namespace.catalog.createCatalog(this)
+        }
+        else {
+            null
+        }
+    }
+    private lazy val _catalog = new Catalog(spark, _externalCatalog)
+
+
+    def monitor : StateStoreProvider = _history
 
     /**
       * Returns the Namespace tied to this Flowman session.
@@ -310,8 +351,14 @@ class Session private[execution](
                 }
             }
         }
-        sparkSession.get
+        sparkSession
     }
+
+    /**
+      * Returns a Catalog for managing Hive tables
+      * @return
+      */
+    def catalog : Catalog = _catalog
 
     /**
       * Returns true if a SparkSession is already available
@@ -320,8 +367,8 @@ class Session private[execution](
     def sparkRunning: Boolean = sparkSession != null
 
     /**
-     * Returns the root context of this session.
-     */
+      * Returns the root context of this session.
+      */
     def context : Context = rootContext
 
     /**
@@ -333,7 +380,7 @@ class Session private[execution](
     def executor : Executor = rootExecutor
 
     /**
-      * Creates a new namespace specific context
+      * Either returns an existing or creates a new project specific context
       *
       * @param project
       * @return
@@ -342,7 +389,39 @@ class Session private[execution](
         rootContext.getProjectContext(project)
     }
 
+    /**
+      * Either returns an existing or creates a new project specific executor
+      *
+      * @param project
+      * @return
+      */
     def getExecutor(project: Project) : Executor = {
         rootExecutor.getProjectExecutor(project)
+    }
+
+    /**
+      * Returns a new detached Flowman Session sharing the same Spark Context.
+      * @param project
+      * @return
+      */
+    def newSession(project:Project) : Session = {
+        new Session(
+            _namespace,
+            project,
+            () => spark.newSession(),
+            _sparkName,
+            _sparkConfig:Map[String,String],
+            _environment: Seq[(String,String)],
+            _profiles:Set[String],
+            Set()
+        )
+    }
+
+    /**
+      * Returns a new detached Flowman Session for the same namespace and project sharing the same Spark Context.
+      * @return
+      */
+    def newSession() : Session = {
+        newSession(_project)
     }
 }

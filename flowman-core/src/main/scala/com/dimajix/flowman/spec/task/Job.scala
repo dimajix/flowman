@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,14 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
+import com.dimajix.flowman.spec.Resource
+import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.state.JobInstance
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StringType
-import com.dimajix.flowman.util.splitSettings
 
-
-sealed abstract class JobStatus
-object JobStatus {
-    case object SUCCESS extends JobStatus
-    case object FAILURE extends JobStatus
-    case object ABORTED extends JobStatus
-    case object SKIPPED extends JobStatus
-}
 
 class JobParameter {
     @JsonProperty(value="name") private var _name:String = ""
@@ -121,9 +116,10 @@ class JobParameter {
 
 
 object Job {
-    def apply(tasks:Seq[Task], description:String) : Job = {
+    def apply(tasks:Seq[Task], name:String, description:String) : Job = {
         val job = new Job
         job._tasks = tasks
+        job._name = name
         job._description = description
         job
     }
@@ -139,6 +135,10 @@ object Job {
         }
         def setDescription(desc:String) : Builder = {
             job._description = desc
+            this
+        }
+        def setLogged(boolean: Boolean) : Builder = {
+            job._logged = boolean.toString
             this
         }
         def setParameters(params:Seq[JobParameter]) : Builder = {
@@ -176,10 +176,11 @@ object Job {
 /**
   * A Job represents a collection of individual tasks. Jobs can be logged by appropriate runners.
   */
-class Job {
+class Job extends Resource {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
     @JsonIgnore private var _name:String = ""
+    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
     @JsonProperty(value="description") private var _description:String = ""
     @JsonProperty(value="logged") private var _logged:String = "true"
     @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
@@ -188,7 +189,11 @@ class Job {
     @JsonProperty(value="failure") private var _failure:Seq[Task] = Seq()
     @JsonProperty(value="cleanup") private var _cleanup:Seq[Task] = Seq()
 
-    def name : String = _name
+    override def name : String = _name
+    override def category: String = "job"
+    override def kind : String = "job"
+    override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
+
     def description(implicit context:Context) : String = context.evaluate(_description)
     def logged(implicit context:Context) : Boolean = context.evaluate(_logged).toBoolean
     def tasks : Seq[Task] = _tasks
@@ -198,7 +203,21 @@ class Job {
     def parameters: Seq[JobParameter] = _parameters
 
     /**
-      * Determine final arguments of this job, by performing granularity adjustments atc
+      * Returns a JobInstance used for state management
+      * @param context
+      * @return
+      */
+    def instance(args:Map[String,String])(implicit context: Context) : JobInstance = {
+        JobInstance(
+            Option(context.namespace).map(_.name).getOrElse(""),
+            Option(context.project).map(_.name).getOrElse(""),
+            name,
+            args
+        )
+    }
+
+    /**
+      * Determine final arguments of this job, by performing granularity adjustments etc
       * @param args
       * @param context
       * @return
@@ -218,7 +237,7 @@ class Job {
       * @param args
       * @return
       */
-    def execute(executor:Executor, args:Map[String,String]) : JobStatus = {
+    def execute(executor:Executor, args:Map[String,String]) : Status = {
         implicit val context = executor.context
         logger.info(s"Running job: '$name' ($description)")
 
@@ -248,7 +267,7 @@ class Job {
         result
     }
 
-    private def runJob(executor:Executor) : JobStatus = {
+    private def runJob(executor:Executor) : Status = {
         implicit val context = executor.context
         val result = runTasks(executor, _tasks)
 
@@ -272,10 +291,10 @@ class Job {
         result match {
             case Success(true) =>
                 logger.info("Successfully executed job")
-                JobStatus.SUCCESS
+                Status.SUCCESS
             case Success(false) | Failure(_) =>
                 logger.error(s"Execution of job '$name' failed")
-                JobStatus.FAILURE
+                Status.FAILED
         }
     }
 

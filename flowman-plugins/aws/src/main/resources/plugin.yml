@@ -1,0 +1,7 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - hadoop-aws-${hadoop.version}.jar
+ - aws-java-sdk-s3-${aws.version}.jar

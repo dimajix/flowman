@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
+    <version>0.3.0</version>
     <packaging>pom</packaging>
-    <version>0.2.0</version>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
     <url>http://flowman.io</url>
@@ -53,14 +53,15 @@
         <hadoop.version>2.8.4</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
         <spark.version>2.4.0</spark.version>
-        <aws.version>1.11.95</aws.version>
+        <aws.version>1.10.6</aws.version>
+        <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
         <avro.version>1.8.2</avro.version>
         <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
-        <json4s.version>3.2.11</json4s.version>
+        <json4s.version>3.5.3</json4s.version>
         <json.version>20180130</json.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>12.0</guava.version>
@@ -103,6 +104,7 @@
                 <jackson.version>2.6.5</jackson.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
+                <json4s.version>3.2.11</json4s.version>
             </properties>
         </profile>
         <profile>
@@ -112,6 +114,7 @@
                 <jackson.version>2.6.7</jackson.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
+                <json4s.version>3.2.11</json4s.version>
             </properties>
         </profile>
         <profile>
@@ -121,6 +124,7 @@
                 <jackson.version>2.6.7</jackson.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
+                <json4s.version>3.5.3</json4s.version>
             </properties>
         </profile>
         <profile>
@@ -210,8 +214,11 @@
         <module>flowman-testing</module>
         <module>flowman-tools</module>
         <module>flowman-plugins/example</module>
+        <module>flowman-plugins/aws</module>
+        <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
         <module>flowman-plugins/hbase</module>
+        <module>flowman-plugins/impala</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -510,6 +517,18 @@
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-aws</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-azure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-example</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -523,6 +542,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-kafka</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-impala</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -660,13 +685,6 @@
                         <groupId>log4j</groupId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-aws</artifactId>
-                <version>${hadoop.version}</version>
-                <scope>provided</scope>
             </dependency>
 
             <dependency>

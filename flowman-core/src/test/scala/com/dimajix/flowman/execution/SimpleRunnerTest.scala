@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.StringType
 
 
@@ -32,8 +32,8 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
             .build()
         val session = Session.builder()
             .build()
-        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
-        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
+        runner.execute(session.executor, job) should be (Status.SUCCESS)
+        runner.execute(session.executor, job) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
@@ -44,7 +44,7 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
             .build()
         val session = Session.builder()
             .build()
-        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
-        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
+        runner.execute(session.executor, job) should be (Status.FAILED)
+        runner.execute(session.executor, job) should be (Status.FAILED)
     }
 }

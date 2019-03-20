@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,33 +22,33 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.internal.SQLConf
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.hadoop.FileCollector
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.FileCollector
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class FileRelation extends SchemaRelation {
+class FileRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
-    @JsonProperty(value="location") private var _location: String = _
-    @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="partitions") private var _partitions: Seq[PartitionField] = Seq()
-    @JsonProperty(value="pattern") private var _pattern: String = _
+    @JsonProperty(value="location", required = true) private var _location: String = _
+    @JsonProperty(value="format", required = false) private var _format: String = "csv"
+    @JsonProperty(value="pattern", required = false) private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
     def location(implicit context:Context) : String = context.evaluate(_location)
     def format(implicit context:Context) : String = context.evaluate(_format)
-    def partitions : Seq[PartitionField] = _partitions
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -59,27 +59,35 @@ class FileRelation extends SchemaRelation {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(executor != null)
+        require(partitions != null)
+
         implicit val context = executor.context
-        val inputFiles = collectFiles(executor, partitions)
+        val data = mapFiles(executor, partitions) { (partition, paths) =>
+            paths.foreach(p => logger.info(s"Reading from ${HiveDialect.expr.partition(partition)} file $p"))
+            //if (inputFiles.isEmpty)
+            //    throw new IllegalArgumentException("No input files found")
 
-        //if (inputFiles.isEmpty)
-        //    throw new IllegalArgumentException("No input files found")
+            val pathNames = paths.map(_.toString)
+            val reader = this.reader(executor)
+                .format(format)
 
-        val reader = this.reader(executor)
-            .format(format)
+            // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
+            // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
+            // underlying format implementation
+            val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
+            val df = providingClass.newInstance() match {
+                case _: RelationProvider => reader.load(pathNames.mkString(","))
+                case _: SchemaRelationProvider => reader.load(pathNames.mkString(","))
+                case _: FileFormat => reader.load(pathNames: _*)
+                case _ => reader.load(pathNames.mkString(","))
+            }
 
-        // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
-        // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
-        // underlying format implementation
-        val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
-        val rawData = providingClass.newInstance() match {
-            case _:RelationProvider => reader.load(inputFiles.map(_.toString).mkString(","))
-            case _:SchemaRelationProvider => reader.load(inputFiles.map(_.toString).mkString(","))
-            case _:FileFormat => reader.load(inputFiles.map(_.toString): _*)
-            case _ => reader.load(inputFiles.map(_.toString).mkString(","))
+            // Add partitions values as columns
+            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, lit(p._2)))
         }
-
-        SchemaUtils.applySchema(rawData, schema)
+        val allData = data.reduce(_ union _)
+        SchemaUtils.applySchema(allData, schema)
     }
 
     private def lookupDataSource(provider: String, conf: SQLConf): Class[_] = {
@@ -105,10 +113,13 @@ class FileRelation extends SchemaRelation {
       * @param partition - destination partition
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        require(executor != null)
+        require(partition != null)
+
         implicit val context = executor.context
 
-        val parsedPartition = PartitionSchema(partitions).parse(partition).map(kv => (kv._1.name, kv._2)).toMap
-        val outputPath = collector(executor).resolve(parsedPartition)
+        val partitionSpec = PartitionSchema(partitions).spec(partition)
+        val outputPath = collector(executor).resolve(partitionSpec.toMap)
 
         logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
 
@@ -116,6 +127,38 @@ class FileRelation extends SchemaRelation {
             .format(format)
             .mode(mode)
             .save(outputPath.toString)
+    }
+
+    /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    override def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
+        require(executor != null)
+        require(partitions != null)
+
+        implicit val context = executor.context
+        if (location == null || location.isEmpty)
+            throw new IllegalArgumentException("location needs to be defined for cleaning files")
+
+        if (this.partitions != null && this.partitions.nonEmpty)
+            cleanPartitionedFiles(executor, partitions)
+        else
+            cleanUnpartitionedFiles(executor)
+    }
+
+    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+        implicit val context = executor.context
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        collector(executor).delete(resolvedPartitions)
+    }
+
+    private def cleanUnpartitionedFiles(executor: Executor) = {
+        collector(executor).delete()
     }
 
     /**
@@ -141,6 +184,7 @@ class FileRelation extends SchemaRelation {
         val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         fs.delete(path, true)
     }
+
     override def migrate(executor:Executor) : Unit = ???
 
     /**
@@ -150,36 +194,31 @@ class FileRelation extends SchemaRelation {
       * @param partitions
       * @return
       */
-    private def collectFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+    private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         implicit val context = executor.context
         if (location == null || location.isEmpty)
             throw new IllegalArgumentException("location needs to be defined for reading files")
 
-        val inputFiles =
-            if (this.partitions != null && this.partitions.nonEmpty)
-                collectPartitionedFiles(executor, partitions)
-            else
-                collectUnpartitionedFiles(executor)
-
-        // Print all files that we found
-        inputFiles.foreach(f => logger.info("Reading input file {}", f.toString))
-        inputFiles
+        if (this.partitions != null && this.partitions.nonEmpty)
+            mapPartitionedFiles(executor, partitions)(fn)
+        else
+            Seq(mapUnpartitionedFiles(executor)(fn))
     }
 
-    private def collectPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+    private def mapPartitionedFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         implicit val context = executor.context
         if (partitions == null)
             throw new NullPointerException("Partitioned data source requires partition values to be defined")
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val partitionColumnsByName = this.partitions.map(kv => (kv.name,kv)).toMap
-        val resolvedPartitions = partitions.map(kv => (kv._1, partitionColumnsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Partition column '${kv._1}' not defined in relation $name")).interpolate(kv._2)))
-        collector(executor).collect(resolvedPartitions)
+        val collector = this.collector(executor)
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
-    private def collectUnpartitionedFiles(executor: Executor) = {
-        collector(executor).collect()
+    private def mapUnpartitionedFiles[T](executor: Executor)(fn:(PartitionSpec,Seq[Path]) => T) : T = {
+        fn(PartitionSpec(), collector(executor).collect())
     }
 
     private def collector(executor: Executor) = {

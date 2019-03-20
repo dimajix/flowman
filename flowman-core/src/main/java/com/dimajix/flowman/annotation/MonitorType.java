@@ -23,14 +23,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a Monitor to be used as part of a Namespace. The specific Monitor itself has
- * to derive from the Monitor class
+ * This annotation marks a specific class as a StateStoreProvider to be used as part of a Namespace. The specific StateStoreProvider itself has
+ * to derive from the StateStoreProvider class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface MonitorType {
     /**
-     * Specifies the kind of the monitor which is used in namespace specifications.
+     * Specifies the kind of the state which is used in namespace specifications.
      * @return
      */
     String kind();

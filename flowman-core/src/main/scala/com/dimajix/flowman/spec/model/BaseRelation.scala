@@ -53,6 +53,12 @@ abstract class BaseRelation extends Relation {
       */
     override def schema(implicit context: Context) : Schema = null
 
+    /**
+      * Returns a map of all options. There is no specific usage for options, that depends on the
+      * specific implementation
+      * @param context
+      * @return
+      */
     def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
 
     /**

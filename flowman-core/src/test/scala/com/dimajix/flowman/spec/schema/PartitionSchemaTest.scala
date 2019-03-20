@@ -20,7 +20,11 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.types.ArrayValue
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 
@@ -29,17 +33,17 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
     "The PartitionSchema" should "provide partition column names" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),
-            PartitionField("p2", StringType)
+            PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
         partitionSchema.names should be (Seq("p1", "p2"))
     }
 
-    it should "provide a Hive partition spec" in {
+    it should "create a spec" in {
         val partitionColumns = Seq(
-            PartitionField("p1", StringType),
-            PartitionField("p2", StringType)
+            PartitionField("P1", StringType),
+            PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
@@ -47,24 +51,52 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         implicit val context = session.context
         val partitions = Map(
             "p1" -> SingleValue("lala"),
-            "p2" -> SingleValue("lolo")
+            "p2" -> SingleValue("123")
         )
-        partitionSchema.partitionSpec(partitions) should be ("PARTITION(p1='lala',p2='lolo')")
+
+        val spec = partitionSchema.spec(partitions)
+        spec("p1") should be ("lala")
+        spec("P1") should be ("lala")
+        spec("p2") should be (123)
+        spec("P2") should be (123)
+        spec.toMap should be (Map("P1" -> "lala", "p2" -> 123))
     }
 
-    it should "provide a Hive compatible path" in {
+    it should "interpolate partition values" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),
-            PartitionField("p2", StringType)
+            PartitionField("p2", IntegerType)
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
         val session = Session.builder().build()
         implicit val context = session.context
         val partitions = Map(
-            "p1" -> SingleValue("lala"),
-            "p2" -> SingleValue("lolo")
+            "p1" -> ArrayValue("lala", "lolo"),
+            "p2" -> RangeValue("123", "127", "2")
         )
-        partitionSchema.partitionPath(new Path("/lala"), partitions) should be (new Path("/lala/p1=lala/p2=lolo"))
+
+        val all = partitionSchema.interpolate(partitions)
+        all.toSeq should be (Seq(
+            PartitionSpec(Map("p1" -> "lala", "p2" -> 123)),
+            PartitionSpec(Map("p1" -> "lala", "p2" -> 125)),
+            PartitionSpec(Map("p1" -> "lolo", "p2" -> 123)),
+            PartitionSpec(Map("p1" -> "lolo", "p2" -> 125))
+        ))
+    }
+
+    it should "be case insensitive" in {
+        val partitionColumns = Seq(
+            PartitionField("P1", StringType),
+            PartitionField("p2", IntegerType)
+        )
+        val partitionSchema = PartitionSchema(partitionColumns)
+
+        partitionSchema.get("p1").name should be ("P1")
+        partitionSchema.get("P1").name should be ("P1")
+        partitionSchema.get("p2").name should be ("p2")
+        partitionSchema.get("P2").name should be ("p2")
+
+        partitionSchema.names should be (Seq("P1", "p2"))
     }
 }

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.task.DescribeMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -37,11 +37,10 @@ class DescribeCommand extends ActionCommand {
 
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Describing mapping '$tablename'")
+        val task = DescribeMappingTask(tablename)
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse(tablename))
-            table.printSchema()
+            task.execute(executor)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished describing mapping")

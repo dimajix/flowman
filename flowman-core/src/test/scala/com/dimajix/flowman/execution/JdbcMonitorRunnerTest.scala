@@ -23,11 +23,11 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.namespace.Namespace
-import com.dimajix.flowman.namespace.monitor.JdbcMonitor
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.state.JdbcStateStoreProvider
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobStatus
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.StringType
 
 
@@ -42,7 +42,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         tempDir.toFile.delete()
     }
 
-    "The JdbcMonitor" should "work" in {
+    "The JdbcStateStoreProvider" should "work" in {
         val db = tempDir.resolve("mydb")
         val job = Job.builder()
             .setName("job")
@@ -54,31 +54,31 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val monitor = JdbcMonitor("logger")
-        val runner = new MonitoredRunner(monitor)
-        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
-        runner.execute(session.executor, job) should be (JobStatus.SKIPPED)
-        runner.execute(session.executor, job, force=true) should be (JobStatus.SUCCESS)
+        val monitor = JdbcStateStoreProvider("logger")
+        val runner = new MonitoredRunner(monitor.createStateStore(session))
+        runner.execute(session.executor, job) should be (Status.SUCCESS)
+        runner.execute(session.executor, job) should be (Status.SKIPPED)
+        runner.execute(session.executor, job, force=true) should be (Status.SUCCESS)
     }
 
     it should "be used in a Session" in {
         val db = tempDir.resolve("mydb")
-        val monitor = JdbcMonitor("logger")
+        val monitor = JdbcStateStoreProvider("logger")
         val job = Job.builder()
             .setName("job")
             .build()
         val ns = Namespace.builder()
             .addConnection("logger", JdbcConnection("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
-            .setMonitor(monitor)
+            .setStateStore(monitor)
             .build()
         val session = Session.builder()
             .withNamespace(ns)
             .build()
 
         val runner = session.runner
-        runner.execute(session.executor, job) should be (JobStatus.SUCCESS)
-        runner.execute(session.executor, job) should be (JobStatus.SKIPPED)
-        runner.execute(session.executor, job, force=true) should be (JobStatus.SUCCESS)
+        runner.execute(session.executor, job) should be (Status.SUCCESS)
+        runner.execute(session.executor, job) should be (Status.SKIPPED)
+        runner.execute(session.executor, job, force=true) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
@@ -94,10 +94,10 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val monitor = JdbcMonitor("logger")
-        val runner = new MonitoredRunner(monitor)
-        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
-        runner.execute(session.executor, job) should be (JobStatus.FAILURE)
+        val monitor = JdbcStateStoreProvider("logger")
+        val runner = new MonitoredRunner(monitor.createStateStore(session))
+        runner.execute(session.executor, job) should be (Status.FAILED)
+        runner.execute(session.executor, job) should be (Status.FAILED)
     }
 
     it should "support parameters" in {
@@ -113,11 +113,11 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val monitor = JdbcMonitor("logger")
-        val runner = new MonitoredRunner(monitor)
-        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (JobStatus.SUCCESS)
-        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (JobStatus.SKIPPED)
-        runner.execute(session.executor, job, Map("p1" -> "v2")) should be (JobStatus.SUCCESS)
-        runner.execute(session.executor, job, Map("p1" -> "v2"), force=true) should be (JobStatus.SUCCESS)
+        val monitor = JdbcStateStoreProvider("logger")
+        val runner = new MonitoredRunner(monitor.createStateStore(session))
+        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (Status.SUCCESS)
+        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (Status.SKIPPED)
+        runner.execute(session.executor, job, Map("p1" -> "v2")) should be (Status.SUCCESS)
+        runner.execute(session.executor, job, Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
     }
 }

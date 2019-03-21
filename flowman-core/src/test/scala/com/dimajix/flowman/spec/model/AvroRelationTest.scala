@@ -32,29 +32,29 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val spec =
             s"""
-              |relations:
-              |  t0:
-              |    kind: table
-              |    database: default
-              |    table: avro_test
-              |    format: avro
-              |    location: "${tempDir}/avro_test1"
-              |    writer: spark
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: parent
-              |          type:
-              |            kind: struct
-              |            fields:
-              |              - name: pair
-              |                type:
-              |                  kind: struct
-              |                  fields:
-              |                    - name: str_col
-              |                      type: string
-              |                    - name: int_col
-              |                      type: int
+               |relations:
+               |  t0:
+               |    kind: table
+               |    database: default
+               |    table: avro_test
+               |    format: avro
+               |    location: "${tempDir.toURI}/avro_test1"
+               |    writer: spark
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: parent
+               |          type:
+               |            kind: struct
+               |            fields:
+               |              - name: pair
+               |                type:
+               |                  kind: struct
+               |                  fields:
+               |                    - name: str_col
+               |                      type: string
+               |                    - name: int_col
+               |                      type: int
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
@@ -65,8 +65,8 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read
-                .schema(StructType(relation.schema.fields.map(_.sparkField)))
-                .json(spark.createDataset(jsons))
+            .schema(StructType(relation.schema.fields.map(_.sparkField)))
+            .json(spark.createDataset(jsons))
 
         df.printSchema()
         df.show()
@@ -81,26 +81,26 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val spec =
             s"""
-              |relations:
-              |  t0:
-              |    kind: file
-              |    location: "${tempDir}/avro_test2"
-              |    format: com.databricks.spark.avro
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: parent
-              |          type:
-              |            kind: struct
-              |            fields:
-              |              - name: pair
-              |                type:
-              |                  kind: struct
-              |                  fields:
-              |                    - name: str_col
-              |                      type: string
-              |                    - name: int_col
-              |                      type: int
+               |relations:
+               |  t0:
+               |    kind: file
+               |    location: "${tempDir.toURI}/avro_test2"
+               |    format: com.databricks.spark.avro
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: parent
+               |          type:
+               |            kind: struct
+               |            fields:
+               |              - name: pair
+               |                type:
+               |                  kind: struct
+               |                  fields:
+               |                    - name: str_col
+               |                      type: string
+               |                    - name: int_col
+               |                      type: int
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()

@@ -32,7 +32,15 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
     }
     override def afterAll() : Unit = {
         if (tempDir != null) {
-            deleteTempDir(tempDir)
+            if (System.getProperty("os.name").startsWith("Windows")) {
+                val dir = tempDir
+                Runtime.getRuntime.addShutdownHook(
+                    new Thread() { override def run() : Unit = deleteTempDir(dir) }
+                )
+            }
+            else {
+                deleteTempDir(tempDir)
+            }
             tempDir = null
         }
     }

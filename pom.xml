@@ -92,6 +92,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <scala.version>2.11.8</scala.version>
         <scala.api_version>2.11</scala.api_version>
+        <gpg.skip>true</gpg.skip>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

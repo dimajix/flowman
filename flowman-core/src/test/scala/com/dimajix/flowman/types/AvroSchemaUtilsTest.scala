@@ -26,19 +26,19 @@ import org.scalatest.Matchers
 class AvroSchemaUtilsTest extends FlatSpec with Matchers {
     "AvroSchemaUtils" should "convert a Flowman schema of primitives to an Avro schema" in {
         val schema = Seq(
-                Field("str_field", StringType, false),
-                Field("int_field", IntegerType, false),
-                Field("long_field", LongType, false),
-                Field("short_field", ShortType, false),
-                Field("bool_field", BooleanType, false),
-                Field("bin_field", BinaryType, false),
-                Field("char_field", CharType(10), false),
-                Field("varchar_field", VarcharType(10), false),
-                Field("float_field", FloatType, false),
-                Field("double_field", DoubleType, false),
-                Field("date_field", DateType, false),
-                Field("timestamp_field", TimestampType, false)
-            )
+            Field("str_field", StringType, false),
+            Field("int_field", IntegerType, false),
+            Field("long_field", LongType, false),
+            Field("short_field", ShortType, false),
+            Field("bool_field", BooleanType, false),
+            Field("bin_field", BinaryType, false),
+            Field("char_field", CharType(10), false),
+            Field("varchar_field", VarcharType(10), false),
+            Field("float_field", FloatType, false),
+            Field("double_field", DoubleType, false),
+            Field("date_field", DateType, false),
+            Field("timestamp_field", TimestampType, false)
+        )
 
         val result = AvroSchemaUtils.toAvro(schema)
         result.getType should be (RECORD)
@@ -118,8 +118,8 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
         )
 
         val result = AvroSchemaUtils.toAvro(schema)
-        result.toString(true) should be (
-           """{
+        result.toString(true).replace("\r\n", "\n") should be (
+            """{
               |  "type" : "record",
               |  "name" : "topLevelRecord",
               |  "fields" : [ {
@@ -139,7 +139,7 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
         )
 
         val result = AvroSchemaUtils.toAvro(schema)
-        result.toString(true) should be (
+        result.toString(true).replace("\r\n", "\n") should be (
             """{
               |  "type" : "record",
               |  "name" : "topLevelRecord",
@@ -187,7 +187,7 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
         val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
         val fields = AvroSchemaUtils.fromAvro(avroSchema)
         val result = AvroSchemaUtils.toAvro(fields)
-        result.toString(true) should be (spec)
+        result.toString(true).replace("\r\n", "\n") should be (spec)
     }
 
     it should "correctly support a round trip (2)" in {
@@ -253,6 +253,6 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
         val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
         val fields = AvroSchemaUtils.fromAvro(avroSchema)
         val result = AvroSchemaUtils.toAvro(fields)
-        result.toString(true) should be (spec)
+        result.toString(true).replace("\r\n", "\n") should be (spec)
     }
 }

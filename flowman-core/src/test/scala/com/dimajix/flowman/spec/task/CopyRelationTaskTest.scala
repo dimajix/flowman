@@ -73,7 +73,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |  target_relation:
               |    kind: local
               |    format: csv
-              |    location: ${tempDir}/copy-relation-output.csv
+              |    location: $tempDir/copy-relation-output.csv
               |    schema:
               |      kind: embedded
               |      fields:

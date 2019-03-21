@@ -50,7 +50,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
     @JsonProperty(value = "database", required = false) private var _database: String = ""
     @JsonProperty(value = "table", required = true) private var _table: String = ""
     @JsonProperty(value = "external", required = false) private var _external: String = "false"
-    @JsonProperty(value = "location", required = false) private var _location: String = _
+    @JsonProperty(value = "location", required = false) private var _location: String = ""
     @JsonProperty(value = "format", required = false) private var _format: String = _
     @JsonProperty(value = "rowFormat", required = false) private var _rowFormat: String = _
     @JsonProperty(value = "inputFormat", required = false) private var _inputFormat: String = _
@@ -61,7 +61,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
     def database(implicit context: Context): String = context.evaluate(_database)
     def table(implicit context: Context): String = context.evaluate(_table)
     def external(implicit context: Context): Boolean = context.evaluate(_external).toBoolean
-    def location(implicit context: Context): String = context.evaluate(_location)
+    def location(implicit context: Context): Path = if (_location != null && _location.nonEmpty) new Path(context.evaluate(_location)) else null
     def format(implicit context: Context): String = context.evaluate(_format)
     def rowFormat(implicit context: Context): String = context.evaluate(_rowFormat)
     def inputFormat(implicit context: Context): String = context.evaluate(_inputFormat)
@@ -178,10 +178,11 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         val partitionSpec = partitionSchema.spec(partition)
         logger.info(s"Writing to Hive table $tableIdentifier with partition values $partitionSpec using direct mode")
 
-        if (_location == null || location.isEmpty)
+        val location = this.location
+        if (location == null)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
 
-        val outputPath = partitionSpec.path(new Path(location), partitionSchema.names)
+        val outputPath = partitionSpec.path(location, partitionSchema.names)
 
         // Perform Hive => Spark format mapping
         val format = this.format.toLowerCase(Locale.ROOT) match {
@@ -257,7 +258,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
             tableType = if (external) CatalogTableType.EXTERNAL
             else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(
-                Option(location).map(new URI(_)),
+                Option(location).map(_.toUri),
                 Option(inputFormat),
                 Option(outputFormat),
                 Option(rowFormat),

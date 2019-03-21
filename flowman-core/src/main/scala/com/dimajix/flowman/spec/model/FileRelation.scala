@@ -42,12 +42,12 @@ import com.dimajix.flowman.util.SchemaUtils
 class FileRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
-    @JsonProperty(value="location", required = true) private var _location: String = _
+    @JsonProperty(value="location", required = true) private var _location: String = "/"
     @JsonProperty(value="format", required = false) private var _format: String = "csv"
     @JsonProperty(value="pattern", required = false) private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
-    def location(implicit context:Context) : String = context.evaluate(_location)
+    def location(implicit context:Context) : Path = new Path(context.evaluate(_location))
     def format(implicit context:Context) : String = context.evaluate(_format)
 
     /**
@@ -139,9 +139,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
 
         implicit val context = executor.context
-        if (location == null || location.isEmpty)
-            throw new IllegalArgumentException("location needs to be defined for cleaning files")
-
         if (this.partitions != null && this.partitions.nonEmpty)
             cleanPartitionedFiles(executor, partitions)
         else
@@ -167,10 +164,10 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
       */
     override def create(executor:Executor) : Unit = {
         implicit val context = executor.context
+        val location = this.location
         logger.info(s"Creating directory '$location' for file relation")
-        val path = new Path(location)
-        val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        fs.mkdirs(path)
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        fs.mkdirs(location)
     }
 
     /**
@@ -179,10 +176,10 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
       */
     override def destroy(executor:Executor) : Unit =  {
         implicit val context = executor.context
+        val location = this.location
         logger.info(s"Deleting directory '$location' of file relation")
-        val path = new Path(location)
-        val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        fs.delete(path, true)
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        fs.delete(location, true)
     }
 
     override def migrate(executor:Executor) : Unit = ???
@@ -196,9 +193,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
       */
     private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         implicit val context = executor.context
-        if (location == null || location.isEmpty)
-            throw new IllegalArgumentException("location needs to be defined for reading files")
-
         if (this.partitions != null && this.partitions.nonEmpty)
             mapPartitionedFiles(executor, partitions)(fn)
         else
@@ -224,7 +218,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     private def collector(executor: Executor) = {
         implicit val context = executor.context
         new FileCollector(executor.spark)
-            .path(new Path(location))
+            .path(location)
             .pattern(pattern)
     }
 }

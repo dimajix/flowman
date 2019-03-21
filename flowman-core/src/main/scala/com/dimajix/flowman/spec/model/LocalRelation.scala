@@ -37,12 +37,12 @@ import com.dimajix.flowman.util.SchemaUtils
 class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
 
-    @JsonProperty(value="location") private var _location: String = _
-    @JsonProperty(value="format") private var _format: String = "csv"
-    @JsonProperty(value="pattern") private var _pattern: String = _
+    @JsonProperty(value="location", required=true) private var _location: String = "/"
+    @JsonProperty(value="format", required=false) private var _format: String = "csv"
+    @JsonProperty(value="pattern", required=false) private var _pattern: String = _
 
     def pattern(implicit context:Context) : String = context.evaluate(_pattern)
-    def location(implicit context:Context) : String = context.evaluate(_location)
+    def location(implicit context:Context) : Path = makePath(context.evaluate(_location))
     def format(implicit context:Context) : String = context.evaluate(_format)
 
     /**
@@ -105,14 +105,10 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
         require(partitions != null)
 
         implicit val context = executor.context
-        if (location == null || location.isEmpty)
-            throw new IllegalArgumentException("location needs to be defined for cleaning files")
-
-        val inputFiles =
-            if (this.partitions != null && this.partitions.nonEmpty)
-                cleanPartitionedFiles(executor, partitions)
-            else
-                cleanUnpartitionedFiles(executor)
+        if (this.partitions != null && this.partitions.nonEmpty)
+            cleanPartitionedFiles(executor, partitions)
+        else
+            cleanUnpartitionedFiles(executor)
     }
 
     private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
@@ -185,9 +181,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
       */
     private def collectFiles(executor: Executor, partitions:Map[String,FieldValue]) : Seq[Path] = {
         implicit val context = executor.context
-        if (location == null || location.isEmpty)
-            throw new IllegalArgumentException("location needs to be defined for reading files")
-
         val inputFiles =
             if (this.partitions != null && this.partitions.nonEmpty)
                 collectPartitionedFiles(executor, partitions)
@@ -214,21 +207,27 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
 
     private def collector(executor: Executor) = {
         implicit val context = executor.context
-        val path = new Path("file:///" + localLocation)
         new FileCollector(executor.spark)
-            .path(path)
+            .path(location)
             .pattern(pattern)
     }
 
-    private def localLocation(implicit context: Context) = new Path(location).toUri.getPath
+    private def makePath(location:String) : Path = {
+        val path = new Path(location)
+        if (path.isAbsoluteAndSchemeAuthorityNull)
+            new Path("file", null, path.toString)
+        else
+            path
+    }
+
     private def localDirectory(implicit context: Context) = {
-        val location = localLocation
+        val location = this.location
         val pattern = this.pattern
         if (pattern != null && pattern.nonEmpty) {
-            new Path(location).toUri.getPath
+            location.toUri.getPath
         }
         else {
-            new Path(location).getParent.toUri.getPath
+            location.getParent.toUri.getPath
         }
     }
 }

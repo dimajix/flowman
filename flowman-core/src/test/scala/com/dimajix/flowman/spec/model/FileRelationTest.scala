@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.model
 
 import java.nio.file.Paths
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -55,14 +56,20 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        implicit val context = executor.context
         val relation = project.relations("t0")
         relation.kind should be ("file")
+
+        val fileRelation = relation.asInstanceOf[FileRelation]
+        fileRelation.format should be ("csv")
+        fileRelation.location should be (new Path("test/data/data_1.csv"))
+
         val df = relation.read(executor, null)
         df.schema should be (StructType(
             StructField("f1", StringType) ::
-            StructField("f2", StringType) ::
-            StructField("f3", StringType) ::
-            Nil
+                StructField("f2", StringType) ::
+                StructField("f3", StringType) ::
+                Nil
         ))
         df.collect()
     }
@@ -74,7 +81,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
                |relations:
                |  local:
                |    kind: file
-               |    location: file://$outputPath
+               |    location: ${outputPath.toUri}
                |    pattern: data.csv
                |    format: csv
                |    schema:
@@ -92,6 +99,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         implicit val context = executor.context
         val relation = project.relations("local")
+
+        val fileRelation = relation.asInstanceOf[FileRelation]
+        fileRelation.location should be (new Path(outputPath.toUri))
 
         outputPath.toFile.exists() should be (false)
         relation.create(executor)
@@ -123,7 +133,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
                |relations:
                |  local:
                |    kind: file
-               |    location: file://$outputPath
+               |    location: ${outputPath.toUri}
                |    pattern: p_col=$$p_col
                |    format: csv
                |    schema:
@@ -161,17 +171,17 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         df_p1.count() should be (0)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
-            StructField("int_col", IntegerType, true) ::
-            StructField("p_col", IntegerType, false) ::
-            Nil
+                StructField("int_col", IntegerType, true) ::
+                StructField("p_col", IntegerType, false) ::
+                Nil
         ))
         val df_p2 = relation.read(executor, null, Map("p_col" -> SingleValue("2")))
         df_p2.count() should be (2)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
-            StructField("int_col", IntegerType, true) ::
-            StructField("p_col", IntegerType, false) ::
-            Nil
+                StructField("int_col", IntegerType, true) ::
+                StructField("p_col", IntegerType, false) ::
+                Nil
         ))
 
         relation.clean(executor)

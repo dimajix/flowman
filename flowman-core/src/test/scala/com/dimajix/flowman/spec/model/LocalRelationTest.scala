@@ -108,7 +108,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val relation = project.relations("local")
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path("file:" + tempDir + "/csv/test/data.csv"))
+        localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
         localRelation.pattern should be (null)
 
         relation.create(executor)
@@ -129,13 +129,16 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
-    it should "also support file:/// schema" in {
+    it should "also support URI schema with (empty) authority" in {
+        val location = new Path("file", "", tempDir.getPath).toUri
+        location.toString should startWith ("file:///")
+
         val spec =
             s"""
                |relations:
                |  local:
                |    kind: local
-               |    location: file://$tempDir/csv/test
+               |    location: $location/csv/test
                |    pattern: data.csv
                |    format: csv
                |    schema:
@@ -154,7 +157,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val relation = project.relations("local")
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path("file://" + tempDir + "/csv/test"))
+        localRelation.location should be (new Path(location.toString + "/csv/test"))
         localRelation.pattern should be ("data.csv")
 
         relation.create(executor)
@@ -175,13 +178,17 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
-    it should "also support file:/ schema" in {
+    it should "also support URI schema without authority" in {
+        val location = new Path("file", null, tempDir.getPath).toUri
+        location.toString should not startWith ("file:///")
+        location.toString should startWith ("file:/")
+
         val spec =
             s"""
                |relations:
                |  local:
                |    kind: local
-               |    location: file:$tempDir/csv/test
+               |    location: $location/csv/test
                |    pattern: data.csv
                |    format: csv
                |    schema:
@@ -200,7 +207,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val relation = project.relations("local")
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path("file:" + tempDir + "/csv/test"))
+        localRelation.location should be (new Path(location.toString + "/csv/test"))
         localRelation.pattern should be ("data.csv")
 
         relation.create(executor)

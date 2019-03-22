@@ -235,8 +235,8 @@ class TemplatingTest extends FlatSpec with Matchers {
 
     "System" should "provide access to some system variables" in {
         val output1 = new StringWriter()
-        engine.evaluate(context, output1, "test", "${System.getenv('USER')}")
-        output1.toString should be (System.getenv("USER"))
+        engine.evaluate(context, output1, "test", "${System.getenv('PATH')}")
+        output1.toString should be (System.getenv("PATH"))
 
         val output2 = new StringWriter()
         engine.evaluate(context, output2, "test", "${System.getenv('NO_SUCH_ENV')}")
@@ -247,8 +247,8 @@ class TemplatingTest extends FlatSpec with Matchers {
         output3.toString should be ("default")
 
         val output4 = new StringWriter()
-        engine.evaluate(context, output4, "test","$System.getenv('USER')")
-        output4.toString should be (System.getenv("USER"))
+        engine.evaluate(context, output4, "test","$System.getenv('PATH')")
+        output4.toString should be (System.getenv("PATH"))
 
         val output5 = new StringWriter()
         engine.evaluate(context, output5, "test","$System.getenv('NO_SUCH_ENV')")
@@ -259,12 +259,12 @@ class TemplatingTest extends FlatSpec with Matchers {
         output6.toString should be ("default")
 
         val output7 = new StringWriter()
-        engine.evaluate(context, output7, "test", "$System.getenv('NO_SUCH_ENV', $System.getenv('USER'))")
-        output7.toString should be (System.getenv("USER"))
+        engine.evaluate(context, output7, "test", "$System.getenv('NO_SUCH_ENV', $System.getenv('PATH'))")
+        output7.toString should be (System.getenv("PATH"))
 
         val output8 = new StringWriter()
-        engine.evaluate(context, output8, "test", """$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('USER')))""")
-        output8.toString should be ("lala/" + System.getenv("USER"))
+        engine.evaluate(context, output8, "test", """$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('PATH')))""")
+        output8.toString should be ("lala/" + System.getenv("PATH"))
     }
 
     "The Velocity systeM" should "support new classes via annotation" in {

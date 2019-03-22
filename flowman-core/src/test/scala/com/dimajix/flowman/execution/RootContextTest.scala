@@ -26,11 +26,11 @@ class RootContextTest extends FlatSpec with Matchers {
             .build()
         val context = session.context
 
-        context.evaluate("${System.getenv('USER')}") should be (System.getenv("USER"))
+        context.evaluate("${System.getenv('PATH')}") should be (System.getenv("PATH"))
         context.evaluate("${System.getenv('NO_SUCH_ENV')}") should be ("")
         context.evaluate("${System.getenv('NO_SUCH_ENV', 'default')}") should be ("default")
 
-        context.evaluate("$System.getenv('USER')") should be (System.getenv("USER"))
+        context.evaluate("$System.getenv('PATH')") should be (System.getenv("PATH"))
         context.evaluate("$System.getenv('NO_SUCH_ENV')") should be ("")
         context.evaluate("$System.getenv('NO_SUCH_ENV', 'default')") should be ("default")
     }

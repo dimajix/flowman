@@ -12,6 +12,19 @@ want to run Flowman in a complex environment with Kerberos.
 
 # Custom Builds
 
+## Build on Windows
+
+Although you can normally build Flowman on Windows, you will need the Hadoop WinUtils installed. You can download
+the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto your 
+machine. Do not forget to set the HADOOP_HOME environment variable to the installation directory of these utils!
+
+You should also configure git such that all files are checked out using "LF" endings instead of "CRLF", otherwise
+some unittests may fail and Docker images might not be useable. This can be done by setting the git configuration
+value "core.autocrlf" to "input"
+
+    git config --global core.autocrlf input
+
+
 ## Build for Custom Spark Version
 
 Per default, dataflow will be built for fairly recent versions of Spark (2.3.2 as of this writing) and

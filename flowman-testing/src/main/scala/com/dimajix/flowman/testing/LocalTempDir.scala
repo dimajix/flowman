@@ -86,7 +86,14 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
     private def deleteRecursively(file: File): Unit = {
         if (file.isDirectory)
             file.listFiles.foreach(deleteRecursively)
-        if (file.exists && !file.delete)
-            throw new Exception(s"Unable to delete ${file.getAbsolutePath}")
+        if (file.exists) {
+            // Silently eat up all exceptions
+            try {
+                file.delete()
+            }
+            catch {
+                case ex:IOException =>
+            }
+        }
     }
 }

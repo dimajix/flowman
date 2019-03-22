@@ -32,15 +32,7 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
     }
     override def afterAll() : Unit = {
         if (tempDir != null) {
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                val dir = tempDir
-                Runtime.getRuntime.addShutdownHook(
-                    new Thread() { override def run() : Unit = deleteTempDir(dir) }
-                )
-            }
-            else {
-                deleteTempDir(tempDir)
-            }
+            deleteTempDir(tempDir)
             tempDir = null
         }
     }
@@ -87,7 +79,14 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
     private def deleteRecursively(file: File): Unit = {
         if (file.isDirectory)
             file.listFiles.foreach(deleteRecursively)
-        if (file.exists && !file.delete)
-            throw new Exception(s"Unable to delete ${file.getAbsolutePath}")
+        if (file.exists) {
+            // Silently eat up all exceptions
+            try {
+                file.delete()
+            }
+            catch {
+                case ex:IOException => 
+            }
+        }
     }
 }

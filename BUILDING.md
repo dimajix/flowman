@@ -23,6 +23,10 @@ some unittests may fail and Docker images might not be useable. This can be done
 value "core.autocrlf" to "input"
 
     git config --global core.autocrlf input
+    
+You might also want to skip unittests (the HBase plugin is currently failing under windows)
+
+    mvn clean install -DskipTests    
 
 
 ## Build for Custom Spark Version
@@ -30,7 +34,7 @@ value "core.autocrlf" to "input"
 Per default, dataflow will be built for fairly recent versions of Spark (2.3.2 as of this writing) and
 Hadoop (2.8.3). But of course you can also build for a different version by either using a profile
     
-    mvn install -Pspark2.2 -Phadoop2.7
+    mvn install -Pspark2.2 -Phadoop2.7 -DskipTests
     
 This will always select the latest bugfix version within the minor version. You can also specify
 versions explicitly as follows:    
@@ -45,7 +49,7 @@ using the correct version.
 
 The Maven project also contains preconfigured profiles for Cloudera.
 
-    mvn install -PCDH-5.13        
+    mvn install -Pspark-2.3 -PCDH-5.15 -DskipTests
 
 
 # Releasing

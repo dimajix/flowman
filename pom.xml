@@ -207,6 +207,15 @@
                 <jackson.version>2.6.7</jackson.version>
                 <commons-lang.version>2.6</commons-lang.version>
             </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>jetty-sslengine</artifactId>
+                        <version>6.1.26.cloudera.4</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
     </profiles>
 

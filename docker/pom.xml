@@ -14,6 +14,19 @@
         <relativePath>..</relativePath>
     </parent>
 
+    <properties>
+        <docker.base-image.version>${spark.version}</docker.base-image.version>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>CDH-5.15</id>
+            <properties>
+                <docker.base-image.version>2.3.1</docker.base-image.version>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>

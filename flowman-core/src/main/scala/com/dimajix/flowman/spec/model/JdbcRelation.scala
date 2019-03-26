@@ -246,7 +246,12 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
 
     private def withConnection[T](fn:(Connection,JDBCOptions) => T)(implicit context: Context) : T = {
         val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
-        val options = new JDBCOptions(db.url, tableIdentifier.unquotedString, db.properties ++ properties)
+        val props = scala.collection.mutable.Map[String,String]()
+        Option(db.username).foreach(props.update("user", _))
+        Option(db.password).foreach(props.update("password", _))
+        props.update("driver", db.driver)
+
+        val options = new JDBCOptions(db.url, tableIdentifier.unquotedString, props.toMap ++ db.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)
         try {
             fn(conn, options)

@@ -26,3 +26,4 @@ plugins:
   - flowman-azure
   - flowman-kafka
   - flowman-impala
+  - flowman-mariadb

@@ -68,7 +68,6 @@
         <snakeyaml.version>1.21</snakeyaml.version>
         <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
-        <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
         <velocity.version>1.7</velocity.version>
         <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
@@ -233,6 +232,7 @@
         <module>flowman-plugins/kafka</module>
         <module>flowman-plugins/hbase</module>
         <module>flowman-plugins/impala</module>
+        <module>flowman-plugins/mariadb</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -561,6 +561,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-impala</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mariadb</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1035,12 +1041,6 @@
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.mariadb.jdbc</groupId>
-                <artifactId>mariadb-java-client</artifactId>
-                <version>${mariadb-java-client.version}</version>
             </dependency>
 
             <dependency>

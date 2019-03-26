@@ -23,6 +23,10 @@ some unittests may fail and Docker images might not be useable. This can be done
 value "core.autocrlf" to "input"
 
     git config --global core.autocrlf input
+    
+You might also want to skip unittests (the HBase plugin is currently failing under windows)
+
+    mvn clean install -DskipTests    
 
 
 ## Build for Custom Spark Version
@@ -30,7 +34,7 @@ value "core.autocrlf" to "input"
 Per default, dataflow will be built for fairly recent versions of Spark (2.3.2 as of this writing) and
 Hadoop (2.8.3). But of course you can also build for a different version by either using a profile
     
-    mvn install -Pspark2.2 -Phadoop2.7
+    mvn install -Pspark2.2 -Phadoop2.7 -DskipTests
     
 This will always select the latest bugfix version within the minor version. You can also specify
 versions explicitly as follows:    
@@ -45,23 +49,23 @@ using the correct version.
 
 The Maven project also contains preconfigured profiles for Cloudera.
 
-    mvn install -PCDH-5.13        
+    mvn install -Pspark-2.3 -PCDH-5.15 -DskipTests
 
 
 # Releasing
 
 ## Releasing
 
+When making a release, the gitflow maven plugin should be used for managing versions
+
+    mvn gitflow:release
+
 ## Deploying to Central Repository
 
 Both snapshot and release versions can be deployed to Sonatype, which in turn is mirrored by the Maven Central
 Repository.
 
-### 1. Make a release to the master branch 
-    mvn gitflow:release
-    
-### 2. Deploy artefacts to Sonatype repository    
-    mvn deploy
+    mvn deploy -Dgpg.skip=false
     
 The deployment has to be committed via     
     
@@ -70,3 +74,25 @@ The deployment has to be committed via
 Or the staging data can be removed via
 
     mvn nexus-staging:drop    
+
+## Deploying to Custom Repository
+
+You can also deploy to a different repository by setting the following properties
+* `deployment.repository.id` - contains the ID of the repository. This should match any entry in your settings.xml
+  for authentication
+* `deployment.repository.server` - the url of the server as used by the nexus-staging-maven-plugin
+* `deployment.repository.url` - the url of the default release repsotiory
+* `deployment.repository.snapshot-url` - the url of the snapshot repository
+
+Per default, Flowman uses the staging mechanism provided by the nexus-staging-maven-plugin. This this is not what you
+want, you can simply disable the Plugin via `skipTests` 
+
+With these settings you can deploy to a different (local) repository, for example
+
+    mvn deploy \
+        -Pspark-2.3 \
+        -PCDH-5.15 \
+        -Ddeployment.repository.snapshot-url=https://nexus-snapshots.my-company.net/repository/snapshots \
+        -Ddeployment.repository.id=nexus-snapshots \
+        -DskipStaging \
+        -DskipTests

@@ -3,4 +3,4 @@ description: ${project.name}
 version: ${plugin.version}
 isolation: false
 jars:
- - hadoop-aws-${hadoop.version}.jar
+ - mariadb-java-client-${mariadb-java-client.version}.jar

@@ -75,6 +75,8 @@ class Driver(options:Arguments) {
     private def loadNamespace() : Namespace = {
         val ns = Option(System.getenv("FLOWMAN_CONF_DIR"))
             .filter(_.nonEmpty)
+            .orElse(Option(System.getenv("FLOWMAN_HOME")).map(_ + "/conf"))
+            .filter(_.nonEmpty)
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)
             .map(file => Namespace.read.file(file))

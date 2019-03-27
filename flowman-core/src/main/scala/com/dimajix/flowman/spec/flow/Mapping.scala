@@ -56,6 +56,7 @@ object Mapping extends TypeRegistry[Mapping] {
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMapping]),
     new JsonSubTypes.Type(name = "json-extract", value = classOf[ExtractJsonMapping]),
     new JsonSubTypes.Type(name = "json-unpack", value = classOf[UnpackJsonMapping]),
+    new JsonSubTypes.Type(name = "latest", value = classOf[LatestMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMapping]),
     new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMapping]),

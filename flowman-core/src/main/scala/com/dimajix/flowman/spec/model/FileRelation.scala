@@ -64,7 +64,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
 
         implicit val context = executor.context
         val data = mapFiles(executor, partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading from ${HiveDialect.expr.partition(partition)} file $p"))
+            paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
             //if (inputFiles.isEmpty)
             //    throw new IllegalArgumentException("No input files found")
 

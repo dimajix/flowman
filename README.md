@@ -6,7 +6,7 @@ Flowman is a Spark based ETL tool.
 
 The Maven build will create both a packed distribution file and a Docker image.
 
-    mvn clean install -PCDH-5.13
+    mvn clean install -PCDH-5.15
 
 ## Installing the Packed Distribution 
 
@@ -32,3 +32,9 @@ project with a file `project.yml` or you need to specify the path to a valid pro
 
     flowexec -f /path/to/project/folder <cmd>
     
+    
+# Debugging
+
+When you want to run the application inside your IDE (for example for debugging purpose), the best way to do that is
+to actually install (via `tar xvzf ...`) the application into some directory and then set the environment variable
+`FLOWMAN_HOME` accordingly. This will ensure that all plugins can be found and loaded.

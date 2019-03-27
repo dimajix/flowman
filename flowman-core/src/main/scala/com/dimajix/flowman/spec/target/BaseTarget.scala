@@ -24,12 +24,12 @@ import com.dimajix.flowman.state.TargetInstance
 
 
 abstract class BaseTarget extends Target {
-    @JsonProperty(value = "enabled", required=false) private var _enabled:String = _
+    @JsonProperty(value = "enabled", required=false) private var _enabled:String = "true"
     @JsonProperty(value = "input", required=true) private var _input:String = _
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
 
-    override def enabled(implicit context:Context) : Boolean = if (_enabled != null) context.evaluate(_enabled).toBoolean else true
+    override def enabled(implicit context:Context) : Boolean = context.evaluate(_enabled).toBoolean
 
     /**
       * Returns an instance representing this target with the context
@@ -52,7 +52,7 @@ abstract class BaseTarget extends Target {
       */
     override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         val table = input
-        if (table != null)
+        if (table != null && table.nonEmpty)
             Array(table)
         else
             Array()

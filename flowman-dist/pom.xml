@@ -140,34 +140,6 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-tools</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-aws</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-azure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-example</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-hbase</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-kafka</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-impala</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-mariadb</artifactId>
-        </dependency>
     </dependencies>
 </project>
 

@@ -46,7 +46,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     @JsonProperty(value="format", required = false) private var _format: String = "csv"
     @JsonProperty(value="pattern", required = false) private var _pattern: String = _
 
-    def pattern(implicit context:Context) : String = context.evaluate(_pattern)
+    def pattern(implicit context:Context) : String = _pattern
     def location(implicit context:Context) : Path = new Path(context.evaluate(_location))
     def format(implicit context:Context) : String = context.evaluate(_format)
 
@@ -63,6 +63,8 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
 
         implicit val context = executor.context
+        requireValidPartitionKeys(partitions)
+
         val data = mapFiles(executor, partitions) { (partition, paths) =>
             paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
             //if (inputFiles.isEmpty)
@@ -117,6 +119,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partition != null)
 
         implicit val context = executor.context
+        requireValidPartitionKeys(partition)
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector(executor).resolve(partitionSpec.toMap)
@@ -139,7 +142,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
 
         implicit val context = executor.context
-        if (this.partitions != null && this.partitions.nonEmpty)
+        if (this.partitions != null && this.partitions.nonEmpty && partitions.nonEmpty)
             cleanPartitionedFiles(executor, partitions)
         else
             cleanUnpartitionedFiles(executor)
@@ -147,6 +150,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
 
     private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
         implicit val context = executor.context
+        requireValidPartitionKeys(partitions)
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -192,6 +196,9 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
       * @return
       */
     private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+        require(partitions != null)
+        require(executor != null)
+
         implicit val context = executor.context
         if (this.partitions != null && this.partitions.nonEmpty)
             mapPartitionedFiles(executor, partitions)(fn)
@@ -200,9 +207,10 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
 
     private def mapPartitionedFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+        require(partitions != null)
+        require(executor != null)
+
         implicit val context = executor.context
-        if (partitions == null)
-            throw new NullPointerException("Partitioned data source requires partition values to be defined")
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 

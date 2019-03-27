@@ -17,9 +17,11 @@
 package com.dimajix.flowman.templating
 
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Period
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.Temporal
 
 import com.dimajix.flowman.hadoop.File
@@ -66,60 +68,68 @@ class SystemWrapper {
 }
 
 class TimestampWrapper {
-    def parse(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
-    def valueOf(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
-    def toEpochSeconds(value:String) : Long = UtcTimestamp.toEpochSeconds(value)
+    def parse(value:AnyRef) : UtcTimestamp = UtcTimestamp.parse(value.toString)
+    def valueOf(value:AnyRef) : UtcTimestamp = UtcTimestamp.parse(value.toString)
+    def toEpochSeconds(value:AnyRef) : Long = UtcTimestamp.toEpochSeconds(value.toString)
+    def format(value:AnyRef, format:String) : String = UtcTimestamp.parse(value.toString).format(format)
+}
+
+class LocalDateWrapper {
+    def parse(value:AnyRef) : LocalDate = LocalDate.parse(value.toString)
+    def valueOf(value:AnyRef) : LocalDate = LocalDate.parse(value.toString)
+    def format(value:AnyRef, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDate.parse(value.toString))
 }
 
 class LocalDateTimeWrapper {
-    def parse(value:String) : LocalDateTime = LocalDateTime.parse(value)
-    def valueOf(value:String) : LocalDateTime = LocalDateTime.parse(value)
-    def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)
+    def parse(value:AnyRef) : LocalDateTime = LocalDateTime.parse(value.toString)
+    def valueOf(value:AnyRef) : LocalDateTime = LocalDateTime.parse(value.toString)
+    def ofEpochSeconds(epoch:AnyRef) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toString.toLong, 0, ZoneOffset.UTC)
     def ofEpochSeconds(epoch:Long) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
+    def format(value:AnyRef, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDateTime.parse(value.toString))
 }
 
 class DurationWrapper {
-    def ofDays(days:String) : Duration = Duration.ofDays(days.toLong)
+    def ofDays(days:AnyRef) : Duration = Duration.ofDays(days.toString.toLong)
     def ofDays(days:Long) : Duration = Duration.ofDays(days)
-    def ofHours(hours:String) : Duration = Duration.ofHours(hours.toLong)
+    def ofHours(hours:AnyRef) : Duration = Duration.ofHours(hours.toString.toLong)
     def ofHours(hours:Long) : Duration = Duration.ofHours(hours)
-    def ofMinutes(minutes:String) : Duration = Duration.ofMinutes(minutes.toLong)
+    def ofMinutes(minutes:AnyRef) : Duration = Duration.ofMinutes(minutes.toString.toLong)
     def ofMinutes(minutes:Long) : Duration = Duration.ofMinutes(minutes)
-    def ofSeconds(seconds:String) : Duration = Duration.ofSeconds(seconds.toLong)
+    def ofSeconds(seconds:AnyRef) : Duration = Duration.ofSeconds(seconds.toString.toLong)
     def ofSeconds(seconds:Long) : Duration = Duration.ofSeconds(seconds)
-    def ofMillis(millis:String) : Duration = Duration.ofMillis(millis.toLong)
+    def ofMillis(millis:AnyRef) : Duration = Duration.ofMillis(millis.toString.toLong)
     def ofMillis(millis:Long) : Duration = Duration.ofMillis(millis)
     def between(startInclusive: UtcTimestamp, endExclusive: UtcTimestamp) : Duration = Duration.between(startInclusive.toLocalDateTime(), endExclusive.toLocalDateTime())
     def between(startInclusive: Temporal, endExclusive: Temporal) : Duration = Duration.between(startInclusive, endExclusive)
-    def between(startInclusive: String, endExclusive: String) : Duration = between(UtcTimestamp.parse(startInclusive), UtcTimestamp.parse(endExclusive))
-    def parse(value:String) : Duration = Duration.parse(value)
-    def valueOf(value:String) : Duration = Duration.parse(value)
+    def between(startInclusive: AnyRef, endExclusive: AnyRef) : Duration = between(UtcTimestamp.parse(startInclusive.toString), UtcTimestamp.parse(endExclusive.toString))
+    def parse(value:AnyRef) : Duration = Duration.parse(value.toString)
+    def valueOf(value:AnyRef) : Duration = Duration.parse(value.toString)
 }
 
 class PeriodWrapper {
-    def ofYears(years:String) : Period = Period.ofYears(years.toInt)
+    def ofYears(years:AnyRef) : Period = Period.ofYears(years.toString.toInt)
     def ofYears(years:Int) : Period = Period.ofYears(years)
-    def ofMonths(months:String) : Period = Period.ofMonths(months.toInt)
+    def ofMonths(months:AnyRef) : Period = Period.ofMonths(months.toString.toInt)
     def ofMonths(months:Int) : Period = Period.ofMonths(months)
-    def ofWeeks(weeks:String) : Period = Period.ofWeeks(weeks.toInt)
+    def ofWeeks(weeks:AnyRef) : Period = Period.ofWeeks(weeks.toString.toInt)
     def ofWeeks(weeks:Int) : Period = Period.ofWeeks(weeks)
-    def ofDays(days:String) : Period = Period.ofDays(days.toInt)
+    def ofDays(days:AnyRef) : Period = Period.ofDays(days.toString.toInt)
     def ofDays(days:Int) : Period = Period.ofDays(days)
-    def parse(value:String) : Period = Period.parse(value)
-    def valueOf(value:String) : Period = Period.parse(value)
+    def parse(value:AnyRef) : Period = Period.parse(value.toString)
+    def valueOf(value:AnyRef) : Period = Period.parse(value.toString)
 }
 
 class BooleanWrapper {
     def parse(value:Boolean) : Boolean = value
-    def parse(value:String) : Boolean = java.lang.Boolean.parseBoolean(value)
-    def valueOf(value:String) : Boolean = java.lang.Boolean.parseBoolean(value)
+    def parse(value:AnyRef) : Boolean = java.lang.Boolean.parseBoolean(value.toString)
+    def valueOf(value:AnyRef) : Boolean = java.lang.Boolean.parseBoolean(value.toString)
 }
 
 class IntegerWrapper {
     def parse(value:Integer) : Int = value
     def valueOf(value:Integer) : Int = value
-    def parse(value:String) : Int = java.lang.Integer.parseInt(value)
-    def valueOf(value:String) : Int = java.lang.Integer.parseInt(value)
+    def parse(value:AnyRef) : Int = java.lang.Integer.parseInt(value.toString)
+    def valueOf(value:AnyRef) : Int = java.lang.Integer.parseInt(value.toString)
 }
 
 class FloatWrapper {
@@ -127,6 +137,6 @@ class FloatWrapper {
     def valueOf(value:Integer) : Double = value.toDouble
     def parse(value:Double) : Double = value
     def valueOf(value:Double) : Double = value
-    def parse(value:String) : Double = java.lang.Double.parseDouble(value)
-    def valueOf(value:String) : Double = java.lang.Double.parseDouble(value)
+    def parse(value:AnyRef) : Double = java.lang.Double.parseDouble(value.toString)
+    def valueOf(value:AnyRef) : Double = java.lang.Double.parseDouble(value.toString)
 }

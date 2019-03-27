@@ -32,6 +32,7 @@ object Velocity {
     addClass("Boolean", classOf[BooleanWrapper])
     addClass("Integer", classOf[IntegerWrapper])
     addClass("Float", classOf[FloatWrapper])
+    addClass("LocalDate", classOf[LocalDateWrapper])
     addClass("LocalDateTime", classOf[LocalDateTimeWrapper])
     addClass("Timestamp", classOf[TimestampWrapper])
     addClass("Duration", classOf[DurationWrapper])

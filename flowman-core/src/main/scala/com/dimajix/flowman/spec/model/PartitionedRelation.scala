@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
@@ -66,4 +68,12 @@ trait PartitionedRelation { this:Relation =>
 
         partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
     }
+
+    protected def requireValidPartitionKeys(map: Map[String,_])(implicit context: Context) : Unit = {
+        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
+        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        require(valueKeys.forall(key => partitionKeys.contains(key)))
+        require(partitionKeys.forall(key => valueKeys.contains(key)))
+    }
 }
+

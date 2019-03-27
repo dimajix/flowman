@@ -17,6 +17,7 @@
 package com.dimajix.flowman.templating
 
 import java.io.StringWriter
+import java.sql.Date
 import java.time.Month
 
 import org.scalatest.FlatSpec
@@ -163,7 +164,7 @@ class TemplatingTest extends FlatSpec with Matchers {
         evaluate("#set($r=$false_val || $true_val)$r") should be ("true")
     }
 
-    "Timestamps" should "be supported" in {
+    "Timestamps" should "be parseable from strings" in {
         evaluate("$Timestamp.parse('2017-10-10T10:00:00')") should be ("2017-10-10T10:00:00.0")
         evaluate("$Timestamp.parse('2017-10-10T10:00:00Z')") should be ("2017-10-10T10:00:00.0")
         evaluate("$Timestamp.parse('2017-10-10T10:00:00+00')") should be ("2017-10-10T10:00:00.0")
@@ -171,6 +172,12 @@ class TemplatingTest extends FlatSpec with Matchers {
         evaluate("$Timestamp.parse('2017-10-10T10:00:00+01')") should be ("2017-10-10T09:00:00.0")
         evaluate("$Timestamp.parse('2017-10-10T10:00:00+0100')") should be ("2017-10-10T09:00:00.0")
         evaluate("$Timestamp.parse('2017-10-10T10:00:00').toEpochSeconds()") should be ("1507629600")
+    }
+
+    they should "support using timestamps" in {
+        context.put("ts", UtcTimestamp.parse("2017-10-10T10:00:00.0"))
+        evaluate("$Timestamp.parse($ts)") should be ("2017-10-10T10:00:00.0")
+        evaluate("$Timestamp.format($ts, 'yyyy/MM/dd')") should be ("2017/10/10")
     }
 
     they should "be convertible to LocalDateTime" in {
@@ -191,6 +198,18 @@ class TemplatingTest extends FlatSpec with Matchers {
         val output = new StringWriter()
         engine.evaluate(context, output, "test", """data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
         output.toString should be ("data/2017/06/19/1497830400.i-*.log")
+    }
+
+    "LocalDate" should "be parseable" in {
+        evaluate("$LocalDate.parse('2017-10-10')") should be ("2017-10-10")
+    }
+
+    it should "be formattable" in {
+        context.put("date_str", "2017-10-10")
+        context.put("date_date", Date.valueOf("2017-10-10"))
+        evaluate("$LocalDate.format('2017-10-10', 'yyyy/MM/dd')") should be ("2017/10/10")
+        evaluate("$LocalDate.format($date_str, 'yyyy/MM/dd')") should be ("2017/10/10")
+        evaluate("$LocalDate.format($date_date, 'yyyy/MM/dd')") should be ("2017/10/10")
     }
 
     "LocalDateTime" should "be parseable" in {

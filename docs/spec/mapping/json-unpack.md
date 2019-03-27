@@ -10,7 +10,7 @@ permalink: /spec/mapping/json-unpack.html
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `json-unpack`
+* `kind` **(mandatory)** *(type: string)*: `unpackJson`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.

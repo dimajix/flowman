@@ -29,7 +29,7 @@ Mappings are specified in the `mappings` section of a file. For example
 ```
 mappings:
   measurements-raw:
-    kind: read-relation
+    kind: readRelation
     source: measurements-raw
     partitions:
       year:
@@ -53,7 +53,7 @@ mappings:
 ```
 This specification defines two mappings: `measurements-raw` and `measurements`. Every mapping
 needs to specify its `kind` which provides the desired type of operation. In this example
-the first mapping `measurements-raw` of kind `read-relation` reads in input data from a 
+the first mapping `measurements-raw` of kind `readRelation` reads in input data from a 
 relation called `measurements-raw`. The second mapping called `measurements` is of kind
 `select` and will perform an operation comparable to an SQL `SELECT` to extract new columns
 from its input mapping `measurements-raw` (which is just the first mapping).
@@ -115,17 +115,17 @@ Use [Filter](filter.html) to apply filter logic (essentially a `WHERE` condition
 * [`join`](join.html): 
 Use a [Join](join.html) to merge two mappings based on a common key or a join condition
 
-* [`json-extract`](json-extract.html): 
+* [`extractJson`](json-extract.html): 
 [Extract columns from JSON](json-extract.html) for transforming raw JSON data into structured data 
 
-* [`json-unpack`](json-unpack.html): 
+* [`unpackJson`](json-unpack.html): 
 [Unpack JSON columns](json-unpack.html) for extracting individual columns containing raw JSON data.
 
 * [`project`](project.html): 
 Using [Projections](project.html) you can apply a schema with a fixed order of fields and data types
 
-* [`read` / `read-relation`](read.html):
-A [Read](read.html) mapping reads in data from a relation.
+* [`read` / `readRelation`](read-relation.html):
+A [Read](read-relation.html) mapping reads in data from a relation.
  
 * [`rebalance`](rebalance.html):
 Shuffles data to produce a specified amount of Spark partitions with an approximately equal number

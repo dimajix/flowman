@@ -443,7 +443,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: hive-table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0010
                |    external: false
@@ -501,7 +501,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: hive-table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0011
                |    external: true
@@ -559,7 +559,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: hive-table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0012
                |    external: false

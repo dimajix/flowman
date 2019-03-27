@@ -15,7 +15,7 @@ schema of the JSONs to be extracted.
 ```
 mappings:
   statement_item:
-    kind: json-extract
+    kind: extractJson
     input: statement_item_raw
     column: value
     schema:
@@ -25,7 +25,7 @@ mappings:
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `json-extract`
+* `kind` **(mandatory)** *(type: string)*: `jsonExtract`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.

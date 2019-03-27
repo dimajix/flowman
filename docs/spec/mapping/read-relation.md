@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Flowman Read Mapping
-permalink: /spec/mapping/read.html
+permalink: /spec/mapping/read-relation.html
 ---
 # Read Mapping
 
@@ -10,8 +10,8 @@ permalink: /spec/mapping/read.html
 ```
 mappings:
   measurements-raw:
-    kind: read-relation
-    source: measurements-raw
+    kind: readRelation
+    relation: measurements-raw
     partitions:
       year:
         start: $start_year
@@ -22,7 +22,7 @@ mappings:
 
 ## Fields
 
-* `kind` **(mandatory)** *(type: string)*: `read` or `read-relation`
+* `kind` **(mandatory)** *(type: string)*: `read` or `readRelation`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.
@@ -36,7 +36,7 @@ Cache mode for the results of this mapping. Supported values are
   * MEMORY_AND_DISK
   * MEMORY_AND_DISK_SER
 
-* `source` **(mandatory)** *(type: string)*:
+* `relation` **(mandatory)** *(type: string)*:
 * `partitions` **(optional)** *(type: map:partition)*:
 * `columns` **(optional)** *(type: map:data_type)* *(default: empty):
 

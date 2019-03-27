@@ -34,11 +34,11 @@ import com.dimajix.flowman.util.SchemaUtils
 class ReadRelationMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadRelationMapping])
 
-    @JsonProperty(value = "source", required = true) private var _source:String = _
+    @JsonProperty(value = "relation", required = true) private var _relation:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
     @JsonProperty(value = "partitions", required=false) private var _partitions:Map[String,FieldValue] = Map()
 
-    def source(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_source))
+    def relation(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
     def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
     def partitions(implicit context:Context) : Map[String,FieldValue] = {
         _partitions.mapValues {
@@ -57,7 +57,7 @@ class ReadRelationMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        val source = this.source
+        val source = this.relation
         val fields = this.columns
         val partitions = this.partitions
         val relation = context.getRelation(source)

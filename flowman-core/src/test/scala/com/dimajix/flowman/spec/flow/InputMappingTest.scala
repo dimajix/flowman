@@ -35,7 +35,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
               |    columns:
               |      str_col: string
               |      int_col: integer
@@ -67,7 +67,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("empty")
@@ -99,7 +99,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("empty")
@@ -131,7 +131,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
               |    partitions:
               |      spart: abc
             """.stripMargin

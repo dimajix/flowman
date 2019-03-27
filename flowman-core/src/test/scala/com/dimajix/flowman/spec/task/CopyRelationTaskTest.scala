@@ -34,7 +34,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
     "A CopyRelationTask" should "support configuration via YML" in {
         val spec =
             """
-              |kind: copy-relation
+              |kind: copyRelation
               |source: local_file
               |sourcePartitions:
               |  spc: part_value
@@ -87,7 +87,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |jobs:
               |  main:
               |    tasks:
-              |     - kind: copy-relation
+              |     - kind: copyRelation
               |       source: source_relation
               |       target: target_relation
               |       mode: overwrite

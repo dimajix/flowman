@@ -22,7 +22,7 @@ class ProvidedRelationTest extends FlatSpec with Matchers with LocalSparkSession
               |mappings:
               |  dummy:
               |    kind: read
-              |    source: dummy
+              |    relation: dummy
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("dummy")

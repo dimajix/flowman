@@ -37,7 +37,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1
@@ -65,7 +65,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1
@@ -128,7 +128,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1
@@ -175,7 +175,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1

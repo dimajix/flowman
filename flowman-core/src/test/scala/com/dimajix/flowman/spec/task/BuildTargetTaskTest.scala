@@ -38,7 +38,7 @@ class BuildTargetTaskTest extends FlatSpec with Matchers {
               |  dump:
               |    description: "Runs all outputs"
               |    tasks:
-              |      - kind: build-target
+              |      - kind: build
               |        targets:
               |          - measurements
             """.stripMargin

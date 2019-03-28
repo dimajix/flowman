@@ -18,6 +18,7 @@ package com.dimajix.flowman.templating
 
 import java.io.StringWriter
 import java.sql.Date
+import java.time.LocalDate
 import java.time.Month
 
 import org.scalatest.FlatSpec
@@ -207,9 +208,12 @@ class TemplatingTest extends FlatSpec with Matchers {
     it should "be formattable" in {
         context.put("date_str", "2017-10-10")
         context.put("date_date", Date.valueOf("2017-10-10"))
+        context.put("date_ldate", LocalDate.parse("2017-10-10"))
+        evaluate("$LocalDate.format('2017-10-10', 'yyyy/MM/dd')") should be ("2017/10/10")
         evaluate("$LocalDate.format('2017-10-10', 'yyyy/MM/dd')") should be ("2017/10/10")
         evaluate("$LocalDate.format($date_str, 'yyyy/MM/dd')") should be ("2017/10/10")
         evaluate("$LocalDate.format($date_date, 'yyyy/MM/dd')") should be ("2017/10/10")
+        evaluate("$LocalDate.format($date_ldate, 'yyyy/MM/dd')") should be ("2017/10/10")
     }
 
     "LocalDateTime" should "be parseable" in {

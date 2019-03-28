@@ -72,12 +72,15 @@ class TimestampWrapper {
     def valueOf(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def toEpochSeconds(value:String) : Long = UtcTimestamp.toEpochSeconds(value)
     def format(value:String, format:String) : String = UtcTimestamp.parse(value).format(format)
+    def format(value:UtcTimestamp, format:String) : String = value.format(format)
 }
 
 class LocalDateWrapper {
     def parse(value:String) : LocalDate = LocalDate.parse(value)
     def valueOf(value:String) : LocalDate = LocalDate.parse(value)
     def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDate.parse(value))
+    def format(value:Temporal, format:String) : String = DateTimeFormatter.ofPattern(format).format(value)
+    def format(value:UtcTimestamp, format:String) : String = DateTimeFormatter.ofPattern(format).format(value.toLocalDate())
 }
 
 class LocalDateTimeWrapper {
@@ -86,6 +89,8 @@ class LocalDateTimeWrapper {
     def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)
     def ofEpochSeconds(epoch:Long) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
     def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDateTime.parse(value))
+    def format(value:Temporal, format:String) : String = DateTimeFormatter.ofPattern(format).format(value)
+    def format(value:UtcTimestamp, format:String) : String = DateTimeFormatter.ofPattern(format).format(value.toLocalDateTime())
 }
 
 class DurationWrapper {

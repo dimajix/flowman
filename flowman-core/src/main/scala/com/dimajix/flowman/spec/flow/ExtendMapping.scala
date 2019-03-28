@@ -72,7 +72,7 @@ class ExtendMapping extends BaseMapping {
             val deps = getRequiredColumns(column)
             val start = (orderedFields, usedFields + column)
             val result = deps.foldLeft(start) { case ((ordered, used), field) =>
-                if (columnNames.contains(field) && !ordered.contains(field))
+                if (field != column && columnNames.contains(field) && !ordered.contains(field))
                     addField(field, ordered, used)
                 else
                     (ordered, used)

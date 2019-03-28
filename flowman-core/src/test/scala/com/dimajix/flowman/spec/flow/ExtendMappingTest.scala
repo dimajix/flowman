@@ -80,6 +80,33 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         rows(1) should be (Row("col2", 23, 46, 92, 184, 2*184+92))
     }
 
+    it should "replace existing fields" in {
+        val df = spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val xfs = ExtendMapping( "myview",
+            Map(
+                "f1" -> "2*_2",
+                "_2" -> "2*_2"
+            )
+        )
+
+        val result = xfs.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_1")
+        result.schema(0).name should be ("_1")
+        result.schema(1).name should be ("_2")
+        result.schema(2).name should be ("f1")
+        val rows = result.collect()
+        rows.size should be (2)
+        rows(0) should be (Row("col1", 24, 48))
+        rows(1) should be (Row("col2", 46, 92))
+    }
+
     it should "detect dependency cycles" in {
         val xfs = ExtendMapping("myview",
             Map(

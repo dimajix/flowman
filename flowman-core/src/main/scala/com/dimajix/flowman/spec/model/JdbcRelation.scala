@@ -167,20 +167,39 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     }
 
     /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = {
+        require(executor != null)
+
+        implicit val context = executor.context
+        withConnection{ (con,options) =>
+            JdbcUtils.tableExists(con, tableIdentifier, options)
+        }
+    }
+
+    /**
       * This method will physically create the corresponding relation in the target JDBC database.
       * @param executor
       */
-    override def create(executor:Executor) : Unit = {
+    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
+        val tableIdentifier = this.tableIdentifier
         logger.info(s"Creating jdbc relation $name, this will create jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
-            val table = TableDefinition(
-                tableIdentifier,
-                schema.fields ++ partitions.map(_.field),
-                schema.description,
-                schema.primaryKey
-            )
-            JdbcUtils.createTable(con, table, options)
+            if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
+                val table = TableDefinition(
+                    tableIdentifier,
+                    schema.fields ++ partitions.map(_.field),
+                    schema.description,
+                    schema.primaryKey
+                )
+                JdbcUtils.createTable(con, table, options)
+            }
         }
     }
 
@@ -188,11 +207,16 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
       * This method will physically destroy the corresponding relation in the target JDBC database.
       * @param executor
       */
-    override def destroy(executor:Executor) : Unit = {
+    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
+        val tableIdentifier = this.tableIdentifier
         logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
-            JdbcUtils.dropTable(con, tableIdentifier, options)
+            if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
+                JdbcUtils.dropTable(con, tableIdentifier, options)
+            }
         }
     }
 

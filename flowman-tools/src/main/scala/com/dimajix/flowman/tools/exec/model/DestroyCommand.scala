@@ -17,6 +17,7 @@
 package com.dimajix.flowman.tools.exec.model
 
 import org.kohsuke.args4j.Argument
+import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Executor
@@ -25,7 +26,6 @@ import com.dimajix.flowman.spec.task.DestroyRelationTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.tools.exec.ActionCommand
-import com.dimajix.flowman.tools.exec.target.BuildCommand
 
 
 class DestroyCommand extends ActionCommand {
@@ -33,6 +33,8 @@ class DestroyCommand extends ActionCommand {
 
     @Argument(usage = "specifies relations to destroy", metaVar = "<relation>")
     var relations: Array[String] = Array()
+    @Option(name = "-i", aliases=Array("--ignoreIfExists"), usage = "does not do anything if relation does not exist")
+    var ignoreIfNotExists: Boolean = false
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
@@ -45,7 +47,7 @@ class DestroyCommand extends ActionCommand {
             else
                 project.relations.keys.toSeq
 
-        val task = DestroyRelationTask(toRun)
+        val task = DestroyRelationTask(toRun, ignoreIfNotExists)
         val job = Job(Seq(task), "destroy-relations", "Destroy relations")
 
         val runner = executor.runner

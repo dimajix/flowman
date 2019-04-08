@@ -121,8 +121,11 @@ Use a [Join](join.html) to merge two mappings based on a common key or a join co
 * [`unpackJson`](json-unpack.html): 
 [Unpack JSON columns](json-unpack.html) for extracting individual columns containing raw JSON data.
 
+* [`conform`](conform.html): 
+Using [Conforming](conform.html) you can apply a schema with a fixed order of fields and data types
+
 * [`project`](project.html): 
-Using [Projections](project.html) you can apply a schema with a fixed order of fields and data types
+Using [Projections](project.html) you can select a subset of columns
 
 * [`read` / `readRelation`](read-relation.html):
 A [Read](read-relation.html) mapping reads in data from a relation.
@@ -132,8 +135,9 @@ Shuffles data to produce a specified amount of Spark partitions with an approxim
 of records.
 
 * [`repartition`](repartition.html):
-* [`project`](project.html):
 * [`select`](select.html):
+* [`update`](update.html):
+* [`latest`](latest.html):
 * [`sort`](sort.html):
 * [`sql`](sql.html): An [SQL](sql.html) mapping allows to specify any SQL statement supported by
 Spark SQL. You can reference any other mapping as tables within the statement.

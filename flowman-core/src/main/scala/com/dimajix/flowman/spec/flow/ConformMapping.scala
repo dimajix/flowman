@@ -27,9 +27,9 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.util.SchemaUtils
 
 
-object ProjectMapping {
-    def apply(input:String, columns:Seq[String]) : ProjectMapping = {
-        val mapping = new ProjectMapping
+object ConformMapping {
+    def apply(input:String, columns:Map[String,String]) : ConformMapping = {
+        val mapping = new ConformMapping
         mapping._input = input
         mapping._columns = columns
         mapping
@@ -37,14 +37,14 @@ object ProjectMapping {
 }
 
 
-class ProjectMapping extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
+class ConformMapping extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[ConformMapping])
 
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Seq[String] = Seq()
+    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = Map()
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
+    def columns(implicit context: Context) : Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -57,10 +57,11 @@ class ProjectMapping extends BaseMapping {
         implicit val context = executor.context
         val columns = this.columns
         val input = this.input
-        logger.info(s"Projecting mapping '$input' onto columns ${columns.mkString(",")}")
+        logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
+        require(input != null && input.nonEmpty, "Require input mapping")
 
         val df = tables(input)
-        val cols = columns.map(nv => col(nv))
+        val cols = columns.map(nv => col(nv._1).cast(SchemaUtils.mapType(nv._2)))
         df.select(cols:_*)
     }
 

@@ -125,12 +125,25 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     }
 
     /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = {
+        require(executor != null)
+
+        implicit val context = executor.context
+        val dir = localDirectory
+        new File(dir).exists()
+    }
+
+    /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       *
       * @param executor
       */
-    override def create(executor: Executor): Unit =  {
+    override def create(executor: Executor, ifNotExists:Boolean=false): Unit =  {
         require(executor != null)
 
         implicit val context = executor.context
@@ -146,7 +159,7 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
       *
       * @param executor
       */
-    override def destroy(executor: Executor): Unit = {
+    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
         require(executor != null)
 
         implicit val context = executor.context

@@ -163,27 +163,48 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
 
     /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = {
+        require(executor != null)
+
+        implicit val context = executor.context
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        fs.exists(location)
+    }
+
+    /**
       * This method will create the given directory as specified in "location"
       * @param executor
       */
-    override def create(executor:Executor) : Unit = {
+    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
         val location = this.location
         logger.info(s"Creating directory '$location' for file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        fs.mkdirs(location)
+        if (!ifNotExists || !fs.exists(location)) {
+            fs.mkdirs(location)
+        }
     }
 
     /**
       * This method will remove the given directory as specified in "location"
       * @param executor
       */
-    override def destroy(executor:Executor) : Unit =  {
+    override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {
+        require(executor != null)
+
         implicit val context = executor.context
         val location = this.location
         logger.info(s"Deleting directory '$location' of file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        fs.delete(location, true)
+        if (!ifExists || fs.exists(location)) {
+            fs.delete(location, true)
+        }
     }
 
     override def migrate(executor:Executor) : Unit = ???

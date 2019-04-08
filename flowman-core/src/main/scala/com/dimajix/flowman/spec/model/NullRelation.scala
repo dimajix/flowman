@@ -67,10 +67,17 @@ class NullRelation extends BaseRelation with SchemaRelation {
         require(executor != null)
     }
 
-    override def create(executor: Executor): Unit = {
+    /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = true
+
+    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)
     }
-    override def destroy(executor: Executor): Unit = {
+    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
         require(executor != null)
     }
     override def migrate(executor: Executor): Unit = {

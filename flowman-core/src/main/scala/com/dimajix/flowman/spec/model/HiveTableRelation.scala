@@ -85,7 +85,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         implicit val context = executor.context
         logger.info(s"Reading from Hive table $tableIdentifier using partition values $partitions")
 
-        val reader = this.reader(executor)
+        val reader = executor.spark.read.options(options)
         val tableDf = reader.table(tableIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
 
@@ -229,11 +229,24 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
     }
 
     /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = {
+        require(executor != null)
+
+        implicit val context = executor.context
+        val catalog = executor.catalog
+        catalog.tableExists(tableIdentifier)
+    }
+
+    /**
       * Creates a Hive table by executing the appropriate DDL
       *
       * @param executor
       */
-    override def create(executor: Executor): Unit = {
+    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)
 
         implicit val context = executor.context
@@ -274,7 +287,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         )
 
         val catalog = executor.catalog
-        catalog.createTable(catalogTable, false)
+        catalog.createTable(catalogTable, ifNotExists)
         /*
         val external = if (this.external) "EXTERNAL" else ""
         val create = s"CREATE $external TABLE $tableName"
@@ -298,14 +311,16 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
       *
       * @param executor
       */
-    override def destroy(executor: Executor): Unit = {
+    override def destroy(executor: Executor, ifExists:Boolean): Unit = {
         require(executor != null)
 
         implicit val context = executor.context
         logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
 
         val catalog = executor.catalog
-        catalog.dropTable(tableIdentifier)
+        if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            catalog.dropTable(tableIdentifier)
+        }
     }
 
     override def migrate(executor: Executor): Unit = ???

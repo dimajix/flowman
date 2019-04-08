@@ -26,8 +26,8 @@ import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The ProjectMapping" should "work" in {
+class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+    "The ConformMapping" should "work" in {
         val df = spark.createDataFrame(Seq(
             ("col1", 12),
             ("col2", 23)
@@ -37,10 +37,10 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         implicit val context = executor.context
 
-        val mapping = ProjectMapping("myview", Seq("_2"))
+        val mapping = ConformMapping("myview", Map("_2" -> "int"))
 
         mapping.input should be (MappingIdentifier("myview"))
-        mapping.columns should be (Seq("_2"))
+        mapping.columns should be (Seq("_2" -> "int"))
         mapping.dependencies should be (Array(MappingIdentifier("myview")))
 
         val result = mapping.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_2").collect()
@@ -54,11 +54,11 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """
               |mappings:
               |  t1:
-              |    kind: project
+              |    kind: conform
               |    input: t0
               |    columns:
-              |      - _2
-              |      - _1
+              |      _2: string
+              |      _1: string
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")

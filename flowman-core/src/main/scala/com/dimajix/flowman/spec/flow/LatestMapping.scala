@@ -60,7 +60,7 @@ class LatestMapping extends BaseMapping {
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def versionColumn(implicit context: Context) : String = context.evaluate(_versionColumn)
-    def keyColumns(implicit context: Context) : Seq[String] = _keyColumns.map(context.evaluate(_))
+    def keyColumns(implicit context: Context) : Seq[String] = _keyColumns.map(context.evaluate)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame

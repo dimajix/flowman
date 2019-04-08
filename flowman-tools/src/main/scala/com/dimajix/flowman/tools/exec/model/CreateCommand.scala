@@ -36,6 +36,8 @@ class CreateCommand extends ActionCommand {
     var relations: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-i", aliases=Array("--ignoreIfExists"), usage = "does not do anything if relation already exists")
+    var ignoreIfExists: Boolean = false
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
@@ -48,7 +50,7 @@ class CreateCommand extends ActionCommand {
             else
                 project.relations.keys.toSeq
 
-        val task = CreateRelationTask(toRun)
+        val task = CreateRelationTask(toRun, ignoreIfExists)
         val job = Job(Seq(task), "create-relations", "Create relations")
 
         val runner = executor.runner

@@ -24,9 +24,10 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 
 object DestroyRelationTask {
-    def apply(relations:Seq[String]) : DestroyRelationTask = {
+    def apply(relations:Seq[String], ignoreIfExists:Boolean) : DestroyRelationTask = {
         val task = new DestroyRelationTask
         task._relations = relations
+        task._ignoreIfExists = ignoreIfExists.toString
         task
     }
 }
@@ -36,8 +37,10 @@ class DestroyRelationTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CreateRelationTask])
 
     @JsonProperty(value="relation", required=true) private var _relations:Seq[String] = Seq()
+    @JsonProperty(value="ignoreIfExists", required=true) private var _ignoreIfExists:String = "false"
 
     def relations(implicit context: Context) : Seq[RelationIdentifier] = _relations.map(i => RelationIdentifier.parse(context.evaluate(i)))
+    def ignoreIfExists(implicit context: Context) : Boolean = context.evaluate(_ignoreIfExists).toBoolean
 
     /**
       * Instantiates all outputs defined in this task
@@ -46,17 +49,22 @@ class DestroyRelationTask extends BaseTask {
       * @return
       */
     override def execute(executor:Executor) : Boolean = {
+        require(executor != null)
+
         implicit val context = executor.context
         relations.foreach(o => createRelation(executor, o))
         true
     }
 
     private def createRelation(executor: Executor, identifier:RelationIdentifier) : Boolean = {
+        require(executor != null)
+        require(identifier != null)
+
         implicit val context = executor.context
         val relation = context.getRelation(identifier)
 
         logger.info("Destroying relation '{}'", identifier.toString)
-        relation.destroy(executor)
+        relation.destroy(executor, ignoreIfExists)
         true
     }
 }

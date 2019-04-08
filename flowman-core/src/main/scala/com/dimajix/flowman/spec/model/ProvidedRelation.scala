@@ -40,6 +40,8 @@ class ProvidedRelation extends BaseRelation with SchemaRelation {
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(executor != null)
+
         implicit val context = executor.context
         executor.spark.table(table)
     }
@@ -59,10 +61,22 @@ class ProvidedRelation extends BaseRelation with SchemaRelation {
         throw new UnsupportedOperationException("Cleaning provided tables not supported")
     }
 
-    override def create(executor: Executor): Unit = {
+    /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = {
+        require(executor != null)
+
+        implicit val context = executor.context
+        executor.spark.catalog.tableExists(table)
+    }
+
+    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         throw new UnsupportedOperationException("Creating provided tables not supported")
     }
-    override def destroy(executor: Executor): Unit = {
+    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
         throw new UnsupportedOperationException("Destroying provided tables not supported")
     }
     override def migrate(executor: Executor): Unit = {

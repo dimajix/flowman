@@ -144,7 +144,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
 
             // Create temp view
             val tempViewName = "flowman_tmp_" + System.currentTimeMillis()
-            outputDf.createOrReplaceTempView(tempViewName)
+            m "outputDf.createOrReplaceTempView(tempViewName)
 
             // Insert data via SQL
             val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"

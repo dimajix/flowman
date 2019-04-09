@@ -54,6 +54,33 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
     }
 
+    it should "add missing columns from updates" in {
+        val mapping = UpdateMapping("prev", "updates", Seq("_1"), "op != 'DELETE'")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val prev = executor.spark.createDataFrame(Seq(
+            ("id-123", "will_remain", "col3"),
+            ("id-124", "will_be_deleted", "col3"),
+            ("id-125", "will_be_updated", "col3")
+        ))
+        val updates = executor.spark.createDataFrame(Seq(
+            ("id-124", "will_be_deleted", "DELETE"),
+            ("id-125", "will_be_updated", "UPDATE"),
+            ("id-126", "will_be_added", "CREATE")
+        )).withColumnRenamed("_3", "op")
+
+        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        val rows = result.orderBy("_1").collect().toSeq
+        rows should be (Seq(
+            Row("id-123", "will_remain", "col3"),
+            Row("id-125", "will_be_updated", null),
+            Row("id-126", "will_be_added", null)
+        ))
+    }
+
     "An appropriate Dataflow" should "be readable from YML" in {
         val spec =
             """

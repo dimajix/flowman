@@ -16,9 +16,12 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -77,7 +80,11 @@ class UpdateMapping extends BaseMapping {
         val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
 
         // Project updates DataFrame to schema of input DataFrame
-        val projectedUpdates = filteredUpdates.select(inputDf.columns.map(col):_*)
+        val updateColumns = filteredUpdates.columns.map(name => name.toUpperCase(Locale.ROOT) -> col(name)).toMap
+        val unifiedColumns = inputDf.columns.map(name =>
+            updateColumns.getOrElse(name, lit(null).cast(inputDf.schema(name).dataType).as(name))
+        )
+        val projectedUpdates = filteredUpdates.select(unifiedColumns:_*)
 
         inputDf.join(updatesDf, keyColumns, "left_anti")
             .union(projectedUpdates)

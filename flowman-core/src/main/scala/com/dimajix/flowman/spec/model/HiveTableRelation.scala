@@ -340,7 +340,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
             df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
         }
         else {
-            df
+            mixedCaseDf
         }
     }
 

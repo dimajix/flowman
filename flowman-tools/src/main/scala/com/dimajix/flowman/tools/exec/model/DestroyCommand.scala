@@ -33,7 +33,7 @@ class DestroyCommand extends ActionCommand {
 
     @Argument(usage = "specifies relations to destroy", metaVar = "<relation>")
     var relations: Array[String] = Array()
-    @Option(name = "-i", aliases=Array("--ignoreIfExists"), usage = "does not do anything if relation does not exist")
+    @Option(name = "-i", aliases=Array("--ignoreIfNotExists"), usage = "does not do anything if relation does not exist")
     var ignoreIfNotExists: Boolean = false
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {

@@ -26,6 +26,18 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
+object UpdateMapping {
+    def apply(input:String, updates:String, keyColumns:Seq[String], filter:String="") : UpdateMapping = {
+        val mapping = new UpdateMapping
+        mapping._input = input
+        mapping._updates = updates
+        mapping._keyColumns = keyColumns
+        mapping._filter = filter
+        mapping
+    }
+}
+
+
 class UpdateMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[UpdateMapping])
 

@@ -21,6 +21,8 @@ import java.io.File
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -72,7 +74,15 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location.toString should not be ("")
+
+        // Try to create relation, although it already exists
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
+        relation.create(executor, true)
+
+        // Drop table
         relation.destroy(executor)
+        an[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
     }
 
     it should "support external tables" in {
@@ -490,7 +500,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
 
         // Test 2nd destruction
-        relation.destroy(executor)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
     }
@@ -548,7 +559,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
 
         // Test 2nd destruction
-        relation.destroy(executor)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
     }
@@ -604,7 +616,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
 
         // Test 2nd destruction
-        relation.destroy(executor)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
     }

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.io.FileNotFoundException
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
 
 import org.apache.hadoop.fs.Path
@@ -108,6 +110,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         outputPath.toFile.exists() should be (true)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
 
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
+        relation.create(executor, true)
+
         val df = spark.createDataFrame(Seq(
             ("lala", 1),
             ("lolo", 2)
@@ -124,6 +129,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         relation.destroy(executor)
         outputPath.toFile.exists() should be (false)
+
+        a[FileNotFoundException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
     }
 
     it should "support partitions" in {

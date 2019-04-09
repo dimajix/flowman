@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.io.FileNotFoundException
+import java.nio.file.FileAlreadyExistsException
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.internal.SQLConf
@@ -186,7 +190,12 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         val location = this.location
         logger.info(s"Creating directory '$location' for file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        if (!ifNotExists || !fs.exists(location)) {
+        if (fs.exists(location)) {
+            if (!ifNotExists) {
+                throw new FileAlreadyExistsException(location.toString)
+            }
+        }
+        else {
             fs.mkdirs(location)
         }
     }
@@ -202,7 +211,12 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         val location = this.location
         logger.info(s"Deleting directory '$location' of file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        if (!ifExists || fs.exists(location)) {
+        if (!fs.exists(location)) {
+            if (!ifExists) {
+                throw new FileNotFoundException(location.toString)
+            }
+        }
+        else {
             fs.delete(location, true)
         }
     }

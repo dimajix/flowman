@@ -17,8 +17,11 @@
 package com.dimajix.flowman.catalog
 
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
@@ -43,9 +46,15 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       */
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
         require(table != null)
+
+        if (!ignoreIfExists && tableExists(table.identifier)) {
+            throw new TableAlreadyExistsException(table.identifier.database.getOrElse(""), table.identifier.table)
+        }
+
         val cmd = CreateTableCommand(table, ignoreIfExists)
         cmd.run(spark)
 
+        // Publish table to external catalog
         if (externalCatalog != null) {
             externalCatalog.createTable(table)
         }
@@ -88,25 +97,29 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * Drops a whole table including all partitions and all files
       * @param table
       */
-    def dropTable(table:TableIdentifier) : Unit = {
+    def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
-        if (tableExists(table)) {
-            logger.info(s"Dropping Hive table $table")
-            // Delete all partitions
-            val catalogTable = catalog.getTableMetadata(table)
-            if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-                catalog.listPartitions(table).foreach(p => deleteLocation(new Path(p.location)))
-            }
 
-            // Delete table itself
-            val location = getTableLocation(table)
-            deleteLocation(location)
-            val cmd = DropTableCommand(table, false, false, true)
-            cmd.run(spark)
+        if (!ignoreIfNotExists && !tableExists(table)) {
+            throw new NoSuchTableException(table.database.getOrElse(""), table.table)
+        }
 
-            if (externalCatalog != null) {
-                externalCatalog.dropTable(catalogTable)
-            }
+        logger.info(s"Dropping Hive table $table")
+        // Delete all partitions
+        val catalogTable = catalog.getTableMetadata(table)
+        if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
+            catalog.listPartitions(table).foreach(p => deleteLocation(new Path(p.location)))
+        }
+
+        // Delete table itself
+        val location = getTableLocation(table)
+        deleteLocation(location)
+        val cmd = DropTableCommand(table, ignoreIfNotExists, false, true)
+        cmd.run(spark)
+
+        // Remove table from external catalog
+        if (externalCatalog != null) {
+            externalCatalog.dropTable(catalogTable)
         }
     }
 

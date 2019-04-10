@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Encoders
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
@@ -87,6 +88,6 @@ class ExtractJsonMapping extends BaseMapping {
             .option("allowNonNumericNumbers", allowNonNumericNumbers)
             .option("allowBackslashEscapingAnyCharacter", allowBackslashEscapingAnyCharacter)
             .option("allowUnquotedControlChars", allowUnquotedControlChars)
-            .json(table.select(table(column)).as[String](Encoders.STRING))
+            .json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
     }
 }

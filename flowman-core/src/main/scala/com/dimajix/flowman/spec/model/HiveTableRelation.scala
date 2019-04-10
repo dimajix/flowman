@@ -23,12 +23,16 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.plans.logical.InsertIntoTable
+import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.jdbc.HiveDialect
@@ -105,10 +109,13 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         require(partition != null)
 
         implicit val context = executor.context
+        val schema = PartitionSchema(partitions)
+        val partitionSpec = schema.spec(partition)
+
         if (writer == "hive")
-            writeHive(executor, df, partition, mode)
+            writeHive(executor, df, partitionSpec, mode)
         else if (writer == "spark")
-            writeSpark(executor, df, partition, mode)
+            writeSpark(executor, df, partitionSpec, mode)
         else
             throw new IllegalArgumentException("Hive relations only support write modes 'hive' and 'spark'")
     }
@@ -118,10 +125,15 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
       *
       * @param executor
       * @param df
-      * @param partition
+      * @param partitionSpec
       * @param mode
       */
-    private def writeHive(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+    private def writeHive(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode: String): Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partitionSpec != null)
+        require(mode != null)
+
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
         logger.info(s"Writing to Hive table $tableIdentifier with partitions ${partitionNames.mkString(",")}")
@@ -129,22 +141,23 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(df)
 
-        if (partition.nonEmpty) {
+        if (partitionSpec.nonEmpty) {
             val spark = executor.spark
 
-            /*
+            val overwrite = mode.toLowerCase(Locale.ROOT) == "overwrite"
             val cmd = InsertIntoTable(
                 table = UnresolvedRelation(TableIdentifier(table, Option(database))),
-                partition = Map.empty[String, Option[String]],
-                query = df.queryExecution.logical,
-                overwrite = mode.toLowerCase(Locale.ROOT) == "overwrite",
+                partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
+                query = outputDf.queryExecution.logical,
+                overwrite = overwrite,
                 ifPartitionNotExists = false)
-            spark.sessionState.executePlan(cmd)
-            */
+            val qe = spark.sessionState.executePlan(cmd)
+            SQLExecution.withNewExecutionId(spark, qe)(qe.toRdd)
 
+            /*
             // Create temp view
             val tempViewName = "flowman_tmp_" + System.currentTimeMillis()
-            m "outputDf.createOrReplaceTempView(tempViewName)
+            outputDf.createOrReplaceTempView(tempViewName)
 
             // Insert data via SQL
             val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
@@ -154,6 +167,12 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
 
             // Remove temp view again
             spark.sessionState.catalog.dropTempView(tempViewName)
+            */
+
+            // Finally add Hive partition
+            val catalog = executor.catalog
+            val location = catalog.getPartitionLocation(tableIdentifier, partitionSpec)
+            catalog.addOrReplacePartition(tableIdentifier, partitionSpec, location)
         }
         else {
             outputDf.write
@@ -169,20 +188,23 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
       *
       * @param executor
       * @param df
-      * @param partition
+      * @param partitionSpec
       * @param mode
       */
-    private def writeSpark(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+    private def writeSpark(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode: String): Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partitionSpec != null)
+        require(mode != null)
+
         implicit val context = executor.context
-        val partitionSchema = PartitionSchema(partitions)
-        val partitionSpec = partitionSchema.spec(partition)
         logger.info(s"Writing to Hive table $tableIdentifier with partition values $partitionSpec using direct mode")
 
         val location = this.location
         if (location == null)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
 
-        val outputPath = partitionSpec.path(location, partitionSchema.names)
+        val outputPath = partitionSpec.path(location, partitions.map(_.name))
 
         // Perform Hive => Spark format mapping
         val format = this.format.toLowerCase(Locale.ROOT) match {
@@ -190,14 +212,14 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
             case _ => this.format
         }
 
-        logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
+        logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
         this.writer(executor, df)
             .format(format)
             .mode(mode)
             .save(outputPath.toString)
 
         // Finally add Hive partition
-        if (partition.nonEmpty) {
+        if (partitionSpec.nonEmpty) {
             val catalog = executor.catalog
             catalog.addOrReplacePartition(tableIdentifier, partitionSpec, outputPath)
         }
@@ -268,8 +290,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
 
         val catalogTable = CatalogTable(
             identifier = tableIdentifier,
-            tableType = if (external) CatalogTableType.EXTERNAL
-            else CatalogTableType.MANAGED,
+            tableType = if (external) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(
                 Option(location).map(_.toUri),
                 Option(inputFormat),
@@ -278,8 +299,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
                 true,
                 Map()
             ),
-            provider = if (format != null && format.nonEmpty) Some(format)
-            else Some("hive"),
+            provider = if (format != null && format.nonEmpty) Some(format) else Some("hive"),
             schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
             partitionColumnNames = partitions.map(_.name),
             properties = properties,

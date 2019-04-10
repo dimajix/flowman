@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.from_json
+import org.apache.spark.sql.types.StringType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -103,7 +104,7 @@ class UnpackJsonMapping extends BaseMapping {
 
         columns.foldLeft(table){ (t,c) =>
             val sparkSchema = c.schema.sparkSchema
-            t.withColumn(Option(c.alias).getOrElse(c.name), from_json(table(c.name), sparkSchema, options))
+            t.withColumn(Option(c.alias).getOrElse(c.name), from_json(table(c.name).cast(StringType), sparkSchema, options))
         }
     }
 }

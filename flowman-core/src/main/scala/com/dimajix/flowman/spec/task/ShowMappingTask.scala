@@ -39,8 +39,8 @@ class ShowMappingTask extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[ShowMappingTask])
 
     @JsonProperty(value="mapping", required=true) private var _mapping:String = _
-    @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
-    @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
+    @JsonProperty(value="limit", required=false) private[spec] var _limit:String = "100"
+    @JsonProperty(value="columns", required=false) private[spec] var _columns:Seq[String] = Seq()
 
     def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
     def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
@@ -50,10 +50,11 @@ class ShowMappingTask extends BaseTask {
         implicit val context = executor.context
         val limit = this.limit
         val identifier = this.mapping
+        val columns = this.columns
         logger.info(s"Showing first $limit rows of mapping '$identifier'")
 
         val table = executor.instantiate(identifier)
-        val projection = if (_columns != null && _columns.nonEmpty)
+        val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else
             table

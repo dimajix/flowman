@@ -18,8 +18,11 @@ package com.dimajix.flowman.util
 
 import java.util.Locale
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
@@ -73,6 +76,36 @@ object SchemaUtils {
             df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)
         else
             df
+    }
+
+
+    /**
+      * Helper method for conforming a given schema to a target schema. This will project the given schema and also
+      * add missing columns (which are filled with NULL values)
+      * @param inputSchema
+      * @param requiredSchema
+      * @return
+      */
+    def conformSchema(inputSchema:StructType, requiredSchema:StructType) : Seq[Column] = {
+        def conformField(requiredField:StructField, inputType:DataType, prefix:String) : Column = {
+            requiredField.dataType match {
+                case st:StructType => struct(conformStruct(st, inputType.asInstanceOf[StructType], prefix + requiredField.name + "."):_*)
+                case _:ArrayType => col(prefix + requiredField.name)
+                case _:DataType => col(prefix + requiredField.name).cast(requiredField.dataType)
+            }
+        }
+
+        def conformStruct(requiredSchema:StructType, inputSchema:StructType, prefix:String) : Seq[Column] = {
+            val inputFields = inputSchema.fields.map(field => (field.name.toLowerCase(Locale.ROOT), field)).toMap
+            requiredSchema.fields.map { field =>
+                inputFields.get(field.name.toLowerCase(Locale.ROOT))
+                    .map(f => conformField(field, f.dataType, prefix))
+                    .getOrElse(lit(null).cast(field.dataType))
+                    .as(field.name)
+            }.toSeq
+        }
+
+        conformStruct(requiredSchema, inputSchema, "")
     }
 
     /**

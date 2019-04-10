@@ -16,9 +16,11 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -61,7 +63,11 @@ class ConformMapping extends BaseMapping {
         require(input != null && input.nonEmpty, "Require input mapping")
 
         val df = tables(input)
-        val cols = columns.map(nv => col(nv._1).cast(SchemaUtils.mapType(nv._2)))
+        val inputCols = df.columns.map(col => (col.toUpperCase(Locale.ROOT), df(col))).toMap
+        val cols = columns.map(nv =>
+            inputCols.getOrElse(nv._1.toUpperCase(Locale.ROOT), lit(null).as(nv._1))
+                .cast(SchemaUtils.mapType(nv._2))
+        )
         df.select(cols:_*)
     }
 

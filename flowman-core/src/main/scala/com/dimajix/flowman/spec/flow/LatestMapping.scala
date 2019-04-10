@@ -80,17 +80,17 @@ class LatestMapping extends BaseMapping {
 
         // Get appropriate function for extracting latest version
         val latest = df.schema(versionColumn).dataType match {
-            case ShortType => records:Seq[Row] => records.maxBy(row => row.getShort(0)).getStruct(1)
-            case IntegerType => records:Seq[Row] => records.maxBy(row => row.getInt(0)).getStruct(1)
-            case LongType => records:Seq[Row] => records.maxBy(row => row.getLong(0)).getStruct(1)
-            case FloatType => records:Seq[Row] => records.maxBy(row => row.getFloat(0)).getStruct(1)
-            case DoubleType => records:Seq[Row] => records.maxBy(row => row.getDouble(0)).getStruct(1)
-            case _:DecimalType => records:Seq[Row] => records.maxBy(row => row.getDecimal(0)).getStruct(1)
-            case TimestampType => records:Seq[Row] => records.maxBy(row => row.getTimestamp(0).getTime).getStruct(1)
-            case DateType => records:Seq[Row] => records.maxBy(row => row.getDate(0).toInstant.getEpochSecond).getStruct(1)
-            case ByteType => records:Seq[Row] => records.maxBy(row => row.getByte(0)).getStruct(1)
-            case StringType => records:Seq[Row] => records.maxBy(row => row.getString(0)).getStruct(1)
-            case _:VarcharType => records:Seq[Row] => records.maxBy(row => row.getString(0)).getStruct(1)
+            case ShortType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Short.MinValue else row.getShort(0)).getStruct(1)
+            case IntegerType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Int.MinValue else row.getInt(0)).getStruct(1)
+            case LongType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getLong(0)).getStruct(1)
+            case FloatType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Float.MinValue else row.getFloat(0)).getStruct(1)
+            case DoubleType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Double.MinValue else row.getDouble(0)).getStruct(1)
+            case _:DecimalType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) new java.math.BigDecimal(Long.MinValue) else row.getDecimal(0)).getStruct(1)
+            case TimestampType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getTimestamp(0).getTime).getStruct(1)
+            case DateType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getDate(0).toInstant.getEpochSecond).getStruct(1)
+            case ByteType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Byte.MinValue else row.getByte(0)).getStruct(1)
+            case StringType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) "" else row.getString(0)).getStruct(1)
+            case _:VarcharType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) "" else row.getString(0)).getStruct(1)
         }
         val latest_udf = udf(latest, df.schema)
 

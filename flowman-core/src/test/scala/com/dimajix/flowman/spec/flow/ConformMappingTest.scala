@@ -17,6 +17,10 @@
 package com.dimajix.flowman.spec.flow
 
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -47,6 +51,33 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         result.size should be (2)
         result(0) should be (Row(12))
         result(1) should be (Row(23))
+    }
+
+    it should "add NULL columns for missing columns" in {
+        val df = spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val mapping = ConformMapping("myview", Map("_2" -> "int", "new" -> "string"))
+
+        mapping.input should be (MappingIdentifier("myview"))
+        mapping.columns should be (Seq("_2" -> "int", "new" -> "string"))
+        mapping.dependencies should be (Array(MappingIdentifier("myview")))
+
+        val result = mapping.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_2")
+        result.schema should be (StructType(Seq(
+            StructField("_2", IntegerType, false),
+            StructField("new", StringType, true)
+        )))
+        val rows = result.collect()
+        rows.size should be (2)
+        rows(0) should be (Row(12, null))
+        rows(1) should be (Row(23, null))
     }
 
     "An appropriate Dataflow" should "be readable from YML" in {

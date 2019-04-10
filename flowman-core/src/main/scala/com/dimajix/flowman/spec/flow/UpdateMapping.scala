@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.util.SchemaUtils
 
 
 object UpdateMapping {
@@ -80,12 +81,10 @@ class UpdateMapping extends BaseMapping {
         val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
 
         // Project updates DataFrame to schema of input DataFrame
-        val updateColumns = filteredUpdates.columns.map(name => name.toUpperCase(Locale.ROOT) -> col(name)).toMap
-        val unifiedColumns = inputDf.columns.map(name =>
-            updateColumns.getOrElse(name, lit(null).cast(inputDf.schema(name).dataType).as(name))
-        )
+        val unifiedColumns = SchemaUtils.conformSchema(filteredUpdates.schema, inputDf.schema)
         val projectedUpdates = filteredUpdates.select(unifiedColumns:_*)
 
+        // Perform update operation
         inputDf.join(updatesDf, keyColumns, "left_anti")
             .union(projectedUpdates)
     }

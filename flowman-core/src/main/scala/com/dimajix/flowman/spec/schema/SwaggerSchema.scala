@@ -73,8 +73,10 @@ import com.dimajix.flowman.types.TimestampType
   */
 class SwaggerSchema extends ExternalSchema {
     @JsonProperty(value="entity", required=false) private var _entity: String = _
+    @JsonProperty(value="nullable", required=false) private var _nullable: String = "false"
 
     def entity(implicit context: Context) : String = context.evaluate(_entity)
+    def nullable(implicit context: Context) : Boolean = context.evaluate(_nullable).toBoolean
 
     /**
       * Returns the list of all fields of the schema
@@ -90,7 +92,7 @@ class SwaggerSchema extends ExternalSchema {
             throw new IllegalArgumentException("Root type in Swagger must be a simple model or composed model")
 
         CachedSchema(
-            fromSwaggerModel(model),
+            fromSwaggerModel(model, nullable),
             Option(swagger.getInfo).map(_.getDescription).orNull
         )
     }
@@ -138,25 +140,25 @@ class SwaggerSchema extends ExternalSchema {
         jsonNode.elements().foreach(replaceAllOf)
     }
 
-    private def fromSwaggerModel(model:Model) : Seq[Field] = {
+    private def fromSwaggerModel(model:Model, nullable:Boolean) : Seq[Field] = {
         model match {
-            case composed:ComposedModel => composed.getAllOf.flatMap(fromSwaggerModel)
+            case composed:ComposedModel => composed.getAllOf.flatMap(m => fromSwaggerModel(m, nullable))
             //case array:ArrayModel => Seq(fromSwaggerProperty(array.getItems))
-            case _ => fromSwaggerObject(model.getProperties.toSeq, "").fields
+            case _ => fromSwaggerObject(model.getProperties.toSeq, "", nullable).fields
         }
     }
 
-    private def fromSwaggerObject(properties:Seq[(String,Property)], prefix:String) : StructType = {
-        StructType(properties.map(np => fromSwaggerProperty(np._1, np._2, prefix)))
+    private def fromSwaggerObject(properties:Seq[(String,Property)], prefix:String, nullable:Boolean) : StructType = {
+        StructType(properties.map(np => fromSwaggerProperty(np._1, np._2, prefix, nullable)))
     }
 
-    private def fromSwaggerProperty(name:String, property:Property, prefix:String) : Field = {
-        Field(name, fromSwaggerType(property, prefix + name), !property.getRequired, property.getDescription)
+    private def fromSwaggerProperty(name:String, property:Property, prefix:String, nullable:Boolean) : Field = {
+        Field(name, fromSwaggerType(property, prefix + name, nullable), nullable || !property.getRequired, property.getDescription)
     }
 
-    private def fromSwaggerType(property:Property, fqName:String) : FieldType = {
+    private def fromSwaggerType(property:Property, fqName:String, nullable:Boolean) : FieldType = {
         property match {
-            case array:ArrayProperty => ArrayType(fromSwaggerType(array.getItems, fqName + ".items"))
+            case array:ArrayProperty => ArrayType(fromSwaggerType(array.getItems, fqName + ".items", nullable))
             case _:BinaryProperty => BinaryType
             case _:BooleanProperty => BooleanType
             case _:ByteArrayProperty => BinaryType
@@ -169,7 +171,7 @@ class SwaggerSchema extends ExternalSchema {
             case _:LongProperty => LongType
             case _:BaseIntegerProperty => IntegerType
             case _:MapProperty => MapType(StringType, StringType)
-            case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.toSeq, fqName + ".")
+            case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.toSeq, fqName + ".", nullable)
             case _:StringProperty => StringType
             case _:UUIDProperty => StringType
             case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")

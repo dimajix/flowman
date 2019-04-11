@@ -27,8 +27,10 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.parser.ParserUtils.operationNotAllowed
 import org.apache.spark.sql.catalyst.plans.logical.InsertIntoTable
 import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -272,6 +274,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         require(executor != null)
 
         implicit val context = executor.context
+        val spark = executor.spark
         val properties = this.properties
         val fields = this.fields
         val tableIdentifier = this.tableIdentifier
@@ -288,18 +291,36 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
                 .save(executor.context.fs.file(avroSchemaUrl))
         }
 
+        val defaultStorage = HiveSerDe.getDefaultStorage(spark.sessionState.conf)
+        val inputFormat = Option(this.inputFormat).filter(_.nonEmpty).orElse(defaultStorage.inputFormat)
+        val outputFormat = Option(this.outputFormat).filter(_.nonEmpty).orElse(defaultStorage.outputFormat)
+        val fileStorage = if (format != null && format.nonEmpty) {
+            HiveSerDe.sourceToSerDe(format) match {
+                case Some(s) =>
+                    CatalogStorageFormat.empty.copy(
+                        inputFormat = s.inputFormat,
+                        outputFormat = s.outputFormat,
+                        serde = s.serde)
+                case None =>
+                    throw new IllegalArgumentException(s"File format '$format' not supported")
+            }
+        }
+        else {
+            CatalogStorageFormat.empty
+        }
+
         val catalogTable = CatalogTable(
             identifier = tableIdentifier,
             tableType = if (external) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(
-                Option(location).map(_.toUri),
-                Option(inputFormat),
-                Option(outputFormat),
-                Option(rowFormat),
-                true,
-                Map()
+                locationUri = Option(location).map(_.toUri),
+                inputFormat = fileStorage.inputFormat.orElse(inputFormat),
+                outputFormat = fileStorage.outputFormat.orElse(outputFormat),
+                serde = fileStorage.serde.orElse(Option(rowFormat)),
+                compressed = false,
+                properties = fileStorage.properties
             ),
-            provider = if (format != null && format.nonEmpty) Some(format) else Some("hive"),
+            provider = Some("hive"),
             schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
             partitionColumnNames = partitions.map(_.name),
             properties = properties,
@@ -308,9 +329,9 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
 
         val catalog = executor.catalog
         catalog.createTable(catalogTable, ifNotExists)
-        /*
+/*
         val external = if (this.external) "EXTERNAL" else ""
-        val create = s"CREATE $external TABLE $tableName"
+        val create = s"CREATE $external TABLE $tableIdentifier"
         val columns = "(\n" + fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
         val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
         val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
@@ -322,8 +343,8 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         val props = if (_properties.nonEmpty) "\nTBLPROPERTIES(" + properties.map(kv => "\n    \"" + kv._1 + "\"=\"" + kv._2 + "\"").mkString(",") + "\n)" else ""
         val stmt = create + columns + comment + partitionBy + rowFormat + storedAs + location + props
         logger.info(s"Executing SQL statement:\n$stmt")
-        spark.sql(stmt)
-        */
+        executor.spark.sql(stmt)
+*/
     }
 
     /**

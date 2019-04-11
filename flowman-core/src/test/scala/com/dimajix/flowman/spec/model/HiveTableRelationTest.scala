@@ -63,13 +63,14 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0001", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(Some("This is a test table"))
         table.identifier should be (TableIdentifier("lala_0001", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                Nil
+            StructField("int_col", IntegerType) ::
+            Nil
         ))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
@@ -116,6 +117,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0002", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0002", Some("default")))
         table.tableType should be (CatalogTableType.EXTERNAL)
@@ -160,6 +162,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0003", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0003", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
@@ -209,6 +212,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0004", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0004", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
@@ -256,6 +260,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0005", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0005", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
@@ -308,7 +313,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
-        table.provider should be (Some("parquet"))
+        table.provider should be (Some("hive"))
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"))
@@ -351,7 +356,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
-        table.provider should be (Some("avro"))
+        table.provider should be (Some("hive"))
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
@@ -395,8 +400,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
         table.provider should be (Some("hive"))
-        table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.SequenceFileInputFormat"))
-        table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat"))
+        table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.TextInputFormat"))
+        table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
         relation.destroy(executor)
     }

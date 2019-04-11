@@ -138,7 +138,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
 
         implicit val context = executor.context
         val partitionNames = partitions.map(_.name)
-        logger.info(s"Writing to Hive table $tableIdentifier with partitions ${partitionNames.mkString(",")}")
+        logger.info(s"Writing to Hive table $tableIdentifier with partitions ${partitionNames.mkString(",")} using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(df)

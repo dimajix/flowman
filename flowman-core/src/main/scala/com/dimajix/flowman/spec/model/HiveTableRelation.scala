@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.model
 
-import java.net.URI
 import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -27,7 +26,6 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.catalyst.parser.ParserUtils.operationNotAllowed
 import org.apache.spark.sql.catalyst.plans.logical.InsertIntoTable
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.internal.HiveSerDe

@@ -82,7 +82,7 @@ object SchemaUtils {
     /**
       * Helper method for conforming a given schema to a target schema. This will project the given schema and also
       * add missing columns (which are filled with NULL values)
-      * @param inputSchema
+      * @param inputSchema - Denotes the input schema to be conformed
       * @param requiredSchema
       * @return
       */
@@ -106,6 +106,33 @@ object SchemaUtils {
         }
 
         conformStruct(requiredSchema, inputSchema, "")
+    }
+
+    /**
+      * Helper method for conforming a given schema to a target schema. This will project the given schema and also
+      * add missing columns (which are filled with NULL values)
+      * @param df - Denotes the input DataFrame
+      * @param requiredSchema
+      * @return
+      */
+    def conformSchema(df:DataFrame, requiredSchema:StructType) : DataFrame = {
+        val unifiedColumns = conformSchema(df.schema, requiredSchema)
+        df.select(unifiedColumns:_*)
+    }
+
+    /**
+      * Conforms the DataFrame to the given set of columns and data types
+      * @param df
+      * @param columns
+      * @return
+      */
+    def conformColumns(df:DataFrame, columns:Seq[(String,String)]) : DataFrame = {
+        val inputCols = df.columns.map(col => (col.toUpperCase(Locale.ROOT), df(col))).toMap
+        val cols = columns.map(nv =>
+            inputCols.getOrElse(nv._1.toUpperCase(Locale.ROOT), lit(null).as(nv._1))
+                .cast(SchemaUtils.mapType(nv._2))
+        )
+        df.select(cols: _*)
     }
 
     /**

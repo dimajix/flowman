@@ -81,8 +81,7 @@ class UpdateMapping extends BaseMapping {
         val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
 
         // Project updates DataFrame to schema of input DataFrame
-        val unifiedColumns = SchemaUtils.conformSchema(filteredUpdates.schema, inputDf.schema)
-        val projectedUpdates = filteredUpdates.select(unifiedColumns:_*)
+        val projectedUpdates = SchemaUtils.conformSchema(filteredUpdates, inputDf.schema)
 
         // Perform update operation
         inputDf.join(updatesDf, keyColumns, "left_anti")

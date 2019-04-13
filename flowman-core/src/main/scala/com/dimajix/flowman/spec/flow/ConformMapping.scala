@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -43,10 +44,12 @@ class ConformMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ConformMapping])
 
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Map[String,String] = Map()
+    @JsonProperty(value = "columns", required = false) private[spec] var _columns:Map[String,String] = Map()
+    @JsonProperty(value = "schema", required = false) private var _schema: Schema = _
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def columns(implicit context: Context) : Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
+    def schema(implicit context: Context): Schema = _schema
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -56,19 +59,49 @@ class ConformMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+        require(executor != null)
+        require(tables != null)
+
+        if (_schema != null) {
+            conformToSchema(executor, tables)
+        }
+        else if (_columns != null && _columns.nonEmpty) {
+            conformToColumns(executor, tables)
+        }
+        else {
+            throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
+        }
+    }
+
+    private def conformToSchema(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+        require(executor != null)
+        require(tables != null)
+
         implicit val context = executor.context
-        val columns = this.columns
         val input = this.input
-        logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
+        val schema = this.schema
+        require(schema != null, "Require target schema")
         require(input != null && input.nonEmpty, "Require input mapping")
 
+        logger.info(s"Projecting mapping '$input' onto specified schema")
         val df = tables(input)
-        val inputCols = df.columns.map(col => (col.toUpperCase(Locale.ROOT), df(col))).toMap
-        val cols = columns.map(nv =>
-            inputCols.getOrElse(nv._1.toUpperCase(Locale.ROOT), lit(null).as(nv._1))
-                .cast(SchemaUtils.mapType(nv._2))
-        )
-        df.select(cols:_*)
+        val sparkSchema = schema.sparkSchema
+        SchemaUtils.conformSchema(df, sparkSchema)
+    }
+
+    private def conformToColumns(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+        require(executor != null)
+        require(tables != null)
+
+        implicit val context = executor.context
+        val input = this.input
+        val columns = this.columns
+        require(columns != null && columns.nonEmpty, "Require non empty columns")
+        require(input != null && input.nonEmpty, "Require input mapping")
+
+        logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
+        val df = tables(input)
+        SchemaUtils.conformColumns(df, columns)
     }
 
     /**

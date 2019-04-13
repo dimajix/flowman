@@ -34,6 +34,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.util.SchemaUtils
 
 
 class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -360,6 +361,53 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
+        relation.destroy(executor)
+    }
+
+    it should "support csv format" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala_0007
+              |    format: textfile
+              |    rowFormat: org.apache.hadoop.hive.serde2.OpenCSVSerde
+              |    serdeProperties:
+              |      separatorChar: "\t"
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val relation = project.relations("t0")
+
+        relation.create(executor)
+        val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
+        table.comment should be(None)
+        table.identifier should be (TableIdentifier("lala_0007", Some("default")))
+        table.tableType should be (CatalogTableType.MANAGED)
+        SchemaUtils.dropMetadata(table.schema) should be (StructType(
+            StructField("str_col", StringType) ::
+            StructField("int_col", StringType) ::
+            Nil
+        ))
+        table.partitionColumnNames should be (Seq())
+        table.partitionSchema should be (StructType(Nil))
+        table.location should not be (None)
+        table.provider should be (Some("hive"))
+        table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.TextInputFormat"))
+        table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
+        table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"))
+        table.storage.properties should be (Map("separatorChar" -> "\t", "serialization.format" -> "1"))
         relation.destroy(executor)
     }
 

@@ -62,6 +62,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
     @JsonProperty(value = "inputFormat", required = false) private var _inputFormat: String = _
     @JsonProperty(value = "outputFormat", required = false) private var _outputFormat: String = _
     @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
+    @JsonProperty(value = "serdeProperties", required = false) private var _serdeProperties: Map[String, String] = Map()
     @JsonProperty(value = "writer", required = false) private var _writer: String = "hive"
 
     def database(implicit context: Context): String = context.evaluate(_database)
@@ -73,6 +74,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
     def inputFormat(implicit context: Context): String = context.evaluate(_inputFormat)
     def outputFormat(implicit context: Context): String = context.evaluate(_outputFormat)
     def properties(implicit context: Context): Map[String, String] = _properties.mapValues(context.evaluate)
+    def serdeProperties(implicit context: Context): Map[String, String] = _serdeProperties.mapValues(context.evaluate)
     def writer(implicit context: Context): String = context.evaluate(_writer).toLowerCase(Locale.ROOT)
     def tableIdentifier(implicit context: Context): TableIdentifier = new TableIdentifier(table, Option(database))
 
@@ -276,6 +278,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         implicit val context = executor.context
         val spark = executor.spark
         val properties = this.properties
+        val serdeProperties = this.serdeProperties
         val fields = this.fields
         val tableIdentifier = this.tableIdentifier
         val format = this.format
@@ -292,9 +295,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
         }
 
         val defaultStorage = HiveSerDe.getDefaultStorage(spark.sessionState.conf)
-        val inputFormat = Option(this.inputFormat).filter(_.nonEmpty).orElse(defaultStorage.inputFormat)
-        val outputFormat = Option(this.outputFormat).filter(_.nonEmpty).orElse(defaultStorage.outputFormat)
-        val fileStorage = if (format != null && format.nonEmpty) {
+        val fileStorage : CatalogStorageFormat = if (format != null && format.nonEmpty) {
             HiveSerDe.sourceToSerDe(format) match {
                 case Some(s) =>
                     CatalogStorageFormat.empty.copy(
@@ -309,16 +310,25 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
             CatalogStorageFormat.empty
         }
 
+        // Selection rule:
+        //  1. use explicitly specified format
+        //  2. use format from file storage
+        //  3. use default format
+        val inputFormat = Option(this.inputFormat).filter(_.nonEmpty).orElse(fileStorage.inputFormat).orElse(defaultStorage.inputFormat)
+        val outputFormat = Option(this.outputFormat).filter(_.nonEmpty).orElse(fileStorage.outputFormat).orElse(defaultStorage.outputFormat)
+        val rowFormat = Option(this.rowFormat).filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
+
+        // Configure catalog table by assembling all options
         val catalogTable = CatalogTable(
             identifier = tableIdentifier,
             tableType = if (external) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(
                 locationUri = Option(location).map(_.toUri),
-                inputFormat = fileStorage.inputFormat.orElse(inputFormat),
-                outputFormat = fileStorage.outputFormat.orElse(outputFormat),
-                serde = fileStorage.serde.orElse(Option(rowFormat)),
+                inputFormat = inputFormat,
+                outputFormat = outputFormat,
+                serde = rowFormat,
                 compressed = false,
-                properties = fileStorage.properties
+                properties = fileStorage.properties ++ serdeProperties
             ),
             provider = Some("hive"),
             schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
@@ -327,6 +337,7 @@ class HiveTableRelation extends BaseRelation with SchemaRelation with Partitione
             comment = Option(description)
         )
 
+        // Create table
         val catalog = executor.catalog
         catalog.createTable(catalogTable, ifNotExists)
 /*

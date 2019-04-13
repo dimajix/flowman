@@ -5,12 +5,51 @@ permalink: /spec/relation/table.html
 ---
 # Hive Table Relations
 
-## Example
+## Examples
+
+### Parquet Example
 ```
+relations:
+  parquet_relation:
+    kind: hiveTable
+    database: default
+    table: financial_transactions
+    location: /warehouse/default/financial_transactions
+    format: parquet
+    schema:
+      kind: inline
+      fields:
+        - name: id
+          type: string
+        - name: amount
+          type: double
+    partitions:
+      - name: business_date
+        type: string
+```
+
+### CSV Example
+```
+relations:
+  csv_relation:
+    kind: hiveTable
+    database: default
+    table: financial_transactions
+    format: textfile
+    rowFormat: org.apache.hadoop.hive.serde2.OpenCSVSerde
+    serdeProperties:
+      separatorChar: "\t"
+    schema:
+      kind: inline
+      fields:
+        - name: id
+          type: string
+        - name: amount
+          type: string
 ```
 
 ## Fields
- * `kind` **(mandatory)** *(string)*: `table` or `hive-table`
+ * `kind` **(mandatory)** *(string)*: `table` or `hiveTable`
  
  * `schema` **(optional)** *(schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically

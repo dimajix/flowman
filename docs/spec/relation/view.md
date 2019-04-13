@@ -10,10 +10,7 @@ permalink: /spec/relation/view.html
 ```
 
 ## Fields
- * `kind` **(mandatory)** *(string)*: `view` or `hive-view`
- * `schema` **(optional)** *(schema)* *(default: empty)*: 
- Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
- try to infer the schema.
+ * `kind` **(mandatory)** *(string)*: `view` or `hiveView`
 
  * `description` **(optional)** *(string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.

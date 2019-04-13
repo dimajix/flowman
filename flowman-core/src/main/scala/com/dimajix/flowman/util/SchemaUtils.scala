@@ -136,6 +136,26 @@ object SchemaUtils {
     }
 
     /**
+      * Removes all meta data from a Spark schema. Useful for comparing results in unit tests
+      * @param schema
+      * @return
+      */
+    def dropMetadata(schema:StructType) : StructType = {
+        def processType(dataType:DataType) : DataType = {
+            dataType match {
+                case st:StructType => dropMetadata(st)
+                case ar:ArrayType => ArrayType(processType(ar.elementType), ar.containsNull)
+                case mt:MapType => MapType(processType(mt.keyType), processType(mt.valueType), mt.valueContainsNull)
+                case dt:DataType => dt
+            }
+        }
+        val fields = schema.fields.map { field =>
+            StructField(field.name, processType(field.dataType), field.nullable)
+        }
+        StructType(fields)
+    }
+
+    /**
       * Converts the given Spark schema to a lower case schema
       * @param schema
       * @return

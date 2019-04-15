@@ -85,15 +85,6 @@ abstract class Executor {
     def context : Context
 
     /**
-      * Returns a named table created by an executor. If a project is specified, Executors for other projects
-      * will be searched as well
-      *
-      * @param identifier
-      * @return
-      */
-    def getTable(identifier: MappingIdentifier) : DataFrame
-
-    /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache
       *
       * @param identifier

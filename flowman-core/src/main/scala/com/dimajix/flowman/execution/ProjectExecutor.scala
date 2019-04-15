@@ -64,22 +64,6 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
     }
 
     /**
-      * Returns a named table created by an executor. If a project is specified, Executors for other projects
-      * will be searched as well
-      *
-      * @param identifier
-      * @return
-      */
-    override def getTable(identifier: MappingIdentifier): DataFrame = {
-        require(identifier != null && identifier.nonEmpty)
-
-        if (identifier.project.forall(_ == _project.name))
-            _parent.getTable(MappingIdentifier(identifier.name, _project.name))
-        else
-            _parent.getTable(identifier)
-    }
-
-    /**
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */

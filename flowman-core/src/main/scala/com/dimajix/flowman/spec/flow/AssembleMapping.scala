@@ -33,6 +33,7 @@ object AssembleMapping {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl=classOf[ColumnsEntry], visible = false)
     @JsonSubTypes(value = Array(
         new JsonSubTypes.Type(name = "columns", value = classOf[ColumnsEntry]),
+        new JsonSubTypes.Type(name = "lift", value = classOf[LiftEntry]),
         new JsonSubTypes.Type(name = "nest", value = classOf[NestEntry]),
         new JsonSubTypes.Type(name = "struct", value = classOf[StructEntry])
     ))
@@ -68,6 +69,32 @@ object AssembleMapping {
                 _.path(if (path == null) "" else path)
                  .keep(keep)
                  .drop(drop)
+            )
+        }
+    }
+
+    object LiftEntry {
+        def apply(path:String, columns:Seq[String]) : LiftEntry = {
+            val result = new LiftEntry
+            result._path = path
+            result._columns = columns
+            result
+        }
+    }
+    class LiftEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var _path:String = _
+        @JsonProperty(value = "columns", required = false) private var _columns:Seq[String] = Seq()
+
+        def path(implicit context: Context) : String = context.evaluate(_path)
+        def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
+
+        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
+            val path = this.path
+            val columns = this.columns
+
+            builder.lift(
+                _.path(if (path == null) "" else path)
+                    .columns(columns)
             )
         }
     }

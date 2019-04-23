@@ -164,6 +164,31 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
     }
 
+    it should "support lift" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val asm = Assembler.builder()
+            .lift(
+                _.path("stupidName")
+                    .column("secret.field")
+            )
+            .build()
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq(
+            StructField("field", LongType)
+        ))
+
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+    }
+
     it should "support assembling sub structures" in {
         val spark = this.spark
         import spark.implicits._

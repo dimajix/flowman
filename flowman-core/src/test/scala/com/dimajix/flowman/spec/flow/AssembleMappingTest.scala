@@ -30,6 +30,7 @@ import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.AssembleMapping.ColumnsEntry
+import com.dimajix.flowman.spec.flow.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.StructEntry
 
@@ -129,7 +130,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 ColumnsEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
                 StructEntry("sub_structure", Seq(
                     ColumnsEntry("embedded.old_structure", Seq(), Seq())
-                ))
+                )),
+                LiftEntry("stupidName", Seq("secret.field"))
             )
         )
 
@@ -156,7 +158,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )), false),
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
-            )), false)
+            )), false),
+            StructField("field", LongType)
         ))
 
         outputDf.count should be (1)
@@ -175,7 +178,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 ColumnsEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
                 StructEntry("sub_structure", Seq(
                     ColumnsEntry("embedded.old_structure", Seq(), Seq())
-                ))
+                )),
+                LiftEntry("stupidName", Seq("secret.field"))
             )
         )
 
@@ -200,7 +204,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )), true),
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
-            )), true)
+            )), true),
+            StructField("field", LongType)
         ))
 
         val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))

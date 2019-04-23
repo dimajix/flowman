@@ -26,7 +26,6 @@ import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.transforms.schema.SchemaTree
 import com.dimajix.flowman.transforms.schema.StructNode
-import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
 
@@ -34,6 +33,7 @@ object Assembler {
     abstract class Builder {
         def build() : Assembler
     }
+
     class ColumnBuilder extends Builder {
         private var _path = Path()
         private val _keep = mutable.ListBuffer[Path]()
@@ -65,6 +65,28 @@ object Assembler {
         }
     }
 
+    class LiftBuilder extends Builder {
+        private var _path = Path()
+        private val _columns = mutable.ListBuffer[Path]()
+
+        def path(c:String) : LiftBuilder = {
+            _path = Path(c)
+            this
+        }
+        def column(c:String) : LiftBuilder = {
+            _columns += Path(c)
+            this
+        }
+        def columns(c:Seq[String]) : LiftBuilder = {
+            _columns ++= c.map(Path(_))
+            this
+        }
+
+        override def build() : Assembler = {
+            new LiftAssembler(_path, _columns)
+        }
+    }
+
     class StructBuilder extends Builder {
         private val _children = mutable.ListBuffer[(Option[String],Builder)]()
 
@@ -78,6 +100,12 @@ object Assembler {
             val builder = new ColumnBuilder
             spec(builder)
             _children += ((Some(name), builder))
+            this
+        }
+        def lift(spec:LiftBuilder => Unit) : StructBuilder = {
+            val builder = new LiftBuilder
+            spec(builder)
+            _children += ((None, builder))
             this
         }
         def assemble(name:String)(spec:StructBuilder => Unit) : StructBuilder = {
@@ -140,11 +168,19 @@ sealed abstract class Assembler {
 
 class ColumnAssembler private[transforms] (path:Path, keep:Seq[Path], drop:Seq[Path]) extends Assembler {
     override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
-        val child = root.find(path)
+        val start = root.find(path)
         if(keep.nonEmpty)
-            child.map(_.keep(keep).drop(drop)).getOrElse(Node.empty[T])
+            start.map(_.keep(keep).drop(drop)).getOrElse(Node.empty[T])
         else
-            child.map(_.drop(drop)).getOrElse(Node.empty[T])
+            start.map(_.drop(drop)).getOrElse(Node.empty[T])
+    }
+}
+
+class LiftAssembler private[transforms] (path:Path, columns:Seq[Path]) extends Assembler {
+    override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
+        val start = root.find(path)
+        val children = columns.flatMap(p => start.flatMap(_.find(p)))
+        StructNode("", children)
     }
 }
 

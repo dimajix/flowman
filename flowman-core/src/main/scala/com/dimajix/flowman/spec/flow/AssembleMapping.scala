@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.transforms.Assembler
+import com.dimajix.flowman.types.StructType
 
 
 object AssembleMapping {
@@ -173,6 +174,22 @@ class AssembleMapping extends BaseMapping {
         val df = input(this.input)
         val asm = assembler
         asm.reassemble(df)
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        val schema = input(this.input)
+        val asm = assembler
+        asm.reassemble(schema)
     }
 
     private def assembler(implicit context:Context) : Assembler = {

@@ -30,28 +30,32 @@ import org.apache.spark.sql.types.StructType
 class ColumnNodeOps extends NodeOps[Column] {
     override def empty : Column = col("")
 
-    override def rename(value:Column, name:String) : Column = {
+    override def metadata(value:Column, meta:Map[String,String]) : Column = value
+
+    override def nullable(value:Column, n:Boolean) : Column = value
+
+    override def leaf(name:String, value:Column) : Column = withName(name, value)
+
+    override def struct(name:String, children:Seq[Column]) : Column = {
+        withName(name, functions.struct(children: _*))
+    }
+
+    override def array(name:String, element:Column) : Column = ???
+
+    override def map(name:String, keyType:Column, valueType:Column) : Column = ???
+
+    private def withName(name:String, value:Column) : Column = {
         if (name.nonEmpty)
             value.as(name)
         else
             value
     }
-
-    override def metadata(value:Column, meta:Map[String,String]) : Column = value
-
-    override def nullable(value:Column, n:Boolean) : Column = value
-
-    override def struct(children:Seq[Column]) : Column = functions.struct(children:_*)
-
-    override def array(element:Column) : Column = ???
-
-    override def map(keyType:Column, valueType:Column) : Column = ???
 }
 
 
 object ColumnTree {
     object implicits {
-        implicit val nodeOps = new ColumnNodeOps
+        implicit val columnNodeOps = new ColumnNodeOps
     }
 
     def ofSchema(schema:StructType) : Node[Column] = {
@@ -92,9 +96,9 @@ object ColumnTree {
         def processArray(prefix:String, name:String, at:ArrayType) : ArrayNode[Column] = {
             val fqName = fq(prefix, name)
             val elem = at.elementType match {
-                case st:StructType => processStruct(fqName, "", st)
-                case at:ArrayType => processArray(fqName, "", at)
-                case _:DataType => processLeaf(fqName, "")
+                case st:StructType => processStruct(fqName, "element", st)
+                case at:ArrayType => processArray(fqName, "element", at)
+                case _:DataType => processLeaf(fqName, "element")
             }
             ArrayNode(name, elem)
         }

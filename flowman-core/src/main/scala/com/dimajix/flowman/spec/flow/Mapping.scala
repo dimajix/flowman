@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Resource
 import com.dimajix.flowman.spi.TypeRegistry
+import com.dimajix.flowman.types.StructType
 
 
 object Mapping extends TypeRegistry[Mapping] {
@@ -139,4 +140,12 @@ abstract class Mapping extends Resource {
       * @return
       */
     def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType
 }

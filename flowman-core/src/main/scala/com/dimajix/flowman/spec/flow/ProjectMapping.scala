@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
@@ -24,6 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -72,5 +75,26 @@ class ProjectMapping extends BaseMapping {
       */
     override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         Array(input)
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        val columns = this.columns
+        val mappingId = this.input
+        val schema = input(mappingId)
+        val inputFields = schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+        val outputFields = columns.map { name =>
+            inputFields.getOrElse(name.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Cannot find field $name in schema $mappingId"))
+        }
+        StructType(outputFields)
     }
 }

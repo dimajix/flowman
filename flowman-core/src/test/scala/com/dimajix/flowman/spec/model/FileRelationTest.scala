@@ -31,7 +31,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.{types => ftypes}
 
 
 class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -198,5 +200,48 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         relation.destroy(executor)
         outputPath.toFile.exists() should be (false)
+    }
+
+    it should "support mapping schemas" in {
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: file
+               |    location: ${outputPath.toUri}
+               |    pattern: p_col=$$p_col
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |        - name: p_col
+               |          type: integer
+               |mappings:
+               |  input:
+               |    kind: read
+               |    relation: local
+               |    partitions:
+               |      spart: abc
+               |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val mapping = project.mappings("input")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("p_col", ftypes.IntegerType, false)
+        )))
     }
 }

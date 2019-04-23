@@ -34,17 +34,17 @@ case class Path(segments:Seq[String])
 trait NodeOps[T] {
     def empty : T
 
-    def rename(value:T, name:String) : T
-
     def metadata(value:T, meta:Map[String,String]) : T
 
     def nullable(value:T, n:Boolean) : T
 
-    def struct(children:Seq[T]) : T
+    def leaf(name:String, value:T) : T
 
-    def array(element:T) : T
+    def struct(name:String, children:Seq[T]) : T
 
-    def map(keyType:T, valueType:T) : T
+    def array(name:String, element:T) : T
+
+    def map(name:String, keyType:T, valueType:T) : T
 }
 
 
@@ -149,7 +149,7 @@ sealed abstract class Node[T] {
     def keep(paths:Seq[Path]) : Node[T]
 
     protected def applyProperties(value:T)(implicit ops: NodeOps[T]) : T = {
-        ops.rename(ops.metadata(ops.nullable(value, nullable), metadata), name)
+        ops.metadata(ops.nullable(value, nullable), metadata)
     }
 }
 
@@ -248,7 +248,7 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        applyProperties(value)
+        ops.leaf(name, applyProperties(value))
     }
 
     /**
@@ -327,7 +327,7 @@ case class StructNode[T](name:String, children:Seq[Node[T]], nullable:Boolean=tr
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = ops.struct(children.map(_.mkValue()))
+        val value = ops.struct(name, children.map(_.mkValue()))
         applyProperties(value)
     }
 
@@ -461,7 +461,7 @@ case class ArrayNode[T](name:String, elements:Node[T], nullable:Boolean=true, me
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = ops.array(elements.mkValue())
+        val value = ops.array(name, elements.mkValue())
         applyProperties(value)
     }
 
@@ -552,7 +552,7 @@ case class MapNode[T](name:String, mapKey:Node[T], mapValue:Node[T], nullable:Bo
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = ops.map(mapKey.mkValue(), mapValue.mkValue())
+        val value = ops.map(name, mapKey.mkValue(), mapValue.mkValue())
         applyProperties(value)
     }
 

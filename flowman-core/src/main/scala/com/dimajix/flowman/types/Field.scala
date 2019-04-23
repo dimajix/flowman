@@ -142,4 +142,27 @@ class Field {
         if (size > 0) metadata.putLong("size", size)
         StructField(name, sparkType, nullable, metadata.build())
     }
+
+    override def toString: String = s"Field($name, $ftype, $nullable)"
+
+
+    def canEqual(other: Any): Boolean = other.isInstanceOf[Field]
+
+    override def equals(other: Any): Boolean = other match {
+        case that: Field =>
+            (that canEqual this) &&
+                _name == that._name &&
+                _type == that._type &&
+                _nullable == that._nullable &&
+                _description == that._description &&
+                _default == that._default &&
+                _size == that._size &&
+                _format == that._format
+        case _ => false
+    }
+
+    override def hashCode(): Int = {
+        val state = Seq(_name, _type, _nullable, _description, _default, _size, _format)
+        state.map(o => if (o != null) o.hashCode() else 0).foldLeft(0)((a, b) => 31 * a + b)
+    }
 }

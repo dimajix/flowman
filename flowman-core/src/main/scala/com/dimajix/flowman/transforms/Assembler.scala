@@ -24,8 +24,10 @@ import com.dimajix.flowman.transforms.schema.ColumnTree
 import com.dimajix.flowman.transforms.schema.Node
 import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.Path
+import com.dimajix.flowman.transforms.schema.SchemaTree
 import com.dimajix.flowman.transforms.schema.StructNode
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.StructType
 
 
 object Assembler {
@@ -99,6 +101,7 @@ object Assembler {
   */
 sealed abstract class Assembler {
     import com.dimajix.flowman.transforms.schema.ColumnTree.implicits._
+    import com.dimajix.flowman.transforms.schema.SchemaTree.implicits._
 
     /**
       * Generic method for reassembling the given Node of a schema tree
@@ -126,7 +129,12 @@ sealed abstract class Assembler {
       * @param fields
       * @return
       */
-    def reassemble(fields:Seq[Field]) : Seq[Field] = ???
+    def reassemble(fields:StructType) : StructType = {
+        val tree = SchemaTree.ofSchema(fields)
+        val newTree = reassemble(tree)
+        val columns = newTree.children.map(_.mkValue())
+        StructType(columns)
+    }
 }
 
 

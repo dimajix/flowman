@@ -26,6 +26,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.AssembleMapping.ColumnsEntry
@@ -34,6 +35,30 @@ import com.dimajix.flowman.spec.flow.AssembleMapping.StructEntry
 
 
 class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+    private val inputJson =
+        """
+          |{
+          |  "stupidName": {
+          |    "secret": {
+          |      "field":123,
+          |      "other_field":456
+          |    }
+          |  },
+          |  "lala": {
+          |  },
+          |  "embedded" : {
+          |    "structure": {
+          |      "secret": {
+          |        "value":"top_secret"
+          |      },
+          |      "public": "common_knowledge"
+          |    },
+          |    "old_structure": {
+          |      "value": [123, 456]
+          |    }
+          |  }
+          |}""".stripMargin
+
     "An Assembler" should "be parseable" in {
         val spec =
             """
@@ -96,30 +121,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val spark = this.spark
         import spark.implicits._
 
-        val inputJson =
-        """
-          |{
-          |  "stupidName": {
-          |    "secret": {
-          |      "field":123,
-          |      "other_field":456
-          |    }
-          |  },
-          |  "lala": {
-          |  },
-          |  "embedded" : {
-          |    "structure": {
-          |      "secret": {
-          |        "value":"top_secret"
-          |      },
-          |      "public": "common_knowledge"
-          |    },
-          |    "old_structure": {
-          |      "value": [123, 456]
-          |    }
-          |  }
-          |}""".stripMargin
-
         val mapping = AssembleMapping(
             "input_df",
             Seq(
@@ -160,5 +161,49 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
+    }
+
+    it should "provide a correct output schema" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val mapping = AssembleMapping(
+            "input_df",
+            Seq(
+                NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
+                ColumnsEntry("", Seq("lala", "lolo"), Seq()),
+                ColumnsEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
+                StructEntry("sub_structure", Seq(
+                    ColumnsEntry("embedded.old_structure", Seq(), Seq())
+                ))
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val expectedSchema = StructType(Seq(
+            StructField("clever_name", StructType(Seq(
+                StructField("secret", StructType(Seq(
+                    StructField("other_field", LongType)
+                )), true)
+            )), true),
+            StructField("embedded", StructType(Seq(
+                StructField("structure", StructType(Seq(
+                    StructField("public", StringType)
+                )), true)
+            )), true),
+            StructField("sub_structure", StructType(Seq(
+                StructField("value", ArrayType(LongType))
+            )), true)
+        ))
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
     }
 }

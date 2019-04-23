@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.types.StructType
 
 
 class DistinctMapping extends BaseMapping {
@@ -56,5 +57,19 @@ class DistinctMapping extends BaseMapping {
 
         val df = tables(input)
         df.distinct()
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        input(this.input)
     }
 }

@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -62,5 +63,27 @@ class ReadStreamMapping extends BaseMapping {
       */
     override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
         Array()
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        val fields = this.columns
+        if (fields != null && fields.nonEmpty) {
+            StructType.of(SchemaUtils.createSchema(fields.toSeq))
+        }
+        else {
+            val source = this.relation
+            val relation = context.getRelation(source)
+            StructType(relation.schema.fields)
+        }
     }
 }

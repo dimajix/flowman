@@ -34,6 +34,8 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -673,5 +675,46 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
+    }
+
+    it should "support mapping schemas" in {
+        val spec =
+            s"""
+               |relations:
+               |  t0:
+               |    kind: table
+               |    database: default
+               |    table: lala_0004
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |      - name: spart
+               |        type: string
+               |      - name: ip
+               |        type: int
+               |mappings:
+               |  input:
+               |    kind: read
+               |    relation: t0
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val mapping = project.mappings("input")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("spart", ftypes.StringType, false),
+            Field("ip", ftypes.IntegerType, false)
+        )))
     }
 }

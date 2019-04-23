@@ -23,6 +23,7 @@ import org.apache.spark.sql.functions.col
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.types.StructType
 
 class RepartitionMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
@@ -62,5 +63,19 @@ class RepartitionMapping extends BaseMapping {
       */
     override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         Array(input)
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        input(this.input)
     }
 }

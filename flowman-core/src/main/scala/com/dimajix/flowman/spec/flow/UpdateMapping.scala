@@ -16,18 +16,14 @@
 
 package com.dimajix.flowman.spec.flow
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.lit
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.transforms.Conformer
 
 
 object UpdateMapping {
@@ -81,7 +77,7 @@ class UpdateMapping extends BaseMapping {
         val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
 
         // Project updates DataFrame to schema of input DataFrame
-        val projectedUpdates = SchemaUtils.conformSchema(filteredUpdates, inputDf.schema)
+        val projectedUpdates = Conformer.conformSchema(filteredUpdates, inputDf.schema)
 
         // Perform update operation
         inputDf.join(updatesDf, keyColumns, "left_anti")

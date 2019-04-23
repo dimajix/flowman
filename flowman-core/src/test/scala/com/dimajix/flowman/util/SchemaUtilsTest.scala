@@ -16,24 +16,17 @@
 
 package com.dimajix.flowman.util
 
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 
-
-class SchemaUtilsTest extends FlatSpec with Matchers with LocalSparkSession {
+class SchemaUtilsTest extends FlatSpec with Matchers {
     "SchemaUtils" should "convert all names to lower case" in {
         val schema = StructType(
             StructField("Name", StringType) ::
@@ -71,100 +64,5 @@ class SchemaUtilsTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val result = SchemaUtils.toLowerCase(schema)
         result should be(expected)
-    }
-
-    "A conforming schema" should "be generated for simple cases" in {
-        val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
-            StructField("COL2", IntegerType),
-            StructField("col3", IntegerType)
-        ))
-        val requestedSchema = StructType(Seq(
-            StructField("col2", StringType),
-            StructField("col1", StringType),
-            StructField("col4", IntegerType)
-        ))
-
-        val columns = SchemaUtils.conformSchema(inputSchema, requestedSchema)
-        val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
-        val outputDf = inputDf.select(columns:_*)
-        outputDf.schema should be (StructType(Seq(
-            StructField("col2", StringType),
-            StructField("col1", StringType),
-            StructField("col4", IntegerType)
-        )))
-    }
-
-    it should "work with nested entities" in {
-        val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
-            StructField("COL2", StructType(
-                Seq(
-                    StructField("nested1", StringType),
-                    StructField("nested3", FloatType),
-                    StructField("nested4", StructType(
-                        Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_2", FloatType)
-                        )
-                    )),
-                    StructField("nested5", StructType(
-                        Seq(
-                            StructField("nested5_1", StringType),
-                            StructField("nested5_2", FloatType)
-                        )
-                    ))
-                )
-            )),
-            StructField("col3", IntegerType)
-        ))
-        val requestedSchema = StructType(Seq(
-            StructField("col2", StructType(
-                Seq(
-                    StructField("nested1", LongType),
-                    StructField("nested2", FloatType),
-                    StructField("nested4", StructType(
-                        Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_3", FloatType)
-                        )
-                    )),
-                    StructField("nested5", StructType(
-                        Seq(
-                            StructField("nested5_1", StringType),
-                            StructField("nested5_2", FloatType)
-                        )
-                    ))
-                )
-            )),
-            StructField("col1", StringType),
-            StructField("col4", IntegerType)
-        ))
-
-        val columns = SchemaUtils.conformSchema(inputSchema, requestedSchema)
-        val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
-        val outputDf = inputDf.select(columns:_*)
-        outputDf.schema should be (StructType(Seq(
-            StructField("col2", StructType(
-                Seq(
-                    StructField("nested1", LongType),
-                    StructField("nested2", FloatType),
-                    StructField("nested4", StructType(
-                        Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_3", FloatType)
-                        )
-                    ), false),
-                    StructField("nested5", StructType(
-                        Seq(
-                            StructField("nested5_1", StringType),
-                            StructField("nested5_2", FloatType)
-                        )
-                    ), false)
-                )
-            ), false),
-            StructField("col1", StringType),
-            StructField("col4", IntegerType)
-        )))
     }
 }

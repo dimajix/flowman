@@ -48,6 +48,7 @@ object Mapping extends TypeRegistry[Mapping] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
+    new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMapping]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMapping]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),

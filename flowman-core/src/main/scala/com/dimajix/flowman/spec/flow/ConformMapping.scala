@@ -16,18 +16,15 @@
 
 package com.dimajix.flowman.spec.flow
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.lit
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.transforms.Conformer
 
 
 object ConformMapping {
@@ -86,7 +83,7 @@ class ConformMapping extends BaseMapping {
         logger.info(s"Projecting mapping '$input' onto specified schema")
         val df = tables(input)
         val sparkSchema = schema.sparkSchema
-        SchemaUtils.conformSchema(df, sparkSchema)
+        Conformer.conformSchema(df, sparkSchema)
     }
 
     private def conformToColumns(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
@@ -101,7 +98,7 @@ class ConformMapping extends BaseMapping {
 
         logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
         val df = tables(input)
-        SchemaUtils.conformColumns(df, columns)
+        Conformer.conformColumns(df, columns)
     }
 
     /**

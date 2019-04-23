@@ -94,12 +94,26 @@ object Assembler {
     def builder() = new StructBuilder()
 }
 
-
+/**
+  * The main class for reassembling DataFrames (and Flowman Schemas)
+  */
 sealed abstract class Assembler {
     import com.dimajix.flowman.transforms.schema.ColumnTree.implicits._
 
+    /**
+      * Generic method for reassembling the given Node of a schema tree
+      * @param root
+      * @param ops
+      * @tparam T
+      * @return
+      */
     def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T]
 
+    /**
+      * Reassembles a Spark DataFrame
+      * @param df
+      * @return
+      */
     def reassemble(df:DataFrame) : DataFrame = {
         val tree = ColumnTree.ofSchema(df.schema)
         val newTree = reassemble(tree)
@@ -107,8 +121,14 @@ sealed abstract class Assembler {
         df.select(columns:_*)
     }
 
+    /**
+      * Reassembles a Flowman schema (given as a sequence of fields)
+      * @param fields
+      * @return
+      */
     def reassemble(fields:Seq[Field]) : Seq[Field] = ???
 }
+
 
 class ColumnAssembler private[transforms] (path:Path, keep:Seq[Path], drop:Seq[Path]) extends Assembler {
     override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
@@ -116,7 +136,7 @@ class ColumnAssembler private[transforms] (path:Path, keep:Seq[Path], drop:Seq[P
         if(keep.nonEmpty)
             child.map(_.keep(keep).drop(drop)).getOrElse(Node.empty[T])
         else
-            root.drop(drop)
+            child.map(_.drop(drop)).getOrElse(Node.empty[T])
     }
 }
 
@@ -131,27 +151,5 @@ class StructAssembler private[transforms] (columns:Seq[(Option[String],Assembler
             }
         }
         StructNode("", children)
-    }
-}
-
-
-object lala {
-    def testAssembler = {
-        Assembler.builder()
-            .nest("clever_name")(
-                _.path("stupidName")
-                    .drop("secret.field")
-            )
-            .columns(
-                _.path("")
-                    .keep(Seq("lala", "lolo"))
-                    .drop(Seq("embedded.structure.secret"))
-                    .drop(Seq("embedded.old_structure"))
-            )
-            .assemble("sub_structure")(
-                _.columns(
-                    _.path("embedded.old_structure")
-                )
-            )
     }
 }

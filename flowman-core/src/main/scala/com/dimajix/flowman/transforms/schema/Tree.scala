@@ -26,6 +26,11 @@ object Path {
 case class Path(segments:Seq[String])
 
 
+/**
+  * Interface class required for recreating a native value (like a Spark schema) from an abstract tree
+  * representation
+  * @tparam T
+  */
 trait NodeOps[T] {
     def empty : T
 
@@ -47,8 +52,12 @@ object Node {
     def empty[T](implicit ops:NodeOps[T]) : Node[T] = EmptyNode[T]()
 }
 
-
-abstract class Node[T] {
+/**
+  * Base class for representing a schema as a tree with associated typical tree operations to support
+  * reassembling a schema
+  * @tparam T
+  */
+sealed abstract class Node[T] {
     /**
       * The (non-fully-qualified) name of this node
       * @return

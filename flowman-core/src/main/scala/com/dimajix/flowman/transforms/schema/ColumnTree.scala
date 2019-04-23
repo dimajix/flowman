@@ -66,7 +66,8 @@ object ColumnTree {
         def processField(prefix:String, field: StructField) : Node[Column] = {
             val node = field.dataType match {
                 case st:StructType => processStruct(prefix, field.name, st)
-                case at:ArrayType => processArray(prefix, field.name, at)
+                // Arrays are not supported as dedicated nodes
+                //case at:ArrayType => processArray(prefix, field.name, at)
                 case _:DataType => processLeaf(prefix, field.name)
             }
 

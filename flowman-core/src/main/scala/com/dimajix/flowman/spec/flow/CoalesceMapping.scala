@@ -39,6 +39,9 @@ class CoalesceMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+        require(executor != null)
+        require(input != null)
+
         implicit val context = executor.context
         val df = input(this.input)
         val parts = partitions

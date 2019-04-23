@@ -28,7 +28,7 @@ import com.dimajix.flowman.LocalSparkSession
 
 
 class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
-    val inputJson =
+    private val inputJson =
         """
           |{
           |  "stupidName": {
@@ -186,6 +186,56 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
             )), false)
+        ))
+
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+    }
+
+//    it should "support renaming a column via assemble" in {
+//        val spark = this.spark
+//        import spark.implicits._
+//
+//        val asm = Assembler.builder()
+//            .assemble("new_name")(
+//                _.columns(
+//                    _.path("embedded.old_structure.value")
+//                )
+//            )
+//            .build()
+//
+//        val inputRecords = Seq(inputJson.replace("\n",""))
+//        val inputDs = spark.createDataset(inputRecords)
+//        val inputDf = spark.read.json(inputDs)
+//
+//        val outputDf = asm.reassemble(inputDf)
+//
+//        val expectedSchema = StructType(Seq(
+//            StructField("value", ArrayType(LongType), false)
+//        ))
+//
+//        outputDf.count should be (1)
+//        outputDf.schema should be (expectedSchema)
+//    }
+
+    it should "support renaming a column via nest" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val asm = Assembler.builder()
+            .nest("new_name")(
+                _.path("embedded.old_structure.value")
+            )
+            .build()
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq(
+            StructField("new_name", ArrayType(LongType), true)
         ))
 
         outputDf.count should be (1)

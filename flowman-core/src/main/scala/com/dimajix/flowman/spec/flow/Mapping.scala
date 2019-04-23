@@ -48,6 +48,7 @@ object Mapping extends TypeRegistry[Mapping] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
+    new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMapping]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMapping]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
@@ -66,7 +67,6 @@ object Mapping extends TypeRegistry[Mapping] {
     new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMapping]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMapping]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMapping]),
-    new JsonSubTypes.Type(name = "restructure", value = classOf[RestructureMapping]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMapping]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),

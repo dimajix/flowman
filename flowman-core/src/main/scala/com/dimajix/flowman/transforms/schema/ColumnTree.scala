@@ -40,8 +40,13 @@ class ColumnNodeOps extends NodeOps[Column] {
 
     override def struct_pruned(name:String, children:Seq[Column], nullable:Boolean) : Column = {
         if (nullable) {
-            val notAllNull = children.foldLeft(functions.lit(false))((tf, col) => tf || col.isNotNull)
-            withName(name, functions.when(notAllNull, functions.struct(children: _*)))
+            if (children.isEmpty) {
+                col(null)
+            }
+            else {
+                val notAllNull = children.map(_.isNotNull).reduce(_ || _)
+                withName(name, functions.when(notAllNull, functions.struct(children: _*)))
+            }
         }
         else {
             withName(name, functions.struct(children: _*))

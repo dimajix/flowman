@@ -54,6 +54,7 @@ object Mapping extends TypeRegistry[Mapping] {
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMapping]),
+    new JsonSubTypes.Type(name = "drop", value = classOf[DropMapping]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMapping]),

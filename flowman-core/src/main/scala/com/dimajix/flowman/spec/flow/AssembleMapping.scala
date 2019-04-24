@@ -255,15 +255,18 @@ class AssembleMapping extends BaseMapping {
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param deps
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, deps: Map[MappingIdentifier, DataFrame]): DataFrame = {
         require(executor != null)
-        require(input != null)
+        require(deps != null)
 
         implicit val context = executor.context
-        val df = input(this.input)
+        val input = this.input
+        logger.info(s"Reassembling input mapping '$input'")
+
+        val df = deps(input)
         val asm = assembler
         asm.reassemble(df)
     }
@@ -271,15 +274,15 @@ class AssembleMapping extends BaseMapping {
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param context
-      * @param input
+      * @param deps
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(context:Context, deps:Map[MappingIdentifier,StructType]) : StructType = {
         require(context != null)
-        require(input != null)
+        require(deps != null)
 
         implicit val icontext = context
-        val schema = input(this.input)
+        val schema = deps(this.input)
         val asm = assembler
         asm.reassemble(schema)
     }

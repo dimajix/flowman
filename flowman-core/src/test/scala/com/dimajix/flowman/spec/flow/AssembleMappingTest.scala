@@ -29,7 +29,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.flow.AssembleMapping.ColumnsEntry
+import com.dimajix.flowman.spec.flow.AssembleMapping.AppendEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.StructEntry
@@ -69,7 +69,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
               |    input: some_mapping
               |    columns:
               |      - # Add several top level columns
-              |        kind: columns
+              |        kind: append
               |        keep:
               |         - lala
               |         - lolo
@@ -126,10 +126,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             "input_df",
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
-                ColumnsEntry("", Seq("lala", "lolo"), Seq()),
-                ColumnsEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
+                AppendEntry("", Seq("lala", "lolo"), Seq()),
+                AppendEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
                 StructEntry("sub_structure", Seq(
-                    ColumnsEntry("embedded.old_structure", Seq(), Seq())
+                    AppendEntry("embedded.old_structure", Seq(), Seq())
                 )),
                 LiftEntry("stupidName", Seq("secret.field"))
             )
@@ -174,10 +174,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             "input_df",
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
-                ColumnsEntry("", Seq("lala", "lolo"), Seq()),
-                ColumnsEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
+                AppendEntry("", Seq("lala", "lolo"), Seq()),
+                AppendEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
                 StructEntry("sub_structure", Seq(
-                    ColumnsEntry("embedded.old_structure", Seq(), Seq())
+                    AppendEntry("embedded.old_structure", Seq(), Seq())
                 )),
                 LiftEntry("stupidName", Seq("secret.field"))
             )

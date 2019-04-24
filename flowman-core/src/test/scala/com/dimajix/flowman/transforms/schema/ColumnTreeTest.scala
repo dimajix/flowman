@@ -17,7 +17,9 @@
 package com.dimajix.flowman.transforms.schema
 
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.explode
 import org.apache.spark.sql.functions.struct
+import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -36,7 +38,7 @@ class ColumnTreeTest extends FlatSpec with Matchers {
             StructField("COL2", StructType(
                 Seq(
                     StructField("nested1", StringType),
-                    StructField("nested3", FloatType),
+                    StructField("nested3", ArrayType(FloatType)),
                     StructField("nested4", StructType(
                         Seq(
                             StructField("nested4_1", StringType),
@@ -170,6 +172,51 @@ class ColumnTreeTest extends FlatSpec with Matchers {
             ).as("COL2"),
             col("col3") as "col3"
         )
+
+        // This doesn't work:
+        //      columns should be (expected)
+        // therefore we compare string representation
+        columns.toString() should be (expected.toString())
+    }
+
+    it should "support explode on simple arrays via NodeOps" in {
+        val inputSchema = StructType(Seq(
+            StructField("COL2", StructType(
+                Seq(
+                    StructField("nested", ArrayType(StringType))
+                )
+            ))
+        ))
+        val root = ColumnTree.ofSchema(inputSchema)
+        val child = root.find(Path("COL2.nested"))
+
+        val columns = columnNodeOps.explode("exploded", child.get.mkValue())
+
+        val expected = explode(col("COL2.nested") as "nested") as "exploded"
+
+        // This doesn't work:
+        //      columns should be (expected)
+        // therefore we compare string representation
+        columns.toString() should be (expected.toString())
+    }
+
+    it should "support explode on structured arrays via NodeOps" in {
+        val inputSchema = StructType(Seq(
+            StructField("COL2", StructType(
+                Seq(
+                    StructField("nested", ArrayType(StructType(Seq(
+                        StructField("int", IntegerType),
+                        StructField("str", StringType)
+                    ))))
+                )
+            ))
+        ))
+        val root = ColumnTree.ofSchema(inputSchema)
+        val child = root.find(Path("COL2.nested"))
+
+        val columns = columnNodeOps.explode("exploded", child.get.mkValue())
+
+        val expected = explode(col("COL2.nested") as "nested") as "exploded"
 
         // This doesn't work:
         //      columns should be (expected)

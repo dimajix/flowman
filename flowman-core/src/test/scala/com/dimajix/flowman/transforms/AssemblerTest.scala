@@ -48,7 +48,17 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
           |    },
           |    "old_structure": {
           |      "value": [123, 456]
-          |    }
+          |    },
+          |    "struct_array": [
+          |       {
+          |         "key": "k2",
+          |         "value": 123
+          |       },
+          |       {
+          |         "key": "k1",
+          |         "value": 456
+          |       }
+          |    ]
           |  }
           |}""".stripMargin
 
@@ -91,6 +101,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
                 )), false)
             )), false),
             StructField("embedded", StructType(Seq(
+                StructField("struct_array", ArrayType(
+                    StructType(Seq(
+                        StructField("key", StringType),
+                        StructField("value", LongType)
+                    ))
+                ), true),
                 StructField("structure", StructType(Seq(
                     StructField("public", StringType)
                 )), false)
@@ -125,6 +141,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val expectedSchema = StructType(Seq(
             StructField("embedded", StructType(Seq(
+                StructField("struct_array", ArrayType(
+                    StructType(Seq(
+                        StructField("key", StringType),
+                        StructField("value", LongType)
+                    ))
+                ), true),
                 StructField("structure", StructType(Seq(
                     StructField("public", StringType)
                 )), false)
@@ -264,6 +286,79 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+    }
+
+    it should "ignore non-existing paths and structs" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val asm = Assembler.builder()
+            .nest("new_name")(
+                _.path("embedded.no_such_field")
+            )
+            .build()
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq())
+
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+    }
+
+    it should "support explode on simple arrays" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val asm = Assembler.builder()
+            .explode(
+                _.path("embedded.old_structure.value")
+            )
+            .build()
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq(
+            StructField("value", LongType)
+        ))
+
+        outputDf.count should be (2)
+        outputDf.schema should be (expectedSchema)
+    }
+
+    it should "support explode on complex arrays" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val asm = Assembler.builder()
+            .explode(
+                _.path("embedded.struct_array")
+            )
+            .build()
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq(
+            StructField("struct_array", StructType(Seq(
+                StructField("key", StringType),
+                StructField("value", LongType)
+            )), true)
+        ))
+
+        outputDf.count should be (2)
         outputDf.schema should be (expectedSchema)
     }
 }

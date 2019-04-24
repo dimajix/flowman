@@ -44,6 +44,10 @@ class ColumnNodeOps extends NodeOps[Column] {
 
     override def map(name:String, keyType:Column, valueType:Column) : Column = ???
 
+    override def explode(name: String, array: Column): Column = {
+        withName(name, functions.explode(array))
+    }
+
     private def withName(name:String, value:Column) : Column = {
         if (name.nonEmpty)
             value.as(name)
@@ -70,8 +74,7 @@ object ColumnTree {
         def processField(prefix:String, field: StructField) : Node[Column] = {
             val node = field.dataType match {
                 case st:StructType => processStruct(prefix, field.name, st)
-                // Arrays are not supported as dedicated nodes
-                //case at:ArrayType => processArray(prefix, field.name, at)
+                case at:ArrayType => processArray(prefix, field.name, at)
                 case _:DataType => processLeaf(prefix, field.name)
             }
 
@@ -91,16 +94,16 @@ object ColumnTree {
         def processStruct(prefix:String, name:String, st:StructType) : StructNode[Column] = {
             val fqName = fq(prefix, name)
             val children = st.fields.map(field => processField(fqName, field))
-            StructNode(name, children)
+            StructNode(name, None, children)
         }
         def processArray(prefix:String, name:String, at:ArrayType) : ArrayNode[Column] = {
             val fqName = fq(prefix, name)
             val elem = at.elementType match {
-                case st:StructType => processStruct(fqName, "element", st)
-                case at:ArrayType => processArray(fqName, "element", at)
-                case _:DataType => processLeaf(fqName, "element")
+                case st:StructType => processStruct(fqName, "", st)
+                case at:ArrayType => processArray(fqName, "", at)
+                case _:DataType => processLeaf(fqName, "")
             }
-            ArrayNode(name, elem)
+            ArrayNode(name, Some(col(fqName)), elem)
         }
         def processLeaf(prefix:String, name:String) : LeafNode[Column] = {
             val fqName = fq(prefix, name)

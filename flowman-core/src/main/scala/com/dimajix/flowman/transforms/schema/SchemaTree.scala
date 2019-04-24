@@ -85,6 +85,13 @@ class SchemaNodeOps extends NodeOps[Field] {
     override def map(name:String, keyType:Field, valueType:Field) : Field = {
         Field(name, MapType(keyType.ftype, valueType.ftype))
     }
+
+    override def explode(name: String, array: Field): Field = {
+        array.ftype match {
+            case at:ArrayType => Field(name, at.elementType, at.containsNull || array.nullable, array.description)
+            case _ => array
+        }
+    }
 }
 
 
@@ -116,7 +123,7 @@ object SchemaTree {
         }
         def processStruct(name:String, st:StructType) : StructNode[Field] = {
             val children = st.fields.map(field => processField(field))
-            StructNode(name, children)
+            StructNode(name, None, children)
         }
         def processArray(name:String, at:ArrayType) : ArrayNode[Field] = {
             val elem = at.elementType match {
@@ -124,7 +131,7 @@ object SchemaTree {
                 case at:ArrayType => processArray("element", at)
                 case f:FieldType => processLeaf(Field("element", f))
             }
-            ArrayNode(name, elem)
+            ArrayNode(name, None, elem)
         }
         def processLeaf(field:Field) : LeafNode[Field] = {
             LeafNode(field.name, field)

@@ -39,8 +39,13 @@ class ColumnNodeOps extends NodeOps[Column] {
     }
 
     override def struct_pruned(name:String, children:Seq[Column], nullable:Boolean) : Column = {
-        val notAllNull = children.foldLeft(functions.lit(false))((tf, col) => tf || col.isNotNull)
-        withName(name, functions.when(notAllNull, functions.struct(children: _*)))
+        if (nullable) {
+            val notAllNull = children.foldLeft(functions.lit(false))((tf, col) => tf || col.isNotNull)
+            withName(name, functions.when(notAllNull, functions.struct(children: _*)))
+        }
+        else {
+            withName(name, functions.struct(children: _*))
+        }
     }
 
     override def array(name:String, element:Column, nullable:Boolean) : Column = ???
@@ -113,6 +118,6 @@ object ColumnTree {
             LeafNode(name, col(fqName))
         }
 
-        processStruct("", "", schema)
+        processStruct("", "", schema).withNullable(false)
     }
 }

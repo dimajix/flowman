@@ -53,8 +53,9 @@ class SchemaTreeTest extends FlatSpec with Matchers {
             )))
         ))
         val root = SchemaTree.ofSchema(inputSchema)
-        val columns = root.mkValue()
+        root.nullable should be (false)
 
+        val columns = root.mkValue()
         columns.ftype should be (inputSchema)
     }
 

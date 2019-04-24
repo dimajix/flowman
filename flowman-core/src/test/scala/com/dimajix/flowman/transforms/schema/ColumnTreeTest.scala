@@ -50,8 +50,9 @@ class ColumnTreeTest extends FlatSpec with Matchers {
             StructField("col3", IntegerType, false)
         ))
         val root = ColumnTree.ofSchema(inputSchema)
-        val columns = root.mkValue()
+        root.nullable should be (false)
 
+        val columns = root.mkValue()
         val expected = struct(
             col("col1") as "col1",
             struct(

@@ -129,6 +129,6 @@ object SchemaTree {
             LeafNode(field.name, field)
         }
 
-        processStruct("", schema)
+        processStruct("", schema).withNullable(false)
     }
 }

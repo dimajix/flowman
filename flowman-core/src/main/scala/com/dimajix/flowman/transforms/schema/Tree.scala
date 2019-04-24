@@ -23,7 +23,14 @@ object Path {
     def apply() : Path = Path(Seq())
     def apply(p:String) : Path = Path(p.split('.'))
 }
-case class Path(segments:Seq[String])
+case class Path(segments:Seq[String]) {
+    override def toString: String = {
+        if (segments.isEmpty)
+            "."
+        else
+            segments.mkString(".")
+    }
+}
 
 
 /**
@@ -36,21 +43,19 @@ trait NodeOps[T] {
 
     def metadata(value:T, meta:Map[String,String]) : T
 
-    def nullable(value:T, n:Boolean) : T
+    def leaf(name:String, value:T, nullable:Boolean) : T
 
-    def leaf(name:String, value:T) : T
+    def struct(name:String, children:Seq[T], nullable:Boolean) : T
 
-    def struct(name:String, children:Seq[T]) : T
+    def struct_pruned(name:String, children:Seq[T], nullable:Boolean) : T
 
-    def array(name:String, element:T) : T
+    def array(name:String, element:T, nullable:Boolean) : T
 
-    def map(name:String, keyType:T, valueType:T) : T
+    def map(name:String, keyType:T, valueType:T, nullable:Boolean) : T
+
+    def explode(name:String, array:T) : T
 }
 
-
-object Node {
-    def empty[T](implicit ops:NodeOps[T]) : Node[T] = EmptyNode[T]()
-}
 
 /**
   * Base class for representing a schema as a tree with associated typical tree operations to support
@@ -110,6 +115,13 @@ sealed abstract class Node[T] {
     def mkValue()(implicit ops:NodeOps[T]) : T
 
     /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    def withValue(newValue:T) : Node[T]
+
+    /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
@@ -149,61 +161,8 @@ sealed abstract class Node[T] {
     def keep(paths:Seq[Path]) : Node[T]
 
     protected def applyProperties(value:T)(implicit ops: NodeOps[T]) : T = {
-        ops.metadata(ops.nullable(value, nullable), metadata)
+        ops.metadata(value, metadata)
     }
-}
-
-
-case class EmptyNode[T]() extends Node[T] {
-    override def name: String = ""
-
-    override def children : Seq[Node[T]] = Seq()
-
-    /**
-      * Returns true if the node contains a child with the specified name
-      * @param node
-      * @return
-      */
-    override def contains(node:String) : Boolean = false
-
-    /**
-      * Retrieves a named child node of this tree (or None if no child was found)
-      * @param node
-      * @return
-      */
-    override def get(node:String) : Option[Node[T]] = None
-
-    /**
-      * Walks down the specified path od this tree and returns the corresponding node
-      * @param node
-      * @return
-      */
-    override def find(node:Path): Option[Node[T]] = None
-
-    override def nullable : Boolean = false
-
-    override def metadata: Map[String,String] = Map()
-
-    /**
-      * Creates an appropriate value associated with this node
-      * @return
-      */
-    override def mkValue()(implicit ops:NodeOps[T]) : T = ops.empty
-
-    /**
-      * Creates a copy of the structure with a new name of the current element
-      * @param newName
-      * @return
-      */
-    override def withName(newName:String) : Node[T] = this
-
-    override def withNullable(n:Boolean) : Node[T] = this
-
-    override def withMetadata(meta:Map[String,String]) : Node[T] = this
-
-    override def drop(path:Path) : EmptyNode[T] = this
-
-    override def keep(paths:Seq[Path]) : EmptyNode[T] = this
 }
 
 
@@ -248,8 +207,15 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        ops.leaf(name, applyProperties(value))
+        ops.leaf(name, applyProperties(value), nullable)
     }
+
+    /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : LeafNode[T] = this.copy(value=newValue)
 
     /**
       * Creates a copy of the structure with a new name of the current element
@@ -278,7 +244,7 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
 }
 
 
-case class StructNode[T](name:String, children:Seq[Node[T]], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
+case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
     private val nameToChild = children.map(node => (node.name.toLowerCase(Locale.ROOT), node)).toMap
 
     /**
@@ -327,9 +293,25 @@ case class StructNode[T](name:String, children:Seq[Node[T]], nullable:Boolean=tr
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = ops.struct(name, children.map(_.mkValue()))
+        val value = this.value
+            .map(v => ops.leaf(name, v, nullable))
+            .getOrElse {
+                if (children.forall(_.nullable)) {
+                    ops.struct_pruned(name, children.map(_.mkValue()), nullable)
+                }
+                else {
+                    ops.struct(name, children.map(_.mkValue()), nullable)
+                }
+            }
         applyProperties(value)
     }
+
+    /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : StructNode[T] = this.copy(value=Some(newValue))
 
     /**
       * Creates a copy of the structure with a new name of the current element
@@ -408,7 +390,7 @@ case class StructNode[T](name:String, children:Seq[Node[T]], nullable:Boolean=tr
     private def replaceChildren(newChildren:Seq[Node[T]]) : StructNode[T] = {
         // Check if something has changed
         if (newChildren.length != children.length || children.zip(newChildren).exists(xy => !(xy._1 eq xy._2))) {
-            StructNode(name, newChildren)
+            copy(value=None, children=newChildren)
         }
         else {
             this
@@ -417,7 +399,7 @@ case class StructNode[T](name:String, children:Seq[Node[T]], nullable:Boolean=tr
 }
 
 
-case class ArrayNode[T](name:String, elements:Node[T], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
+case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
     override def children : Seq[Node[T]] = elements.children
 
     /**
@@ -461,9 +443,18 @@ case class ArrayNode[T](name:String, elements:Node[T], nullable:Boolean=true, me
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = ops.array(name, elements.mkValue())
+        val value = this.value
+            .map(v => ops.leaf(name, v, nullable))
+            .getOrElse(ops.array(name, elements.mkValue(), nullable))
         applyProperties(value)
     }
+
+    /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : ArrayNode[T] = this.copy(value=Some(newValue))
 
     /**
       * Creates a copy of the structure with a new name of the current element
@@ -502,13 +493,13 @@ case class ArrayNode[T](name:String, elements:Node[T], nullable:Boolean=true, me
             this
         }
         else {
-            ArrayNode(name, newElements)
+            copy(value=None, elements=newElements)
         }
     }
 }
 
 
-case class MapNode[T](name:String, mapKey:Node[T], mapValue:Node[T], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
+case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Node[T], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
     override def children : Seq[Node[T]] = mapValue.children
 
     /**
@@ -552,9 +543,18 @@ case class MapNode[T](name:String, mapKey:Node[T], mapValue:Node[T], nullable:Bo
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = ops.map(name, mapKey.mkValue(), mapValue.mkValue())
+        val value = this.value
+            .map(v => ops.leaf(name, v, nullable))
+            .getOrElse(ops.map(name, mapKey.mkValue(), mapValue.mkValue(), nullable))
         applyProperties(value)
     }
+
+    /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : MapNode[T] = this.copy(value=Some(newValue))
 
     /**
       * Creates a copy of the structure with a new name of the current element
@@ -593,7 +593,7 @@ case class MapNode[T](name:String, mapKey:Node[T], mapValue:Node[T], nullable:Bo
             this
         }
         else {
-            MapNode(name, newKey, newValue)
+            MapNode(name, None, newKey, newValue)
         }
     }
 }

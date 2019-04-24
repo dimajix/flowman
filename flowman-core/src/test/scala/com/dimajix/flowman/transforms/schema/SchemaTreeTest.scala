@@ -19,6 +19,7 @@ package com.dimajix.flowman.transforms.schema
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.IntegerType
@@ -27,15 +28,15 @@ import com.dimajix.flowman.types.StructType
 
 
 class SchemaTreeTest extends FlatSpec with Matchers {
-    "The SchemaTree" should "create the same schema via round-trip" in {
-        import com.dimajix.flowman.transforms.schema.SchemaTree.implicits._
+    import com.dimajix.flowman.transforms.schema.SchemaTree.implicits._
 
+    "The SchemaTree" should "create the same schema via round-trip" in {
         val inputSchema = StructType(Seq(
             Field("col1", StringType),
             Field("COL2", StructType(
                 Seq(
                     Field("nested1", StringType),
-                    Field("nested3", FloatType),
+                    Field("nested3", ArrayType(FloatType)),
                     Field("nested4", StructType(
                         Seq(
                             Field("nested4_1", StringType),
@@ -44,11 +45,62 @@ class SchemaTreeTest extends FlatSpec with Matchers {
                     ))
                 )
             )),
-            Field("col3", IntegerType)
+            Field("col3", ArrayType(StructType(
+                Seq(
+                    Field("nested1", StringType),
+                    Field("nested3", IntegerType)
+                )
+            )))
         ))
         val root = SchemaTree.ofSchema(inputSchema)
-        val columns = root.mkValue()
+        root.nullable should be (false)
 
+        val columns = root.mkValue()
         columns.ftype should be (inputSchema)
+    }
+
+    it should "support explode on simple arrays via NodeOps" in {
+        val inputSchema = StructType(Seq(
+            Field("COL2", StructType(
+                Seq(
+                    Field("array", IntegerType)
+                )
+            ))
+        ))
+        val root = SchemaTree.ofSchema(inputSchema)
+        val child = root.find(Path("COL2.array"))
+
+        val columns = schemaNodeOps.explode("exploded", child.get.mkValue())
+
+        val expected = Field("exploded", IntegerType)
+        columns should be (expected)
+    }
+
+    it should "support explode on structured arrays via NodeOps" in {
+        val inputSchema = StructType(Seq(
+            Field("COL2", StructType(
+                Seq(
+                    Field("array", ArrayType(StructType(
+                        Seq(
+                            Field("nested4_1", StringType),
+                            Field("nested4_2", FloatType)
+                        )
+                    )))
+                )
+            ))
+        ))
+        val root = SchemaTree.ofSchema(inputSchema)
+        val child = root.find(Path("COL2.array"))
+
+        val columns = schemaNodeOps.explode("exploded", child.get.mkValue())
+
+        val expected =
+                Field("exploded", StructType(
+                    Seq(
+                        Field("nested4_1", StringType),
+                        Field("nested4_2", FloatType)
+                    )
+                ))
+        columns should be (expected)
     }
 }

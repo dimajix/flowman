@@ -30,11 +30,13 @@ import com.dimajix.flowman.types.StructType
 
 
 object AssembleMapping {
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl=classOf[ColumnsEntry], visible = false)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl=classOf[AppendEntry], visible = false)
     @JsonSubTypes(value = Array(
-        new JsonSubTypes.Type(name = "columns", value = classOf[ColumnsEntry]),
+        new JsonSubTypes.Type(name = "append", value = classOf[AppendEntry]),
+        new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeEntry]),
         new JsonSubTypes.Type(name = "lift", value = classOf[LiftEntry]),
         new JsonSubTypes.Type(name = "nest", value = classOf[NestEntry]),
+        new JsonSubTypes.Type(name = "rename", value = classOf[RenameEntry]),
         new JsonSubTypes.Type(name = "struct", value = classOf[StructEntry])
     ))
     abstract class Entry {
@@ -42,17 +44,17 @@ object AssembleMapping {
     }
 
 
-    object ColumnsEntry {
-        def apply(path:String, keep:Seq[String], drop:Seq[String]) : ColumnsEntry = {
-            val result = new ColumnsEntry
+    object AppendEntry {
+        def apply(path:String, keep:Seq[String], drop:Seq[String]) : AppendEntry = {
+            val result = new AppendEntry
             result._path = path
             result._keep = keep
             result._drop = drop
             result
         }
     }
-    class ColumnsEntry extends Entry {
-        @JsonProperty(value = "path", required = false) private var _path:String = _
+    class AppendEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var _path:String = ""
         @JsonProperty(value = "keep", required = false) private var _keep:Seq[String] = Seq()
         @JsonProperty(value = "drop", required = false) private var _drop:Seq[String] = Seq()
 
@@ -66,7 +68,7 @@ object AssembleMapping {
             val drop = this.drop
 
             builder.columns(
-                _.path(if (path == null) "" else path)
+                _.path(path)
                  .keep(keep)
                  .drop(drop)
             )
@@ -82,7 +84,7 @@ object AssembleMapping {
         }
     }
     class LiftEntry extends Entry {
-        @JsonProperty(value = "path", required = false) private var _path:String = _
+        @JsonProperty(value = "path", required = false) private var _path:String = ""
         @JsonProperty(value = "columns", required = false) private var _columns:Seq[String] = Seq()
 
         def path(implicit context: Context) : String = context.evaluate(_path)
@@ -93,8 +95,34 @@ object AssembleMapping {
             val columns = this.columns
 
             builder.lift(
-                _.path(if (path == null) "" else path)
+                _.path(path)
                     .columns(columns)
+            )
+        }
+    }
+
+    object RenameEntry {
+        def apply(path:String, columns:Map[String,String]) : RenameEntry = {
+            val result = new RenameEntry
+            result._path = path
+            result._columns = columns
+            result
+        }
+    }
+    class RenameEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var _path:String = ""
+        @JsonProperty(value = "columns", required = false) private var _columns:Map[String,String] = Map()
+
+        def path(implicit context: Context) : String = context.evaluate(_path)
+        def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
+
+        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
+            val path = this.path
+            val columns = this.columns
+
+            builder.rename(
+                _.path(path)
+                    .columns(columns.toSeq)
             )
         }
     }
@@ -108,7 +136,7 @@ object AssembleMapping {
         }
     }
     class StructEntry extends Entry {
-        @JsonProperty(value = "name", required = false) private var _name:String = _
+        @JsonProperty(value = "name", required = true) private var _name:String = ""
         @JsonProperty(value = "columns", required = false) private var _columns:Seq[Entry] = Seq()
 
         def name(implicit context: Context) : String = context.evaluate(_name)
@@ -133,8 +161,8 @@ object AssembleMapping {
         }
     }
     class NestEntry extends Entry {
-        @JsonProperty(value = "name", required = false) private var _name:String = _
-        @JsonProperty(value = "path", required = false) private var _path:String = _
+        @JsonProperty(value = "name", required = true) private var _name:String = ""
+        @JsonProperty(value = "path", required = false) private var _path:String = ""
         @JsonProperty(value = "keep", required = false) private var _keep:Seq[String] = Seq()
         @JsonProperty(value = "drop", required = false) private var _drop:Seq[String] = Seq()
 
@@ -149,10 +177,47 @@ object AssembleMapping {
             val drop = this.drop
 
             builder.nest(name)(
-                _.path(if (path == null) "" else path)
+                _.path(path)
                     .keep(keep)
                     .drop(drop)
             )
+        }
+    }
+
+    object ExplodeEntry {
+        def apply(path:String) : ExplodeEntry = {
+            val result = new ExplodeEntry
+            result._path = path
+            result
+        }
+        def apply(name:String, path:String) : ExplodeEntry = {
+            val result = new ExplodeEntry
+            result._name = name
+            result._path = path
+            result
+        }
+    }
+    class ExplodeEntry extends Entry {
+        @JsonProperty(value = "name", required = false) private var _name:String = ""
+        @JsonProperty(value = "path", required = true) private var _path:String = ""
+
+        def name(implicit context: Context) : String = context.evaluate(_name)
+        def path(implicit context: Context) : String = context.evaluate(_path)
+
+        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
+            val path = this.path
+            val name = this.name
+
+            if (name.nonEmpty) {
+                builder.explode(name)(
+                    _.path(path)
+                )
+            }
+            else {
+                builder.explode(
+                    _.path(path)
+                )
+            }
         }
     }
 

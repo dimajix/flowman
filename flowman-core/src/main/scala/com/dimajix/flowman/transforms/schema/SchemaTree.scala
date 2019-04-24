@@ -45,19 +45,7 @@ class SchemaNodeOps extends NodeOps[Field] {
         )
     }
 
-    override def nullable(value:Field, n:Boolean) : Field = {
-        Field(
-            value.name,
-            value.ftype,
-            n,
-            value.description,
-            value.default,
-            if (value.size > 0) Some(value.size) else None,
-            value.format
-        )
-    }
-
-    override def leaf(name:String, value:Field) : Field = {
+    override def leaf(name:String, value:Field, nullable:Boolean) : Field = {
         if (name.isEmpty) {
             value
         }
@@ -65,7 +53,7 @@ class SchemaNodeOps extends NodeOps[Field] {
             Field(
                 name,
                 value.ftype,
-                value.nullable,
+                nullable,
                 value.description,
                 value.default,
                 if (value.size > 0) Some(value.size) else None,
@@ -74,16 +62,27 @@ class SchemaNodeOps extends NodeOps[Field] {
         }
     }
 
-    override def struct(name:String, children:Seq[Field]) : Field = {
-        Field(name, StructType(children))
+    override def struct(name:String, children:Seq[Field], nullable:Boolean) : Field = {
+        Field(name, StructType(children), nullable)
     }
 
-    override def array(name:String, element:Field) : Field = {
-        Field(name, ArrayType(element.ftype))
+    override def struct_pruned(name:String, children:Seq[Field], nullable:Boolean) : Field = {
+        Field(name, StructType(children), nullable)
     }
 
-    override def map(name:String, keyType:Field, valueType:Field) : Field = {
-        Field(name, MapType(keyType.ftype, valueType.ftype))
+    override def array(name:String, element:Field, nullable:Boolean) : Field = {
+        Field(name, ArrayType(element.ftype), nullable)
+    }
+
+    override def map(name:String, keyType:Field, valueType:Field, nullable:Boolean) : Field = {
+        Field(name, MapType(keyType.ftype, valueType.ftype), nullable)
+    }
+
+    override def explode(name: String, array: Field): Field = {
+        array.ftype match {
+            case at:ArrayType => Field(name, at.elementType, at.containsNull || array.nullable, array.description)
+            case _ => array.copy(name=name)
+        }
     }
 }
 
@@ -116,7 +115,7 @@ object SchemaTree {
         }
         def processStruct(name:String, st:StructType) : StructNode[Field] = {
             val children = st.fields.map(field => processField(field))
-            StructNode(name, children)
+            StructNode(name, None, children)
         }
         def processArray(name:String, at:ArrayType) : ArrayNode[Field] = {
             val elem = at.elementType match {
@@ -124,12 +123,12 @@ object SchemaTree {
                 case at:ArrayType => processArray("element", at)
                 case f:FieldType => processLeaf(Field("element", f))
             }
-            ArrayNode(name, elem)
+            ArrayNode(name, None, elem)
         }
         def processLeaf(field:Field) : LeafNode[Field] = {
             LeafNode(field.name, field)
         }
 
-        processStruct("", schema)
+        processStruct("", schema).withNullable(false)
     }
 }

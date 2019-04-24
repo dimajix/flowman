@@ -27,11 +27,11 @@ object Field {
         val field = new Field()
         field._name = name
         field._type = ftype
-        field._nullable = nullable.toString
+        field._nullable = nullable
         field._description = description
         field._default = default
         field._format = format
-        field._size = size.map(_.toString).orNull
+        field._size = size
         field
     }
 
@@ -59,10 +59,10 @@ object Field {
 class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
-    @JsonProperty(value="nullable", required = true) private var _nullable: String = "true"
+    @JsonProperty(value="nullable", required = true) private var _nullable: Boolean = true
     @JsonProperty(value="description", required = false) private var _description: String = _
     @JsonProperty(value="default", required = false) private var _default: String = _
-    @JsonProperty(value="size", required = false) private var _size: String = _
+    @JsonProperty(value="size", required = false) private var _size: Option[Int] = None
     @JsonProperty(value="format", required = false) private var _format: String = _
 
     /**
@@ -81,7 +81,7 @@ class Field {
       * Returns true if the field is nullable
       * @return
       */
-    def nullable : Boolean = _nullable.toBoolean
+    def nullable : Boolean = _nullable
 
     /**
       * Returns an optional description. If there is no description, null will be returned
@@ -95,7 +95,7 @@ class Field {
       * size is specified, 0 is returned
       * @return
       */
-    def size : Int = Option(_size).map(_.trim).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
+    def size : Int = _size.getOrElse(0)
 
     /**
       * Returns an optional default value as a string. If no default value is specified, null is returned instead.
@@ -164,5 +164,15 @@ class Field {
     override def hashCode(): Int = {
         val state = Seq(_name, _type, _nullable, _description, _default, _size, _format)
         state.map(o => if (o != null) o.hashCode() else 0).foldLeft(0)((a, b) => 31 * a + b)
+    }
+
+    def copy(name:String=_name,
+             ftype:FieldType=_type,
+             nullable:Boolean=_nullable,
+             description:String=_description,
+             default:String=_default,
+             size:Option[Int]=_size,
+             format:String=_format) = {
+        Field(name, ftype, nullable, description, default, size, format)
     }
 }

@@ -40,6 +40,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.util.SchemaUtils
 
 
 object LatestMapping {
@@ -80,7 +81,9 @@ class LatestMapping extends BaseMapping {
         val df = tables(input)
 
         // Get appropriate function for extracting latest version
-        val latest = df.schema(versionColumn).dataType match {
+        val versionField = SchemaUtils.find(df.schema,versionColumn)
+                .getOrElse(throw new IllegalArgumentException(s"Key column $versionColumn not found in schema ${df.schema}"))
+        val latest = versionField.dataType match {
             case ShortType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Short.MinValue else row.getShort(0)).getStruct(1)
             case IntegerType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Int.MinValue else row.getInt(0)).getStruct(1)
             case LongType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getLong(0)).getStruct(1)
@@ -96,16 +99,18 @@ class LatestMapping extends BaseMapping {
         val latest_udf = udf(latest, df.schema)
 
         // Create projection expression
-        val cols = keyColumns :+
+        val cols = Seq(
+            struct(keyColumns:_*) as "key",
             struct(
                 // Extract version
                 col(versionColumn) as "version",
                 // Extract full record
                 struct(col("*")) as "record"
-            ).as("payload")
+            ) as "payload"
+        )
 
         df.select(cols:_*)
-            .groupBy(keyColumns:_*)
+            .groupBy(col("key"))
             .agg(
                 collect_list(col("payload")) as "records"
             )

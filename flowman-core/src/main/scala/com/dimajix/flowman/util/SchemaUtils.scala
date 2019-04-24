@@ -78,6 +78,35 @@ object SchemaUtils {
             df
     }
 
+    /**
+      * Finds a specific field in a schema
+      * @param struct
+      * @param name
+      * @return
+      */
+    def find(struct:StructType, name:String) : Option[StructField] = {
+        def findField(field:StructField, head:String, tail:Seq[String]) : Option[StructField] = {
+            field.dataType match {
+                case st:StructType => findStruct(st, head, tail)
+                case at:ArrayType => findField(StructField("element", at.elementType), head, tail)
+                case _ => throw new NoSuchElementException(s"Cannot descend field ${field.name} - it is neither struct not array")
+            }
+        }
+        def findStruct(struct:StructType, head:String, tail:Seq[String]) : Option[StructField] = {
+            struct.fields
+                .find(_.name.toLowerCase(Locale.ROOT) == head)
+                .flatMap { field =>
+                    if (tail.isEmpty)
+                        Some(field)
+                    else
+                        findField(field, tail.head, tail.tail)
+                }
+        }
+
+        val segments = name.toLowerCase(Locale.ROOT).split('.')
+        findStruct(struct, segments.head, segments.tail)
+    }
+
 
     /**
       * Removes all meta data from a Spark schema. Useful for comparing results in unit tests

@@ -81,6 +81,46 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
     }
 
+    it should "remove entries with duplicate keys" in {
+        val mapping = UpdateMapping("prev", "updates", Seq("_1"), "op != 'DELETE'")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val prev = executor.spark.createDataFrame(Seq(
+            ("id-123", "subid-0", "will_remain_1", "v0"),
+            ("id-123", "subid-1", "will_remain_2", "v0"),
+            ("id-124", "subid-0", "will_be_updated_1", "v0"),
+            ("id-124", "subid-1", "will_be_updated_2", "v0"),
+            ("id-124", "subid-2", "will_be_updated_3", "v0"),
+            ("id-125", "subid-0", "will_be_deleted_1", "v0"),
+            ("id-125", "subid-1", "will_be_deleted_2", "v0")
+        ))
+        val updates = executor.spark.createDataFrame(Seq(
+            ("id-124", "subid-0", "will_be_deleted", "", "DELETE"),
+            ("id-125", "subid-0", "will_be_updated", "v1", "UPDATE"),
+            ("id-125", "subid-1", "will_be_updated", "v1", "UPDATE"),
+            ("id-125", "subid-2", "will_be_updated", "v1", "UPDATE"),
+            ("id-125", "subid-3", "will_be_updated", "v1", "UPDATE"),
+            ("id-126", "subid-0", "will_be_added", "v1", "CREATE"),
+            ("id-126", "subid-1", "will_be_added", "v1", "CREATE")
+        )).withColumnRenamed("_5", "op")
+
+        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        val rows = result.orderBy("_1", "_2").collect().toSeq
+        rows should be (Seq(
+            Row("id-123", "subid-0", "will_remain_1", "v0"),
+            Row("id-123", "subid-1", "will_remain_2", "v0"),
+            Row("id-125", "subid-0", "will_be_updated", "v1"),
+            Row("id-125", "subid-1", "will_be_updated", "v1"),
+            Row("id-125", "subid-2", "will_be_updated", "v1"),
+            Row("id-125", "subid-3", "will_be_updated", "v1"),
+            Row("id-126", "subid-0", "will_be_added", "v1"),
+            Row("id-126", "subid-1", "will_be_added", "v1")
+        ))
+    }
+
     "An appropriate Dataflow" should "be readable from YML" in {
         val spec =
             """

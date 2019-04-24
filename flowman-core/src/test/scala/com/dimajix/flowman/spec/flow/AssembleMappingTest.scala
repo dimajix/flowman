@@ -30,6 +30,7 @@ import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.AssembleMapping.AppendEntry
+import com.dimajix.flowman.spec.flow.AssembleMapping.ExplodeEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.StructEntry
@@ -56,7 +57,17 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
           |    },
           |    "old_structure": {
           |      "value": [123, 456]
-          |    }
+          |    },
+          |    "struct_array": [
+          |       {
+          |         "key": "k2",
+          |         "value": 123
+          |       },
+          |       {
+          |         "key": "k1",
+          |         "value": 456
+          |       }
+          |    ]
           |  }
           |}""".stripMargin
 
@@ -110,6 +121,9 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
               |                path: embedded.structure
               |                drop: secret
               |
+              |      - kind: explode
+              |        name: array
+              |        path: embedded.struct_array
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
@@ -152,6 +166,12 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 )), false)
             )), false),
             StructField("embedded", StructType(Seq(
+                StructField("struct_array", ArrayType(
+                    StructType(Seq(
+                        StructField("key", StringType),
+                        StructField("value", LongType)
+                    ))
+                ), true),
                 StructField("structure", StructType(Seq(
                     StructField("public", StringType)
                 )), false)
@@ -198,6 +218,12 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 )), true)
             )), true),
             StructField("embedded", StructType(Seq(
+                StructField("struct_array", ArrayType(
+                    StructType(Seq(
+                        StructField("key", StringType),
+                        StructField("value", LongType)
+                    ))
+                ), true),
                 StructField("structure", StructType(Seq(
                     StructField("public", StringType)
                 )), true)
@@ -210,5 +236,137 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
+    }
+
+    it should "support explodes of complex types with rename" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val mapping = AssembleMapping(
+            "input_df",
+            Seq(
+                ExplodeEntry("array", "embedded.struct_array")
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val expectedSchema = StructType(Seq(
+            StructField("array",
+                StructType(Seq(
+                    StructField("key", StringType),
+                    StructField("value", LongType)
+                )
+            ), true)
+        ))
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
+
+        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        outputDf.schema should be (expectedSchema)
+        outputDf.count() should be (2)
+    }
+
+    it should "support explodes of complex types without rename" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val mapping = AssembleMapping(
+            "input_df",
+            Seq(
+                ExplodeEntry("embedded.struct_array")
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val expectedSchema = StructType(Seq(
+            StructField("struct_array",
+                StructType(Seq(
+                    StructField("key", StringType),
+                    StructField("value", LongType)
+                )
+                ), true)
+        ))
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
+
+        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        outputDf.schema should be (expectedSchema)
+        outputDf.count() should be (2)
+    }
+
+    it should "support explodes of simple types" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val mapping = AssembleMapping(
+            "input_df",
+            Seq(
+                ExplodeEntry("embedded.old_structure.value")
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val expectedSchema = StructType(Seq(
+            StructField("value", LongType)
+        ))
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
+
+        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        outputDf.schema should be (expectedSchema)
+        outputDf.count() should be (2)
+    }
+
+    it should "ignore explodes of non-existing paths" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val mapping = AssembleMapping(
+            "input_df",
+            Seq(
+                ExplodeEntry("no_such_path")
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val expectedSchema = StructType(Seq())
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
+
+        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        outputDf.schema should be (expectedSchema)
+        outputDf.count() should be (1)
     }
 }

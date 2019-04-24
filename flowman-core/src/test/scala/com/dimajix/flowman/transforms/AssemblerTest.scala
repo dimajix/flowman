@@ -388,4 +388,26 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.count should be (2)
         outputDf.schema should be (expectedSchema)
     }
+
+    it should "ignore explode with non-existing paths" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val asm = Assembler.builder()
+            .explode("array")(
+                _.path("embedded.no_such_path")
+            )
+            .build()
+
+        val inputRecords = Seq(inputJson.replace("\n",""))
+        val inputDs = spark.createDataset(inputRecords)
+        val inputDf = spark.read.json(inputDs)
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq())
+
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+    }
 }

@@ -35,7 +35,7 @@ object Assembler {
         def build() : Assembler
     }
 
-    abstract class RecusriveBuilder extends Builder {
+    abstract class RecursiveBuilder extends Builder {
         private val _children = mutable.ListBuffer[Builder]()
 
         protected def addChild(child:Builder) : Unit = {
@@ -102,7 +102,7 @@ object Assembler {
         }
     }
 
-    class StructBuilder(name:String) extends RecusriveBuilder {
+    class StructBuilder(name:String) extends RecursiveBuilder {
         def columns(spec:ColumnBuilder => Unit) : StructBuilder = {
             val builder = new ColumnBuilder()
             spec(builder)
@@ -127,6 +127,12 @@ object Assembler {
             addChild(builder)
             this
         }
+        def rename(spec:RenameBuilder => Unit) : StructBuilder = {
+            val builder = new RenameBuilder
+            spec(builder)
+            addChild(builder)
+            this
+        }
         def explode(name:String)(spec:ExplodeBuilder => Unit) : StructBuilder = {
             val builder = new ExplodeBuilder(name)
             spec(builder)
@@ -142,6 +148,28 @@ object Assembler {
 
         override def build(): Assembler = {
             new StructAssembler(name, children())
+        }
+    }
+
+    class RenameBuilder extends Builder {
+        private var _path = Path()
+        private val _columns = mutable.ListBuffer[(String,Path)]()
+
+        def path(p:String) : RenameBuilder = {
+            _path = Path(p)
+            this
+        }
+        def column(newName:String, oldName:String) : RenameBuilder = {
+            _columns += ((newName, Path(oldName)))
+            this
+        }
+        def columns(c:Seq[(String,String)]) : RenameBuilder = {
+            _columns ++= c.map(e => (e._1, Path(e._2)))
+            this
+        }
+
+        override def build(): Assembler = {
+            new RenameAssembler(_path, _columns)
         }
     }
 
@@ -229,12 +257,15 @@ class ColumnAssembler private[transforms] (path:Path, keep:Seq[Path], drop:Seq[P
   */
 class NestAssembler private[transforms] (name:String, path:Path, keep:Seq[Path], drop:Seq[Path]) extends Assembler {
     override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Seq[Node[T]] = {
-        val start = root.find(path)
-        val node = if(keep.nonEmpty)
-                start.map(_.keep(keep).drop(drop))
+        val node = root
+            .find(path)
+            .getOrElse(throw new IllegalArgumentException(s"Path $path not found in rename"))
+
+        val struct = if(keep.nonEmpty)
+                node.keep(keep).drop(drop)
             else
-                start.map(_.drop(drop))
-        node.map(_.withName(name)).toSeq
+                node.drop(drop)
+        Seq(struct.withName(name))
     }
 }
 
@@ -245,28 +276,49 @@ class NestAssembler private[transforms] (name:String, path:Path, keep:Seq[Path],
   */
 class LiftAssembler private[transforms] (path:Path, columns:Seq[Path]) extends Assembler {
     override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Seq[Node[T]] = {
-        val start = root.find(path)
-        columns.flatMap(p => start.flatMap(_.find(p)))
+        val node = root
+            .find(path)
+            .getOrElse(throw new IllegalArgumentException(s"Path $path not found in rename"))
+
+        columns.map(p => node.find(p).getOrElse(throw new IllegalArgumentException(s"Column $p not found in path $path in lift")))
+    }
+}
+
+/**
+  * This assembler will lift nested columns to the top level and returns a list of lifted columns
+  * @param path
+  * @param columns
+  */
+class RenameAssembler private[transforms] (path:Path, columns:Seq[(String,Path)]) extends Assembler {
+    override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Seq[Node[T]] = {
+        val node = root
+            .find(path)
+            .getOrElse(throw new IllegalArgumentException(s"Path $path not found in rename"))
+
+        columns.map { p =>
+            val child = node.find(p._2).getOrElse(throw new IllegalArgumentException(s"Column ${p._2} not found in path $path in rename"))
+            child.withName(p._1)
+        }
     }
 }
 
 /**
   * This Assembler will explode a single column
-  * @param array
+  * @param path
   */
-class ExplodeAssembler private[transforms] (name:String, array:Path) extends Assembler {
+class ExplodeAssembler private[transforms] (name:String, path:Path) extends Assembler {
     override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Seq[Node[T]] = {
-        val start = root.find(array)
-        val result = start.map { node =>
-            val finalName = if (name.nonEmpty) name else node.name
-            val elements = node match {
-                case an:ArrayNode[T] => an.elements
-                case n:Node[T] => n
-            }
+        val node = root
+            .find(path)
+            .getOrElse(throw new IllegalArgumentException(s"Path $path not found in explode"))
 
-            elements.withName(finalName).withValue(ops.explode(finalName, node.mkValue()))
+        val finalName = if (name.nonEmpty) name else node.name
+        val elements = node match {
+            case an:ArrayNode[T] => an.elements
+            case n:Node[T] => n
         }
-        result.toSeq
+
+        Seq(elements.withName(finalName).withValue(ops.explode(finalName, node.mkValue())))
     }
 }
 

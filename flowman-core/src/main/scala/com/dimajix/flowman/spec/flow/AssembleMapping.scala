@@ -36,6 +36,7 @@ object AssembleMapping {
         new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeEntry]),
         new JsonSubTypes.Type(name = "lift", value = classOf[LiftEntry]),
         new JsonSubTypes.Type(name = "nest", value = classOf[NestEntry]),
+        new JsonSubTypes.Type(name = "rename", value = classOf[RenameEntry]),
         new JsonSubTypes.Type(name = "struct", value = classOf[StructEntry])
     ))
     abstract class Entry {
@@ -96,6 +97,32 @@ object AssembleMapping {
             builder.lift(
                 _.path(path)
                     .columns(columns)
+            )
+        }
+    }
+
+    object RenameEntry {
+        def apply(path:String, columns:Map[String,String]) : RenameEntry = {
+            val result = new RenameEntry
+            result._path = path
+            result._columns = columns
+            result
+        }
+    }
+    class RenameEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var _path:String = ""
+        @JsonProperty(value = "columns", required = false) private var _columns:Map[String,String] = Map()
+
+        def path(implicit context: Context) : String = context.evaluate(_path)
+        def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
+
+        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
+            val path = this.path
+            val columns = this.columns
+
+            builder.rename(
+                _.path(path)
+                    .columns(columns.toSeq)
             )
         }
     }

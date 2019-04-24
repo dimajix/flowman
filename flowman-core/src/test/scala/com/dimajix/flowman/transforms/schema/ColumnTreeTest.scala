@@ -34,20 +34,20 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
     "The ColumnTree" should "create the same schema via round-trip" in {
         val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
+            StructField("col1", StringType, false),
             StructField("COL2", StructType(
                 Seq(
-                    StructField("nested1", StringType),
-                    StructField("nested3", ArrayType(FloatType)),
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", ArrayType(FloatType), false),
                     StructField("nested4", StructType(
                         Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_2", FloatType)
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
                         )
-                    ))
+                    ), false)
                 )
-            )),
-            StructField("col3", IntegerType)
+            ), false),
+            StructField("col3", IntegerType, false)
         ))
         val root = ColumnTree.ofSchema(inputSchema)
         val columns = root.mkValue()
@@ -73,20 +73,20 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
     it should "support dropping non existing paths" in {
         val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
+            StructField("col1", StringType, false),
             StructField("COL2", StructType(
                 Seq(
-                    StructField("nested1", StringType),
-                    StructField("nested3", FloatType),
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false),
                     StructField("nested4", StructType(
                         Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_2", FloatType)
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
                         )
-                    ))
+                    ), false)
                 )
-            )),
-            StructField("col3", IntegerType)
+            ), false),
+            StructField("col3", IntegerType, false)
         ))
         val root = ColumnTree.ofSchema(inputSchema)
             .drop(Path("no_such_column"))
@@ -113,20 +113,20 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
     it should "support dropping existing paths" in {
         val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
+            StructField("col1", StringType, false),
             StructField("COL2", StructType(
                 Seq(
-                    StructField("nested1", StringType),
-                    StructField("nested3", FloatType),
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false),
                     StructField("nested4", StructType(
                         Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_2", FloatType)
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
                         )
-                    ))
+                    ), false)
                 )
-            )),
-            StructField("col3", IntegerType)
+            ), false),
+            StructField("col3", IntegerType, false)
         ))
         val root = ColumnTree.ofSchema(inputSchema)
             .drop(Path("COL2"))
@@ -145,20 +145,20 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
     it should "support dropping non existing nested paths" in {
         val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
+            StructField("col1", StringType, false),
             StructField("COL2", StructType(
                 Seq(
-                    StructField("nested1", StringType),
-                    StructField("nested3", FloatType),
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false),
                     StructField("nested4", StructType(
                         Seq(
-                            StructField("nested4_1", StringType),
-                            StructField("nested4_2", FloatType)
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
                         )
-                    ))
+                    ), false)
                 )
-            )),
-            StructField("col3", IntegerType)
+            ), false),
+            StructField("col3", IntegerType, false)
         ))
         val root = ColumnTree.ofSchema(inputSchema)
             .drop(Path("COL2.nested4"))

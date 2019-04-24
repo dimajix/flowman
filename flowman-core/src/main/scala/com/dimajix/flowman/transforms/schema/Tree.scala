@@ -36,15 +36,15 @@ trait NodeOps[T] {
 
     def metadata(value:T, meta:Map[String,String]) : T
 
-    def nullable(value:T, n:Boolean) : T
+    def leaf(name:String, value:T, nullable:Boolean) : T
 
-    def leaf(name:String, value:T) : T
+    def struct(name:String, children:Seq[T], nullable:Boolean) : T
 
-    def struct(name:String, children:Seq[T]) : T
+    def struct_pruned(name:String, children:Seq[T], nullable:Boolean) : T
 
-    def array(name:String, element:T) : T
+    def array(name:String, element:T, nullable:Boolean) : T
 
-    def map(name:String, keyType:T, valueType:T) : T
+    def map(name:String, keyType:T, valueType:T, nullable:Boolean) : T
 
     def explode(name:String, array:T) : T
 }
@@ -154,7 +154,7 @@ sealed abstract class Node[T] {
     def keep(paths:Seq[Path]) : Node[T]
 
     protected def applyProperties(value:T)(implicit ops: NodeOps[T]) : T = {
-        ops.metadata(ops.nullable(value, nullable), metadata)
+        ops.metadata(value, metadata)
     }
 }
 
@@ -200,7 +200,7 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        ops.leaf(name, applyProperties(value))
+        ops.leaf(name, applyProperties(value), nullable)
     }
 
     /**
@@ -286,7 +286,16 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = this.value.map(v => ops.leaf(name, v)).getOrElse(ops.struct(name, children.map(_.mkValue())))
+        val value = this.value
+            .map(v => ops.leaf(name, v, nullable))
+            .getOrElse {
+                if (children.forall(_.nullable)) {
+                    ops.struct_pruned(name, children.map(_.mkValue()), nullable)
+                }
+                else {
+                    ops.struct(name, children.map(_.mkValue()), nullable)
+                }
+            }
         applyProperties(value)
     }
 
@@ -374,7 +383,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
     private def replaceChildren(newChildren:Seq[Node[T]]) : StructNode[T] = {
         // Check if something has changed
         if (newChildren.length != children.length || children.zip(newChildren).exists(xy => !(xy._1 eq xy._2))) {
-            StructNode(name, None, newChildren)
+            copy(value=None, children=newChildren)
         }
         else {
             this
@@ -427,7 +436,9 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = this.value.map(v => ops.leaf(name, v)).getOrElse(ops.array(name, elements.mkValue()))
+        val value = this.value
+            .map(v => ops.leaf(name, v, nullable))
+            .getOrElse(ops.array(name, elements.mkValue(), nullable))
         applyProperties(value)
     }
 
@@ -475,7 +486,7 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
             this
         }
         else {
-            ArrayNode(name, None, newElements)
+            copy(value=None, elements=newElements)
         }
     }
 }
@@ -525,7 +536,9 @@ case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Nod
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = this.value.getOrElse(ops.map(name, mapKey.mkValue(), mapValue.mkValue()))
+        val value = this.value
+            .map(v => ops.leaf(name, v, nullable))
+            .getOrElse(ops.map(name, mapKey.mkValue(), mapValue.mkValue(), nullable))
         applyProperties(value)
     }
 

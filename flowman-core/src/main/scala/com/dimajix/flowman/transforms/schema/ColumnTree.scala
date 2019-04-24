@@ -32,17 +32,20 @@ class ColumnNodeOps extends NodeOps[Column] {
 
     override def metadata(value:Column, meta:Map[String,String]) : Column = value
 
-    override def nullable(value:Column, n:Boolean) : Column = value
+    override def leaf(name:String, value:Column, nullable:Boolean) : Column = withName(name, value)
 
-    override def leaf(name:String, value:Column) : Column = withName(name, value)
-
-    override def struct(name:String, children:Seq[Column]) : Column = {
+    override def struct(name:String, children:Seq[Column], nullable:Boolean) : Column = {
         withName(name, functions.struct(children: _*))
     }
 
-    override def array(name:String, element:Column) : Column = ???
+    override def struct_pruned(name:String, children:Seq[Column], nullable:Boolean) : Column = {
+        val notAllNull = children.foldLeft(functions.lit(false))((tf, col) => tf || col.isNotNull)
+        withName(name, functions.when(notAllNull, functions.struct(children: _*)))
+    }
 
-    override def map(name:String, keyType:Column, valueType:Column) : Column = ???
+    override def array(name:String, element:Column, nullable:Boolean) : Column = ???
+
+    override def map(name:String, keyType:Column, valueType:Column, nullable:Boolean) : Column = ???
 
     override def explode(name: String, array: Column): Column = {
         withName(name, functions.explode(array))

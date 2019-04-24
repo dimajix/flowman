@@ -23,7 +23,14 @@ object Path {
     def apply() : Path = Path(Seq())
     def apply(p:String) : Path = Path(p.split('.'))
 }
-case class Path(segments:Seq[String])
+case class Path(segments:Seq[String]) {
+    override def toString: String = {
+        if (segments.isEmpty)
+            "."
+        else
+            segments.mkString(".")
+    }
+}
 
 
 /**

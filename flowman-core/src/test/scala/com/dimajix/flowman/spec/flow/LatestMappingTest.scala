@@ -26,7 +26,11 @@ import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
 
+object LatestMappingTest {
+    case class Record(ts:(String,Long), id:(String,Int), data:String)
+}
 
 class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     "The LatestMapping" should "extract the latest version" in {
@@ -61,6 +65,32 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         result(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
         result(2) should be (Row(mutable.WrappedArray.make(Array(14,3)), 14, "UPDATE", 124))
         result(3) should be (Row(mutable.WrappedArray.make(Array(15,2)), 15, "CREATE", 127))
+    }
+
+    it should "support nested columns" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val df = Seq(
+            Record(("ts_0", 123), ("id_0", 7), "lala")
+        ).toDF
+
+        val mapping = LatestMapping("df1", Seq("id._1"), "ts._2")
+        mapping.input should be (MappingIdentifier("df1"))
+        mapping.keyColumns should be (Seq("id._1" ))
+        mapping.versionColumn should be ("ts._2")
+        mapping.dependencies should be (Array(MappingIdentifier("df1")))
+
+        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df)).orderBy("id._1")
+            .as[Record]
+            .collect()
+        result should be (Seq(
+            Record(("ts_0", 123), ("id_0", 7), "lala")
+        ))
     }
 
     it should "be parseable" in {

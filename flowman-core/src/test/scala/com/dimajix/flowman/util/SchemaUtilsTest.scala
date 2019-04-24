@@ -65,4 +65,27 @@ class SchemaUtilsTest extends FlatSpec with Matchers {
         val result = SchemaUtils.toLowerCase(schema)
         result should be(expected)
     }
+
+    "SchemaUtils.find" should "find nested fields" in {
+        val schema = StructType(Seq(
+            StructField("Name", StringType),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType),
+                    StructField("SomeArray", ArrayType(IntegerType))
+                ))
+            ),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType)
+                ))
+            ))
+        ))
+
+        SchemaUtils.find(schema, "no_such_field") should be (None)
+        SchemaUtils.find(schema, "Name") should be (Some(schema("Name")))
+        SchemaUtils.find(schema, "name") should be (Some(schema("Name")))
+        SchemaUtils.find(schema, "nested.amount") should be (Some(StructField("AmOUnt", DoubleType)))
+        SchemaUtils.find(schema, "StructArray.Name") should be (Some(StructField("Name", StringType)))
+    }
 }

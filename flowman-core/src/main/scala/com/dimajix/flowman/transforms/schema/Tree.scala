@@ -108,6 +108,13 @@ sealed abstract class Node[T] {
     def mkValue()(implicit ops:NodeOps[T]) : T
 
     /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    def withValue(newValue:T) : Node[T]
+
+    /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
@@ -197,6 +204,13 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
     }
 
     /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : LeafNode[T] = this.copy(value=newValue)
+
+    /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
@@ -275,6 +289,13 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
         val value = this.value.map(v => ops.leaf(name, v)).getOrElse(ops.struct(name, children.map(_.mkValue())))
         applyProperties(value)
     }
+
+    /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : StructNode[T] = this.copy(value=Some(newValue))
 
     /**
       * Creates a copy of the structure with a new name of the current element
@@ -411,6 +432,13 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
     }
 
     /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : ArrayNode[T] = this.copy(value=Some(newValue))
+
+    /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
@@ -500,6 +528,13 @@ case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Nod
         val value = this.value.getOrElse(ops.map(name, mapKey.mkValue(), mapValue.mkValue()))
         applyProperties(value)
     }
+
+    /**
+      * Creates a copy of the structure with a new explicit value
+      * @param newValue
+      * @return
+      */
+    override def withValue(newValue:T) : MapNode[T] = this.copy(value=Some(newValue))
 
     /**
       * Creates a copy of the structure with a new name of the current element

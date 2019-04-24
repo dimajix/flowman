@@ -89,7 +89,7 @@ class SchemaNodeOps extends NodeOps[Field] {
     override def explode(name: String, array: Field): Field = {
         array.ftype match {
             case at:ArrayType => Field(name, at.elementType, at.containsNull || array.nullable, array.description)
-            case _ => array
+            case _ => array.copy(name=name)
         }
     }
 }

@@ -20,8 +20,8 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
 
+import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.ColumnTree
-import com.dimajix.flowman.transforms.schema.LeafNode
 import com.dimajix.flowman.transforms.schema.Node
 import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.Path
@@ -33,6 +33,17 @@ import com.dimajix.flowman.types.StructType
 object Assembler {
     abstract class Builder {
         def build() : Assembler
+    }
+
+    abstract class RecusriveBuilder extends Builder {
+        private val _children = mutable.ListBuffer[Builder]()
+
+        protected def addChild(child:Builder) : Unit = {
+            _children += child
+        }
+        protected def children(): Seq[Assembler] = {
+            _children.map(_.build())
+        }
     }
 
     class ColumnBuilder(name:String="") extends Builder {
@@ -91,42 +102,42 @@ object Assembler {
         }
     }
 
-    class StructBuilder(name:String) extends Builder {
-        private val _children = mutable.ListBuffer[Builder]()
-
+    class StructBuilder(name:String) extends RecusriveBuilder {
         def columns(spec:ColumnBuilder => Unit) : StructBuilder = {
             val builder = new ColumnBuilder()
             spec(builder)
-            _children += builder
+            addChild(builder)
             this
         }
         def nest(name:String)(spec:ColumnBuilder => Unit) : StructBuilder = {
             val builder = new ColumnBuilder(name)
             spec(builder)
-            _children += builder
+            addChild(builder)
             this
         }
         def lift(spec:LiftBuilder => Unit) : StructBuilder = {
             val builder = new LiftBuilder
             spec(builder)
-            _children += builder
+            addChild(builder)
             this
         }
         def assemble(name:String)(spec:StructBuilder => Unit) : StructBuilder = {
             val builder = new StructBuilder(name)
             spec(builder)
-            _children += builder
+            addChild(builder)
+            this
+        }
+        def explode(name:String)(spec:ExplodeBuilder => Unit) : StructBuilder = {
+            val builder = new ExplodeBuilder(name)
+            spec(builder)
+            addChild(builder)
             this
         }
         def explode(spec:ExplodeBuilder => Unit) : StructBuilder = {
-            val builder = new ExplodeBuilder
+            val builder = new ExplodeBuilder("")
             spec(builder)
-            _children += builder
+            addChild(builder)
             this
-        }
-
-        protected def children(): Seq[Assembler] = {
-            _children.map(_.build())
         }
 
         override def build(): Assembler = {
@@ -134,7 +145,7 @@ object Assembler {
         }
     }
 
-    class ExplodeBuilder extends StructBuilder("") {
+    class ExplodeBuilder(name:String) extends Builder {
         private var _path = Path()
 
         def path(p:String) : ExplodeBuilder = {
@@ -143,7 +154,7 @@ object Assembler {
         }
 
         override def build(): Assembler = {
-            new ExplodeAssembler(_path, children())
+            new ExplodeAssembler(name, _path)
         }
     }
 
@@ -242,11 +253,20 @@ class LiftAssembler private[transforms] (path:Path, columns:Seq[Path]) extends A
 /**
   * This Assembler will explode a single column
   * @param array
-  * @param columns
   */
-class ExplodeAssembler private[transforms] (array:Path, columns:Seq[Assembler]) extends Assembler {
+class ExplodeAssembler private[transforms] (name:String, array:Path) extends Assembler {
     override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Seq[Node[T]] = {
-        root.find(array).map(node => LeafNode(node.name, ops.explode(node.name, node.mkValue()))).toSeq
+        val start = root.find(array)
+        val result = start.map { node =>
+            val finalName = if (name.nonEmpty) name else node.name
+            val elements = node match {
+                case an:ArrayNode[T] => an.elements
+                case n:Node[T] => n
+            }
+
+            elements.withName(finalName).withValue(ops.explode(finalName, node.mkValue()))
+        }
+        result.toSeq
     }
 }
 

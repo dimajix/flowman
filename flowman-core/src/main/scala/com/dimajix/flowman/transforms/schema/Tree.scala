@@ -406,8 +406,7 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
       * @return
       */
     override def mkValue()(implicit ops:NodeOps[T]) : T = {
-        val value = this.value.map(v => ops.leaf(name, v)).getOrElse(ops.struct(name, children.map(_.mkValue())))
-        //val value = this.value.getOrElse(ops.array(name, elements.mkValue()))
+        val value = this.value.map(v => ops.leaf(name, v)).getOrElse(ops.array(name, elements.mkValue()))
         applyProperties(value)
     }
 

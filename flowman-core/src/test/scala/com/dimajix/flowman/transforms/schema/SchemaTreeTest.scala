@@ -19,6 +19,7 @@ package com.dimajix.flowman.transforms.schema
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.IntegerType
@@ -35,7 +36,7 @@ class SchemaTreeTest extends FlatSpec with Matchers {
             Field("COL2", StructType(
                 Seq(
                     Field("nested1", StringType),
-                    Field("nested3", FloatType),
+                    Field("nested3", ArrayType(FloatType)),
                     Field("nested4", StructType(
                         Seq(
                             Field("nested4_1", StringType),
@@ -44,7 +45,12 @@ class SchemaTreeTest extends FlatSpec with Matchers {
                     ))
                 )
             )),
-            Field("col3", IntegerType)
+            Field("col3", ArrayType(StructType(
+                Seq(
+                    Field("nested1", StringType),
+                    Field("nested3", IntegerType)
+                )
+            )))
         ))
         val root = SchemaTree.ofSchema(inputSchema)
         val columns = root.mkValue()

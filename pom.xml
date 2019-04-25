@@ -92,7 +92,7 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.11.12</scala.version>
         <scala.api_version>2.11</scala.api_version>
         <!-- Set this to false for releases -->
         <gpg.skip>true</gpg.skip>
@@ -400,6 +400,9 @@
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
                     <version>3.4.6</version>
+                    <configuration>
+                        <scalaVersion>${scala.version}</scalaVersion>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>scala-compile-first</id>

@@ -60,7 +60,17 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
           |         "value": 456
           |       }
           |    ]
-          |  }
+          |  },
+          |  "top_array" : [
+          |     {
+          |       "key": "k2",
+          |       "value": 123
+          |     },
+          |     {
+          |       "key": "k1",
+          |       "value": 456
+          |     }
+          |  ]
           |}""".stripMargin
 
     private var inputDf:DataFrame = _
@@ -91,6 +101,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
                     .drop("stupidName")
                     .drop("embedded.structure.secret")
                     .drop("embedded.old_structure")
+                    .drop("top_array")
             )
             .assemble("sub_structure")(
                 _.columns(
@@ -284,7 +295,27 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
     }
 
-    it should "support explode on complex arrays" in {
+    it should "support top level explode on complex arrays with rename" in {
+        val asm = Assembler.builder()
+            .explode("array")(
+                _.path("top_array")
+            )
+            .build()
+
+        val outputDf = asm.reassemble(inputDf)
+
+        val expectedSchema = StructType(Seq(
+            StructField("array", StructType(Seq(
+                StructField("key", StringType),
+                StructField("value", LongType)
+            )), true)
+        ))
+
+        outputDf.count should be (2)
+        outputDf.schema should be (expectedSchema)
+    }
+
+    it should "support nested explode on complex arrays" in {
         val asm = Assembler.builder()
             .explode(
                 _.path("embedded.struct_array")
@@ -304,7 +335,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
     }
 
-    it should "support explode on complex arrays with rename" in {
+    it should "support nested explode on complex arrays with rename" in {
         val asm = Assembler.builder()
             .explode("array")(
                 _.path("embedded.struct_array")

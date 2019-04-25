@@ -19,6 +19,7 @@ package com.dimajix.flowman.transforms.schema
 import scala.collection.mutable
 
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.ArrayType
@@ -62,10 +63,16 @@ class ColumnNodeOps extends NodeOps[Column] {
     }
 
     private def withName(name:String, value:Column) : Column = {
-        if (name.nonEmpty)
-            value.as(name)
-        else
+        if (name.nonEmpty) {
+            // Avoid multiple "as" expressions, this will confuse Spark 2.3
+            value.expr match {
+                case alias:Alias => new Column(alias.child).as(name)
+                case _ => value.as(name)
+            }
+        }
+        else {
             value
+        }
     }
 }
 

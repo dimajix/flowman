@@ -20,9 +20,23 @@ import java.util.Locale
 
 
 object Path {
+    /**
+      * Create an empty column path, which represents the root structure
+      * @return
+      */
     def apply() : Path = Path(Seq())
-    def apply(p:String) : Path = Path(p.split('.'))
+
+    /**
+      * Creates a Path from a string which should contain the column names in dotted notation (some.nested.column)
+      * @param path
+      * @return
+      */
+    def apply(path:String) : Path = Path(path.split('.'))
 }
+
+/**
+  * Small helper class to represent a column path within a nested structure
+  */
 case class Path(segments:Seq[String]) {
     override def toString: String = {
         if (segments.isEmpty)
@@ -215,28 +229,48 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
       * @param newValue
       * @return
       */
-    override def withValue(newValue:T) : LeafNode[T] = this.copy(value=newValue)
+    override def withValue(newValue:T) : LeafNode[T] = {
+        if (newValue != value)
+            copy(value=newValue)
+        else
+            this
+    }
 
     /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
       */
-    override def withName(newName:String) : LeafNode[T] = this.copy(name=newName)
+    override def withName(newName:String) : LeafNode[T] = {
+        if (name != newName)
+            copy(name=newName)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the nullable value set to the specified value
       * @param n
       * @return
       */
-    override def withNullable(n:Boolean) : Node[T] = this.copy(nullable=n)
+    override def withNullable(n:Boolean) : Node[T] = {
+        if (nullable != n)
+            copy(nullable=n)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the meta data set to the specified value
       * @param meta
       * @return
       */
-    override def withMetadata(meta:Map[String,String]) : Node[T] = this.copy(metadata=meta)
+    override def withMetadata(meta:Map[String,String]) : Node[T] = {
+        if (metadata != meta)
+            copy(metadata=meta)
+        else
+            this
+    }
 
     override def drop(path:Path) : LeafNode[T] = this
 
@@ -311,28 +345,49 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
       * @param newValue
       * @return
       */
-    override def withValue(newValue:T) : StructNode[T] = this.copy(value=Some(newValue))
+    override def withValue(newValue:T) : StructNode[T] = {
+        val optValue = Option(newValue)
+        if (value != optValue)
+            copy(value=optValue)
+        else
+            this
+    }
 
     /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
       */
-    override def withName(newName:String) : StructNode[T] = this.copy(name=newName)
+    override def withName(newName:String) : StructNode[T] = {
+        if (name != newName)
+            copy(name=newName)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the nullable value set to the specified value
       * @param n
       * @return
       */
-    override def withNullable(n:Boolean) : StructNode[T] = this.copy(nullable=n)
+    override def withNullable(n:Boolean) : StructNode[T] = {
+        if (nullable != n)
+            copy(nullable=n)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the meta data set to the specified value
       * @param meta
       * @return
       */
-    override def withMetadata(meta:Map[String,String]) : StructNode[T] = this.copy(metadata=meta)
+    override def withMetadata(meta:Map[String,String]) : StructNode[T] = {
+        if (meta != metadata)
+            copy(metadata=meta)
+        else
+            this
+    }
 
     /**
       * Drops the specified path and returns a new subtree representing the pruned tree
@@ -454,28 +509,49 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
       * @param newValue
       * @return
       */
-    override def withValue(newValue:T) : ArrayNode[T] = this.copy(value=Some(newValue))
+    override def withValue(newValue:T) : ArrayNode[T] = {
+        val optValue = Option(newValue)
+        if (value != optValue)
+            copy(value=optValue)
+        else
+            this
+    }
 
     /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
       */
-    override def withName(newName:String) : ArrayNode[T] = this.copy(name=newName)
+    override def withName(newName:String) : ArrayNode[T] = {
+        if (newName != name)
+            copy(name=newName)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the nullable value set to the specified value
       * @param n
       * @return
       */
-    override def withNullable(n:Boolean) : ArrayNode[T] = this.copy(nullable=n)
+    override def withNullable(n:Boolean) : ArrayNode[T] = {
+        if (n != nullable)
+            copy(nullable=n)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the meta data set to the specified value
       * @param meta
       * @return
       */
-    override def withMetadata(meta:Map[String,String]) : ArrayNode[T] = this.copy(metadata=meta)
+    override def withMetadata(meta:Map[String,String]) : ArrayNode[T] = {
+        if (meta != metadata)
+            copy(metadata=meta)
+        else
+            this
+    }
 
     override def drop(path:Path) : ArrayNode[T] = {
         require(path.segments.nonEmpty)
@@ -554,28 +630,49 @@ case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Nod
       * @param newValue
       * @return
       */
-    override def withValue(newValue:T) : MapNode[T] = this.copy(value=Some(newValue))
+    override def withValue(newValue:T) : MapNode[T] = {
+        val optValue = Option(newValue)
+        if (value != optValue)
+            copy(value=optValue)
+        else
+            this
+    }
 
     /**
       * Creates a copy of the structure with a new name of the current element
       * @param newName
       * @return
       */
-    override def withName(newName:String) : MapNode[T] = this.copy(name=newName)
+    override def withName(newName:String) : MapNode[T] = {
+        if (name != newName)
+            copy(name=newName)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the nullable value set to the specified value
       * @param n
       * @return
       */
-    override def withNullable(n:Boolean) : MapNode[T] = this.copy(nullable=n)
+    override def withNullable(n:Boolean) : MapNode[T] = {
+        if (nullable != n)
+            copy(nullable=n)
+        else
+            this
+    }
 
     /**
       * Returns a copy of this node with the meta data set to the specified value
       * @param meta
       * @return
       */
-    override def withMetadata(meta:Map[String,String]) : MapNode[T] = this.copy(metadata=meta)
+    override def withMetadata(meta:Map[String,String]) : MapNode[T] = {
+        if (meta != metadata)
+            copy(metadata=meta)
+        else
+            this
+    }
 
     override def drop(path:Path) : MapNode[T] = {
         require(path.segments.nonEmpty)

@@ -55,14 +55,7 @@ class ColumnTreeTest extends FlatSpec with Matchers {
         val columns = root.mkValue()
         val expected = struct(
             col("col1") as "col1",
-            struct(
-                col("COL2.nested1") as "nested1",
-                col("COL2.nested3") as "nested3",
-                struct(
-                    col("COL2.nested4.nested4_1") as "nested4_1",
-                    col("COL2.nested4.nested4_2") as "nested4_2"
-                ) as "nested4"
-            ).as("COL2"),
+            col("COL2") as "COL2",
             col("col3") as "col3"
         )
 
@@ -95,14 +88,7 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
         val expected = struct(
             col("col1") as "col1",
-            struct(
-                col("COL2.nested1") as "nested1",
-                col("COL2.nested3") as "nested3",
-                struct(
-                    col("COL2.nested4.nested4_1") as "nested4_1",
-                    col("COL2.nested4.nested4_2") as "nested4_2"
-                ) as "nested4"
-            ).as("COL2"),
+            col("COL2") as "COL2",
             col("col3") as "col3"
         )
 
@@ -130,12 +116,46 @@ class ColumnTreeTest extends FlatSpec with Matchers {
             StructField("col3", IntegerType, false)
         ))
         val root = ColumnTree.ofSchema(inputSchema)
-            .drop(Path("COL2"))
+            .drop(Path("col1"))
+        val columns = root.mkValue()
+
+        val expected = struct(
+            col("COL2") as "COL2",
+            col("col3") as "col3"
+        )
+
+        // This doesn't work:
+        //      columns should be (expected)
+        // therefore we compare string representation
+        columns.toString() should be (expected.toString())
+    }
+
+    it should "support dropping nested paths" in {
+        val inputSchema = StructType(Seq(
+            StructField("col1", StringType, false),
+            StructField("COL2", StructType(
+                Seq(
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false),
+                    StructField("nested4", StructType(
+                        Seq(
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
+                        )
+                    ), false)
+                )
+            ), false)
+        ))
+        val root = ColumnTree.ofSchema(inputSchema)
+            .drop(Path("COL2.nested4"))
         val columns = root.mkValue()
 
         val expected = struct(
             col("col1") as "col1",
-            col("col3") as "col3"
+            struct(
+                col("COL2.nested1") as "nested1",
+                col("COL2.nested3") as "nested3"
+            ).as("COL2")
         )
 
         // This doesn't work:
@@ -150,13 +170,7 @@ class ColumnTreeTest extends FlatSpec with Matchers {
             StructField("COL2", StructType(
                 Seq(
                     StructField("nested1", StringType, false),
-                    StructField("nested3", FloatType, false),
-                    StructField("nested4", StructType(
-                        Seq(
-                            StructField("nested4_1", StringType, false),
-                            StructField("nested4_2", FloatType, false)
-                        )
-                    ), false)
+                    StructField("nested3", FloatType, false)
                 )
             ), false),
             StructField("col3", IntegerType, false)
@@ -167,10 +181,7 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
         val expected = struct(
             col("col1") as "col1",
-            struct(
-                col("COL2.nested1") as "nested1",
-                col("COL2.nested3") as "nested3"
-            ).as("COL2"),
+            col("COL2") as "COL2",
             col("col3") as "col3"
         )
 

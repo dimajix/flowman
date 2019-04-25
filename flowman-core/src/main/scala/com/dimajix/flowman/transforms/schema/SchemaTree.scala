@@ -26,6 +26,10 @@ import com.dimajix.flowman.types.NullType
 import com.dimajix.flowman.types.StructType
 
 
+/**
+  * Implementation of NodeOps required for manipulating a tree of [[com.dimajix.flowman.types.Field]] nodes
+  * which represent a tree of a Flowman schema
+  */
 class SchemaNodeOps extends NodeOps[Field] {
     override def empty : Field = Field("", NullType)
 
@@ -87,11 +91,20 @@ class SchemaNodeOps extends NodeOps[Field] {
 }
 
 
+/**
+  * Utility class for creating a tree with nodes of type [[com.dimajix.flowman.types.Field]] for manipulating a
+  * Flowman schema
+  */
 object SchemaTree {
     object implicits {
         implicit val schemaNodeOps = new SchemaNodeOps
     }
 
+    /**
+      * Construct a tree with `Node[Field]` elements from a Flowman StructType.
+      * @param schema
+      * @return
+      */
     def ofSchema(schema:StructType) : Node[Field] = {
         def processField(field: Field) : Node[Field] = {
             val node = field.ftype match {

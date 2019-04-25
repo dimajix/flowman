@@ -69,12 +69,19 @@ class ColumnNodeOps extends NodeOps[Column] {
     }
 }
 
-
+/**
+  * The ColumnTree object offers functionality to create a Tree of a Spark schema
+  */
 object ColumnTree {
     object implicits {
         implicit val columnNodeOps = new ColumnNodeOps
     }
 
+    /**
+      * Create a Tree of `Node[Column]` objects from a Spark schema.
+      * @param schema
+      * @return
+      */
     def ofSchema(schema:StructType) : Node[Column] = {
         def fq(prefix:String, name:String) : String = {
             if (prefix.isEmpty)
@@ -107,7 +114,7 @@ object ColumnTree {
         def processStruct(prefix:String, name:String, st:StructType) : StructNode[Column] = {
             val fqName = fq(prefix, name)
             val children = st.fields.map(field => processField(fqName, field))
-            StructNode(name, None, children)
+            StructNode(name, Some(col(fqName)), children)
         }
         def processArray(prefix:String, name:String, at:ArrayType) : ArrayNode[Column] = {
             val fqName = fq(prefix, name)
@@ -123,6 +130,7 @@ object ColumnTree {
             LeafNode(name, col(fqName))
         }
 
-        processStruct("", "", schema).withNullable(false)
+        val children = schema.fields.map(field => processField("", field))
+        StructNode("", None, children).withNullable(false)
     }
 }

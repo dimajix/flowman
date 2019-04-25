@@ -24,6 +24,8 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.Temporal
 
+import org.apache.hadoop.fs.Path
+
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.util.UtcTimestamp
 
@@ -32,6 +34,7 @@ case class FileWrapper(file:File) {
 
     def getParent() : FileWrapper = FileWrapper(file.parent)
     def getAbsPath() : FileWrapper = FileWrapper(file.absolute)
+    def getPath() : String = Path.getPathWithoutSchemeAndAuthority(file.path).toString
     def getFilename() : String = file.filename
     def withSuffix(suffix:String) : FileWrapper = FileWrapper(file.withSuffix(suffix))
     def withName(name:String) : FileWrapper = FileWrapper(file.withName(name))

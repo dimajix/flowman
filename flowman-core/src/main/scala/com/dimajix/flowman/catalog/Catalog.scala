@@ -20,24 +20,52 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.DatabaseAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
+import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
+import com.dimajix.flowman.util.SchemaUtils
 
 
 class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = null) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
+
+    /**
+      * Creates a new database
+      */
+    def createDatabase(database:String, ignoreIfExists:Boolean) : Unit = {
+        require(database != null && database.nonEmpty)
+
+        if (!ignoreIfExists && databaseExists(database)) {
+            throw new DatabaseAlreadyExistsException(database)
+        }
+
+        val cmd = CreateDatabaseCommand(database, ignoreIfExists, None, None, Map())
+        cmd.run(spark)
+    }
+
+    /**
+      * Returns true if the specified Hive database actually exists
+      * @param database
+      * @return
+      */
+    def databaseExists(database:String) : Boolean = {
+        require(database != null)
+        // "SHOW TABLES IN training LIKE 'weather_raw'"
+        catalog.databaseExists(database)
+    }
 
     /**
       * Creates a new table from a detailed definition
@@ -51,7 +79,11 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             throw new TableAlreadyExistsException(table.identifier.database.getOrElse(""), table.identifier.table)
         }
 
-        val cmd = CreateTableCommand(table, ignoreIfExists)
+        // Cleanup table definition
+        val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
+        val cleanedTable = table.copy(schema = cleanedSchema)
+
+        val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
         cmd.run(spark)
 
         // Publish table to external catalog
@@ -127,7 +159,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * Truncates a table by either removing the corresponding file or by dropping all partitions
       * @param table
       */
-    @Override
     def truncateTable(table:TableIdentifier) : Unit = {
         require(table != null)
         logger.info(s"Truncating Hive table $table")
@@ -150,7 +181,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param partition
       * @return
       */
-    @Override
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -163,7 +193,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param partition
       * @return
       */
-    @Override
     def getPartitionLocation(table:TableIdentifier, partition:PartitionSpec) : Path = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -176,7 +205,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param table
       * @return
       */
-    @Override
     def getPartitionSchema(table:TableIdentifier) : PartitionSchema = {
         require(table != null)
         // "DESCRIBE FORMATTED training.weather_raw"
@@ -190,7 +218,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param partition
       * @param location
       */
-    @Override
     def addPartition(table:TableIdentifier, partition:PartitionSpec, location:Path) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -213,7 +240,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param partition
       * @param location
       */
-    @Override
     def addOrReplacePartition(table:TableIdentifier, partition:PartitionSpec, location:Path) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -247,7 +273,6 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param table
       * @param partition
       */
-    @Override
     def truncatePartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -269,14 +294,12 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param table
       * @param partition
       */
-    @Override
     def dropPartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         dropPartitions(table, Seq(partition))
     }
 
-    @Override
     def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec]) : Unit = {
         require(table != null)
         require(partitions != null)
@@ -319,6 +342,16 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         if (fs.exists(location)) {
             logger.info(s"Deleting file or directory '$location'")
             fs.delete(location, true)
+        }
+    }
+
+    private def maxCommentLength : Int = {
+        if (spark.conf.getOption("spark.hadoop.hive.metastore.uris").isEmpty
+            || spark.conf.getOption("javax.jdo.option.ConnectionURL").exists(_.contains("jdbc:derby:"))) {
+            254
+        }
+        else {
+            4000
         }
     }
 }

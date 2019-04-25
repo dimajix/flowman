@@ -31,6 +31,7 @@ import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.MapType
+import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -107,6 +108,34 @@ object SchemaUtils {
         findStruct(struct, segments.head, segments.tail)
     }
 
+    /**
+      * Truncate comments to maximum length. Maybe required for Hive tables
+      * @param schema
+      * @param maxLength
+      * @return
+      */
+    def truncateComments(schema:StructType, maxLength:Int) : StructType = {
+        def processType(dataType:DataType) : DataType = {
+            dataType match {
+                case st:StructType => truncateComments(st, maxLength)
+                case ar:ArrayType => ar.copy(elementType = processType(ar.elementType))
+                case mt:MapType => mt.copy(keyType = processType(mt.keyType), valueType = processType(mt.valueType))
+                case dt:DataType => dt
+            }
+        }
+        def truncate(field:StructField) : StructField = {
+            val metadata = field.getComment()
+                .map(comment => new MetadataBuilder()
+                    .withMetadata(field.metadata)
+                    .putString("comment", comment.take(maxLength))
+                    .build()
+                ).getOrElse(field.metadata)
+            val dataType = processType(field.dataType)
+            field.copy(dataType = dataType, metadata = metadata)
+        }
+        val fields = schema.fields.map(truncate)
+        StructType(fields)
+    }
 
     /**
       * Removes all meta data from a Spark schema. Useful for comparing results in unit tests
@@ -117,13 +146,14 @@ object SchemaUtils {
         def processType(dataType:DataType) : DataType = {
             dataType match {
                 case st:StructType => dropMetadata(st)
-                case ar:ArrayType => ArrayType(processType(ar.elementType), ar.containsNull)
-                case mt:MapType => MapType(processType(mt.keyType), processType(mt.valueType), mt.valueContainsNull)
+                case ar:ArrayType => ar.copy(elementType = processType(ar.elementType))
+                case mt:MapType => mt.copy(keyType = processType(mt.keyType), valueType = processType(mt.valueType))
                 case dt:DataType => dt
             }
         }
+
         val fields = schema.fields.map { field =>
-            StructField(field.name, processType(field.dataType), field.nullable)
+            field.copy(dataType = processType(field.dataType), metadata = null)
         }
         StructType(fields)
     }

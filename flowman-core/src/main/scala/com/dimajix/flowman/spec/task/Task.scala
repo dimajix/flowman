@@ -36,6 +36,7 @@ object Task extends TypeRegistry[Task] {
     new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTask]),
     new JsonSubTypes.Type(name = "copyRelation", value = classOf[CopyRelationTask]),
     new JsonSubTypes.Type(name = "countMapping", value = classOf[CountMappingTask]),
+    new JsonSubTypes.Type(name = "createDatabase", value = classOf[CreateDatabaseTask]),
     new JsonSubTypes.Type(name = "createRelation", value = classOf[CreateRelationTask]),
     new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTask]),
     new JsonSubTypes.Type(name = "destroyRelation", value = classOf[DestroyRelationTask]),

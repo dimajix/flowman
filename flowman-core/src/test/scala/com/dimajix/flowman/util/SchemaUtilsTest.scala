@@ -88,4 +88,41 @@ class SchemaUtilsTest extends FlatSpec with Matchers {
         SchemaUtils.find(schema, "nested.amount") should be (Some(StructField("AmOUnt", DoubleType)))
         SchemaUtils.find(schema, "StructArray.Name") should be (Some(StructField("Name", StringType)))
     }
+
+    "SchemaUtils.truncateComments" should "work" in {
+        val comment = "123456789"
+        val schema = StructType(Seq(
+            StructField("Name", StringType).withComment(comment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType).withComment(comment),
+                    StructField("SomeArray", ArrayType(IntegerType)).withComment(comment)
+                ))
+            ).withComment(comment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(comment)
+                ))
+            )).withComment(comment)
+        ))
+
+        val truncatedSchema = SchemaUtils.truncateComments(schema, 3)
+
+        val expectedComment = comment.take(3)
+        val expectedSchema = StructType(Seq(
+            StructField("Name", StringType).withComment(expectedComment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType).withComment(expectedComment),
+                    StructField("SomeArray", ArrayType(IntegerType)).withComment(expectedComment)
+                ))
+            ).withComment(expectedComment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(expectedComment)
+                ))
+            )).withComment(expectedComment)
+        ))
+        truncatedSchema should be (expectedSchema)
+    }
 }

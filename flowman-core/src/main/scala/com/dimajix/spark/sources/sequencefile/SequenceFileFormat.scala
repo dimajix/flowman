@@ -75,7 +75,7 @@ class SequenceFileFormat extends DataSourceRegister with FileFormat {
                 SequenceFile.Reader.length(file.length),
                 SequenceFile.Reader.start(file.start)
             )
-            Option(TaskContext.get()).foreach(_.addTaskCompletionListener[Unit](_ => seqFile.close()))
+            Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => seqFile.close()))
             new SequenceFileIterator(seqFile, options)
         }
     }

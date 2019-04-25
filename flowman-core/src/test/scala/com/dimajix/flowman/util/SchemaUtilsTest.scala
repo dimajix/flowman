@@ -66,6 +66,42 @@ class SchemaUtilsTest extends FlatSpec with Matchers {
         result should be(expected)
     }
 
+    "SchemaUtils.dropMetadata" should "remove all meta data" in {
+        val comment = "123456789"
+        val schema = StructType(Seq(
+            StructField("Name", StringType, false).withComment(comment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType).withComment(comment),
+                    StructField("SomeArray", ArrayType(IntegerType, false)).withComment(comment)
+                ))
+            ).withComment(comment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(comment)
+                ))
+            )).withComment(comment)
+        ))
+
+        val pureSchema = SchemaUtils.dropMetadata(schema)
+
+        val expectedSchema = StructType(Seq(
+            StructField("Name", StringType, false),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType),
+                    StructField("SomeArray", ArrayType(IntegerType, false))
+                ))
+            ),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType)
+                ))
+            ))
+        ))
+        pureSchema should be (expectedSchema)
+    }
+
     "SchemaUtils.find" should "find nested fields" in {
         val schema = StructType(Seq(
             StructField("Name", StringType),

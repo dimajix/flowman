@@ -48,26 +48,7 @@ class TemplatingTest extends FlatSpec with Matchers {
         output.toString
     }
 
-    "Integers" should "be supported as values" in {
-        context.put("int", 2)
-        val output = evaluate("$int")
-        output.toString should be ("2")
-
-        val three = 3
-        context.put("three", three)
-        val output2 = evaluate("$three")
-        output2.toString should be ("3")
-    }
-
-    they should "support arithmetics" in {
-        context.put("a", 2)
-        context.put("b", 3)
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "#set($r=$a+$b)$r")
-        output.toString should be ("5")
-    }
-
-    they should "be parseable" in {
+    "Integers" should "be parseable" in {
         context.put("one_val", 1)
         context.put("two_val", 2)
         context.put("one_str", "1")
@@ -82,21 +63,7 @@ class TemplatingTest extends FlatSpec with Matchers {
         evaluate("$Integer.parse($two_str)") should be ("2")
     }
 
-
-    "Floats" should "be supported as values" in {
-        context.put("f", 2.0)
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$f")
-        output.toString should be ("2.0")
-
-        val three = 3.2
-        context.put("three", three)
-        val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "$three")
-        output2.toString should be ("3.2")
-    }
-
-    they should "be parseable" in {
+    "Floats" should "be parseable" in {
         context.put("one_int", 1)
         context.put("two_int", 2)
         context.put("one_float", 1.0f)
@@ -129,20 +96,7 @@ class TemplatingTest extends FlatSpec with Matchers {
         output.toString should be ("5.0")
     }
 
-    "Booleans" should "be supported as values" in {
-        context.put("true_val", true)
-        context.put("false_val", false)
-        evaluate("#if(true)1#{else}2#end") should be ("1")
-        evaluate("#if(false)1#{else}2#end") should be ("2")
-        evaluate("#if(${true_val})1#{else}2#end") should be ("1")
-        evaluate("#if(${false_val})1#{else}2#end") should be ("2")
-        evaluate("true") should be ("true")
-        evaluate("false") should be ("false")
-        evaluate("$true_val") should be ("true")
-        evaluate("$false_val") should be ("false")
-    }
-
-    they should "be parseable" in {
+    "Booleans" should "be parseable" in {
         context.put("true_val", true)
         context.put("false_val", false)
         context.put("true_str", "true")
@@ -155,14 +109,6 @@ class TemplatingTest extends FlatSpec with Matchers {
         evaluate("$Boolean.parse($false_val)") should be ("false")
         evaluate("$Boolean.parse($true_str)") should be ("true")
         evaluate("$Boolean.parse($false_str)") should be ("false")
-    }
-
-    they should "support arithmetics" in {
-        context.put("true_val", true)
-        context.put("false_val", false)
-        evaluate("#set($r=$true_val && $true_val)$r") should be ("true")
-        evaluate("#set($r=$false_val && $true_val)$r") should be ("false")
-        evaluate("#set($r=$false_val || $true_val)$r") should be ("true")
     }
 
     "Timestamps" should "be parseable from strings" in {
@@ -257,40 +203,17 @@ class TemplatingTest extends FlatSpec with Matchers {
     }
 
     "System" should "provide access to some system variables" in {
-        val output1 = new StringWriter()
-        engine.evaluate(context, output1, "test", "${System.getenv('PATH')}")
-        output1.toString should be (System.getenv("PATH"))
-
-        val output2 = new StringWriter()
-        engine.evaluate(context, output2, "test", "${System.getenv('NO_SUCH_ENV')}")
-        output2.toString should be ("")
-
-        val output3 = new StringWriter()
-        engine.evaluate(context, output3, "test","${System.getenv('NO_SUCH_ENV', 'default')}")
-        output3.toString should be ("default")
-
-        val output4 = new StringWriter()
-        engine.evaluate(context, output4, "test","$System.getenv('PATH')")
-        output4.toString should be (System.getenv("PATH"))
-
-        val output5 = new StringWriter()
-        engine.evaluate(context, output5, "test","$System.getenv('NO_SUCH_ENV')")
-        output5.toString should be ("")
-
-        val output6 = new StringWriter()
-        engine.evaluate(context, output6, "test","$System.getenv('NO_SUCH_ENV', 'default')")
-        output6.toString should be ("default")
-
-        val output7 = new StringWriter()
-        engine.evaluate(context, output7, "test", "$System.getenv('NO_SUCH_ENV', $System.getenv('PATH'))")
-        output7.toString should be (System.getenv("PATH"))
-
-        val output8 = new StringWriter()
-        engine.evaluate(context, output8, "test", """$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('PATH')))""")
-        output8.toString should be ("lala/" + System.getenv("PATH"))
+        evaluate("${System.getenv('PATH')}") should be (System.getenv("PATH"))
+        evaluate("${System.getenv('NO_SUCH_ENV')}") should be ("")
+        evaluate("${System.getenv('NO_SUCH_ENV', 'default')}") should be ("default")
+        evaluate("$System.getenv('PATH')") should be (System.getenv("PATH"))
+        evaluate("$System.getenv('NO_SUCH_ENV')") should be ("")
+        evaluate("$System.getenv('NO_SUCH_ENV', 'default')") should be ("default")
+        evaluate("$System.getenv('NO_SUCH_ENV', $System.getenv('PATH'))") should be (System.getenv("PATH"))
+        evaluate("$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('PATH')))") should be ("lala/" + System.getenv("PATH"))
     }
 
-    "The Velocity systeM" should "support new classes via annotation" in {
+    "The Velocity system" should "support new classes via annotation" in {
         evaluate("${SomeObject.upper('Hello World')}") should be ("HELLO WORLD")
     }
 }

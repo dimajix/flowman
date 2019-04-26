@@ -37,7 +37,7 @@ class JsonSchemaTest extends FlatSpec with Matchers {
               |    "javaType": "com.dimajix.json.AmountWithIndicators",
               |    "additionalProperties": false,
               |    "patternProperties": {
-              |      "^\\w+$": {}
+              |      "^\\\\w+$": {}
               |    },
               |    "properties": {
               |      "AmountValue": {
@@ -108,7 +108,7 @@ class JsonSchemaTest extends FlatSpec with Matchers {
               |    "javaType": "com.dimajix.json.AmountWithIndicators",
               |    "additionalProperties": false,
               |    "patternProperties": {
-              |      "^\\w+$": {}
+              |      "^\\\\w+$": {}
               |    },
               |    "properties": {
               |      "AmountValue": {

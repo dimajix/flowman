@@ -69,7 +69,7 @@
         <snakeyaml.version>1.21</snakeyaml.version>
         <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
-        <velocity.version>2.0</velocity.version>
+        <velocity.version>2.1</velocity.version>
         <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>

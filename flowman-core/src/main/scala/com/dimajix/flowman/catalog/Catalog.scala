@@ -17,10 +17,10 @@
 package com.dimajix.flowman.catalog
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.DatabaseAlreadyExistsException
+import org.apache.spark.sql.catalyst.analysis.NoSuchPartitionException
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
@@ -129,7 +129,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * Drops a whole table including all partitions and all files
       * @param table
       */
-    def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
+    def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false, purge:Boolean=false) : Unit = {
         require(table != null)
 
         if (!ignoreIfNotExists && !tableExists(table)) {
@@ -146,7 +146,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         // Delete table itself
         val location = getTableLocation(table)
         deleteLocation(location)
-        val cmd = DropTableCommand(table, ignoreIfNotExists, false, true)
+        val cmd = DropTableCommand(table, ignoreIfNotExists, false, purge)
         cmd.run(spark)
 
         // Remove table from external catalog
@@ -294,18 +294,25 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param table
       * @param partition
       */
-    def dropPartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
+    def dropPartition(table:TableIdentifier, partition:PartitionSpec, ignoreIfNotExists:Boolean=false, purge:Boolean = false) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
-        dropPartitions(table, Seq(partition))
+        dropPartitions(table, Seq(partition), ignoreIfNotExists, purge)
     }
 
-    def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec]) : Unit = {
+    def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec], ignoreIfNotExists:Boolean=false, purge:Boolean = false) : Unit = {
         require(table != null)
         require(partitions != null)
 
+        if (!ignoreIfNotExists) {
+            partitions.foreach { spec =>
+                if (!partitionExists(table, spec))
+                    throw new NoSuchPartitionException(table.database.getOrElse(""), table.table, spec.mapValues(_.toString).toMap)
+            }
+        }
+
         logger.info(s"Dropping partitions $partitions of Hive table $table")
-        val cmd = new AlterTableDropPartitionCommand(table, partitions.map(_.mapValues(_.toString).toMap), true, true, false)
+        val cmd = AlterTableDropPartitionCommand(table, partitions.map(_.mapValues(_.toString).toMap), ignoreIfNotExists, purge, false)
         cmd.run(spark)
 
         //partitions.foreach(partition => {

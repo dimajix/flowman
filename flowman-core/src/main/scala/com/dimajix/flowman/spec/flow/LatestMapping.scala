@@ -19,7 +19,9 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.row_number
 import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.functions.collect_list
 import org.apache.spark.sql.functions.struct
@@ -74,15 +76,40 @@ class LatestMapping extends BaseMapping {
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         implicit val context = executor.context
         val input = this.input
-        val keyColumns = this.keyColumns.map(col)
+        val keyColumns = this.keyColumns
         val versionColumn = this.versionColumn
         logger.info(s"Selecting latest version in '$input' using key columns ${keyColumns.mkString(",")} and version column $versionColumn")
 
         val df = tables(input)
 
+        execute_window(df, keyColumns, versionColumn)
+    }
+
+    /**
+      * Spark native implementation using Window functions
+      * @param df
+      * @param keyColumns
+      * @param versionColumn
+      * @return
+      */
+    private def execute_window(df:DataFrame, keyColumns:Seq[String], versionColumn:String) = {
+        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(col(versionColumn).desc)
+        df.select(struct(col("*")) as "record", row_number().over(window) as "rank")
+            .filter(col("rank") === 1)
+            .select(col("record.*"))
+    }
+
+    /**
+      * Alternative implementation using UDFs
+      * @param df
+      * @param keyColumns
+      * @param versionColumn
+      * @return
+      */
+    private def execute_udf(df:DataFrame, keyColumns:Seq[String], versionColumn:String) = {
         // Get appropriate function for extracting latest version
         val versionField = SchemaUtils.find(df.schema,versionColumn)
-                .getOrElse(throw new IllegalArgumentException(s"Key column $versionColumn not found in schema ${df.schema}"))
+            .getOrElse(throw new IllegalArgumentException(s"Version column $versionColumn not found in schema ${df.schema}"))
         val latest = versionField.dataType match {
             case ShortType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Short.MinValue else row.getShort(0)).getStruct(1)
             case IntegerType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Int.MinValue else row.getInt(0)).getStruct(1)
@@ -100,7 +127,7 @@ class LatestMapping extends BaseMapping {
 
         // Create projection expression
         val cols = Seq(
-            struct(keyColumns:_*) as "key",
+            struct(keyColumns.map(col):_*) as "key",
             struct(
                 // Extract version
                 col(versionColumn) as "version",

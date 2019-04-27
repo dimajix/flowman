@@ -67,6 +67,30 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         result(3) should be (Row(mutable.WrappedArray.make(Array(15,2)), 15, "CREATE", 127))
     }
 
+    it should "support the same version number multiple times" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val json_1 = Seq(
+            """{"ts":123,"id":12, "a":[12,1], "op":"CREATE"}""",
+            """{"ts":125,"id":12, "a":[12,2], "op":"UPDATE"}""",
+            """{"ts":133,"id":12, "a":[12,3], "op":"UPDATE"}""",
+            """{"ts":133,"id":12, "a":[12,3], "op":"UPDATE"}""",
+            """{"ts":123,"id":13, "a":[13,2], "op":"CREATE"}"""
+        ).toDS
+        val df = spark.read.json(json_1)
+
+        val mapping = LatestMapping("df1", Seq("id"), "ts")
+        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df)).orderBy("id").collect()
+        result.size should be (2)
+        result(0) should be (Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133))
+        result(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
+    }
+
     it should "support nested columns" in {
         val spark = this.spark
         import spark.implicits._

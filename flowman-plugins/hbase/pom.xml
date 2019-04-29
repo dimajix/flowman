@@ -19,6 +19,14 @@
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
     </properties>
 
+    <repositories>
+        <!-- The following repository is required for some jetty dependency -->
+        <repository>
+            <id>spring</id>
+            <url>http://repo.spring.io/plugins-release</url>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>
@@ -90,11 +98,6 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

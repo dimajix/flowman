@@ -73,6 +73,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.cloudera</groupId>
             <artifactId>ImpalaJDBC41</artifactId>
             <version>${impala.jdbc.version}</version>

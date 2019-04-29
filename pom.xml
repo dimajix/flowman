@@ -124,6 +124,7 @@
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
                 <guava.version>12.0.1</guava.version>
+                <json4s.version>3.2.11</json4s.version>
                 <jackson.version>2.6.5</jackson.version>
                 <jackson.databind.version>2.6.5</jackson.databind.version>
                 <commons-lang.version>2.4</commons-lang.version>
@@ -144,6 +145,7 @@
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
                 <guava.version>12.0.1</guava.version>
+                <json4s.version>3.2.11</json4s.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <commons-lang.version>2.6</commons-lang.version>
@@ -199,6 +201,7 @@
                 <guava.version>14.0.1</guava.version>
             </properties>
         </profile>
+
         <profile>
             <id>hadoop-2.6</id>
             <properties>

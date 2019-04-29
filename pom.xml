@@ -53,6 +53,7 @@
         <hadoop.version>2.8.5</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
         <spark.version>2.4.2</spark.version>
+        <spark-hive.scope>compile</spark-hive.scope>
         <aws.version>1.10.6</aws.version>
         <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
@@ -120,6 +121,7 @@
             <properties>
                 <cdh.version>cdh5.13.1</cdh.version>
                 <spark.version>2.2.0</spark.version>
+                <spark-hive.scope>provided</spark-hive.scope>
                 <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
@@ -141,6 +143,7 @@
             <properties>
                 <cdh.version>cdh5.15.1</cdh.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
+                <spark-hive.scope>provided</spark-hive.scope>
                 <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
@@ -672,7 +675,7 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-hive_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>compile</scope>
+                <scope>${spark-hive.scope}</scope>
             </dependency>
 
             <dependency>
@@ -739,6 +742,13 @@
                         <groupId>log4j</groupId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-server-resourcemanager</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

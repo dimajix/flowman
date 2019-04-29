@@ -74,6 +74,7 @@
         <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>
+        <slf4j.version>1.7.10</slf4j.version>
         <antlr.version>2.7.7</antlr.version>
         <antlr-runtime.version>3.4</antlr-runtime.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -130,6 +131,7 @@
                 <jackson.version>2.6.5</jackson.version>
                 <jackson.databind.version>2.6.5</jackson.databind.version>
                 <commons-lang.version>2.4</commons-lang.version>
+                <slf4j.version>1.7.5</slf4j.version>
             </properties>
         </profile>
         <profile>
@@ -152,6 +154,7 @@
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <commons-lang.version>2.6</commons-lang.version>
+                <slf4j.version>1.7.5</slf4j.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -888,6 +891,20 @@
             </dependency>
 
             <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
                 <version>${joda.version}</version>
@@ -919,7 +936,7 @@
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-mapper-asl</artifactId>
                 <version>${jackson_asl.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

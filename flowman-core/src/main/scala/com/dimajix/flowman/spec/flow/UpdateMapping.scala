@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.transforms.Conformer
+import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
@@ -78,7 +78,7 @@ class UpdateMapping extends BaseMapping {
         val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
 
         // Project updates DataFrame to schema of input DataFrame
-        val conformer = new Conformer(inputDf.schema)
+        val conformer = new SchemaEnforcer(inputDf.schema)
         val projectedUpdates = conformer.transform(filteredUpdates)
 
         // Perform update operation

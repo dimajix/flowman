@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 
 
-class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
+class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
     "A conforming schema" should "be generated for simple cases" in {
         val inputSchema = StructType(Seq(
             StructField("col1", StringType),
@@ -42,7 +42,7 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val xfs = new Conformer(requestedSchema)
+        val xfs = new SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
@@ -65,7 +65,7 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             "col4" -> "int"
         )
 
-        val xfs = new Conformer(requestedSchema)
+        val xfs = new SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
@@ -122,7 +122,7 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val xfs = new Conformer(requestedSchema)
+        val xfs = new SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)

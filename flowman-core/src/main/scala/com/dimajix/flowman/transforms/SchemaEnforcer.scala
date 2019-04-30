@@ -33,7 +33,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 
 
-class Conformer(schema:StructType) {
+class SchemaEnforcer(schema:StructType) {
     def this(columns:Seq[(String,String)]) = this(StructType(
         columns.map(nt => StructField(nt._1, SchemaUtils.mapType(nt._2)))
     ))

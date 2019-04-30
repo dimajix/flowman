@@ -36,12 +36,12 @@ class NullStateStoreTest extends FlatSpec with Matchers {
 
         val monitor = new NullStateStore
         monitor.checkJob(job) should be(false)
-        monitor.getState(job) should be (None)
+        monitor.getJobState(job) should be (None)
         val token = monitor.startJob(job)
-        monitor.getState(job) should be (None)
+        monitor.getJobState(job) should be (None)
         monitor.checkJob(job) should be(false)
         monitor.finishJob(token, Status.SUCCESS)
         monitor.checkJob(job) should be(false)
-        monitor.getState(job) should be (None)
+        monitor.getJobState(job) should be (None)
     }
 }

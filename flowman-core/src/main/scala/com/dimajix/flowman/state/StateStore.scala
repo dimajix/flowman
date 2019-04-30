@@ -3,11 +3,11 @@ package com.dimajix.flowman.state
 
 abstract class StateStore {
     /**
-      * Returns the state of a job
+      * Returns the state of a job, or None if no information is available
       * @param job
       * @return
       */
-    def getState(job:JobInstance) : Option[JobState]
+    def getJobState(job:JobInstance) : Option[JobState]
 
     /**
       * Performs some checkJob, if the run is required
@@ -25,8 +25,21 @@ abstract class StateStore {
 
     /**
       * Sets the status of a job after it has been started
-      * @param token
+      * @param token The token returned by startJob
       * @param status
       */
     def finishJob(token:Object, status:Status) : Unit
+
+    /**
+      * Returns the state of a specific target on its last run, or None if no information is available
+      * @param target
+      * @return
+      */
+    def getTargetState(target:TargetInstance) : Option[TargetState]
+
+    def checkTarget(target:TargetInstance) : Boolean
+
+    def startTarget(target:TargetInstance) : Object
+
+    def finishTarget(token:Object, status:Status) : Unit
 }

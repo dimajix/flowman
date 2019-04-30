@@ -26,7 +26,7 @@ class NullStateStore extends StateStore {
       * @param job
       * @return
       */
-    def getState(job:JobInstance) : Option[JobState] = None
+    def getJobState(job:JobInstance) : Option[JobState] = None
 
     /**
       * Performs some checkJob, if the run is required
@@ -48,4 +48,32 @@ class NullStateStore extends StateStore {
       * @param status
       */
     override def finishJob(token:Object, status:Status) : Unit = {}
+
+    /**
+      * Returns the state of a target
+      * @param target
+      * @return
+      */
+    def getTargetState(target:TargetInstance) : Option[TargetState] = None
+
+    /**
+      * Performs some checkTarget, if the run is required
+      * @param target
+      * @return
+      */
+    override def checkTarget(target:TargetInstance) : Boolean = false
+
+    /**
+      * Starts the run and returns a token, which can be anything
+      * @param target
+      * @return
+      */
+    override def startTarget(target:TargetInstance) : Object = null
+
+    /**
+      * Sets the status of a target after it has been started
+      * @param token
+      * @param status
+      */
+    override def finishTarget(token:Object, status:Status) : Unit = {}
 }

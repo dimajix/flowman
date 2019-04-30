@@ -76,7 +76,7 @@ object Namespace {
     }
 
     class Reader {
-        private val logger = LoggerFactory.getLogger(classOf[Project])
+        private val logger = LoggerFactory.getLogger(classOf[Namespace])
 
         def file(file: File): Namespace = {
             logger.info(s"Reading namespace file ${file.toString}")

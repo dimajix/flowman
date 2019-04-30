@@ -53,6 +53,29 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
         )))
     }
 
+    it should "support a list of columns an types" in {
+        val inputSchema = StructType(Seq(
+            StructField("col1", StringType),
+            StructField("COL2", IntegerType),
+            StructField("col3", IntegerType)
+        ))
+        val requestedSchema = Seq(
+            "col2" -> "string",
+            "col1" -> "string",
+            "col4" -> "int"
+        )
+
+        val xfs = new Conformer(requestedSchema)
+        val columns = xfs.transform(inputSchema)
+        val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
+        val outputDf = inputDf.select(columns:_*)
+        outputDf.schema should be (StructType(Seq(
+            StructField("col2", StringType),
+            StructField("col1", StringType),
+            StructField("col4", IntegerType)
+        )))
+    }
+
     it should "work with nested entities" in {
         val inputSchema = StructType(Seq(
             StructField("col1", StringType),

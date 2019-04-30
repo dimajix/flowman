@@ -48,13 +48,16 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     def createDatabase(database:String, ignoreIfExists:Boolean) : Unit = {
         require(database != null && database.nonEmpty)
 
-        if (!ignoreIfExists && databaseExists(database)) {
+        val exists = databaseExists(database)
+        if (!ignoreIfExists && exists) {
             throw new DatabaseAlreadyExistsException(database)
         }
 
-        logger.info(s"Creating Hive database $database")
-        val cmd = CreateDatabaseCommand(database, ignoreIfExists, None, None, Map())
-        cmd.run(spark)
+        if (!exists) {
+            logger.info(s"Creating Hive database $database")
+            val cmd = CreateDatabaseCommand(database, ignoreIfExists, None, None, Map())
+            cmd.run(spark)
+        }
     }
 
     /**
@@ -76,21 +79,24 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
         require(table != null)
 
-        if (!ignoreIfExists && tableExists(table.identifier)) {
+        val exists = tableExists(table.identifier)
+        if (!ignoreIfExists && exists) {
             throw new TableAlreadyExistsException(table.identifier.database.getOrElse(""), table.identifier.table)
         }
 
-        // Cleanup table definition
-        val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
-        val cleanedTable = table.copy(schema = cleanedSchema)
+        if (!exists) {
+            // Cleanup table definition
+            val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
+            val cleanedTable = table.copy(schema = cleanedSchema)
 
-        logger.info(s"Creating Hive table ${table.identifier}")
-        val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
-        cmd.run(spark)
+            logger.info(s"Creating Hive table ${table.identifier}")
+            val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
+            cmd.run(spark)
 
-        // Publish table to external catalog
-        if (externalCatalog != null) {
-            externalCatalog.createTable(table)
+            // Publish table to external catalog
+            if (externalCatalog != null) {
+                externalCatalog.createTable(table)
+            }
         }
     }
 
@@ -134,26 +140,29 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false, purge:Boolean=false) : Unit = {
         require(table != null)
 
-        if (!ignoreIfNotExists && !tableExists(table)) {
+        val exists = tableExists(table)
+        if (!ignoreIfNotExists && !exists) {
             throw new NoSuchTableException(table.database.getOrElse(""), table.table)
         }
 
-        logger.info(s"Dropping Hive table $table")
-        // Delete all partitions
-        val catalogTable = catalog.getTableMetadata(table)
-        if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            catalog.listPartitions(table).foreach(p => deleteLocation(new Path(p.location)))
-        }
+        if (exists) {
+            logger.info(s"Dropping Hive table $table")
+            // Delete all partitions
+            val catalogTable = catalog.getTableMetadata(table)
+            if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
+                catalog.listPartitions(table).foreach(p => deleteLocation(new Path(p.location)))
+            }
 
-        // Delete table itself
-        val location = getTableLocation(table)
-        deleteLocation(location)
-        val cmd = DropTableCommand(table, ignoreIfNotExists, false, purge)
-        cmd.run(spark)
+            // Delete table itself
+            val location = getTableLocation(table)
+            deleteLocation(location)
+            val cmd = DropTableCommand(table, ignoreIfNotExists, false, purge)
+            cmd.run(spark)
 
-        // Remove table from external catalog
-        if (externalCatalog != null) {
-            externalCatalog.dropTable(catalogTable)
+            // Remove table from external catalog
+            if (externalCatalog != null) {
+                externalCatalog.dropTable(catalogTable)
+            }
         }
     }
 
@@ -224,6 +233,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         require(table != null)
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
+
         logger.info(s"Adding partition ${partition.spec} to table '$table' at '$location'")
         val sparkPartition = partition.mapValues(_.toString).toMap
         val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
@@ -308,15 +318,21 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         require(table != null)
         require(partitions != null)
 
-        if (!ignoreIfNotExists) {
-            partitions.foreach { spec =>
-                if (!partitionExists(table, spec))
-                    throw new NoSuchPartitionException(table.database.getOrElse(""), table.table, spec.mapValues(_.toString).toMap)
-            }
+        // Check which partitions actually exist
+        val flaggedPartitions = partitions.map(p => (p, partitionExists(table, p)))
+        if (!ignoreIfNotExists && flaggedPartitions.exists(!_._2)) {
+            val missingPartitions = flaggedPartitions.filter(!_._2).head
+            val oneMissingPartition = missingPartitions._1.mapValues(_.toString)
+            throw new NoSuchPartitionException(table.database.getOrElse(""), table.table, oneMissingPartition.toMap)
         }
 
-        logger.info(s"Dropping partitions ${partitions.map(_.spec).mkString(",")} from Hive table $table")
-        val cmd = AlterTableDropPartitionCommand(table, partitions.map(_.mapValues(_.toString).toMap), ignoreIfNotExists, purge, false)
+        // Keep only those partitions which really need to be dropped
+        val dropPartitions = flaggedPartitions.filter(_._2).map(_._1)
+        // Convert to Spark partitions
+        val sparkPartitions = dropPartitions.map(_.mapValues(_.toString).toMap)
+
+        logger.info(s"Dropping partitions ${dropPartitions.map(_.spec).mkString(",")} from Hive table $table")
+        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge, false)
         cmd.run(spark)
 
         //partitions.foreach(partition => {
@@ -329,9 +345,8 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
 
         if (externalCatalog != null) {
             val catalogTable = catalog.getTableMetadata(table)
-            partitions.foreach { partition =>
-                val sparkPartition = partition.mapValues(_.toString).toMap
-                val catalogPartition = catalog.getPartition(table, sparkPartition)
+            sparkPartitions.foreach { partition =>
+                val catalogPartition = catalog.getPartition(table, partition)
                 externalCatalog.dropPartition(catalogTable, catalogPartition)
             }
         }

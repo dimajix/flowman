@@ -42,7 +42,8 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val columns = Conformer.conformSchema(inputSchema, requestedSchema)
+        val xfs = new Conformer(requestedSchema)
+        val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
         outputDf.schema should be (StructType(Seq(
@@ -98,7 +99,8 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val columns = Conformer.conformSchema(inputSchema, requestedSchema)
+        val xfs = new Conformer(requestedSchema)
+        val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
         outputDf.schema should be (StructType(Seq(
@@ -111,18 +113,17 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
                             StructField("nested4_1", StringType),
                             StructField("nested4_3", FloatType)
                         )
-                    ), false),
+                    )),
                     StructField("nested5", StructType(
                         Seq(
                             StructField("nested5_1", StringType),
                             StructField("nested5_2", FloatType)
                         )
-                    ), false)
+                    ))
                 )
-            ), false),
+            )),
             StructField("col1", StringType),
             StructField("col4", IntegerType)
         )))
     }
-
 }

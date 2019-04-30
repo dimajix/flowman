@@ -83,8 +83,8 @@ class ConformMapping extends BaseMapping {
 
         logger.info(s"Projecting mapping '$input' onto specified schema")
         val df = tables(input)
-        val sparkSchema = schema.sparkSchema
-        Conformer.conformSchema(df, sparkSchema)
+        val xfs = new Conformer(schema.sparkSchema)
+        xfs.transform(df)
     }
 
     private def conformToColumns(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
@@ -99,7 +99,8 @@ class ConformMapping extends BaseMapping {
 
         logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
         val df = tables(input)
-        Conformer.conformColumns(df, columns)
+        val xfs = new Conformer(columns)
+        xfs.transform(df)
     }
 
     /**

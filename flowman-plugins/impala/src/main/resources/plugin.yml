@@ -4,4 +4,4 @@ version: ${plugin.version}
 isolation: false
 jars:
   - ${plugin.jar}
-  - ImpalaJDBC41-${impala.jdbc.version}
+  - ImpalaJDBC41-${impala.jdbc.version}.jar

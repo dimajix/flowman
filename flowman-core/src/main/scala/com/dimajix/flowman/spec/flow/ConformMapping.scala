@@ -60,46 +60,24 @@ class ConformMapping extends BaseMapping {
         require(executor != null)
         require(tables != null)
 
-        if (_schema != null) {
-            conformToSchema(executor, tables)
+        implicit val context = executor.context
+        val input = this.input
+        val schema = this.schema
+        val columns = this.columns
+
+        val xfs = if (schema != null) {
+            logger.info(s"Projecting mapping '$input' onto specified schema")
+            new Conformer(schema.sparkSchema)
         }
-        else if (_columns != null && _columns.nonEmpty) {
-            conformToColumns(executor, tables)
+        else if (columns != null && columns.nonEmpty) {
+            logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
+            new Conformer(columns)
         }
         else {
             throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
         }
-    }
 
-    private def conformToSchema(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        require(executor != null)
-        require(tables != null)
-
-        implicit val context = executor.context
-        val input = this.input
-        val schema = this.schema
-        require(schema != null, "Require target schema")
-        require(input != null && input.nonEmpty, "Require input mapping")
-
-        logger.info(s"Projecting mapping '$input' onto specified schema")
         val df = tables(input)
-        val xfs = new Conformer(schema.sparkSchema)
-        xfs.transform(df)
-    }
-
-    private def conformToColumns(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        require(executor != null)
-        require(tables != null)
-
-        implicit val context = executor.context
-        val input = this.input
-        val columns = this.columns
-        require(columns != null && columns.nonEmpty, "Require non empty columns")
-        require(input != null && input.nonEmpty, "Require input mapping")
-
-        logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
-        val df = tables(input)
-        val xfs = new Conformer(columns)
         xfs.transform(df)
     }
 

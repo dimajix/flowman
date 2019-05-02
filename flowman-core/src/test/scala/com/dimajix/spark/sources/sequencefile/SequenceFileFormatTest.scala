@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -158,6 +159,68 @@ class SequenceFileFormatTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val rowsOut = dfOut.orderBy(col("value")).collect.toSeq
         val rowsIn = dfIn.orderBy(col("value")).collect.toSeq
+        rowsIn should be (rowsOut)
+
+        tempFile.delete()
+    }
+
+    it should "support reading only values via column pruning" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val dfOut = Seq(
+            ("key1", "value1"),
+            ("key2", "value2")
+        ).toDF
+
+        val tempFile = new File(tempDir, "seq1.seq")
+        dfOut.write
+            .format("sequencefile")
+            .mode("overwrite")
+            .option("path", tempFile.toString)
+            .save()
+
+        val dfIn = spark.read
+            .format("sequencefile")
+            .schema(dfOut.schema)
+            .option("path", tempFile.toString)
+            .load()
+            .select("_2")
+        dfIn.schema should be (StructType(Seq(StructField("_2", StringType))))
+
+        val rowsOut = dfOut.select("_2").orderBy(col("_2")).collect.toSeq
+        val rowsIn = dfIn.orderBy(col("_2")).collect.toSeq
+        rowsIn should be (rowsOut)
+
+        tempFile.delete()
+    }
+
+    it should "support reading column in different order" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val dfOut = Seq(
+            ("key1", "value1"),
+            ("key2", "value2")
+        ).toDF
+
+        val tempFile = new File(tempDir, "seq1.seq")
+        dfOut.write
+            .format("sequencefile")
+            .mode("overwrite")
+            .option("path", tempFile.toString)
+            .save()
+
+        val dfIn = spark.read
+            .format("sequencefile")
+            .schema(dfOut.schema)
+            .option("path", tempFile.toString)
+            .load()
+            .select("_2", "_1")
+        dfIn.schema should be (StructType(Seq(StructField("_2", StringType), StructField("_1", StringType))))
+
+        val rowsOut = dfOut.select("_2", "_1").orderBy(col("_2")).collect.toSeq
+        val rowsIn = dfIn.orderBy(col("_2")).collect.toSeq
         rowsIn should be (rowsOut)
 
         tempFile.delete()

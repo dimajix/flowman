@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.CodecStreams
@@ -38,8 +39,6 @@ import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-
-import com.dimajix.flowman.hadoop.SerializableConfiguration
 
 
 class SequenceFileFormat extends DataSourceRegister with FileFormat {
@@ -67,7 +66,7 @@ class SequenceFileFormat extends DataSourceRegister with FileFormat {
                          filters: Seq[Filter],
                          parameters: Map[String, String],
                          hadoopConf: Configuration): PartitionedFile => Iterator[InternalRow] = {
-        val options = new SequenceFileOptions(sparkSession.sparkContext.hadoopConfiguration, parameters, dataSchema)
+        val options = new SequenceFileOptions(sparkSession.sparkContext.hadoopConfiguration, parameters, dataSchema, requiredSchema)
 
         (file:PartitionedFile) => {
             val seqFile = new SequenceFile.Reader(options.hadoopConf,
@@ -100,13 +99,25 @@ class SequenceFileFormat extends DataSourceRegister with FileFormat {
 
 
 private[spark] class SequenceFileIterator(seqFile:SequenceFile.Reader, options:SequenceFileOptions) extends Iterator[InternalRow] {
+    private val keyName = options.keyName
     private val keyConverter = options.keyConverter
-    private val valueConverter = options.valueConverter
     private val keyReader = keyConverter.converter
-    private val valueReader = valueConverter.converter
-
     private val key = keyConverter.writableFactory()
+
+    private val valueName = options.valueName
+    private val valueConverter = options.valueConverter
+    private val valueReader = valueConverter.converter
     private val value = valueConverter.writableFactory()
+
+    // Build list of readers for all required columns
+    private val readers = options.requiredSchema.map { field =>
+        field.name match {
+            case `keyName` => () => keyReader(key)
+            case `valueName` => () => valueReader(value)
+            case _ => () => null: Any
+        }
+    }
+
     private var validKeyValue = seqFile.next(key, value)
 
     override def hasNext: Boolean = {
@@ -114,12 +125,7 @@ private[spark] class SequenceFileIterator(seqFile:SequenceFile.Reader, options:S
     }
 
     override def next(): InternalRow = {
-        val result = if (options.hasKey) {
-            InternalRow(keyReader(key), valueReader(value))
-        }
-        else {
-            InternalRow(valueReader(value))
-        }
+        val result = InternalRow.fromSeq(readers.map(r => r()))
         validKeyValue = seqFile.next(key, value)
         result
     }

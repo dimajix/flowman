@@ -119,25 +119,42 @@ object WritableConverter {
 
 class SequenceFileOptions(
         val config:SerializableConfiguration,
-         @transient val parameters: CaseInsensitiveMap[String],
-         val schema:StructType) extends Serializable {
+        @transient val parameters: CaseInsensitiveMap[String],
+        val dataSchema:StructType,
+        val requiredSchema:StructType) extends Serializable {
 
-    if (schema.fields.length > 2)
-        throw new IllegalArgumentException("SequenceFiles can only contain up to two columns")
+    require(config != null)
+    require(parameters != null)
+    require(dataSchema != null)
+    require(requiredSchema != null)
 
-    def this(config:Configuration, parameters: Map[String, String], schema:StructType) = {
-        this(new SerializableConfiguration(config), CaseInsensitiveMap(parameters), schema)
+    if (dataSchema.fields.length > 2)
+        throw new IllegalArgumentException("SequenceFiles can only read or write up to two columns")
+    if (requiredSchema.fields.length > 2)
+        throw new IllegalArgumentException("SequenceFiles can only read or write up to two columns")
+
+    def this(config:Configuration, parameters: Map[String, String], dataSchema:StructType, requiredSchema:StructType) = {
+        this(new SerializableConfiguration(config), CaseInsensitiveMap(parameters), dataSchema, requiredSchema)
+    }
+    def this(config:Configuration, parameters: Map[String, String], dataSchema:StructType) = {
+        this(new SerializableConfiguration(config), CaseInsensitiveMap(parameters), dataSchema, dataSchema)
     }
 
     def hadoopConf : Configuration = config.value
 
-    def hasKey : Boolean = schema.fields.length > 1
+    def hasKey : Boolean = dataSchema.fields.length > 1
     def keyIdx : Int = if (hasKey) 0 else -1
     def valueIdx  : Int = if (hasKey) 1 else 0
 
-    def keyType : DataType = if (hasKey) schema.fields(0).dataType else NullType
-    def valueType : DataType = schema.fields(valueIdx).dataType
+    def keyName : String = if (hasKey) dataSchema.fields(0).name else ""
+    def valueName : String = dataSchema.fields(valueIdx).name
+
+    def keyType : DataType = if (hasKey) dataSchema.fields(0).dataType else NullType
+    def valueType : DataType = dataSchema.fields(valueIdx).dataType
 
     def keyConverter : WritableConverter = WritableConverter.of(keyType, keyIdx)
     def valueConverter : WritableConverter = WritableConverter.of(valueType, valueIdx)
+
+    def requireKeyIdx = if (hasKey) requiredSchema.fields.map(_.name).indexOf(keyName) else -1
+    def requireValueIdx = requiredSchema.fields.map(_.name).indexOf(valueName)
 }

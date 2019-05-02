@@ -28,29 +28,33 @@ import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
 case class CaseFormatter(inputFormat:CaseFormat, outputFormat:CaseFormat) extends TreeTransformer {
-    def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
+    private def rename(str:String) : String = {
+        inputFormat.to(outputFormat, str)
+    }
+
+    override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
         def processStruct(node:StructNode[T]) : StructNode[T] = {
             val children = node.children
             val newChildren = children.map(processNode)
-            val newName = inputFormat.to(outputFormat, node.name)
+            val newName = rename(node.name)
 
             node.withName(newName).withChildren(newChildren)
         }
         def processMap(node:MapNode[T]) : MapNode[T] = {
             val newKey = processNode(node.mapKey)
             val newValue = processNode(node.mapValue)
-            val newName = inputFormat.to(outputFormat, node.name)
+            val newName = rename(node.name)
 
             node.withName(newName).withKeyValue(newKey, newValue)
         }
         def processArray(node:ArrayNode[T]) : ArrayNode[T] = {
             val newElement = processNode(node.elements)
-            val newName = inputFormat.to(outputFormat, node.name)
+            val newName = rename(node.name)
 
             node.withName(newName).withElements(newElement)
         }
         def processLeaf(node:LeafNode[T]) : LeafNode[T] = {
-            val newName = inputFormat.to(outputFormat, node.name)
+            val newName = rename(node.name)
             node.withName(newName)
         }
         def processNode(node:Node[T]) : Node[T] = {

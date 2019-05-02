@@ -67,11 +67,11 @@ class SchemaMapping extends BaseMapping {
 
         val xfs = if (schema != null) {
             logger.info(s"Projecting mapping '$input' onto specified schema")
-            new SchemaEnforcer(schema.sparkSchema)
+            SchemaEnforcer(schema.sparkSchema)
         }
         else if (columns != null && columns.nonEmpty) {
             logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
-            new SchemaEnforcer(columns)
+            SchemaEnforcer(columns)
         }
         else {
             throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")

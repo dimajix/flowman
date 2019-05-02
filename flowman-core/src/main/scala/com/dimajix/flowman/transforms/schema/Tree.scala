@@ -180,6 +180,14 @@ sealed abstract class Node[T] {
 }
 
 
+/**
+  * A LeafNode represents a single fully qualified column, which has no more child elements
+  * @param name
+  * @param value
+  * @param nullable
+  * @param metadata
+  * @tparam T
+  */
 case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
     override def children : Seq[Node[T]] = Seq()
 
@@ -390,6 +398,18 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
     }
 
     /**
+      * Replaces the children of this node
+      * @param newChildren
+      * @return
+      */
+    def withChildren(newChildren:Seq[Node[T]]) : StructNode[T] = {
+        if (newChildren.length != children.length || children.zip(newChildren).exists(xy => xy._1 ne xy._2))
+            copy( children=newChildren, value=None)
+        else
+            this
+    }
+
+    /**
       * Drops the specified path and returns a new subtree representing the pruned tree
       * @param path
       * @return
@@ -553,6 +573,18 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
             this
     }
 
+    /**
+      * Returns an ArrayNode with the specified child type
+      * @param newElements
+      * @return
+      */
+    def withElements(newElements:Node[T]) : ArrayNode[T] = {
+        if (newElements ne elements)
+            copy(elements=newElements, value=None)
+        else
+            this
+    }
+
     override def drop(path:Path) : ArrayNode[T] = {
         require(path.segments.nonEmpty)
         val prunedElements = elements.drop(path)
@@ -670,6 +702,19 @@ case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Nod
     override def withMetadata(meta:Map[String,String]) : MapNode[T] = {
         if (meta != metadata)
             copy(metadata=meta)
+        else
+            this
+    }
+
+    /**
+      * Returns an MapNode with the specified key and value types
+      * @param newKey
+      * @param newValue
+      * @return
+      */
+    def withKeyValue(newKey:Node[T], newValue:Node[T]) : MapNode[T] = {
+        if ((newKey ne newKey) || (newValue ne mapValue))
+            copy(mapKey=newKey, mapValue=newValue, value=None)
         else
             this
     }

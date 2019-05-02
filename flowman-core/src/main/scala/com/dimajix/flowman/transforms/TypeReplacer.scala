@@ -17,7 +17,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 
 
-class TypeReplacer(replace:Map[String, FieldType]) {
+case class TypeReplacer(replace:Map[String, FieldType]) {
     private val typeAliases = Map(
         "text" -> "string",
         "long" -> "bigint",

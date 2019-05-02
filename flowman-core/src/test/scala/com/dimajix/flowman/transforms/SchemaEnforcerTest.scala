@@ -42,7 +42,7 @@ class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val xfs = new SchemaEnforcer(requestedSchema)
+        val xfs = SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
@@ -65,7 +65,7 @@ class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
             "col4" -> "int"
         )
 
-        val xfs = new SchemaEnforcer(requestedSchema)
+        val xfs = SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
@@ -122,7 +122,7 @@ class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val xfs = new SchemaEnforcer(requestedSchema)
+        val xfs = SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)

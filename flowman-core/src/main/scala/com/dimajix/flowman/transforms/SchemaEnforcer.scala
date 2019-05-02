@@ -32,12 +32,15 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
+object SchemaEnforcer {
+    def apply(columns:Seq[(String,String)]) : SchemaEnforcer = {
+        val schema = StructType(columns.map(nt => StructField(nt._1, SchemaUtils.mapType(nt._2))))
+        SchemaEnforcer(schema)
+    }
+}
 
-class SchemaEnforcer(schema:StructType) {
-    def this(columns:Seq[(String,String)]) = this(StructType(
-        columns.map(nt => StructField(nt._1, SchemaUtils.mapType(nt._2)))
-    ))
 
+case class SchemaEnforcer(schema:StructType) {
     /**
       * Helper method for conforming a given schema to a target schema. This will project the given schema and also
       * add missing columns (which are filled with NULL values)

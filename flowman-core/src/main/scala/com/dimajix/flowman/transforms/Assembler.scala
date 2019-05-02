@@ -220,11 +220,11 @@ sealed abstract class Assembler {
 
     /**
       * Reassembles a Flowman schema (given as a sequence of fields)
-      * @param fields
+      * @param schema
       * @return
       */
-    def reassemble(fields:StructType) : StructType = {
-        val tree = SchemaTree.ofSchema(fields)
+    def reassemble(schema:StructType) : StructType = {
+        val tree = SchemaTree.ofSchema(schema)
         val newTree = reassemble(tree)
         val columns = newTree.flatMap(_.children.map(_.mkValue()))
         StructType(columns)

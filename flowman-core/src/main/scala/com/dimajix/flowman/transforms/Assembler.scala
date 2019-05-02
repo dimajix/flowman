@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,10 @@ object Assembler {
         }
     }
 
+    /**
+      * This builder is used to either keep certain columns or to drop columns
+      * @param name
+      */
     class ColumnBuilder(name:String="") extends Builder {
         private var _path = Path()
         private val _keep = mutable.ListBuffer[Path]()
@@ -80,6 +84,9 @@ object Assembler {
         }
     }
 
+    /**
+      * This builder is used to lift nested columns to the top level
+      */
     class LiftBuilder extends Builder {
         private var _path = Path()
         private val _columns = mutable.ListBuffer[Path]()
@@ -102,6 +109,10 @@ object Assembler {
         }
     }
 
+    /**
+      * This builder is used to assemble the output of multiple sub-builders
+      * @param name
+      */
     class StructBuilder(name:String) extends RecursiveBuilder {
         def columns(spec:ColumnBuilder => Unit) : StructBuilder = {
             val builder = new ColumnBuilder()
@@ -151,6 +162,9 @@ object Assembler {
         }
     }
 
+    /**
+      * This builder is simply used for renaming individual columns
+      */
     class RenameBuilder extends Builder {
         private var _path = Path()
         private val _columns = mutable.ListBuffer[(String,Path)]()

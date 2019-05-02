@@ -63,7 +63,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |    location: test/data/data_1.csv
               |    schema:
               |      kind: embedded
-              |      schema:
+              |      fields:
               |        - name: f1
               |          type: string
               |        - name: f2

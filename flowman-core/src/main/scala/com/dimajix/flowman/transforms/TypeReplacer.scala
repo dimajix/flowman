@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dimajix.flowman.transforms
 
 import java.util.Locale
@@ -17,7 +33,11 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 
 
-case class TypeReplacer(replace:Map[String, FieldType]) {
+/**
+  * This
+  * @param replace
+  */
+case class TypeReplacer(replace:Map[String, FieldType]) extends Transformer {
     private val typeAliases = Map(
         "text" -> "string",
         "long" -> "bigint",
@@ -29,7 +49,7 @@ case class TypeReplacer(replace:Map[String, FieldType]) {
             typeAliases.getOrElse(kv._1, kv._1) -> kv._2
         )
 
-    def transform(df:DataFrame) : DataFrame = {
+    override def transform(df:DataFrame) : DataFrame = {
         def fqName(prefix:String, name:String) : String = {
             if (prefix.isEmpty)
                 name
@@ -88,7 +108,7 @@ case class TypeReplacer(replace:Map[String, FieldType]) {
         df.select(columns:_*)
     }
 
-    def transform(schema:StructType) : StructType = {
+    override def transform(schema:StructType) : StructType = {
         def processType(fieldType: FieldType) : FieldType = {
             fieldType match {
                 case dt:DecimalType => typeMap.getOrElse("decimal", dt)

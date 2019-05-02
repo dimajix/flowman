@@ -687,7 +687,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
                |    table: lala_0004
                |    schema:
                |      kind: inline
-               |      schema:
+               |      fields:
                |        - name: str_col
                |          type: string
                |        - name: int_col

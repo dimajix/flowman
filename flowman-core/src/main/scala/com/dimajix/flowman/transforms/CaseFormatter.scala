@@ -17,23 +17,17 @@
 package com.dimajix.flowman.transforms
 
 import com.google.common.base.CaseFormat
-import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.transforms.schema.ArrayNode
-import com.dimajix.flowman.transforms.schema.ColumnTree
 import com.dimajix.flowman.transforms.schema.LeafNode
 import com.dimajix.flowman.transforms.schema.MapNode
 import com.dimajix.flowman.transforms.schema.Node
 import com.dimajix.flowman.transforms.schema.NodeOps
-import com.dimajix.flowman.transforms.schema.SchemaTree
 import com.dimajix.flowman.transforms.schema.StructNode
-import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
-case class CaseFormatter(inputFormat:CaseFormat, outputFormat:CaseFormat) {
-    import com.dimajix.flowman.transforms.schema.ColumnTree.implicits._
-    import com.dimajix.flowman.transforms.schema.SchemaTree.implicits._
-
+case class CaseFormatter(inputFormat:CaseFormat, outputFormat:CaseFormat) extends TreeTransformer {
     def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
         def processStruct(node:StructNode[T]) : StructNode[T] = {
             val children = node.children
@@ -69,29 +63,5 @@ case class CaseFormatter(inputFormat:CaseFormat, outputFormat:CaseFormat) {
         }
 
         processNode(root)
-    }
-
-    /**
-      * Transforms the field names of a dataframe to the desired case format
-      * @param df
-      * @return
-      */
-    def transform(df:DataFrame) : DataFrame = {
-        val tree = ColumnTree.ofSchema(df.schema)
-        val newTree = transform(tree)
-        val columns = newTree.children.map(_.mkValue())
-        df.select(columns:_*)
-    }
-
-    /**
-      * Transforms the field names of a schema to the desired case format
-      * @param schema
-      * @return
-      */
-    def transform(schema:StructType) : StructType = {
-        val tree = SchemaTree.ofSchema(schema)
-        val newTree = transform(tree)
-        val columns = newTree.children.map(_.mkValue())
-        StructType(columns)
     }
 }

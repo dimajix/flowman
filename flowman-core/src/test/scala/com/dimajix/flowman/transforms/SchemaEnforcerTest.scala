@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.LocalSparkSession
 
 
-class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
+class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
     "A conforming schema" should "be generated for simple cases" in {
         val inputSchema = StructType(Seq(
             StructField("col1", StringType),
@@ -42,7 +42,31 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val columns = Conformer.conformSchema(inputSchema, requestedSchema)
+        val xfs = SchemaEnforcer(requestedSchema)
+        val columns = xfs.transform(inputSchema)
+        val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
+        val outputDf = inputDf.select(columns:_*)
+        outputDf.schema should be (StructType(Seq(
+            StructField("col2", StringType),
+            StructField("col1", StringType),
+            StructField("col4", IntegerType)
+        )))
+    }
+
+    it should "support a list of columns an types" in {
+        val inputSchema = StructType(Seq(
+            StructField("col1", StringType),
+            StructField("COL2", IntegerType),
+            StructField("col3", IntegerType)
+        ))
+        val requestedSchema = Seq(
+            "col2" -> "string",
+            "col1" -> "string",
+            "col4" -> "int"
+        )
+
+        val xfs = SchemaEnforcer(requestedSchema)
+        val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
         outputDf.schema should be (StructType(Seq(
@@ -98,7 +122,8 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col4", IntegerType)
         ))
 
-        val columns = Conformer.conformSchema(inputSchema, requestedSchema)
+        val xfs = SchemaEnforcer(requestedSchema)
+        val columns = xfs.transform(inputSchema)
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         val outputDf = inputDf.select(columns:_*)
         outputDf.schema should be (StructType(Seq(
@@ -111,18 +136,17 @@ class ConfomerTest extends FlatSpec with Matchers with LocalSparkSession {
                             StructField("nested4_1", StringType),
                             StructField("nested4_3", FloatType)
                         )
-                    ), false),
+                    )),
                     StructField("nested5", StructType(
                         Seq(
                             StructField("nested5_1", StringType),
                             StructField("nested5_2", FloatType)
                         )
-                    ), false)
+                    ))
                 )
-            ), false),
+            )),
             StructField("col1", StringType),
             StructField("col4", IntegerType)
         )))
     }
-
 }

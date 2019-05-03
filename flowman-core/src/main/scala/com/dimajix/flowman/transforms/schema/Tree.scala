@@ -157,6 +157,13 @@ sealed abstract class Node[T] {
     def withMetadata(meta:Map[String,String]) : Node[T]
 
     /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    def transform(fn:Node[T] => Node[T]) : Node[T]
+
+    /**
       * Drops the specified path and returns a new subtree representing the pruned tree
       * @param path
       * @return
@@ -180,6 +187,14 @@ sealed abstract class Node[T] {
 }
 
 
+/**
+  * A LeafNode represents a single fully qualified column, which has no more child elements
+  * @param name
+  * @param value
+  * @param nullable
+  * @param metadata
+  * @tparam T
+  */
 case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
     override def children : Seq[Node[T]] = Seq()
 
@@ -271,6 +286,13 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
         else
             this
     }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = fn(this)
 
     override def drop(path:Path) : LeafNode[T] = this
 
@@ -387,6 +409,28 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
             copy(metadata=meta)
         else
             this
+    }
+
+    /**
+      * Replaces the children of this node
+      * @param newChildren
+      * @return
+      */
+    def withChildren(newChildren:Seq[Node[T]]) : StructNode[T] = {
+        if (newChildren.length != children.length || children.zip(newChildren).exists(xy => xy._1 ne xy._2))
+            copy( children=newChildren, value=None)
+        else
+            this
+    }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = {
+        val newChildren = children.map(_.transform(fn))
+        fn(withChildren(newChildren))
     }
 
     /**
@@ -553,6 +597,28 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
             this
     }
 
+    /**
+      * Returns an ArrayNode with the specified child type
+      * @param newElements
+      * @return
+      */
+    def withElements(newElements:Node[T]) : ArrayNode[T] = {
+        if (newElements ne elements)
+            copy(elements=newElements, value=None)
+        else
+            this
+    }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = {
+        val newElements = elements.transform(fn)
+        fn(withElements(newElements))
+    }
+
     override def drop(path:Path) : ArrayNode[T] = {
         require(path.segments.nonEmpty)
         val prunedElements = elements.drop(path)
@@ -672,6 +738,30 @@ case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Nod
             copy(metadata=meta)
         else
             this
+    }
+
+    /**
+      * Returns an MapNode with the specified key and value types
+      * @param newKey
+      * @param newValue
+      * @return
+      */
+    def withKeyValue(newKey:Node[T], newValue:Node[T]) : MapNode[T] = {
+        if ((newKey ne newKey) || (newValue ne mapValue))
+            copy(mapKey=newKey, mapValue=newValue, value=None)
+        else
+            this
+    }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = {
+        val newKey = mapKey.transform(fn)
+        val newValue = mapValue.transform(fn)
+        fn(withKeyValue(newKey, newValue))
     }
 
     override def drop(path:Path) : MapNode[T] = {

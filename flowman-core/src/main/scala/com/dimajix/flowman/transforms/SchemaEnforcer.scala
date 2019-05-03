@@ -21,6 +21,7 @@ import java.util.Locale
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.types.ArrayType
@@ -31,18 +32,32 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
-object Conformer {
+object SchemaEnforcer {
+    def apply(columns:Seq[(String,String)]) : SchemaEnforcer = {
+        val schema = StructType(columns.map(nt => StructField(nt._1, SchemaUtils.mapType(nt._2))))
+        SchemaEnforcer(schema)
+    }
+}
+
+
+case class SchemaEnforcer(schema:StructType) {
     /**
       * Helper method for conforming a given schema to a target schema. This will project the given schema and also
       * add missing columns (which are filled with NULL values)
       * @param inputSchema - Denotes the input schema to be conformed
-      * @param requiredSchema
       * @return
       */
-    def conformSchema(inputSchema:StructType, requiredSchema:StructType) : Seq[Column] = {
+    def transform(inputSchema:StructType) : Seq[Column] = {
         def conformField(requiredField:StructField, inputType:DataType, prefix:String) : Column = {
             requiredField.dataType match {
-                case st:StructType => struct(conformStruct(st, inputType.asInstanceOf[StructType], prefix + requiredField.name + "."):_*)
+                case st:StructType =>
+                    val columns = conformStruct(st, inputType.asInstanceOf[StructType], prefix + requiredField.name + ".")
+                    if (requiredField.nullable) {
+                        when(columns.map(_.isNotNull).reduce(_ || _), struct(columns: _*))
+                    }
+                    else {
+                        struct(columns: _*)
+                    }
                 case _:ArrayType => col(prefix + requiredField.name)
                 case _:DataType => col(prefix + requiredField.name).cast(requiredField.dataType)
             }
@@ -58,33 +73,17 @@ object Conformer {
             }.toSeq
         }
 
-        conformStruct(requiredSchema, inputSchema, "")
+        conformStruct(schema, inputSchema, "")
     }
 
     /**
       * Helper method for conforming a given schema to a target schema. This will project the given schema and also
       * add missing columns (which are filled with NULL values)
       * @param df - Denotes the input DataFrame
-      * @param requiredSchema
       * @return
       */
-    def conformSchema(df:DataFrame, requiredSchema:StructType) : DataFrame = {
-        val unifiedColumns = conformSchema(df.schema, requiredSchema)
+    def transform(df:DataFrame) : DataFrame = {
+        val unifiedColumns = transform(df.schema)
         df.select(unifiedColumns:_*)
-    }
-
-    /**
-      * Conforms the DataFrame to the given set of columns and data types
-      * @param df
-      * @param columns
-      * @return
-      */
-    def conformColumns(df:DataFrame, columns:Seq[(String,String)]) : DataFrame = {
-        val inputCols = df.columns.map(col => (col.toUpperCase(Locale.ROOT), df(col))).toMap
-        val cols = columns.map(nv =>
-            inputCols.getOrElse(nv._1.toUpperCase(Locale.ROOT), lit(null).as(nv._1))
-                .cast(SchemaUtils.mapType(nv._2))
-        )
-        df.select(cols: _*)
     }
 }

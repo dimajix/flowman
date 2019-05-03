@@ -272,20 +272,24 @@ class Job extends Resource {
         val result = runTasks(executor, _tasks)
 
         // Execute failure action
-        result match {
-            case Success(false) | Failure(_) =>
-                logger.info(s"Running failure tasks for job '$name'")
-                runTasks(executor, _failure)
-            case Success(_) =>
+        if (_failure.nonEmpty) {
+            result match {
+                case Success(false) | Failure(_) =>
+                    logger.info(s"Running failure tasks for job '$name'")
+                    runTasks(executor, _failure)
+                case Success(_) =>
+            }
         }
 
         // Execute cleanup actions
-        logger.info(s"Running cleanup tasks for job '$name'")
-        runTasks(executor, _cleanup) match {
-            case Success(true) =>
-                logger.info(s"Successfully executed all cleanup tasks of job '$name'")
-            case Success(false) | Failure(_) =>
-                logger.error(s"Execution of cleanup tasks failed for job '$name'")
+        if (_cleanup.nonEmpty) {
+            logger.info(s"Running cleanup tasks for job '$name'")
+            runTasks(executor, _cleanup) match {
+                case Success(true) =>
+                    logger.info(s"Successfully executed all cleanup tasks of job '$name'")
+                case Success(false) | Failure(_) =>
+                    logger.error(s"Execution of cleanup tasks failed for job '$name'")
+            }
         }
 
         result match {

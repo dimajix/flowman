@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
@@ -23,94 +25,75 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.transforms.Conformer
+import com.dimajix.flowman.transforms.CaseFormatter
+import com.dimajix.flowman.transforms.Transformer
+import com.dimajix.flowman.transforms.TypeReplacer
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
 object ConformMapping {
-    def apply(input:String, columns:Map[String,String]) : ConformMapping = {
-        val mapping = new ConformMapping
-        mapping._input = input
-        mapping._columns = columns
-        mapping
+    private val typeAliases = Map(
+        "text" -> "string",
+        "long" -> "bigint",
+        "short" -> "tinyint"
+    )
+    def apply(input:String, types:Map[String,String]) : ConformMapping = {
+        val result = new ConformMapping
+        result._input = input
+        result._types = types
+        result
+    }
+    def apply(input:String, caseFormat:String) : ConformMapping = {
+        val result = new ConformMapping
+        result._input = input
+        result._naming = caseFormat
+        result
     }
 }
 
 
 class ConformMapping extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ConformMapping])
+    import ConformMapping.typeAliases
+    private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
 
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = false) private[spec] var _columns:Map[String,String] = Map()
-    @JsonProperty(value = "schema", required = false) private var _schema: Schema = _
+    @JsonProperty(value = "types", required = false) private[spec] var _types:Map[String,String] = Map()
+    @JsonProperty(value = "naming", required = false) private[spec] var _naming:String = _
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
-    def schema(implicit context: Context): Schema = _schema
+    def types(implicit context: Context) : Map[String,FieldType] = _types.map(kv =>
+        typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
+    )
+    def naming(implicit context: Context) : String = context.evaluate(_naming)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param tables
+      * @param input
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
         require(executor != null)
-        require(tables != null)
+        require(input != null)
 
-        if (_schema != null) {
-            conformToSchema(executor, tables)
-        }
-        else if (_columns != null && _columns.nonEmpty) {
-            conformToColumns(executor, tables)
-        }
-        else {
-            throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
-        }
-    }
+        implicit val icontext = executor.context
+        val mappingId = this.input
+        val df = input(mappingId)
+        val transforms = this.transforms
 
-    private def conformToSchema(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        require(executor != null)
-        require(tables != null)
-
-        implicit val context = executor.context
-        val input = this.input
-        val schema = this.schema
-        require(schema != null, "Require target schema")
-        require(input != null && input.nonEmpty, "Require input mapping")
-
-        logger.info(s"Projecting mapping '$input' onto specified schema")
-        val df = tables(input)
-        val sparkSchema = schema.sparkSchema
-        Conformer.conformSchema(df, sparkSchema)
-    }
-
-    private def conformToColumns(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        require(executor != null)
-        require(tables != null)
-
-        implicit val context = executor.context
-        val input = this.input
-        val columns = this.columns
-        require(columns != null && columns.nonEmpty, "Require non empty columns")
-        require(input != null && input.nonEmpty, "Require input mapping")
-
-        logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
-        val df = tables(input)
-        Conformer.conformColumns(df, columns)
+        // Apply all transformations in order
+        transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
     }
 
     /**
-      * Returns the dependencies of this mapping, which is exactly one input table
+      * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
-        Array(input)
-    }
+    override def dependencies(implicit context: Context): Array[MappingIdentifier] = Array(input)
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
@@ -123,6 +106,18 @@ class ConformMapping extends BaseMapping {
         require(input != null)
 
         implicit val icontext = context
-        StructType(schema.fields)
+        val mappingId = this.input
+        val schema = input(mappingId)
+        val transforms = this.transforms
+
+        // Apply all transformations in order
+        transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
+    }
+
+    private def transforms(implicit context: Context) : Seq[Transformer] = {
+        Seq(
+            Option(types).filter(_.nonEmpty).map(t => TypeReplacer(t)),
+            Option(naming).filter(_.nonEmpty).map(f => CaseFormatter(f))
+        ).flatten
     }
 }

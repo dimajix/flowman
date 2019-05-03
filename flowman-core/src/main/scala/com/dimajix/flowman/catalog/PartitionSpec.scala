@@ -68,4 +68,14 @@ case class PartitionSpec(values:MapIgnoreCase[Any]) {
             .map(nv => ExternalCatalogUtils.getPartitionPathString(nv._1, nv._2.toString))
             .foldLeft(root)((path, segment) => new Path(path, segment))
     }
+
+    def spec : String = {
+        def str(any:Any) : String = {
+            any match {
+                case s:String => "'" + s + "'"
+                case _ => any.toString
+            }
+        }
+        toSeq.map(kv => kv._1 + "=" + str(kv._2)).mkString("(",",",")")
+    }
 }

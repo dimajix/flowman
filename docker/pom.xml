@@ -15,6 +15,7 @@
     </parent>
 
     <properties>
+        <docker.base-image.repository>dimajix/spark</docker.base-image.repository>
         <docker.base-image.version>${spark.version}</docker.base-image.version>
     </properties>
 
@@ -22,7 +23,7 @@
         <profile>
             <id>CDH-5.15</id>
             <properties>
-                <docker.base-image.version>2.3.1</docker.base-image.version>
+                <docker.base-image.version>2.3.3</docker.base-image.version>
             </properties>
         </profile>
     </profiles>

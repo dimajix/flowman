@@ -23,6 +23,7 @@ import java.util.Properties
 
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.jdbc.HiveDialect
 
@@ -44,9 +45,11 @@ object ImpalaExternalCatalog {
 
 
 class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends ExternalCatalog {
+    private val logger = LoggerFactory.getLogger(classOf[ImpalaExternalCatalog])
     private val connect = createConnectionFactory(connection)
 
     override def createTable(table: CatalogTable): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for newly created table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             stmt.execute(s"INVALIDATE METADATA $identifier")
@@ -54,6 +57,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def alterTable(table: CatalogTable): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for modified table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             stmt.execute(s"REFRESH METADATA $identifier")
@@ -61,6 +65,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def dropTable(table: CatalogTable): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for dropped table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             stmt.execute(s"INVALIDATE METADATA $identifier")
@@ -68,6 +73,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def truncateTable(table: CatalogTable): Unit = {
+        logger.info(s"REFRESH Impala metadata for truncated table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             stmt.execute(s"REFRESH METADATA $identifier")
@@ -75,6 +81,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def addPartition(table: CatalogTable, partition: CatalogTablePartition): Unit = {
+        logger.info(s"REFRESH Impala metadata for new partition ${partition.spec} of table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
@@ -83,6 +90,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def alterPartition(table: CatalogTable, partition: CatalogTablePartition): Unit =  {
+        logger.info(s"REFRESH Impala metadata for changed partition ${partition.spec} of table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
@@ -91,6 +99,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def dropPartition(table: CatalogTable, partition: CatalogTablePartition): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for dropped partition ${partition.spec} of table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             stmt.execute(s"INVALIDATE METADATA $identifier")
@@ -98,6 +107,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def truncatePartition(table: CatalogTable, partition: CatalogTablePartition): Unit =  {
+        logger.info(s"REFRESH Impala metadata for truncated partition ${partition.spec} of table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))

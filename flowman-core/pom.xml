@@ -14,6 +14,18 @@
     </parent>
 
     <profiles>
+        <!-- First come the Hadoop distributon profiles -->
+        <profile>
+            <id>CDH-5.15</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-avro_${scala.api_version}</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- Then come the individual package profiles, which can override distribution settings -->
         <profile>
             <id>spark-2.2</id>
             <dependencies>
@@ -35,6 +47,7 @@
         <profile>
             <id>spark-2.4</id>
             <activation>
+                <!-- This setting ensures that we have at least one Avro library enabled per default -->
                 <activeByDefault>true</activeByDefault>
             </activation>
             <dependencies>

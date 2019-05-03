@@ -54,39 +54,6 @@ case class CaseFormatter(format:String) extends TreeTransformer {
     }
 
     override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
-        def processStruct(node:StructNode[T]) : StructNode[T] = {
-            val children = node.children
-            val newChildren = children.map(processNode)
-            val newName = rename(node.name)
-
-            node.withName(newName).withChildren(newChildren)
-        }
-        def processMap(node:MapNode[T]) : MapNode[T] = {
-            val newKey = processNode(node.mapKey)
-            val newValue = processNode(node.mapValue)
-            val newName = rename(node.name)
-
-            node.withName(newName).withKeyValue(newKey, newValue)
-        }
-        def processArray(node:ArrayNode[T]) : ArrayNode[T] = {
-            val newElement = processNode(node.elements)
-            val newName = rename(node.name)
-
-            node.withName(newName).withElements(newElement)
-        }
-        def processLeaf(node:LeafNode[T]) : LeafNode[T] = {
-            val newName = rename(node.name)
-            node.withName(newName)
-        }
-        def processNode(node:Node[T]) : Node[T] = {
-            node match {
-                case st:StructNode[T] => processStruct(st)
-                case at:ArrayNode[T] => processArray(at)
-                case mt:MapNode[T] => processMap(mt)
-                case leaf:LeafNode[T] => processLeaf(leaf)
-            }
-        }
-
-        processNode(root)
+        root.transform(node => node.withName(rename(node.name)))
     }
 }

@@ -157,6 +157,13 @@ sealed abstract class Node[T] {
     def withMetadata(meta:Map[String,String]) : Node[T]
 
     /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    def transform(fn:Node[T] => Node[T]) : Node[T]
+
+    /**
       * Drops the specified path and returns a new subtree representing the pruned tree
       * @param path
       * @return
@@ -279,6 +286,13 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
         else
             this
     }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = fn(this)
 
     override def drop(path:Path) : LeafNode[T] = this
 
@@ -407,6 +421,16 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
             copy( children=newChildren, value=None)
         else
             this
+    }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = {
+        val newChildren = children.map(_.transform(fn))
+        fn(withChildren(newChildren))
     }
 
     /**
@@ -585,6 +609,16 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
             this
     }
 
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = {
+        val newElements = elements.transform(fn)
+        fn(withElements(newElements))
+    }
+
     override def drop(path:Path) : ArrayNode[T] = {
         require(path.segments.nonEmpty)
         val prunedElements = elements.drop(path)
@@ -717,6 +751,17 @@ case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Nod
             copy(mapKey=newKey, mapValue=newValue, value=None)
         else
             this
+    }
+
+    /**
+      * This method recusrively applies a transformation first to the nodes children and then to itself
+      * @param fn
+      * @return
+      */
+    override def transform(fn:Node[T] => Node[T]) : Node[T] = {
+        val newKey = mapKey.transform(fn)
+        val newValue = mapValue.transform(fn)
+        fn(withKeyValue(newKey, newValue))
     }
 
     override def drop(path:Path) : MapNode[T] = {

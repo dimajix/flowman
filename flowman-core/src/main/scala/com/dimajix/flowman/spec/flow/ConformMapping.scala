@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.transforms.CaseFormatter
+import com.dimajix.flowman.transforms.Transformer
 import com.dimajix.flowman.transforms.TypeReplacer
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
@@ -42,6 +44,12 @@ object ConformMapping {
         result._types = types
         result
     }
+    def apply(input:String, caseFormat:String) : ConformMapping = {
+        val result = new ConformMapping
+        result._input = input
+        result._naming = caseFormat
+        result
+    }
 }
 
 
@@ -50,12 +58,14 @@ class ConformMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
 
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "types") private[spec] var _types:Map[String,String] = Map()
+    @JsonProperty(value = "types", required = false) private[spec] var _types:Map[String,String] = Map()
+    @JsonProperty(value = "naming", required = false) private[spec] var _naming:String = _
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
     def types(implicit context: Context) : Map[String,FieldType] = _types.map(kv =>
         typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
     )
+    def naming(implicit context: Context) : String = context.evaluate(_naming)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -69,12 +79,12 @@ class ConformMapping extends BaseMapping {
         require(input != null)
 
         implicit val icontext = executor.context
-        val types = this.types
         val mappingId = this.input
         val df = input(mappingId)
+        val transforms = this.transforms
 
-        val xfs = new TypeReplacer(types)
-        xfs.transform(df)
+        // Apply all transformations in order
+        transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
     }
 
     /**
@@ -96,11 +106,18 @@ class ConformMapping extends BaseMapping {
         require(input != null)
 
         implicit val icontext = context
-        val types = this.types
         val mappingId = this.input
         val schema = input(mappingId)
+        val transforms = this.transforms
 
-        val xfs = new TypeReplacer(types)
-        xfs.transform(schema)
+        // Apply all transformations in order
+        transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
+    }
+
+    private def transforms(implicit context: Context) : Seq[Transformer] = {
+        Seq(
+            Option(types).filter(_.nonEmpty).map(t => TypeReplacer(t)),
+            Option(naming).filter(_.nonEmpty).map(f => CaseFormatter(f))
+        ).flatten
     }
 }

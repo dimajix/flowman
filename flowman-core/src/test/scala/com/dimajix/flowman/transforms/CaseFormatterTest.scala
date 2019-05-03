@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.transforms
 
-import com.google.common.base.CaseFormat
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
@@ -50,7 +49,7 @@ class CaseFormatterTest extends FlatSpec with Matchers with LocalSparkSession {
         val inputDf = spark.read.json(inputDs)
         val inputSchema = ftypes.StructType.of(inputDf.schema)
 
-        val xfs = CaseFormatter(CaseFormat.LOWER_UNDERSCORE, CaseFormat.LOWER_CAMEL)
+        val xfs = CaseFormatter(CaseFormatter.CAMEL_CASE)
 
         val expectedSchema = StructType(Seq(
             StructField("stupidName", StructType(
@@ -94,7 +93,7 @@ class CaseFormatterTest extends FlatSpec with Matchers with LocalSparkSession {
         val inputDf = spark.read.json(inputDs)
         val inputSchema = ftypes.StructType.of(inputDf.schema)
 
-        val xfs = CaseFormatter(CaseFormat.LOWER_UNDERSCORE, CaseFormat.LOWER_CAMEL)
+        val xfs = CaseFormatter(CaseFormatter.CAMEL_CASE)
 
         val expectedSchema = StructType(Seq(
             StructField("embeddedStuff", StructType(

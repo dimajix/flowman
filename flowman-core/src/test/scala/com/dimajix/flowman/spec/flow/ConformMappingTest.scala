@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
@@ -72,6 +73,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |  my_structure:
               |    kind: conform
               |    input: some_mapping
+              |    naming: camelCase
               |    types:
               |      long: string
               |      date: timestamp
@@ -83,7 +85,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping shouldBe an[ConformMapping]
     }
 
-    it should "transform DataFrames correctly" in {
+    it should "support changing types in DataFrames" in {
         val mapping = ConformMapping(
             "input_df",
             Map(
@@ -94,50 +96,23 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
         implicit val context = executor.context
+
+        val expectedSchema = StructType(Seq(
+            StructField("double_col", DoubleType),
+            StructField("embedded", StructType(Seq(
+                StructField("some_string", IntegerType),
+                StructField("struct_array", ArrayType(
+                    StructType(Seq(
+                        StructField("value", LongType)
+                    ))
+                ))
+            ))),
+            StructField("str_col", IntegerType)
+        ))
 
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
-
-        val expectedSchema = StructType(Seq(
-            StructField("double_col", DoubleType),
-            StructField("embedded", StructType(Seq(
-                StructField("some_string", IntegerType),
-                StructField("struct_array", ArrayType(
-                    StructType(Seq(
-                        StructField("value", LongType)
-                    ))
-                ))
-            ))),
-            StructField("str_col", IntegerType)
-        ))
-
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
-    }
-
-    it should "provide a correct output schema" in {
-        val mapping = ConformMapping(
-            "input_df",
-            Map(
-                "string" -> "int"
-            )
-        )
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-
-        val expectedSchema = StructType(Seq(
-            StructField("double_col", DoubleType),
-            StructField("embedded", StructType(Seq(
-                StructField("some_string", IntegerType),
-                StructField("struct_array", ArrayType(
-                    StructType(Seq(
-                        StructField("value", LongType)
-                    ))
-                ))
-            ))),
-            StructField("str_col", IntegerType)
-        ))
 
         val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
@@ -156,5 +131,36 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         implicit val context = executor.context
 
         an[UnsupportedOperationException] shouldBe thrownBy(mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf)))
+    }
+
+    it should "support renaming fields" in {
+        val mapping = ConformMapping(
+            "input_df",
+            "camelCase"
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val expectedSchema = StructType(Seq(
+            StructField("doubleCol", DoubleType),
+            StructField("embedded", StructType(Seq(
+                StructField("someString", StringType),
+                StructField("structArray", ArrayType(
+                    StructType(Seq(
+                        StructField("value", LongType)
+                    ))
+                ))
+            ))),
+            StructField("strCol", StringType)
+        ))
+
+        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
     }
 }

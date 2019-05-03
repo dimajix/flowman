@@ -16,8 +16,7 @@
 
 package com.dimajix.flowman.transforms
 
-import com.google.common.base.CaseFormat
-
+import com.dimajix.common.text.CaseUtils
 import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.LeafNode
 import com.dimajix.flowman.transforms.schema.MapNode
@@ -27,9 +26,31 @@ import com.dimajix.flowman.transforms.schema.StructNode
 import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
-case class CaseFormatter(inputFormat:CaseFormat, outputFormat:CaseFormat) extends TreeTransformer {
+object CaseFormatter {
+    val CAMEL_CASE = "camelCase"
+    val CAMEL_CASE_UPPER = "camelCaseUpper"
+    val SNAKE_CASE = "snakeCase"
+    val SNAKE_CASE_UPPER = "snakeCaseUpper"
+
+    val ALL_CASES = Seq(CAMEL_CASE, CAMEL_CASE_UPPER, SNAKE_CASE, SNAKE_CASE_UPPER)
+}
+
+
+case class CaseFormatter(format:String) extends TreeTransformer {
+    import CaseFormatter._
+
+    val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(format))
+    if (!ALL_CASES.contains(caseFormat))
+        throw new IllegalArgumentException(s"Case format '$format' not supported, please use one of ${ALL_CASES.mkString(",")}")
+
     private def rename(str:String) : String = {
-        inputFormat.to(outputFormat, str)
+        val words = CaseUtils.splitGeneric(str)
+        caseFormat match {
+            case CAMEL_CASE => CaseUtils.joinCamel(words)
+            case CAMEL_CASE_UPPER => CaseUtils.joinCamel(words, true)
+            case SNAKE_CASE => CaseUtils.joinSnake(words)
+            case SNAKE_CASE_UPPER => CaseUtils.joinSnake(words, true)
+        }
     }
 
     override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {

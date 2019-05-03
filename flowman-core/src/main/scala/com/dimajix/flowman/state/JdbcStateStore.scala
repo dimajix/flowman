@@ -186,12 +186,12 @@ private class JdbcJobRepository(connection: JdbcStateStore.Connection, val profi
 
     def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
         val ids = targetRuns
-                .filter(tr => tr.namespace === target.namespace
-                    && tr.project === target.project
-                    && tr.target === target.target
-                    && tr.status =!= Status.SKIPPED.value)
             // Find only records with the correct number of partitions
             .joinLeft(targetPartitions).on(_.id === _.target_id)
+            .filter(tr => tr._1.namespace === target.namespace
+                && tr._1.project === target.project
+                && tr._1.target === target.target
+                && tr._1.status =!= Status.SKIPPED.value)
             .groupBy(_._1.id)
             .map { case (key,values) => key -> values.map(_._2.map(_.target_id)).countDefined }
             .filter(_._2 === partitions.size)

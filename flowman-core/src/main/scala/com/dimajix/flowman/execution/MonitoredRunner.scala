@@ -64,37 +64,8 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       *
       * @param token
       */
-    protected override def finishJob(context: Context, token: JobToken): Unit = {
-        stateStore.finishJob(token, Status.SUCCESS)
-    }
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    protected override def failJob(context: Context, token: JobToken): Unit = {
-        stateStore.finishJob(token, Status.FAILED)
-    }
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param context
-      * @param token
-      */
-    protected override def abortJob(context: Context, token: JobToken): Unit = {
-        stateStore.finishJob(token, Status.ABORTED)
-    }
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param context
-      * @param token
-      */
-    protected override def skipJob(context: Context, token: JobToken): Unit = {
-        stateStore.finishJob(token, Status.SKIPPED)
+    protected override def finishJob(context: Context, token: JobToken, status:Status): Unit = {
+        stateStore.finishJob(token, status)
     }
 
     /**
@@ -122,26 +93,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       *
       * @param token
       */
-    protected override def finishTarget(context: Context, token: TargetToken): Unit = {
-        stateStore.finishTarget(token, Status.SUCCESS)
-    }
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    protected override def failTarget(context: Context, token: TargetToken): Unit = {
-        stateStore.finishTarget(token, Status.FAILED)
-    }
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param context
-      * @param token
-      */
-    protected override def skipTarget(context: Context, token: TargetToken): Unit = {
-        stateStore.finishTarget(token, Status.SKIPPED)
+    protected override def finishTarget(context: Context, token: TargetToken, status:Status): Unit = {
+        stateStore.finishTarget(token, status)
     }
 }

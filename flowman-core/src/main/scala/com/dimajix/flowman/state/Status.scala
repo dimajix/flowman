@@ -16,21 +16,25 @@
 
 package com.dimajix.flowman.state
 
+import java.util.Locale
+
 
 sealed abstract class Status { val value:String }
 object Status {
     case object UNKNOWN extends Status { val value = "unknown" }
     case object RUNNING extends Status { val value = "running" }
     case object SUCCESS extends Status { val value = "success" }
+    case object CLEANED extends Status { val value = "cleaned" }
     case object FAILED extends Status { val value = "failed" }
     case object ABORTED extends Status { val value = "killed" }
     case object SKIPPED extends Status { val value = "skipped" }
 
     def ofString(status:String) : Status = {
-        status match {
+        status.toLowerCase(Locale.ROOT) match {
             case UNKNOWN.value => UNKNOWN
             case RUNNING.value => RUNNING
             case SUCCESS.value => SUCCESS
+            case CLEANED.value => CLEANED
             case FAILED.value => FAILED
             case ABORTED.value => ABORTED
             case SKIPPED.value => SKIPPED

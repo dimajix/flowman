@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.state.JobInstance
 import com.dimajix.flowman.state.JobToken
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.state.TargetInstance
 import com.dimajix.flowman.state.TargetToken
 
@@ -50,31 +51,7 @@ class SimpleRunner extends AbstractRunner {
       * @param context
       * @param token
       */
-    override protected def finishJob(context: Context, token:JobToken) : Unit = {}
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param context
-      * @param token
-      */
-    override protected def failJob(context: Context, token:JobToken) : Unit = {}
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param context
-      * @param token
-      */
-    override protected def abortJob(context: Context, token:JobToken) : Unit = {}
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param context
-      * @param token
-      */
-    override protected def skipJob(context: Context, token:JobToken) : Unit = {}
+    override protected def finishJob(context: Context, token:JobToken, status:Status) : Unit = {}
 
     /**
       * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt
@@ -97,19 +74,5 @@ class SimpleRunner extends AbstractRunner {
       *
       * @param token
       */
-    override protected def finishTarget(context: Context, token:TargetToken) : Unit = {}
-
-    /**
-      * Marks a run as a failure
-      *
-      * @param token
-      */
-    override protected def failTarget(context: Context, token:TargetToken) : Unit = {}
-
-    /**
-      * Marks a run as being skipped
-      *
-      * @param token
-      */
-    override protected def skipTarget(context: Context, token:TargetToken) : Unit = {}
+    override protected def finishTarget(context: Context, token:TargetToken, status:Status) : Unit = {}
 }

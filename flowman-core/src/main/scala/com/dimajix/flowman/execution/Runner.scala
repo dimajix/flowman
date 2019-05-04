@@ -42,4 +42,9 @@ abstract class Runner {
       * Builds a single target
       */
     def build(executor: Executor, target:Target) : Status
+
+    /**
+      * Cleans a single target
+      */
+    def clean(executor: Executor, target:Target) : Status
 }

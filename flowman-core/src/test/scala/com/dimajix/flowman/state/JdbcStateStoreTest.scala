@@ -35,215 +35,195 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         tempDir.toFile.delete()
     }
 
-    "The Job-API of JdbcStateStore" should "provide basic state management for jobs" in {
+    private def newStateStore() = {
         val db = tempDir.resolve("mydb")
         val connection = JdbcStateStore.Connection(
             url = "jdbc:derby:" + db + ";create=true",
             driver = "org.apache.derby.jdbc.EmbeddedDriver"
         )
-        val monitor = new JdbcStateStore(connection)
+
+        new JdbcStateStore(connection)
+    }
+
+    "The JdbcStateStore" should "create tables once" in {
+        val db = tempDir.resolve("mydb")
+        val connection = JdbcStateStore.Connection(
+            url = "jdbc:derby:" + db + ";create=true",
+            driver = "org.apache.derby.jdbc.EmbeddedDriver"
+        )
 
         val job = JobInstance("default", "p1", "j1")
 
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job, None)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishJob(token, Status.SUCCESS)
-        monitor.checkJob(job) should be(true)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        val store1 = new JdbcStateStore(connection)
+        store1.checkJob(job) should be(false)
+        val store2 = new JdbcStateStore(connection)
+        store2.checkJob(job) should be(false)
+    }
+
+    "The Job-API of JdbcStateStore" should "provide basic state management for jobs" in {
+        val store = newStateStore()
+
+        val job = JobInstance("default", "p1", "j1")
+
+        store.checkJob(job) should be(false)
+        store.getJobState(job) should be (None)
+        val token = store.startJob(job, None)
+        store.checkJob(job) should be(false)
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token, Status.SUCCESS)
+        store.checkJob(job) should be(true)
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "return failed on job failures" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val job = JobInstance("default", "p1", "j1")
 
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job, None)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishJob(token, Status.SUCCESS)
-        monitor.checkJob(job) should be(true)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.checkJob(job) should be(false)
+        store.getJobState(job) should be (None)
+        val token = store.startJob(job, None)
+        store.checkJob(job) should be(false)
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token, Status.SUCCESS)
+        store.checkJob(job) should be(true)
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startJob(job, None)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishJob(token2, Status.FAILED)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.FAILED))
+        val token2 = store.startJob(job, None)
+        store.checkJob(job) should be(false)
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token2, Status.FAILED)
+        store.checkJob(job) should be(false)
+        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
     }
 
     it should "return success on skipped jobs" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val job = JobInstance("default", "p1", "j1")
 
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job, None)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishJob(token, Status.SUCCESS)
-        monitor.checkJob(job) should be(true)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.checkJob(job) should be(false)
+        store.getJobState(job) should be (None)
+        val token = store.startJob(job, None)
+        store.checkJob(job) should be(false)
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token, Status.SUCCESS)
+        store.checkJob(job) should be(true)
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startJob(job, None)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishJob(token2, Status.SKIPPED)
-        monitor.checkJob(job) should be(true)
-        monitor.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        val token2 = store.startJob(job, None)
+        store.checkJob(job) should be(false)
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token2, Status.SKIPPED)
+        store.checkJob(job) should be(true)
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support job parameters" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val job = JobInstance("default", "p1", "j1")
 
-        monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
-        val token = monitor.startJob(job.copy(args = Map("p1" -> "v1")), None)
-        monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
-        monitor.finishJob(token, Status.SUCCESS)
-        monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(true)
-        monitor.checkJob(job.copy(args = Map("p1" -> "v2"))) should be(false)
-        monitor.checkJob(job.copy(args = Map("p2" -> "v1"))) should be(false)
-        monitor.checkJob(job) should be(false)
+        store.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
+        val token = store.startJob(job.copy(args = Map("p1" -> "v1")), None)
+        store.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
+        store.finishJob(token, Status.SUCCESS)
+        store.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(true)
+        store.checkJob(job.copy(args = Map("p1" -> "v2"))) should be(false)
+        store.checkJob(job.copy(args = Map("p2" -> "v1"))) should be(false)
+        store.checkJob(job) should be(false)
     }
 
 
     "The Target-API of JdbcStateStore" should "provide basic state management for targets" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val target = TargetInstance("default", "p1", "j1")
 
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target, None)
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishTarget(token, Status.SUCCESS)
-        monitor.checkTarget(target) should be(true)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target) should be (None)
+        val token = store.startTarget(target, None)
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token, Status.SUCCESS)
+        store.checkTarget(target) should be(true)
+        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "return failed on target failures" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val target = TargetInstance("default", "p1", "j1")
 
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target, None)
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishTarget(token, Status.SUCCESS)
-        monitor.checkTarget(target) should be(true)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target) should be (None)
+        val token = store.startTarget(target, None)
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token, Status.SUCCESS)
+        store.checkTarget(target) should be(true)
+        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startTarget(target, None)
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishTarget(token2, Status.FAILED)
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
+        val token2 = store.startTarget(target, None)
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token2, Status.FAILED)
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
     }
 
     it should "return success on skipped target" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val target = TargetInstance("default", "p1", "j1")
 
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target, None)
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishTarget(token, Status.SUCCESS)
-        monitor.checkTarget(target) should be(true)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target) should be (None)
+        val token = store.startTarget(target, None)
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token, Status.SUCCESS)
+        store.checkTarget(target) should be(true)
+        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startTarget(target, None)
-        monitor.checkTarget(target) should be(false)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        monitor.finishTarget(token2, Status.SKIPPED)
-        monitor.checkTarget(target) should be(true)
-        monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        val token2 = store.startTarget(target, None)
+        store.checkTarget(target) should be(false)
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token2, Status.SKIPPED)
+        store.checkTarget(target) should be(true)
+        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support single value target partitions" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val target = TargetInstance("default", "p1", "j1")
 
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
-        val token = monitor.startTarget(target.copy(partitions = Map("p1" -> "v1")), None)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
-        monitor.finishTarget(token, Status.SUCCESS)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(true)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v2"))) should be(false)
-        monitor.checkTarget(target.copy(partitions = Map("p2" -> "v1"))) should be(false)
-        monitor.checkTarget(target) should be(false)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v1"))) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
+        val token = store.startTarget(target.copy(partitions = Map("p1" -> "v1")), None)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
+        store.finishTarget(token, Status.SUCCESS)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(true)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v2"))) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p2" -> "v1"))) should be(false)
+        store.checkTarget(target) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v1"))) should be(false)
     }
 
     it should "support multi value target partitions" in {
-        val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection(
-            url = "jdbc:derby:" + db + ";create=true",
-            driver = "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-        val monitor = new JdbcStateStore(connection)
+        val store = newStateStore()
 
         val target = TargetInstance("default", "p1", "j1")
 
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(false)
-        val token = monitor.startTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), None)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(false)
-        monitor.finishTarget(token, Status.SUCCESS)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(true)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v2", "p2" -> "v2"))) should be(false)
-        monitor.checkTarget(target.copy(partitions = Map("p3" -> "v1", "p2" -> "v2"))) should be(false)
-        monitor.checkTarget(target) should be(false)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
-        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v1"))) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(false)
+        val token = store.startTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), None)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(false)
+        store.finishTarget(token, Status.SUCCESS)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(true)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v2", "p2" -> "v2"))) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p3" -> "v1", "p2" -> "v2"))) should be(false)
+        store.checkTarget(target) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
+        store.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v1"))) should be(false)
     }
 }

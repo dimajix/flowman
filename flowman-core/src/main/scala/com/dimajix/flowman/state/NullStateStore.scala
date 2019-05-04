@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 
 package com.dimajix.flowman.state
-
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.task.Job
 
 
 class NullStateStore extends StateStore {
@@ -40,14 +37,14 @@ class NullStateStore extends StateStore {
       * @param job
       * @return
       */
-    override def startJob(job:JobInstance) : Object = null
+    override def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken = null
 
     /**
       * Sets the status of a job after it has been started
       * @param token
       * @param status
       */
-    override def finishJob(token:Object, status:Status) : Unit = {}
+    override def finishJob(token:JobToken, status:Status) : Unit = {}
 
     /**
       * Returns the state of a target
@@ -68,12 +65,12 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance) : Object = null
+    override def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
 
     /**
       * Sets the status of a target after it has been started
       * @param token
       * @param status
       */
-    override def finishTarget(token:Object, status:Status) : Unit = {}
+    override def finishTarget(token:TargetToken, status:Status) : Unit = {}
 }

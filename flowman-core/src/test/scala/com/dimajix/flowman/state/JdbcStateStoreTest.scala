@@ -47,7 +47,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job)
+        val token = monitor.startJob(job, None)
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishJob(token, Status.SUCCESS)
@@ -67,14 +67,14 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job)
+        val token = monitor.startJob(job, None)
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishJob(token, Status.SUCCESS)
         monitor.checkJob(job) should be(true)
         monitor.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startJob(job)
+        val token2 = monitor.startJob(job, None)
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishJob(token2, Status.FAILED)
@@ -94,14 +94,14 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job)
+        val token = monitor.startJob(job, None)
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishJob(token, Status.SUCCESS)
         monitor.checkJob(job) should be(true)
         monitor.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startJob(job)
+        val token2 = monitor.startJob(job, None)
         monitor.checkJob(job) should be(false)
         monitor.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishJob(token2, Status.SKIPPED)
@@ -120,7 +120,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         val job = JobInstance("default", "p1", "j1")
 
         monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
-        val token = monitor.startJob(job.copy(args = Map("p1" -> "v1")))
+        val token = monitor.startJob(job.copy(args = Map("p1" -> "v1")), None)
         monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
         monitor.finishJob(token, Status.SUCCESS)
         monitor.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(true)
@@ -142,7 +142,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target)
+        val token = monitor.startTarget(target, None)
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishTarget(token, Status.SUCCESS)
@@ -162,14 +162,14 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target)
+        val token = monitor.startTarget(target, None)
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishTarget(token, Status.SUCCESS)
         monitor.checkTarget(target) should be(true)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startTarget(target)
+        val token2 = monitor.startTarget(target, None)
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishTarget(token2, Status.FAILED)
@@ -189,14 +189,14 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target)
+        val token = monitor.startTarget(target, None)
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishTarget(token, Status.SUCCESS)
         monitor.checkTarget(target) should be(true)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = monitor.startTarget(target)
+        val token2 = monitor.startTarget(target, None)
         monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
         monitor.finishTarget(token2, Status.SKIPPED)
@@ -204,7 +204,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         monitor.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
     }
 
-    it should "support target partitions" in {
+    it should "support single value target partitions" in {
         val db = tempDir.resolve("mydb")
         val connection = JdbcStateStore.Connection(
             url = "jdbc:derby:" + db + ";create=true",
@@ -215,13 +215,35 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         val target = TargetInstance("default", "p1", "j1")
 
         monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
-        val token = monitor.startTarget(target.copy(partitions = Map("p1" -> "v1")))
+        val token = monitor.startTarget(target.copy(partitions = Map("p1" -> "v1")), None)
         monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
         monitor.finishTarget(token, Status.SUCCESS)
         monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(true)
         monitor.checkTarget(target.copy(partitions = Map("p1" -> "v2"))) should be(false)
         monitor.checkTarget(target.copy(partitions = Map("p2" -> "v1"))) should be(false)
         monitor.checkTarget(target) should be(false)
+        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v1"))) should be(false)
+    }
+
+    it should "support multi value target partitions" in {
+        val db = tempDir.resolve("mydb")
+        val connection = JdbcStateStore.Connection(
+            url = "jdbc:derby:" + db + ";create=true",
+            driver = "org.apache.derby.jdbc.EmbeddedDriver"
+        )
+        val monitor = new JdbcStateStore(connection)
+
+        val target = TargetInstance("default", "p1", "j1")
+
+        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(false)
+        val token = monitor.startTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), None)
+        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(false)
+        monitor.finishTarget(token, Status.SUCCESS)
+        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(true)
+        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v2", "p2" -> "v2"))) should be(false)
+        monitor.checkTarget(target.copy(partitions = Map("p3" -> "v1", "p2" -> "v2"))) should be(false)
+        monitor.checkTarget(target) should be(false)
+        monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1"))) should be(false)
         monitor.checkTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v1"))) should be(false)
     }
 }

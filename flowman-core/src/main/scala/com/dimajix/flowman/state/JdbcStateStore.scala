@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ private object JdbcJobRepository {
          start_ts:Timestamp,
          end_ts:Timestamp,
          status:String
-     )
+     ) extends JobToken
 
     case class JobArgument(
         job_id:Long,
@@ -65,7 +65,7 @@ private object JdbcJobRepository {
         start_ts:Timestamp,
         end_ts:Timestamp,
         status:String
-    )
+    ) extends TargetToken
 
     case class TargetPartition(
         target_id:Long,
@@ -186,25 +186,30 @@ private class JdbcJobRepository(connection: JdbcStateStore.Connection, val profi
 
     def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
         val ids = targetRuns
+            .filter(tr => tr.namespace === target.namespace
+                && tr.project === target.project
+                && tr.target === target.target
+                && tr.status =!= Status.SKIPPED.value)
             // Find only records with the correct number of partitions
             .joinLeft(targetPartitions).on(_.id === _.target_id)
-            .filter(tr => tr._1.namespace === target.namespace
-                && tr._1.project === target.project
-                && tr._1.target === target.target
-                && tr._1.status =!= Status.SKIPPED.value)
             .groupBy(_._1.id)
             .map { case (key,values) => key -> values.map(_._2.map(_.target_id)).countDefined }
             .filter(_._2 === partitions.size)
             .map(_._1)
-        val latestId = partitions.foldLeft(ids)((t,p) =>
-                t.join(targetPartitions)
-                    .on((id,part) =>
-                        id === part.target_id
-                            && part.name === p._1
-                            && part.value === p._2)
-                    .map(_._1)
-            )
+        // NOTE: Normally we'd use some JOIN to retrieve the correct ID, but due to a bug in Slick
+        // we have to revert to some more complex (and possibly less efficient) logic
+        // Create list of admissible IDs per partition
+        val partitionFilters = partitions.map(p =>
+            targetPartitions
+                .filter(part => part.name === p._1 && part.value === p._2)
+                .map(_.target_id)
+        )
+        // Now perform filtering of IDs
+        val latestId = partitionFilters
+            .foldLeft(ids)((t,p) =>t.filter(_ in p))
             .max
+
+        // Finally select the run with the calculated ID
         val q = targetRuns.filter(r => r.id === latestId)
         Await.result(db.run(q.result), Duration.Inf)
             .headOption
@@ -290,7 +295,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param job
       * @return
       */
-    override def startJob(job:JobInstance) : Object = {
+    override def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  JobRun(
             0,
@@ -314,7 +319,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       *
       * @param token
       */
-    override def finishJob(token:Object, status: Status) : Unit = {
+    override def finishJob(token:JobToken, status: Status) : Unit = {
         val run = token.asInstanceOf[JobRun]
         logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
 
@@ -365,7 +370,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance) : Object = {
+    override def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  TargetRun(
             0,
@@ -388,7 +393,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       *
       * @param token
       */
-    override def finishTarget(token:Object, status: Status) : Unit = {
+    override def finishTarget(token:TargetToken, status: Status) : Unit = {
         val run = token.asInstanceOf[TargetRun]
         logger.info(s"Mark last run of target ${run.namespace}/${run.project}/${run.target} as $status in state database")
 

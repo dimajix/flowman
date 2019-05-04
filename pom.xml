@@ -74,7 +74,7 @@
         <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>
-        <slf4j.version>1.7.10</slf4j.version>
+        <slf4j.version>1.7.16</slf4j.version>
         <antlr.version>2.7.7</antlr.version>
         <antlr-runtime.version>3.4</antlr-runtime.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -179,6 +179,7 @@
                 <kafka.version>0.10.0.1</kafka.version>
                 <json4s.version>3.2.11</json4s.version>
                 <guava.version>12.0</guava.version>
+                <slf4j.version>1.7.16</slf4j.version>
             </properties>
         </profile>
         <profile>
@@ -192,6 +193,7 @@
                 <kafka.version>0.10.0.1</kafka.version>
                 <json4s.version>3.2.11</json4s.version>
                 <guava.version>12.0</guava.version>
+                <slf4j.version>1.7.16</slf4j.version>
             </properties>
         </profile>
         <profile>
@@ -205,6 +207,7 @@
                 <kafka.version>2.0.0</kafka.version>
                 <json4s.version>3.5.3</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.16</slf4j.version>
             </properties>
         </profile>
 

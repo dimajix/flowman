@@ -86,7 +86,7 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
             if (tail.nonEmpty) {
                 val th = tail.head
                 val tt = tail.tail
-                th._2.flatMap(elem => recurse(head :+ (th._1, elem), tt))
+                th._2.flatMap(elem => recurse(head :+ ((th._1, elem)), tt))
             }
             else {
                 Some(PartitionSpec(head.toMap))

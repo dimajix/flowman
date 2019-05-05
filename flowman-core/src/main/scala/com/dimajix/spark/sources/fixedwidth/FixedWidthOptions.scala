@@ -108,7 +108,7 @@ class FixedWidthOptions(
     val ignoreTrailingWhiteSpaceFlagInWrite: Boolean = getBool("ignoreTrailingWhiteSpace", default = true)
 
     val nullValue: String = parameters.getOrElse("nullValue", "")
-    val padding: Char = getChar("padding", '\0')
+    val padding: Char = getChar("padding", '\u0000')
 
     val numbersLeadingZeros: Boolean = getBool("numbersLeadingZeros", default=false)
     val numbersPositiveSign: Boolean = getBool("numbersPositiveSign", default=false)

@@ -113,7 +113,7 @@ private class JdbcJobRepository(connection: JdbcStateStore.Connection, val profi
         def status = column[String]("status")
 
         def idx = index("JOB_RUN_IDX", (namespace, project, job, args_hash, status), unique = false)
-        def parent_job = foreignKey("JOB_RUN_PARENT_FK", parent_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def parent_job = foreignKey("JOB_RUN_PARENT_FK", parent_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
         def * = (id, parent_id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
     }
@@ -141,7 +141,7 @@ private class JdbcJobRepository(connection: JdbcStateStore.Connection, val profi
         def status = column[String]("status")
 
         def idx = index("TARGET_RUN_IDX", (namespace, project, target, partitions_hash, status), unique = false)
-        def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
         def * = (id, job_id, namespace, project, target, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
     }

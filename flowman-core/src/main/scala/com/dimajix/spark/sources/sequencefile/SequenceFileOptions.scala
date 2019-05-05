@@ -43,17 +43,17 @@ import org.apache.spark.unsafe.types.UTF8String
 import com.dimajix.flowman.hadoop.SerializableConfiguration
 
 
-case class WritableConverter(
-    writable:Class[_ <: org.apache.hadoop.io.Writable],
-    value:Class[_],
+case class WritableConverter[W <: org.apache.hadoop.io.Writable,V](
+    writable:Class[W],
+    value:Class[V],
     converter:Writable => Any,
-    writableExtractor:(InternalRow) => Writable,
+    writableExtractor:InternalRow => Writable,
     writableFactory:() => Writable
 )
 
 
 object WritableConverter {
-    def of(fieldType:DataType, idx:Int) : WritableConverter = {
+    def of(fieldType:DataType, idx:Int) : WritableConverter[_,_] = {
         fieldType match {
             case ShortType => WritableConverter(
                 classOf[ShortWritable],
@@ -152,8 +152,8 @@ class SequenceFileOptions(
     def keyType : DataType = if (hasKey) dataSchema.fields(0).dataType else NullType
     def valueType : DataType = dataSchema.fields(valueIdx).dataType
 
-    def keyConverter : WritableConverter = WritableConverter.of(keyType, keyIdx)
-    def valueConverter : WritableConverter = WritableConverter.of(valueType, valueIdx)
+    def keyConverter : WritableConverter[_,_] = WritableConverter.of(keyType, keyIdx)
+    def valueConverter : WritableConverter[_,_] = WritableConverter.of(valueType, valueIdx)
 
     def requireKeyIdx = if (hasKey) requiredSchema.fields.map(_.name).indexOf(keyName) else -1
     def requireValueIdx = requiredSchema.fields.map(_.name).indexOf(valueName)

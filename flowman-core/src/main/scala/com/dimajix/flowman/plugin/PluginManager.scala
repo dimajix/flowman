@@ -73,7 +73,7 @@ class PluginManager {
         _plugins.update(plugin.name, plugin)
 
         // Resolve all JAR files from the plugin
-        val jarFiles = plugin.jars.map(_.toURL).toArray
+        val jarFiles = plugin.jars.map(_.toURI.toURL).toArray
 
         // Extend classpath
         val classLoader = classOf[PluginManager].getClassLoader.asInstanceOf[URLClassLoader]

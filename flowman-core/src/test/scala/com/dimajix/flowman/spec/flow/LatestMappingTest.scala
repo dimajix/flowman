@@ -59,12 +59,15 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.versionColumn should be ("ts")
         mapping.dependencies should be (Array(MappingIdentifier("df1")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df)).orderBy("id").collect()
-        result.size should be (4)
-        result(0) should be (Row(mutable.WrappedArray.make(Array(12,4)), 12, "DELETE", 134))
-        result(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
-        result(2) should be (Row(mutable.WrappedArray.make(Array(14,3)), 14, "UPDATE", 124))
-        result(3) should be (Row(mutable.WrappedArray.make(Array(15,2)), 15, "CREATE", 127))
+        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
+        result.schema should be (df.schema)
+
+        val rows = result.orderBy("id").collect()
+        rows.size should be (4)
+        rows(0) should be (Row(mutable.WrappedArray.make(Array(12,4)), 12, "DELETE", 134))
+        rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
+        rows(2) should be (Row(mutable.WrappedArray.make(Array(14,3)), 14, "UPDATE", 124))
+        rows(3) should be (Row(mutable.WrappedArray.make(Array(15,2)), 15, "CREATE", 127))
     }
 
     it should "support the same version number multiple times" in {
@@ -85,10 +88,13 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val df = spark.read.json(json_1)
 
         val mapping = LatestMapping("df1", Seq("id"), "ts")
-        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df)).orderBy("id").collect()
-        result.size should be (2)
-        result(0) should be (Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133))
-        result(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
+        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
+        result.schema should be (df.schema)
+
+        val rows = result.orderBy("id").collect()
+        rows.size should be (2)
+        rows(0) should be (Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133))
+        rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
     }
 
     it should "support nested columns" in {
@@ -109,10 +115,11 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.versionColumn should be ("ts._2")
         mapping.dependencies should be (Array(MappingIdentifier("df1")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df)).orderBy("id._1")
-            .as[Record]
-            .collect()
-        result should be (Seq(
+        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
+        result.schema should be (df.schema)
+
+        val rows = result.orderBy("id._1").as[Record].collect()
+        rows should be (Seq(
             Record(("ts_0", 123), ("id_0", 7), "lala")
         ))
     }

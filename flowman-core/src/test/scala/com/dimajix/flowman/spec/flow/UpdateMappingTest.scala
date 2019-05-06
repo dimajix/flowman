@@ -46,11 +46,43 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        result.schema should be (prev.schema)
+
         val rows = result.orderBy("_1").collect().toSeq
         rows should be (Seq(
             Row("id-123", "will_remain"),
             Row("id-125", "will_be_updated"),
             Row("id-126", "will_be_added")
+        ))
+    }
+
+    it should "reorder columns correctly" in {
+        val mapping = UpdateMapping("prev", "updates", Seq("id"), "op != 'DELETE'")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val prev = executor.spark.createDataFrame(Seq(
+                ("CREATE", "id-125", "will_remain")
+            ))
+            .withColumnRenamed("_1", "op")
+            .withColumnRenamed("_2", "id")
+            .withColumnRenamed("_3", "data")
+        val updates = executor.spark.createDataFrame(Seq(
+                ("id-126", "will_be_added", "CREATE")
+            ))
+            .withColumnRenamed("_1", "id")
+            .withColumnRenamed("_2", "data")
+            .withColumnRenamed("_3", "op")
+
+        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        result.schema should be (prev.schema)
+
+        val rows = result.orderBy("id").collect().toSeq
+        rows should be (Seq(
+            Row("CREATE", "id-125", "will_remain"),
+            Row("CREATE", "id-126", "will_be_added")
         ))
     }
 
@@ -62,17 +94,19 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         implicit val context = executor.context
 
         val prev = executor.spark.createDataFrame(Seq(
-            ("id-123", "will_remain", "col3"),
-            ("id-124", "will_be_deleted", "col3"),
-            ("id-125", "will_be_updated", "col3")
-        ))
+                ("id-123", "will_remain", "col3"),
+                ("id-124", "will_be_deleted", "col3"),
+                ("id-125", "will_be_updated", "col3")
+            ))
         val updates = executor.spark.createDataFrame(Seq(
-            ("id-124", "will_be_deleted", "DELETE"),
-            ("id-125", "will_be_updated", "UPDATE"),
-            ("id-126", "will_be_added", "CREATE")
-        )).withColumnRenamed("_3", "op")
+                ("id-124", "will_be_deleted", "DELETE"),
+                ("id-125", "will_be_updated", "UPDATE"),
+                ("id-126", "will_be_added", "CREATE")
+            )).withColumnRenamed("_3", "op")
 
         val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        result.schema should be (prev.schema)
+
         val rows = result.orderBy("_1").collect().toSeq
         rows should be (Seq(
             Row("id-123", "will_remain", "col3"),
@@ -108,6 +142,8 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )).withColumnRenamed("_5", "op")
 
         val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        result.schema should be (prev.schema)
+
         val rows = result.orderBy("_1", "_2").collect().toSeq
         rows should be (Seq(
             Row("id-123", "subid-0", "will_remain_1", "v0"),

@@ -82,7 +82,8 @@ class UpdateMapping extends BaseMapping {
         val projectedUpdates = conformer.transform(filteredUpdates)
 
         // Perform update operation
-        inputDf.join(updatesDf, keyColumns, "left_anti")
+        val joinCondition = keyColumns.map(col => inputDf(col) === updatesDf(col)).reduce(_ && _)
+        inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
     }
 

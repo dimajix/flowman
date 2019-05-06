@@ -17,6 +17,7 @@
 package com.dimajix.flowman.tools.exec
 
 import java.io.File
+import java.net.URI
 import java.util.Locale
 
 import scala.util.Failure
@@ -24,6 +25,7 @@ import scala.util.Success
 import scala.util.Try
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.PropertyConfigurator
 import org.slf4j.LoggerFactory
 
@@ -100,8 +102,12 @@ class Driver(options:Arguments) {
         val hadoopConfig = new Configuration()
         val fs = FileSystem(hadoopConfig)
 
-        // Load Project
-        Project.read.file(fs.local(options.projectFile))
+        // Load Project. If no schema is specified, load from local file system
+        val projectPath = new Path(options.projectFile)
+        if (projectPath.isAbsoluteAndSchemeAuthorityNull)
+            Project.read.file(fs.local(projectPath))
+        else
+            Project.read.file(fs.file(projectPath))
     }
 
     private def setupLogging() : Unit = {

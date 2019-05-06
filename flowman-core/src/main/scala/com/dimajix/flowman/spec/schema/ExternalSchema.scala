@@ -22,6 +22,7 @@ import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
+import org.slf4j.Logger
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.hadoop.File
@@ -41,6 +42,8 @@ object ExternalSchema {
   * Helper class for external schemas which are stored in files or at URLs
   */
 abstract class ExternalSchema extends Schema {
+    protected val logger: Logger
+
     @JsonProperty(value = "file", required = false) private var _file: String = _
     @JsonProperty(value = "url", required = false) private var _url: String = _
     @JsonProperty(value = "spec", required = false) private var _spec: String = _
@@ -98,6 +101,7 @@ abstract class ExternalSchema extends Schema {
         val spec = this.spec
 
         if (file != null) {
+            logger.info(s"Loading schema from file $file")
             val input = file.open()
             try {
                 val writer = new StringWriter()
@@ -109,6 +113,7 @@ abstract class ExternalSchema extends Schema {
             }
         }
         else if (url != null) {
+            logger.info(s"Loading schema from url $url")
             IOUtils.toString(url)
         }
         else if (spec != null && spec.nonEmpty) {

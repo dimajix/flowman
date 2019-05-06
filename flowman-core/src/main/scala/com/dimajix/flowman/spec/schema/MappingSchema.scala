@@ -45,7 +45,7 @@ class MappingSchema extends Schema {
       * @param context
       * @return
       */
-    override def description(implicit context: Context) : String = s"Infered from mapping $mapping"
+    override def description(implicit context: Context) : String = s"Inferred from mapping $mapping"
 
     /**
       * Returns the list of all fields of the schema

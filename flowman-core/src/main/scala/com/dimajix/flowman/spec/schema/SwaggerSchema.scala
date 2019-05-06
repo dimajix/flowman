@@ -48,6 +48,7 @@ import io.swagger.models.properties.UUIDProperty
 import io.swagger.parser.util.DeserializationUtils
 import io.swagger.parser.util.SwaggerDeserializer
 import io.swagger.util.Json
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
@@ -72,6 +73,8 @@ import com.dimajix.flowman.types.TimestampType
   * fields.
   */
 class SwaggerSchema extends ExternalSchema {
+    protected override val logger = LoggerFactory.getLogger(classOf[SwaggerSchema])
+
     @JsonProperty(value="entity", required=false) private var _entity: String = _
     @JsonProperty(value="nullable", required=false) private var _nullable: String = "false"
 

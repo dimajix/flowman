@@ -29,6 +29,7 @@ import org.everit.json.schema.loader.SchemaLoader
 import org.everit.json.schema.{Schema => JSchema}
 import org.json.JSONObject
 import org.json.JSONTokener
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
@@ -47,6 +48,8 @@ import com.dimajix.flowman.types.VarcharType
   * This class encapsulates a data frame schema specified as a JSON schema document.
   */
 class JsonSchema extends ExternalSchema {
+    protected override val logger = LoggerFactory.getLogger(classOf[JsonSchema])
+
     /**
       * Returns the description of the whole schema
       * @param context

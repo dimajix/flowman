@@ -25,9 +25,7 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.AssembleMapping.AppendEntry
@@ -36,6 +34,8 @@ import com.dimajix.flowman.spec.flow.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.RenameEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.StructEntry
+import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.{types => ftypes}
 
 
 class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession {

@@ -23,10 +23,10 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {

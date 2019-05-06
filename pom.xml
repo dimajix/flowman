@@ -256,8 +256,8 @@
     </profiles>
 
     <modules>
-        <module>flowman-core</module>
         <module>flowman-testing</module>
+        <module>flowman-core</module>
         <module>flowman-tools</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
@@ -570,6 +570,13 @@
         <dependencies>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-testing</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -577,12 +584,6 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

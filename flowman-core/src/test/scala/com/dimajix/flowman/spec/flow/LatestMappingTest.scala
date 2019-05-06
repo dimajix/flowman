@@ -22,11 +22,11 @@ import org.apache.spark.sql.Row
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
+import com.dimajix.flowman.testing.LocalSparkSession
 
 object LatestMappingTest {
     case class Record(ts:(String,Long), id:(String,Int), data:String)

@@ -20,7 +20,8 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.sources.local.implicits._
-import com.dimajix.flowman.LocalSparkSession
+import com.dimajix.flowman.testing.LocalSparkSession
+
 
 class DataFrameWriterTest extends FlatSpec with Matchers with LocalSparkSession {
     "The DataFrameWriter" should "be instantiated by a readLocal call" in {

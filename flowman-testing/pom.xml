@@ -28,12 +28,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.api_version}</artifactId>
         </dependency>

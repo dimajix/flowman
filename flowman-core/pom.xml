@@ -100,6 +100,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-testing</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
         </dependency>

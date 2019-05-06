@@ -21,9 +21,9 @@ import java.nio.charset.Charset
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {

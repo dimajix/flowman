@@ -19,8 +19,8 @@ package com.dimajix.flowman.spec
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.testing.LocalSparkSession
 
 class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
     "The Module" should "be loadable from a string" in {

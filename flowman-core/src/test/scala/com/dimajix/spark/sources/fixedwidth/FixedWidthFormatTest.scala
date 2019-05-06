@@ -37,7 +37,7 @@ import org.apache.spark.sql.types.TimestampType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class FixedWidthFormatTest extends FlatSpec with Matchers with LocalSparkSession {

@@ -21,12 +21,12 @@ import java.io.File
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.SingleValue
 
 

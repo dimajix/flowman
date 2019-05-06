@@ -14,6 +14,7 @@ mappings:
   partial_facts:
     kind: conform
     input: facts
+    naming: snakeCase
     columns:
       id: String
       temperature: Float
@@ -28,17 +29,24 @@ Hint for broadcasting the result of this mapping for map-side joins.
 
 * `cache` **(optional)** *(type: string)* *(default: NONE)*:
 Cache mode for the results of this mapping. Supported values are
-  * NONE
-  * DISK_ONLY
-  * MEMORY_ONLY
-  * MEMORY_ONLY_SER
-  * MEMORY_AND_DISK
-  * MEMORY_AND_DISK_SER
+  * `NONE`
+  * `DISK_ONLY`
+  * `MEMORY_ONLY`
+  * `MEMORY_ONLY_SER`
+  * `MEMORY_AND_DISK`
+  * `MEMORY_AND_DISK_SER`
 
 * `input` **(mandatory)** *(type: string)*:
 Specifies the name of the input mapping to be filtered.
 
-* `columns` **(mandatory)** *(type: map:string)*:
+* `naming` **(optional)** *(type: string)*:
+Specifies the naming scheme used for the output. The following values are supported:
+  * `camelCase` - This will 
+  * `snakeCase`
+  * `camelCaseUpper`
+
+* `columns` **(optional)** *(type: map:string)*:
+Specifies the list of column names (key) with their type (value)
 
 
 ## Description

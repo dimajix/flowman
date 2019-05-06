@@ -29,16 +29,23 @@ Hint for broadcasting the result of this mapping for map-side joins.
 
 * `cache` **(optional)** *(type: string)* *(default: NONE)*:
 Cache mode for the results of this mapping. Supported values are
-  * NONE
-  * DISK_ONLY
-  * MEMORY_ONLY
-  * MEMORY_ONLY_SER
-  * MEMORY_AND_DISK
-  * MEMORY_AND_DISK_SER
+  * `NONE` - Disables caching of teh results of this mapping
+  * `DISK_ONLY` - Caches the results on disk
+  * `MEMORY_ONLY` - Caches the results in memory. If not enough memory is available, records will be uncached.
+  * `MEMORY_ONLY_SER` - Caches the results in memory in a serialized format. If not enough memory is available, records will be uncached.
+  * `MEMORY_AND_DISK` - Caches the results first in memory and then spills to disk.
+  * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
 * `relation` **(mandatory)** *(type: string)*:
+Specifies the name of the relation to read from
+
 * `partitions` **(optional)** *(type: map:partition)*:
+Specifies the partition (or multiple partitions) to read data from
+
 * `columns` **(optional)** *(type: map:data_type)* *(default: empty):
+Specifies the list of columns and types to read from the relation. This schema
+will be applied to the records after they have been read and interpreted by the
+underlying source.
 
 
 ## Description

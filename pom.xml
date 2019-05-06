@@ -125,6 +125,7 @@
                 <spark-hive.scope>provided</spark-hive.scope>
                 <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
+                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
                 <guava.version>12.0.1</guava.version>
                 <json4s.version>3.2.11</json4s.version>
@@ -148,6 +149,7 @@
                 <spark-hive.scope>provided</spark-hive.scope>
                 <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
+                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
                 <guava.version>12.0.1</guava.version>
                 <json4s.version>3.2.11</json4s.version>

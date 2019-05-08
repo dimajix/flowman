@@ -1,3 +1,8 @@
+# Version 0.4.1
+
+* Add parameters to "job run" CLI
+
+
 # Version 0.4.0 - 2019-05-08
 
 * Add support for Spark 2.4.2

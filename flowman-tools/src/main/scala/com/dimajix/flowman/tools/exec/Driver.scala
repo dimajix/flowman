@@ -17,6 +17,7 @@
 package com.dimajix.flowman.tools.exec
 
 import java.io.File
+import java.net.URI
 import java.util.Locale
 
 import scala.util.Failure
@@ -24,15 +25,18 @@ import scala.util.Success
 import scala.util.Try
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.PropertyConfigurator
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.plugin.PluginManager
+import com.dimajix.flowman.spec.SystemSettings
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.tools.ToolConfig
 
 
 object Driver {
@@ -64,17 +68,25 @@ class Driver(options:Arguments) {
     private val logger = LoggerFactory.getLogger(classOf[Driver])
 
     private lazy val plugins:PluginManager = {
-        val pluginDir = new File(System.getenv("FLOWMAN_HOME"), "plugins")
-        new PluginManager().withPluginDir(pluginDir)
+        val pluginManager = new PluginManager
+        ToolConfig.pluginDirectory.foreach(pluginManager.withPluginDir)
+        pluginManager
     }
 
-    private def loadSystemPlugins() : Unit = {
-        // TODO
+    private def loadSystemSettings() : SystemSettings = {
+        val settings = ToolConfig.confDirectory
+            .map(confDir => new File(confDir, "system.yml"))
+            .filter(_.isFile)
+            .map(file => SystemSettings.read.file(file))
+            .getOrElse(SystemSettings.read.default())
+
+        // Load all global plugins from System settings
+        settings.plugins.foreach(plugins.load)
+        settings
     }
 
     private def loadNamespace() : Namespace = {
-        val ns = Option(System.getenv("FLOWMAN_CONF_DIR"))
-            .filter(_.nonEmpty)
+        val ns = ToolConfig.confDirectory
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)
             .map(file => Namespace.read.file(file))
@@ -90,8 +102,12 @@ class Driver(options:Arguments) {
         val hadoopConfig = new Configuration()
         val fs = FileSystem(hadoopConfig)
 
-        // Load Project
-        Project.read.file(fs.local(options.projectFile))
+        // Load Project. If no schema is specified, load from local file system
+        val projectPath = new Path(options.projectFile)
+        if (projectPath.isAbsoluteAndSchemeAuthorityNull)
+            Project.read.file(fs.local(projectPath))
+        else
+            Project.read.file(fs.file(projectPath))
     }
 
     private def setupLogging() : Unit = {
@@ -122,7 +138,7 @@ class Driver(options:Arguments) {
         setupLogging()
 
         // Load global Plugins, which can already be used by the Namespace
-        loadSystemPlugins()
+        loadSystemSettings()
 
         // Load Namespace (including any plugins), afterwards also load Project
         val ns = loadNamespace()

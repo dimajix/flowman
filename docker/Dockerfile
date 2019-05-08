@@ -1,4 +1,4 @@
-FROM dimajix/spark:${spark.version}
+FROM ${docker.base-image.repository}:${docker.base-image.version}
 MAINTAINER k.kupferschmidt@dimajix.de
 
 USER root

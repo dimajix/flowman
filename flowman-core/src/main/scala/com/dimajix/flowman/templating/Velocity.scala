@@ -20,6 +20,7 @@ import scala.collection.mutable
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
+import org.apache.velocity.runtime.RuntimeConstants
 
 
 object Velocity {
@@ -32,6 +33,7 @@ object Velocity {
     addClass("Boolean", classOf[BooleanWrapper])
     addClass("Integer", classOf[IntegerWrapper])
     addClass("Float", classOf[FloatWrapper])
+    addClass("LocalDate", classOf[LocalDateWrapper])
     addClass("LocalDateTime", classOf[LocalDateTimeWrapper])
     addClass("Timestamp", classOf[TimestampWrapper])
     addClass("Duration", classOf[DurationWrapper])
@@ -59,6 +61,8 @@ object Velocity {
       */
     def newEngine() : VelocityEngine = {
         val ve = new VelocityEngine()
+        ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "true")
+        ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT_ESCAPE, "true")
         ve.init()
         ve
     }

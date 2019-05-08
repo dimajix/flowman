@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.model
+package com.dimajix.flowman.transforms
 
-class FixedFileRelationTest {
+import org.apache.spark.sql.DataFrame
 
+import com.dimajix.flowman.types.StructType
+
+
+trait Transformer {
+    /**
+      * Transform a Spark DataFrame
+      * @param df
+      * @return
+      */
+    def transform(df:DataFrame) : DataFrame
+
+    /**
+      * Transform a Flowman schema
+      * @param schema
+      * @return
+      */
+    def transform(schema:StructType) : StructType
 }

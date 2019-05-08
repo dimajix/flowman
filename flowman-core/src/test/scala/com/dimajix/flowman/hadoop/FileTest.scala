@@ -19,7 +19,7 @@ package com.dimajix.flowman.hadoop
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class FileTest extends FlatSpec with Matchers with LocalSparkSession {

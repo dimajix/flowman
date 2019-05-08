@@ -17,10 +17,12 @@
 package com.dimajix.flowman.spec.model
 
 import java.io.File
-import java.net.URI
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -29,9 +31,12 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.{types => ftypes}
 
 
 class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -61,6 +66,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0001", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(Some("This is a test table"))
         table.identifier should be (TableIdentifier("lala_0001", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
@@ -72,72 +78,85 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location.toString should not be ("")
+
+        // Try to create relation, although it already exists
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
+        relation.create(executor, true)
+
+        // Drop table
         relation.destroy(executor)
+        an[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
     }
 
     it should "support external tables" in {
-        val location = new File(tempDir, "hive/default/lala")
+        val location = new File(tempDir, "hive/default/lala").toURI
         val spec =
             s"""
-              |relations:
-              |  t0:
-              |    kind: table
-              |    database: default
-              |    table: lala_0002
-              |    external: true
-              |    location: $location
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
+               |relations:
+               |  t0:
+               |    kind: table
+               |    database: default
+               |    table: lala_0002
+               |    external: true
+               |    location: $location
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
+        implicit val context = executor.context
         val relation = project.relations("t0")
+
+        val hiveRelation = relation.asInstanceOf[HiveTableRelation]
+        hiveRelation.location should be (new Path(location))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0002", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0002", Some("default")))
         table.tableType should be (CatalogTableType.EXTERNAL)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            Nil
+                StructField("int_col", IntegerType) ::
+                Nil
         ))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
-        table.location should be (new URI(s"file:$location"))
+        table.location should be (location)
         relation.destroy(executor)
     }
 
     it should "support single partition columns" in {
-        val location = new File(tempDir, "hive/default/lala")
+        val location = new File(tempDir, "hive/default/lala").toURI
         val spec =
             s"""
-              |relations:
-              |  t0:
-              |    kind: table
-              |    database: default
-              |    table: lala_0003
-              |    external: false
-              |    location: $location
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-              |    partitions:
-              |      - name: spart
-              |        type: string
-              |""".stripMargin
+               |relations:
+               |  t0:
+               |    kind: table
+               |    database: default
+               |    table: lala_0003
+               |    external: false
+               |    location: $location
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |      - name: spart
+               |        type: string
+               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
@@ -146,47 +165,48 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0003", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0003", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            StructField("spart", StringType, false) ::
-            Nil
+                StructField("int_col", IntegerType) ::
+                StructField("spart", StringType, false) ::
+                Nil
         ))
         table.partitionColumnNames should be (Seq("spart"))
         table.partitionSchema should be (StructType(
             StructField("spart", StringType, false) ::
-            Nil
+                Nil
         ))
-        table.location should be (new URI(s"file:$location"))
+        table.location should be (location)
         relation.destroy(executor)
     }
 
     it should "support multiple partition columns" in {
-        val location = new File(tempDir, "hive/default/lala")
+        val location = new File(tempDir, "hive/default/lala").toURI
         val spec =
             s"""
-              |relations:
-              |  t0:
-              |    kind: table
-              |    database: default
-              |    table: lala_0004
-              |    location: $location
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-              |    partitions:
-              |      - name: spart
-              |        type: string
-              |      - name: ip
-              |        type: int
-              |""".stripMargin
+               |relations:
+               |  t0:
+               |    kind: table
+               |    database: default
+               |    table: lala_0004
+               |    location: $location
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |      - name: spart
+               |        type: string
+               |      - name: ip
+               |        type: int
+               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
@@ -195,23 +215,24 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0004", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0004", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            StructField("spart", StringType, false) ::
-            StructField("ip", IntegerType, false) ::
-            Nil
+                StructField("int_col", IntegerType) ::
+                StructField("spart", StringType, false) ::
+                StructField("ip", IntegerType, false) ::
+                Nil
         ))
         table.partitionColumnNames should be (Seq("spart", "ip"))
         table.partitionSchema should be (StructType(
             StructField("spart", StringType, false) ::
-            StructField("ip", IntegerType, false) ::
-            Nil
+                StructField("ip", IntegerType, false) ::
+                Nil
         ))
-        table.location should be (new URI(s"file:$location"))
+        table.location should be (location)
         relation.destroy(executor)
     }
 
@@ -242,13 +263,14 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0005", Some("default")))
+        table.provider should be (Some("hive"))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0005", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            Nil
+                StructField("int_col", IntegerType) ::
+                Nil
         ))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
@@ -294,7 +316,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
-        table.provider should be (Some("parquet"))
+        table.provider should be (Some("hive"))
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"))
@@ -337,10 +359,57 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
-        table.provider should be (Some("avro"))
+        table.provider should be (Some("hive"))
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
+        relation.destroy(executor)
+    }
+
+    it should "support csv format" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: table
+              |    database: default
+              |    table: lala_0007
+              |    format: textfile
+              |    rowFormat: org.apache.hadoop.hive.serde2.OpenCSVSerde
+              |    serdeProperties:
+              |      separatorChar: "\t"
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val relation = project.relations("t0")
+
+        relation.create(executor)
+        val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
+        table.comment should be(None)
+        table.identifier should be (TableIdentifier("lala_0007", Some("default")))
+        table.tableType should be (CatalogTableType.MANAGED)
+        SchemaUtils.dropMetadata(table.schema) should be (StructType(
+            StructField("str_col", StringType) ::
+            StructField("int_col", StringType) ::
+            Nil
+        ))
+        table.partitionColumnNames should be (Seq())
+        table.partitionSchema should be (StructType(Nil))
+        table.location should not be (None)
+        table.provider should be (Some("hive"))
+        table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.TextInputFormat"))
+        table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
+        table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"))
+        table.storage.properties should be (Map("separatorChar" -> "\t", "serialization.format" -> "1"))
         relation.destroy(executor)
     }
 
@@ -374,15 +443,15 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            Nil
+                StructField("int_col", IntegerType) ::
+                Nil
         ))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
         table.provider should be (Some("hive"))
-        table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.SequenceFileInputFormat"))
-        table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat"))
+        table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.TextInputFormat"))
+        table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
         relation.destroy(executor)
     }
@@ -419,8 +488,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            Nil
+                StructField("int_col", IntegerType) ::
+                Nil
         ))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
@@ -437,20 +506,20 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val location = new File(tempDir, "hive/default/lala")
         val spec =
             s"""
-              |relations:
-              |  t0:
-              |    kind: hive-table
-              |    database: default
-              |    table: lala_0010
-              |    external: false
-              |    location: $location
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
+               |relations:
+               |  t0:
+               |    kind: hiveTable
+               |    database: default
+               |    table: lala_0010
+               |    external: false
+               |    location: ${location.toURI}
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val relation = project.relations("t0")
@@ -486,7 +555,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
 
         // Test 2nd destruction
-        relation.destroy(executor)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
     }
@@ -497,11 +567,11 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: hive-table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0011
                |    external: true
-               |    location: $location
+               |    location: ${location.toURI}
                |    schema:
                |      kind: inline
                |      fields:
@@ -544,7 +614,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
 
         // Test 2nd destruction
-        relation.destroy(executor)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
     }
@@ -555,11 +626,11 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: hive-table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0012
                |    external: false
-               |    location: $location
+               |    location: ${location.toURI}
                |    schema:
                |      kind: inline
                |      fields:
@@ -600,8 +671,50 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
 
         // Test 2nd destruction
-        relation.destroy(executor)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
+    }
+
+    it should "support mapping schemas" in {
+        val spec =
+            s"""
+               |relations:
+               |  t0:
+               |    kind: table
+               |    database: default
+               |    table: lala_0004
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |      - name: spart
+               |        type: string
+               |      - name: ip
+               |        type: int
+               |mappings:
+               |  input:
+               |    kind: read
+               |    relation: t0
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val mapping = project.mappings("input")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("spart", ftypes.StringType, false),
+            Field("ip", ftypes.IntegerType, false)
+        )))
     }
 }

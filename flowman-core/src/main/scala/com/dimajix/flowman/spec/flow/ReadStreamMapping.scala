@@ -24,16 +24,17 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
 class ReadStreamMapping extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
 
-    @JsonProperty(value = "source", required = true) private var _source:String = _
+    @JsonProperty(value = "relation", required = true) private var _relation:String = _
     @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = _
 
-    def source(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_source))
+    def relation(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
     def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
 
     /**
@@ -45,7 +46,7 @@ class ReadStreamMapping extends BaseMapping {
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         implicit val context = executor.context
-        val source = this.source
+        val source = this.relation
         val fields = this.columns
         val relation = context.getRelation(source)
         val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
@@ -62,5 +63,27 @@ class ReadStreamMapping extends BaseMapping {
       */
     override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
         Array()
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        val fields = this.columns
+        if (fields != null && fields.nonEmpty) {
+            StructType.of(SchemaUtils.createSchema(fields.toSeq))
+        }
+        else {
+            val source = this.relation
+            val relation = context.getRelation(source)
+            StructType(relation.schema.fields)
+        }
     }
 }

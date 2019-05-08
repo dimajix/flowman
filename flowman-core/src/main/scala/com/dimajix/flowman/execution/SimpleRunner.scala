@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,23 @@ package com.dimajix.flowman.execution
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.state.JobInstance
+import com.dimajix.flowman.state.JobToken
+import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.state.TargetInstance
+import com.dimajix.flowman.state.TargetToken
 
 
 class SimpleRunner extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[SimpleRunner])
 
+    override protected def jobRunner(job:JobToken) : Runner = this
+
     /**
-      * Performs some checkJob, if the run is required
+      * Performs some checkJob, if the run is required. Returns false if the job is out of date and should be rerun
       * @param context
       * @return
       */
-    override protected def check(context:Context, job:JobInstance) : Boolean = false
+    override protected def checkJob(context:Context, job:JobInstance) : Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -37,7 +43,7 @@ class SimpleRunner extends AbstractRunner {
       * @param context
       * @return
       */
-    override protected def start(context:Context, job:JobInstance) : Object = null
+    override protected def startJob(context:Context, job:JobInstance, parent:Option[JobToken]) : JobToken = null
 
     /**
       * Marks a run as a success
@@ -45,29 +51,28 @@ class SimpleRunner extends AbstractRunner {
       * @param context
       * @param token
       */
-    override protected def success(context: Context, token:Object) : Unit = {}
+    override protected def finishJob(context: Context, token:JobToken, status:Status) : Unit = {}
 
     /**
-      * Marks a run as a failure
+      * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt
       *
-      * @param context
-      * @param token
+      * @param target
+      * @return
       */
-    override protected def failure(context: Context, token:Object) : Unit = {}
+    protected override def checkTarget(context: Context, target: TargetInstance): Boolean = false
 
     /**
-      * Marks a run as a failure
+      * Starts the run and returns a token, which can be anything
       *
-      * @param context
-      * @param token
+      * @param target
+      * @return
       */
-    override protected def aborted(context: Context, token:Object) : Unit = {}
+    override protected def startTarget(context: Context, target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
 
     /**
-      * Marks a run as being skipped
+      * Marks a run as a success
       *
-      * @param context
       * @param token
       */
-    override protected def skipped(context: Context, token:Object) : Unit = {}
+    override protected def finishTarget(context: Context, token:TargetToken, status:Status) : Unit = {}
 }

@@ -31,6 +31,22 @@ import org.apache.spark.sql.types.DataType
 
 
 object FieldType {
+    private val nonDecimalNameToType = {
+        Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
+            DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType, DurationType)
+            .map(t => t.sqlType -> t).toMap ++
+            Map("int" -> IntegerType, "text" -> StringType)
+    }
+
+    private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r
+    private val VARCHAR = """varchar\(\s*(\d+)\s*\)""".r
+    private val CHAR = """char\(\s*(\d+)\s*\)""".r
+
+    /**
+      * Create a Flowman FieldType from a Spark DataType
+      * @param dataType
+      * @return
+      */
     def of(dataType:org.apache.spark.sql.types.DataType) : FieldType = {
         dataType match {
             case org.apache.spark.sql.types.ShortType => ShortType
@@ -51,6 +67,24 @@ object FieldType {
             case org.apache.spark.sql.types.ArrayType(dt, n) => ArrayType(FieldType.of(dt), n)
             case org.apache.spark.sql.types.StructType(fields) => StructType(fields.map(Field.of))
             case org.apache.spark.sql.types.MapType(k,v,n) => MapType(FieldType.of(k), FieldType.of(v), n)
+        }
+    }
+
+    /**
+      * Create a Flowman FieldType from a string
+      * @param str
+      * @return
+      */
+    def of(str:String) : FieldType = {
+        str.toLowerCase match {
+            case "decimal" => DecimalType.USER_DEFAULT
+            case FIXED_DECIMAL (precision, scale) => DecimalType(precision.toInt, scale.toInt)
+            case VARCHAR(length) => VarcharType(length.toInt)
+            case CHAR(length) => CharType(length.toInt)
+            case other => nonDecimalNameToType.getOrElse (
+                other,
+                throw new IllegalArgumentException(s"Failed to convert string '$str' to a field type.")
+            )
         }
     }
 }
@@ -114,29 +148,15 @@ abstract class ContainerType extends FieldType {
 
 
 private object FieldTypeDeserializer {
-    private val nonDecimalNameToType = {
-        Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
-            DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType, DurationType)
-            .map(t => t.sqlType -> t).toMap ++
-        Map("int" -> IntegerType, "text" -> StringType)
-    }
-
-    private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r
-    private val VARCHAR = """varchar\(\s*(\d+)\s*\)""".r
-    private val CHAR = """char\(\s*(\d+)\s*\)""".r
-
     def deserialize(jp: JsonParser, ctxt: DeserializationContext): FieldType = {
         jp.getCurrentToken match {
             case JsonToken.VALUE_STRING => {
-                jp.getText.toLowerCase match {
-                    case "decimal" => DecimalType.USER_DEFAULT
-                    case FIXED_DECIMAL (precision, scale) => DecimalType(precision.toInt, scale.toInt)
-                    case VARCHAR(length) => VarcharType(length.toInt)
-                    case CHAR(length) => CharType(length.toInt)
-                    case other => nonDecimalNameToType.getOrElse (
-                        other,
+                try {
+                    FieldType.of(jp.getText)
+                }
+                catch {
+                    case _:IllegalArgumentException =>
                         throw JsonMappingException.from(jp, s"Failed to convert the JSON string '${jp.getText}' to a field type.")
-                    )
                 }
             }
             case JsonToken.START_OBJECT => {

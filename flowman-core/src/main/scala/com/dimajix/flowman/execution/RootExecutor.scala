@@ -64,20 +64,6 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
 
     override def root: Executor = this
 
-     /**
-      * Returns a fully qualified table as a DataFrame from a project belonging to the namespace of this executor
-      *
-      * @param identifier
-      * @return
-      */
-    override def getTable(identifier: MappingIdentifier): DataFrame = {
-        require(identifier != null)
-
-        if (identifier.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in table specifier")
-        cache.getOrElse((identifier.project.get, identifier.name), throw new NoSuchElementException(s"Table $identifier not found"))
-    }
-
     /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache
       *

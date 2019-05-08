@@ -54,8 +54,8 @@ object Relation extends TypeRegistry[Relation] {
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
-    new JsonSubTypes.Type(name = "hive-table", value = classOf[HiveTableRelation]),
-    new JsonSubTypes.Type(name = "hive-view", value = classOf[HiveViewRelation]),
+    new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelation]),
+    new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelation]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),
@@ -155,18 +155,25 @@ abstract class Relation extends Resource {
     def writeStream(executor:Executor, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    def exists(executor:Executor) : Boolean
+
+    /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       * @param executor
       */
-    def create(executor:Executor) : Unit
+    def create(executor:Executor, ifNotExists:Boolean=false) : Unit
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       * @param executor
       */
-    def destroy(executor:Executor) : Unit
+    def destroy(executor:Executor, ifExists:Boolean=false) : Unit
 
     /**
       * This will update any existing relation to the specified metadata.

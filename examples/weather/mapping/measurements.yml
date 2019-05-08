@@ -1,7 +1,7 @@
 mappings:
   measurements-raw:
-    kind: read-relation
-    source: measurements-raw
+    kind: readRelation
+    relation: measurements-raw
     partitions:
       year:
         start: $start_year

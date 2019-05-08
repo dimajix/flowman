@@ -182,12 +182,18 @@ class KafkaRelation extends BaseRelation {
     }
 
     /**
+      * Verify if the corresponding physical backend of this relation already exists
+      * @param executor
+      */
+    override def exists(executor: Executor): Boolean = ???
+
+    /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       *
       * @param executor
       */
-    override def create(executor: Executor): Unit = ???
+    override def create(executor: Executor, ignoreIfExsists: Boolean): Unit = ???
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
@@ -195,7 +201,7 @@ class KafkaRelation extends BaseRelation {
       *
       * @param executor
       */
-    override def destroy(executor: Executor): Unit = ???
+    override def destroy(executor: Executor, ignoreIfNotExists:Boolean): Unit = ???
 
     /**
       * This will update any existing relation to the specified metadata.

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.AvroSchemaUtils
@@ -25,6 +27,8 @@ import com.dimajix.flowman.types.AvroSchemaUtils
   * Schema implementation for reading Avro schemas.
   */
 class AvroSchema extends ExternalSchema {
+    protected override val logger = LoggerFactory.getLogger(classOf[ExternalSchema])
+
     /**
       * Returns the description of the schema
       * @param context

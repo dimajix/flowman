@@ -16,8 +16,11 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.io.FileNotFoundException
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -25,10 +28,12 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.{types => ftypes}
 
 
 class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -55,14 +60,20 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        implicit val context = executor.context
         val relation = project.relations("t0")
         relation.kind should be ("file")
+
+        val fileRelation = relation.asInstanceOf[FileRelation]
+        fileRelation.format should be ("csv")
+        fileRelation.location should be (new Path("test/data/data_1.csv"))
+
         val df = relation.read(executor, null)
         df.schema should be (StructType(
             StructField("f1", StringType) ::
-            StructField("f2", StringType) ::
-            StructField("f3", StringType) ::
-            Nil
+                StructField("f2", StringType) ::
+                StructField("f3", StringType) ::
+                Nil
         ))
         df.collect()
     }
@@ -74,7 +85,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
                |relations:
                |  local:
                |    kind: file
-               |    location: file://$outputPath
+               |    location: ${outputPath.toUri}
                |    pattern: data.csv
                |    format: csv
                |    schema:
@@ -93,10 +104,16 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         implicit val context = executor.context
         val relation = project.relations("local")
 
+        val fileRelation = relation.asInstanceOf[FileRelation]
+        fileRelation.location should be (new Path(outputPath.toUri))
+
         outputPath.toFile.exists() should be (false)
         relation.create(executor)
         outputPath.toFile.exists() should be (true)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
+
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
+        relation.create(executor, true)
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),
@@ -114,6 +131,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         relation.destroy(executor)
         outputPath.toFile.exists() should be (false)
+
+        a[FileNotFoundException] shouldBe thrownBy(relation.destroy(executor))
+        relation.destroy(executor, true)
     }
 
     it should "support partitions" in {
@@ -123,7 +143,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
                |relations:
                |  local:
                |    kind: file
-               |    location: file://$outputPath
+               |    location: ${outputPath.toUri}
                |    pattern: p_col=$$p_col
                |    format: csv
                |    schema:
@@ -161,17 +181,17 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         df_p1.count() should be (0)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
-            StructField("int_col", IntegerType, true) ::
-            StructField("p_col", IntegerType, false) ::
-            Nil
+                StructField("int_col", IntegerType, true) ::
+                StructField("p_col", IntegerType, false) ::
+                Nil
         ))
         val df_p2 = relation.read(executor, null, Map("p_col" -> SingleValue("2")))
         df_p2.count() should be (2)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
-            StructField("int_col", IntegerType, true) ::
-            StructField("p_col", IntegerType, false) ::
-            Nil
+                StructField("int_col", IntegerType, true) ::
+                StructField("p_col", IntegerType, false) ::
+                Nil
         ))
 
         relation.clean(executor)
@@ -180,5 +200,48 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         relation.destroy(executor)
         outputPath.toFile.exists() should be (false)
+    }
+
+    it should "support mapping schemas" in {
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: file
+               |    location: ${outputPath.toUri}
+               |    pattern: p_col=$$p_col
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |        - name: p_col
+               |          type: integer
+               |mappings:
+               |  input:
+               |    kind: read
+               |    relation: local
+               |    partitions:
+               |      spart: abc
+               |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val mapping = project.mappings("input")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("p_col", ftypes.IntegerType, false)
+        )))
     }
 }

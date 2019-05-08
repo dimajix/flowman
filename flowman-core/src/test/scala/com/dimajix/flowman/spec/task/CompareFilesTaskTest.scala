@@ -21,16 +21,16 @@ import java.io.IOException
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
     "The CompareFileTask" should "work on same files" in {
         val spec =
             """
-              |kind: compare-files
+              |kind: compareFiles
               |expected: test/data/data_1.csv
               |actual: test/data/data_1.csv
               |""".stripMargin
@@ -47,7 +47,7 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
     it should "fail on non existing actual file" in {
         val spec =
             """
-              |kind: compare-files
+              |kind: compareFiles
               |expected: test/data/data_1.csv
               |actual: no_such_file
               |""".stripMargin
@@ -64,7 +64,7 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
     it should "throw an exception on an non existing expected file" in {
         val spec =
             """
-              |kind: compare-files
+              |kind: compareFiles
               |expected: no_such_file
               |actual: test/data/data_1.csv
               |""".stripMargin
@@ -81,7 +81,7 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
     it should "work with a directory as expected" in {
         val spec =
             """
-              |kind: compare-files
+              |kind: compareFiles
               |expected: test/data
               |actual: test/data/data_1.csv
               |""".stripMargin
@@ -98,7 +98,7 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
     it should "work with a directory as actual" in {
         val spec =
             """
-              |kind: compare-files
+              |kind: compareFiles
               |expected: test/data/data_1.csv
               |actual: test/data
               |""".stripMargin
@@ -115,7 +115,7 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
     it should "work with a directory as expected and actual" in {
         val spec =
             """
-              |kind: compare-files
+              |kind: compareFiles
               |expected: test/data/expected
               |actual: test/data/actual
               |""".stripMargin

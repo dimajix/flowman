@@ -16,10 +16,9 @@
 
 package com.dimajix.flowman.execution
 
+import org.apache.velocity.exception.MethodInvocationException
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
-import com.dimajix.flowman.LocalSparkSession
 
 
 class ContextTest extends FlatSpec with Matchers {
@@ -40,11 +39,11 @@ class ContextTest extends FlatSpec with Matchers {
         context.evaluate("$env_3") should be ("value_1")
     }
 
-    it should "not replace unknown vars" in {
+    it should "throw an exception on unknown vars" in {
         val context1 = RootContext.builder()
             .withEnvironment(Seq(("env_1", "value_1")), SettingLevel.NONE)
             .build()
-        context1.evaluate("$env_2") should be ("$env_2")
+        a[MethodInvocationException] shouldBe thrownBy(context1.evaluate("$env_2"))
 
         val context2 = RootContext.builder()
             .withEnvironment(Seq(("env_1", "value_1")), SettingLevel.NONE)

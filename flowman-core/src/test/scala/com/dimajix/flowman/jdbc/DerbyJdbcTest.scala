@@ -23,7 +23,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalTempDir
+import com.dimajix.flowman.testing.LocalTempDir
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType

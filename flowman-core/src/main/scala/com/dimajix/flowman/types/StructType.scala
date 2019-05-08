@@ -20,6 +20,13 @@ import org.apache.spark.sql.types.DataType
 import org.codehaus.jackson.annotate.JsonProperty
 
 
+object StructType {
+    def of(schema:org.apache.spark.sql.types.StructType) : StructType = {
+        StructType(Field.of(schema.fields))
+    }
+}
+
+
 case class StructType(
     @JsonProperty(value = "fields") fields:Seq[Field]
                      ) extends ContainerType {

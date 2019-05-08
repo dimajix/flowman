@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.io.FileNotFoundException
+import java.nio.file.FileAlreadyExistsException
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.internal.SQLConf
@@ -42,12 +46,12 @@ import com.dimajix.flowman.util.SchemaUtils
 class FileRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
-    @JsonProperty(value="location", required = true) private var _location: String = _
+    @JsonProperty(value="location", required = true) private var _location: String = "/"
     @JsonProperty(value="format", required = false) private var _format: String = "csv"
     @JsonProperty(value="pattern", required = false) private var _pattern: String = _
 
-    def pattern(implicit context:Context) : String = context.evaluate(_pattern)
-    def location(implicit context:Context) : String = context.evaluate(_location)
+    def pattern(implicit context:Context) : String = _pattern
+    def location(implicit context:Context) : Path = new Path(context.evaluate(_location))
     def format(implicit context:Context) : String = context.evaluate(_format)
 
     /**
@@ -63,8 +67,10 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
 
         implicit val context = executor.context
+        requireValidPartitionKeys(partitions)
+
         val data = mapFiles(executor, partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading from ${HiveDialect.expr.partition(partition)} file $p"))
+            paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
             //if (inputFiles.isEmpty)
             //    throw new IllegalArgumentException("No input files found")
 
@@ -117,6 +123,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partition != null)
 
         implicit val context = executor.context
+        requireValidPartitionKeys(partition)
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector(executor).resolve(partitionSpec.toMap)
@@ -139,10 +146,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
 
         implicit val context = executor.context
-        if (location == null || location.isEmpty)
-            throw new IllegalArgumentException("location needs to be defined for cleaning files")
-
-        if (this.partitions != null && this.partitions.nonEmpty)
+        if (this.partitions != null && this.partitions.nonEmpty && partitions.nonEmpty)
             cleanPartitionedFiles(executor, partitions)
         else
             cleanUnpartitionedFiles(executor)
@@ -150,6 +154,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
 
     private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
         implicit val context = executor.context
+        requireValidPartitionKeys(partitions)
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -162,27 +167,58 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
 
     /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = {
+        require(executor != null)
+
+        implicit val context = executor.context
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        fs.exists(location)
+    }
+
+    /**
       * This method will create the given directory as specified in "location"
       * @param executor
       */
-    override def create(executor:Executor) : Unit = {
+    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
+        require(executor != null)
+
         implicit val context = executor.context
+        val location = this.location
         logger.info(s"Creating directory '$location' for file relation")
-        val path = new Path(location)
-        val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        fs.mkdirs(path)
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        if (fs.exists(location)) {
+            if (!ifNotExists) {
+                throw new FileAlreadyExistsException(location.toString)
+            }
+        }
+        else {
+            fs.mkdirs(location)
+        }
     }
 
     /**
       * This method will remove the given directory as specified in "location"
       * @param executor
       */
-    override def destroy(executor:Executor) : Unit =  {
+    override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {
+        require(executor != null)
+
         implicit val context = executor.context
+        val location = this.location
         logger.info(s"Deleting directory '$location' of file relation")
-        val path = new Path(location)
-        val fs = path.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        fs.delete(path, true)
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        if (!fs.exists(location)) {
+            if (!ifExists) {
+                throw new FileNotFoundException(location.toString)
+            }
+        }
+        else {
+            fs.delete(location, true)
+        }
     }
 
     override def migrate(executor:Executor) : Unit = ???
@@ -195,10 +231,10 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
       * @return
       */
     private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
-        implicit val context = executor.context
-        if (location == null || location.isEmpty)
-            throw new IllegalArgumentException("location needs to be defined for reading files")
+        require(partitions != null)
+        require(executor != null)
 
+        implicit val context = executor.context
         if (this.partitions != null && this.partitions.nonEmpty)
             mapPartitionedFiles(executor, partitions)(fn)
         else
@@ -206,9 +242,10 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
 
     private def mapPartitionedFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+        require(partitions != null)
+        require(executor != null)
+
         implicit val context = executor.context
-        if (partitions == null)
-            throw new NullPointerException("Partitioned data source requires partition values to be defined")
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -224,7 +261,7 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     private def collector(executor: Executor) = {
         implicit val context = executor.context
         new FileCollector(executor.spark)
-            .path(new Path(location))
+            .path(location)
             .pattern(pattern)
     }
 }

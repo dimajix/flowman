@@ -113,6 +113,10 @@ class UtcTimestamp(dt:LocalDateTime) {
         dt.toEpochSecond(ZoneOffset.UTC)
     }
 
+    def toLocalDate() : LocalDate = {
+        dt.toLocalDate
+    }
+
     def toLocalDateTime() : LocalDateTime = {
         dt
     }

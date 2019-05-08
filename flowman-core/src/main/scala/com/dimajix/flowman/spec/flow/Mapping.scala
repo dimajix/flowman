@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Resource
 import com.dimajix.flowman.spi.TypeRegistry
+import com.dimajix.flowman.types.StructType
 
 
 object Mapping extends TypeRegistry[Mapping] {
@@ -48,21 +49,27 @@ object Mapping extends TypeRegistry[Mapping] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
+    new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMapping]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMapping]),
+    new JsonSubTypes.Type(name = "conform", value = classOf[ConformMapping]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMapping]),
+    new JsonSubTypes.Type(name = "drop", value = classOf[DropMapping]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMapping]),
-    new JsonSubTypes.Type(name = "json-extract", value = classOf[ExtractJsonMapping]),
-    new JsonSubTypes.Type(name = "json-unpack", value = classOf[UnpackJsonMapping]),
+    new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMapping]),
+    new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMapping]),
+    new JsonSubTypes.Type(name = "latest", value = classOf[LatestMapping]),
+    new JsonSubTypes.Type(name = "update", value = classOf[UpdateMapping]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMapping]),
     new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMapping]),
-    new JsonSubTypes.Type(name = "read-relation", value = classOf[ReadRelationMapping]),
-    new JsonSubTypes.Type(name = "read-stream", value = classOf[ReadStreamMapping]),
+    new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMapping]),
+    new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMapping]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMapping]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMapping]),
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaMapping]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMapping]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),
@@ -135,4 +142,12 @@ abstract class Mapping extends Resource {
       * @return
       */
     def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType
 }

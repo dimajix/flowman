@@ -18,8 +18,11 @@ package com.dimajix.flowman.util
 
 import java.util.Locale
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
@@ -28,6 +31,8 @@ import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.MapType
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -73,6 +78,85 @@ object SchemaUtils {
             df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)
         else
             df
+    }
+
+    /**
+      * Finds a specific field in a schema
+      * @param struct
+      * @param name
+      * @return
+      */
+    def find(struct:StructType, name:String) : Option[StructField] = {
+        def findField(field:StructField, head:String, tail:Seq[String]) : Option[StructField] = {
+            field.dataType match {
+                case st:StructType => findStruct(st, head, tail)
+                case at:ArrayType => findField(StructField("element", at.elementType), head, tail)
+                case _ => throw new NoSuchElementException(s"Cannot descend field ${field.name} - it is neither struct not array")
+            }
+        }
+        def findStruct(struct:StructType, head:String, tail:Seq[String]) : Option[StructField] = {
+            struct.fields
+                .find(_.name.toLowerCase(Locale.ROOT) == head)
+                .flatMap { field =>
+                    if (tail.isEmpty)
+                        Some(field)
+                    else
+                        findField(field, tail.head, tail.tail)
+                }
+        }
+
+        val segments = name.toLowerCase(Locale.ROOT).split('.')
+        findStruct(struct, segments.head, segments.tail)
+    }
+
+    /**
+      * Truncate comments to maximum length. Maybe required for Hive tables
+      * @param schema
+      * @param maxLength
+      * @return
+      */
+    def truncateComments(schema:StructType, maxLength:Int) : StructType = {
+        def processType(dataType:DataType) : DataType = {
+            dataType match {
+                case st:StructType => truncateComments(st, maxLength)
+                case ar:ArrayType => ar.copy(elementType = processType(ar.elementType))
+                case mt:MapType => mt.copy(keyType = processType(mt.keyType), valueType = processType(mt.valueType))
+                case dt:DataType => dt
+            }
+        }
+        def truncate(field:StructField) : StructField = {
+            val metadata = field.getComment()
+                .map(comment => new MetadataBuilder()
+                    .withMetadata(field.metadata)
+                    .putString("comment", comment.take(maxLength))
+                    .build()
+                ).getOrElse(field.metadata)
+            val dataType = processType(field.dataType)
+            field.copy(dataType = dataType, metadata = metadata)
+        }
+        val fields = schema.fields.map(truncate)
+        StructType(fields)
+    }
+
+    /**
+      * Removes all meta data from a Spark schema. Useful for comparing results in unit tests
+      * @param schema
+      * @return
+      */
+    def dropMetadata(schema:StructType) : StructType = {
+        def processType(dataType:DataType) : DataType = {
+            dataType match {
+                case st:StructType => dropMetadata(st)
+                case ar:ArrayType => ar.copy(elementType = processType(ar.elementType))
+                case mt:MapType => mt.copy(keyType = processType(mt.keyType), valueType = processType(mt.valueType))
+                case dt:DataType => dt
+            }
+        }
+
+        val fields = schema.fields.map { field =>
+            field.copy(dataType = processType(field.dataType), metadata = Metadata.empty)
+        }
+        StructType(fields)
     }
 
     /**

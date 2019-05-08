@@ -28,8 +28,8 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.sources.local.implicits._
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {

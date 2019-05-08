@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,15 +83,6 @@ abstract class Executor {
       * @return
       */
     def context : Context
-
-    /**
-      * Returns a named table created by an executor. If a project is specified, Executors for other projects
-      * will be searched as well
-      *
-      * @param identifier
-      * @return
-      */
-    def getTable(identifier: MappingIdentifier) : DataFrame
 
     /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache

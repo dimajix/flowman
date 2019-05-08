@@ -19,10 +19,14 @@ package com.dimajix.flowman.spec.flow
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 
 
 class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -35,7 +39,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
               |    columns:
               |      str_col: string
               |      int_col: integer
@@ -49,6 +53,13 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
+
+        val mapping = project.mappings("empty")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        )))
     }
 
     it should "support embedded schema" in {
@@ -67,7 +78,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("empty")
@@ -78,6 +89,55 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
+
+        val mapping = project.mappings("empty")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        )))
+    }
+
+    it should "support reading from partitions with explicit columns" in {
+        val spec =
+            """
+              |relations:
+              |  empty:
+              |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: spart
+              |        type: string
+              |mappings:
+              |  empty:
+              |    kind: read
+              |    relation: empty
+              |    columns:
+              |      str_col: string
+              |      int_col: integer
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        project.relations.keys should contain("empty")
+        project.mappings.keys should contain("empty")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        val df = executor.instantiate(MappingIdentifier("empty"))
+        df.columns should contain("str_col")
+        df.columns should contain("int_col")
+
+        val mapping = project.mappings("empty")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        )))
     }
 
     it should "support reading from partitions without specification" in {
@@ -99,7 +159,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("empty")
@@ -110,6 +170,15 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
+        df.columns should contain("spart")
+
+        val mapping = project.mappings("empty")
+        val schema = mapping.describe(executor.context, Map())
+        schema should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType),
+            Field("spart", StringType, false)
+        )))
     }
 
     it should "support reading from partitions with specification" in {
@@ -131,7 +200,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty:
               |    kind: read
-              |    source: empty
+              |    relation: empty
               |    partitions:
               |      spart: abc
             """.stripMargin
@@ -144,5 +213,6 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
+        df.columns should contain("spart")
     }
 }

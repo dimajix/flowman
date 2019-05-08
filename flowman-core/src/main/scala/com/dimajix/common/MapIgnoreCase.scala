@@ -26,11 +26,11 @@ import scala.collection.Seq
 object MapIgnoreCase {
     def apply[T]() : MapIgnoreCase[T] = new MapIgnoreCase[T](Map())
     def apply[T](map:Map[String,T]) : MapIgnoreCase[T] = {
-        new MapIgnoreCase[T](map.map(kv => kv._1.toLowerCase(Locale.ROOT) -> (kv._1, kv._2)))
+        new MapIgnoreCase[T](map.map(kv => kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))))
     }
 
     def apply[T](seq:Seq[(String,T)]) : MapIgnoreCase[T] = {
-        new MapIgnoreCase[T](seq.map(kv => kv._1.toLowerCase(Locale.ROOT) -> (kv._1, kv._2)).toMap)
+        new MapIgnoreCase[T](seq.map(kv => kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))).toMap)
     }
 }
 
@@ -66,7 +66,7 @@ class MapIgnoreCase[B] private(impl:Map[String,(String,B)] = Map()) extends Map[
       *  @usecase  def + (kv: (A, B)): Map[A, B]
       *    @inheritdoc
       */
-    override def + [B1 >: B] (kv: (String, B1)): MapIgnoreCase[B1] = new MapIgnoreCase[B1](impl + (kv._1.toLowerCase(Locale.ROOT) -> (kv._1, kv._2)))
+    override def + [B1 >: B] (kv: (String, B1)): MapIgnoreCase[B1] = new MapIgnoreCase[B1](impl + (kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))))
 
     /** Removes a key from this map, returning a new map.
       *  @param    key the key to be removed

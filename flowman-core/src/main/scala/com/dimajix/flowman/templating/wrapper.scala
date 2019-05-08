@@ -17,10 +17,14 @@
 package com.dimajix.flowman.templating
 
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Period
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.Temporal
+
+import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.util.UtcTimestamp
@@ -30,6 +34,7 @@ case class FileWrapper(file:File) {
 
     def getParent() : FileWrapper = FileWrapper(file.parent)
     def getAbsPath() : FileWrapper = FileWrapper(file.absolute)
+    def getPath() : String = Path.getPathWithoutSchemeAndAuthority(file.path).toString
     def getFilename() : String = file.filename
     def withSuffix(suffix:String) : FileWrapper = FileWrapper(file.withSuffix(suffix))
     def withName(name:String) : FileWrapper = FileWrapper(file.withName(name))
@@ -69,6 +74,24 @@ class TimestampWrapper {
     def parse(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def valueOf(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def toEpochSeconds(value:String) : Long = UtcTimestamp.toEpochSeconds(value)
+    def format(value:String, format:String) : String = UtcTimestamp.parse(value).format(format)
+    def format(value:UtcTimestamp, format:String) : String = value.format(format)
+}
+
+class LocalDateWrapper {
+    def parse(value:String) : LocalDate = LocalDate.parse(value)
+    def valueOf(value:String) : LocalDate = LocalDate.parse(value)
+    def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDate.parse(value))
+    def format(value:Temporal, format:String) : String = DateTimeFormatter.ofPattern(format).format(value)
+    def format(value:UtcTimestamp, format:String) : String = DateTimeFormatter.ofPattern(format).format(value.toLocalDate())
+    def addDays(value:String, days:Int) : LocalDate = LocalDate.parse(value).plusDays(days)
+    def addDays(value:LocalDate, days:Int) : LocalDate = value.plusDays(days)
+    def addWeeks(value:String, weeks:Int) : LocalDate = LocalDate.parse(value).plusWeeks(weeks)
+    def addWeeks(value:LocalDate, weeks:Int) : LocalDate = value.plusWeeks(weeks)
+    def addMonths(value:String, months:Int) : LocalDate = LocalDate.parse(value).plusMonths(months)
+    def addMonths(value:LocalDate, months:Int) : LocalDate = value.plusMonths(months)
+    def addYears(value:String, days:Int) : LocalDate = LocalDate.parse(value).plusYears(days)
+    def addYears(value:LocalDate, days:Int) : LocalDate = value.plusYears(days)
 }
 
 class LocalDateTimeWrapper {
@@ -76,6 +99,23 @@ class LocalDateTimeWrapper {
     def valueOf(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)
     def ofEpochSeconds(epoch:Long) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
+    def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDateTime.parse(value))
+    def format(value:Temporal, format:String) : String = DateTimeFormatter.ofPattern(format).format(value)
+    def format(value:UtcTimestamp, format:String) : String = DateTimeFormatter.ofPattern(format).format(value.toLocalDateTime())
+    def addSeconds(value:String, seconds:Int) : LocalDateTime = LocalDateTime.parse(value).plusSeconds(seconds)
+    def addSeconds(value:LocalDateTime, seconds:Int) : LocalDateTime = value.plusSeconds(seconds)
+    def addMinutes(value:String, minutes:Int) : LocalDateTime = LocalDateTime.parse(value).plusMinutes(minutes)
+    def addMinutes(value:LocalDateTime, minutes:Int) : LocalDateTime = value.plusMinutes(minutes)
+    def addHours(value:String, hours:Int) : LocalDateTime = LocalDateTime.parse(value).plusHours(hours)
+    def addHours(value:LocalDateTime, hours:Int) : LocalDateTime = value.plusHours(hours)
+    def addDays(value:String, days:Int) : LocalDateTime = LocalDateTime.parse(value).plusDays(days)
+    def addDays(value:LocalDateTime, days:Int) : LocalDateTime = value.plusDays(days)
+    def addWeeks(value:String, weeks:Int) : LocalDateTime = LocalDateTime.parse(value).plusWeeks(weeks)
+    def addWeeks(value:LocalDateTime, weeks:Int) : LocalDateTime = value.plusWeeks(weeks)
+    def addMonths(value:String, months:Int) : LocalDateTime = LocalDateTime.parse(value).plusMonths(months)
+    def addMonths(value:LocalDateTime, months:Int) : LocalDateTime = value.plusMonths(months)
+    def addYears(value:String, days:Int) : LocalDateTime = LocalDateTime.parse(value).plusYears(days)
+    def addYears(value:LocalDateTime, days:Int) : LocalDateTime = value.plusYears(days)
 }
 
 class DurationWrapper {

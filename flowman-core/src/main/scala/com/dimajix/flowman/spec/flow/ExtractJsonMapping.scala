@@ -19,12 +19,14 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Encoders
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.{types => ftypes}
 
 
 class ExtractJsonMapping extends BaseMapping {
@@ -87,6 +89,20 @@ class ExtractJsonMapping extends BaseMapping {
             .option("allowNonNumericNumbers", allowNonNumericNumbers)
             .option("allowBackslashEscapingAnyCharacter", allowBackslashEscapingAnyCharacter)
             .option("allowUnquotedControlChars", allowUnquotedControlChars)
-            .json(table.select(table(column)).as[String](Encoders.STRING))
+            .json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,ftypes.StructType]) : ftypes.StructType = {
+        require(context != null)
+        require(input != null)
+        implicit val icontext = context
+
+        ftypes.StructType(schema.fields)
     }
 }

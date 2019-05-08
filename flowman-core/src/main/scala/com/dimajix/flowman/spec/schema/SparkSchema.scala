@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.schema
 
 import org.apache.spark.sql.types.DataType
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
@@ -24,6 +25,8 @@ import com.dimajix.flowman.types.Field
 
 
 class SparkSchema extends ExternalSchema {
+    protected override val logger = LoggerFactory.getLogger(classOf[SparkSchema])
+
     /**
       * Returns the list of all fields of the schema
       * @param context

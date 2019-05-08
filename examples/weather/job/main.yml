@@ -2,7 +2,7 @@ jobs:
   main:
     description: "Main job"
     tasks:
-      - kind: show-environment
+      - kind: showEnvironment
       - kind: print
         text:
           - "project.name=${project.name}"

@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -100,6 +100,14 @@
                                     <classifier>bin</classifier>
                                     <outputDirectory>target</outputDirectory>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-mariadb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>target</outputDirectory>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -131,30 +139,6 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-tools</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-aws</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-azure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-example</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-hbase</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-kafka</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-impala</artifactId>
         </dependency>
     </dependencies>
 </project>

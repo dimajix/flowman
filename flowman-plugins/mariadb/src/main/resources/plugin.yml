@@ -1,0 +1,6 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - mariadb-java-client-${mariadb-java-client.version}.jar

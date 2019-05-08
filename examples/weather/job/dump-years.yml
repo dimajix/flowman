@@ -19,8 +19,8 @@ jobs:
       - start_year=${year}
       - end_year=#set($r=$year+1)$r
     tasks:
-      - kind: show-environment
+      - kind: showEnvironment
         description: Dump current execution environment for year $start_year
-      - kind: show-mapping
+      - kind: showMapping
         description: Dump measurements from year $start_year
         mapping: measurements

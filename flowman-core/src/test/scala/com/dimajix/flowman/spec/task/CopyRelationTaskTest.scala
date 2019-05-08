@@ -21,12 +21,12 @@ import java.io.File
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.SingleValue
 
 
@@ -34,7 +34,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
     "A CopyRelationTask" should "support configuration via YML" in {
         val spec =
             """
-              |kind: copy-relation
+              |kind: copyRelation
               |source: local_file
               |sourcePartitions:
               |  spc: part_value
@@ -73,7 +73,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |  target_relation:
               |    kind: local
               |    format: csv
-              |    location: ${tempDir}/copy-relation-output.csv
+              |    location: $tempDir/copy-relation-output.csv
               |    schema:
               |      kind: embedded
               |      fields:
@@ -87,7 +87,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |jobs:
               |  main:
               |    tasks:
-              |     - kind: copy-relation
+              |     - kind: copyRelation
               |       source: source_relation
               |       target: target_relation
               |       mode: overwrite

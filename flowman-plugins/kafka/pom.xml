@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -72,6 +72,11 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

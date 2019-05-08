@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -40,19 +40,20 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>${deployment.repository.id}</id>
+            <url>${deployment.repository.snapshot-url}</url>
         </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>${deployment.repository.id}</id>
+            <url>${deployment.repository.url}</url>
         </repository>
     </distributionManagement>
 
     <properties>
-        <hadoop.version>2.8.4</hadoop.version>
+        <hadoop.version>2.8.5</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.0</spark.version>
+        <spark.version>2.4.2</spark.version>
+        <spark-hive.scope>compile</spark-hive.scope>
         <aws.version>1.10.6</aws.version>
         <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
@@ -60,6 +61,7 @@
         <avro.version>1.8.2</avro.version>
         <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
+        <jackson.databind.version>2.6.7.1</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <json4s.version>3.5.3</json4s.version>
         <json.version>20180130</json.version>
@@ -68,11 +70,11 @@
         <snakeyaml.version>1.21</snakeyaml.version>
         <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
-        <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
-        <velocity.version>1.7</velocity.version>
+        <velocity.version>2.1</velocity.version>
         <slick.version>3.2.3</slick.version>
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>
+        <slf4j.version>1.7.16</slf4j.version>
         <antlr.version>2.7.7</antlr.version>
         <antlr-runtime.version>3.4</antlr-runtime.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -88,45 +90,129 @@
         <httpclient.version>4.5.2</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
         <swagger-parser.version>1.0.36</swagger-parser.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <scala.version>2.11.8</scala.version>
+        <!-- Language versions -->
+        <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <scala.version>2.11.12</scala.version>
         <scala.api_version>2.11</scala.api_version>
+        <!-- Set this to false for releases -->
+        <gpg.skip>true</gpg.skip>
+        <!-- Definition of the release repository -->
+        <deployment.repository.id>ossrh</deployment.repository.id>
+        <deployment.repository.server>https://oss.sonatype.org/</deployment.repository.server>
+        <deployment.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</deployment.repository.url>
+        <deployment.repository.snapshot-url>https://oss.sonatype.org/content/repositories/snapshots</deployment.repository.snapshot-url>
+        <!-- Encoding related settings -->
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <profiles>
+        <!-- First come the Hadoop distributon profiles -->
+        <profile>
+            <id>CDH-5.13</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <cdh.version>cdh5.13.1</cdh.version>
+                <spark.version>2.2.0</spark.version>
+                <spark-hive.scope>provided</spark-hive.scope>
+                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
+                <hbase.version>1.2.0-${cdh.version}</hbase.version>
+                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
+                <avro.version>1.7.6-${cdh.version}</avro.version>
+                <guava.version>12.0.1</guava.version>
+                <json4s.version>3.2.11</json4s.version>
+                <jackson.version>2.6.5</jackson.version>
+                <jackson.databind.version>2.6.5</jackson.databind.version>
+                <commons-lang.version>2.4</commons-lang.version>
+                <slf4j.version>1.7.5</slf4j.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>CDH-5.15</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <cdh.version>cdh5.15.1</cdh.version>
+                <spark.version>2.3.0.cloudera3</spark.version>
+                <spark-hive.scope>provided</spark-hive.scope>
+                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
+                <hbase.version>1.2.0-${cdh.version}</hbase.version>
+                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
+                <avro.version>1.7.6-${cdh.version}</avro.version>
+                <guava.version>12.0.1</guava.version>
+                <json4s.version>3.2.11</json4s.version>
+                <jackson.version>2.6.7</jackson.version>
+                <jackson.databind.version>2.6.7.1</jackson.databind.version>
+                <commons-lang.version>2.6</commons-lang.version>
+                <slf4j.version>1.7.5</slf4j.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>jetty-sslengine</artifactId>
+                        <version>6.1.26.cloudera.4</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
+        <!-- Then come the individual package profiles, which can override distribution settings -->
         <profile>
             <id>spark-2.2</id>
             <properties>
-                <spark.version>2.2.1</spark.version>
+                <scala.version>2.11.8</scala.version>
+                <spark.version>2.2.3</spark.version>
                 <jackson.version>2.6.5</jackson.version>
+                <jackson.databind.version>2.6.5</jackson.databind.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
                 <json4s.version>3.2.11</json4s.version>
+                <guava.version>12.0</guava.version>
+                <slf4j.version>1.7.16</slf4j.version>
             </properties>
         </profile>
         <profile>
             <id>spark-2.3</id>
             <properties>
-                <spark.version>2.3.2</spark.version>
+                <scala.version>2.11.8</scala.version>
+                <spark.version>2.3.3</spark.version>
                 <jackson.version>2.6.7</jackson.version>
+                <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
                 <json4s.version>3.2.11</json4s.version>
+                <guava.version>12.0</guava.version>
+                <slf4j.version>1.7.16</slf4j.version>
             </properties>
         </profile>
         <profile>
             <id>spark-2.4</id>
             <properties>
-                <spark.version>2.4.0</spark.version>
+                <scala.version>2.11.12</scala.version>
+                <spark.version>2.4.2</spark.version>
                 <jackson.version>2.6.7</jackson.version>
+                <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
                 <json4s.version>3.5.3</json4s.version>
+                <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.16</slf4j.version>
             </properties>
         </profile>
+
         <profile>
             <id>hadoop-2.6</id>
             <properties>
@@ -136,19 +222,19 @@
         <profile>
             <id>hadoop-2.7</id>
             <properties>
-                <hadoop.version>2.7.6</hadoop.version>
+                <hadoop.version>2.7.7</hadoop.version>
             </properties>
         </profile>
         <profile>
             <id>hadoop-2.8</id>
             <properties>
-                <hadoop.version>2.8.4</hadoop.version>
+                <hadoop.version>2.8.5</hadoop.version>
             </properties>
         </profile>
         <profile>
             <id>hadoop-2.9</id>
             <properties>
-                <hadoop.version>2.9.1</hadoop.version>
+                <hadoop.version>2.9.2</hadoop.version>
             </properties>
         </profile>
         <profile>
@@ -169,49 +255,11 @@
                 <hbase.version>1.4.5</hbase.version>
             </properties>
         </profile>
-        <profile>
-            <id>CDH-5.13</id>
-            <repositories>
-                <repository>
-                    <id>cloudera</id>
-                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-                </repository>
-            </repositories>
-            <properties>
-                <cdh.version>cdh5.13.1</cdh.version>
-                <spark.version>2.2.0</spark.version>
-                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
-                <hbase.version>1.2.0-${cdh.version}</hbase.version>
-                <avro.version>1.7.6-${cdh.version}</avro.version>
-                <guava.version>12.0.1</guava.version>
-                <jackson.version>2.6.5</jackson.version>
-                <commons-lang.version>2.4</commons-lang.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>CDH-5.15</id>
-            <repositories>
-                <repository>
-                    <id>cloudera</id>
-                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-                </repository>
-            </repositories>
-            <properties>
-                <cdh.version>cdh5.15.1</cdh.version>
-                <spark.version>2.3.0.cloudera3</spark.version>
-                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
-                <hbase.version>1.2.0-${cdh.version}</hbase.version>
-                <avro.version>1.7.6-${cdh.version}</avro.version>
-                <guava.version>12.0.1</guava.version>
-                <jackson.version>2.6.7</jackson.version>
-                <commons-lang.version>2.6</commons-lang.version>
-            </properties>
-        </profile>
     </profiles>
 
     <modules>
-        <module>flowman-core</module>
         <module>flowman-testing</module>
+        <module>flowman-core</module>
         <module>flowman-tools</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
@@ -219,6 +267,7 @@
         <module>flowman-plugins/kafka</module>
         <module>flowman-plugins/hbase</module>
         <module>flowman-plugins/impala</module>
+        <module>flowman-plugins/mariadb</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -267,11 +316,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
-            </plugin>
-            <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
                 <version>1.11.0</version>
@@ -307,13 +351,18 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+            </plugin>
+            <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>1.6.7</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <serverId>${deployment.repository.id}</serverId>
+                    <nexusUrl>${deployment.repository.server}</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
@@ -341,6 +390,14 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.1.0</version>
+                    <configuration>
+                        <resources>
+                            <resource>
+                                <directory>src/main/resources</directory>
+                                <filtering>true</filtering>
+                            </resource>
+                        </resources>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -360,6 +417,23 @@
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
                     <version>3.4.6</version>
+                    <configuration>
+                        <scalaVersion>${scala.version}</scalaVersion>
+                        <args>
+                            <arg>-unchecked</arg>
+                            <arg>-deprecation</arg>
+                            <arg>-feature</arg>
+                            <arg>-explaintypes</arg>
+                            <arg>-Yno-adapted-args</arg>
+                        </args>
+                        <javacArgs>
+                            <javacArg>-source</javacArg>
+                            <javacArg>${java.version}</javacArg>
+                            <javacArg>-target</javacArg>
+                            <javacArg>${java.version}</javacArg>
+                            <javacArg>-Xlint:all,-serial,-path,-try</javacArg>
+                        </javacArgs>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>scala-compile-first</id>
@@ -438,10 +512,9 @@
                     </executions>
                 </plugin>
                 <plugin>
-                    <inherited>true</inherited>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>2.21.0</version>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.7</version>
                 </plugin>
                 <plugin>
                     <groupId>com.spotify</groupId>
@@ -499,6 +572,13 @@
         <dependencies>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-testing</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -506,12 +586,6 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -548,6 +622,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-impala</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mariadb</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -618,7 +698,7 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-hive_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>compile</scope>
+                <scope>${spark-hive.scope}</scope>
             </dependency>
 
             <dependency>
@@ -689,6 +769,13 @@
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-server-resourcemanager</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-annotations</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
@@ -729,20 +816,20 @@
                 <scope>provided</scope>
                 <exclusions>
                     <exclusion>
-                        <artifactId>slf4j-log4j12</artifactId>
                         <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                     <exclusion>
-                        <artifactId>log4j</artifactId>
                         <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
                     </exclusion>
                     <exclusion>
-                        <artifactId>jetty</artifactId>
                         <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty</artifactId>
                     </exclusion>
                     <exclusion>
-                        <artifactId>servlet-api</artifactId>
                         <groupId>javax.servlet</groupId>
+                        <artifactId>servlet-api</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -752,6 +839,27 @@
                 <artifactId>hadoop-yarn-api</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-common</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>javax.servlet</groupId>
+                        <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.sun.jersey</groupId>
+                        <artifactId>jersey-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.sun.jersey</groupId>
+                        <artifactId>jersey-client</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -803,6 +911,20 @@
             </dependency>
 
             <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
                 <version>${joda.version}</version>
@@ -834,7 +956,7 @@
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-mapper-asl</artifactId>
                 <version>${jackson_asl.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -847,7 +969,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson.databind.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -996,7 +1118,7 @@
 
             <dependency>
                 <groupId>org.apache.velocity</groupId>
-                <artifactId>velocity</artifactId>
+                <artifactId>velocity-engine-core</artifactId>
                 <version>${velocity.version}</version>
             </dependency>
 
@@ -1022,12 +1144,6 @@
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.mariadb.jdbc</groupId>
-                <artifactId>mariadb-java-client</artifactId>
-                <version>${mariadb-java-client.version}</version>
             </dependency>
 
             <dependency>

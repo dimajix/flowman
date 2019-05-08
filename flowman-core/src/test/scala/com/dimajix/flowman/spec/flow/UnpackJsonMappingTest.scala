@@ -25,10 +25,10 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -37,7 +37,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1
@@ -65,7 +65,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1
@@ -128,7 +128,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1
@@ -175,7 +175,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |mappings:
               |  m0:
-              |    kind: json-unpack
+              |    kind: unpackJson
               |    input: p0
               |    columns:
               |      - name: _1

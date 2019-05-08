@@ -19,8 +19,8 @@ package com.dimajix.flowman.spec
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.testing.LocalSparkSession
 
 class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
     "The Module" should "be loadable from a string" in {
@@ -51,7 +51,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  input:
               |    kind: read
-              |    source: empty
+              |    relation: empty
               |    columns:
               |      col1: String
               |      col2: Integer
@@ -59,7 +59,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |jobs:
               |  default:
               |    tasks:
-              |      - kind: build-target
+              |      - kind: build
               |        targets: blackhole
             """.stripMargin
         val project = Module.read.string(spec).toProject("default")

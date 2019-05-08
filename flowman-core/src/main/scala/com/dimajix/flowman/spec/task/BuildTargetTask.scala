@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,7 @@ class BuildTargetTask extends BaseTask {
     private def executeTarget(executor: Executor, identifier:TargetIdentifier) : Boolean = {
         implicit val context = executor.context
         val target = context.getTarget(identifier)
-
-        logger.info("Resolving dependencies for target '{}'", identifier.toString)
-        val dependencies = target.dependencies
-            .map(d => (d, executor.instantiate(d)))
-            .toMap
-
-        logger.info("Executing target '{}'", identifier.toString)
-        target.build(executor, dependencies)
+        executor.runner.build(executor, target)
         true
     }
 }

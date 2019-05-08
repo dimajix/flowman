@@ -30,27 +30,28 @@ object Task extends TypeRegistry[Task] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "build", value = classOf[BuildTargetTask]),
     new JsonSubTypes.Type(name = "call", value = classOf[CallTask]),
-    new JsonSubTypes.Type(name = "count-mapping", value = classOf[CountMappingTask]),
-    new JsonSubTypes.Type(name = "create-relation", value = classOf[CreateRelationTask]),
-    new JsonSubTypes.Type(name = "destroy-relation", value = classOf[DestroyRelationTask]),
-    new JsonSubTypes.Type(name = "describe-relation", value = classOf[DescribeRelationTask]),
-    new JsonSubTypes.Type(name = "copy-relation", value = classOf[CopyRelationTask]),
-    new JsonSubTypes.Type(name = "show-mapping", value = classOf[ShowMappingTask]),
-    new JsonSubTypes.Type(name = "show-relation", value = classOf[ShowRelationTask]),
-    new JsonSubTypes.Type(name = "describe-mapping", value = classOf[DescribeMappingTask]),
-    new JsonSubTypes.Type(name = "show-environment", value = classOf[ShowEnvironmentTask]),
-    new JsonSubTypes.Type(name = "print", value = classOf[PrintTask]),
+    new JsonSubTypes.Type(name = "compareFiles", value = classOf[CompareFilesTask]),
+    new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTask]),
+    new JsonSubTypes.Type(name = "copyRelation", value = classOf[CopyRelationTask]),
+    new JsonSubTypes.Type(name = "countMapping", value = classOf[CountMappingTask]),
+    new JsonSubTypes.Type(name = "createDatabase", value = classOf[CreateDatabaseTask]),
+    new JsonSubTypes.Type(name = "createRelation", value = classOf[CreateRelationTask]),
+    new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTask]),
+    new JsonSubTypes.Type(name = "destroyRelation", value = classOf[DestroyRelationTask]),
+    new JsonSubTypes.Type(name = "describeRelation", value = classOf[DescribeRelationTask]),
+    new JsonSubTypes.Type(name = "describeMapping", value = classOf[DescribeMappingTask]),
+    new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTask]),
     new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
-    new JsonSubTypes.Type(name = "build-target", value = classOf[BuildTargetTask]),
-    new JsonSubTypes.Type(name = "get-file", value = classOf[GetFileTask]),
-    new JsonSubTypes.Type(name = "put-file", value = classOf[PutFileTask]),
-    new JsonSubTypes.Type(name = "copy-file", value = classOf[CopyFileTask]),
-    new JsonSubTypes.Type(name = "merge-files", value = classOf[MergeFilesTask]),
-    new JsonSubTypes.Type(name = "delete-file", value = classOf[DeleteFileTask]),
-    new JsonSubTypes.Type(name = "compare-files", value = classOf[CompareFilesTask]),
-    new JsonSubTypes.Type(name = "sftp-upload", value = classOf[SftpUploadTask]),
-    new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask])
+    new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTask]),
+    new JsonSubTypes.Type(name = "print", value = classOf[PrintTask]),
+    new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTask]),
+    new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTask]),
+    new JsonSubTypes.Type(name = "showMapping", value = classOf[ShowMappingTask]),
+    new JsonSubTypes.Type(name = "showRelation", value = classOf[ShowRelationTask]),
+    new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask]),
+    new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTask])
 ))
 abstract class Task {
     /**

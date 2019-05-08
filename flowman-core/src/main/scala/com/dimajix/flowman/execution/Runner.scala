@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.Status
 
@@ -36,4 +37,14 @@ abstract class Runner {
       * @return
       */
     def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : Status
+
+    /**
+      * Builds a single target
+      */
+    def build(executor: Executor, target:Target) : Status
+
+    /**
+      * Cleans a single target
+      */
+    def clean(executor: Executor, target:Target) : Status
 }

@@ -71,7 +71,14 @@ class HiveViewRelation extends BaseRelation with SchemaRelation {
         logger.info(s"Cleaning from Hive view $tableName (no-op)")
     }
 
-    override def create(executor:Executor) : Unit = ???
-    override def destroy(executor:Executor) : Unit = ???
+    /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = ???
+
+    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = ???
+    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = ???
     override def migrate(executor:Executor) : Unit = ???
 }

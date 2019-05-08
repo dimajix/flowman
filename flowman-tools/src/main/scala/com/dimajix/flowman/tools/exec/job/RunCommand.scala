@@ -40,7 +40,7 @@ class RunCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
-        logger.info("Processing outputs {}", if (jobs != null) jobs.mkString(",") else "all")
+        logger.info("Processing jobs {}", if (jobs != null) jobs.mkString(",") else "all")
 
         // Then execute output operations
         val toRun =

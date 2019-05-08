@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,33 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.state.StateStore
 import com.dimajix.flowman.state.JobInstance
+import com.dimajix.flowman.state.JobToken
 import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.state.TargetInstance
+import com.dimajix.flowman.state.TargetToken
 
 
 /**
   * This implementation of the Runner interface provides monitoring via calling appropriate methods in
   * a StateStoreProvider
-  * @param monitor
+  *
+  * @param stateStore
   */
-class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
+class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None) extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[MonitoredRunner])
+
+    override protected def jobRunner(job:JobToken) : Runner = {
+        new MonitoredRunner(stateStore, Some(job))
+    }
 
     /**
       * Performs some checkJob, if the run is required
+      *
       * @param job
       * @return
       */
-    protected override def check(context: Context, job:JobInstance) : Boolean = {
-        monitor.checkJob(job)
+    protected override def checkJob(context: Context, job: JobInstance): Boolean = {
+        stateStore.checkJob(job)
     }
 
     /**
@@ -46,8 +55,8 @@ class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
       * @param job
       * @return
       */
-    protected override def start(context: Context, job:JobInstance) : Object = {
-        monitor.startJob(job)
+    protected override def startJob(context: Context, job: JobInstance, parent: Option[JobToken]): JobToken = {
+        stateStore.startJob(job, parent)
     }
 
     /**
@@ -55,36 +64,36 @@ class MonitoredRunner(monitor:StateStore) extends AbstractRunner {
       *
       * @param token
       */
-    protected override def success(context: Context, token:Object) : Unit = {
-        monitor.finishJob(token, Status.SUCCESS)
+    protected override def finishJob(context: Context, token: JobToken, status:Status): Unit = {
+        stateStore.finishJob(token, status)
     }
 
     /**
-      * Marks a run as a failure
+      * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt
       *
-      * @param token
+      * @param target
+      * @return
       */
-    protected override def failure(context: Context, token:Object) : Unit = {
-        monitor.finishJob(token, Status.FAILED)
+    protected override def checkTarget(context: Context, target: TargetInstance): Boolean = {
+        stateStore.checkTarget(target)
     }
 
     /**
-      * Marks a run as a failure
+      * Starts the run and returns a token, which can be anything
       *
-      * @param context
-      * @param token
+      * @param target
+      * @return
       */
-    protected override def aborted(context: Context, token:Object) : Unit = {
-        monitor.finishJob(token, Status.ABORTED)
+    protected override def startTarget(context: Context, target: TargetInstance, parent: Option[JobToken]): TargetToken = {
+        stateStore.startTarget(target, parent)
     }
 
     /**
-      * Marks a run as being skipped
+      * Marks a run as a success
       *
-      * @param context
       * @param token
       */
-    protected override def skipped(context: Context, token:Object) : Unit = {
-        monitor.finishJob(token, Status.SKIPPED)
+    protected override def finishTarget(context: Context, token: TargetToken, status:Status): Unit = {
+        stateStore.finishTarget(token, status)
     }
 }

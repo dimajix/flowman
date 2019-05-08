@@ -65,4 +65,100 @@ class SchemaUtilsTest extends FlatSpec with Matchers {
         val result = SchemaUtils.toLowerCase(schema)
         result should be(expected)
     }
+
+    "SchemaUtils.dropMetadata" should "remove all meta data" in {
+        val comment = "123456789"
+        val schema = StructType(Seq(
+            StructField("Name", StringType, false).withComment(comment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType).withComment(comment),
+                    StructField("SomeArray", ArrayType(IntegerType, false)).withComment(comment)
+                ))
+            ).withComment(comment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(comment)
+                ))
+            )).withComment(comment)
+        ))
+
+        val pureSchema = SchemaUtils.dropMetadata(schema)
+
+        val expectedSchema = StructType(Seq(
+            StructField("Name", StringType, false),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType),
+                    StructField("SomeArray", ArrayType(IntegerType, false))
+                ))
+            ),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType)
+                ))
+            ))
+        ))
+        pureSchema should be (expectedSchema)
+    }
+
+    "SchemaUtils.find" should "find nested fields" in {
+        val schema = StructType(Seq(
+            StructField("Name", StringType),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType),
+                    StructField("SomeArray", ArrayType(IntegerType))
+                ))
+            ),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType)
+                ))
+            ))
+        ))
+
+        SchemaUtils.find(schema, "no_such_field") should be (None)
+        SchemaUtils.find(schema, "Name") should be (Some(schema("Name")))
+        SchemaUtils.find(schema, "name") should be (Some(schema("Name")))
+        SchemaUtils.find(schema, "nested.amount") should be (Some(StructField("AmOUnt", DoubleType)))
+        SchemaUtils.find(schema, "StructArray.Name") should be (Some(StructField("Name", StringType)))
+    }
+
+    "SchemaUtils.truncateComments" should "work" in {
+        val comment = "123456789"
+        val schema = StructType(Seq(
+            StructField("Name", StringType).withComment(comment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType).withComment(comment),
+                    StructField("SomeArray", ArrayType(IntegerType)).withComment(comment)
+                ))
+            ).withComment(comment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(comment)
+                ))
+            )).withComment(comment)
+        ))
+
+        val truncatedSchema = SchemaUtils.truncateComments(schema, 3)
+
+        val expectedComment = comment.take(3)
+        val expectedSchema = StructType(Seq(
+            StructField("Name", StringType).withComment(expectedComment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", DoubleType).withComment(expectedComment),
+                    StructField("SomeArray", ArrayType(IntegerType)).withComment(expectedComment)
+                ))
+            ).withComment(expectedComment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(expectedComment)
+                ))
+            )).withComment(expectedComment)
+        ))
+        truncatedSchema should be (expectedSchema)
+    }
 }

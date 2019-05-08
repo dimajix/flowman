@@ -41,6 +41,7 @@ object SqlDialects {
 
     registerDialect(HiveDialect)
     registerDialect(DerbyDialect)
+    registerDialect(MySQLDialect)
 
     /**
       * Fetch the JdbcDialect class corresponding to a given database url.

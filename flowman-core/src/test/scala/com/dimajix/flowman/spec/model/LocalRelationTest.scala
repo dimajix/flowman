@@ -19,13 +19,14 @@ package com.dimajix.flowman.spec.model
 import java.io.File
 import java.nio.file.Paths
 
+import org.apache.hadoop.fs.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
@@ -54,6 +55,10 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val executor = session.executor
         implicit val context = executor.context
         val relation = project.relations("local")
+
+        val localRelation = relation.asInstanceOf[LocalRelation]
+        localRelation.location should be (new Path(outputPath.toUri))
+        localRelation.pattern should be ("data.csv")
 
         outputPath.toFile.exists() should be (false)
         relation.create(executor)
@@ -102,6 +107,10 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         implicit val context = executor.context
         val relation = project.relations("local")
 
+        val localRelation = relation.asInstanceOf[LocalRelation]
+        localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
+        localRelation.pattern should be (null)
+
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
@@ -120,13 +129,16 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
-    it should "also support file:/// schema" in {
+    it should "also support URI schema with (empty) authority" in {
+        val location = new Path("file", "", tempDir.getPath).toUri
+        location.toString should startWith ("file:///")
+
         val spec =
             s"""
                |relations:
                |  local:
                |    kind: local
-               |    location: file:///$tempDir/csv/test
+               |    location: $location/csv/test
                |    pattern: data.csv
                |    format: csv
                |    schema:
@@ -143,6 +155,60 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         val executor = session.executor
         implicit val context = executor.context
         val relation = project.relations("local")
+
+        val localRelation = relation.asInstanceOf[LocalRelation]
+        localRelation.location should be (new Path(location.toString + "/csv/test"))
+        localRelation.pattern should be ("data.csv")
+
+        relation.create(executor)
+        new File(tempDir, "csv/test").exists() should be (true)
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        new File(tempDir, "csv/test/data.csv").exists() should be (false)
+        relation.write(executor, df, Map(), "overwrite")
+        new File(tempDir, "csv/test/data.csv").exists() should be (true)
+
+        relation.destroy(executor)
+        new File(tempDir, "csv/test").exists() should be (false)
+    }
+
+    it should "also support URI schema without authority" in {
+        val location = new Path("file", null, tempDir.getPath).toUri
+        location.toString should not startWith ("file:///")
+        location.toString should startWith ("file:/")
+
+        val spec =
+            s"""
+               |relations:
+               |  local:
+               |    kind: local
+               |    location: $location/csv/test
+               |    pattern: data.csv
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+        val relation = project.relations("local")
+
+        val localRelation = relation.asInstanceOf[LocalRelation]
+        localRelation.location should be (new Path(location.toString + "/csv/test"))
+        localRelation.pattern should be ("data.csv")
 
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)

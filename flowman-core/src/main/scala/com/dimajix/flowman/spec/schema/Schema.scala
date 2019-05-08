@@ -40,6 +40,7 @@ object Schema extends TypeRegistry[Schema] {
     new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema]),
     new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchema]),
     new JsonSubTypes.Type(name = "json", value = classOf[JsonSchema]),
+    new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchema]),
     new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchema]),
     new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchema])
 ))

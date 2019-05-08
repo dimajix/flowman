@@ -23,6 +23,7 @@ import org.apache.spark.sql.functions.col
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.types.StructType
 
 class CoalesceMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private var _input:String = _
@@ -39,6 +40,9 @@ class CoalesceMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+        require(executor != null)
+        require(input != null)
+
         implicit val context = executor.context
         val df = input(this.input)
         val parts = partitions
@@ -53,5 +57,19 @@ class CoalesceMapping extends BaseMapping {
       */
     override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
         Array(input)
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param context
+      * @param input
+      * @return
+      */
+    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(context != null)
+        require(input != null)
+
+        implicit val icontext = context
+        input(this.input)
     }
 }

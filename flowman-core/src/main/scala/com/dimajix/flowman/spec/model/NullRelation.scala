@@ -16,23 +16,17 @@
 
 package com.dimajix.flowman.spec.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class NullRelation extends BaseRelation with SchemaRelation {
-    @JsonProperty(value="partitions", required=false) private var _partitions: Seq[PartitionField] = Seq()
-
-    def partitions(implicit context: Context) : Seq[PartitionField] = _partitions
-
+class NullRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -46,8 +40,15 @@ class NullRelation extends BaseRelation with SchemaRelation {
         require(partitions != null)
 
         implicit val context = executor.context
+        val inputSchema = this.inputSchema
+
+        if (inputSchema == null && schema == null)
+            throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
+
+        // Add partitions values as columns
+        val fullSchema = Option(inputSchema).map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
+        val readSchema = Option(schema).orElse(fullSchema).get
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
-        val readSchema = Option(schema).getOrElse(inputSchema)
         executor.spark.createDataFrame(rdd, readSchema)
     }
 
@@ -67,10 +68,17 @@ class NullRelation extends BaseRelation with SchemaRelation {
         require(executor != null)
     }
 
-    override def create(executor: Executor): Unit = {
+    /**
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * @param executor
+      * @return
+      */
+    override def exists(executor:Executor) : Boolean = true
+
+    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)
     }
-    override def destroy(executor: Executor): Unit = {
+    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
         require(executor != null)
     }
     override def migrate(executor: Executor): Unit = {

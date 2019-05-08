@@ -20,10 +20,10 @@ import org.apache.spark.sql.Row
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.LocalSparkSession
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -37,12 +37,10 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         implicit val context = executor.context
 
-        val mapping = new ProjectMapping
-        mapping._input = "myview"
-        mapping._columns = Map("_2" -> "int")
+        val mapping = ProjectMapping("myview", Seq("_2"))
 
         mapping.input should be (MappingIdentifier("myview"))
-        mapping.columns should be (Seq("_2" -> "int"))
+        mapping.columns should be (Seq("_2"))
         mapping.dependencies should be (Array(MappingIdentifier("myview")))
 
         val result = mapping.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_2").collect()
@@ -59,8 +57,8 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |    kind: project
               |    input: t0
               |    columns:
-              |      _2: string
-              |      _1: string
+              |      - _2
+              |      - _1
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")

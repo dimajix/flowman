@@ -40,7 +40,7 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>${deployment.repository.id}</id>
+            <id>${deployment.repository.snapshot-id}</id>
             <url>${deployment.repository.snapshot-url}</url>
         </snapshotRepository>
         <repository>
@@ -100,6 +100,7 @@
         <gpg.skip>true</gpg.skip>
         <!-- Definition of the release repository -->
         <deployment.repository.id>ossrh</deployment.repository.id>
+        <deployment.repository.snapshot-id>${deployment.repository.id}</deployment.repository.snapshot-id>
         <deployment.repository.server>https://oss.sonatype.org/</deployment.repository.server>
         <deployment.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</deployment.repository.url>
         <deployment.repository.snapshot-url>https://oss.sonatype.org/content/repositories/snapshots</deployment.repository.snapshot-url>

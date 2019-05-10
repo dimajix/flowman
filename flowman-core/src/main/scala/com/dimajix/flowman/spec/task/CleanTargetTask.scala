@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.state.Status
 
 
 object CleanTargetTask {
@@ -49,16 +50,18 @@ class CleanTargetTask extends BaseTask {
       */
     override def execute(executor:Executor) : Boolean = {
         implicit val context = executor.context
-        targets.foreach(o => executeTarget(executor, o))
-        true
+        targets.forall(o => executeTarget(executor, o))
     }
 
     private def executeTarget(executor: Executor, identifier:TargetIdentifier) : Boolean = {
         implicit val context = executor.context
         val target = context.getTarget(identifier)
+        val result = executor.runner.clean(executor, target)
 
-        logger.info("Cleaning target '{}'", identifier.toString)
-        target.clean(executor)
-        true
+        // Only return true if status is SUCCESS, CLEANED or SKIPPED
+        result match {
+            case Status.SUCCESS | Status.SKIPPED => true
+            case _ => false
+        }
     }
 }

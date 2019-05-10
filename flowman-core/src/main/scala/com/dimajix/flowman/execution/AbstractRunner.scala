@@ -219,12 +219,11 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
     /**
       * Builds a single target
       */
-    override def build(executor: Executor, target: Target): Status = {
+    override def build(executor: Executor, target: Target, logged:Boolean=true): Status = {
         implicit val context = executor.context
 
         // Now run the job
         val force = true
-        val logged = true
         if (logged) {
             buildLogged(executor, target, force)
         }
@@ -314,11 +313,10 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
     /**
       * Builds a single target
       */
-    override def clean(executor: Executor, target: Target): Status = {
+    override def clean(executor: Executor, target: Target, logged:Boolean=true): Status = {
         implicit val context = executor.context
 
         // Now run the job
-        val logged = true
         if (logged) {
             cleanLogged(executor, target)
         }

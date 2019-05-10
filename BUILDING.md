@@ -78,8 +78,8 @@ Or the staging data can be removed via
 ## Deploying to Custom Repository
 
 You can also deploy to a different repository by setting the following properties
-* `deployment.repository.id` - contains the ID of the repository. This should match any entry in your settings.xml
-  for authentication
+* `deployment.repository.id` - contains the ID of the repository. This should match any entry in your settings.xml for authentication
+* `deployment.repository.snapshot-id` - contains the ID of the repository. This should match any entry in your settings.xml for authentication
 * `deployment.repository.server` - the url of the server as used by the nexus-staging-maven-plugin
 * `deployment.repository.url` - the url of the default release repsotiory
 * `deployment.repository.snapshot-url` - the url of the snapshot repository
@@ -93,6 +93,6 @@ With these settings you can deploy to a different (local) repository, for exampl
         -Pspark-2.3 \
         -PCDH-5.15 \
         -Ddeployment.repository.snapshot-url=https://nexus-snapshots.my-company.net/repository/snapshots \
-        -Ddeployment.repository.id=nexus-snapshots \
+        -Ddeployment.repository.snapshot-id=nexus-snapshots \
         -DskipStaging \
         -DskipTests

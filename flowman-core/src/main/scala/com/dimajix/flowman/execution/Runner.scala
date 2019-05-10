@@ -40,11 +40,17 @@ abstract class Runner {
 
     /**
       * Builds a single target
+      * @param executor
+      * @param target the target to build
+      * @param logged boolean parameter specifying if the build process should be logged in the state database
       */
-    def build(executor: Executor, target:Target) : Status
+    def build(executor: Executor, target:Target, logged:Boolean=true) : Status
 
     /**
       * Cleans a single target
+      * @param executor
+      * @param target the target to clean
+      * @param logged boolean parameter specifying if the clean process should be logged in the state database
       */
-    def clean(executor: Executor, target:Target) : Status
+    def clean(executor: Executor, target:Target, logged:Boolean=true) : Status
 }

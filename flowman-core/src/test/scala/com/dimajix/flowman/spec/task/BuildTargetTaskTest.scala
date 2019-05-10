@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,18 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.testing.LocalSparkSession
 
 
-class BuildTargetTaskTest extends FlatSpec with Matchers {
+class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession {
     "The BuildTargetTask" should "support string assignments from code" in {
         val session = Session.builder().build()
         implicit val context = session.context
         val task = BuildTargetTask(Seq("lala"), "test")
         task.targets should equal(Seq(TargetIdentifier("lala",None)))
     }
+
     it should "support configuration via YML" in {
         val spec =
             """
@@ -45,10 +48,45 @@ class BuildTargetTaskTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         implicit val context = session.context
+
         module.jobs.size should be (1)
         val job = module.jobs("dump")
         job.tasks.size should be (1)
         val task = job.tasks(0).asInstanceOf[BuildTargetTask]
         task.targets.size should be (1)
+    }
+
+    it should "throw exceptions on missing targets" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        implicit val context = session.context
+
+        val task = BuildTargetTask(Seq("no_such_output"), "test")
+        an[Exception] shouldBe thrownBy(task.execute(session.executor))
+    }
+
+    it should "return false if the target itself has problems" in {
+        val spec =
+            """
+              |targets:
+              |  error:
+              |    kind: console
+              |    input: no_such_mapping
+              |jobs:
+              |  dump:
+              |    description: "Runs all outputs"
+              |    tasks:
+              |      - kind: build
+              |        targets:
+              |          - error
+            """.stripMargin
+
+        val module = Module.read.string(spec)
+        val project = module.toProject("test")
+        val session = Session.builder().withProject(project).withSparkSession(spark).build()
+        val executor = session.getExecutor(project)
+        implicit val context = executor.context
+
+        val job = project.jobs("dump")
+        job.execute(executor, Map()) should be(Status.FAILED)
     }
 }

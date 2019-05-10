@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.tools.exec.job
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
@@ -23,6 +27,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -30,8 +36,10 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class RunCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[RunCommand])
 
-    @Argument(usage = "specifies jobs to run", metaVar = "<job>")
-    var jobs: Array[String] = Array()
+    @Argument(index=0, required=true, usage = "specifies job to run", metaVar = "<job>")
+    var job: String = ""
+    @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
+    var args: Array[String] = Array()
     @Option(name = "-a", aliases=Array("--all"), usage = "runs all outputs, even the disabled ones")
     var all: Boolean = false
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
@@ -40,26 +48,28 @@ class RunCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, project: Project) : Boolean = {
         implicit val context = executor.context
-        logger.info("Processing jobs {}", if (jobs != null) jobs.mkString(",") else "all")
+        val args = splitSettings(this.args).toMap
+        Try {
+            project.jobs(job)
+        }
+        match {
+            case Failure(e) =>
+                logger.error(s"Cannot find job $job")
+                false
+            case Success(job) =>
+                executeJob(executor, job, args)
+        }
+    }
 
-        // Then execute output operations
-        val toRun =
-            if (all)
-                project.jobs.keys.toSeq
-            else if (jobs.nonEmpty)
-                jobs.toSeq
-            else
-                project.jobs.keys.toSeq
-
+    private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
+        implicit val context = executor.context
+        logger.info(s"Executing job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
         val runner = executor.runner
-        toRun.forall(jobname => {
-            val job = context.getJob(JobIdentifier.parse(jobname))
-            val result = runner.execute(executor, job, Map(), force)
-            result match {
-                case Status.SUCCESS => true
-                case Status.SKIPPED => true
-                case _ => false
-            }
-        })
+        val result = runner.execute(executor, job, args, force)
+        result match {
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
+            case _ => false
+        }
     }
 }

@@ -143,6 +143,9 @@ Changes the number of (Spark) partitions of the result of a mapping.
 * [`select`](select.html):
 Evaluate arbitrary SQL expressions
 
+* [`schema`](schema.html):
+Apply a schema to input data
+
 * [`sort`](sort.html):
 [Sort](sort.html) records according to column values
 

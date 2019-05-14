@@ -1,4 +1,7 @@
-# Version 0.4.1
+# Version 0.4.2 - 2019-05-14
+
+
+# Version 0.4.1 - 2019-05-11
 
 * Add parameters to "job run" CLI
 * Fix error handling of failing "build" and "clean" tasks

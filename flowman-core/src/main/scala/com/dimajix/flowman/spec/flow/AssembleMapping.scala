@@ -30,7 +30,7 @@ import com.dimajix.flowman.types.StructType
 
 
 object AssembleMapping {
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = false)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl=classOf[AppendEntry], visible = false)
     @JsonSubTypes(value = Array(
         new JsonSubTypes.Type(name = "append", value = classOf[AppendEntry]),
         new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeEntry]),

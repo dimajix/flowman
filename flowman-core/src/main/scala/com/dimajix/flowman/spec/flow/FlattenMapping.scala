@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,63 +16,35 @@
 
 package com.dimajix.flowman.spec.flow
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.transforms.CaseFormatter
 import com.dimajix.flowman.transforms.FlattenTransformer
-import com.dimajix.flowman.transforms.Transformer
-import com.dimajix.flowman.transforms.TypeReplacer
-import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-object ConformMapping {
-    private val typeAliases = Map(
-        "text" -> "string",
-        "long" -> "bigint",
-        "short" -> "tinyint"
-    )
-    def apply(input:String, types:Map[String,String]) : ConformMapping = {
-        val result = new ConformMapping
-        result._input = input
-        result._types = types
-        result
-    }
-    def apply(input:String, caseFormat:String, flatten:Boolean=false) : ConformMapping = {
-        val result = new ConformMapping
+object FlattenMapping {
+    def apply(input:String, caseFormat:String) : FlattenMapping  = {
+        val result = new FlattenMapping
         result._input = input
         result._naming = caseFormat
-        result._flatten = flatten.toString
         result
     }
 }
 
 
-class ConformMapping extends BaseMapping {
-    import ConformMapping.typeAliases
-    private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
-
+class FlattenMapping extends BaseMapping {
     @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "types", required = false) private[spec] var _types:Map[String,String] = Map()
     @JsonProperty(value = "naming", required = false) private[spec] var _naming:String = _
-    @JsonProperty(value = "flatten", required = false) private[spec] var _flatten:String = "false"
 
     def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def types(implicit context: Context) : Map[String,FieldType] = _types.map(kv =>
-        typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
-    )
     def naming(implicit context: Context) : String = context.evaluate(_naming)
-    def flatten(implicit context: Context) : Boolean = context.evaluate(_flatten).toBoolean
 
     /**
-      * Executes this MappingType and returns a corresponding DataFrame
+      * Executes the mapping operation and returns a corresponding DataFrame
       *
       * @param executor
       * @param input
@@ -85,10 +57,9 @@ class ConformMapping extends BaseMapping {
         implicit val icontext = executor.context
         val mappingId = this.input
         val df = input(mappingId)
-        val transforms = this.transforms
+        val xfs = FlattenTransformer(naming)
 
-        // Apply all transformations in order
-        transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
+        xfs.transform(df)
     }
 
     /**
@@ -112,17 +83,9 @@ class ConformMapping extends BaseMapping {
         implicit val icontext = context
         val mappingId = this.input
         val schema = input(mappingId)
-        val transforms = this.transforms
+        val xfs = FlattenTransformer(naming)
 
-        // Apply all transformations in order
-        transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
+        xfs.transform(schema)
     }
 
-    private def transforms(implicit context: Context) : Seq[Transformer] = {
-        Seq(
-            Option(types).filter(_.nonEmpty).map(t => TypeReplacer(t)),
-            Option(naming).filter(_.nonEmpty).map(f => CaseFormatter(f)),
-            Option(flatten).filter(_ == true).map(_ => FlattenTransformer(Option(naming).filter(_.nonEmpty).getOrElse("snakeCase")))
-        ).flatten
-    }
 }

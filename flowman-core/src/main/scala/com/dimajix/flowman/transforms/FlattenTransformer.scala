@@ -21,39 +21,43 @@ import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.LeafNode
 import com.dimajix.flowman.transforms.schema.MapNode
 import com.dimajix.flowman.transforms.schema.Node
-import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.StructNode
 import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
-object CaseFormatter {
+object FlattenTransformer {
     val CAMEL_CASE = "camelCase"
-    val CAMEL_CASE_UPPER = "camelCaseUpper"
     val SNAKE_CASE = "snakeCase"
-    val SNAKE_CASE_UPPER = "snakeCaseUpper"
 
-    val ALL_CASES = Seq(CAMEL_CASE, CAMEL_CASE_UPPER, SNAKE_CASE, SNAKE_CASE_UPPER)
+    val ALL_CASES = Seq(CAMEL_CASE, SNAKE_CASE)
 }
 
 
-case class CaseFormatter(format:String) extends TreeTransformer {
-    import CaseFormatter._
+case class FlattenTransformer(format:String) extends TreeTransformer {
+    import FlattenTransformer._
 
     private val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(format))
     if (!ALL_CASES.contains(caseFormat))
         throw new IllegalArgumentException(s"Case format '$format' not supported, please use one of ${ALL_CASES.mkString(",")}")
 
-    private def rename(str:String) : String = {
-        val words = CaseUtils.splitGeneric(str)
+    private def rename(prefix:String, name:String) : String = {
         caseFormat match {
-            case CAMEL_CASE => CaseUtils.joinCamel(words)
-            case CAMEL_CASE_UPPER => CaseUtils.joinCamel(words, true)
-            case SNAKE_CASE => CaseUtils.joinSnake(words)
-            case SNAKE_CASE_UPPER => CaseUtils.joinSnake(words, true)
+            case CAMEL_CASE => if (prefix.isEmpty) name else prefix + (name.head.toUpper + name.tail)
+            case SNAKE_CASE => if (prefix.isEmpty) name else prefix + "_" + name
+        }
+    }
+
+    private def flatten[T](node:Node[T], prefix:String) : Seq[Node[T]] = {
+        node match {
+            case leaf:LeafNode[T] => Seq(leaf.withName(rename(prefix, leaf.name)))
+            case struct:StructNode[T] => struct.children.flatMap(flatten(_, rename(prefix, struct.name)))
+            case array:ArrayNode[T] => Seq(array.withName(rename(prefix , array.name)))
+            case map:MapNode[T] => Seq(map.withName(rename(prefix, map.name)))
         }
     }
 
     override def transform[T](root:Node[T]) : Node[T] = {
-        root.transform(node => node.withName(rename(node.name)))
+        val newChildren = root.children.flatMap(flatten(_, ""))
+        root.asInstanceOf[StructNode[T]].withChildren(newChildren)
     }
 }

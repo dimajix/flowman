@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ object Mapping extends TypeRegistry[Mapping] {
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMapping]),
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMapping]),
+    new JsonSubTypes.Type(name = "flatten", value = classOf[FlattenMapping]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMapping]),
     new JsonSubTypes.Type(name = "latest", value = classOf[LatestMapping]),
     new JsonSubTypes.Type(name = "update", value = classOf[UpdateMapping]),

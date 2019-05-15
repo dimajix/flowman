@@ -26,7 +26,7 @@ abstract class TreeTransformer extends Transformer {
     import com.dimajix.flowman.transforms.schema.ColumnTree.implicits._
     import com.dimajix.flowman.transforms.schema.SchemaTree.implicits._
 
-    def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T]
+    def transform[T](root:Node[T]) : Node[T]
 
     /**
       * Transforms the field names of a dataframe to the desired case format

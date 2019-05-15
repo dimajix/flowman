@@ -121,6 +121,9 @@ With [Extend](extend.html) you can add new columns to a mapping
 * [`filter`](filter.html): 
 Use [Filter](filter.html) to apply filter logic (essentially a `WHERE` condition)
 
+* [`flatten`](flatten.html): 
+Use [Flatten](flatten.html) to flatten the schema of a nested data structure into a simple list of columns.
+
 * [`join`](join.html): 
 Use a [Join](join.html) to merge two mappings based on a common key or a join condition
 

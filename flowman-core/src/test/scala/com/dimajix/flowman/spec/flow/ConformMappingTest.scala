@@ -163,4 +163,34 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
     }
+
+    it should "support flattening nested structures" in {
+        val mapping = ConformMapping(
+            "input_df",
+            "snakeCase",
+            true
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        implicit val context = executor.context
+
+        val expectedSchema = StructType(Seq(
+            StructField("double_col", DoubleType),
+            StructField("embedded_some_string", StringType),
+            StructField("embedded_struct_array", ArrayType(
+                StructType(Seq(
+                    StructField("value", LongType)
+                ))
+            )),
+            StructField("str_col", StringType)
+        ))
+
+        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+
+        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        outputSchema.sparkType should be (expectedSchema)
+    }
 }

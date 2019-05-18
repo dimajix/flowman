@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.state.NullStateStoreProvider
+import com.dimajix.flowman.spec.state.NullStateStoreSpec
 
 
 class NamespaceTest extends FlatSpec with Matchers {
@@ -42,6 +42,6 @@ class NamespaceTest extends FlatSpec with Matchers {
         val ns = Namespace.read.default()
         ns should not be (null)
         ns.name should be ("default")
-        ns.monitor shouldBe a[NullStateStoreProvider]
+        ns.monitor shouldBe a[NullStateStoreSpec]
     }
 }

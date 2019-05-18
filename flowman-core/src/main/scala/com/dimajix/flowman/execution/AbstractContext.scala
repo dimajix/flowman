@@ -28,40 +28,173 @@ import org.slf4j.Logger
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.templating.Velocity
 
 
 object AbstractContext {
     private lazy val rootContext = Velocity.newContext()
 
-    abstract class Builder extends Context.Builder {
+    abstract class Builder(parent:Context, defaultSettingLevel:SettingLevel) extends Context.Builder {
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
-        private var _databases = Seq[(String, Connection, SettingLevel)]()
+        private var _connections = Seq[(String, ConnectionSpec, SettingLevel)]()
 
+        protected val logger:Logger
+
+        /**
+          * Builds a new Context with the configuration as done before in the Builder
+          * @return
+          */
         override def build() : AbstractContext = {
-            val context = createContext()
-            _environment.foreach(v => context.setEnvironment(v._1, v._2, v._3))
-            _config.foreach(v => context.setConfig(v._1, v._2, v._3))
-            _databases.foreach(v => context.setDatabase(v._1, v._2, v._3))
+            val rawEnvironment = mutable.Map[String,(Any, Int)]()
+            val rawConfig = mutable.Map[String,(String, Int)]()
+            val rawConnections = mutable.Map[String, (ConnectionSpec, Int)]()
+
+            if (parent != null) {
+                parent.rawEnvironment.foreach(kv => rawEnvironment.update(kv._1, kv._2))
+                parent.rawConfig.foreach(kv => rawConfig.update(kv._1, kv._2))
+            }
+
+            val templateEngine = Velocity.newEngine()
+            val templateContext = new VelocityContext(AbstractContext.rootContext)
+
+            def evaluate(string:String) : String = {
+                if (string != null) {
+                    val output = new StringWriter()
+                    templateEngine.evaluate(templateContext, output, "context", string)
+                    output.getBuffer.toString
+                }
+                else {
+                    null
+                }
+            }
+
+            def addConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
+                val currentValue = rawConfig.getOrElse(key, ("", SettingLevel.NONE.level))
+                if (currentValue._2 <= settingLevel.level) {
+                    rawConfig.update(key, (value, settingLevel.level))
+                }
+                else {
+                    logger.info(s"Ignoring changing final config variable $key=${currentValue._1} to '$value'")
+                }
+            }
+
+            def addEnvironment(key:String, value:Any, settingLevel: SettingLevel) : Unit = {
+                val currentValue = rawEnvironment.getOrElse(key, ("", SettingLevel.NONE.level))
+                if (currentValue._2 <= settingLevel.level) {
+                    val finalValue = value match {
+                        case s:String => evaluate(s)
+                        case v:Any => v
+                    }
+                    rawEnvironment.update(key, (finalValue, settingLevel.level))
+                    templateContext.put(key, finalValue)
+                }
+                else {
+                    logger.info(s"Ignoring changing final environment variable $key=${currentValue._1} to '$value'")
+                }
+            }
+
+            def addConnection(name:String, connection:ConnectionSpec, settingLevel: SettingLevel) : Unit = {
+                val currentValue = rawConnections.getOrElse(name, (null, SettingLevel.NONE.level))
+                if (currentValue._2 <= settingLevel.level) {
+                    rawConnections.update(name, (connection, settingLevel.level))
+                }
+                else {
+                    logger.info(s"Ignoring changing final database $name")
+                }
+            }
+
+            _environment.foreach(v => addEnvironment(v._1, v._2, v._3))
+            _config.foreach(v => addConfig(v._1, v._2, v._3))
+            _connections.foreach(v => addConnection(v._1, v._2, v._3))
+            val context = createContext(rawEnvironment.toMap, rawConfig.toMap, rawConnections.mapValues(_._1).toMap)
             context
         }
 
+        /**
+          * Set Spark configuration options
+          * @param config
+          * @return
+          */
+        override def withConfig(config:Map[String,String]) : Builder = {
+            require(config != null)
+            withConfig(config, defaultSettingLevel)
+            this
+        }
+        /**
+          * Set Spark configuration options
+          * @param config
+          * @return
+          */
         override def withConfig(config:Map[String,String], level:SettingLevel) : Builder = {
             require(config != null)
+            require(level != null)
             _config = _config ++ config.map(kv => (kv._1, kv._2, level))
             this
         }
-        override def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder = {
-            require(env != null)
-            _databases = _databases ++ env.map(kv => (kv._1, kv._2, level))
+
+        /**
+          * Add some connections
+          * @param connections
+          * @return
+          */
+        override def withConnections(connections:Map[String,ConnectionSpec]) : Builder = {
+            require(connections != null)
+            withConnections(connections, defaultSettingLevel)
             this
         }
+        /**
+          * Add some connections
+          * @param connections
+          * @return
+          */
+        override def withConnections(connections:Map[String,ConnectionSpec], level:SettingLevel) : Builder = {
+            require(connections != null)
+            require(level != null)
+            _connections = _connections ++ connections.map(kv => (kv._1, kv._2, level))
+            this
+        }
+
+        /**
+          * Set environment variables. All variables will be interpolated using the previously defined
+          * variables
+          * @param env
+          * @return
+          */
+        override def withEnvironment(env: Seq[(String, Any)]): Builder = {
+            require(env != null)
+            withEnvironment(env, defaultSettingLevel)
+            this
+        }
+        /**
+          * Set environment variables. All variables will be interpolated using the previously defined
+          * variables
+          * @param env
+          * @return
+          */
         override def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder = {
             require(env != null)
+            require(level != null)
             _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
+
+        /**
+          * Activate some profile
+          * @param profile
+          * @return
+          */
+        override def withProfile(profile:Profile) : Builder = {
+            require(profile != null)
+            withProfile(profile, defaultSettingLevel)
+            this
+        }
+        /**
+          * Activate some profile using a specific setting priority
+          * @param profile
+          * @return
+          */
         protected def withProfile(profile:Profile, level:SettingLevel) : Builder = {
             require(profile != null)
             require(level != null)
@@ -71,30 +204,20 @@ object AbstractContext {
             this
         }
 
-        protected def createContext() : AbstractContext
+        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : AbstractContext
     }
 }
 
 
-abstract class AbstractContext extends Context {
-    protected val logger:Logger
-
-    private val _environment = mutable.Map[String,(Any, Int)]()
-    private val _config = mutable.Map[String,(String, Int)]()
-    private val _databases = mutable.Map[String, (Connection, Int)]()
-
+abstract class AbstractContext(
+          override val rawEnvironment:Map[String,(Any, Int)],
+          override val rawConfig:Map[String,(String, Int)]
+) extends Context {
     private lazy val templateEngine = Velocity.newEngine()
     protected lazy val templateContext = {
         val context = new VelocityContext(AbstractContext.rootContext)
         environment.foreach(kv => context.put(kv._1, kv._2))
         context
-    }
-
-    protected def databases : Map[String,Connection] = _databases.mapValues(_._1).toMap
-
-    protected def updateFrom(context:Context) = {
-        context.rawEnvironment.foreach(kv => _environment.update(kv._1,kv._2))
-        context.rawConfig.foreach(kv => _config.update(kv._1,kv._2))
     }
 
     /**
@@ -118,75 +241,32 @@ abstract class AbstractContext extends Context {
       * Returns all configuration options as a key-value map
       * @return
       */
-    override def config : Map[String,String] = _config.mapValues(v => evaluate(v._1)).toMap
-    override def rawConfig : Map[String,(String, Int)] = _config.toMap
+    override def config : Map[String,String] = rawConfig.mapValues(v => evaluate(v._1))
 
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    override def environment : Map[String,Any] = _environment.mapValues(_._1).toMap
-    override def rawEnvironment : Map[String,(Any, Int)] = _environment.toMap
-
-    override def fs: FileSystem = root.fs
-    override def sparkConf : SparkConf = root.sparkConf
-    override def hadoopConf : Configuration = root.hadoopConf
-
-    private def setConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
-        val currentValue = _config.getOrElse(key, ("", SettingLevel.NONE.level))
-        if (currentValue._2 <= settingLevel.level) {
-            _config.update(key, (value, settingLevel.level))
-        }
-        else {
-            logger.info(s"Ignoring changing final config variable $key=${currentValue._1} to '$value'")
-        }
-    }
-    private def unsetConfig(key:String, settingLevel: SettingLevel) : Unit = {
-        val currentValue = _config.getOrElse(key, ("", SettingLevel.NONE.level))
-        if (currentValue._2 <= settingLevel.level) {
-            _config.remove(key)
-        }
-        else {
-            logger.info(s"Ignoring removing final config variable $key=${currentValue._1}")
-        }
-    }
+    override def environment : Map[String,Any] = rawEnvironment.mapValues(_._1)
 
     /**
-      * Updates environment variables
+      * Returns the FileSystem as configured in Hadoop
+      * @return
       */
-    private def setEnvironment(key:String, value:Any, settingLevel: SettingLevel) : Unit = {
-        val currentValue = _environment.getOrElse(key, ("", SettingLevel.NONE.level))
-        if (currentValue._2 <= settingLevel.level) {
-            val finalValue = value match {
-                case s:String => evaluate(s)
-                case v:Any => v
-            }
-            _environment.update(key, (finalValue, settingLevel.level))
-            templateContext.put(key, finalValue)
-        }
-        else {
-            logger.info(s"Ignoring changing final environment variable $key=${currentValue._1} to '$value'")
-        }
-    }
-    private def unsetEnvironment(key:String, settingLevel: SettingLevel) : Unit = {
-        val currentValue = _environment.getOrElse(key, ("", SettingLevel.NONE.level))
-        if (currentValue._2 <= settingLevel.level) {
-            _environment.remove(key)
-            templateContext.remove(key)
-        }
-        else {
-            logger.info(s"Ignoring removing final config variable $key=${currentValue._1}")
-        }
-    }
+    override def fs: FileSystem = root.fs
 
-    private def setDatabase(name:String, database:Connection, settingLevel: SettingLevel) : Unit = {
-        val currentValue = _databases.getOrElse(name, (null, SettingLevel.NONE.level))
-        if (currentValue._2 <= settingLevel.level) {
-            _databases.update(name, (database, settingLevel.level))
-        }
-        else {
-            logger.info(s"Ignoring changing final database $name")
-        }
-    }
+    /**
+      * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
+      * is not necessarily the one used by the Spark Session!
+      * @return
+      */
+    override def sparkConf : SparkConf = root.sparkConf
+
+    /**
+      * Returns a Hadoop Configuration object which contains all settings form the configuration. The object is not
+      * necessarily the one used by the active Spark session
+      * @return
+      */
+    override def hadoopConf : Configuration = root.hadoopConf
 }

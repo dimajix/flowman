@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class ProvidedMapping extends BaseMapping {
-    @JsonProperty(value = "table", required = true) private var _table:String = _
-
-    def table(implicit context:Context) : String = context.evaluate(_table)
-
+case class ProvidedMapping(
+    instanceProperties:Mapping.Properties,
+    table:String
+)
+extends BaseMapping {
     /**
       * Instantiates the specified table, which must be available in the Spark session
       *
@@ -37,17 +37,26 @@ class ProvidedMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        implicit val context = executor.context
         executor.spark.table(table)
     }
 
     /**
       * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array()
+    }
+}
+
+
+class ProvidedMappingSpec extends MappingSpec {
+    @JsonProperty(value = "table", required = true) private var table: String = _
+
+    override def instantiate(context: Context): ProvidedMapping = {
+        val props = instanceProperties(context)
+        val table = context.evaluate(this.table)
+        ProvidedMapping(props, table)
     }
 }

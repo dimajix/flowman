@@ -28,16 +28,13 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class HiveViewRelation extends BaseRelation with SchemaRelation {
+case class HiveViewRelation(
+    instanceProperties:Relation.Properties,
+    database: String,
+    view: String,
+    definition: String
+) extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
-
-    @JsonProperty(value="database") private var _database: String = _
-    @JsonProperty(value="view") private var _view: String = _
-    @JsonProperty(value="definition") private var _definition: String = _
-
-    def database(implicit context:Context) : String = context.evaluate(_database)
-    def view(implicit context:Context) : String = context.evaluate(_view)
-    def definition(implicit context:Context) : String = context.evaluate(_definition)
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -51,7 +48,6 @@ class HiveViewRelation extends BaseRelation with SchemaRelation {
         require(executor != null)
         require(partitions != null)
 
-        implicit val context = executor.context
         val tableName = database + "." + view
         logger.info(s"Reading from Hive view $tableName")
 
@@ -66,7 +62,6 @@ class HiveViewRelation extends BaseRelation with SchemaRelation {
         require(executor != null)
         require(partitions != null)
 
-        implicit val context = executor.context
         val tableName = database + "." + view
         logger.info(s"Cleaning from Hive view $tableName (no-op)")
     }
@@ -81,4 +76,21 @@ class HiveViewRelation extends BaseRelation with SchemaRelation {
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = ???
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = ???
     override def migrate(executor:Executor) : Unit = ???
+}
+
+
+
+class HiveViewRelationSpec extends RelationSpec {
+    @JsonProperty(value="database") private var database: String = _
+    @JsonProperty(value="view") private var view: String = _
+    @JsonProperty(value="definition") private var definition: String = _
+
+    override def instantiate(context: Context): HiveViewRelation = {
+        HiveViewRelation(
+            instanceProperties(context),
+            context.evaluate(database),
+            context.evaluate(view),
+            context.evaluate(definition)
+        )
+    }
 }

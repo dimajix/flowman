@@ -25,11 +25,10 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class AliasMapping extends BaseMapping {
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-
+case class AliasMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier
+) extends BaseMapping {
     /**
       * Executes this mapping by returning a DataFrame which corresponds to the specified input
       * @param executor
@@ -37,31 +36,36 @@ class AliasMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
         input(this.input)
     }
 
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
-
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+class AliasMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+
+    override def instantiate(context: Context): AliasMapping = {
+        val props = instanceProperties(context)
+        val input = MappingIdentifier(context.evaluate(this.input))
+        AliasMapping(props, input)
     }
 }

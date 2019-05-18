@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,12 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class SortMapping extends BaseMapping {
+case class SortMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Seq[(String,String)]
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[SortMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private var _columns:Seq[Map[String,String]] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) :Seq[(String,String)] = _columns.flatMap(_.mapValues(context.evaluate))
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -44,9 +42,6 @@ class SortMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
-        val columns = this.columns
         logger.info(s"Sorting mapping '$input' by columns ${columns.mkString(",")}")
 
         val df = tables(input)
@@ -61,24 +56,35 @@ class SortMapping extends BaseMapping {
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+
+class SortMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private var columns:Seq[Map[String,String]] = Seq()
+
+    override def instantiate(context: Context): SortMapping = {
+        SortMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(this.input)),
+            columns.flatMap(_.mapValues(context.evaluate))
+        )
     }
 }

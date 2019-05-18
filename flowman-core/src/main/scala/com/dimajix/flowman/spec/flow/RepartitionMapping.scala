@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,14 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
-class RepartitionMapping extends BaseMapping {
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Seq[String] = _
-    @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
-    @JsonProperty(value = "sort", required = false) private[spec] var _sort:String = _
 
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) :Seq[String] = if (_columns != null) _columns.map(context.evaluate) else Seq[String]()
-    def partitions(implicit context: Context) : Int= if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
-    def sort(implicit context: Context) : Boolean = if (_sort == null || _sort.isEmpty) false else context.evaluate(_sort).toBoolean
-
+case class RepartitionMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Seq[String],
+    partitions:Int,
+    sort:Boolean
+) extends BaseMapping {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -44,11 +41,9 @@ class RepartitionMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
         val df = input(this.input)
-        val parts = partitions
         val cols = columns.map(col)
-        val repartitioned = if (parts > 0) df.repartition(parts, cols:_*) else df.repartition(cols:_*)
+        val repartitioned = if (partitions > 0) df.repartition(partitions, cols:_*) else df.repartition(cols:_*)
         if (sort)
             repartitioned.sortWithinPartitions(cols:_*)
         else
@@ -58,24 +53,39 @@ class RepartitionMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+
+class RepartitionMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private[spec] var columns:Seq[String] = _
+    @JsonProperty(value = "partitions", required = false) private[spec] var partitions:String = _
+    @JsonProperty(value = "sort", required = false) private[spec] var sort:String = _
+
+    override def instantiate(context: Context): RepartitionMapping = {
+        RepartitionMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(context.evaluate),
+            context.evaluate(partitions).toInt,
+            context.evaluate(sort).toBoolean
+        )
     }
 }

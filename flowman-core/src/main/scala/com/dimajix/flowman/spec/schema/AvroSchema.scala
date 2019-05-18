@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.spec.schema
 
+import java.net.URL
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.AvroSchemaUtils
 
@@ -26,20 +30,37 @@ import com.dimajix.flowman.types.AvroSchemaUtils
 /**
   * Schema implementation for reading Avro schemas.
   */
-class AvroSchema extends ExternalSchema {
+case class AvroSchema(
+    instanceProperties:Instance.Properties,
+    override val file: File,
+    override val url: URL,
+    override val spec: String
+) extends ExternalSchema {
     protected override val logger = LoggerFactory.getLogger(classOf[ExternalSchema])
 
     /**
       * Returns the description of the schema
-      * @param context
       * @return
       */
-    protected override def loadSchema(implicit context: Context): CachedSchema = {
+    protected override def loadSchema : CachedSchema = {
         val spec = loadSchemaSpec
         val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
         CachedSchema(
             AvroSchemaUtils.fromAvro(avroSchema),
             avroSchema.getDoc
+        )
+    }
+}
+
+
+
+class AvroSchemaSpec extends ExternalSchemaSpec {
+    override def instantiate(context: Context): AvroSchema = {
+        AvroSchema(
+            Schema.Properties(context),
+            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
+            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull,
+            context.evaluate(spec)
         )
     }
 }

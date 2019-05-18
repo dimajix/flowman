@@ -148,7 +148,11 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "transform DataFrames correctly" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
@@ -160,10 +164,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 LiftEntry("stupidName", Seq("secret.field"))
             )
         )
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
 
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
 
@@ -195,7 +195,11 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "provide a correct output schema" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
@@ -207,10 +211,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 LiftEntry("stupidName", Seq("secret.field"))
             )
         )
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
 
         val expectedSchema = StructType(Seq(
             StructField("clever_name", StructType(Seq(
@@ -235,21 +235,21 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             StructField("field", LongType)
         ))
 
-        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
     }
 
     it should "support explodes of complex types with rename" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("array", "embedded.struct_array")
             )
         )
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
 
         val expectedSchema = StructType(Seq(
             StructField("array",
@@ -260,7 +260,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             ), true)
         ))
 
-        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
@@ -269,16 +269,16 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "support explodes of complex types without rename" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("embedded.struct_array")
             )
         )
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
 
         val expectedSchema = StructType(Seq(
             StructField("struct_array",
@@ -289,7 +289,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 ), true)
         ))
 
-        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
@@ -298,22 +298,22 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "support explodes of simple types" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("embedded.old_structure.value")
             )
         )
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-
         val expectedSchema = StructType(Seq(
             StructField("value", LongType)
         ))
 
-        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
@@ -322,31 +322,31 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "throw exceptions on explodes of non-existing paths" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("no_such_path")
             )
         )
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-
-        an[IllegalArgumentException] shouldBe thrownBy(mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema))))
+        an[IllegalArgumentException] shouldBe thrownBy(mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema))))
     }
 
     it should "support rename operations" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val mapping = AssembleMapping(
+            executor.context,
             "input_df",
             Seq(
                 RenameEntry("embedded", Map("new_elem" -> "old_structure"))
             )
         )
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
 
         val expectedSchema = StructType(Seq(
             StructField("new_elem", StructType(Seq(
@@ -354,7 +354,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )))
        ))
 
-        val outputSchema = mapping.describe(context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))

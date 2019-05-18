@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.model.PartitionedRelation
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.types.ArrayValue
@@ -34,22 +34,13 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class ReadRelationMapping extends BaseMapping {
+case class ReadRelationMapping(
+    instanceProperties:Mapping.Properties,
+    relation:RelationIdentifier,
+    columns:Map[String,String],
+    partitions:Map[String,FieldValue]
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadRelationMapping])
-
-    @JsonProperty(value = "relation", required = true) private var _relation:String = _
-    @JsonProperty(value = "columns", required=false) private var _columns:Map[String,String] = Map()
-    @JsonProperty(value = "partitions", required=false) private var _partitions:Map[String,FieldValue] = Map()
-
-    def relation(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
-    def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
-    def partitions(implicit context:Context) : Map[String,FieldValue] = {
-        _partitions.mapValues {
-            case v: SingleValue => SingleValue(context.evaluate(v.value))
-            case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-            case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
-        }
-    }
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -59,13 +50,9 @@ class ReadRelationMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val source = this.relation
-        val fields = this.columns
-        val partitions = this.partitions
-        val relation = context.getRelation(source)
-        val schema = if (fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
-        logger.info(s"Reading from relation '$source' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        val relation = context.getRelation(this.relation)
+        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        logger.info(s"Reading from relation '${this.relation}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
         relation.read(executor, schema, partitions)
     }
@@ -73,34 +60,48 @@ class ReadRelationMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array()
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
-        val cols = this.columns
-        if (cols.nonEmpty) {
-            StructType.of(SchemaUtils.createSchema(cols.toSeq))
+        if (columns.nonEmpty) {
+            StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
-            val source = this.relation
-            context.getRelation(source) match {
+            context.getRelation(relation) match {
                 case pt:PartitionedRelation => StructType(pt.schema.fields ++ pt.partitions.map(_.field))
                 case relation:Relation => StructType(relation.schema.fields)
             }
         }
+    }
+}
+
+
+
+class ReadRelationMappingSpec extends MappingSpec {
+    @JsonProperty(value = "relation", required = true) private var relation:String = _
+    @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
+    @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
+
+    override def instantiate(context: Context): ReadRelationMapping = {
+        val props = instanceProperties(context)
+        val relation = RelationIdentifier(context.evaluate(this.relation))
+        val columns = this.columns.mapValues(context.evaluate)
+        val partitions= this.partitions.mapValues {
+                case v: SingleValue => SingleValue(context.evaluate(v.value))
+                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
+                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
+            }
+        ReadRelationMapping(props, relation, columns, partitions)
     }
 }

@@ -20,11 +20,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
-import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.model.RelationSpec
+import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.task.JobSpec
 
 
 object Project {
@@ -111,43 +112,43 @@ object Project {
             project._profiles = project._profiles + (name -> profile)
             this
         }
-        def setConnections(connections:Map[String,Connection]) : Builder = {
+        def setConnections(connections:Map[String,ConnectionSpec]) : Builder = {
             project._connections = connections
             this
         }
-        def addConnection(name:String, connection:Connection) : Builder = {
+        def addConnection(name:String, connection:ConnectionSpec) : Builder = {
             project._connections = project._connections + (name -> connection)
             this
         }
-        def setRelations(relations:Map[String,Relation]) : Builder = {
+        def setRelations(relations:Map[String,RelationSpec]) : Builder = {
             project._relations = relations
             this
         }
-        def addRelations(name:String, relation:Relation) : Builder = {
+        def addRelations(name:String, relation:RelationSpec) : Builder = {
             project._relations = project._relations + (name -> relation)
             this
         }
-        def setMappings(mappings:Map[String,Mapping]) : Builder = {
+        def setMappings(mappings:Map[String,MappingSpec]) : Builder = {
             project._mappings = mappings
             this
         }
-        def addMapping(name:String, mapping:Mapping) : Builder = {
+        def addMapping(name:String, mapping:MappingSpec) : Builder = {
             project._mappings = project._mappings + (name -> mapping)
             this
         }
-        def setTargets(outputs:Map[String,Target]) : Builder = {
+        def setTargets(outputs:Map[String,TargetSpec]) : Builder = {
             project._targets = outputs
             this
         }
-        def addTarget(name:String, target:Target) : Builder = {
+        def addTarget(name:String, target:TargetSpec) : Builder = {
             project._targets = project._targets + (name -> target)
             this
         }
-        def setJobs(jobs:Map[String,Job]) : Builder = {
+        def setJobs(jobs:Map[String,JobSpec]) : Builder = {
             project._jobs = jobs
             this
         }
-        def addJob(name:String, job:Job) : Builder = {
+        def addJob(name:String, job:JobSpec) : Builder = {
             project._jobs = project._jobs + (name -> job)
             this
         }
@@ -172,11 +173,11 @@ class Project {
     private var _environment: Seq[(String,String)] = Seq()
     private var _config: Seq[(String,String)] = Seq()
     private var _profiles: Map[String,Profile] = Map()
-    private var _connections: Map[String,Connection] = Map()
-    private var _relations: Map[String,Relation] = Map()
-    private var _mappings: Map[String,Mapping] = Map()
-    private var _targets: Map[String,Target] = Map()
-    private var _jobs: Map[String,Job] = Map()
+    private var _connections: Map[String,ConnectionSpec] = Map()
+    private var _relations: Map[String,RelationSpec] = Map()
+    private var _mappings: Map[String,MappingSpec] = Map()
+    private var _targets: Map[String,TargetSpec] = Map()
+    private var _jobs: Map[String,JobSpec] = Map()
 
     def name : String = _name
     def description : String = _description
@@ -190,10 +191,9 @@ class Project {
     def environment : Seq[(String,String)] = _environment
 
     def profiles : Map[String,Profile] = _profiles
-    def relations : Map[String,Relation] = _relations
-    def connections : Map[String,Connection] = _connections
-    def mappings : Map[String,Mapping] = _mappings
-    def targets : Map[String,Target] = _targets
-    def jobs : Map[String,Job] = _jobs
+    def relations : Map[String,RelationSpec] = _relations
+    def connections : Map[String,ConnectionSpec] = _connections
+    def mappings : Map[String,MappingSpec] = _mappings
+    def targets : Map[String,TargetSpec] = _targets
+    def jobs : Map[String,JobSpec] = _jobs
 }
-

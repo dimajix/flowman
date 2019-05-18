@@ -24,7 +24,7 @@ import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.state.StateStoreProvider
+import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.UdfProvider
 
@@ -212,7 +212,7 @@ class Session private[execution](
     }
     private val _runner = {
         if (_history  != null)
-            new MonitoredRunner(_history.createStateStore(this))
+            new MonitoredRunner(_history.instantiate(this))
         else
             new SimpleRunner
     }
@@ -308,7 +308,7 @@ class Session private[execution](
 
     private lazy val _externalCatalog : ExternalCatalog = {
         if (_namespace != null && _namespace.catalog != null) {
-            _namespace.catalog.createCatalog(this)
+            _namespace.catalog.instantiate(this)
         }
         else {
             null
@@ -317,7 +317,7 @@ class Session private[execution](
     private lazy val _catalog = new Catalog(spark, _externalCatalog)
 
 
-    def monitor : StateStoreProvider = _history
+    def monitor : StateStoreSpec = _history
 
     /**
       * Returns the Namespace tied to this Flowman session.

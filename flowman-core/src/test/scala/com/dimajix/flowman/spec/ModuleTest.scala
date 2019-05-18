@@ -19,6 +19,8 @@ package com.dimajix.flowman.spec
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.testing.LocalSparkSession
 
@@ -65,8 +67,15 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("default")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = executor.context
         val runner = executor.runner
-        runner.execute(executor, project.jobs("default"))
+
+        val job = context.getJob(JobIdentifier("default"))
+        job should not be (null)
+        job.name should be ("default")
+        job.category should be ("job")
+        job.kind should be ("job")
+        runner.execute(executor, job)
     }
 
     it should "set the names of all jobs" in {
@@ -77,11 +86,16 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |    description: "Lala"
             """.stripMargin
 
+        val context = RootContext.builder().build()
+
         val module = Module.read.string(spec)
         module.jobs.keys should contain ("default")
-        module.jobs("default").name should be ("default")
+        val mjob = module.jobs("default").instantiate(context)
+        mjob.name should be ("default")
+
         val project = module.toProject("default")
         project.jobs.keys should contain ("default")
-        project.jobs("default").name should be ("default")
+        val pjob = project.jobs("default").instantiate(context)
+        pjob.name should be ("default")
     }
 }

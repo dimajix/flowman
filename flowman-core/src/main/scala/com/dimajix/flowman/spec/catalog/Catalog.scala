@@ -24,12 +24,12 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spi.TypeRegistry
 
 
-object CatalogProvider extends TypeRegistry[CatalogProvider] {
+object CatalogSpec extends TypeRegistry[CatalogSpec] {
 }
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array())
-abstract class CatalogProvider {
-    def createCatalog(session:Session) : ExternalCatalog
+abstract class CatalogSpec {
+    def instantiate(session:Session) : ExternalCatalog
 }

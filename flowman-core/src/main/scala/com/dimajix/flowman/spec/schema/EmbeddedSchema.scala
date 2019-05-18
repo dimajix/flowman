@@ -1,27 +1,57 @@
+/*
+ * Copyright 2018-2019 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.types.Field
 
 
 object EmbeddedSchema {
-    def apply(fields:Seq[Field], description:String=null) : EmbeddedSchema = {
-        val schema = new EmbeddedSchema
-        schema._fields = fields
-        schema._description = description
-        schema
+    def apply(context:Context, fields:Seq[Field], description:String=null) : EmbeddedSchema = {
+        EmbeddedSchema(Schema.Properties(context), description, fields, Seq())
     }
 }
 
 
-class EmbeddedSchema extends Schema {
-    @JsonProperty(value="fields", required=false) private var _fields: Seq[Field] = _
-    @JsonProperty(value="description", required = false) private var _description: String = _
-    @JsonProperty(value="primaryKey", required = false) private var _primaryKey: Seq[String] = Seq()
+case class EmbeddedSchema(
+    instanceProperties : Schema.Properties,
+    description : String,
+    fields : Seq[Field],
+    primaryKey : Seq[String]
+)
+extends Schema {
+}
 
-    override def description(implicit context: Context) : String = context.evaluate(_description)
-    override def fields(implicit context: Context) : Seq[Field] = _fields
-    override def primaryKey(implicit context: Context): Seq[String] = _primaryKey.map(context.evaluate)
+
+
+class EmbeddedSchemaSpec extends SchemaSpec {
+    @JsonProperty(value="fields", required=false) private var fields: Seq[Field] = _
+    @JsonProperty(value="description", required = false) private var description: String = _
+    @JsonProperty(value="primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
+
+    override def instantiate(context: Context): EmbeddedSchema = {
+        EmbeddedSchema(
+            Schema.Properties(context),
+            context.evaluate(description),
+            fields,
+            primaryKey.map(context.evaluate)
+        )
+    }
 }

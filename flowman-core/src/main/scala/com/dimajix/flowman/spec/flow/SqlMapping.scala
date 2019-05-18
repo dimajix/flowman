@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,16 +35,14 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class SqlMapping extends BaseMapping {
+case class SqlMapping(
+    instanceProperties:Mapping.Properties,
+    sql:String,
+    file:File,
+    url:URL
+)
+extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[SqlMapping])
-
-    @JsonProperty(value="sql", required=false) private var _sql:String = _
-    @JsonProperty(value="file", required=false) private var _file:String = _
-    @JsonProperty(value="url", required=false) private var _url: String = _
-
-    def sql(implicit context: Context) : String = context.evaluate(_sql)
-    def file(implicit context: Context) : File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
-    def url(implicit context: Context) : URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -54,8 +52,6 @@ class SqlMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
-        val statement = this.statement
         logger.info(s"Executing SQL statement $statement")
 
         // Register all input DataFrames as temp views
@@ -70,10 +66,9 @@ class SqlMapping extends BaseMapping {
     /**
       * Resolves all dependencies required to build the SQL
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
         resolveDependencies(plan).map(MappingIdentifier.parse).toArray
     }
@@ -96,10 +91,7 @@ class SqlMapping extends BaseMapping {
         tables ++ cteDependencies
     }
 
-    private def statement(implicit context: Context) : String = {
-        val sql = this.sql
-        val url = this.url
-        val file = this.file
+    private def statement : String = {
         if (sql != null && sql.nonEmpty) {
             sql
         }
@@ -120,5 +112,22 @@ class SqlMapping extends BaseMapping {
         else {
             throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")
         }
+    }
+}
+
+
+
+class SqlMappingSpec extends MappingSpec {
+    @JsonProperty(value="sql", required=false) private var sql:String = _
+    @JsonProperty(value="file", required=false) private var file:String = _
+    @JsonProperty(value="url", required=false) private var url: String = _
+
+    override def instantiate(context: Context): SqlMapping = {
+        SqlMapping(
+            instanceProperties(context),
+            context.evaluate(sql),
+            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
+            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
+        )
     }
 }

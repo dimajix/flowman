@@ -19,7 +19,16 @@ package com.dimajix.flowman.spec
 import com.dimajix.flowman.execution.Context
 
 
-abstract class Resource {
+object Instance {
+    trait Properties {
+        val context: Context
+        val name: String
+        val kind: String
+        val labels: Map[String, String]
+    }
+}
+
+abstract class Instance {
     /**
       * Returns the name of the resource
       * @return
@@ -40,17 +49,31 @@ abstract class Resource {
 
     /**
       * Returns the map of generic meta data labels
-      * @param context
       * @return
       */
-    def labels(implicit context:Context) : Map[String,String]
+    def labels : Map[String,String]
+
+    /**
+      * Returns the Namespace this instance belongs to
+      * @return
+      */
+    def namespace : Namespace = context.namespace
+
+    /**
+      * Returns the Project this instance belongs to
+      */
+    def project : Project = context.project
+
+    /**
+      * Returns the context that was used to create this instance
+      */
+    def context : Context
 
     /**
       * Returns the full set of meta data of this resource
-      * @param context
       * @return
       */
-    def metadata(implicit context:Context) : Metadata = {
+    def metadata : Metadata = {
         Metadata(
             Option(context.namespace).map(_.name),
             Option(context.project).map(_.name),
@@ -61,4 +84,32 @@ abstract class Resource {
             labels
         )
     }
+}
+
+
+abstract class AbstractInstance extends Instance {
+    protected def instanceProperties : Instance.Properties
+
+    /**
+      * Returns the name of the resource
+      * @return
+      */
+    override def name : String = instanceProperties.name
+
+    /**
+      * Returns the kind of the resource
+      * @return
+      */
+    override def kind : String = instanceProperties.kind
+
+    /**
+      * Returns the map of generic meta data labels
+      * @return
+      */
+    override def labels : Map[String,String] = instanceProperties.labels
+
+    /**
+      * Returns the context that was used to create this instance
+      */
+    override def context : Context = instanceProperties.context
 }

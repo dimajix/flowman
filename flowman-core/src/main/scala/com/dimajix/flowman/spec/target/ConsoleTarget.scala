@@ -25,16 +25,13 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class ConsoleTarget extends BaseTarget {
+case class ConsoleTarget(
+    instanceProperties:Target.Properties,
+    limit:Int,
+    header:Boolean,
+    columns:Seq[String]
+) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[ConsoleTarget])
-
-    @JsonProperty(value="limit", required=true) private var _limit:String = "100"
-    @JsonProperty(value="header", required=true) private var _header:String = "true"
-    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = _
-
-    def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
-    def header(implicit context: Context) : Boolean = context.evaluate(_header).toBoolean
-    def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
 
     /**
       * Build the "console" target by dumping records to stdout
@@ -43,9 +40,8 @@ class ConsoleTarget extends BaseTarget {
       * @param input
       */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
-        implicit val context = executor.context
-        val dfIn = input(this.input)
-        val dfOut = if (_columns != null && _columns.nonEmpty)
+        val dfIn = input(instanceProperties.input)
+        val dfOut = if (columns.nonEmpty)
             dfIn.select(columns.map(c => dfIn(c)):_*)
         else
             dfIn
@@ -64,4 +60,23 @@ class ConsoleTarget extends BaseTarget {
     override def clean(executor: Executor): Unit = {
 
     }
+}
+
+
+
+class ConsoleTargetSpec extends TargetSpec {
+    @JsonProperty(value="limit", required=true) private var limit:String = "100"
+    @JsonProperty(value="header", required=true) private var header:String = "true"
+    @JsonProperty(value="columns", required=true) private var columns:Seq[String] = Seq()
+
+
+    override def instantiate(context: Context): Target = {
+        ConsoleTarget(
+            instanceProperties(context),
+            context.evaluate(limit).toInt,
+            context.evaluate(header).toBoolean,
+            columns.map(context.evaluate)
+        )
+    }
+
 }

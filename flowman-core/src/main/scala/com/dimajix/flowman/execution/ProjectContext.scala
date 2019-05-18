@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.mutable
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.ConnectionIdentifier
@@ -27,6 +29,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
@@ -35,26 +38,16 @@ import com.dimajix.flowman.templating.FileWrapper
 
 
 object ProjectContext {
-    class Builder(_parent:Context, _project:Project) extends AbstractContext.Builder {
-        override def withEnvironment(env: Seq[(String, Any)]): Builder = {
-            withEnvironment(env, SettingLevel.PROJECT_SETTING)
-            this
-        }
-        override def withConfig(config:Map[String,String]) : Builder = {
-            withConfig(config, SettingLevel.PROJECT_SETTING)
-            this
-        }
-        override def withConnections(connections:Map[String,Connection]) : Builder = {
-            withConnections(connections, SettingLevel.PROJECT_SETTING)
-            this
-        }
+    class Builder(parent:Context, project:Project) extends AbstractContext.Builder(parent, SettingLevel.PROJECT_SETTING) {
+        override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
+
         override def withProfile(profile:Profile) : Builder = {
             withProfile(profile, SettingLevel.PROJECT_PROFILE)
             this
         }
 
-        override protected def createContext(): ProjectContext = {
-            new ProjectContext(_parent, _project)
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : ProjectContext = {
+            new ProjectContext(parent, project, env, config, connections)
         }
     }
 
@@ -66,32 +59,35 @@ object ProjectContext {
   * Execution context for a specific Flowman project. This will interpolate all resources within the project
   * or (if the resource is fully qualified) walks up into the parent context.
   * @param parent
-  * @param _project
+  * @param project
   */
-class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
-    override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
-
+class ProjectContext private[execution](
+   parent:Context,
+   override val project:Project,
+   fullEnv:Map[String,(Any, Int)],
+   fullConfig:Map[String,(String, Int)],
+   nonProjectConnections:Map[String, ConnectionSpec]
+) extends AbstractContext(fullEnv, fullConfig) {
     private object ProjectWrapper {
-        def getBasedir() : FileWrapper = FileWrapper(_project.basedir)
-        def getFilename() : FileWrapper = FileWrapper(_project.filename)
-        def getName() : String = _project.name
-        def getVersion() : String = _project.version
+        def getBasedir() : FileWrapper = FileWrapper(project.basedir)
+        def getFilename() : FileWrapper = FileWrapper(project.filename)
+        def getName() : String = project.name
+        def getVersion() : String = project.version
     }
 
-    updateFrom(parent)
     templateContext.put("project", ProjectWrapper)
+
+    private val mappings = mutable.Map[String,Mapping]()
+    private val relations = mutable.Map[String,Relation]()
+    private val targets = mutable.Map[String,Target]()
+    private val connections = mutable.Map[String,Connection]()
+    private val jobs = mutable.Map[String,Job]()
 
     /**
       * Returns the namespace associated with this context. Can be null
       * @return
       */
     override def namespace : Namespace = parent.namespace
-
-    /**
-      * Returns the project associated with this context. Can be null
-      * @return
-      */
-    override def project : Project = _project
 
     /**
       * Returns the root context in a hierarchy of connected contexts
@@ -109,10 +105,18 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override def getMapping(identifier: MappingIdentifier): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == _project.name))
-            _project.mappings.getOrElse(identifier.name, throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${_project.name}"))
-        else
+        if (identifier.project.forall(_ == project.name)) {
+            mappings.getOrElseUpdate(identifier.name,
+                project.mappings
+                    .getOrElse(identifier.name,
+                        throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${project.name}")
+                    )
+                    .instantiate(this)
+            )
+        }
+        else {
             parent.getMapping(identifier)
+        }
     }
 
     /**
@@ -125,10 +129,18 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override def getRelation(identifier: RelationIdentifier): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == _project.name))
-            _project.relations.getOrElse(identifier.name, throw new NoSuchElementException(s"Relation '$identifier' not found in project ${_project.name}"))
-        else
+        if (identifier.project.forall(_ == project.name)) {
+            relations.getOrElseUpdate(identifier.name,
+                project.relations
+                    .getOrElse(identifier.name,
+                        throw new NoSuchElementException(s"Relation '$identifier' not found in project ${project.name}")
+                    )
+                    .instantiate(this)
+            )
+        }
+        else {
             parent.getRelation(identifier)
+        }
     }
 
     /**
@@ -141,10 +153,18 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == _project.name))
-            _project.targets.getOrElse(identifier.name, throw new NoSuchElementException(s"Target '$identifier' not found in project ${_project.name}"))
-        else
+        if (identifier.project.forall(_ == project.name)) {
+            targets.getOrElseUpdate(identifier.name,
+                project.targets
+                    .getOrElse(identifier.name,
+                        throw new NoSuchElementException(s"Target '$identifier' not found in project ${project.name}")
+                    )
+                    .instantiate(this)
+            )
+        }
+        else {
             parent.getTarget(identifier)
+        }
     }
 
     /**
@@ -156,11 +176,27 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty) {
-            databases.getOrElse(identifier.name, _project.connections.getOrElse(identifier.name, throw new NoSuchElementException(s"Connection '$identifier' not found in project ${_project.name}")))
-        }
-        else if (identifier.project.contains(_project.name)) {
-            _project.connections.getOrElse(identifier.name, throw new NoSuchElementException(s"Connection '$identifier' not found in project ${_project.name}"))
+        if (identifier.project.forall(_ == project.name)) {
+            connections.getOrElseUpdate(identifier.name,
+                if (identifier.project.nonEmpty) {
+                    // Explicit project identifier specified, only look in project connections
+                    project.connections
+                        .getOrElse(identifier.name,
+                            throw new NoSuchElementException(s"Connection '$identifier' not found in project ${project.name}")
+                        )
+                        .instantiate(this)
+                }
+                else {
+                    // No project specifier given, first look into non-project connections, then try project connections
+                    nonProjectConnections.getOrElse(identifier.name,
+                        project.connections
+                            .getOrElse(identifier.name,
+                                throw new NoSuchElementException(s"Connection '$identifier' not found in project ${project.name}")
+                            )
+                    )
+                    .instantiate(this)
+                }
+            )
         }
         else {
             parent.getConnection(identifier)
@@ -177,10 +213,18 @@ class ProjectContext(parent:Context, _project:Project) extends AbstractContext {
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == _project.name))
-            _project.jobs.getOrElse(identifier.name, throw new NoSuchElementException(s"Job $identifier not found in project ${_project.name}"))
-        else
+        if (identifier.project.forall(_ == project.name)) {
+            jobs.getOrElseUpdate(identifier.name,
+                project.jobs
+                    .getOrElse(identifier.name,
+                        throw new NoSuchElementException(s"Job $identifier not found in project ${project.name}")
+                    )
+                    .instantiate(this)
+            )
+        }
+        else {
             parent.getJob(identifier)
+        }
     }
 
     override def getProjectContext(projectName:String) : Context = {

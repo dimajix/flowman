@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,19 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class DeduplicateMapping extends BaseMapping {
+object DeduplicateMapping {
+    def apply(context:Context, input:String, columns:Seq[String]) : DeduplicateMapping = {
+        DeduplicateMapping(Mapping.Properties(context), MappingIdentifier(input), columns)
+    }
+}
+
+
+case class DeduplicateMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Seq[String]
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DeduplicateMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private var _columns:Seq[String] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
 
     /**
       * Creates an instance of the deduplication table.
@@ -43,9 +48,6 @@ class DeduplicateMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
-        val columns = this.columns
         logger.info(s"Deduplicating mapping '$input' on columns ${columns.mkString(",")}")
 
         val df = tables(input)
@@ -56,24 +58,32 @@ class DeduplicateMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
-
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+class DeduplicateMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+
+    override def instantiate(context: Context): DeduplicateMapping = {
+        val props = instanceProperties(context)
+        val input = MappingIdentifier(context.evaluate(this.input))
+        val columns = this.columns.map(context.evaluate)
+        DeduplicateMapping(props, input, columns)
     }
 }

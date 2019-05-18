@@ -35,9 +35,8 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
-        val xfs = ExtendMapping("myview", Map("new_f" -> "2*_2"))
+        val xfs = ExtendMapping(executor.context, "myview", Map("new_f" -> "2*_2"))
         xfs.input should be (MappingIdentifier.parse("myview"))
         xfs.columns should be (Map("new_f" -> "2*_2"))
         xfs.dependencies should be (Array(MappingIdentifier.parse("myview")))
@@ -56,9 +55,10 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
-        val xfs = ExtendMapping( "myview",
+        val xfs = ExtendMapping(
+            executor.context,
+            "myview",
             Map(
                 "f1" -> "2*_2",
                 "f2" -> "2*f1",
@@ -88,9 +88,10 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
-        val xfs = ExtendMapping( "myview",
+        val xfs = ExtendMapping(
+            executor.context,
+            "myview",
             Map(
                 "f1" -> "2*_2",
                 "_2" -> "2*_2"
@@ -108,7 +109,12 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "detect dependency cycles" in {
-        val xfs = ExtendMapping("myview",
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val xfs = ExtendMapping(
+            executor.context,
+            "myview",
             Map(
                 "f1" -> "2*_2",
                 "f2" -> "2*f1",
@@ -117,9 +123,6 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             )
         )
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
         a[RuntimeException] should be thrownBy xfs.execute(executor, Map(MappingIdentifier("myview") -> spark.emptyDataFrame))
     }
 

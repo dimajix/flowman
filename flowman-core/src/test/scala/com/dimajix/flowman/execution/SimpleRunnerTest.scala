@@ -26,24 +26,26 @@ import com.dimajix.flowman.types.StringType
 
 class SimpleRunnerTest extends FlatSpec with Matchers {
     "The SimpleRunner" should "work" in {
-        val runner = new SimpleRunner
-        val job = Job.builder()
-            .setName("job")
-            .build()
         val session = Session.builder()
             .build()
+        val job = Job.builder(session.context)
+            .setName("job")
+            .build()
+
+        val runner = new SimpleRunner
         runner.execute(session.executor, job) should be (Status.SUCCESS)
         runner.execute(session.executor, job) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
-        val runner = new SimpleRunner
-        val job = Job.builder()
+        val session = Session.builder()
+            .build()
+        val job = Job.builder(session.context)
             .setName("job")
             .addParameter("p1", StringType)
             .build()
-        val session = Session.builder()
-            .build()
+
+        val runner = new SimpleRunner
         runner.execute(session.executor, job) should be (Status.FAILED)
         runner.execute(session.executor, job) should be (Status.FAILED)
     }

@@ -23,8 +23,8 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a StateStoreProvider to be used as part of a Namespace. The specific StateStoreProvider itself has
- * to derive from the StateStoreProvider class
+ * This annotation marks a specific class as a StateStoreSpec to be used as part of a Namespace. The specific StateStoreSpec itself has
+ * to derive from the StateStoreSpec class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})

@@ -23,11 +23,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
-import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.model.RelationSpec
+import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.task.JobSpec
 
 
 object Module {
@@ -85,23 +86,23 @@ class Module {
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
-    @JsonDeserialize(converter=classOf[Connection.NameResolver])
-    @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
-    @JsonDeserialize(converter=classOf[Relation.NameResolver])
-    @JsonProperty(value="relations") private var _relations: Map[String,Relation] = Map()
-    @JsonDeserialize(converter=classOf[Mapping.NameResolver])
-    @JsonProperty(value="mappings") private var _mappings: Map[String,Mapping] = Map()
-    @JsonDeserialize(converter=classOf[Target.NameResolver])
-    @JsonProperty(value="targets") private var _targets: Map[String,Target] = Map()
-    @JsonDeserialize(converter=classOf[Job.NameResolver])
-    @JsonProperty(value="jobs") private var _jobs: Map[String,Job] = Map()
+    @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
+    @JsonProperty(value="connections") private var _connections: Map[String,ConnectionSpec] = Map()
+    @JsonDeserialize(converter=classOf[RelationSpec.NameResolver])
+    @JsonProperty(value="relations") private var _relations: Map[String,RelationSpec] = Map()
+    @JsonDeserialize(converter=classOf[MappingSpec.NameResolver])
+    @JsonProperty(value="mappings") private var _mappings: Map[String,MappingSpec] = Map()
+    @JsonDeserialize(converter=classOf[TargetSpec.NameResolver])
+    @JsonProperty(value="targets") private var _targets: Map[String,TargetSpec] = Map()
+    @JsonDeserialize(converter=classOf[JobSpec.NameResolver])
+    @JsonProperty(value="jobs") private var _jobs: Map[String,JobSpec] = Map()
 
     def profiles : Map[String,Profile] = _profiles
-    def relations : Map[String,Relation] = _relations
-    def connections : Map[String,Connection] = _connections
-    def mappings : Map[String,Mapping] = _mappings
-    def targets : Map[String,Target] = _targets
-    def jobs : Map[String,Job] = _jobs
+    def relations : Map[String,RelationSpec] = _relations
+    def connections : Map[String,ConnectionSpec] = _connections
+    def mappings : Map[String,MappingSpec] = _mappings
+    def targets : Map[String,TargetSpec] = _targets
+    def jobs : Map[String,JobSpec] = _jobs
 
     /**
       * Returns all configuration variables as a key-value sequence

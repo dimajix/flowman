@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,42 @@
 
 package com.dimajix.flowman.spec.flow
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.storage.StorageLevel
 
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
+
 
 /**
   * Common base implementation for the MappingType interface
   */
 abstract class BaseMapping extends Mapping {
-    @JsonProperty("broadcast") private[spec] var _broadcast:String = "false"
-    @JsonProperty("checkpoint") private[spec] var _checkpoint:String = "false"
-    @JsonProperty("cache") private[spec] var _cache:String = "NONE"
+    protected override def instanceProperties : Mapping.Properties
 
-    def broadcast(implicit context: Context) : Boolean = context.evaluate(_broadcast).toBoolean
-    def checkpoint(implicit context: Context) : Boolean = context.evaluate(_checkpoint).toBoolean
-    def cache(implicit context: Context) : StorageLevel = StorageLevel.fromString(context.evaluate(_cache))
+    /**
+      * This method should return true, if the resulting dataframe should be broadcast for map-side joins
+      * @return
+      */
+    override def broadcast : Boolean = instanceProperties.broadcast
+
+    /**
+      * This method should return true, if the resulting dataframe should be checkpointed
+      * @return
+      */
+    override def checkpoint : Boolean = instanceProperties.checkpoint
+
+    /**
+      * Returns the desired storage level. Default should be StorageLevel.NONE
+      * @return
+      */
+    override def cache : StorageLevel = instanceProperties.cache
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
         throw new UnsupportedOperationException(s"Schema inference not supported for mapping $name of type $category")

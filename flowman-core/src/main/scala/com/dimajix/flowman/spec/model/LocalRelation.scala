@@ -28,22 +28,24 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.sources.local.implicits._
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
+case class LocalRelation(
+    instanceProperties:Relation.Properties,
+    override val schema:Schema,
+    override val partitions: Seq[PartitionField],
+    location:Path,
+    pattern:String,
+    format:String
+)
+extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
-
-    @JsonProperty(value="location", required=true) private var _location: String = "/"
-    @JsonProperty(value="format", required=false) private var _format: String = "csv"
-    @JsonProperty(value="pattern", required=false) private var _pattern: String = _
-
-    def pattern(implicit context:Context) : String = context.evaluate(_pattern)
-    def location(implicit context:Context) : Path = makePath(context.evaluate(_location))
-    def format(implicit context:Context) : String = context.evaluate(_format)
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -57,7 +59,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
         require(executor != null)
         require(partitions != null)
 
-        implicit val context = executor.context
         logger.info(s"Reading from local location '$location' (partitions=$partitions)")
 
         val inputFiles = collectFiles(executor, partitions)
@@ -83,8 +84,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
         require(executor != null)
         require(df != null)
         require(partition != null)
-
-        implicit val context = executor.context
 
         val outputPath  = collector(executor).resolve(partition.mapValues(_.value))
         val outputFile = new File(outputPath.toUri)
@@ -112,7 +111,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     }
 
     private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
-        implicit val context = executor.context
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -132,9 +130,7 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     override def exists(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val dir = localDirectory
-        new File(dir).exists()
+        new File(localDirectory).exists()
     }
 
     /**
@@ -146,7 +142,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit =  {
         require(executor != null)
 
-        implicit val context = executor.context
         val dir = localDirectory
         logger.info(s"Creating local directory '$dir' for local file relation")
         val path = new File(dir)
@@ -162,7 +157,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
         require(executor != null)
 
-        implicit val context = executor.context
         val dir = localDirectory
         logger.info(s"Removing local directory '$dir' of local file relation")
         val root = new File(dir)
@@ -193,7 +187,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
       * @return
       */
     private def collectFiles(executor: Executor, partitions:Map[String,FieldValue]) : Seq[Path] = {
-        implicit val context = executor.context
         val inputFiles =
             if (this.partitions != null && this.partitions.nonEmpty)
                 collectPartitionedFiles(executor, partitions)
@@ -206,7 +199,6 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     }
 
     private def collectPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) : Seq[Path] = {
-        implicit val context = executor.context
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -219,10 +211,38 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
     }
 
     private def collector(executor: Executor) = {
-        implicit val context = executor.context
         new FileCollector(executor.spark)
             .path(location)
             .pattern(pattern)
+    }
+
+    private def localDirectory = {
+        if (pattern != null && pattern.nonEmpty) {
+            location.toUri.getPath
+        }
+        else {
+            location.getParent.toUri.getPath
+        }
+    }
+}
+
+
+
+class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+    @JsonProperty(value="location", required=true) private var location: String = "/"
+    @JsonProperty(value="format", required=false) private var format: String = "csv"
+    @JsonProperty(value="pattern", required=false) private var pattern: String = _
+
+
+    override def instantiate(context: Context): LocalRelation = {
+        LocalRelation(
+            instanceProperties(context),
+            if (schema != null) schema.instantiate(context) else null,
+            partitions.map(_.instantiate(context)),
+            makePath(context.evaluate(location)),
+            pattern,
+            context.evaluate(format)
+        )
     }
 
     private def makePath(location:String) : Path = {
@@ -231,16 +251,5 @@ class LocalRelation extends BaseRelation with SchemaRelation with PartitionedRel
             new Path("file", null, path.toString)
         else
             path
-    }
-
-    private def localDirectory(implicit context: Context) = {
-        val location = this.location
-        val pattern = this.pattern
-        if (pattern != null && pattern.nonEmpty) {
-            location.toUri.getPath
-        }
-        else {
-            location.getParent.toUri.getPath
-        }
     }
 }

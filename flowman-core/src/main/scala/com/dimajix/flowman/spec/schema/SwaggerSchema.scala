@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.schema
 
 import java.io.IOException
+import java.net.URL
 
 import scala.collection.JavaConversions._
 
@@ -51,6 +52,8 @@ import io.swagger.util.Json
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BinaryType
@@ -72,22 +75,22 @@ import com.dimajix.flowman.types.TimestampType
   * Schema implementation for reading Swagger / OpenAPI schemas. This implementation will preserve the ordering of
   * fields.
   */
-class SwaggerSchema extends ExternalSchema {
+case class SwaggerSchema(
+    instanceProperties:Schema.Properties,
+    override val file: File,
+    override val url: URL,
+    override val spec: String,
+    entity: String,
+    nullable: Boolean
+) extends ExternalSchema {
     protected override val logger = LoggerFactory.getLogger(classOf[SwaggerSchema])
-
-    @JsonProperty(value="entity", required=false) private var _entity: String = _
-    @JsonProperty(value="nullable", required=false) private var _nullable: String = "false"
-
-    def entity(implicit context: Context) : String = context.evaluate(_entity)
-    def nullable(implicit context: Context) : Boolean = context.evaluate(_nullable).toBoolean
 
     /**
       * Returns the list of all fields of the schema
-      * @param context
       * @return
       */
-    protected override def loadSchema(implicit context: Context): CachedSchema = {
-        val string = loadSchemaSpec(context)
+    protected override def loadSchema : CachedSchema = {
+        val string = loadSchemaSpec
         val swagger = convertToSwagger(string)
         val model = Option(entity).filter(_.nonEmpty).map(e => swagger.getDefinitions()(e)).getOrElse(swagger.getDefinitions().values().head)
 
@@ -179,5 +182,23 @@ class SwaggerSchema extends ExternalSchema {
             case _:UUIDProperty => StringType
             case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")
         }
+    }
+}
+
+
+
+class SwaggerSchemaSpec extends ExternalSchemaSpec {
+    @JsonProperty(value="entity", required=false) private var entity: String = _
+    @JsonProperty(value="nullable", required=false) private var nullable: String = "false"
+
+    override def instantiate(context: Context): SwaggerSchema = {
+        SwaggerSchema(
+            Schema.Properties(context),
+            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
+            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull,
+            context.evaluate(spec),
+            context.evaluate(entity),
+            context.evaluate(nullable).toBoolean
+        )
     }
 }

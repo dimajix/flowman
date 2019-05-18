@@ -16,72 +16,36 @@
 
 package com.dimajix.flowman.spec.flow
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Resource
+import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
 
-object Mapping extends TypeRegistry[Mapping] {
-    class NameResolver extends StdConverter[Map[String,Mapping],Map[String,Mapping]] {
-        override def convert(value: Map[String,Mapping]): Map[String,Mapping] = {
-            value.foreach(kv => kv._2._name = kv._1)
-            value
-        }
-    }
+object Mapping {
+    case class Properties(
+         context:Context,
+         name:String="",
+         kind:String="",
+         labels:Map[String,String]=Map(),
+         broadcast:Boolean=false,
+         checkpoint:Boolean=false,
+         cache:StorageLevel=StorageLevel.NONE
+    ) extends Instance.Properties
 }
 
 
-/**
-  * Interface class for specifying a transformation (mapping)
-  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMapping]),
-    new JsonSubTypes.Type(name = "alias", value = classOf[AliasMapping]),
-    new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMapping]),
-    new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMapping]),
-    new JsonSubTypes.Type(name = "conform", value = classOf[ConformMapping]),
-    new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMapping]),
-    new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMapping]),
-    new JsonSubTypes.Type(name = "drop", value = classOf[DropMapping]),
-    new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMapping]),
-    new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMapping]),
-    new JsonSubTypes.Type(name = "filter", value = classOf[FilterMapping]),
-    new JsonSubTypes.Type(name = "flatten", value = classOf[FlattenMapping]),
-    new JsonSubTypes.Type(name = "join", value = classOf[JoinMapping]),
-    new JsonSubTypes.Type(name = "latest", value = classOf[LatestMapping]),
-    new JsonSubTypes.Type(name = "update", value = classOf[UpdateMapping]),
-    new JsonSubTypes.Type(name = "project", value = classOf[ProjectMapping]),
-    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMapping]),
-    new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMapping]),
-    new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMapping]),
-    new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMapping]),
-    new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMapping]),
-    new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMapping]),
-    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaMapping]),
-    new JsonSubTypes.Type(name = "select", value = classOf[SelectMapping]),
-    new JsonSubTypes.Type(name = "sort", value = classOf[SortMapping]),
-    new JsonSubTypes.Type(name = "sql", value = classOf[SqlMapping]),
-    new JsonSubTypes.Type(name = "union", value = classOf[UnionMapping]),
-    new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMapping])
-))
-abstract class Mapping extends Resource {
-    @JsonIgnore private var _name:String = ""
-
-    @JsonProperty(value="kind", required = true) private var _kind: String = _
-    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
-
+abstract class Mapping extends AbstractInstance {
     /**
       * Returns the category of this resource
       * @return
@@ -89,51 +53,28 @@ abstract class Mapping extends Resource {
     final override def category: String = "mapping"
 
     /**
-      * Returns the specific kind of this resource
-      * @return
-      */
-    final override def kind: String = _kind
-
-    /**
-      * Returns a map of user defined labels
-      * @param context
-      * @return
-      */
-    final override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
-
-    /**
-      * Returns the name of the mapping
-      * @return
-      */
-    final override def name : String = _name
-
-    /**
       * This method should return true, if the resulting dataframe should be broadcast for map-side joins
-      * @param context
       * @return
       */
-    def broadcast(implicit context: Context) : Boolean
+    def broadcast : Boolean
 
     /**
       * This method should return true, if the resulting dataframe should be checkpointed
-      * @param context
       * @return
       */
-    def checkpoint(implicit context: Context) : Boolean
+    def checkpoint : Boolean
 
     /**
       * Returns the desired storage level. Default should be StorageLevel.NONE
-      * @param context
       * @return
       */
-    def cache(implicit context: Context) : StorageLevel
+    def cache : StorageLevel
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
-      * @param context
       * @return
       */
-    def dependencies(implicit context:Context) : Array[MappingIdentifier]
+    def dependencies : Array[MappingIdentifier]
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -146,9 +87,72 @@ abstract class Mapping extends Resource {
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType
+    def describe(input:Map[MappingIdentifier,StructType]) : StructType
+}
+
+
+
+object MappingSpec extends TypeRegistry[MappingSpec] {
+    type NameResolver = NamedSpec.NameResolver[Mapping, MappingSpec]
+}
+
+
+/**
+  * Interface class for specifying a transformation (mapping)
+  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMappingSpec]),
+    new JsonSubTypes.Type(name = "alias", value = classOf[AliasMappingSpec]),
+    new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMappingSpec]),
+    new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMappingSpec]),
+    new JsonSubTypes.Type(name = "conform", value = classOf[ConformMappingSpec]),
+    new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMappingSpec]),
+    new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMappingSpec]),
+    new JsonSubTypes.Type(name = "drop", value = classOf[DropMappingSpec]),
+    new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMappingSpec]),
+    new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),
+    new JsonSubTypes.Type(name = "filter", value = classOf[FilterMappingSpec]),
+    new JsonSubTypes.Type(name = "flatten", value = classOf[FlattenMappingSpec]),
+    new JsonSubTypes.Type(name = "join", value = classOf[JoinMappingSpec]),
+    new JsonSubTypes.Type(name = "latest", value = classOf[LatestMappingSpec]),
+    new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
+    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
+    new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
+    new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
+    new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
+    new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMappingSpec]),
+    new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMappingSpec]),
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaMappingSpec]),
+    new JsonSubTypes.Type(name = "select", value = classOf[SelectMappingSpec]),
+    new JsonSubTypes.Type(name = "sort", value = classOf[SortMappingSpec]),
+    new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
+    new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
+    new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),
+    new JsonSubTypes.Type(name = "update", value = classOf[UpdateMappingSpec])
+))
+abstract class MappingSpec extends NamedSpec[Mapping] {
+    @JsonProperty("broadcast") protected var broadcast:String = "false"
+    @JsonProperty("checkpoint") protected var checkpoint:String = "false"
+    @JsonProperty("cache") protected var cache:String = "NONE"
+
+    override def instantiate(context:Context) : Mapping
+
+    /**
+      * Returns a set of common properties
+      * @param context
+      * @return
+      */
+    override protected def instanceProperties(context:Context) : Mapping.Properties = {
+        val name = this.name
+        val kind = this.kind
+        val labels = this.labels.mapValues(context.evaluate)
+        val broadcast = context.evaluate(this.broadcast).toBoolean
+        val checkpoint = context.evaluate(this.checkpoint).toBoolean
+        val cache = StorageLevel.fromString(context.evaluate(this.cache))
+        Mapping.Properties(context, name, kind, labels, broadcast, checkpoint, cache)
+    }
 }

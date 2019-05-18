@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.spec.schema
+
+import java.net.URL
 
 import scala.collection.JavaConversions._
 
@@ -32,6 +34,8 @@ import org.json.JSONTokener
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BooleanType
@@ -44,18 +48,23 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 
+
 /**
   * This class encapsulates a data frame schema specified as a JSON schema document.
   */
-class JsonSchema extends ExternalSchema {
+case class JsonSchema(
+    instanceProperties:Schema.Properties,
+    override val file: File,
+    override val url: URL,
+    override val spec: String
+) extends ExternalSchema {
     protected override val logger = LoggerFactory.getLogger(classOf[JsonSchema])
 
     /**
       * Returns the description of the whole schema
-      * @param context
       * @return
       */
-    protected override def loadSchema(implicit context: Context): CachedSchema = {
+    protected override def loadSchema : CachedSchema = {
         val spec = loadSchemaSpec
 
         val rawSchema = new JSONObject(new JSONTokener(spec))
@@ -100,5 +109,18 @@ class JsonSchema extends ExternalSchema {
             }
             case _ => throw new UnsupportedOperationException(s"Unsupported type in JSON schema")
         }
+    }
+}
+
+
+
+class JsonSchemaSpec extends ExternalSchemaSpec {
+    override def instantiate(context: Context): JsonSchema = {
+        JsonSchema(
+            Schema.Properties(context),
+            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
+            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull,
+            context.evaluate(spec)
+        )
     }
 }

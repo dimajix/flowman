@@ -21,45 +21,41 @@ import scala.collection.mutable
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
 
 object MappingSchema {
-    def apply(mapping:String) : MappingSchema = {
-        val result = new MappingSchema
-        result._mapping = mapping
-        result
+    def apply(context:Context, mapping:String) : MappingSchema = {
+        MappingSchema(Schema.Properties(context), MappingIdentifier(mapping))
     }
 }
 
 
-class MappingSchema extends Schema {
-    @JsonProperty(value = "mapping", required = true) private var _mapping: String = ""
-
-    def mapping(implicit context: Context): MappingIdentifier = MappingIdentifier(context.evaluate(_mapping))
-
+case class MappingSchema (
+    instanceProperties:Schema.Properties,
+    mapping: MappingIdentifier
+) extends Schema {
     /**
       * Returns the description of the schema
-      * @param context
       * @return
       */
-    override def description(implicit context: Context) : String = s"Inferred from mapping $mapping"
+    override def description : String = s"Inferred from mapping $mapping"
 
     /**
       * Returns the list of all fields of the schema
-      * @param context
       * @return
       */
-    override def fields(implicit context: Context) : Seq[Field] = {
+    override def fields : Seq[Field] = {
         val schemaCache = mutable.Map[MappingIdentifier, StructType]()
 
         def describe(mapping:MappingIdentifier) : StructType = {
             schemaCache.getOrElseUpdate(mapping, {
                 val map = context.getMapping(mapping)
                 val deps = map.dependencies.map(id => (id,describe(id))).toMap
-                map.describe(context, deps)
+                map.describe(deps)
             })
         }
 
@@ -68,8 +64,20 @@ class MappingSchema extends Schema {
 
     /**
       * Returns the list of primary keys. Can be empty of no PK is available
-      * @param context
       * @return
       */
-    override def primaryKey(implicit context: Context) : Seq[String] = Seq()
+    override def primaryKey : Seq[String] = Seq()
+}
+
+
+
+class MappingSchemaSpec extends SchemaSpec {
+    @JsonProperty(value = "mapping", required = true) private var mapping: String = ""
+
+    override def instantiate(context: Context): Schema = {
+        MappingSchema(
+            Schema.Properties(context),
+            MappingIdentifier(context.evaluate(mapping))
+        )
+    }
 }

@@ -22,11 +22,10 @@ import java.nio.file.FileAlreadyExistsException
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
-import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
@@ -37,22 +36,24 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.spec.schema.PartitionFieldSpec
 import com.dimajix.flowman.spec.schema.PartitionSchema
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class FileRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
+case class FileRelation(
+    instanceProperties:Relation.Properties,
+    override val schema:Schema,
+    override val partitions: Seq[PartitionField],
+    location:Path,
+    pattern:String,
+    format:String
+) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
-
-    @JsonProperty(value="location", required = true) private var _location: String = "/"
-    @JsonProperty(value="format", required = false) private var _format: String = "csv"
-    @JsonProperty(value="pattern", required = false) private var _pattern: String = _
-
-    def pattern(implicit context:Context) : String = _pattern
-    def location(implicit context:Context) : Path = new Path(context.evaluate(_location))
-    def format(implicit context:Context) : String = context.evaluate(_format)
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -122,7 +123,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(executor != null)
         require(partition != null)
 
-        implicit val context = executor.context
         requireValidPartitionKeys(partition)
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
@@ -145,7 +145,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(executor != null)
         require(partitions != null)
 
-        implicit val context = executor.context
         if (this.partitions != null && this.partitions.nonEmpty && partitions.nonEmpty)
             cleanPartitionedFiles(executor, partitions)
         else
@@ -153,7 +152,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
 
     private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
-        implicit val context = executor.context
         requireValidPartitionKeys(partitions)
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
@@ -174,7 +172,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     override def exists(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         fs.exists(location)
     }
@@ -207,8 +204,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {
         require(executor != null)
 
-        implicit val context = executor.context
-        val location = this.location
         logger.info(s"Deleting directory '$location' of file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         if (!fs.exists(location)) {
@@ -234,7 +229,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
         require(executor != null)
 
-        implicit val context = executor.context
         if (this.partitions != null && this.partitions.nonEmpty)
             mapPartitionedFiles(executor, partitions)(fn)
         else
@@ -245,7 +239,6 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
         require(partitions != null)
         require(executor != null)
 
-        implicit val context = executor.context
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -259,9 +252,27 @@ class FileRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
 
     private def collector(executor: Executor) = {
-        implicit val context = executor.context
         new FileCollector(executor.spark)
             .path(location)
             .pattern(pattern)
+    }
+}
+
+
+
+class FileRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+    @JsonProperty(value="location", required = true) private var location: String = "/"
+    @JsonProperty(value="format", required = false) private var format: String = "csv"
+    @JsonProperty(value="pattern", required = false) private var pattern: String = _
+
+    override def instantiate(context: Context): FileRelation = {
+        FileRelation(
+            instanceProperties(context),
+            if (schema != null) schema.instantiate(context) else null,
+            partitions.map(_.instantiate(context)),
+            new Path(context.evaluate(location)),
+            pattern,
+            context.evaluate(format)
+        )
     }
 }

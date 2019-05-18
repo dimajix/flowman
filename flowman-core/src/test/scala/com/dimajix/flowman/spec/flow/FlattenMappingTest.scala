@@ -77,7 +77,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(executor.context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
     }
 }

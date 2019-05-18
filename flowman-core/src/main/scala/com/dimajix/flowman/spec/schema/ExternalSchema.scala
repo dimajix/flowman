@@ -43,38 +43,31 @@ object ExternalSchema {
   */
 abstract class ExternalSchema extends Schema {
     protected val logger: Logger
-
-    @JsonProperty(value = "file", required = false) private var _file: String = _
-    @JsonProperty(value = "url", required = false) private var _url: String = _
-    @JsonProperty(value = "spec", required = false) private var _spec: String = _
-
-    def file(implicit context: Context): File = Option(_file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull
-    def url(implicit context: Context): URL = Option(_url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
-    def spec(implicit context: Context): String = context.evaluate(_spec)
+    protected val file: File
+    protected val url: URL
+    protected val spec: String
 
     /**
       * Returns the description of the schema. This will be cached once and for ever
-      * @param context
       * @return
       */
-    override def description(implicit context: Context): String = {
+    override def description : String = {
         cache.description
     }
 
     /**
       * Returns the list of all fields of the schema. This list will be cached once and for ever
-      * @param context
       * @return
       */
-    override def fields(implicit context: Context): Seq[Field] = {
+    override def fields : Seq[Field] = {
         cache.fields
     }
 
-    override def primaryKey(implicit context: Context): Seq[String] = {
+    override def primaryKey : Seq[String] = {
         cache.primaryKey
     }
 
-    private def cache(implicit context: Context) : CachedSchema = {
+    private def cache : CachedSchema = {
         if (cachedSchema == null) {
             cachedSchema = loadSchema
         }
@@ -84,22 +77,16 @@ abstract class ExternalSchema extends Schema {
 
     /**
       * Loads the real schema from external source. This has to be provided by derived classes
-      * @param context
       * @return
       */
-    protected def loadSchema(implicit context: Context): CachedSchema
+    protected def loadSchema : CachedSchema
 
     /**
       * Loads the raw schema definition from the external resource (file or URL)
       *
-      * @param context
       * @return
       */
-    protected def loadSchemaSpec(implicit context: Context): String = {
-        val file = this.file
-        val url = this.url
-        val spec = this.spec
-
+    protected def loadSchemaSpec : String = {
         if (file != null) {
             logger.info(s"Loading schema from file $file")
             val input = file.open()
@@ -123,4 +110,15 @@ abstract class ExternalSchema extends Schema {
             throw new IllegalArgumentException("A schema needs either a 'file', 'url' or a 'spec' element")
         }
     }
+}
+
+
+
+/**
+  * Helper class for external schemas which are stored in files or at URLs
+  */
+abstract class ExternalSchemaSpec extends SchemaSpec {
+    @JsonProperty(value = "file", required = false) protected var file: String = _
+    @JsonProperty(value = "url", required = false) protected var url: String = _
+    @JsonProperty(value = "spec", required = false) protected var spec: String = _
 }

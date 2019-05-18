@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,25 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
-class RebalanceMapping extends BaseMapping {
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
 
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def partitions(implicit context: Context) : Int= if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
+object RebalanceMapping {
+    def apply(context:Context, input:String, partitions:Int) : RebalanceMapping = {
+        RebalanceMapping(Mapping.Properties(context), MappingIdentifier(input), partitions)
+    }
+}
 
+
+case class RebalanceMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    partitions:Int
+) extends BaseMapping {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -40,7 +45,6 @@ class RebalanceMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
         val df = input(this.input)
         val parts = partitions
         df.repartition(parts)
@@ -49,24 +53,34 @@ class RebalanceMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+
+class RebalanceMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
+
+    override def instantiate(context: Context): RebalanceMapping = {
+        val props = instanceProperties(context)
+        val input = MappingIdentifier(context.evaluate(this.input))
+        val partitions = context.evaluate(this.partitions).toInt
+        RebalanceMapping(props, input, partitions)
     }
 }

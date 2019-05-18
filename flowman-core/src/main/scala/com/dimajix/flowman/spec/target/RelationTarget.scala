@@ -28,27 +28,21 @@ import com.dimajix.flowman.state.TargetInstance
 import com.dimajix.flowman.types.SingleValue
 
 
-class RelationTarget extends BaseTarget {
+case class RelationTarget(
+    instanceProperties: Target.Properties,
+    relation: RelationIdentifier,
+    mode: String,
+    partition: Map[String,String],
+    parallelism: Int,
+    rebalance: Boolean
+) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
-
-    @JsonProperty(value="relation", required=true) private var _relation:String = _
-    @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
-    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = Map()
-    @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
-    @JsonProperty(value="rebalance", required=false) private var _rebalance:String = "false"
-
-    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
-    def mode(implicit context: Context) : String = context.evaluate(_mode)
-    def partition(implicit context: Context) : Map[String,String] = _partition.mapValues(context.evaluate)
-    def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
-    def rebalance(implicit context: Context) : Boolean = context.evaluate(_rebalance).toBoolean
 
     /**
       * Returns an instance representing this target with the context
-      * @param context
       * @return
       */
-    override def instance(implicit context: Context) : TargetInstance = {
+    override def instance : TargetInstance = {
         TargetInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
@@ -64,14 +58,11 @@ class RelationTarget extends BaseTarget {
       * @param tables
       */
     override def build(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
-        implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))
-        val rebalance = this.rebalance
-        val target = this.relation
-        val input = this.input
+        val input = instanceProperties.input
 
-        logger.info(s"Writing mapping '$input' to relation '$target' into partition $partition")
-        val relation = context.getRelation(target)
+        logger.info(s"Writing mapping '$input' to relation '${this.relation}' into partition $partition")
+        val relation = context.getRelation(this.relation)
         val table = if (rebalance)
             tables(input).repartition(parallelism)
         else
@@ -85,12 +76,32 @@ class RelationTarget extends BaseTarget {
       * @param executor
       */
     override def clean(executor: Executor): Unit = {
-        implicit var context = executor.context
         val partition = this.partition.mapValues(v => SingleValue(v))
-        val target = this.relation
 
-        logger.info(s"Cleaning partition $partition of relation '$target'")
-        val relation = context.getRelation(target)
+        logger.info(s"Cleaning partition $partition of relation '${this.relation}'")
+        val relation = context.getRelation(this.relation)
         relation.clean(executor, partition)
+    }
+}
+
+
+
+
+class RelationTargetSpec extends TargetSpec {
+    @JsonProperty(value="relation", required=true) private var _relation:String = _
+    @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
+    @JsonProperty(value="partition", required=false) private var _partition:Map[String,String] = Map()
+    @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
+    @JsonProperty(value="rebalance", required=false) private var _rebalance:String = "false"
+
+    override def instantiate(context: Context): Target = {
+        RelationTarget(
+            instanceProperties(context),
+            RelationIdentifier.parse(context.evaluate(_relation)),
+            context.evaluate(_mode),
+            _partition.mapValues(context.evaluate),
+            context.evaluate(_parallelism).toInt,
+            context.evaluate(_rebalance).toBoolean
+        )
     }
 }

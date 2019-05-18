@@ -16,23 +16,11 @@
 
 package com.dimajix.flowman.spec.state
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.state.StateStore
-import com.dimajix.flowman.spi.TypeRegistry
+import com.dimajix.flowman.state.NullStateStore
 
 
-object StateStoreProvider extends TypeRegistry[StateStoreProvider] {
-}
-
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "null", value = classOf[NullStateStoreProvider]),
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcStateStoreProvider])
-))
-abstract class StateStoreProvider {
-    def createStateStore(session:Session): StateStore
+class NullStateStoreSpec extends StateStoreSpec {
+    def instantiate(session:Session): StateStore = new NullStateStore
 }

@@ -29,12 +29,12 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 
 
 @CatalogType(kind = "impala")
-class ImpalaCatalogProvider extends CatalogProvider {
+class ImpalaCatalogProvider extends CatalogSpec {
     @JsonProperty(value="connection", required=true) private var _connection:String = ""
 
     def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
 
-    override def createCatalog(session: Session): ExternalCatalog = {
+    override def instantiate(session: Session): ExternalCatalog = {
         implicit val context = session.context
         val con = context.getConnection(this.connection)
         val connection = con match {

@@ -46,7 +46,7 @@ class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
             .withNamespace(namespace)
             .build()
 
-        val catalog = namespace.catalog.createCatalog(session)
+        val catalog = namespace.catalog.instantiate(session)
         catalog shouldBe an[ImpalaExternalCatalog]
     }
 }

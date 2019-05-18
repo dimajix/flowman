@@ -120,21 +120,19 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @return
       */
     private def runLogged(executor: Executor, job:Job, args:Map[String,String], force:Boolean) : Status = {
-        implicit val context = executor.context
-
         // Create job instance for state server
         val instance = job.instance(args)
 
         // Get Token
-        val present = checkJob(context, instance)
-        val token = startJob(context, instance, parentJob)
+        val present = checkJob(instance)
+        val token = startJob(instance, parentJob)
 
-        val shutdownHook = new Thread() { override def run() : Unit = finishJob(context, token, Status.FAILED) }
+        val shutdownHook = new Thread() { override def run() : Unit = finishJob(token, Status.FAILED) }
         withShutdownHook(shutdownHook) {
             // First checkJob if execution is really required
             if (present && !force) {
                 logger.info(s"Job '${job.name}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")} is up to date - will be skipped")
-                finishJob(context, token, Status.SKIPPED)
+                finishJob(token, Status.SKIPPED)
                 Status.SKIPPED
             }
             else {
@@ -146,31 +144,31 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
                 match {
                     case Success(status @ Status.SUCCESS) =>
                         logger.info(s"Successfully finished execution of job '${job.name}'")
-                        finishJob(context, token, Status.SUCCESS)
+                        finishJob(token, Status.SUCCESS)
                         status
                     case Success(status @ Status.FAILED) =>
                         logger.error(s"Execution of job '${job.name}' failed")
-                        finishJob(context, token, Status.FAILED)
+                        finishJob(token, Status.FAILED)
                         status
                     case Success(status @ Status.ABORTED) =>
                         logger.error(s"Execution of job '${job.name}' aborted")
-                        finishJob(context, token, Status.ABORTED)
+                        finishJob(token, Status.ABORTED)
                         status
                     case Success(status @ Status.SKIPPED) =>
                         logger.error(s"Execution of job '${job.name}' skipped")
-                        finishJob(context, token, Status.SKIPPED)
+                        finishJob(token, Status.SKIPPED)
                         status
                     case Success(status @ Status.RUNNING) =>
                         logger.error(s"Execution of job '${job.name}' already running")
-                        finishJob(context, token, Status.SKIPPED)
+                        finishJob(token, Status.SKIPPED)
                         status
                     case Success(status) =>
                         logger.error(s"Execution of job '${job.name}' in unknown state. Assuming failure")
-                        finishJob(context, token, Status.FAILED)
+                        finishJob(token, Status.FAILED)
                         status
                     case Failure(e) =>
                         logger.error(s"Caught exception while executing job '${job.name}'", e)
-                        finishJob(context, token, Status.FAILED)
+                        finishJob(token, Status.FAILED)
                         Status.FAILED
                 }
             }
@@ -241,21 +239,19 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @return
       */
     private def buildLogged(executor: Executor, target:Target, force:Boolean) : Status = {
-        implicit val context = executor.context
-
         // Create job instance for state server
-        val instance = target.instance(context)
+        val instance = target.instance
 
         // Get Token
-        val present = checkTarget(context, instance)
-        val token = startTarget(context, instance, parentJob)
+        val present = checkTarget(instance)
+        val token = startTarget(instance, parentJob)
 
-        val shutdownHook = new Thread() { override def run() : Unit = finishTarget(context, token, Status.FAILED) }
+        val shutdownHook = new Thread() { override def run() : Unit = finishTarget(token, Status.FAILED) }
         withShutdownHook(shutdownHook) {
             // First checkJob if execution is really required
             if (present && !force) {
                 logger.info("Everything up to date, skipping execution")
-                finishTarget(context, token, Status.SKIPPED)
+                finishTarget(token, Status.SKIPPED)
                 Status.SKIPPED
             }
             else {
@@ -265,11 +261,11 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
                 match {
                     case Success(_) =>
                         logger.info(s"Successfully finished building target '${target.name}'")
-                        finishTarget(context, token, Status.SUCCESS)
+                        finishTarget(token, Status.SUCCESS)
                         Status.SUCCESS
                     case Failure(e) =>
                         logger.error(s"Caught exception while building target '${target.name}'", e)
-                        finishTarget(context, token, Status.FAILED)
+                        finishTarget(token, Status.FAILED)
                         Status.FAILED
                 }
             }
@@ -333,15 +329,13 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @return
       */
     private def cleanLogged(executor: Executor, target:Target) : Status = {
-        implicit val context = executor.context
-
         // Create job instance for state server
-        val instance = target.instance(context)
+        val instance = target.instance
 
         // Get Token
-        val token = startTarget(context, instance, parentJob)
+        val token = startTarget(instance, parentJob)
 
-        val shutdownHook = new Thread() { override def run() : Unit = finishTarget(context, token, Status.FAILED) }
+        val shutdownHook = new Thread() { override def run() : Unit = finishTarget(token, Status.FAILED) }
         withShutdownHook(shutdownHook) {
             Try {
                 target.clean(executor)
@@ -349,11 +343,11 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
             match {
                 case Success(_) =>
                     logger.info(s"Successfully finished cleaning target '${target.name}'")
-                    finishTarget(context, token, Status.CLEANED)
+                    finishTarget(token, Status.CLEANED)
                     Status.CLEANED
                 case Failure(e) =>
                     logger.error(s"Caught exception while cleaning target '${target.name}'", e)
-                    finishTarget(context, token, Status.FAILED)
+                    finishTarget(token, Status.FAILED)
                     Status.FAILED
             }
         }
@@ -388,7 +382,7 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param job
       * @return
       */
-    protected def checkJob(context: Context, job:JobInstance) : Boolean
+    protected def checkJob(job:JobInstance) : Boolean
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -396,21 +390,21 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param job
       * @return
       */
-    protected def startJob(context: Context, job:JobInstance, parent:Option[JobToken]) : JobToken
+    protected def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    protected def finishJob(context: Context, token:JobToken, status:Status) : Unit
+    protected def finishJob(token:JobToken, status:Status) : Unit
 
     /**
       * Performs some checks, if the target is already up to date
       * @param target
       * @return
       */
-    protected def checkTarget(context: Context, target:TargetInstance) : Boolean
+    protected def checkTarget(target:TargetInstance) : Boolean
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -418,14 +412,14 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param target
       * @return
       */
-    protected def startTarget(context: Context, target:TargetInstance, parent:Option[JobToken]) : TargetToken
+    protected def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    protected def finishTarget(context: Context, token:TargetToken, status:Status) : Unit
+    protected def finishTarget(token:TargetToken, status:Status) : Unit
 
     private def withShutdownHook[T](shutdownHook:Thread)(block: => T) : T = {
         Runtime.getRuntime.addShutdownHook(shutdownHook)

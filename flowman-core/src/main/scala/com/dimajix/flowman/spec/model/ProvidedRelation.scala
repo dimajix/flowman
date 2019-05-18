@@ -22,15 +22,16 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class ProvidedRelation extends BaseRelation with SchemaRelation {
-    @JsonProperty(value="table") private var _table: String = _
-
-    def table(implicit context:Context) : String = context.evaluate(_table)
-
+case class ProvidedRelation(
+    instanceProperties:Relation.Properties,
+    override val schema:Schema,
+    table:String
+) extends BaseRelation with SchemaRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -69,7 +70,6 @@ class ProvidedRelation extends BaseRelation with SchemaRelation {
     override def exists(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
         executor.spark.catalog.tableExists(table)
     }
 
@@ -83,4 +83,19 @@ class ProvidedRelation extends BaseRelation with SchemaRelation {
         throw new UnsupportedOperationException("Migrating provided tables not supported")
     }
 
+}
+
+
+
+
+class ProvidedRelationSpec extends RelationSpec with SchemaRelationSpec {
+    @JsonProperty(value="table") private var table: String = _
+
+    override def instantiate(context: Context): Relation = {
+        ProvidedRelation(
+            instanceProperties(context),
+            if (schema != null) schema.instantiate(context) else null,
+            context.evaluate(table)
+        )
+    }
 }

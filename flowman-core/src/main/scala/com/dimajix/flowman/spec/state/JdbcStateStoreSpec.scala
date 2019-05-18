@@ -27,9 +27,9 @@ import com.dimajix.flowman.state.JdbcStateStore
 import com.dimajix.flowman.state.StateStore
 
 
-object JdbcStateStoreProvider {
-    def apply(connection:String, retries:Int=3, timeout:Int=1000) : JdbcStateStoreProvider = {
-        val runner = new JdbcStateStoreProvider
+object JdbcStateStoreSpec {
+    def apply(connection:String, retries:Int=3, timeout:Int=1000) : JdbcStateStoreSpec = {
+        val runner = new JdbcStateStoreSpec
         runner._connection = connection
         runner._retries = retries.toString
         runner._timeout = timeout.toString
@@ -38,8 +38,8 @@ object JdbcStateStoreProvider {
 }
 
 
-class JdbcStateStoreProvider extends StateStoreProvider {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcStateStoreProvider])
+class JdbcStateStoreSpec extends StateStoreSpec {
+    private val logger = LoggerFactory.getLogger(classOf[JdbcStateStoreSpec])
 
     @JsonProperty(value="connection", required=true) private var _connection:String = ""
     @JsonProperty(value="retries", required=false) private var _retries:String = "3"
@@ -49,7 +49,7 @@ class JdbcStateStoreProvider extends StateStoreProvider {
     def retries(implicit context: Context) : Int = context.evaluate(_retries).toInt
     def timeout(implicit context: Context) : Int = context.evaluate(_timeout).toInt
 
-    override def createStateStore(session: Session): StateStore = {
+    override def instantiate(session: Session): StateStore = {
         implicit val context = session.context
         val con = context.getConnection(this.connection).asInstanceOf[JdbcConnection]
         val connection = new JdbcStateStore.Connection(

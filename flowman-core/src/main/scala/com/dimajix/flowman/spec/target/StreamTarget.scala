@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,29 +30,14 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 
 
-class StreamTarget extends BaseTarget {
+case class StreamTarget(
+    instanceProperties:Target.Properties,
+    relation:RelationIdentifier,
+    mode:OutputMode,
+    parallelism:Int,
+    checkpointLocation:Path
+) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
-    private lazy val ts =  System.currentTimeMillis()
-
-    @JsonProperty(value="relation", required=true) private var _relation:String = _
-    @JsonProperty(value="mode", required=false) private var _mode:String = OutputMode.Update().toString
-    @JsonProperty(value="checkpointLocation", required=false) private var _checkpointLocation:String = _
-    @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
-
-    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
-    def mode(implicit context: Context) : OutputMode = context.evaluate(_mode).toUpperCase(Locale.ROOT) match {
-        case "APPEND" => OutputMode.Append()
-        case "COMPLETE" => OutputMode.Complete()
-        case "UPDATE" => OutputMode.Update()
-        case mode:String => throw new IllegalArgumentException(s"Unsupported output mode '$mode'")
-    }
-    def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
-    def checkpointLocation(implicit context: Context) : Path = new Path(
-        Option(context.evaluate(_checkpointLocation))
-            .map(_.trim)
-            .filter(_.nonEmpty)
-            .getOrElse("/tmp/flowman-streaming-sink-" + name + "-" + ts)
-    )
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -61,11 +46,8 @@ class StreamTarget extends BaseTarget {
       * @param executor
       */
     override def build(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): Unit = {
-        implicit var context = executor.context
         val target = this.relation
-        val input = this.input
-        val mode = this.mode
-        val checkpointLocation = this.checkpointLocation
+        val input = instanceProperties.input
 
         logger.info(s"Writing mapping '$input' to streaming relation '$target' using mode '$mode' and checkpoint location '$checkpointLocation'")
         val relation = context.getRelation(target)
@@ -79,11 +61,44 @@ class StreamTarget extends BaseTarget {
       * @param executor
       */
     override def clean(executor: Executor): Unit = {
-        implicit var context = executor.context
         val target = this.relation
 
         logger.info(s"Cleaining streaming relation '$target'")
         val relation = context.getRelation(target)
         relation.clean(executor)
+    }
+}
+
+
+
+
+class StreamTargetSpec extends TargetSpec {
+    @JsonProperty(value="relation", required=true) private var relation:String = _
+    @JsonProperty(value="mode", required=false) private var mode:String = OutputMode.Update().toString
+    @JsonProperty(value="checkpointLocation", required=false) private var checkpointLocation:String = _
+    @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
+
+
+    override def instantiate(context: Context): Target = {
+        val  mode = context.evaluate(this.mode).toUpperCase(Locale.ROOT) match {
+            case "APPEND" => OutputMode.Append()
+            case "COMPLETE" => OutputMode.Complete()
+            case "UPDATE" => OutputMode.Update()
+            case mode:String => throw new IllegalArgumentException(s"Unsupported output mode '$mode'")
+        }
+
+        val checkpointLocation = Option(context.evaluate(this.checkpointLocation))
+            .map(_.trim)
+            .filter(_.nonEmpty)
+            .getOrElse("/tmp/flowman-streaming-sink-" + name + "-" + System.currentTimeMillis())
+
+
+        StreamTarget(
+            instanceProperties(context),
+            RelationIdentifier.parse(context.evaluate(relation)),
+            mode,
+            context.evaluate(parallelism).toInt,
+            new Path(checkpointLocation)
+        )
     }
 }

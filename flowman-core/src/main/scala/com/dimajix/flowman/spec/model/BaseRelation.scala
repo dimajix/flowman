@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
@@ -27,7 +26,6 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Schema
 
@@ -36,30 +34,26 @@ import com.dimajix.flowman.spec.schema.Schema
   * Common base implementation for the Relation interface class. It contains a couple of common properties.
   */
 abstract class BaseRelation extends Relation {
-    @JsonProperty(value="description", required = false) private var _description: String = _
-    @JsonProperty(value="options", required=false) private var _options:Map[String,String] = Map()
+    protected override def instanceProperties : Relation.Properties
 
     /**
       * Returns a description for the relation
-      * @param context
       * @return
       */
-    override def description(implicit context: Context) : String = context.evaluate(_description)
+    override def description : String = instanceProperties.description
 
     /**
       * Returns the schema of the relation
-      * @param context
       * @return
       */
-    override def schema(implicit context: Context) : Schema = null
+    override def schema : Schema = null
 
     /**
       * Returns a map of all options. There is no specific usage for options, that depends on the
       * specific implementation
-      * @param context
       * @return
       */
-    def options(implicit context: Context) : Map[String,String] = _options.mapValues(context.evaluate)
+    def options : Map[String,String] = instanceProperties.options
 
     /**
       * Creates a DataFrameReader which is already configured with options and the schema is also
@@ -68,7 +62,6 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def reader(executor:Executor) : DataFrameReader = {
-        implicit val context = executor.context
         val reader = executor.spark.read.options(options)
 
         val schema = this.inputSchema
@@ -85,7 +78,6 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def streamReader(executor: Executor) : DataStreamReader = {
-        implicit val context = executor.context
         val reader = executor.spark.readStream.options(options)
 
         val schema = this.inputSchema
@@ -103,7 +95,6 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        implicit val context = executor.context
         val outputDf = applyOutputSchema(df)
         outputDf.write.options(options)
     }
@@ -116,7 +107,6 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def streamWriter(executor: Executor, df:DataFrame, outputMode:OutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        implicit val context = executor.context
         val outputDf = applyOutputSchema(df)
         outputDf.writeStream
             .options(options)
@@ -126,11 +116,9 @@ abstract class BaseRelation extends Relation {
 
     /**
       * Creates a Spark schema from the list of fields.
-      * @param context
       * @return
       */
-    protected def inputSchema(implicit context:Context) : StructType = {
-        val schema = this.schema
+    protected def inputSchema : StructType = {
         if (schema != null) {
             StructType(schema.fields.map(_.sparkField))
         }
@@ -141,11 +129,9 @@ abstract class BaseRelation extends Relation {
 
     /**
       * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
-      * @param context
       * @return
       */
-    protected def outputSchema(implicit context:Context) : StructType = {
-        val schema = this.schema
+    protected def outputSchema : StructType = {
         if (schema != null) {
             StructType(schema.fields.map(_.sparkField))
         }
@@ -159,7 +145,7 @@ abstract class BaseRelation extends Relation {
       * @param df
       * @return
       */
-    protected def applyOutputSchema(df:DataFrame)(implicit context:Context) : DataFrame = {
+    protected def applyOutputSchema(df:DataFrame) : DataFrame = {
         val schema = this.outputSchema
         if (schema != null) {
             val outputColumns = schema.fields

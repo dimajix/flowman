@@ -26,14 +26,14 @@ import com.dimajix.flowman.spec.task.Job
 
 
 class NullStateStoreTest extends FlatSpec with Matchers {
-    "The NullStateStoreProvider" should "be parseable" in {
+    "The NullStateStoreSpec" should "be parseable" in {
         val spec =
             """
               |kind: null
             """.stripMargin
 
-        val monitor = ObjectMapper.parse[StateStoreProvider](spec)
-        monitor shouldBe a[NullStateStoreProvider]
+        val monitor = ObjectMapper.parse[StateStoreSpec](spec)
+        monitor shouldBe a[NullStateStoreSpec]
     }
 
 }

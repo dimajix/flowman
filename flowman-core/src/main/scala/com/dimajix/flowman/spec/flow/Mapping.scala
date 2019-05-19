@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
@@ -30,7 +31,6 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
@@ -122,9 +122,13 @@ abstract class Mapping extends AbstractInstance {
 
 
 object MappingSpec extends TypeRegistry[MappingSpec] {
-    type NameResolver = NamedSpec.NameResolver[Mapping, MappingSpec]
+    class NameResolver extends StdConverter[Map[String, MappingSpec], Map[String, MappingSpec]] {
+        override def convert(value: Map[String, MappingSpec]): Map[String, MappingSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
 }
-
 
 /**
   * Interface class for specifying a transformation (mapping)

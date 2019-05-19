@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.OutputMode
@@ -34,6 +35,7 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -176,24 +178,28 @@ abstract class Relation extends AbstractInstance {
 
 
 object RelationSpec extends TypeRegistry[RelationSpec] {
-    type NameResolver = NamedSpec.NameResolver[Relation, RelationSpec]
+    class NameResolver extends StdConverter[Map[String, RelationSpec], Map[String, RelationSpec]] {
+        override def convert(value: Map[String, RelationSpec]): Map[String, RelationSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
 }
-
 
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
-    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
-    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
-    new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelation]),
-    new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelation]),
-    new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
-    new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
-    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
+    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
+    new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
+    new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
+    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
+    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="description", required = false) private var description: String = _

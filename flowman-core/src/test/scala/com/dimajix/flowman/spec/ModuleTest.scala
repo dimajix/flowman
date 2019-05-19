@@ -22,12 +22,24 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.testing.LocalSparkSession
 
 class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
     "The Module" should "be loadable from a string" in {
         val spec =
             """
+              |targets:
+              |  blackhole:
+              |    kind: blackhole
+              |    input: input
+              |relations:
+              |  empty:
+              |    kind: null
+              |mappings:
+              |  input:
+              |    kind: read
+              |    relation: empty
               |environment:
               |  - x=y
               |config:
@@ -75,7 +87,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         job.name should be ("default")
         job.category should be ("job")
         job.kind should be ("job")
-        runner.execute(executor, job)
+        runner.execute(executor, job) should be (Status.SUCCESS)
     }
 
     it should "set the names of all jobs" in {

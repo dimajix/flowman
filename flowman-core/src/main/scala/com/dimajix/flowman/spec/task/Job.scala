@@ -21,6 +21,7 @@ import scala.util.Success
 import scala.util.Try
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -34,7 +35,6 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
-import com.dimajix.flowman.spec.schema.Schema.Properties
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.state.JobInstance
@@ -311,9 +311,13 @@ case class Job (
 
 
 object JobSpec extends TypeRegistry[JobSpec] {
-    type NameResolver = NamedSpec.NameResolver[Job, JobSpec]
+    class NameResolver extends StdConverter[Map[String, JobSpec], Map[String, JobSpec]] {
+        override def convert(value: Map[String, JobSpec]): Map[String, JobSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
 }
-
 
 class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="description") private var description:String = ""

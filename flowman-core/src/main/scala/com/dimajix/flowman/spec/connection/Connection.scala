@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.AbstractInstance
@@ -74,7 +75,12 @@ abstract class Connection extends AbstractInstance {
 
 
 object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
-    type NameResolver = NamedSpec.NameResolver[Connection, ConnectionSpec]
+    class NameResolver extends StdConverter[Map[String, ConnectionSpec], Map[String, ConnectionSpec]] {
+        override def convert(value: Map[String, ConnectionSpec]): Map[String, ConnectionSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
 }
 
 /**

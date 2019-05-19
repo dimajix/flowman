@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
@@ -114,7 +115,12 @@ abstract class Target extends AbstractInstance {
 
 
 object TargetSpec extends TypeRegistry[TargetSpec] {
-    type NameResolver = NamedSpec.NameResolver[Target, TargetSpec]
+    class NameResolver extends StdConverter[Map[String, TargetSpec], Map[String, TargetSpec]] {
+        override def convert(value: Map[String, TargetSpec]): Map[String, TargetSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
 }
 
 

@@ -50,7 +50,7 @@ case class BlackholeTarget(
 class BlackholeTargetSpec extends TargetSpec {
     override def instantiate(context: Context): BlackholeTarget = {
         BlackholeTarget(
-            Target.Properties(context)
+            instanceProperties(context)
         )
     }
 }

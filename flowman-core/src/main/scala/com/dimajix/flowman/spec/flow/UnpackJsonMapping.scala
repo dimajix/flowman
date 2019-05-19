@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
@@ -109,13 +110,13 @@ object UnpackJsonMappingSpec {
     class ColumnMapping {
         @JsonProperty(value="name", required=true) private var name:String = _
         @JsonProperty(value="alias", required=true) private var alias:String = _
-        @JsonProperty(value="schema", required=true) private var schema: Schema = _
+        @JsonProperty(value="schema", required=true) private var schema: SchemaSpec = _
 
         def instantiate(context:Context) : UnpackJsonMapping.ColumnMapping = {
             UnpackJsonMapping.ColumnMapping(
                 context.evaluate(name),
                 context.evaluate(alias),
-                schema
+                schema.instantiate(context)
             )
         }
     }

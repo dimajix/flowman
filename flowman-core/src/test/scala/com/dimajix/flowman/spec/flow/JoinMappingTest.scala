@@ -114,13 +114,11 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
               |  - df2
               |expression: "df1.key = df2.key"
             """.stripMargin
-        val mapping = ObjectMapper.parse[Mapping](spec)
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
+        val session = Session.builder().build()
+        val mapping = ObjectMapper.parse[MappingSpec](spec)
+        mapping shouldBe a[JoinMappingSpec]
 
-        mapping shouldBe a[JoinMapping]
-        val join = mapping.asInstanceOf[JoinMapping]
+        val join = mapping.instantiate(session.context).asInstanceOf[JoinMapping]
         join.inputs should be (Seq(MappingIdentifier("df1"), MappingIdentifier("df2")))
         join.expression should be ("df1.key = df2.key")
         join.dependencies should be (Array(MappingIdentifier("df1"), MappingIdentifier("df2")))

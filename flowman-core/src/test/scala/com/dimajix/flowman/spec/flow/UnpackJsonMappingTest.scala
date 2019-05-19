@@ -51,13 +51,10 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
 
         project.mappings.size should be(1)
         project.mappings.contains("m0") should be(true)
-        project.mappings("m0") shouldBe an[UnpackJsonMapping]
+        project.mappings("m0") shouldBe an[UnpackJsonMappingSpec]
     }
 
     it should "work" in {

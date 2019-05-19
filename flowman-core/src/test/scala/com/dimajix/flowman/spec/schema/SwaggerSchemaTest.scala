@@ -66,9 +66,10 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[SwaggerSchemaSpec]
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
         result.description should be ("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification")
 
@@ -134,9 +135,10 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[SwaggerSchemaSpec]
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
         result.description should be ("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification")
 
@@ -202,9 +204,10 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[SwaggerSchemaSpec]
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
 
         val fields = result.fields

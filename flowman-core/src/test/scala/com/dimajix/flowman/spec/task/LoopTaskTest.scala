@@ -95,7 +95,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType)))
+        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType)))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 

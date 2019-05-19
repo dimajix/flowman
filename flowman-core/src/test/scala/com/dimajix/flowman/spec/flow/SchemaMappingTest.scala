@@ -94,7 +94,7 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.getExecutor(project)
 
         project.mappings.size should be (1)
         project.mappings.contains("t0") should be (false)

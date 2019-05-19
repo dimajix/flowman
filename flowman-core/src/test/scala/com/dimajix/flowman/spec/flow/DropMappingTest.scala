@@ -43,7 +43,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         project.mappings.keys should contain("drop")
-        project.mappings("drop") shouldBe a[DropMapping]
+        project.mappings("drop") shouldBe a[DropMappingSpec]
     }
 
     it should "drop known columns" in {

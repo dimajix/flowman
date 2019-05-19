@@ -102,7 +102,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.getExecutor(project)
 
         val relation = executor.context.getRelation(RelationIdentifier("local"))
         val fileRelation = relation.asInstanceOf[FileRelation]
@@ -162,7 +162,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.getExecutor(project)
 
         val relation = executor.context.getRelation(RelationIdentifier("local"))
         outputPath.toFile.exists() should be (false)

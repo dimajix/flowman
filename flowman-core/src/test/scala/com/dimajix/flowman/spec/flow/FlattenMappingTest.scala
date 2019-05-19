@@ -42,7 +42,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val project = Module.read.string(spec).toProject("project")
         val mapping = project.mappings("my_structure")
 
-        mapping shouldBe an[FlattenMapping]
+        mapping shouldBe an[FlattenMappingSpec]
     }
 
     it should "flatten nested structures" in {

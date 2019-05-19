@@ -29,6 +29,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.spec.schema.SwaggerSchemaSpec
 import com.dimajix.flowman.testing.LocalSparkSession
 
 
@@ -58,14 +61,11 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
 
         project.mappings.size should be (1)
         project.mappings.contains("m0") should be (true)
         val mapping = project.mappings("m0")
-        mapping shouldBe an[ExtractJsonMapping]
+        mapping shouldBe an[ExtractJsonMappingSpec]
     }
 
     it should "work with an explicit schema" in {

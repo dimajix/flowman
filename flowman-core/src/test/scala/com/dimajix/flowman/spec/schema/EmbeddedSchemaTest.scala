@@ -38,8 +38,10 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
 
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe a[EmbeddedSchemaSpec]
+
         val result = schemaSpec.instantiate(session.context)
-        result shouldBe a[EmbeddedSchemaSpec]
+        result shouldBe a[EmbeddedSchema]
         result.fields.size should be (2)
         result.fields(0).name should be ("str_col")
         result.fields(1).name should be ("int_col")

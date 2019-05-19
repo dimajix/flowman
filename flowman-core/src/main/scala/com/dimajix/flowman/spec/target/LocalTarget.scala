@@ -131,7 +131,7 @@ class LocalTargetSpec extends TargetSpec {
     @JsonProperty(value="delimiter", required=true) private var _delimiter:String = ","
     @JsonProperty(value="quote", required=true) private var _quote:String = "\""
     @JsonProperty(value="escape", required=true) private var _escape:String = "\\"
-    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = _
+    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = Seq()
 
     override def instantiate(context: Context): LocalTarget = {
         LocalTarget(

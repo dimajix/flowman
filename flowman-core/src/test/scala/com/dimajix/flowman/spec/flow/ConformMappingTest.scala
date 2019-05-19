@@ -82,7 +82,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         val mapping = project.mappings("my_structure")
 
-        mapping shouldBe an[ConformMapping]
+        mapping shouldBe an[ConformMappingSpec]
     }
 
     it should "support changing types in DataFrames" in {

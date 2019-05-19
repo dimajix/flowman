@@ -54,7 +54,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val session = Session.builder().withSparkSession(spark).withProject(project).build()
         val executor = session.getExecutor(project)
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val relation = executor.context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(outputPath.toUri))
@@ -104,7 +104,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val session = Session.builder().withSparkSession(spark).withProject(project).build()
         val executor = session.getExecutor(project)
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val relation = executor.context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))

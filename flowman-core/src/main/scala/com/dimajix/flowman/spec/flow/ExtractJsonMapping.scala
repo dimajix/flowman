@@ -117,7 +117,7 @@ class ExtractJsonMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingIdentifier(context.evaluate(input)),
             context.evaluate(column),
-            schema.instantiate(context),
+            if (schema != null) schema.instantiate(context) else null,
             context.evaluate(parseMode),
             context.evaluate(corruptedColumn),
             context.evaluate(allowComments).toBoolean,

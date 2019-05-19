@@ -167,15 +167,15 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
 
         project.mappings.size should be (1)
         project.mappings.contains("t0") should be (false)
         project.mappings.contains("t1") should be (true)
 
         val mapping = project.mappings("t1")
-        mapping shouldBe an[UpdateMapping]
-        val updateMapping = mapping.asInstanceOf[UpdateMapping]
+        mapping shouldBe an[UpdateMappingSpec]
+
+        val updateMapping = mapping.instantiate(session.context).asInstanceOf[UpdateMapping]
         updateMapping.dependencies.toSeq should be (Seq(MappingIdentifier("t0"),MappingIdentifier("t1")))
         updateMapping.input should be (MappingIdentifier("t0"))
         updateMapping.updates should be (MappingIdentifier("t1"))

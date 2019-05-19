@@ -27,8 +27,8 @@ import com.dimajix.flowman.types.StructType
 
 
 object DeduplicateMapping {
-    def apply(context:Context, input:String, columns:Seq[String]) : DeduplicateMapping = {
-        DeduplicateMapping(Mapping.Properties(context), MappingIdentifier(input), columns)
+    def apply(input:String, columns:Seq[String]) : DeduplicateMapping = {
+        DeduplicateMapping(Mapping.Properties(), MappingIdentifier(input), columns)
     }
 }
 
@@ -80,10 +80,16 @@ class DeduplicateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): DeduplicateMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        val columns = this.columns.map(context.evaluate)
-        DeduplicateMapping(props, input, columns)
+        DeduplicateMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(context.evaluate)
+        )
     }
 }

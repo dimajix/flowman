@@ -152,7 +152,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
@@ -199,7 +198,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
@@ -244,7 +242,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("array", "embedded.struct_array")
@@ -273,7 +270,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("embedded.struct_array")
@@ -302,7 +298,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("embedded.old_structure.value")
@@ -326,7 +321,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 ExplodeEntry("no_such_path")
@@ -341,7 +335,6 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            executor.context,
             "input_df",
             Seq(
                 RenameEntry("embedded", Map("new_elem" -> "old_structure"))

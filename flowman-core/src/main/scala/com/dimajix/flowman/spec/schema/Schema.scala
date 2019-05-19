@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.ArrayType
@@ -32,11 +34,25 @@ import com.dimajix.flowman.types.StructType
 
 
 object Schema {
+    object Properties {
+        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map()
+            )
+        }
+    }
     case class Properties(
-        context: Context,
-        name: String = "",
-        kind: String = "",
-        labels: Map[String, String] = Map()
+        context:Context,
+        namespace:Namespace,
+        project:Project,
+        name: String,
+        kind: String,
+        labels: Map[String, String]
     ) extends Instance.Properties {
     }
 }

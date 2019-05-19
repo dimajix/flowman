@@ -98,8 +98,8 @@ object AssembleMapping {
         }
     }
 
-    def apply(context:Context, input:String, columns:Seq[Entry]) : AssembleMapping = {
-        AssembleMapping(Mapping.Properties(context), MappingIdentifier(input), columns)
+    def apply(input:String, columns:Seq[Entry]) : AssembleMapping = {
+        AssembleMapping(Mapping.Properties(), MappingIdentifier(input), columns)
     }
 }
 
@@ -253,6 +253,11 @@ class AssembleMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns: Seq[AssembleMappingSpec.Entry] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): AssembleMapping = {
         AssembleMapping(
             instanceProperties(context),

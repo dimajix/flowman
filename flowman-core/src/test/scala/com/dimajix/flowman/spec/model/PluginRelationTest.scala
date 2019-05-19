@@ -19,12 +19,13 @@ package com.dimajix.flowman.spec.model
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.annotation.RelationType
+import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spi.CustomRelationSpec
 
 
 @RelationType(kind = "annotatedRelation")
-class AnnotationRelation extends NullRelation { }
+class AnnotationRelationSpec extends NullRelationSpec { }
 
 
 class PluginRelationTest extends FlatSpec with Matchers {
@@ -37,6 +38,7 @@ class PluginRelationTest extends FlatSpec with Matchers {
             """.stripMargin
         val module = Module.read.string(spec)
         module.relations.keys should contain("custom")
+        module.relations("custom") shouldBe a[CustomRelationSpec]
     }
 
     "Annotated plugins should" should "be used" in {
@@ -48,5 +50,6 @@ class PluginRelationTest extends FlatSpec with Matchers {
             """.stripMargin
         val module = Module.read.string(spec)
         module.relations.keys should contain("custom")
+        module.relations("custom") shouldBe a[AnnotationRelationSpec]
     }
 }

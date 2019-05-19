@@ -23,7 +23,16 @@ import com.dimajix.flowman.spec.Instance
 
 
 object JdbcConnection {
-    def apply(context: Context, driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : JdbcConnection = {
+    /**
+      * Convenience constructor mainly used in unit tests
+      * @param driver
+      * @param url
+      * @param username
+      * @param password
+      * @param properties
+      * @return
+      */
+    def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : JdbcConnection = {
         JdbcConnection(
             Connection.Properties(null),
             driver,
@@ -42,12 +51,21 @@ case class JdbcConnection(
     username:String,
     password:String,
     properties:Map[String,String]
-) extends Connection {
+) extends BaseConnection {
 }
 
 
 
 object JdbcConnectionSpec {
+    /**
+      * Convenience constructor mainly used in unit tests
+      * @param driver
+      * @param url
+      * @param username
+      * @param password
+      * @param properties
+      * @return
+      */
     def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : JdbcConnectionSpec = {
         val con = new JdbcConnectionSpec()
         con.driver = driver
@@ -59,7 +77,6 @@ object JdbcConnectionSpec {
     }
 }
 
-
 class JdbcConnectionSpec extends ConnectionSpec  {
     @JsonProperty(value="driver", required=true) private var driver:String = ""
     @JsonProperty(value="url", required=true) private var url:String = ""
@@ -67,6 +84,11 @@ class JdbcConnectionSpec extends ConnectionSpec  {
     @JsonProperty(value="password", required=false) private var password:String = _
     @JsonProperty(value="properties", required=false) private var properties:Map[String,String] = Map()
 
+    /**
+      * Creates the instance of the specified JdbcConnection with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): JdbcConnection = {
         JdbcConnection(
             instanceProperties(context),

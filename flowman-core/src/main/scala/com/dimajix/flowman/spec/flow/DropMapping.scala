@@ -28,9 +28,9 @@ import com.dimajix.flowman.types.StructType
 
 
 object DropMapping {
-    def apply(context: Context, input:String, columns:Seq[String]) : DropMapping = {
+    def apply(input:String, columns:Seq[String]) : DropMapping = {
         DropMapping(
-            Mapping.Properties(context),
+            Mapping.Properties(),
             MappingIdentifier(input),
             columns
         )
@@ -97,10 +97,16 @@ class DropMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): DropMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        val columns = this.columns.map(context.evaluate)
-        DropMapping(props, input, columns)
+        DropMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(context.evaluate)
+        )
     }
 }

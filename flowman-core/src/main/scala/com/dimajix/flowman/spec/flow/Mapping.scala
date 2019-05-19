@@ -28,19 +28,39 @@ import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
 
 object Mapping {
+    object Properties {
+        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map(),
+                false,
+                false,
+                StorageLevel.NONE
+            )
+        }
+    }
     case class Properties(
-         context:Context,
-         name:String="",
-         kind:String="",
-         labels:Map[String,String]=Map(),
-         broadcast:Boolean=false,
-         checkpoint:Boolean=false,
-         cache:StorageLevel=StorageLevel.NONE
+         context: Context,
+         namespace:Namespace,
+         project:Project,
+         name:String,
+         kind:String,
+         labels:Map[String,String],
+         broadcast:Boolean,
+         checkpoint:Boolean,
+         cache:StorageLevel
     ) extends Instance.Properties
 }
 
@@ -51,6 +71,12 @@ abstract class Mapping extends AbstractInstance {
       * @return
       */
     final override def category: String = "mapping"
+
+    /**
+      * Returns an identifier for this mapping
+      * @return
+      */
+    def identifier : MappingIdentifier
 
     /**
       * This method should return true, if the resulting dataframe should be broadcast for map-side joins
@@ -139,6 +165,11 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
     @JsonProperty("checkpoint") protected var checkpoint:String = "false"
     @JsonProperty("cache") protected var cache:String = "NONE"
 
+    /**
+      * Creates an instance of this specification and performs the interpolation of all variables
+      * @param context
+      * @return
+      */
     override def instantiate(context:Context) : Mapping
 
     /**
@@ -147,12 +178,17 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
       * @return
       */
     override protected def instanceProperties(context:Context) : Mapping.Properties = {
-        val name = this.name
-        val kind = this.kind
-        val labels = this.labels.mapValues(context.evaluate)
-        val broadcast = context.evaluate(this.broadcast).toBoolean
-        val checkpoint = context.evaluate(this.checkpoint).toBoolean
-        val cache = StorageLevel.fromString(context.evaluate(this.cache))
-        Mapping.Properties(context, name, kind, labels, broadcast, checkpoint, cache)
+        require(context != null)
+        Mapping.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            kind,
+            labels.mapValues(context.evaluate),
+            context.evaluate(broadcast).toBoolean,
+            context.evaluate(checkpoint).toBoolean,
+            StorageLevel.fromString(context.evaluate(cache))
+        )
     }
 }

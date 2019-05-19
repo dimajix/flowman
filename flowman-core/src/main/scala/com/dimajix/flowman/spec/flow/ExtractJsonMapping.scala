@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.{types => ftypes}
 
 
@@ -95,7 +96,7 @@ case class ExtractJsonMapping(
 class ExtractJsonMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "column", required = true) private var column: String = _
-    @JsonProperty(value = "schema", required = false) private var schema: Schema = _
+    @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
     @JsonProperty(value = "parseMode", required = false) private var parseMode: String = "PERMISSIVE"
     @JsonProperty(value = "corruptedColumn", required = false) private var corruptedColumn: String = "_corrupt_record"
     @JsonProperty(value = "allowComments", required = false) private var allowComments: String = "false"
@@ -106,21 +107,26 @@ class ExtractJsonMappingSpec extends MappingSpec {
     @JsonProperty(value = "allowBackslashEscapingAnyCharacter", required = false) private var allowBackslashEscapingAnyCharacter: String = "false"
     @JsonProperty(value = "allowUnquotedControlChars", required = false) private var allowUnquotedControlChars: String = "false"
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): ExtractJsonMapping = {
         ExtractJsonMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(this.input)),
-            context.evaluate(this.column),
-            this.schema,
-            context.evaluate(this.parseMode),
-            context.evaluate(this.corruptedColumn),
-            context.evaluate(this.allowComments).toBoolean,
-            context.evaluate(this.allowUnquotedFieldNames).toBoolean,
-            context.evaluate(this.allowSingleQuotes).toBoolean,
-            context.evaluate(this.allowNumericLeadingZeros).toBoolean,
-            context.evaluate(this.allowNonNumericNumbers).toBoolean,
-            context.evaluate(this.allowBackslashEscapingAnyCharacter).toBoolean,
-            context.evaluate(this.allowUnquotedControlChars).toBoolean
+            MappingIdentifier(context.evaluate(input)),
+            context.evaluate(column),
+            schema.instantiate(context),
+            context.evaluate(parseMode),
+            context.evaluate(corruptedColumn),
+            context.evaluate(allowComments).toBoolean,
+            context.evaluate(allowUnquotedFieldNames).toBoolean,
+            context.evaluate(allowSingleQuotes).toBoolean,
+            context.evaluate(allowNumericLeadingZeros).toBoolean,
+            context.evaluate(allowNonNumericNumbers).toBoolean,
+            context.evaluate(allowBackslashEscapingAnyCharacter).toBoolean,
+            context.evaluate(allowUnquotedControlChars).toBoolean
         )
     }
 }

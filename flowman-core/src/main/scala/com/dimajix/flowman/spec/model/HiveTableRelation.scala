@@ -407,6 +407,11 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
     @JsonProperty(value = "serdeProperties", required = false) private var _serdeProperties: Map[String, String] = Map()
     @JsonProperty(value = "writer", required = false) private var _writer: String = "hive"
 
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): Relation = {
         HiveTableRelation(
             instanceProperties(context),

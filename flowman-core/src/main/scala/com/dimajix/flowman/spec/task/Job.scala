@@ -31,7 +31,10 @@ import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.schema.Schema.Properties
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.state.JobInstance
@@ -43,10 +46,10 @@ import com.dimajix.flowman.types.StringType
 
 case class JobParameter(
     name:String,
-    description:String,
     ftype : FieldType,
-    granularity: String,
-    default: Any
+    description:String=null,
+    granularity: String=null,
+    default: Any = null
 ) {
     /**
       * Interpolates a given FieldValue returning all values as an Iterable
@@ -83,10 +86,23 @@ object Job {
         )
     }
 
+    object Properties {
+        def apply(context:Context=null, name:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                Map()
+            )
+        }
+    }
     case class Properties(
         context: Context,
-        name: String = "",
-        labels: Map[String, String] = Map()
+        namespace:Namespace,
+        project:Project,
+        name: String,
+        labels: Map[String, String]
     ) extends Instance.Properties {
         override val kind : String = "job"
     }
@@ -101,11 +117,7 @@ object Job {
         private var cleanup:Seq[Task] = Seq()
 
         def build() : Job = Job(
-            Job.Properties(
-                context,
-                name,
-                Map()
-            ),
+            Job.Properties(context, name),
             description,
             parameters,
             Seq(),
@@ -142,7 +154,7 @@ object Job {
         def addParameter(name:String, ftype:FieldType, granularity:String = null, value:Any = null) : Builder = {
             require(name != null)
             require(ftype != null)
-            this.parameters = this.parameters :+ JobParameter(name, "", ftype, granularity, value)
+            this.parameters = this.parameters :+ JobParameter(name, ftype, "", granularity, value)
             this
         }
         def setTasks(tasks:Seq[Task]) : Builder = {
@@ -331,8 +343,11 @@ class JobSpec extends NamedSpec[Job] {
       * @return
       */
     override protected def instanceProperties(context:Context) : Job.Properties = {
+        require(context != null)
         Job.Properties(
             context,
+            context.namespace,
+            context.project,
             name,
             labels
         )
@@ -348,6 +363,8 @@ class JobParameterSpec extends Spec[JobParameter] {
     @JsonProperty(value = "default", required = false) private var default: String = _
 
     override def instantiate(context: Context): JobParameter = {
+        require(context != null)
+
         val default = {
             val v = context.evaluate(this.default)
             if (v != null)
@@ -358,8 +375,8 @@ class JobParameterSpec extends Spec[JobParameter] {
 
         JobParameter(
             context.evaluate(name),
-            context.evaluate(description),
             ftype,
+            context.evaluate(description),
             context.evaluate(granularity),
             default
         )

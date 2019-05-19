@@ -51,10 +51,10 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
             """.stripMargin
         val monitor = ObjectMapper.parse[StateStoreSpec](spec)
 
-        val job = Job.builder()
-            .setName("job")
-            .build()
         val session = Session.builder()
+            .build()
+        val job = Job.builder(session.context)
+            .setName("job")
             .build()
 
         a[NoSuchElementException] shouldBe thrownBy(monitor.instantiate(session))

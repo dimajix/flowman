@@ -24,6 +24,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -36,17 +37,16 @@ class ExportSchemaCommand extends ActionCommand {
 
     @Option(name="-f", aliases=Array("--format"), usage="Specifies the format", metaVar="<format>", required = false)
     var format: String = "spark"
-    @Argument(usage = "specifies the model to save the schema", metaVar = "<model>", required = true)
-    var modelName: String = ""
+    @Argument(usage = "specifies the relation to save the schema", metaVar = "<relation>", required = true)
+    var relation: String = ""
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true)
     var filename: String = ""
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Exporting the schema of model '$modelName' to '$filename'")
-        implicit val context = executor.context
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+        logger.info(s"Exporting the schema of model '$relation' to '$filename'")
 
         Try {
-            val relation = context.getRelation(RelationIdentifier.parse(modelName))
+            val relation = context.getRelation(RelationIdentifier.parse(this.relation))
             val schema = relation.schema
             val file = executor.context.fs.local(filename)
             new SchemaWriter(schema.fields).format(format).save(file)
@@ -55,7 +55,7 @@ class ExportSchemaCommand extends ActionCommand {
                 logger.info("Successfully saved schema")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while save the schema of model '$modelName'", e)
+                logger.error(s"Caught exception while save the schema of model '$relation'", e)
                 false
         }
     }

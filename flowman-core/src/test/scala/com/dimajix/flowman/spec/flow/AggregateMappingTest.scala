@@ -44,7 +44,6 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
 
         val xfs = AggregateMapping(
-            executor.context,
             "myview",
             Seq("_1", "_2"),
             Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)")

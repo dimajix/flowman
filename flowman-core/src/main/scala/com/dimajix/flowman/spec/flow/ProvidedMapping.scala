@@ -54,9 +54,15 @@ extends BaseMapping {
 class ProvidedMappingSpec extends MappingSpec {
     @JsonProperty(value = "table", required = true) private var table: String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): ProvidedMapping = {
-        val props = instanceProperties(context)
-        val table = context.evaluate(this.table)
-        ProvidedMapping(props, table)
+        ProvidedMapping(
+            instanceProperties(context),
+            context.evaluate(table)
+        )
     }
 }

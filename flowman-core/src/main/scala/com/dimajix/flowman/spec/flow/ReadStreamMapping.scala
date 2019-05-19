@@ -24,13 +24,14 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
 case class ReadStreamMapping (
     instanceProperties:Mapping.Properties,
-    relation:RelationIdentifier,
+    relation:Relation,
     columns:Map[String,String]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
@@ -44,9 +45,8 @@ case class ReadStreamMapping (
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         val fields = this.columns
-        val relation = context.getRelation(this.relation)
         val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
-        logger.info(s"Reading from streaming relation '${this.relation}'")
+        logger.info(s"Reading from streaming relation '${relation.identifier}'")
 
         relation.readStream(executor, schema)
     }
@@ -73,7 +73,6 @@ case class ReadStreamMapping (
             StructType.of(SchemaUtils.createSchema(fields.toSeq))
         }
         else {
-            val relation = context.getRelation(this.relation)
             StructType(relation.schema.fields)
         }
     }
@@ -85,10 +84,16 @@ class ReadStreamMappingSpec extends MappingSpec {
     @JsonProperty(value = "relation", required = true) private var relation:String = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): ReadStreamMapping = {
-        val props = instanceProperties(context)
-        val relation = RelationIdentifier(context.evaluate(this.relation))
-        val columns = this.columns.mapValues(context.evaluate)
-        ReadStreamMapping(props, relation, columns)
+        ReadStreamMapping(
+            instanceProperties(context),
+            context.getRelation(RelationIdentifier(context.evaluate(relation))),
+            columns.mapValues(context.evaluate)
+        )
     }
 }

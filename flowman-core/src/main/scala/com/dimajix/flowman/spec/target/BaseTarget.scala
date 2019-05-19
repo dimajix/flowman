@@ -17,11 +17,18 @@
 package com.dimajix.flowman.spec.target
 
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.state.TargetInstance
 
 
 abstract class BaseTarget extends Target {
     protected override def instanceProperties : Target.Properties
+
+    /**
+      * Returns an identifier for this target
+      * @return
+      */
+    override def identifier : TargetIdentifier = TargetIdentifier(name, Option(project).map(_.name))
 
     /**
       * Returns true if the output should be executed per default
@@ -35,8 +42,8 @@ abstract class BaseTarget extends Target {
       */
     override def instance : TargetInstance = {
         TargetInstance(
-            Option(context.namespace).map(_.name).getOrElse(""),
-            Option(context.project).map(_.name).getOrElse(""),
+            Option(namespace).map(_.name).getOrElse(""),
+            Option(project).map(_.name).getOrElse(""),
             name
         )
     }

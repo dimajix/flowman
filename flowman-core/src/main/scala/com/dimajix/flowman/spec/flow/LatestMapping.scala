@@ -44,6 +44,16 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
+object LatestMapping {
+    def apply(input:String, keyColumns:Seq[String], versionColumn:String) : LatestMapping = {
+        LatestMapping(
+            Mapping.Properties(),
+            MappingIdentifier(input),
+            keyColumns,
+            versionColumn
+        )
+    }
+}
 
 case class LatestMapping(
     instanceProperties:Mapping.Properties,
@@ -154,6 +164,11 @@ class LatestMappingSpec extends MappingSpec {
     @JsonProperty(value = "versionColumn", required = true) private var versionColumn:String = _
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): LatestMapping = {
         LatestMapping(
             instanceProperties(context),

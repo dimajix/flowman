@@ -60,9 +60,8 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
         val executor = session.getExecutor(project)
-        implicit val context = session.context
 
-        val job = project.jobs("loop")
+        val job = project.jobs("loop").instantiate(session.context)
         job.execute(executor, Map()) shouldBe (Status.SUCCESS)
     }
 
@@ -84,9 +83,8 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
         val executor = session.getExecutor(project)
-        implicit val context = session.context
 
-        val job = project.jobs("loop")
+        val job = project.jobs("loop").instantiate(session.context)
         job.execute(executor, Map()) shouldBe (Status.FAILED)
     }
 
@@ -94,11 +92,8 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val loopJob = mock[Job]
         val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2")))
 
-        val project = Project.builder()
-            .addJob("job", loopJob)
-            .build()
         val session = Session.builder().build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
 
         when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType)))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
@@ -114,13 +109,10 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val loopJob = mock[Job]
         val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8")))
 
-        val project = Project.builder()
-            .addJob("job", loopJob)
-            .build()
         val session = Session.builder().build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
 
-        when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2")))
+        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2")))
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "4"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "6"))).thenReturn(Status.SUCCESS)
@@ -142,13 +134,10 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val loopJob = mock[Job]
         val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2")))
 
-        val project = Project.builder()
-            .addJob("job", loopJob)
-            .build()
         val session = Session.builder().build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
 
-        when(loopJob.parameters).thenReturn(Seq(new JobParameter("p1", StringType), new JobParameter("p2", IntegerType, "2", "4")))
+        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2", "4")))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 

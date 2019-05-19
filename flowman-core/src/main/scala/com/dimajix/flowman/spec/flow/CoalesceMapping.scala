@@ -70,10 +70,16 @@ class CoalesceMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): CoalesceMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        val partitions = if (this.partitions == null || this.partitions.isEmpty) 0 else context.evaluate(this.partitions).toInt
-        CoalesceMapping(props, input, partitions)
+        CoalesceMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            Option(context.evaluate(partitions)).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
+        )
     }
 }

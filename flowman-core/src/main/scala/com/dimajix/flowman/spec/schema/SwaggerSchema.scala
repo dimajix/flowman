@@ -191,6 +191,11 @@ class SwaggerSchemaSpec extends ExternalSchemaSpec {
     @JsonProperty(value="entity", required=false) private var entity: String = _
     @JsonProperty(value="nullable", required=false) private var nullable: String = "false"
 
+    /**
+      * Creates the instance of the specified Schema with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SwaggerSchema = {
         SwaggerSchema(
             Schema.Properties(context),

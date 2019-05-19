@@ -94,9 +94,9 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.size should be (1)
         project.mappings.contains("t1") should be (true)
 
-        val session = Session.builder().withSparkSession(spark).build()
-        implicit val icontext = session.context
-        val mapping = project.mappings("t1")
+        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val context = session.getContext(project)
+        val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping.dependencies should be (Array(MappingIdentifier("t0")))
     }
 
@@ -140,8 +140,8 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.contains("t1") should be (true)
 
         val session = Session.builder().withSparkSession(spark).build()
-        implicit val icontext = session.context
-        val mapping = project.mappings("t1")
+        val context = session.getContext(project)
+        val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping.dependencies.map(_.name).sorted should be (Array("other_table", "some_table", "some_table_archive"))
     }
 
@@ -160,14 +160,13 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        implicit val icontext = executor.context
 
         val df = executor.spark.createDataFrame(Seq(
             ("col1", 12),
             ("col2", 23)
         ))
 
-        val mapping = project.mappings("t1")
+        val mapping = executor.context.getMapping(MappingIdentifier("t1"))
         val result = mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
         result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
         result.collect().size should be (2)

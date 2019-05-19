@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,40 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.TypeRegistry
 
 
 object Connection {
+    object Properties {
+        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map()
+            )
+        }
+    }
     case class Properties(
-         context:Context,
-         name:String="",
-         kind:String="",
-         labels:Map[String,String]=Map()
+        context:Context,
+        namespace:Namespace,
+        project:Project,
+        name:String,
+        kind:String,
+        labels:Map[String,String]
      ) extends Instance.Properties
 }
 
+/**
+  * Base class to be used for all Connection instances
+  */
 abstract class Connection extends AbstractInstance {
     protected override def instanceProperties : Connection.Properties
 
@@ -43,14 +63,23 @@ abstract class Connection extends AbstractInstance {
       * @return
       */
     final override def category: String = "connection"
+
+    /**
+      * Returns an identifier for this connection
+      * @return
+      */
+    def identifier : ConnectionIdentifier
 }
+
 
 
 object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
     type NameResolver = NamedSpec.NameResolver[Connection, ConnectionSpec]
 }
 
-
+/**
+  * The ConnectionSpec class contains the raw specification values, which may require interpolation.
+  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[JdbcConnectionSpec], visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcConnectionSpec]),
@@ -58,6 +87,11 @@ object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
     new JsonSubTypes.Type(name = "sftp", value = classOf[SshConnectionSpec])
 ))
 abstract class ConnectionSpec extends NamedSpec[Connection] {
+    /**
+      * Creates an instance of this specification and performs the interpolation of all variables
+      * @param context
+      * @return
+      */
     override def instantiate(context:Context) : Connection
 
     /**
@@ -66,9 +100,14 @@ abstract class ConnectionSpec extends NamedSpec[Connection] {
       * @return
       */
     override protected def instanceProperties(context:Context) : Connection.Properties = {
-        val name = this.name
-        val kind = this.kind
-        val labels = this.labels.mapValues(context.evaluate)
-        Connection.Properties(context, name, kind, labels)
+        require(context != null)
+        Connection.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            kind,
+            labels.mapValues(context.evaluate)
+        )
     }
 }

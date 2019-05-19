@@ -28,9 +28,16 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object AggregateMapping {
-    def apply(context: Context, input:String, dimensions:Seq[String], aggregations:Map[String,String]) : AggregateMapping = {
+    /**
+      * Convenience constructor mainly used in unit tests
+      * @param input
+      * @param dimensions
+      * @param aggregations
+      * @return
+      */
+    def apply(input:String, dimensions:Seq[String], aggregations:Map[String,String]) : AggregateMapping = {
         AggregateMapping(
-            Mapping.Properties(context),
+            Mapping.Properties(null),
             MappingIdentifier(input),
             dimensions,
             aggregations,
@@ -86,6 +93,11 @@ class AggregateMappingSpec extends MappingSpec {
     @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: Map[String, String] = _
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context:Context) : AggregateMapping = {
         val props = instanceProperties(context)
         val input = MappingIdentifier.parse(context.evaluate(this.input))

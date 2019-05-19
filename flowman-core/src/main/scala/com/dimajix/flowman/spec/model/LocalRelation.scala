@@ -233,7 +233,11 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
     @JsonProperty(value="format", required=false) private var format: String = "csv"
     @JsonProperty(value="pattern", required=false) private var pattern: String = _
 
-
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): LocalRelation = {
         LocalRelation(
             instanceProperties(context),

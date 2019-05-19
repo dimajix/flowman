@@ -24,8 +24,10 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -37,21 +39,24 @@ class ValidateCommand extends ActionCommand {
     @Option(name = "-a", aliases=Array("--all"), usage = "validates all targets, even the disabled ones")
     var all: Boolean = false
 
-    def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
+    def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Validating targets {}", if (outputs != null) outputs.mkString(",") else "all")
 
         // Then execute output operations
         Try {
-            val outputNames =
+            val targets =
                 if (all)
                     project.targets.keys.toSeq
+                        .map(t => context.getTarget(TargetIdentifier(t)))
                 else if (outputs.nonEmpty)
                     outputs.toSeq
+                        .map(t => context.getTarget(TargetIdentifier(t)))
                 else
-                    project.targets.filter(_._2.enabled).keys.toSeq
+                    project.targets.keys.toSeq
+                        .map(t => context.getTarget(TargetIdentifier(t)))
+                        .filter(_.enabled)
 
-            val tables = outputNames.map(project.targets).flatMap(_.dependencies)
+            val tables = targets.flatMap(_.dependencies)
             tables.forall(table => executor.instantiate(table) != null)
         } match {
             case Success(true) =>

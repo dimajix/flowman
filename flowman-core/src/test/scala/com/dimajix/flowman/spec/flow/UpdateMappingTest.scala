@@ -32,7 +32,6 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val prev = executor.spark.createDataFrame(Seq(
             ("id-123", "will_remain"),
@@ -61,7 +60,6 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val prev = executor.spark.createDataFrame(Seq(
                 ("CREATE", "id-125", "will_remain")
@@ -91,7 +89,6 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val prev = executor.spark.createDataFrame(Seq(
                 ("id-123", "will_remain", "col3"),
@@ -120,7 +117,6 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val prev = executor.spark.createDataFrame(Seq(
             ("id-123", "subid-0", "will_remain_1", "v0"),
@@ -172,7 +168,6 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         project.mappings.size should be (1)
         project.mappings.contains("t0") should be (false)

@@ -114,6 +114,11 @@ class UnionMappingSpec extends MappingSpec {
     @JsonProperty(value="columns", required=false) private[spec] var columns:Map[String,String] = _
     @JsonProperty(value="distinct", required=false) var distinct:String = "false"
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): UnionMapping = {
         UnionMapping(
             instanceProperties(context),

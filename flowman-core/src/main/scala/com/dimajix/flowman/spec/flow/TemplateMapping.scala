@@ -56,7 +56,6 @@ abstract class TemplateMapping extends BaseMapping {
       * @return
       */
     override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
         require(input != null)
         ???
     }

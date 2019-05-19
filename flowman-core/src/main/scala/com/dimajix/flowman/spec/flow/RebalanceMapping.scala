@@ -77,10 +77,16 @@ class RebalanceMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): RebalanceMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        val partitions = context.evaluate(this.partitions).toInt
-        RebalanceMapping(props, input, partitions)
+        RebalanceMapping(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(input)),
+            context.evaluate(partitions).toInt
+        )
     }
 }

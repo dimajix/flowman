@@ -34,11 +34,11 @@ import com.dimajix.flowman.types.StructType
 
 
 object ConformMapping {
-    def apply(context:Context, input:String, types:Map[String,FieldType]) : ConformMapping = {
-        ConformMapping(Mapping.Properties(context), MappingIdentifier(input), types, null, false)
+    def apply(input:String, types:Map[String,FieldType]) : ConformMapping = {
+        ConformMapping(Mapping.Properties(), MappingIdentifier(input), types, null, false)
     }
-    def apply(context:Context, input:String, caseFormat:String, flatten:Boolean=false) : ConformMapping = {
-        ConformMapping(Mapping.Properties(context), MappingIdentifier(input), Map(), caseFormat, flatten)
+    def apply(input:String, caseFormat:String, flatten:Boolean=false) : ConformMapping = {
+        ConformMapping(Mapping.Properties(), MappingIdentifier(input), Map(), caseFormat, flatten)
     }
 }
 
@@ -120,14 +120,21 @@ class ConformMappingSpec extends MappingSpec {
     @JsonProperty(value = "naming", required = false) private[spec] var naming: String = _
     @JsonProperty(value = "flatten", required = false) private[spec] var flatten: String = "false"
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): Mapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier.parse(context.evaluate(this.input))
         val types = this.types.map(kv =>
             typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
         )
-        val naming = context.evaluate(this.naming)
-        val flatten = context.evaluate(this.flatten).toBoolean
-        ConformMapping(props, input, types, naming, flatten)
+        ConformMapping(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(input)),
+            types,
+            context.evaluate(naming),
+            context.evaluate(flatten).toBoolean
+        )
     }
 }

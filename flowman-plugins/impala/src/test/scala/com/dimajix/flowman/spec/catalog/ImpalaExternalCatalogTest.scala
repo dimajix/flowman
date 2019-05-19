@@ -40,7 +40,7 @@ class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
 
         val namespace = Namespace.read.string(spec)
         namespace.catalog should not be (null)
-        namespace.catalog shouldBe an[ImpalaCatalogProvider]
+        namespace.catalog shouldBe an[ImpalaCatalogSpec]
 
         val session = Session.builder()
             .withNamespace(namespace)

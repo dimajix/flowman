@@ -20,6 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -54,10 +55,10 @@ class MappingSchemaTest extends FlatSpec with Matchers {
               |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
-        implicit val context = session.getContext(project)
+        val session = Session.builder().withProject(project).build()
+        val context = session.getContext(project)
 
-        val schema = MappingSchema("alias")
+        val schema = MappingSchema(context, "alias")
 
         schema.fields should be (Seq(
             Field("str_col", StringType),
@@ -99,9 +100,8 @@ class MappingSchemaTest extends FlatSpec with Matchers {
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
-        implicit val context = session.getContext(project)
 
-        val sink = project.relations("sink")
+        val sink = project.relations("sink").instantiate(session.context)
         val schema = sink.schema
 
         schema.fields should be (Seq(

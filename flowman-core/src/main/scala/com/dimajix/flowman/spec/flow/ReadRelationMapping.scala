@@ -36,7 +36,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 case class ReadRelationMapping(
     instanceProperties:Mapping.Properties,
-    relation:RelationIdentifier,
+    relation:Relation,
     columns:Map[String,String],
     partitions:Map[String,FieldValue]
 ) extends BaseMapping {
@@ -50,9 +50,8 @@ case class ReadRelationMapping(
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        val relation = context.getRelation(this.relation)
         val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
-        logger.info(s"Reading from relation '${this.relation}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Reading from relation '${relation.identifier}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
         relation.read(executor, schema, partitions)
     }
@@ -78,7 +77,7 @@ case class ReadRelationMapping(
             StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
-            context.getRelation(relation) match {
+            relation match {
                 case pt:PartitionedRelation => StructType(pt.schema.fields ++ pt.partitions.map(_.field))
                 case relation:Relation => StructType(relation.schema.fields)
             }
@@ -93,15 +92,22 @@ class ReadRelationMappingSpec extends MappingSpec {
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): ReadRelationMapping = {
-        val props = instanceProperties(context)
-        val relation = RelationIdentifier(context.evaluate(this.relation))
-        val columns = this.columns.mapValues(context.evaluate)
         val partitions= this.partitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
                 case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
             }
-        ReadRelationMapping(props, relation, columns, partitions)
+        ReadRelationMapping(
+            instanceProperties(context),
+            context.getRelation(RelationIdentifier(context.evaluate(relation))),
+            columns.mapValues(context.evaluate),
+            partitions
+        )
     }
 }

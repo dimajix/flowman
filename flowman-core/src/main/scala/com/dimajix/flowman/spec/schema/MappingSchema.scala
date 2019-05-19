@@ -21,7 +21,6 @@ import scala.collection.mutable
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
@@ -74,6 +73,11 @@ case class MappingSchema (
 class MappingSchemaSpec extends SchemaSpec {
     @JsonProperty(value = "mapping", required = true) private var mapping: String = ""
 
+    /**
+      * Creates the instance of the specified Schema with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): Schema = {
         MappingSchema(
             Schema.Properties(context),

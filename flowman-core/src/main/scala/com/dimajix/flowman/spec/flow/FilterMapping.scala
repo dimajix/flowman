@@ -75,10 +75,15 @@ class FilterMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "condition", required = true) private var condition:String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): FilterMapping = {
         FilterMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(this.input)),
+            MappingIdentifier(context.evaluate(input)),
             context.evaluate(condition)
         )
     }

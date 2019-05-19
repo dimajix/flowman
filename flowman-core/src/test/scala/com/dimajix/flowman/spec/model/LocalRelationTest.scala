@@ -26,6 +26,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
 
 
@@ -51,10 +52,9 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("local")
+        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val executor = session.getExecutor(project)
+        val relation = executor.context.getRelation(RelationIdentifier("t0"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(outputPath.toUri))
@@ -102,10 +102,9 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("local")
+        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val executor = session.getExecutor(project)
+        val relation = executor.context.getRelation(RelationIdentifier("t0"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
@@ -151,10 +150,9 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("local")
+        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val executor = session.getExecutor(project)
+        val relation = executor.context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(location.toString + "/csv/test"))
@@ -201,10 +199,9 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("local")
+        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val executor = session.getExecutor(project)
+        val relation = executor.context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(location.toString + "/csv/test"))

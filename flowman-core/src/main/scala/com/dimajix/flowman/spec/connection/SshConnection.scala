@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 
+
 case class SshConnection(
     instanceProperties:Connection.Properties,
     host:String,
@@ -32,7 +33,7 @@ case class SshConnection(
     password:String,
     knownHosts: File
 )
-extends Connection {}
+extends BaseConnection {}
 
 
 class SshConnectionSpec extends ConnectionSpec {
@@ -44,6 +45,11 @@ class SshConnectionSpec extends ConnectionSpec {
     @JsonProperty(value="password", required=false) private var password:String = _
     @JsonProperty(value="knownHosts", required=false) private var knownHosts:String = _
 
+    /**
+      * Creates the instance of the specified Connection with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SshConnection = {
         SshConnection(
             instanceProperties(context),

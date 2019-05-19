@@ -122,6 +122,11 @@ class SqlMappingSpec extends MappingSpec {
     @JsonProperty(value="file", required=false) private var file:String = _
     @JsonProperty(value="url", required=false) private var url: String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SqlMapping = {
         SqlMapping(
             instanceProperties(context),

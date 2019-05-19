@@ -24,13 +24,14 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
 object SchemaMapping {
-    def apply(context:Context, input:String, columns:Map[String,String]) : SchemaMapping = {
-        SchemaMapping(Mapping.Properties(context), MappingIdentifier(input), columns.toSeq, null)
+    def apply(input:String, columns:Map[String,String]) : SchemaMapping = {
+        SchemaMapping(Mapping.Properties(), MappingIdentifier(input), columns.toSeq, null)
     }
 }
 
@@ -97,14 +98,19 @@ extends BaseMapping {
 class SchemaMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
-    @JsonProperty(value = "schema", required = false) private var schema: Schema = _
+    @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SchemaMapping = {
         SchemaMapping(
             instanceProperties(context),
             MappingIdentifier(context.evaluate(this.input)),
             columns.mapValues(context.evaluate).toSeq,
-            schema
+            schema.instantiate(context)
         )
     }
 }

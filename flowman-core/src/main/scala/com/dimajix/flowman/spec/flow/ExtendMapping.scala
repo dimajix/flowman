@@ -28,9 +28,9 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object ExtendMapping {
-    def apply(context: Context, input:String, columns:Map[String,String]) : ExtendMapping = {
+    def apply(input:String, columns:Map[String,String]) : ExtendMapping = {
         ExtendMapping(
-            Mapping.Properties(context),
+            Mapping.Properties(),
             MappingIdentifier(input),
             columns
         )
@@ -109,10 +109,16 @@ class ExtendMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Map[String,String] = Map()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): ExtendMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        val columns = this.columns.mapValues(context.evaluate)
-        ExtendMapping(props, input, columns)
+        ExtendMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.mapValues(context.evaluate)
+        )
     }
 }

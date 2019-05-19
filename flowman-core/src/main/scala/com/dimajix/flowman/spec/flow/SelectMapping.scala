@@ -50,8 +50,6 @@ extends BaseMapping {
       * @return
       */
     override def dependencies : Array[MappingIdentifier] = {
-        require(context != null)
-
         Array(input)
     }
 }
@@ -62,10 +60,15 @@ class SelectMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SelectMapping = {
         SelectMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(this.input)),
+            MappingIdentifier(context.evaluate(input)),
             columns.mapValues(context.evaluate).toSeq
         )
     }

@@ -37,7 +37,6 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.schema.PartitionField
-import com.dimajix.flowman.spec.schema.PartitionFieldSpec
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
@@ -265,6 +264,11 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
     @JsonProperty(value="format", required = false) private var format: String = "csv"
     @JsonProperty(value="pattern", required = false) private var pattern: String = _
 
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): FileRelation = {
         FileRelation(
             instanceProperties(context),

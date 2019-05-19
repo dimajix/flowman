@@ -54,8 +54,8 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = project.mappings("empty")
-        val schema = mapping.describe(executor.context, Map())
+        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -90,8 +90,8 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = project.mappings("empty")
-        val schema = mapping.describe(executor.context, Map())
+        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -132,8 +132,8 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = project.mappings("empty")
-        val schema = mapping.describe(executor.context, Map())
+        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -172,8 +172,8 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("int_col")
         df.columns should contain("spart")
 
-        val mapping = project.mappings("empty")
-        val schema = mapping.describe(executor.context, Map())
+        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType),

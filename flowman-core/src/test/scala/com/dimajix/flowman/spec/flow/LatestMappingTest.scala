@@ -133,12 +133,11 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               | - id
               |versionColumn: v
             """.stripMargin
-        val mapping = ObjectMapper.parse[Mapping](spec)
-        val session = Session.builder().build()
-        val executor = session.executor
-        implicit val context = executor.context
+        val mappingSpec = ObjectMapper.parse[MappingSpec](spec)
+        mappingSpec shouldBe a[LatestMappingSpec]
 
-        mapping shouldBe a[LatestMapping]
+        val session = Session.builder().build()
+        val mapping = mappingSpec.instantiate(session.context)
         val latest = mapping.asInstanceOf[LatestMapping]
         latest.input should be (MappingIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))

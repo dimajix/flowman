@@ -22,6 +22,8 @@ import com.dimajix.flowman.execution.Context
 object Instance {
     trait Properties {
         val context: Context
+        val namespace: Namespace
+        val project: Project
         val name: String
         val kind: String
         val labels: Map[String, String]
@@ -57,15 +59,16 @@ abstract class Instance {
       * Returns the Namespace this instance belongs to
       * @return
       */
-    def namespace : Namespace = context.namespace
+    def namespace : Namespace
 
     /**
       * Returns the Project this instance belongs to
       */
-    def project : Project = context.project
+    def project : Project
 
     /**
-      * Returns the context that was used to create this instance
+      * Returns the Context that was used to create this instance and that may be used to perform
+      * lookups of other resources
       */
     def context : Context
 
@@ -75,10 +78,10 @@ abstract class Instance {
       */
     def metadata : Metadata = {
         Metadata(
-            Option(context.namespace).map(_.name),
-            Option(context.project).map(_.name),
+            Option(namespace).map(_.name),
+            Option(project).map(_.name),
             name,
-            Option(context.project).map(_.version),
+            Option(project).map(_.version),
             category,
             kind,
             labels
@@ -109,7 +112,19 @@ abstract class AbstractInstance extends Instance {
     override def labels : Map[String,String] = instanceProperties.labels
 
     /**
-      * Returns the context that was used to create this instance
+      * Returns the Namespace this instance belongs to. May be `null` if no Namespace is related
+      * @return
+      */
+    override def namespace : Namespace = instanceProperties.namespace
+
+    /**
+      * Returns the Project this instance belongs to. May be `null` if no Project is related
+      */
+    override def project : Project = instanceProperties.project
+
+    /**
+      * Returns the Context that was used to create this instance and that may be used to perform
+      * lookups of other resources.
       */
     override def context : Context = instanceProperties.context
 }

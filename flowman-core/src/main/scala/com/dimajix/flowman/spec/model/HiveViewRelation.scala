@@ -85,6 +85,11 @@ class HiveViewRelationSpec extends RelationSpec {
     @JsonProperty(value="view") private var view: String = _
     @JsonProperty(value="definition") private var definition: String = _
 
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): HiveViewRelation = {
         HiveViewRelation(
             instanceProperties(context),

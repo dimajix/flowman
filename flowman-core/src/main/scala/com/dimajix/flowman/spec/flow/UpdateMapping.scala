@@ -28,9 +28,9 @@ import com.dimajix.flowman.types.StructType
 
 
 object UpdateMapping {
-    def apply(context:Context, input:String, updates:String, keyColumns:Seq[String], filter:String="") : UpdateMapping = {
+    def apply(input:String, updates:String, keyColumns:Seq[String], filter:String="") : UpdateMapping = {
         UpdateMapping(
-            Mapping.Properties(context),
+            Mapping.Properties(),
             MappingIdentifier(input),
             MappingIdentifier(updates),
             filter,
@@ -107,6 +107,11 @@ class UpdateMappingSpec extends MappingSpec {
     @JsonProperty(value = "filter", required = false) private var filter: String = _
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns: Seq[String] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): UpdateMapping = {
         UpdateMapping(
             instanceProperties(context),

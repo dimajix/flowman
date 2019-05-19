@@ -56,8 +56,8 @@ case class LocalTarget(
       */
     override def instance : TargetInstance = {
         TargetInstance(
-            Option(context.namespace).map(_.name).getOrElse(""),
-            Option(context.project).map(_.name).getOrElse(""),
+            Option(namespace).map(_.name).getOrElse(""),
+            Option(project).map(_.name).getOrElse(""),
             name,
             Map("filename" -> filename)
         )

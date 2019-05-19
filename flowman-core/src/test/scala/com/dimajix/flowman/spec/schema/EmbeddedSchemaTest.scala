@@ -36,13 +36,13 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Schema](spec)
-        result shouldBe a[EmbeddedSchema]
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        val result = schemaSpec.instantiate(session.context)
+        result shouldBe a[EmbeddedSchemaSpec]
         result.fields.size should be (2)
-        result.fields(context)(0).name should be ("str_col")
-        result.fields(context)(1).name should be ("int_col")
+        result.fields(0).name should be ("str_col")
+        result.fields(1).name should be ("int_col")
     }
 
     it should "be parseable with inline type" in {
@@ -57,12 +57,12 @@ class EmbeddedSchemaTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe a[EmbeddedSchema]
         result.fields.size should be (2)
-        result.fields(context)(0).name should be ("str_col")
-        result.fields(context)(1).name should be ("int_col")
+        result.fields(0).name should be ("str_col")
+        result.fields(1).name should be ("int_col")
     }
 }

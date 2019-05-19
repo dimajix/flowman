@@ -20,6 +20,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.CreateRelationTask
@@ -39,8 +40,7 @@ class CreateCommand extends ActionCommand {
     @Option(name = "-i", aliases=Array("--ignoreIfExists"), usage = "does not do anything if relation already exists")
     var ignoreIfExists: Boolean = false
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Creating relations {}", if (relations != null) relations.mkString(",") else "all")
 
         // Then execute output operations
@@ -51,7 +51,7 @@ class CreateCommand extends ActionCommand {
                 project.relations.keys.toSeq
 
         val task = CreateRelationTask(toRun, ignoreIfExists)
-        val job = Job(Seq(task), "create-relations", "Create relations")
+        val job = Job(context, Seq(task), "create-relations", "Create relations")
 
         val runner = executor.runner
         val result = runner.execute(executor, job)

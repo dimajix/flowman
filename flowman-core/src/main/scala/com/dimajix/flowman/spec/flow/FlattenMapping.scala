@@ -26,6 +26,16 @@ import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.types.StructType
 
 
+object FlattenMapping {
+    def apply(input:String, naming:String) : FlattenMapping = {
+        FlattenMapping(
+            Mapping.Properties(),
+            MappingIdentifier(input),
+            naming
+        )
+    }
+}
+
 case class FlattenMapping(
      instanceProperties:Mapping.Properties,
      input:MappingIdentifier,
@@ -79,10 +89,15 @@ class FlattenMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "naming", required = true) private var naming:String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): FlattenMapping = {
         FlattenMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(this.input)),
+            MappingIdentifier(context.evaluate(input)),
             context.evaluate(naming)
         )
     }

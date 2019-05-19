@@ -19,11 +19,13 @@ package com.dimajix.flowman.plugin.example
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 
 
 class HelloWorldTaskTest extends FlatSpec with Matchers {
     "A HelloWorldTask" should "be deserializable" in {
+        val session = Session.builder().build()
         val spec =
             """
               |jobs:
@@ -33,7 +35,8 @@ class HelloWorldTaskTest extends FlatSpec with Matchers {
             """.stripMargin
         val module = Module.read.string(spec)
         module.jobs.keys should contain("custom")
-        val job = module.jobs("custom")
+
+        val job = module.jobs("custom").instantiate(session.context)
         job.tasks(0) shouldBe an[HelloWorldTask]
     }
 }

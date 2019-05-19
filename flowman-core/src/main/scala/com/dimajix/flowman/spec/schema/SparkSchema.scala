@@ -54,6 +54,11 @@ case class SparkSchema(
 
 
 class SparkSchemaSpec extends ExternalSchemaSpec {
+    /**
+      * Creates the instance of the specified Schema with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SparkSchema = {
         SparkSchema(
             Schema.Properties(context),

@@ -30,6 +30,9 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
@@ -38,11 +41,27 @@ import com.dimajix.flowman.types.SingleValue
 
 
 object Relation {
+    object Properties {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map(),
+                "",
+                Map()
+            )
+        }
+    }
     case class Properties(
-         override val context:Context,
-         override val name:String="",
-         override val kind:String="",
-         override val labels:Map[String,String]=Map(),
+         context:Context,
+         namespace:Namespace,
+         project:Project,
+         name:String,
+         kind:String,
+         labels:Map[String,String],
          description:String,
          options:Map[String,String]
     )
@@ -59,6 +78,12 @@ abstract class Relation extends AbstractInstance {
       * @return
       */
     final override def category: String = "relation"
+
+    /**
+      * Returns an identifier for this relation
+      * @return
+      */
+    def identifier : RelationIdentifier
 
     /**
       * Returns a description of the relation
@@ -182,8 +207,11 @@ abstract class RelationSpec extends NamedSpec[Relation] {
       * @return
       */
     override protected def instanceProperties(context:Context) : Relation.Properties = {
+        require(context != null)
         Relation.Properties(
             context,
+            context.namespace,
+            context.project,
             name,
             kind,
             labels.mapValues(context.evaluate),

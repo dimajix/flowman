@@ -55,6 +55,11 @@ case class AvroSchema(
 
 
 class AvroSchemaSpec extends ExternalSchemaSpec {
+    /**
+      * Creates the instance of the specified Schema with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): AvroSchema = {
         AvroSchema(
             Schema.Properties(context),

@@ -30,8 +30,8 @@ import com.dimajix.flowman.types.StructType
 
 
 object ProjectMapping {
-    def apply(context:Context, input:String, columns:Seq[String]) : ProjectMapping = {
-        ProjectMapping(Mapping.Properties(context), MappingIdentifier(input), columns)
+    def apply(input:String, columns:Seq[String]) : ProjectMapping = {
+        ProjectMapping(Mapping.Properties(), MappingIdentifier(input), columns)
     }
 }
 
@@ -90,10 +90,16 @@ class ProjectMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): ProjectMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        val columns = this.columns.map(context.evaluate)
-        ProjectMapping(props, input, columns)
+        ProjectMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(context.evaluate)
+        )
     }
 }

@@ -23,19 +23,44 @@ import com.dimajix.flowman.catalog.ImpalaExternalCatalog
 import com.dimajix.flowman.execution.Context
 
 
-@ConnectionType(kind = "impala")
-class ImpalaConnection extends Connection {
-    @JsonProperty(value="username", required=false) private var _username:String = _
-    @JsonProperty(value="password", required=false) private var _password:String = _
-    @JsonProperty(value="properties", required=false) private var _properties:Map[String,String] = Map()
-    @JsonProperty(value="driver", required=false) private var _driver:String = ImpalaExternalCatalog.IMPALA_DEFAULT_DRIVER
-    @JsonProperty(value="host", required=false) private var _host:String = "localhost"
-    @JsonProperty(value="port", required=false) private var _port:String = ImpalaExternalCatalog.IMPALA_DEFAULT_PORT.toString
+case class ImpalaConnection(
+    instanceProperties:Connection.Properties,
+    username:String,
+    password:String,
+    properties:Map[String,String],
+    driver:String,
+    host:String,
+    port:Int
+) extends BaseConnection {
+}
 
-    def username(implicit context: Context) : String  = context.evaluate(_username)
-    def password(implicit context: Context) : String = context.evaluate(_password)
-    def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
-    def driver(implicit context: Context) : String = context.evaluate(_driver)
-    def host(implicit context: Context) : String = context.evaluate(_host)
-    def port(implicit context: Context) : Int = context.evaluate(_port).toInt
+
+
+@ConnectionType(kind = "impala")
+class ImpalaConnectionSpec extends ConnectionSpec {
+    @JsonProperty(value="username", required=false) private var username:String = _
+    @JsonProperty(value="password", required=false) private var password:String = _
+    @JsonProperty(value="properties", required=false) private var properties:Map[String,String] = Map()
+    @JsonProperty(value="driver", required=false) private var driver:String = ImpalaExternalCatalog.IMPALA_DEFAULT_DRIVER
+    @JsonProperty(value="host", required=false) private var host:String = "localhost"
+    @JsonProperty(value="port", required=false) private var port:String = ImpalaExternalCatalog.IMPALA_DEFAULT_PORT.toString
+
+
+    /**
+      * Creates an instance of this specification and performs the interpolation of all variables
+      *
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): Connection = {
+        ImpalaConnection(
+            instanceProperties(context),
+            context.evaluate(username),
+            context.evaluate(password),
+            properties.mapValues(context.evaluate),
+            context.evaluate(driver),
+            context.evaluate(host),
+            context.evaluate(port).toInt
+        )
+    }
 }

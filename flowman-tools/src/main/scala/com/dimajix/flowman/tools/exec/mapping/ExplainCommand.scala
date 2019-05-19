@@ -24,6 +24,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
@@ -35,22 +36,22 @@ class ExplainCommand extends ActionCommand {
 
     @Option(name="-e", aliases=Array("--extended"), required = false)
     var extended: Boolean = false
-    @Argument(usage = "specifies the mapping to explain", metaVar = "<tablename>", required = true)
-    var tablename: String = ""
+    @Argument(usage = "specifies the mapping to explain", metaVar = "<mapping>", required = true)
+    var mapping: String = ""
 
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Explaining mapping '$tablename'")
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+        logger.info(s"Explaining mapping '$mapping'")
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse(tablename))
+            val table = executor.instantiate(MappingIdentifier.parse(mapping))
             table.explain(extended)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished explaining mapping")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while explaining mapping '$tablename", e)
+                logger.error(s"Caught exception while explaining mapping '$mapping", e)
                 false
         }
     }

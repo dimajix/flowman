@@ -23,6 +23,7 @@ import scala.util.Try
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.CountMappingTask
@@ -35,7 +36,7 @@ class CountCommand extends ActionCommand {
     @Argument(usage = "specifies the mapping to count", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val task = CountMappingTask(mapping)
 
         Try {

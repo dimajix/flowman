@@ -90,7 +90,6 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val mapping = ConformMapping(
-            executor.context,
             "input_df",
             Map(
                 "string" -> ftypes.IntegerType
@@ -123,7 +122,6 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val mapping = ConformMapping(
-            executor.context,
             "input_df",
             Map(
                 "long" -> ftypes.IntegerType
@@ -138,7 +136,6 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val mapping = ConformMapping(
-            executor.context,
             "input_df",
             "camelCase"
         )
@@ -169,7 +166,6 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val mapping = ConformMapping(
-            executor.context,
             "input_df",
             "snakeCase",
             true

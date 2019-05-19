@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
 import org.slf4j.Logger
 
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field

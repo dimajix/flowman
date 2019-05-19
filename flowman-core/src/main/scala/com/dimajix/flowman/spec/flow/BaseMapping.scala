@@ -29,6 +29,12 @@ abstract class BaseMapping extends Mapping {
     protected override def instanceProperties : Mapping.Properties
 
     /**
+      * Returns an identifier for this mapping
+      * @return
+      */
+    override def identifier : MappingIdentifier = MappingIdentifier(name, Option(project).map(_.name))
+
+    /**
       * This method should return true, if the resulting dataframe should be broadcast for map-side joins
       * @return
       */

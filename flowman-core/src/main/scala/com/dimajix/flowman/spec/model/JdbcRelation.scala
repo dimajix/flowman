@@ -50,7 +50,7 @@ case class JdbcRelation(
     instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
-    connection: ConnectionIdentifier,
+    connection: JdbcConnection,
     properties: Map[String,String],
     database: String,
     table: String
@@ -67,9 +67,7 @@ case class JdbcRelation(
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        implicit val context = executor.context
-
-        logger.info(s"Reading data from JDBC source $tableIdentifier in database $connection using partition values $partitions")
+        logger.info(s"Reading data from JDBC source '$tableIdentifier' using connection '${connection.identifier}' using partition values $partitions")
 
         // Get Connection
         val (url,props) = createProperties()
@@ -90,7 +88,7 @@ case class JdbcRelation(
       * @param mode
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
-        logger.info(s"Writing data to JDBC source $tableIdentifier in database $connection")
+        logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection.identifier}")
 
         // Get Connection
         val (url,props) = createProperties()
@@ -247,28 +245,26 @@ case class JdbcRelation(
 
     private def createProperties() = {
         // Get Connection
-        val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
         val props = new Properties()
-        Option(db.username).foreach(props.setProperty("user", _))
-        Option(db.password).foreach(props.setProperty("password", _))
-        props.setProperty("driver", db.driver)
+        Option(connection.username).foreach(props.setProperty("user", _))
+        Option(connection.password).foreach(props.setProperty("password", _))
+        props.setProperty("driver", connection.driver)
 
-        db.properties.foreach(kv => props.setProperty(kv._1, kv._2))
+        connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         properties.foreach(kv => props.setProperty(kv._1, kv._2))
 
-        logger.info("Connecting to jdbc source at {}", db.url)
+        logger.info("Connecting to jdbc source at {}", connection.url)
 
-        (db.url,props)
+        (connection.url,props)
     }
 
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
-        val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
         val props = scala.collection.mutable.Map[String,String]()
-        Option(db.username).foreach(props.update("user", _))
-        Option(db.password).foreach(props.update("password", _))
-        props.update("driver", db.driver)
+        Option(connection.username).foreach(props.update("user", _))
+        Option(connection.password).foreach(props.update("password", _))
+        props.update("driver", connection.driver)
 
-        val options = new JDBCOptions(db.url, tableIdentifier.unquotedString, props.toMap ++ db.properties ++ properties)
+        val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)
         try {
             fn(conn, options)
@@ -314,19 +310,24 @@ case class JdbcRelation(
 
 class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
     @JsonProperty(value = "connection", required = true) private var _connection: String = _
-    @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
-    @JsonProperty(value = "database", required = true) private var _database: String = _
-    @JsonProperty(value = "table", required = true) private var _table: String = _
+    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "database", required = true) private var database: String = _
+    @JsonProperty(value = "table", required = true) private var table: String = _
 
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): JdbcRelation = {
         JdbcRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),
-            ConnectionIdentifier.parse(context.evaluate(_connection)),
-            _properties.mapValues(context.evaluate),
-            context.evaluate(_database),
-            context.evaluate(_table)
+            context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[JdbcConnection],
+            properties.mapValues(context.evaluate),
+            context.evaluate(database),
+            context.evaluate(table)
         )
     }
 }

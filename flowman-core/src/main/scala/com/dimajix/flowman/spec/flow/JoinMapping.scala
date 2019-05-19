@@ -27,12 +27,12 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object JoinMapping {
-    def apply(context:Context, inputs:Seq[String], columns:Seq[String], mode:String) : JoinMapping = {
-        JoinMapping(Mapping.Properties(context), inputs.map(MappingIdentifier(_)), columns, "", mode)
+    def apply(inputs:Seq[String], columns:Seq[String], mode:String) : JoinMapping = {
+        JoinMapping(Mapping.Properties(), inputs.map(MappingIdentifier(_)), columns, "", mode)
     }
 
-    def apply(context:Context, inputs:Seq[String], expr:String, mode:String) : JoinMapping = {
-        JoinMapping(Mapping.Properties(context), inputs.map(MappingIdentifier(_)), Seq(), expr, mode)
+    def apply(inputs:Seq[String], expr:String, mode:String) : JoinMapping = {
+        JoinMapping(Mapping.Properties(), inputs.map(MappingIdentifier(_)), Seq(), expr, mode)
     }
 }
 
@@ -89,6 +89,11 @@ class JoinMappingSpec extends MappingSpec {
     @JsonProperty(value = "expression", required = false) private var expression:String = _
     @JsonProperty(value = "mode", required = true) private var mode:String = "left"
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): JoinMapping = {
         JoinMapping(
             instanceProperties(context),

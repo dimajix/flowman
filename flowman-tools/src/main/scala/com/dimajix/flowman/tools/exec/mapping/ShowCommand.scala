@@ -24,9 +24,9 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.task.ShowMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -37,14 +37,14 @@ class ShowCommand extends ActionCommand {
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 10
     @Argument(index=0, usage="specifies the mapping to show", metaVar="<mapping>", required=true)
-    var tablename: String = ""
+    var mapping: String = ""
     @Argument(index=1, usage="specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
     var columns: String = ""
 
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val columns = this.columns.split(",").filter(_.nonEmpty)
-        val task = ShowMappingTask(tablename, columns, limit)
+        val task = ShowMappingTask(mapping, columns, limit)
 
         Try {
             task.execute(executor)
@@ -53,7 +53,7 @@ class ShowCommand extends ActionCommand {
                 logger.info("Successfully finished dumping mapping")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while dumping mapping '$tablename", e)
+                logger.error(s"Caught exception while dumping mapping '$mapping", e)
                 false
         }
     }

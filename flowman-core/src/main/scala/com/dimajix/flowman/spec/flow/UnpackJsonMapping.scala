@@ -135,6 +135,11 @@ class UnpackJsonMappingSpec extends MappingSpec {
     @JsonProperty(value = "allowBackslashEscapingAnyCharacter", required = false) private var allowBackslashEscapingAnyCharacter: String = "false"
     @JsonProperty(value = "allowUnquotedControlChars", required = false) private var allowUnquotedControlChars: String = "false"
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): UnpackJsonMapping = {
         UnpackJsonMapping(
             instanceProperties(context),

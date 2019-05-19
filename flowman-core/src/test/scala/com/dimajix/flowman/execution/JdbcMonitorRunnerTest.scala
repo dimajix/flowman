@@ -44,15 +44,15 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     "The JdbcStateStoreSpec" should "work" in {
         val db = tempDir.resolve("mydb")
+        val ns = Namespace.builder()
+            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
+            .build()
         val session = Session.builder()
             .withNamespace(ns)
             .build()
 
         val job = Job.builder(session.context)
             .setName("job")
-            .build()
-        val ns = Namespace.builder()
-            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
             .build()
 
         val monitor = JdbcStateStoreSpec("logger")

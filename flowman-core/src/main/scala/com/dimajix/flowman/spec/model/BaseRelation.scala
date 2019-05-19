@@ -27,6 +27,7 @@ import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 
 
@@ -35,6 +36,12 @@ import com.dimajix.flowman.spec.schema.Schema
   */
 abstract class BaseRelation extends Relation {
     protected override def instanceProperties : Relation.Properties
+
+    /**
+      * Returns an identifier for this relation
+      * @return
+      */
+    override def identifier : RelationIdentifier = RelationIdentifier(name, Option(project).map(_.name))
 
     /**
       * Returns a description for the relation

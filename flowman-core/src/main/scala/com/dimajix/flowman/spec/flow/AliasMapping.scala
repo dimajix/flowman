@@ -63,6 +63,11 @@ case class AliasMapping(
 class AliasMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): AliasMapping = {
         val props = instanceProperties(context)
         val input = MappingIdentifier(context.evaluate(this.input))

@@ -79,6 +79,11 @@ class RepartitionMappingSpec extends MappingSpec {
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions:String = _
     @JsonProperty(value = "sort", required = false) private[spec] var sort:String = _
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): RepartitionMapping = {
         RepartitionMapping(
             instanceProperties(context),

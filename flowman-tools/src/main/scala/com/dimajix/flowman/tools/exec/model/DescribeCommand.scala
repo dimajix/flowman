@@ -23,6 +23,7 @@ import scala.util.Try
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.DescribeRelationTask
@@ -33,10 +34,10 @@ class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Argument(usage = "specifies the relation to describe", metaVar = "<relation>", required = true)
-    var tablename: String = ""
+    var relation: String = ""
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        val task = DescribeRelationTask(tablename)
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+        val task = DescribeRelationTask(relation)
 
         Try {
             task.execute(executor)
@@ -45,7 +46,7 @@ class DescribeCommand extends ActionCommand {
                 logger.info("Successfully finished describing relation")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while describing relation '$tablename':", e)
+                logger.error(s"Caught exception while describing relation '$relation':", e)
                 false
         }
     }

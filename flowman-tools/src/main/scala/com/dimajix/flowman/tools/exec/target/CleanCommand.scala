@@ -20,8 +20,10 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.task.CleanTargetTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.Status
@@ -37,8 +39,7 @@ class CleanCommand extends ActionCommand {
     var all: Boolean = false
 
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Cleaning outputs {}", if (targets != null) targets.mkString(",") else "all")
 
         // Then build output operations
@@ -48,10 +49,13 @@ class CleanCommand extends ActionCommand {
             else if (targets.nonEmpty)
                 targets.toSeq
             else
-                project.targets.filter(_._2.enabled).keys.toSeq
+                project.targets.keys.toSeq
+                    .map(t => context.getTarget(TargetIdentifier(t)))
+                    .filter(_.enabled)
+                    .map(_.name)
 
         val task = CleanTargetTask(toRun, s"Cleaning targets ${toRun.mkString(",")}")
-        val job = Job(Seq(task), "clean-targets", "Clean targets")
+        val job = Job(context, Seq(task), "clean-targets", "Clean targets")
 
         val runner = executor.runner
         val result = runner.execute(executor, job, Map(), true)

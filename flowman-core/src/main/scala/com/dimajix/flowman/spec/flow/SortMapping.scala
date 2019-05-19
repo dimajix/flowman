@@ -80,10 +80,15 @@ class SortMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns:Seq[Map[String,String]] = Seq()
 
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
     override def instantiate(context: Context): SortMapping = {
         SortMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(this.input)),
+            MappingIdentifier(context.evaluate(input)),
             columns.flatMap(_.mapValues(context.evaluate))
         )
     }

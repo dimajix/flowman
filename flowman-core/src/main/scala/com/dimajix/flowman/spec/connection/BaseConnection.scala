@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.spec.connection
 
-import com.dimajix.flowman.annotation.RelationType
-import com.dimajix.flowman.spec.model.NullRelation
+import com.dimajix.flowman.spec.ConnectionIdentifier
 
 
-@RelationType(kind="customRelation")
-class CustomRelation extends NullRelation {
+abstract class BaseConnection extends Connection {
+    /**
+      * Returns an identifier for this connection
+      * @return
+      */
+    def identifier : ConnectionIdentifier = ConnectionIdentifier(name, Option(project).map(_.name))
 }

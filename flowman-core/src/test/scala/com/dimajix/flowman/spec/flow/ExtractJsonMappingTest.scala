@@ -99,7 +99,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""{"i":12,"s":"lala"}""", 12),
@@ -135,7 +135,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""{"i":12,"s":"lala"}""", 12),
@@ -170,7 +170,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
@@ -210,7 +210,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
@@ -241,7 +241,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
@@ -281,7 +281,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
@@ -312,7 +312,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
@@ -343,7 +343,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val context = executor.context
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),

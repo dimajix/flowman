@@ -43,7 +43,6 @@ case class ProvidedRelation(
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(executor != null)
 
-        implicit val context = executor.context
         executor.spark.table(table)
     }
 

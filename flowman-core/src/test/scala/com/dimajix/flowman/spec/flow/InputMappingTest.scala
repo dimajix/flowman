@@ -50,11 +50,13 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
+
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -86,11 +88,13 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
+
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -128,11 +132,13 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
+
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -167,12 +173,14 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
+
         val df = executor.instantiate(MappingIdentifier("empty"))
         df.columns should contain("str_col")
         df.columns should contain("int_col")
         df.columns should contain("spart")
 
-        val mapping = executor.context.getMapping(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),

@@ -22,39 +22,33 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.model.Relation
 
 
 object ShowRelationTask {
-    def apply(mapping:String, columns:Seq[String], limit:Int) : ShowRelationTask = {
-        val task = new ShowRelationTask
-        task._relation = mapping
-        task._columns = columns
-        task._limit = limit.toString
-        task
+    def apply(relation:Relation, columns:Seq[String], limit:Int) : ShowRelationTask = {
+        ShowRelationTask(
+            Task.Properties(null),
+            relation,
+            columns,
+            limit
+        )
     }
 }
 
-
-class ShowRelationTask extends BaseTask {
+case class ShowRelationTask(
+    instanceProperties:Task.Properties,
+    relation:Relation,
+    columns:Seq[String],
+    limit:Int
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[ShowRelationTask])
 
-    @JsonProperty(value="relation", required=true) private var _relation:String = _
-    @JsonProperty(value="limit", required=true) private[spec] var _limit:String = "100"
-    @JsonProperty(value="columns", required=true) private[spec] var _columns:Seq[String] = _
-
-    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
-    def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
-    def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val limit = this.limit
-        val identifier = this.relation
-        logger.info(s"Showing first $limit rows of relation '$identifier'")
+        logger.info(s"Showing first $limit rows of relation '${relation.identifier}'")
 
-        val relation = context.getRelation(identifier)
         val table = relation.read(executor, null)
-        val projection = if (_columns != null && _columns.nonEmpty)
+        val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else
             table
@@ -62,5 +56,22 @@ class ShowRelationTask extends BaseTask {
         projection.show(limit, truncate = false)
         true
     }
+}
 
+
+
+
+class ShowRelationTaskSpec extends TaskSpec {
+    @JsonProperty(value = "relation", required = true) private var relation: String = _
+    @JsonProperty(value = "limit", required = true) private var limit: String = "100"
+    @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+
+    override def instantiate(context: Context): Task = {
+        ShowRelationTask(
+            instanceProperties(context),
+            context.getRelation(RelationIdentifier(context.evaluate(relation))),
+            columns.map(context.evaluate),
+            context.evaluate(limit).toInt
+        )
+    }
 }

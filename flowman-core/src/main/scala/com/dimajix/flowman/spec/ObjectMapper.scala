@@ -29,18 +29,13 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.catalog.CatalogSpec
-import com.dimajix.flowman.spec.state.StateStoreSpec
-import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.flow.MappingSpec
-import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.model.RelationSpec
-import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.Task
+import com.dimajix.flowman.spec.task.TaskSpec
 import com.dimajix.flowman.spi.Registration
 
 
@@ -62,7 +57,7 @@ object ObjectMapper {
         val mappingTypes = MappingSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val outputTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val schemaTypes = SchemaSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val taskTypes = Task.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val taskTypes = TaskSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new JacksonMapper(new YAMLFactory())
         mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)

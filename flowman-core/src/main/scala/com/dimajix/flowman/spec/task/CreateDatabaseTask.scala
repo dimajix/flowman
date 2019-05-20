@@ -25,21 +25,16 @@ import com.dimajix.flowman.execution.Executor
 
 object CreateDatabaseTask {
     def apply(database:String, ignoreIfExists:Boolean) : CreateDatabaseTask = {
-        val result = new CreateDatabaseTask
-        result._database = database
-        result._ignoreIfExists = ignoreIfExists.toString
-        result
+        CreateDatabaseTask(database, ignoreIfExists)
     }
 }
 
-class CreateDatabaseTask extends BaseTask {
+case class CreateDatabaseTask(
+    instanceProperties:Task.Properties,
+    database:String,
+    ignoreIfExists:Boolean
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CreateDatabaseTask])
-
-    @JsonProperty(value="database", required=true) private var _database:String = ""
-    @JsonProperty(value="ignoreIfExists", required=false) private var _ignoreIfExists:String = "false"
-
-    def database(implicit context: Context) : String = context.evaluate(_database)
-    def ignoreIfExists(implicit context: Context) : Boolean = context.evaluate(_ignoreIfExists).toBoolean
 
     /**
       * Instantiates the specified database
@@ -50,12 +45,23 @@ class CreateDatabaseTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val database = this.database
-        val ignoreIfExists = this.ignoreIfExists
         logger.info(s"Creating Hive database '$database'")
-
         executor.catalog.createDatabase(database, ignoreIfExists)
         true
+    }
+}
+
+
+
+class CreateDatabaseTaskSpec extends TaskSpec {
+    @JsonProperty(value = "database", required = true) private var database: String = ""
+    @JsonProperty(value = "ignoreIfExists", required = false) private var ignoreIfExists: String = "false"
+
+    override def instantiate(context: Context): Task = {
+        CreateDatabaseTask(
+            instanceProperties(context),
+            context.evaluate(database),
+            context.evaluate(ignoreIfExists).toBoolean
+        )
     }
 }

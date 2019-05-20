@@ -73,7 +73,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("col2", 23)
         ))
 
-        val mapping = project.mappings("t1").instantiate(executor.context)
+        val mapping = project.mappings("t1").instantiate(session.context)
         mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
     }
 

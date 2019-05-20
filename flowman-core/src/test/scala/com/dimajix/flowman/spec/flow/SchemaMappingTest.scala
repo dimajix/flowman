@@ -39,7 +39,6 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val mapping = SchemaMapping("myview", Map("_2" -> "int"))
 
@@ -61,7 +60,6 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val mapping = SchemaMapping("myview", Map("_2" -> "int", "new" -> "string"))
 
@@ -95,6 +93,7 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
         project.mappings.size should be (1)
         project.mappings.contains("t0") should be (false)
@@ -105,7 +104,7 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("col2", 23)
         ))
 
-        val mapping = executor.context.getMapping(MappingIdentifier("t1"))
+        val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
     }
 

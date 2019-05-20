@@ -60,11 +60,12 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
               |hosts: localhost:9092
               |topics: topic-01
             """.stripMargin
-        val relation = ObjectMapper.parse[Relation](spec)
-        relation shouldBe a[KafkaRelation]
+        val relationSpec = ObjectMapper.parse[RelationSpec](spec)
+        relationSpec shouldBe a[KafkaRelationSpec]
 
         val session = Session.builder().withSparkSession(spark).build()
-        implicit val context = session.executor.context
+        val relation = relationSpec.instantiate(session.context)
+
         val fields = relation.schema.fields
         fields(0).name should be ("key")
         fields(1).name should be ("value")
@@ -89,7 +90,6 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val schema = StructType(Seq(StructField("value", BinaryType)))
         val df = relation.read(executor, schema, Map()).select(expr("CAST(value AS STRING)"))
@@ -108,7 +108,6 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val values = (0 to 20).map(_.toString).toDF
         relation.write(executor, values, Map(), "append")
@@ -130,7 +129,6 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val values = (0 to 20).toDF.select(
             (col("value") * 2).cast(StringType) as "key",
@@ -154,7 +152,6 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         withTempDir { checkpointLocation =>
             val spark = session.spark

@@ -62,8 +62,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0"))
         relation.kind should be ("file")
 
         val fileRelation = relation.asInstanceOf[FileRelation]
@@ -103,8 +104,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val relation = executor.context.getRelation(RelationIdentifier("local"))
+        val relation = context.getRelation(RelationIdentifier("local"))
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.location should be (new Path(outputPath.toUri))
 
@@ -163,8 +165,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val relation = executor.context.getRelation(RelationIdentifier("local"))
+        val relation = context.getRelation(RelationIdentifier("local"))
         outputPath.toFile.exists() should be (false)
         relation.create(executor)
         outputPath.toFile.exists() should be (true)
@@ -234,8 +237,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val mapping = executor.context.getMapping(MappingIdentifier("input"))
+        val mapping = context.getMapping(MappingIdentifier("input"))
         val schema = mapping.describe(Map())
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),

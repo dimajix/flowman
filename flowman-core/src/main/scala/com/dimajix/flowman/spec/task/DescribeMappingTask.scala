@@ -26,27 +26,38 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 object DescribeMappingTask {
     def apply(mapping:String) : DescribeMappingTask = {
-        val task = new DescribeMappingTask
-        task._mapping = mapping
-        task
+        DescribeMappingTask(
+            Task.Properties(null),
+            MappingIdentifier(mapping)
+        )
+    }
+}
+
+case class DescribeMappingTask(
+    instanceProperties:Task.Properties,
+    mapping:MappingIdentifier
+) extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
+
+    override def execute(executor:Executor) : Boolean = {
+        logger.info(s"Describing mapping '$mapping")
+
+        val df = executor.instantiate(mapping)
+        df.printSchema()
+        true
     }
 }
 
 
-class DescribeMappingTask extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
-    @JsonProperty(value="mapping", required=true) private var _mapping:String = _
+class DescribeMappingTaskSpec extends TaskSpec {
+    @JsonProperty(value = "mapping", required = true) private var _mapping: String = _
 
-    def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
 
-    override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val identifier = this.mapping
-        logger.info(s"Describing mapping '$identifier")
-
-        val df = executor.instantiate(identifier)
-        df.printSchema()
-        true
+    override def instantiate(context: Context): DescribeMappingTask = {
+        DescribeMappingTask(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(_mapping))
+        )
     }
 }

@@ -143,7 +143,6 @@ case class JdbcRelation(
       * @param partitions
       */
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        implicit val context = executor.context
         if (partitions.isEmpty) {
             logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $tableIdentifier")
             withConnection { (con, options) =>
@@ -169,7 +168,6 @@ case class JdbcRelation(
     override def exists(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
         withConnection{ (con,options) =>
             JdbcUtils.tableExists(con, tableIdentifier, options)
         }
@@ -182,8 +180,6 @@ case class JdbcRelation(
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val tableIdentifier = this.tableIdentifier
         logger.info(s"Creating jdbc relation $name, this will create jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
@@ -205,8 +201,6 @@ case class JdbcRelation(
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val tableIdentifier = this.tableIdentifier
         logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {

@@ -32,19 +32,14 @@ import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spec.catalog.CatalogSpec
-import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.flow.MappingSpec
-import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.model.RelationSpec
-import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spec.storage.Store
-import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.Task
+import com.dimajix.flowman.spec.task.TaskSpec
 import com.dimajix.flowman.templating.Velocity
 
 
@@ -87,7 +82,7 @@ object Registration {
         (classOf[RelationType], (clazz:Class[_]) => RelationSpec.register(clazz.getAnnotation(classOf[RelationType]).kind(), clazz.asInstanceOf[Class[_ <: RelationSpec]])),
         (classOf[TargetType], (clazz:Class[_]) => TargetSpec.register(clazz.getAnnotation(classOf[TargetType]).kind(), clazz.asInstanceOf[Class[_ <: TargetSpec]])),
         (classOf[SchemaType], (clazz:Class[_]) => SchemaSpec.register(clazz.getAnnotation(classOf[SchemaType]).kind(), clazz.asInstanceOf[Class[_ <: SchemaSpec]])),
-        (classOf[TaskType], (clazz:Class[_]) => Task.register(clazz.getAnnotation(classOf[TaskType]).kind(), clazz.asInstanceOf[Class[_ <: Task]])),
+        (classOf[TaskType], (clazz:Class[_]) => TaskSpec.register(clazz.getAnnotation(classOf[TaskType]).kind(), clazz.asInstanceOf[Class[_ <: TaskSpec]])),
         (classOf[MonitorType], (clazz:Class[_]) => StateStoreSpec.register(clazz.getAnnotation(classOf[MonitorType]).kind(), clazz.asInstanceOf[Class[_ <: StateStoreSpec]])),
         (classOf[CatalogType], (clazz:Class[_]) => CatalogSpec.register(clazz.getAnnotation(classOf[CatalogType]).kind(), clazz.asInstanceOf[Class[_ <: CatalogSpec]])),
         (classOf[StoreType], (clazz:Class[_]) => Store.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: Store]])),

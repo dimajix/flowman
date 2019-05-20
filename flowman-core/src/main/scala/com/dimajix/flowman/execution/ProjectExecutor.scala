@@ -76,8 +76,6 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
       * @return
       */
     private def createTable(tableName: String): DataFrame = {
-        implicit val icontext = context
-
         // Lookup table definition
         val transform = context.getMapping(MappingIdentifier(tableName, None))
         if (transform == null) {

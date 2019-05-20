@@ -46,10 +46,11 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             .withSparkSession(spark)
             .build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
         import spark.implicits._
         val data = Seq(("v1", 12), ("v2", 23)).toDF()
-        val output = executor.context.getTarget(TargetIdentifier("out"))
+        val output = context.getTarget(TargetIdentifier("out"))
 
         outputPath.toFile.exists() should be (false)
         output.build(executor, Map(MappingIdentifier("some_table") -> data))

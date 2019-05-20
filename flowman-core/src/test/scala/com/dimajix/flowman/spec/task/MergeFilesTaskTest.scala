@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.task
 
 import java.nio.charset.Charset
 
+import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -46,7 +47,7 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(source.toString, dest.toString)
+        val task = MergeFilesTask(source.path, dest.path)
         task.execute(executor)
 
         dest.exists() should be (true)
@@ -80,7 +81,7 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(source.toString, dest.toString, "\n")
+        val task = MergeFilesTask(source.path, dest.path, "\n")
         task.execute(executor)
 
         dest.exists() should be (true)

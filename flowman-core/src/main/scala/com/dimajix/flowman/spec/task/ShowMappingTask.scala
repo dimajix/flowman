@@ -26,34 +26,27 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 object ShowMappingTask {
     def apply(mapping:String, columns:Seq[String], limit:Int) : ShowMappingTask = {
-        val task = new ShowMappingTask
-        task._mapping = mapping
-        task._columns = columns
-        task._limit = limit.toString
-        task
+        ShowMappingTask(
+            Task.Properties(null),
+            MappingIdentifier(mapping),
+            columns,
+            limit
+        )
     }
 }
 
-
-class ShowMappingTask extends BaseTask {
+case class ShowMappingTask(
+    instanceProperties:Task.Properties,
+    mapping:MappingIdentifier,
+    columns:Seq[String],
+    limit:Int
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[ShowMappingTask])
 
-    @JsonProperty(value="mapping", required=true) private var _mapping:String = _
-    @JsonProperty(value="limit", required=false) private[spec] var _limit:String = "100"
-    @JsonProperty(value="columns", required=false) private[spec] var _columns:Seq[String] = Seq()
-
-    def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
-    def limit(implicit context: Context) : Int = context.evaluate(_limit).toInt
-    def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val limit = this.limit
-        val identifier = this.mapping
-        val columns = this.columns
-        logger.info(s"Showing first $limit rows of mapping '$identifier'")
+        logger.info(s"Showing first $limit rows of mapping '$mapping'")
 
-        val table = executor.instantiate(identifier)
+        val table = executor.instantiate(mapping)
         val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else
@@ -61,5 +54,23 @@ class ShowMappingTask extends BaseTask {
 
         projection.show(limit, truncate = false)
         true
+    }
+}
+
+
+
+class ShowMappingTaskSpec extends TaskSpec {
+    @JsonProperty(value = "mapping", required = true) private var mapping: String = _
+    @JsonProperty(value = "limit", required = false) private var limit: String = "100"
+    @JsonProperty(value = "columns", required = false) private var columns: Seq[String] = Seq()
+
+
+    override def instantiate(context: Context): ShowMappingTask = {
+        ShowMappingTask(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(mapping)),
+            columns.map(context.evaluate),
+            context.evaluate(limit).toInt
+        )
     }
 }

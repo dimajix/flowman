@@ -66,7 +66,6 @@ case class FileRelation(
         require(executor != null)
         require(partitions != null)
 
-        implicit val context = executor.context
         requireValidPartitionKeys(partitions)
 
         val data = mapFiles(executor, partitions) { (partition, paths) =>
@@ -182,8 +181,6 @@ case class FileRelation(
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val location = this.location
         logger.info(s"Creating directory '$location' for file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         if (fs.exists(location)) {

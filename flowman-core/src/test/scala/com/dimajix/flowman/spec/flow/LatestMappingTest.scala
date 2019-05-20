@@ -39,7 +39,6 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -76,7 +75,6 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,1], "op":"CREATE"}""",
@@ -103,7 +101,6 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
         val df = Seq(
             Record(("ts_0", 123), ("id_0", 7), "lala")

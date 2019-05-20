@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import scala.collection.JavaConversions._
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -35,18 +36,25 @@ import com.dimajix.common.tryWith
 import com.dimajix.common.TryWith
 
 
-class CompareFilesTask extends BaseTask {
+object CompareFilesTask {
+    def apply(actual:Path, expected:Path) : CompareFilesTask = {
+        CompareFilesTask(
+            Task.Properties(null),
+            actual,
+            expected
+        )
+    }
+}
+
+case class CompareFilesTask(
+    instanceProperties:Task.Properties,
+    actual:Path,
+    expected:Path
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CompareFilesTask])
 
-    @JsonProperty(value="actual", required=true) private var _actual:String = ""
-    @JsonProperty(value="expected", required=true) private var _expected:String = ""
-
-    def actual(implicit context:Context) : String = context.evaluate(_actual)
-    def expected(implicit context:Context) : String = context.evaluate(_expected)
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val fs = new FileSystem(executor.hadoopConf)
+        val fs = executor.context.fs
         val actual = fs.file(this.actual)
         val expected = fs.file(this.expected)
         logger.info(s"Checking identical content of files '$actual' and '$expected'")
@@ -80,5 +88,20 @@ class CompareFilesTask extends BaseTask {
         else {
             file.open()
         }
+    }
+}
+
+
+
+class CompareFilesTaskSpec extends TaskSpec {
+    @JsonProperty(value = "actual", required = true) private var actual: String = ""
+    @JsonProperty(value = "expected", required = true) private var expected: String = ""
+
+    override def instantiate(context: Context): Task = {
+        CompareFilesTask(
+            instanceProperties(context),
+            new Path(context.evaluate(actual)),
+            new Path(context.evaluate(expected))
+        )
     }
 }

@@ -6,15 +6,12 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 
 
-class ShowEnvironmentTask extends BaseTask {
-    @JsonProperty(value="variables", required=false) private var _variables:Seq[String] = Seq()
-
-    def variables(implicit context: Context) : Seq[String] = _variables.map(context.evaluate)
-
+case class ShowEnvironmentTask(
+    instanceProperties:Task.Properties,
+    variables:Seq[String]
+) extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
         val env = executor.context.environment
-        val variables = this.variables
         if (variables.nonEmpty) {
             variables.foreach(v => println(v + "=" + env.getOrElse(v, "<undefined>")))
         }
@@ -24,5 +21,19 @@ class ShowEnvironmentTask extends BaseTask {
                 .foreach(kv => println(kv._1 + "=" + kv._2.toString))
         }
         true
+    }
+}
+
+
+
+class ShowEnvironmentTaskSpec extends TaskSpec {
+    @JsonProperty(value = "variables", required = false) private var variables: Seq[String] = Seq()
+
+
+    override def instantiate(context: Context): ShowEnvironmentTask = {
+        ShowEnvironmentTask(
+            instanceProperties(context),
+            variables.map(context.evaluate)
+        )
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,22 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.state.Status
 
 
 object CleanTargetTask {
-    def apply(outputs:Seq[String], description:String) : CleanTargetTask = {
-        val task = new CleanTargetTask
-        task._targets = outputs
-        task._description = description
-        task
+    def apply(targets:Seq[Target], description:String) : CleanTargetTask = {
+        CleanTargetTask(
+            Task.Properties(null),
+            targets
+        )
     }
 }
 
 
-class CleanTargetTask extends BaseTask {
+case class CleanTargetTask(instanceProperties:Task.Properties, targets:Seq[Target]) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
-
-    @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
-
-    def targets(implicit context: Context) : Seq[TargetIdentifier] = _targets.map(i => TargetIdentifier.parse(context.evaluate(i)))
 
     /**
       * Executes all outputs defined in this task
@@ -49,13 +46,10 @@ class CleanTargetTask extends BaseTask {
       * @return
       */
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
         targets.forall(o => executeTarget(executor, o))
     }
 
-    private def executeTarget(executor: Executor, identifier:TargetIdentifier) : Boolean = {
-        implicit val context = executor.context
-        val target = context.getTarget(identifier)
+    private def executeTarget(executor: Executor, target:Target) : Boolean = {
         val result = executor.runner.clean(executor, target)
 
         // Only return true if status is SUCCESS, CLEANED or SKIPPED
@@ -63,5 +57,18 @@ class CleanTargetTask extends BaseTask {
             case Status.SUCCESS | Status.SKIPPED => true
             case _ => false
         }
+    }
+}
+
+
+
+class CleanTargetTaskSpec extends TaskSpec {
+    @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
+
+    override def instantiate(context: Context): CleanTargetTask = {
+        CleanTargetTask(
+            instanceProperties(context),
+            _targets.map(i => context.getTarget(TargetIdentifier(context.evaluate(i))))
+        )
     }
 }

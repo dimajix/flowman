@@ -60,8 +60,9 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read
@@ -105,8 +106,9 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read

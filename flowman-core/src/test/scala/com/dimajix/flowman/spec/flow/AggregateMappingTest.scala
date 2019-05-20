@@ -92,7 +92,6 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        implicit val context = executor.context
 
         project.mappings.size should be (2)
         project.mappings.contains("t0") should be (true)

@@ -17,31 +17,44 @@
 package com.dimajix.flowman.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.hadoop.FileSystem
 
 
-class GetFileTask extends BaseTask {
+case class GetFileTask(
+    instanceProperties:Task.Properties,
+    source:Path,
+    target:Path,
+    overwrite:Boolean
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[GetFileTask])
 
-    @JsonProperty(value="source", required=true) private var _source:String = ""
-    @JsonProperty(value="target", required=true) private var _target:String = ""
-    @JsonProperty(value="overwrite", required=false) private var _overwrite:String = "true"
-
-    def source(implicit context:Context) : String = context.evaluate(_source)
-    def target(implicit context:Context) : String = context.evaluate(_target)
-    def overwrite(implicit context:Context) : Boolean = context.evaluate(_overwrite).toBoolean
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val fs = new FileSystem(executor.hadoopConf)
+        val fs = executor.context.fs
         val src = fs.file(source)
         val dst = fs.local(target)
         logger.info(s"Retrieving remote file '$src' to local file '$dst' (overwrite=$overwrite)")
         src.copy(dst, overwrite)
         true
+    }
+}
+
+
+
+class GetFileTaskSpec extends TaskSpec {
+    @JsonProperty(value = "source", required = true) private var source: String = ""
+    @JsonProperty(value = "target", required = true) private var target: String = ""
+    @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
+
+    override def instantiate(context: Context): Task = {
+        GetFileTask(
+            instanceProperties(context),
+            new Path(context.evaluate(source)),
+            new Path(context.evaluate(target)),
+            context.evaluate(overwrite).toBoolean
+        )
     }
 }

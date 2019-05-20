@@ -56,7 +56,7 @@ class MappingSchemaTest extends FlatSpec with Matchers {
               |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder().build()
         val context = session.getContext(project)
 
         val schema = MappingSchema(context, "alias")

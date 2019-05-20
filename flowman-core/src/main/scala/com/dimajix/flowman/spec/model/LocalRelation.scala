@@ -103,7 +103,6 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(executor != null)
         require(partitions != null)
 
-        implicit val context = executor.context
         if (this.partitions != null && this.partitions.nonEmpty)
             cleanPartitionedFiles(executor, partitions)
         else

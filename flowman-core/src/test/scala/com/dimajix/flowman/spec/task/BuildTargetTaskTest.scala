@@ -27,14 +27,7 @@ import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The BuildTargetTask" should "support string assignments from code" in {
-        val session = Session.builder().build()
-        implicit val context = session.context
-        val task = BuildTargetTask(Seq("lala"), "test")
-        task.targets should equal(Seq(TargetIdentifier("lala",None)))
-    }
-
-    it should "support configuration via YML" in {
+    "The BuildTargetTask" should "support configuration via YML" in {
         val spec =
             """
               |jobs:
@@ -81,7 +74,7 @@ class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val module = Module.read.string(spec)
         val project = module.toProject("test")
-        val session = Session.builder().withProject(project).withSparkSession(spark).build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
 
         val job = project.jobs("dump").instantiate(session.context)

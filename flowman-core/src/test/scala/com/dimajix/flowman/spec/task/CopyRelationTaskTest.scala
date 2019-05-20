@@ -22,6 +22,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -93,14 +94,13 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |       mode: overwrite
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
-        val session = Session.builder()
-            .withProject(project)
-            .build()
+        val session = Session.builder().build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
         val targetFilename = new File(tempDir, "copy-relation-output.csv")
         targetFilename.exists() should be (false)
-        val job = project.jobs("main").instantiate(executor.context)
+        val job = context.getJob(JobIdentifier("main"))
         job should not be (null)
         job.execute(executor, Map()) shouldBe (Status.SUCCESS)
         targetFilename.exists() should be (true)

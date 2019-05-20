@@ -60,33 +60,24 @@ object SftpUploadTask {
     }
 }
 
-
-class SftpUploadTask extends BaseTask {
+case class SftpUploadTask(
+    instanceProperties:Task.Properties,
+    source:Path,
+    target:Path,
+    credentials:SshConnection,
+    merge:Boolean,
+    delimiter:String,
+    overwrite:Boolean
+) extends BaseTask {
     import SftpUploadTask._
     private val logger = LoggerFactory.getLogger(classOf[SftpUploadTask])
 
-    @JsonProperty(value="source", required=true) private var _source:String = ""
-    @JsonProperty(value="target", required=true) private var _target:String = ""
-    @JsonProperty(value="connection", required=true) private var _connection:String = ""
-    @JsonProperty(value="merge", required=false) private var _merge:String = "false"
-    @JsonProperty(value="delimiter", required=true) private var _delimiter:String = _
-    @JsonProperty(value="overwrite", required=false) private var _overwrite:String = "true"
-
-    def source(implicit context:Context) : String = context.evaluate(_source)
-    def target(implicit context:Context) : String = context.evaluate(_target)
-    def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
-    def merge(implicit context:Context) : Boolean = context.evaluate(_merge).toBoolean
-    def delimiter(implicit context:Context) : String = context.evaluate(_delimiter)
-    def overwrite(implicit context:Context) : Boolean = context.evaluate(_overwrite).toBoolean
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val credentials = context.getConnection(this.connection).asInstanceOf[SshConnection]
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
-        val fs = FileSystem(executor.hadoopConf)
+        val fs = executor.context.fs
         val src = fs.file(source)
-        val dst = new Path(target)
+        val dst = target
         val delimiter = Option(this.delimiter).filter(_.nonEmpty).map(_.getBytes(Charset.forName("UTF-8")))
         logger.info(s"Uploading '$src' to remote destination 'sftp://$host:$port/$dst' (overwrite=$overwrite)")
 
@@ -188,7 +179,7 @@ class SftpUploadTask extends BaseTask {
         }
     }
 
-    private def connect(host:String, port:Int, credentials:SshConnection)(implicit context: Context) : Connection = {
+    private def connect(host:String, port:Int, credentials:SshConnection) : Connection = {
         val username = credentials.username
         val password = credentials.password
         val keyFile = credentials.keyFile
@@ -232,7 +223,7 @@ class SftpUploadTask extends BaseTask {
         connection
     }
 
-    private def hostKeyVerifier(credentials:SshConnection)(implicit context: Context) : ServerHostKeyVerifier = {
+    private def hostKeyVerifier(credentials:SshConnection) : ServerHostKeyVerifier = {
         val knownHosts = credentials.knownHosts
         if (knownHosts != null) {
             val verifier = new PortAwareKnownHosts(knownHosts)
@@ -254,5 +245,29 @@ class SftpUploadTask extends BaseTask {
                 override def verifyServerHostKey(s: String, i: Int, s1: String, bytes: Array[Byte]): Boolean = true
             }
         }
+    }
+}
+
+
+
+
+class SftpUploadTaskSpec extends TaskSpec {
+    @JsonProperty(value = "source", required = true) private var _source: String = ""
+    @JsonProperty(value = "target", required = true) private var _target: String = ""
+    @JsonProperty(value = "connection", required = true) private var _connection: String = ""
+    @JsonProperty(value = "merge", required = false) private var _merge: String = "false"
+    @JsonProperty(value = "delimiter", required = true) private var _delimiter: String = _
+    @JsonProperty(value = "overwrite", required = false) private var _overwrite: String = "true"
+
+    override def instantiate(context: Context): SftpUploadTask = {
+        SftpUploadTask(
+            instanceProperties(context),
+            new Path(context.evaluate(_source)),
+            new Path(context.evaluate(_target)),
+            context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[SshConnection],
+            context.evaluate(_merge).toBoolean,
+            context.evaluate(_delimiter),
+            context.evaluate(_overwrite).toBoolean
+        )
     }
 }

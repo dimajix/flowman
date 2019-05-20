@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
@@ -180,15 +181,21 @@ case class Job (
     description:String,
     parameters:Seq[JobParameter],
     environment:Seq[(String,String)],
-    tasks:Seq[Task],
-    failure:Seq[Task],
-    cleanup:Seq[Task],
+    tasks:Seq[TaskSpec],
+    failure:Seq[TaskSpec],
+    cleanup:Seq[TaskSpec],
     logged:Boolean
 ) extends AbstractInstance {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
     override def category: String = "job"
     override def kind : String = "job"
+
+    /**
+      * Returns an identifier for this job
+      * @return
+      */
+    def identifier : JobIdentifier = JobIdentifier(name, Option(project).map(_.name))
 
     /**
       * Returns a JobInstance used for state management
@@ -224,7 +231,6 @@ case class Job (
       * @return
       */
     def execute(executor:Executor, args:Map[String,String]) : Status = {
-        implicit val context = executor.context
         logger.info(s"Running job: '$name' ($description)")
 
         // Create a new execution environment.
@@ -288,7 +294,6 @@ case class Job (
     }
 
     private def runTasks(executor:Executor, tasks:Seq[Task]) : Try[Boolean] = {
-        implicit val context = executor.context
         val result = Try {
             tasks.forall { task =>
                 logger.info(s"Executing task '${task.description}'")
@@ -324,9 +329,9 @@ class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="logged") private var logged:String = "true"
     @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
-    @JsonProperty(value="tasks") private var tasks:Seq[Task] = Seq()
-    @JsonProperty(value="failure") private var failure:Seq[Task] = Seq()
-    @JsonProperty(value="cleanup") private var cleanup:Seq[Task] = Seq()
+    @JsonProperty(value="tasks") private var tasks:Seq[TaskSpec] = Seq()
+    @JsonProperty(value="failure") private var failure:Seq[TaskSpec] = Seq()
+    @JsonProperty(value="cleanup") private var cleanup:Seq[TaskSpec] = Seq()
 
     override def instantiate(context: Context): Job = {
         Job(

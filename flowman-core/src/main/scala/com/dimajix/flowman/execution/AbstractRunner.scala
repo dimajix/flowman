@@ -77,34 +77,12 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         require(executor != null)
         require(args != null)
 
-        implicit val context = executor.context
-
-        // Check if the job should run isolated. This is required if arguments are specified, which could
-        // result in different DataFrames with different arguments
-        val isolated = false //args != null && args.nonEmpty
-
-        // Create a new execution environment. This ensures that all DataFrames are only reused within a single job
-        // since other runs may have different parameters
-        val jobExecutor = if (isolated) {
-            val rootContext = RootContext.builder(context).build()
-            val rootExecutor = new RootExecutor(executor.session, rootContext)
-            if (context.project != null) rootExecutor.getProjectExecutor(context.project) else rootExecutor
-        }
-        else {
-            executor
-        }
-
         // Now run the job
         val result = if (job.logged) {
-            runLogged(jobExecutor, job, args, force)
+            runLogged(executor, job, args, force)
         }
         else {
-            runUnlogged(jobExecutor, job, args)
-        }
-
-        // Release any resources
-        if (isolated) {
-            jobExecutor.root.cleanup()
+            runUnlogged(executor, job, args)
         }
 
         result
@@ -183,8 +161,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @return
       */
     private def runUnlogged(executor: Executor, job:Job, args:Map[String,String]) : Status = {
-        implicit val context = executor.context
-
         Try {
             logger.info(s"Running job '${job.name}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
             job.execute(executor, args)
@@ -218,8 +194,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * Builds a single target
       */
     override def build(executor: Executor, target: Target, logged:Boolean=true): Status = {
-        implicit val context = executor.context
-
         // Now run the job
         val force = true
         if (logged) {
@@ -279,8 +253,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @return
       */
     private def buildUnlogged(executor: Executor, target:Target) : Status = {
-        implicit val context = executor.context
-
         Try {
             buildTarget(executor, target)
         }
@@ -295,8 +267,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
     }
 
     private def buildTarget(executor: Executor, target:Target) : Unit = {
-        implicit val context = executor.context
-
         logger.info("Resolving dependencies for target '{}'", target.name)
         val dependencies = target.dependencies
             .map(d => (d, executor.instantiate(d)))
@@ -310,8 +280,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * Builds a single target
       */
     override def clean(executor: Executor, target: Target, logged:Boolean=true): Status = {
-        implicit val context = executor.context
-
         // Now run the job
         if (logged) {
             cleanLogged(executor, target)
@@ -360,8 +328,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @return
       */
     private def cleanUnlogged(executor: Executor, target:Target) : Status = {
-        implicit val context = executor.context
-
         Try {
             target.clean(executor)
         }

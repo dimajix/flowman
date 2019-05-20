@@ -25,29 +25,36 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object CountMappingTask {
-    def apply(mapping:String) : CountMappingTask = {
-        val task = new CountMappingTask
-        task._mapping = mapping
-        task
+    def apply(mapping:MappingIdentifier) : CountMappingTask = {
+        CountMappingTask(mapping)
+    }
+}
+
+case class CountMappingTask(
+    instanceProperties:Task.Properties,
+    mapping:MappingIdentifier
+) extends BaseTask {
+    private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
+
+    override def execute(executor:Executor) : Boolean = {
+        logger.info(s"Counting records in mapping '$mapping")
+
+        val table = executor.instantiate(mapping)
+        val count = table.count()
+        println(s"Mapping '$mapping' has $count records")
+        true
     }
 }
 
 
-class CountMappingTask extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
-    @JsonProperty(value="mapping", required=true) private var _mapping:String = _
+class CountMappingTaskSpec extends TaskSpec {
+    @JsonProperty(value = "mapping", required = true) private var mapping: String = _
 
-    def mapping(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_mapping))
-
-    override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val identifier = this.mapping
-        logger.info(s"Counting records in mapping '$identifier")
-
-        val table = executor.instantiate(identifier)
-        val count = table.count()
-        println(s"Mapping '$identifier' has $count records")
-        true
+    override def instantiate(context: Context): CountMappingTask = {
+        CountMappingTask(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(mapping))
+        )
     }
 }

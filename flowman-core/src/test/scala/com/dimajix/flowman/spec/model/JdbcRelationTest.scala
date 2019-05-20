@@ -88,9 +88,11 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),
@@ -176,9 +178,11 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).withProject(project).build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.getExecutor(project)
-        val relation = executor.context.getRelation(RelationIdentifier("t0"))
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),

@@ -22,35 +22,46 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.model.Relation
 
 
 object DescribeRelationTask {
-    def apply(relation:String) : DescribeRelationTask = {
-        val task = new DescribeRelationTask
-        task._relation = relation
-        task
+    def apply(relation:Relation) : DescribeRelationTask = {
+        DescribeRelationTask(
+            Task.Properties(null),
+            relation
+        )
     }
 }
 
 
-class DescribeRelationTask extends BaseTask {
+case class DescribeRelationTask(
+    instanceProperties:Task.Properties,
+    relation:Relation
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeRelationTask])
 
-    @JsonProperty(value="relation", required=true) private var _relation:String = _
-
-    def relation(implicit context: Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_relation))
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val identifier = this.relation
-        logger.info(s"Describing relation '$identifier'")
+        logger.info(s"Describing relation '${relation.identifier}'")
 
-        val relation = context.getRelation(identifier)
         val schema = relation.schema
         if (schema == null)
-            logger.error(s"Relation '$identifier' does not provide an explicit schema")
+            logger.error(s"Relation '${relation.identifier}' does not provide an explicit schema")
         else
             schema.printTree
         true
+    }
+}
+
+
+
+class DescribeRelationTaskSpec extends TaskSpec {
+    @JsonProperty(value = "relation", required = true) private var relation: String = _
+
+    override def instantiate(context: Context): Task = {
+        DescribeRelationTask(
+            instanceProperties(context),
+            context.getRelation(RelationIdentifier(context.evaluate(relation)))
+        )
     }
 }

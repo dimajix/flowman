@@ -46,13 +46,12 @@ case class StreamTarget(
       * @param executor
       */
     override def build(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): Unit = {
-        val target = this.relation
         val input = instanceProperties.input
 
-        logger.info(s"Writing mapping '$input' to streaming relation '$target' using mode '$mode' and checkpoint location '$checkpointLocation'")
-        val relation = context.getRelation(target)
+        logger.info(s"Writing mapping '$input' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")
+        val rel = context.getRelation(relation)
         val table = tables(input).coalesce(parallelism)
-        relation.writeStream(executor, table, mode, checkpointLocation)
+        rel.writeStream(executor, table, mode, checkpointLocation)
     }
 
     /**
@@ -61,11 +60,9 @@ case class StreamTarget(
       * @param executor
       */
     override def clean(executor: Executor): Unit = {
-        val target = this.relation
-
-        logger.info(s"Cleaining streaming relation '$target'")
-        val relation = context.getRelation(target)
-        relation.clean(executor)
+        logger.info(s"Cleaining streaming relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.clean(executor)
     }
 }
 

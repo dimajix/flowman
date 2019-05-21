@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.CountMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -37,7 +38,7 @@ class CountCommand extends ActionCommand {
     var mapping: String = ""
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = CountMappingTask(mapping)
+        val task = CountMappingTask(context, MappingIdentifier(mapping))
 
         Try {
             task.execute(executor)

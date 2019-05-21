@@ -22,13 +22,12 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
 
 
 object DescribeRelationTask {
-    def apply(relation:Relation) : DescribeRelationTask = {
+    def apply(context: Context, relation:RelationIdentifier) : DescribeRelationTask = {
         DescribeRelationTask(
-            Task.Properties(null),
+            Task.Properties(context),
             relation
         )
     }
@@ -37,16 +36,17 @@ object DescribeRelationTask {
 
 case class DescribeRelationTask(
     instanceProperties:Task.Properties,
-    relation:Relation
+    relation:RelationIdentifier
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeRelationTask])
 
     override def execute(executor:Executor) : Boolean = {
-        logger.info(s"Describing relation '${relation.identifier}'")
+        logger.info(s"Describing relation '$relation'")
 
-        val schema = relation.schema
+        val rel = context.getRelation(relation)
+        val schema = rel.schema
         if (schema == null)
-            logger.error(s"Relation '${relation.identifier}' does not provide an explicit schema")
+            logger.error(s"Relation '$relation' does not provide an explicit schema")
         else
             schema.printTree
         true
@@ -61,7 +61,7 @@ class DescribeRelationTaskSpec extends TaskSpec {
     override def instantiate(context: Context): Task = {
         DescribeRelationTask(
             instanceProperties(context),
-            context.getRelation(RelationIdentifier(context.evaluate(relation)))
+            RelationIdentifier(context.evaluate(relation))
         )
     }
 }

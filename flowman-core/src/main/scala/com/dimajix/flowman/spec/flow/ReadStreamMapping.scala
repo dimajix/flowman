@@ -31,7 +31,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 case class ReadStreamMapping (
     instanceProperties:Mapping.Properties,
-    relation:Relation,
+    relation:RelationIdentifier,
     columns:Map[String,String]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
@@ -44,11 +44,11 @@ case class ReadStreamMapping (
       * @return
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        val fields = this.columns
-        val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
-        logger.info(s"Reading from streaming relation '${relation.identifier}'")
+        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        logger.info(s"Reading from streaming relation '${relation}'")
 
-        relation.readStream(executor, schema)
+        val rel = context.getRelation(relation)
+        rel.readStream(executor, schema)
     }
 
     /**
@@ -68,12 +68,12 @@ case class ReadStreamMapping (
     override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        val fields = this.columns
-        if (fields != null && fields.nonEmpty) {
-            StructType.of(SchemaUtils.createSchema(fields.toSeq))
+        if (columns.nonEmpty) {
+            StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
-            StructType(relation.schema.fields)
+            val rel = context.getRelation(relation)
+            StructType(rel.schema.fields)
         }
     }
 }
@@ -92,7 +92,7 @@ class ReadStreamMappingSpec extends MappingSpec {
     override def instantiate(context: Context): ReadStreamMapping = {
         ReadStreamMapping(
             instanceProperties(context),
-            context.getRelation(RelationIdentifier(context.evaluate(relation))),
+            RelationIdentifier(context.evaluate(relation)),
             columns.mapValues(context.evaluate)
         )
     }

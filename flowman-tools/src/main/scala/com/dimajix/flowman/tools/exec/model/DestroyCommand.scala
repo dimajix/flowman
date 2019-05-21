@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.task.DestroyRelationTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.Status
@@ -40,15 +41,18 @@ class DestroyCommand extends ActionCommand {
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Destroying relations {}", if (relations != null) relations.mkString(",") else "all")
 
-        // Then execute output operations
         val toRun =
             if (relations.nonEmpty)
                 relations.toSeq
             else
                 project.relations.keys.toSeq
 
-        val task = DestroyRelationTask(toRun, ignoreIfNotExists)
-        val job = Job(context, Seq(task), "destroy-relations", "Destroy relations")
+        val task = DestroyRelationTask(context, toRun.map(RelationIdentifier.parse), ignoreIfNotExists)
+        val job = Job.builder(context)
+            .setName("destrpy-relations")
+            .setDescription("Destroy relations")
+            .addTask(task)
+            .build()
 
         val runner = executor.runner
         val result = runner.execute(executor, job)

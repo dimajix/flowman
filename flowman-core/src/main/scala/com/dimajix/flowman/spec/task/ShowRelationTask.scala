@@ -22,13 +22,12 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
 
 
 object ShowRelationTask {
-    def apply(relation:Relation, columns:Seq[String], limit:Int) : ShowRelationTask = {
+    def apply(context:Context, relation:RelationIdentifier, columns:Seq[String], limit:Int) : ShowRelationTask = {
         ShowRelationTask(
-            Task.Properties(null),
+            Task.Properties(context),
             relation,
             columns,
             limit
@@ -38,16 +37,17 @@ object ShowRelationTask {
 
 case class ShowRelationTask(
     instanceProperties:Task.Properties,
-    relation:Relation,
+    relation:RelationIdentifier,
     columns:Seq[String],
     limit:Int
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[ShowRelationTask])
 
     override def execute(executor:Executor) : Boolean = {
-        logger.info(s"Showing first $limit rows of relation '${relation.identifier}'")
+        logger.info(s"Showing first $limit rows of relation '$relation'")
 
-        val table = relation.read(executor, null)
+        val rel = context.getRelation(relation)
+        val table = rel.read(executor, null)
         val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else
@@ -69,7 +69,7 @@ class ShowRelationTaskSpec extends TaskSpec {
     override def instantiate(context: Context): Task = {
         ShowRelationTask(
             instanceProperties(context),
-            context.getRelation(RelationIdentifier(context.evaluate(relation))),
+            RelationIdentifier(context.evaluate(relation)),
             columns.map(context.evaluate),
             context.evaluate(limit).toInt
         )

@@ -22,13 +22,12 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
 
 
 object CreateRelationTask {
-    def apply(relations:Seq[Relation], ignoreIfExists:Boolean) : CreateRelationTask = {
+    def apply(context:Context, relations:Seq[RelationIdentifier], ignoreIfExists:Boolean) : CreateRelationTask = {
         CreateRelationTask(
-            Task.Properties(null),
+            Task.Properties(context),
             relations,
             ignoreIfExists
         )
@@ -37,7 +36,7 @@ object CreateRelationTask {
 
 case class CreateRelationTask(
     instanceProperties:Task.Properties,
-    relations:Seq[Relation],
+    relations:Seq[RelationIdentifier],
     ignoreIfExists:Boolean
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CreateRelationTask])
@@ -55,11 +54,12 @@ case class CreateRelationTask(
         true
     }
 
-    private def createRelation(executor: Executor, relation:Relation) : Boolean = {
+    private def createRelation(executor: Executor, relationName:RelationIdentifier) : Boolean = {
         require(executor != null)
-        require(relation != null)
+        require(relationName != null)
 
-        logger.info(s"Creating relation '${relation.identifier}'")
+        logger.info(s"Creating relation '${relationName}'")
+        val relation = context.getRelation(relationName)
         relation.create(executor, ignoreIfExists)
         true
     }
@@ -75,7 +75,7 @@ class CreateRelationTaskSpec extends TaskSpec {
     override def instantiate(context: Context): Task = {
         CreateRelationTask(
             instanceProperties(context),
-            relations.map(i => context.getRelation(RelationIdentifier(context.evaluate(i)))),
+            relations.map(i => RelationIdentifier(context.evaluate(i))),
             context.evaluate(ignoreIfExists).toBoolean
         )
     }

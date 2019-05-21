@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.task.DescribeRelationTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -37,7 +38,7 @@ class DescribeCommand extends ActionCommand {
     var relation: String = ""
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = DescribeRelationTask(relation)
+        val task = DescribeRelationTask(context, RelationIdentifier(relation))
 
         Try {
             task.execute(executor)

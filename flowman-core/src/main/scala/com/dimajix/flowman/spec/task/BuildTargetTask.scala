@@ -22,20 +22,19 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.state.Status
 
 
 object BuildTargetTask {
-    def apply(targets:Seq[Target], description:String) : BuildTargetTask = {
+    def apply(context: Context, targets:Seq[TargetIdentifier], description:String) : BuildTargetTask = {
         BuildTargetTask(
-            Task.Properties(null),
+            Task.Properties(context),
             targets
         )
     }
 }
 
-case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[Target]) extends BaseTask {
+case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[TargetIdentifier]) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
 
     /**
@@ -48,7 +47,8 @@ case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[Targe
         targets.forall(o => executeTarget(executor, o))
     }
 
-    private def executeTarget(executor: Executor, target:Target) : Boolean = {
+    private def executeTarget(executor: Executor, targetName:TargetIdentifier) : Boolean = {
+        val target = context.getTarget(targetName)
         val result = executor.runner.build(executor, target)
 
         // Only return true if status is SUCCESS or SKIPPED
@@ -62,12 +62,12 @@ case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[Targe
 
 
 class BuildTargetTaskSpec extends TaskSpec {
-    @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
+    @JsonProperty(value="targets", required=true) private var targets:Seq[String] = Seq()
 
     override def instantiate(context: Context): BuildTargetTask = {
         BuildTargetTask(
             instanceProperties(context),
-            _targets.map(i => context.getTarget(TargetIdentifier(context.evaluate(i))))
+            targets.map(i => TargetIdentifier(context.evaluate(i)))
         )
     }
 }

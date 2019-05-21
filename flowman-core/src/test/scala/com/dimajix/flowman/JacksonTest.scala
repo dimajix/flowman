@@ -17,6 +17,7 @@
 package com.dimajix.flowman
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -25,22 +26,39 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 
-class SequenceElement {
-    @JsonBackReference
-    var parent:SequenceContainer = _
-    @JsonProperty(value="name")
-    var name:String=_
-}
-class SequenceContainer {
-    @JsonProperty(value="children") var _children: Seq[SequenceElement] = _
+object JacksonTest {
+
+    class SequenceElement {
+        @JsonBackReference
+        var parent: SequenceContainer = _
+        @JsonProperty(value = "name")
+        var name: String = _
+    }
+
+    class SequenceContainer {
+        @JsonProperty(value = "children") var _children: Seq[SequenceElement] = _
+    }
+
+    class OptionContainer {
+        @JsonProperty(value = "key") var key: String = _
+        @JsonProperty(value = "val") var value: Option[String] = _
+    }
+
+    case class CaseClassWithDefaults @JsonCreator(mode=JsonCreator.Mode.DISABLED)(
+        @JsonProperty(value = "key", defaultValue = "key") key: String = "key",
+        @JsonProperty(value = "value", defaultValue = "value") value: String = "value"
+    ) {
+        @JsonCreator
+        def this() = this("key", "value")
+    }
 }
 
-class OptionContainer {
-    @JsonProperty(value="key") var key:String = _
-    @JsonProperty(value="val") var value:Option[String] = _
-}
 
 class JacksonTest extends FlatSpec with Matchers {
+    val mapper = new ObjectMapper(new YAMLFactory())
+    mapper.registerModule(DefaultScalaModule)
+
+    import JacksonTest._
     "The BackReference" should "be filled out" in {
        val yaml =
            """
@@ -48,14 +66,23 @@ class JacksonTest extends FlatSpec with Matchers {
              |   - name: lala
            """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
         val data = mapper.readValue(yaml, classOf[SequenceContainer])
 
         data._children.size should be (1)
         data._children(0) should not be (null)
         data._children(0).name should be ("lala")
         data._children(0).parent should be (null)
+    }
+
+    "Case classes" should "be serialized with default values" in {
+        val yaml =
+            """
+              |value: lala
+            """.stripMargin
+
+        val data = mapper.readValue(yaml, classOf[CaseClassWithDefaults])
+        data.key should be ("key")
+        data.value should be ("lala")
     }
 
     "Optional values" should "be supported" in {
@@ -65,8 +92,6 @@ class JacksonTest extends FlatSpec with Matchers {
               |val: some_value
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
         val data = mapper.readValue(yaml, classOf[OptionContainer])
         data.key should be ("some_key")
         data.value should be (Some("some_value"))
@@ -78,8 +103,6 @@ class JacksonTest extends FlatSpec with Matchers {
               |key: some_key
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
         val data = mapper.readValue(yaml, classOf[OptionContainer])
         data.key should be ("some_key")
         data.value should be (null)
@@ -92,8 +115,6 @@ class JacksonTest extends FlatSpec with Matchers {
               |val: null
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
         val data = mapper.readValue(yaml, classOf[OptionContainer])
         data.key should be (null)
         data.value should be (None)
@@ -106,8 +127,6 @@ class JacksonTest extends FlatSpec with Matchers {
               |val: "null"
             """.stripMargin
 
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
         val data = mapper.readValue(yaml, classOf[OptionContainer])
         data.key should be ("null")
         data.value should be (Some("null"))

@@ -36,7 +36,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 case class ReadRelationMapping(
     instanceProperties:Mapping.Properties,
-    relation:Relation,
+    relation:RelationIdentifier,
     columns:Map[String,String],
     partitions:Map[String,FieldValue]
 ) extends BaseMapping {
@@ -51,9 +51,9 @@ case class ReadRelationMapping(
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
-        logger.info(s"Reading from relation '${relation.identifier}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
-
-        relation.read(executor, schema, partitions)
+        logger.info(s"Reading from relation '${relation}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        val rel = context.getRelation(relation)
+        rel.read(executor, schema, partitions)
     }
 
     /**
@@ -77,7 +77,7 @@ case class ReadRelationMapping(
             StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
-            relation match {
+            context.getRelation(relation) match {
                 case pt:PartitionedRelation => StructType(pt.schema.fields ++ pt.partitions.map(_.field))
                 case relation:Relation => StructType(relation.schema.fields)
             }
@@ -105,7 +105,7 @@ class ReadRelationMappingSpec extends MappingSpec {
             }
         ReadRelationMapping(
             instanceProperties(context),
-            context.getRelation(RelationIdentifier(context.evaluate(relation))),
+            RelationIdentifier(context.evaluate(relation)),
             columns.mapValues(context.evaluate),
             partitions
         )

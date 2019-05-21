@@ -25,10 +25,10 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object ShowMappingTask {
-    def apply(mapping:String, columns:Seq[String], limit:Int) : ShowMappingTask = {
+    def apply(context: Context, mapping:MappingIdentifier, columns:Seq[String], limit:Int) : ShowMappingTask = {
         ShowMappingTask(
-            Task.Properties(null),
-            MappingIdentifier(mapping),
+            Task.Properties(context),
+            mapping,
             columns,
             limit
         )

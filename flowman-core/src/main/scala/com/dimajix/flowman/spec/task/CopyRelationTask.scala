@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
@@ -32,9 +31,9 @@ import com.dimajix.flowman.util.SchemaUtils
 
 case class CopyRelationTask(
     instanceProperties:Task.Properties,
-    source:Relation,
+    source:RelationIdentifier,
     sourcePartitions:Map[String,FieldValue],
-    target:Relation,
+    target:RelationIdentifier,
     targetPartition:Map[String,SingleValue],
     parallelism:Int,
     columns:Map[String,String],
@@ -43,11 +42,13 @@ case class CopyRelationTask(
     private val logger = LoggerFactory.getLogger(classOf[CopyRelationTask])
 
     override def execute(executor:Executor) : Boolean = {
-        logger.info(s"Copying from relation '${source.identifier}' to relation '${target.identifier}' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Copying from relation '${source}' to relation '${target}' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
-        val schema = if (columns != null && columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
-        val data = source.read(executor, schema, sourcePartitions).coalesce(parallelism)
-        target.write(executor, data, targetPartition, mode)
+        val input = context.getRelation(source)
+        val output = context.getRelation(target)
+        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        val data = input.read(executor, schema, sourcePartitions).coalesce(parallelism)
+        output.write(executor, data, targetPartition, mode)
         true
     }
 }
@@ -67,14 +68,14 @@ class CopyRelationTaskSpec extends TaskSpec {
     override def instantiate(context: Context): CopyRelationTask = {
         CopyRelationTask(
             instanceProperties(context),
-            context.getRelation(RelationIdentifier.parse(context.evaluate(source))),
+            RelationIdentifier.parse(context.evaluate(source)),
             sourcePartitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
                 case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context
                     .evaluate(v.step))
             },
-            context.getRelation(RelationIdentifier.parse(context.evaluate(target))),
+            RelationIdentifier.parse(context.evaluate(target)),
             targetPartition.mapValues(p => SingleValue(context.evaluate(p))),
             context.evaluate(parallelism).toInt,
             columns.mapValues(context.evaluate),

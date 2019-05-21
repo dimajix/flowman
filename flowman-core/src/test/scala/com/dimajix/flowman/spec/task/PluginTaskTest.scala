@@ -20,15 +20,22 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 
 
-@TaskType(kind = "annotatedTask")
-class AnnotatedTask extends BaseTask {
+case class AnnotatedTask(instanceProperties:Task.Properties) extends BaseTask {
     override def execute(executor: Executor): Boolean = true
 }
+
+@TaskType(kind = "annotatedTask")
+class AnnotatedTaskSpec extends TaskSpec {
+    override def instantiate(context: Context): Task = AnnotatedTask(instanceProperties(context))
+}
+
+
 
 class PluginTaskTest extends FlatSpec with Matchers  {
     "A plugin" should "be used if present" in {

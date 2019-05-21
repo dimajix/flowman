@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.task.CreateRelationTask
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.Status
@@ -43,15 +44,18 @@ class CreateCommand extends ActionCommand {
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Creating relations {}", if (relations != null) relations.mkString(",") else "all")
 
-        // Then execute output operations
         val toRun =
             if (relations.nonEmpty)
                 relations.toSeq
             else
                 project.relations.keys.toSeq
 
-        val task = CreateRelationTask(toRun, ignoreIfExists)
-        val job = Job(context, Seq(task), "create-relations", "Create relations")
+        val task = CreateRelationTask(context, toRun.map(RelationIdentifier.parse), ignoreIfExists)
+        val job = Job.builder(context)
+            .setName("create-relations")
+            .setDescription("Create relations")
+            .addTask(task)
+            .build()
 
         val runner = executor.runner
         val result = runner.execute(executor, job)

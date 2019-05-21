@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.task.ShowRelationTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -44,7 +45,7 @@ class ShowCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val columns = this.columns.split(",").filter(_.nonEmpty)
-        val task = ShowRelationTask(relation, columns, limit)
+        val task = ShowRelationTask(context, RelationIdentifier(relation), columns, limit)
 
         Try {
             task.execute(executor)

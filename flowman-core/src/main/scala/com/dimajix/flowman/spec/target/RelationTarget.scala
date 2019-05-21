@@ -31,7 +31,7 @@ import com.dimajix.flowman.types.SingleValue
 
 case class RelationTarget(
     instanceProperties: Target.Properties,
-    relation: Relation,
+    relation: RelationIdentifier,
     mode: String,
     partition: Map[String,String],
     parallelism: Int,
@@ -62,13 +62,14 @@ case class RelationTarget(
         val partition = this.partition.mapValues(v => SingleValue(v))
         val input = instanceProperties.input
 
-        logger.info(s"Writing mapping '$input' to relation '${relation.identifier}' into partition $partition")
+        logger.info(s"Writing mapping '$input' to relation '${relation}' into partition $partition")
         val table = if (rebalance)
             tables(input).repartition(parallelism)
         else
             tables(input).coalesce(parallelism)
 
-        relation.write(executor, table, partition, mode)
+        val rel = context.getRelation(relation)
+        rel.write(executor, table, partition, mode)
     }
 
     /**
@@ -78,8 +79,9 @@ case class RelationTarget(
     override def clean(executor: Executor): Unit = {
         val partition = this.partition.mapValues(v => SingleValue(v))
 
-        logger.info(s"Cleaning partition $partition of relation '${relation.identifier}'")
-        relation.clean(executor, partition)
+        logger.info(s"Cleaning partition $partition of relation '${relation}'")
+        val rel = context.getRelation(relation)
+        rel.clean(executor, partition)
     }
 }
 
@@ -96,7 +98,7 @@ class RelationTargetSpec extends TargetSpec {
     override def instantiate(context: Context): Target = {
         RelationTarget(
             instanceProperties(context),
-            context.getRelation(RelationIdentifier.parse(context.evaluate(relation))),
+            RelationIdentifier.parse(context.evaluate(relation)),
             context.evaluate(mode),
             partition.mapValues(context.evaluate),
             context.evaluate(parallelism).toInt,

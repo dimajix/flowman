@@ -42,7 +42,6 @@ class ValidateCommand extends ActionCommand {
     def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Validating targets {}", if (outputs != null) outputs.mkString(",") else "all")
 
-        // Then execute output operations
         Try {
             val targets =
                 if (all)

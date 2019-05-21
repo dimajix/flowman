@@ -22,7 +22,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.state.Status
@@ -83,17 +85,19 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
         val executor = session.getExecutor(project)
+        val context = session.getContext(project)
 
-        val job = project.jobs("loop").instantiate(session.context)
+        val job = project.jobs("loop").instantiate(context)
         job.execute(executor, Map()) shouldBe (Status.FAILED)
     }
 
     it should "loop as expected with a single parameter" in {
-        val loopJob = mock[Job]
-        val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2")))
-
         val session = Session.builder().build()
         val executor = session.executor
+
+        val loopJob = mock[Job]
+        val context = mock[Context]
+        val loopTask = LoopTask(context, JobIdentifier("job"), Map("p1" -> ArrayValue("v1", "v2")))
 
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType)))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
@@ -106,11 +110,12 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
     }
 
     it should "loop as expected with a multiple parameter" in {
-        val loopJob = mock[Job]
-        val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8")))
-
         val session = Session.builder().build()
         val executor = session.executor
+
+        val loopJob = mock[Job]
+        val context = mock[Context]
+        val loopTask = LoopTask(context, JobIdentifier("job"), Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8")))
 
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2")))
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(Status.SUCCESS)
@@ -131,11 +136,12 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
     }
 
     it should "loop as expected with a single parameter and predefined value" in {
-        val loopJob = mock[Job]
-        val loopTask = new LoopTask("job", Map("p1" -> ArrayValue("v1", "v2")))
-
         val session = Session.builder().build()
         val executor = session.executor
+
+        val loopJob = mock[Job]
+        val context = mock[Context]
+        val loopTask = LoopTask(context, JobIdentifier("job"), Map("p1" -> ArrayValue("v1", "v2")))
 
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2", "4")))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)

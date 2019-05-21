@@ -27,16 +27,16 @@ import com.dimajix.flowman.state.Status
 
 
 object CleanTargetTask {
-    def apply(targets:Seq[Target], description:String) : CleanTargetTask = {
+    def apply(context: Context, targets:Seq[TargetIdentifier], description:String) : CleanTargetTask = {
         CleanTargetTask(
-            Task.Properties(null),
+            Task.Properties(context),
             targets
         )
     }
 }
 
 
-case class CleanTargetTask(instanceProperties:Task.Properties, targets:Seq[Target]) extends BaseTask {
+case class CleanTargetTask(instanceProperties:Task.Properties, targets:Seq[TargetIdentifier]) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
 
     /**
@@ -49,7 +49,8 @@ case class CleanTargetTask(instanceProperties:Task.Properties, targets:Seq[Targe
         targets.forall(o => executeTarget(executor, o))
     }
 
-    private def executeTarget(executor: Executor, target:Target) : Boolean = {
+    private def executeTarget(executor: Executor, targetName:TargetIdentifier) : Boolean = {
+        val target = context.getTarget(targetName)
         val result = executor.runner.clean(executor, target)
 
         // Only return true if status is SUCCESS, CLEANED or SKIPPED
@@ -63,12 +64,12 @@ case class CleanTargetTask(instanceProperties:Task.Properties, targets:Seq[Targe
 
 
 class CleanTargetTaskSpec extends TaskSpec {
-    @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
+    @JsonProperty(value="targets", required=true) private var targets:Seq[String] = Seq()
 
     override def instantiate(context: Context): CleanTargetTask = {
         CleanTargetTask(
             instanceProperties(context),
-            _targets.map(i => context.getTarget(TargetIdentifier(context.evaluate(i))))
+            targets.map(i => TargetIdentifier(context.evaluate(i)))
         )
     }
 }

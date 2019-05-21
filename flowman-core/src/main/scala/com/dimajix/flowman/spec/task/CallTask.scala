@@ -26,9 +26,9 @@ import com.dimajix.flowman.state.Status
 
 
 object CallTask {
-    def apply(job:Job, args:Map[String,String], force:Boolean=false) : CallTask = {
+    def apply(context: Context, job:JobIdentifier, args:Map[String,String], force:Boolean=false) : CallTask = {
         CallTask(
-            Task.Properties(null),
+            Task.Properties(context),
             job,
             args,
             force
@@ -39,7 +39,7 @@ object CallTask {
 
 case class CallTask(
     instanceProperties:Task.Properties,
-    job:Job,
+    job:JobIdentifier,
     args:Map[String,String],
     force:Boolean
 ) extends BaseTask {
@@ -50,9 +50,10 @@ case class CallTask(
     }
 
     private def executeJob(executor: Executor) : Boolean = {
-        logger.info(s"Calling sub-job '${job.identifier}' with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+        logger.info(s"Calling sub-job '$job' with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
 
-        executor.runner.execute(executor, job, args, force) match {
+        val instance = context.getJob(job)
+        executor.runner.execute(executor, instance, args, force) match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true
             case _ => false
@@ -71,7 +72,7 @@ class CallTaskSpec extends TaskSpec {
     override def instantiate(context: Context): CallTask = {
         CallTask(
             instanceProperties(context),
-            context.getJob(JobIdentifier.parse(context.evaluate(job))),
+            JobIdentifier.parse(context.evaluate(job)),
             args.mapValues(context.evaluate),
             context.evaluate(force).toBoolean
         )

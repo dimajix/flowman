@@ -74,25 +74,13 @@ case class JobParameter(
 
 
 object Job {
-    def apply(context:Context, tasks:Seq[Task], name:String, description:String) : Job = {
-        Job(
-            Properties(context),
-            description,
-            Seq(),
-            Seq(),
-            tasks,
-            Seq(),
-            Seq(),
-            true
-        )
-    }
-
     object Properties {
-        def apply(context:Context=null, name:String="") : Properties = {
+        def apply(context:Context, name:String="") : Properties = {
+            require(context != null)
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 Map()
             )
@@ -109,13 +97,14 @@ object Job {
     }
 
     class Builder(context:Context) {
+        require(context != null)
         private var name:String = ""
         private var description:String = ""
         private var logged:Boolean = true
         private var parameters:Seq[JobParameter] = Seq()
-        private var tasks:Seq[Task] = Seq()
-        private var failure:Seq[Task] = Seq()
-        private var cleanup:Seq[Task] = Seq()
+        private var tasks:Seq[TaskSpec] = Seq()
+        private var failure:Seq[TaskSpec] = Seq()
+        private var cleanup:Seq[TaskSpec] = Seq()
 
         def build() : Job = Job(
             Job.Properties(context, name),
@@ -158,14 +147,23 @@ object Job {
             this.parameters = this.parameters :+ JobParameter(name, ftype, "", granularity, value)
             this
         }
-        def setTasks(tasks:Seq[Task]) : Builder = {
+        def setTasks(tasks:Seq[TaskSpec]) : Builder = {
             require(tasks != null)
             this.tasks = tasks
             this
         }
-        def addTask(task:Task) : Builder = {
+        def addTask(task:TaskSpec) : Builder = {
             require(task != null)
             this.tasks = this.tasks :+ task
+            this
+        }
+        def addTask(task:Task) : Builder = {
+            require(task != null)
+            require(task.context eq context)
+            val wrapped = new TaskSpec {
+                override def instantiate(context: Context): Task = task
+            }
+            this.tasks = this.tasks :+ wrapped
             this
         }
     }
@@ -242,32 +240,33 @@ case class Job (
         val isolated = args != null && args.nonEmpty
 
         // Create a new execution environment.
-        val jobContext = RootContext.builder(context)
+        val rootContext = RootContext.builder(context)
             .withEnvironment(jobArgs.toSeq, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()
-        val jobExecutor = new RootExecutor(executor, jobContext, isolated)
-        val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
+        val rootExecutor = new RootExecutor(executor, rootContext, isolated)
+        val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
+        val projectExecutor = if (context.project != null) rootExecutor.getProjectExecutor(context.project) else rootExecutor
 
-        val result = runJob(projectExecutor)
+        val result = runJob(projectContext, projectExecutor)
 
         // Release any resources
         if (isolated) {
-            jobExecutor.cleanup()
+            rootExecutor.cleanup()
         }
 
         result
     }
 
-    private def runJob(executor:Executor) : Status = {
-        val result = runTasks(executor, tasks)
+    private def runJob(context:Context, executor:Executor) : Status = {
+        val result = runTasks(context, executor, tasks)
 
         // Execute failure action
         if (failure.nonEmpty) {
             result match {
                 case Success(false) | Failure(_) =>
                     logger.info(s"Running failure tasks for job '$name'")
-                    runTasks(executor, failure)
+                    runTasks(context, executor, failure)
                 case Success(_) =>
             }
         }
@@ -275,7 +274,7 @@ case class Job (
         // Execute cleanup actions
         if (cleanup.nonEmpty) {
             logger.info(s"Running cleanup tasks for job '$name'")
-            runTasks(executor, cleanup) match {
+            runTasks(context, executor, cleanup) match {
                 case Success(true) =>
                     logger.info(s"Successfully executed all cleanup tasks of job '$name'")
                 case Success(false) | Failure(_) =>
@@ -293,9 +292,10 @@ case class Job (
         }
     }
 
-    private def runTasks(executor:Executor, tasks:Seq[Task]) : Try[Boolean] = {
+    private def runTasks(context:Context, executor:Executor, tasks:Seq[TaskSpec]) : Try[Boolean] = {
         val result = Try {
-            tasks.forall { task =>
+            tasks.forall { spec =>
+                val task = spec.instantiate(context)
                 logger.info(s"Executing task '${task.description}'")
                 task.execute(executor)
             }

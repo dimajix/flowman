@@ -22,13 +22,12 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
 
 
 object DestroyRelationTask {
-    def apply(relations:Seq[Relation], ignoreIfNotExists:Boolean) : DestroyRelationTask = {
+    def apply(context: Context, relations:Seq[RelationIdentifier], ignoreIfNotExists:Boolean) : DestroyRelationTask = {
         DestroyRelationTask(
-            Task.Properties(null),
+            Task.Properties(context),
             relations,
             ignoreIfNotExists
         )
@@ -37,7 +36,7 @@ object DestroyRelationTask {
 
 case class DestroyRelationTask(
     instanceProperties:Task.Properties,
-    relations:Seq[Relation],
+    relations:Seq[RelationIdentifier],
     ignoreIfNotExists:Boolean
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CreateRelationTask])
@@ -55,11 +54,12 @@ case class DestroyRelationTask(
         true
     }
 
-    private def destroyRelation(executor: Executor, relation: Relation) : Boolean = {
+    private def destroyRelation(executor: Executor, relationName: RelationIdentifier) : Boolean = {
         require(executor != null)
-        require(relation != null)
+        require(relationName != null)
 
-        logger.info(s"Destroying relation '${relation.identifier}'")
+        logger.info(s"Destroying relation '$relationName'")
+        val relation = context.getRelation(relationName)
         relation.destroy(executor, ignoreIfNotExists)
         true
     }
@@ -74,7 +74,7 @@ class DestroyRelationTaskSpec extends TaskSpec {
     override def instantiate(context: Context): Task = {
         DestroyRelationTask(
             instanceProperties(context),
-            relations.map(i => context.getRelation(RelationIdentifier(context.evaluate(i)))),
+            relations.map(i => RelationIdentifier(context.evaluate(i))),
             context.evaluate(ignoreIfNotExists).toBoolean
         )
     }

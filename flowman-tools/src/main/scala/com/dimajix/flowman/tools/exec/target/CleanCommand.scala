@@ -42,7 +42,6 @@ class CleanCommand extends ActionCommand {
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Cleaning outputs {}", if (targets != null) targets.mkString(",") else "all")
 
-        // Then build output operations
         val toRun =
             if (all)
                 project.targets.keys.toSeq
@@ -54,8 +53,12 @@ class CleanCommand extends ActionCommand {
                     .filter(_.enabled)
                     .map(_.name)
 
-        val task = CleanTargetTask(toRun, s"Cleaning targets ${toRun.mkString(",")}")
-        val job = Job(context, Seq(task), "clean-targets", "Clean targets")
+        val task = CleanTargetTask(context, toRun.map(TargetIdentifier.parse), s"Cleaning targets ${toRun.mkString(",")}")
+        val job = Job.builder(context)
+            .setName("clean-targets")
+            .setDescription("Clean targets")
+            .addTask(task)
+            .build()
 
         val runner = executor.runner
         val result = runner.execute(executor, job, Map(), true)

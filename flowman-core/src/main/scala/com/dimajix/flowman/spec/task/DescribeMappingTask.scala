@@ -25,10 +25,10 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object DescribeMappingTask {
-    def apply(mapping:String) : DescribeMappingTask = {
+    def apply(context: Context, mapping:MappingIdentifier) : DescribeMappingTask = {
         DescribeMappingTask(
-            Task.Properties(null),
-            MappingIdentifier(mapping)
+            Task.Properties(context),
+            mapping
         )
     }
 }

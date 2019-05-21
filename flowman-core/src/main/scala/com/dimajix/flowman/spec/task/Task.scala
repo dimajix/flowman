@@ -32,11 +32,12 @@ import com.dimajix.flowman.spi.TypeRegistry
 
 object Task {
     object Properties {
-        def apply(context:Context=null, kind:String="", description:String="") : Properties = {
+        def apply(context:Context, kind:String="", description:String="") : Properties = {
+            require(context != null)
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 kind,
                 description
             )

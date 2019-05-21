@@ -25,8 +25,11 @@ import com.dimajix.flowman.spec.MappingIdentifier
 
 
 object CountMappingTask {
-    def apply(mapping:MappingIdentifier) : CountMappingTask = {
-        CountMappingTask(mapping)
+    def apply(context: Context, mapping:MappingIdentifier) : CountMappingTask = {
+        CountMappingTask(
+            Task.Properties(context),
+            mapping
+        )
     }
 }
 

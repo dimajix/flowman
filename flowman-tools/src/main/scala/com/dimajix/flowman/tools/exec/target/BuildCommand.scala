@@ -42,7 +42,6 @@ class BuildCommand extends ActionCommand {
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Processing outputs {}", if (targets != null) targets.mkString(",") else "all")
 
-        // Then build output operations
         val toRun =
             if (all)
                 project.targets.keys.toSeq
@@ -54,8 +53,12 @@ class BuildCommand extends ActionCommand {
                     .filter(_.enabled)
                     .map(_.name)
 
-        val task = BuildTargetTask(toRun, s"Building targets ${toRun.mkString(",")}")
-        val job = Job(context, Seq(task), "build-targets", "Build targets")
+        val task = BuildTargetTask(context, toRun.map(TargetIdentifier.parse), s"Building targets ${toRun.mkString(",")}")
+        val job = Job.builder(context)
+            .setName("build-targets")
+            .setDescription("Build targets")
+            .addTask(task)
+            .build()
 
         val runner = executor.runner
         val result = runner.execute(executor, job, Map(), true)

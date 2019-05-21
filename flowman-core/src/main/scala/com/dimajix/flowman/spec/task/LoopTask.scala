@@ -28,10 +28,20 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 
+object LoopTask {
+    def apply(context:Context, job:JobIdentifier, args:Map[String,FieldValue]) : LoopTask = {
+        LoopTask(
+            Task.Properties(context),
+            job,
+            args,
+            false
+        )
+    }
+}
 
 case class LoopTask(
     instanceProperties:Task.Properties,
-    job:Job,
+    job:JobIdentifier,
     args:Map[String,FieldValue],
     force:Boolean
 ) extends BaseTask {
@@ -43,9 +53,10 @@ case class LoopTask(
             args:Map[String,String] => vals.forall(v => fn(args + (param.name -> v)))
         }
 
+        val instance = context.getJob(job)
         val run = (args:Map[String,String]) => {
-            logger.info(s"Calling sub-job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-            executor.runner.execute(executor, job, args, force) match {
+            logger.info(s"Calling sub-job '$job' with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+            executor.runner.execute(executor, instance, args, force) match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true
                 case _ => false
@@ -53,7 +64,7 @@ case class LoopTask(
         }
 
         // Iterate by all parameters and create argument map
-        val paramByName = job.parameters.map(p => (p.name, p)).toMap
+        val paramByName = instance.parameters.map(p => (p.name, p)).toMap
         val result = args.toSeq.foldLeft(run)((a,p) => interpolate(a, paramByName(p._1), p._2))
 
         result(Map())

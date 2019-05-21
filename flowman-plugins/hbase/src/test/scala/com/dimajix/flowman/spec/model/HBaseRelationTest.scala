@@ -93,7 +93,7 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
         (1 until 10).foreach { id =>
             val row = table.get(new Get(id.toString.getBytes))
             row.containsColumn("f".getBytes(), "col1".getBytes()) should be (true)
-            row.getColumnLatest("f".getBytes(), "col1".getBytes()).getValue.map(_.toChar).mkString("") should be ((id*2).toString)
+            row.getColumnLatestCell("f".getBytes(), "col1".getBytes()).getValue.map(_.toChar).mkString("") should be ((id*2).toString)
         }
     }
 

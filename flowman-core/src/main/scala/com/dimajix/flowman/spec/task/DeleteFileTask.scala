@@ -32,7 +32,7 @@ case class DeleteFileTask(
     private val logger = LoggerFactory.getLogger(classOf[DeleteFileTask])
 
     override def execute(executor:Executor) : Boolean = {
-        val fs = executor.context.fs
+        val fs = executor.fs
         val file = fs.file(path)
         logger.info(s"Deleting remote file '$file' (recursive=$recursive)")
         file.delete(recursive)

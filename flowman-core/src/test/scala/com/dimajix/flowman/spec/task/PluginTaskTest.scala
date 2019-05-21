@@ -50,7 +50,7 @@ class PluginTaskTest extends FlatSpec with Matchers  {
         val module = Module.read.string(spec)
         module.jobs.keys should contain("custom")
         val job = module.jobs("custom").instantiate(session.context)
-        job.tasks(0) shouldBe an[AnnotatedTask]
+        job.tasks(0) shouldBe an[AnnotatedTaskSpec]
     }
 
 }

@@ -25,12 +25,12 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.state.JobInstance
 import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.state.JobInstance
 import com.dimajix.flowman.state.JobToken
 import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.state.TargetInstance
@@ -45,18 +45,16 @@ object AbstractRunner {
       */
     class JobExecutor(_parent:Executor, _runner:Runner) extends Executor {
         override def session: Session = _parent.session
-        override def project : Project = _parent.project
         override def namespace : Namespace = _parent.namespace
         override def root: Executor = _parent.root
-        override def context: Context = _parent.context
         override def runner: Runner = _runner
+        override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
         override def instantiate(identifier: MappingIdentifier) : DataFrame = _parent.instantiate(identifier)
         override def cleanup() : Unit = _parent.cleanup()
         override protected[execution] def cache : mutable.Map[(String,String),DataFrame] = _parent.cache
     }
-
 }
 
 
@@ -109,43 +107,43 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         withShutdownHook(shutdownHook) {
             // First checkJob if execution is really required
             if (present && !force) {
-                logger.info(s"Job '${job.name}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")} is up to date - will be skipped")
+                logger.info(s"Job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")} is up to date - will be skipped")
                 finishJob(token, Status.SKIPPED)
                 Status.SKIPPED
             }
             else {
                 Try {
-                    logger.info(s"Running job '${job.name}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+                    logger.info(s"Running job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
                     val jobExecutor = new JobExecutor(executor, jobRunner(token))
                     job.execute(jobExecutor, args)
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
-                        logger.info(s"Successfully finished execution of job '${job.name}'")
+                        logger.info(s"Successfully finished execution of job '${job.identifier}'")
                         finishJob(token, Status.SUCCESS)
                         status
                     case Success(status @ Status.FAILED) =>
-                        logger.error(s"Execution of job '${job.name}' failed")
+                        logger.error(s"Execution of job '${job.identifier}' failed")
                         finishJob(token, Status.FAILED)
                         status
                     case Success(status @ Status.ABORTED) =>
-                        logger.error(s"Execution of job '${job.name}' aborted")
+                        logger.error(s"Execution of job '${job.identifier}' aborted")
                         finishJob(token, Status.ABORTED)
                         status
                     case Success(status @ Status.SKIPPED) =>
-                        logger.error(s"Execution of job '${job.name}' skipped")
+                        logger.error(s"Execution of job '${job.identifier}' skipped")
                         finishJob(token, Status.SKIPPED)
                         status
                     case Success(status @ Status.RUNNING) =>
-                        logger.error(s"Execution of job '${job.name}' already running")
+                        logger.error(s"Execution of job '${job.identifier}' already running")
                         finishJob(token, Status.SKIPPED)
                         status
                     case Success(status) =>
-                        logger.error(s"Execution of job '${job.name}' in unknown state. Assuming failure")
+                        logger.error(s"Execution of job '${job.identifier}' in unknown state. Assuming failure")
                         finishJob(token, Status.FAILED)
                         status
                     case Failure(e) =>
-                        logger.error(s"Caught exception while executing job '${job.name}'", e)
+                        logger.error(s"Caught exception while executing job '${job.identifier}'", e)
                         finishJob(token, Status.FAILED)
                         Status.FAILED
                 }
@@ -162,30 +160,30 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       */
     private def runUnlogged(executor: Executor, job:Job, args:Map[String,String]) : Status = {
         Try {
-            logger.info(s"Running job '${job.name}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+            logger.info(s"Running job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
             job.execute(executor, args)
         }
         match {
             case Success(status @ Status.SUCCESS) =>
-                logger.info(s"Successfully finished execution of job '${job.name}'")
+                logger.info(s"Successfully finished execution of job '${job.identifier}'")
                 status
             case Success(status @ Status.FAILED) =>
-                logger.error(s"Execution of job '${job.name}' failed")
+                logger.error(s"Execution of job '${job.identifier}' failed")
                 status
             case Success(status @ Status.ABORTED) =>
-                logger.error(s"Execution of job '${job.name}' aborted")
+                logger.error(s"Execution of job '${job.identifier}' aborted")
                 status
             case Success(status @ Status.SKIPPED) =>
-                logger.error(s"Execution of job '${job.name}' skipped")
+                logger.error(s"Execution of job '${job.identifier}' skipped")
                 status
             case Success(status @ Status.RUNNING) =>
-                logger.error(s"Execution of job '${job.name}'already running")
+                logger.error(s"Execution of job '${job.identifier}'already running")
                 status
             case Success(status) =>
-                logger.error(s"Execution of job '${job.name}' in unknown state. Assuming failure")
+                logger.error(s"Execution of job '${job.identifier}' in unknown state. Assuming failure")
                 status
             case Failure(e) =>
-                logger.error(s"Caught exception while executing job '${job.name}'", e)
+                logger.error(s"Caught exception while executing job '${job.identifier}'", e)
                 Status.FAILED
         }
     }
@@ -234,11 +232,11 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
                 }
                 match {
                     case Success(_) =>
-                        logger.info(s"Successfully finished building target '${target.name}'")
+                        logger.info(s"Successfully finished building target '${target.identifier}'")
                         finishTarget(token, Status.SUCCESS)
                         Status.SUCCESS
                     case Failure(e) =>
-                        logger.error(s"Caught exception while building target '${target.name}'", e)
+                        logger.error(s"Caught exception while building target '${target.identifier}'", e)
                         finishTarget(token, Status.FAILED)
                         Status.FAILED
                 }
@@ -258,21 +256,21 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         }
         match {
             case Success(_) =>
-                logger.info(s"Successfully built target '${target.name}'")
+                logger.info(s"Successfully built target '${target.identifier}'")
                 Status.SUCCESS
             case Failure(e) =>
-                logger.error(s"Caught exception while building target '${target.name}'", e)
+                logger.error(s"Caught exception while building target '${target.identifier}'", e)
                 Status.FAILED
         }
     }
 
     private def buildTarget(executor: Executor, target:Target) : Unit = {
-        logger.info("Resolving dependencies for target '{}'", target.name)
+        logger.info("Resolving dependencies for target '{}'", target.identifier)
         val dependencies = target.dependencies
             .map(d => (d, executor.instantiate(d)))
             .toMap
 
-        logger.info("Building target '{}'", target.name)
+        logger.info("Building target '{}'", target.identifier)
         target.build(executor, dependencies)
     }
 
@@ -310,11 +308,11 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
             }
             match {
                 case Success(_) =>
-                    logger.info(s"Successfully finished cleaning target '${target.name}'")
+                    logger.info(s"Successfully finished cleaning target '${target.identifier}'")
                     finishTarget(token, Status.CLEANED)
                     Status.CLEANED
                 case Failure(e) =>
-                    logger.error(s"Caught exception while cleaning target '${target.name}'", e)
+                    logger.error(s"Caught exception while cleaning target '${target.identifier}'", e)
                     finishTarget(token, Status.FAILED)
                     Status.FAILED
             }
@@ -333,10 +331,10 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         }
         match {
             case Success(_) =>
-                logger.info(s"Successfully finished cleaning target '${target.name}'")
+                logger.info(s"Successfully finished cleaning target '${target.identifier}'")
                 Status.SUCCESS
             case Failure(e) =>
-                logger.error("Caught exception while cleaning target target '${target.name}'.", e)
+                logger.error(s"Caught exception while cleaning target target '${target.identifier}'.", e)
                 Status.FAILED
         }
     }

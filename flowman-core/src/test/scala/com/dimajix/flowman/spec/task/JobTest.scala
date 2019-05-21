@@ -38,7 +38,7 @@ case class GrabEnvironmentTask(instanceProperties:Task.Properties) extends BaseT
       * @param executor
       */
     override def execute(executor: Executor): Boolean = {
-        GrabEnvironmentTask.environment = executor.context.environment
+        GrabEnvironmentTask.environment = context.environment
         true
     }
 }

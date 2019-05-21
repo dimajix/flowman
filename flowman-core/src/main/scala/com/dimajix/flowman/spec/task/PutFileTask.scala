@@ -33,7 +33,7 @@ case class PutFileTask(
     private val logger = LoggerFactory.getLogger(classOf[PutFileTask])
 
     override def execute(executor:Executor) : Boolean = {
-        val fs = executor.context.fs
+        val fs = executor.fs
         val src = fs.local(source)
         val dst = fs.file(target)
         logger.info(s"Putting local file '$src' to remote destination '$dst' (overwrite=$overwrite)")

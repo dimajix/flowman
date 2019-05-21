@@ -48,9 +48,9 @@ import com.dimajix.flowman.types.StringType
 case class JobParameter(
     name:String,
     ftype : FieldType,
-    description:String=null,
     granularity: String=null,
-    default: Any = null
+    default: Any = null,
+    description:String=null
 ) {
     /**
       * Interpolates a given FieldValue returning all values as an Iterable
@@ -144,7 +144,7 @@ object Job {
         def addParameter(name:String, ftype:FieldType, granularity:String = null, value:Any = null) : Builder = {
             require(name != null)
             require(ftype != null)
-            this.parameters = this.parameters :+ JobParameter(name, ftype, "", granularity, value)
+            this.parameters = this.parameters :+ JobParameter(name, ftype, granularity, value)
             this
         }
         def setTasks(tasks:Seq[TaskSpec]) : Builder = {
@@ -385,9 +385,9 @@ class JobParameterSpec extends Spec[JobParameter] {
         JobParameter(
             context.evaluate(name),
             ftype,
-            context.evaluate(description),
             context.evaluate(granularity),
-            default
+            default,
+            context.evaluate(description)
         )
     }
 }

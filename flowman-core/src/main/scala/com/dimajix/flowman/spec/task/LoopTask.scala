@@ -65,7 +65,7 @@ case class LoopTask(
 
         // Iterate by all parameters and create argument map
         val paramByName = instance.parameters.map(p => (p.name, p)).toMap
-        val result = args.toSeq.foldLeft(run)((a,p) => interpolate(a, paramByName(p._1), p._2))
+        val result = args.toSeq.foldRight(run)((p,a) => interpolate(a, paramByName(p._1), p._2))
 
         result(Map())
     }

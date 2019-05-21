@@ -28,8 +28,9 @@ import com.dimajix.flowman.execution.Executor
 
 
 object MergeFilesTask {
-    def apply(source:Path, target:Path, delimiter:String = null, overwrite:Boolean = true) : MergeFilesTask = {
+    def apply(context: Context, source:Path, target:Path, delimiter:String = null, overwrite:Boolean = true) : MergeFilesTask = {
         MergeFilesTask(
+            Task.Properties(context),
             source,
             target,
             delimiter,
@@ -37,7 +38,6 @@ object MergeFilesTask {
         )
     }
 }
-
 
 case class MergeFilesTask(
     instanceProperties:Task.Properties,
@@ -49,7 +49,7 @@ case class MergeFilesTask(
     private val logger = LoggerFactory.getLogger(classOf[MergeFilesTask])
 
     override def execute(executor:Executor) : Boolean = {
-        val fs = executor.context.fs
+        val fs = executor.fs
         val src = fs.file(source)
         val dst = fs.local(target)
         val delimiter = Option(this.delimiter).map(_.getBytes(Charset.forName("UTF-8"))).filter(_.nonEmpty)

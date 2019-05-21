@@ -29,15 +29,8 @@ import com.dimajix.flowman.spec.Namespace
 
 
 private[execution] class ProjectExecutor(_parent:Executor, _project:Project, context:Context)
-    extends AbstractExecutor(_parent.session, context) {
+    extends AbstractExecutor(_parent.session) {
     override protected val logger = LoggerFactory.getLogger(classOf[ProjectExecutor])
-
-    /**
-      * Returns the project of this executor
-      *
-      * @return
-      */
-    override def project : Project = _project
 
     override def namespace: Namespace = _parent.namespace
 
@@ -92,7 +85,7 @@ private[execution] class ProjectExecutor(_parent:Executor, _project:Project, con
         val doCheckpoint = transform.checkpoint
         val cacheLevel = transform.cache
         val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
-        logger.info(s"Instantiating table for mapping '${_project.name}/$tableName' (broadcast=$doBroadcast, cache='$cacheDesc')")
+        logger.info(s"Instantiating table for mapping '${transform.identifier}' (broadcast=$doBroadcast, cache='$cacheDesc')")
         val instance = transform.execute(this, dependencies)
 
         // Optionally checkpoint DataFrame

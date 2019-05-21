@@ -29,7 +29,7 @@ import com.dimajix.flowman.spec.Namespace
 
 
 class RootExecutor private(session:Session, context:Context, sharedCache:Executor, isolated:Boolean)
-    extends AbstractExecutor(session, context) {
+    extends AbstractExecutor(session) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
     private val _cache = {
@@ -44,7 +44,7 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
         }
     }
     private val _children = mutable.Map[String,ProjectExecutor]()
-    private val _namespace = context.namespace
+    private val _namespace = session.namespace
 
     def this(session: Session, context:Context) = {
         this(session, context, null, true)
@@ -59,8 +59,6 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
       * @return
       */
     override def namespace : Namespace = _namespace
-
-    override def project: Project = null
 
     override def root: Executor = this
 

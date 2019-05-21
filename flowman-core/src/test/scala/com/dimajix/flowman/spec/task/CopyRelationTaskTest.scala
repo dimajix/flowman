@@ -45,12 +45,14 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |mode: append
               |""".stripMargin
         val session = Session.builder().build()
-        implicit val context = session.context
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CopyRelationTask]
+        val context = session.context
+
+        val taskSpec = ObjectMapper.parse[TaskSpec](spec).asInstanceOf[CopyRelationTaskSpec]
+        val task = taskSpec.instantiate(context)
         task.source should be (RelationIdentifier("local_file"))
         task.sourcePartitions should be (Map("spc" -> SingleValue("part_value")))
         task.target should be (RelationIdentifier("some_hive_table"))
-        task.targetPartition should be (Map("tpc" -> "p2"))
+        task.targetPartition should be (Map("tpc" -> SingleValue("p2")))
         task.mode should be ("append")
     }
 

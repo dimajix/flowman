@@ -59,8 +59,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val context = session.context
 
         val task = CompareFilesTask(context,
-            new Path("test/data/data_1.csv"),
-            new Path("no_such_file")
+            new Path("no_such_file"),
+            new Path("test/data/data_1.csv")
         )
         task.expected should be (new Path("test/data/data_1.csv"))
         task.actual should be (new Path("no_such_file"))
@@ -73,8 +73,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val context = session.context
 
         val task = CompareFilesTask(context,
-            new Path("no_such_file"),
-            new Path("test/data/data_1.csv")
+            new Path("test/data/data_1.csv"),
+            new Path("no_such_file")
         )
 
         task.expected should be (new Path("no_such_file"))

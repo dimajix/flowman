@@ -19,26 +19,28 @@ package com.dimajix.flowman.execution
 import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
+import com.dimajix.flowman.hadoop.FileSystem
 
-abstract class AbstractExecutor(_session:Session, _context:Context) extends Executor {
+
+abstract class AbstractExecutor(_session:Session) extends Executor {
+    require(_session != null)
+
     protected val logger:Logger
 
     override def session: Session = _session
 
     /**
-      * Returns the Context associated with this Executor. This context will be used for looking up
-      * databases and relations and for variable substition
-      *
+      * Returns the FileSystem as configured in Hadoop
       * @return
       */
-    override def context: Context = _context
+    override def fs : FileSystem = _session.fs
 
     /**
       * Returns the appropriate runner
       *
       * @return
       */
-    override def runner: Runner = session.runner
+    override def runner: Runner = _session.runner
 
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global

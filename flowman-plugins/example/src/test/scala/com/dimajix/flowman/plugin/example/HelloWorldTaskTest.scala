@@ -37,6 +37,6 @@ class HelloWorldTaskTest extends FlatSpec with Matchers {
         module.jobs.keys should contain("custom")
 
         val job = module.jobs("custom").instantiate(session.context)
-        job.tasks(0) shouldBe an[HelloWorldTask]
+        job.tasks(0) shouldBe an[HelloWorldTaskSpec]
     }
 }

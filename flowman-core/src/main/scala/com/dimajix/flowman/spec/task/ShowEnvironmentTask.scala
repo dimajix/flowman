@@ -11,7 +11,7 @@ case class ShowEnvironmentTask(
     variables:Seq[String]
 ) extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
-        val env = executor.context.environment
+        val env = context.environment
         if (variables.nonEmpty) {
             variables.foreach(v => println(v + "=" + env.getOrElse(v, "<undefined>")))
         }

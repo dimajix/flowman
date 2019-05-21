@@ -75,7 +75,7 @@ case class SftpUploadTask(
     override def execute(executor:Executor) : Boolean = {
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
-        val fs = executor.context.fs
+        val fs = executor.fs
         val src = fs.file(source)
         val dst = target
         val delimiter = Option(this.delimiter).filter(_.nonEmpty).map(_.getBytes(Charset.forName("UTF-8")))

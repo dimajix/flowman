@@ -49,7 +49,7 @@ class ExportSchemaCommand extends ActionCommand {
         Try {
             val table = executor.instantiate(MappingIdentifier.parse(mapping))
             val schema = Field.of(table.schema)
-            val file = executor.context.fs.local(filename)
+            val file = context.fs.local(filename)
             new SchemaWriter(schema).format(format).save(file)
         } match {
             case Success(_) =>

@@ -33,7 +33,7 @@ case class GetFileTask(
     private val logger = LoggerFactory.getLogger(classOf[GetFileTask])
 
     override def execute(executor:Executor) : Boolean = {
-        val fs = executor.context.fs
+        val fs = executor.fs
         val src = fs.file(source)
         val dst = fs.local(target)
         logger.info(s"Retrieving remote file '$src' to local file '$dst' (overwrite=$overwrite)")

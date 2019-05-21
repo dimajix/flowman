@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spec.Project
@@ -365,6 +366,12 @@ class Session private[execution](
       * @return
       */
     def sparkRunning: Boolean = sparkSession != null
+
+    /**
+      * Returns the FileSystem as configured in Hadoop
+      * @return
+      */
+    def fs : FileSystem = rootContext.fs
 
     /**
       * Returns the root context of this session.

@@ -19,21 +19,20 @@ package com.dimajix.flowman.execution
 import scala.collection.mutable
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.SparkConf
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
 
 
 abstract class Executor {
     def session: Session
 
-    def project : Project
     def namespace : Namespace
 
     def root: Executor
@@ -44,6 +43,12 @@ abstract class Executor {
       * @return
       */
     def runner : Runner
+
+    /**
+      * Returns the FileSystem as configured in Hadoop
+      * @return
+      */
+    def fs : FileSystem
 
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
@@ -75,14 +80,6 @@ abstract class Executor {
       * @return
       */
     def catalog: Catalog = session.catalog
-
-    /**
-      * Returns the Context associated with this Executor. This context will be used for looking up
-      * databases and relations and for variable substition
-      *
-      * @return
-      */
-    def context : Context
 
     /**
       * Creates an instance of a table of a Dataflow, or retrieves it from cache

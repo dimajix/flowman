@@ -33,7 +33,7 @@ case class CopyFileTask(
     private val logger = LoggerFactory.getLogger(classOf[CopyFileTask])
 
     override def execute(executor:Executor) : Boolean = {
-        val fs = executor.context.fs
+        val fs = executor.fs
         val src = fs.file(source)
         val dst = fs.file(target)
         logger.info(s"Copying remote file '$src' to remote file '$dst' (overwrite=$overwrite)")

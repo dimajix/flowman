@@ -38,7 +38,7 @@ import com.dimajix.flowman.templating.FileWrapper
 
 
 object ProjectContext {
-    class Builder(parent:Context, project:Project) extends AbstractContext.Builder(parent, SettingLevel.PROJECT_SETTING) {
+    class Builder private[ProjectContext](parent:Context, project:Project) extends AbstractContext.Builder(parent, SettingLevel.PROJECT_SETTING) {
         override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
 
         override def withProfile(profile:Profile) : Builder = {

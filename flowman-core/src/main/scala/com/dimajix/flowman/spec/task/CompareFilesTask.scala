@@ -54,7 +54,7 @@ case class CompareFilesTask(
     private val logger = LoggerFactory.getLogger(classOf[CompareFilesTask])
 
     override def execute(executor:Executor) : Boolean = {
-        val fs = executor.context.fs
+        val fs = executor.fs
         val actual = fs.file(this.actual)
         val expected = fs.file(this.expected)
         logger.info(s"Checking identical content of files '$actual' and '$expected'")

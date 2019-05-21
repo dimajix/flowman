@@ -270,7 +270,7 @@ case class HiveTableRelation(
             logger.info(s"Storing Avro schema at location $avroSchemaUrl")
             new SchemaWriter(fields)
                 .format("avro")
-                .save(executor.context.fs.file(avroSchemaUrl))
+                .save(executor.fs.file(avroSchemaUrl))
         }
 
         val defaultStorage = HiveSerDe.getDefaultStorage(spark.sessionState.conf)

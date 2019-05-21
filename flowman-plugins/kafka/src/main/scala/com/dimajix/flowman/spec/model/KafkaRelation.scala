@@ -48,9 +48,7 @@ object KafkaRelation {
         KafkaRelation(
             Relation.Properties(null),
             hosts,
-            topics,
-            null,
-            null
+            topics
         )
     }
 }
@@ -60,8 +58,8 @@ case class KafkaRelation(
     instanceProperties:Relation.Properties,
     hosts:Seq[String],
     topics:Seq[String],
-    startOffset:String,
-    endOffset:String
+    startOffset:String="earliest",
+    endOffset:String="latest"
 ) extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[KafkaRelation])
 
@@ -92,8 +90,6 @@ case class KafkaRelation(
       */
     override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
         val hosts = this.hosts.mkString(",")
-        val startOffset = this.startOffset
-        val endOffset = this.endOffset
         val topics = this.topics.mkString(",")
         logger.info(s"Reading Kafka topics '$topics' at hosts '$hosts'")
 
@@ -141,7 +137,6 @@ case class KafkaRelation(
       */
     override def readStream(executor: Executor, schema: StructType): DataFrame = {
         val hosts = this.hosts.mkString(",")
-        val startOffset = this.startOffset
         val topics = this.topics.mkString(",")
         logger.info(s"Streaming from Kafka topics '$topics' at hosts '$hosts'")
 

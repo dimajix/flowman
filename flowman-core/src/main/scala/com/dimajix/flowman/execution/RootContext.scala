@@ -43,7 +43,7 @@ import com.dimajix.flowman.spec.task.Job
 
 
 object RootContext {
-    class Builder(namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder(_parent, SettingLevel.NAMESPACE_SETTING) {
+    class Builder private[RootContext](namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder(_parent, SettingLevel.NAMESPACE_SETTING) {
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
 
         override def withProfile(profile:Profile) : Builder = {

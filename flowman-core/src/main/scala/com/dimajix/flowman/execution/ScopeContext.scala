@@ -48,7 +48,7 @@ class ScopeContext(
     parent:Context,
     fullEnv:Map[String,(Any, Int)],
     fullConfig:Map[String,(String, Int)]
-) extends AbstractContext(fullEnv, fullConfig) {
+) extends AbstractContext(parent, fullEnv, fullConfig) {
     override def namespace: Namespace = parent.namespace
     override def project: Project = parent.project
     override def root: Context = parent.root

@@ -86,4 +86,11 @@ class VelocityTest extends FlatSpec with Matchers {
         context.put("b", 3)
         evaluate("#set($r=$a+$b)$r") should be ("5")
     }
+
+    it should "support recursive evaluation via RecursiveValue" in {
+        context.put("a", RecursiveValue(engine, context, "This is $b"))
+        context.put("b", RecursiveValue(engine, context, "$c"))
+        context.put("c", RecursiveValue(engine, context, "ccc"))
+        evaluate("a=$a") should be ("a=This is ccc")
+    }
 }

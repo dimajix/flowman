@@ -25,21 +25,25 @@ import org.apache.velocity.runtime.RuntimeConstants
 
 object Velocity {
     private val classes = mutable.Map[String,Class[_]]()
+    private val objects = mutable.Map[String,AnyRef]()
 
     def addClass(name:String, aClass:Class[_]) : Unit = {
         classes.update(name, aClass)
     }
+    def addObject(name:String, obj:AnyRef) : Unit = {
+        objects.update(name, obj)
+    }
 
-    addClass("Boolean", classOf[BooleanWrapper])
-    addClass("Integer", classOf[IntegerWrapper])
-    addClass("Float", classOf[FloatWrapper])
-    addClass("LocalDate", classOf[LocalDateWrapper])
-    addClass("LocalDateTime", classOf[LocalDateTimeWrapper])
-    addClass("Timestamp", classOf[TimestampWrapper])
-    addClass("Duration", classOf[DurationWrapper])
-    addClass("Period", classOf[PeriodWrapper])
-    addClass("System", classOf[SystemWrapper])
-    addClass("String", classOf[StringWrapper])
+    addObject("Boolean", BooleanWrapper)
+    addObject("Integer", IntegerWrapper)
+    addObject("Float", FloatWrapper)
+    addObject("LocalDate", LocalDateWrapper)
+    addObject("LocalDateTime", LocalDateTimeWrapper)
+    addObject("Timestamp", TimestampWrapper)
+    addObject("Duration", DurationWrapper)
+    addObject("Period", PeriodWrapper)
+    addObject("System", SystemWrapper)
+    addObject("String", StringWrapper)
 
 
     /**
@@ -51,6 +55,7 @@ object Velocity {
 
         // Add instances of all custom classses
         classes.foreach { case (name, cls) => context.put(name, cls.newInstance()) }
+        objects.foreach { case (name, obj) => context.put(name, obj) }
 
         context
     }

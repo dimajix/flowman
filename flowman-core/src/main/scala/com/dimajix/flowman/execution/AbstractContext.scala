@@ -27,8 +27,8 @@ import org.slf4j.Logger
 
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Profile
-import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.templating.RecursiveValue
 import com.dimajix.flowman.templating.Velocity
 
 
@@ -56,20 +56,6 @@ object AbstractContext {
                 parent.rawConfig.foreach(kv => rawConfig.update(kv._1, kv._2))
             }
 
-            val templateEngine = Velocity.newEngine()
-            val templateContext = new VelocityContext(AbstractContext.rootContext)
-
-            def evaluate(string:String) : String = {
-                if (string != null) {
-                    val output = new StringWriter()
-                    templateEngine.evaluate(templateContext, output, "context", string)
-                    output.getBuffer.toString
-                }
-                else {
-                    null
-                }
-            }
-
             def addConfig(key:String, value:String, settingLevel: SettingLevel) : Unit = {
                 val currentValue = rawConfig.getOrElse(key, ("", SettingLevel.NONE.level))
                 if (currentValue._2 <= settingLevel.level) {
@@ -83,12 +69,7 @@ object AbstractContext {
             def addEnvironment(key:String, value:Any, settingLevel: SettingLevel) : Unit = {
                 val currentValue = rawEnvironment.getOrElse(key, ("", SettingLevel.NONE.level))
                 if (currentValue._2 <= settingLevel.level) {
-                    val finalValue = value match {
-                        case s:String => evaluate(s)
-                        case v:Any => v
-                    }
-                    rawEnvironment.update(key, (finalValue, settingLevel.level))
-                    templateContext.put(key, finalValue)
+                    rawEnvironment.update(key, (value, settingLevel.level))
                 }
                 else {
                     logger.info(s"Ignoring changing final environment variable $key=${currentValue._1} to '$value'")
@@ -210,14 +191,20 @@ object AbstractContext {
 
 
 abstract class AbstractContext(
-          override val rawEnvironment:Map[String,(Any, Int)],
-          override val rawConfig:Map[String,(String, Int)]
+    parent:Context,
+    override val rawEnvironment:Map[String,(Any, Int)],
+    override val rawConfig:Map[String,(String, Int)]
 ) extends Context {
-    private lazy val templateEngine = Velocity.newEngine()
-    protected lazy val templateContext = {
-        val context = new VelocityContext(AbstractContext.rootContext)
-        environment.foreach(kv => context.put(kv._1, kv._2))
-        context
+    protected final val templateEngine = Velocity.newEngine()
+    protected final val templateContext = new VelocityContext(AbstractContext.rootContext)
+
+    // Configure templating context
+    rawEnvironment.foreach { case (key,(value,_)) =>
+        val finalValue = value match {
+            case s:String => RecursiveValue(templateEngine, templateContext, s)
+            case v:Any => v
+        }
+        templateContext.put(key, finalValue)
     }
 
     /**
@@ -248,7 +235,10 @@ abstract class AbstractContext(
       *
       * @return
       */
-    override def environment : Map[String,Any] = rawEnvironment.mapValues(_._1)
+    override def environment : Map[String,Any] = rawEnvironment.mapValues {
+        case (s:String,_) => evaluate(s)
+        case (any,_) => any
+    }
 
     /**
       * Returns the FileSystem as configured in Hadoop

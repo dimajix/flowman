@@ -52,7 +52,17 @@ object RootContext {
         }
 
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : RootContext = {
-            new RootContext(namespace, profiles, env, config)
+            case object NamespaceWrapper {
+                def getName() : String = namespace.name
+                override def toString: String = namespace.name
+            }
+
+            val fullEnv = if (namespace != null)
+                env + ("namespace" -> ((NamespaceWrapper, SettingLevel.SCOPE_OVERRIDE.level)))
+            else
+                env
+
+            new RootContext(namespace, profiles, fullEnv, config, connections)
         }
     }
 
@@ -66,8 +76,9 @@ class RootContext private[execution](
         _namespace:Namespace,
         _profiles:Seq[String],
         fullEnv:Map[String,(Any, Int)],
-        fullConfig:Map[String,(String, Int)]
-) extends AbstractContext(fullEnv, fullConfig) {
+        fullConfig:Map[String,(String, Int)],
+        nonNamespaceConnections:Map[String, ConnectionSpec]
+) extends AbstractContext(null, fullEnv, fullConfig) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
     private lazy val _hadoopConf = SparkHadoopUtil.get.newConfiguration(_sparkConf)
@@ -151,8 +162,11 @@ class RootContext private[execution](
 
         if (identifier.project.isEmpty) {
             connections.getOrElseUpdate(identifier.name,
-                Option(namespace)
-                    .flatMap(_.connections.get(identifier.name))
+                nonNamespaceConnections.get(identifier.name)
+                    .orElse(
+                        Option(namespace)
+                            .flatMap(_.connections.get(identifier.name))
+                    )
                     .getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
                     .instantiate(this)
             )

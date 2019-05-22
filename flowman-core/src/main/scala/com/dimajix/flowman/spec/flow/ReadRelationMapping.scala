@@ -51,7 +51,7 @@ case class ReadRelationMapping(
       */
     override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
         val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
-        logger.info(s"Reading from relation '${relation}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
         val rel = context.getRelation(relation)
         rel.read(executor, schema, partitions)
     }

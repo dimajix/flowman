@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,20 +48,6 @@ object SettingLevel {
     val NONE = new SettingLevel(0)
 }
 
-object Context {
-    abstract class Builder {
-        def withEnvironment(env: Seq[(String, Any)]): Builder
-        def withConfig(env:Map[String,String]) : Builder
-        def withConnections(env:Map[String,ConnectionSpec]) : Builder
-        def withProfile(profile:Profile) : Builder
-
-        def withConfig(config:Map[String,String], level:SettingLevel) : Builder
-        def withConnections(env:Map[String,ConnectionSpec], level:SettingLevel) : Builder
-        def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder
-
-        def build() : Context
-    }
-}
 
 abstract class Context {
     /**
@@ -80,7 +66,7 @@ abstract class Context {
       * Returns the root context in a hierarchy of connected contexts
       * @return
       */
-    def root : Context
+    def root : RootContext
 
     /**
       * Evaluates a string containing expressions to be processed.
@@ -149,9 +135,6 @@ abstract class Context {
       */
     def environment: Map[String, Any]
     def rawEnvironment : Map[String,(Any, Int)]
-
-    def getProjectContext(projectName:String) : Context
-    def getProjectContext(project:Project) : Context
 
     /**
       * Returns the FileSystem as configured in Hadoop

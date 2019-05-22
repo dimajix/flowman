@@ -96,11 +96,11 @@ object Project {
             this
         }
 
-        def setEnvironment(env:Seq[(String,String)]) : Builder = {
+        def setEnvironment(env:Map[String,String]) : Builder = {
             project._environment = env
             this
         }
-        def setConfig(conf:Seq[(String,String)]) : Builder = {
+        def setConfig(conf:Map[String,String]) : Builder = {
             project._config = conf
             this
         }
@@ -170,8 +170,8 @@ class Project {
     private var _basedir: File = File.empty
     private var _filename: File = File.empty
 
-    private var _environment: Seq[(String,String)] = Seq()
-    private var _config: Seq[(String,String)] = Seq()
+    private var _environment: Map[String,String] = Map()
+    private var _config: Map[String,String] = Map()
     private var _profiles: Map[String,Profile] = Map()
     private var _connections: Map[String,ConnectionSpec] = Map()
     private var _relations: Map[String,RelationSpec] = Map()
@@ -187,8 +187,8 @@ class Project {
     def basedir : File = _basedir
     def main : Seq[String] = _main
 
-    def config : Seq[(String,String)] = _config
-    def environment : Seq[(String,String)] = _environment
+    def config : Map[String,String] = _config
+    def environment : Map[String,String] = _environment
 
     def profiles : Map[String,Profile] = _profiles
     def relations : Map[String,RelationSpec] = _relations

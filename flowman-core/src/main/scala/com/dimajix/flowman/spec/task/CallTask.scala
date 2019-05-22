@@ -68,7 +68,6 @@ class CallTaskSpec extends TaskSpec {
     @JsonProperty(value = "force") private var force: String = "false"
     @JsonProperty(value = "args", required = false) private var args: Map[String, String] = Map()
 
-
     override def instantiate(context: Context): CallTask = {
         CallTask(
             instanceProperties(context),

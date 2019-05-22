@@ -110,7 +110,7 @@ object Job {
             Job.Properties(context, name),
             description,
             parameters,
-            Seq(),
+            Map(),
             tasks,
             failure,
             cleanup,
@@ -178,7 +178,7 @@ case class Job (
     instanceProperties:Job.Properties,
     description:String,
     parameters:Seq[JobParameter],
-    environment:Seq[(String,String)],
+    environment:Map[String,String],
     tasks:Seq[TaskSpec],
     failure:Seq[TaskSpec],
     cleanup:Seq[TaskSpec],
@@ -241,7 +241,7 @@ case class Job (
 
         // Create a new execution environment.
         val rootContext = RootContext.builder(context)
-            .withEnvironment(jobArgs.toSeq, SettingLevel.SCOPE_OVERRIDE)
+            .withEnvironment(jobArgs, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()
         val projectExecutor = new RootExecutor(executor, isolated)
@@ -337,7 +337,7 @@ class JobSpec extends NamedSpec[Job] {
             instanceProperties(context),
             context.evaluate(description),
             parameters.map(_.instantiate(context)),
-            splitSettings(environment),
+            splitSettings(environment).toMap,
             tasks,
             failure,
             cleanup,

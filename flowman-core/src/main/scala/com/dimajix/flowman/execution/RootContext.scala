@@ -43,7 +43,7 @@ import com.dimajix.flowman.spec.task.Job
 
 
 object RootContext {
-    class Builder private[RootContext](namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder(_parent, SettingLevel.NAMESPACE_SETTING) {
+    class Builder private[RootContext](namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](_parent, SettingLevel.NAMESPACE_SETTING) {
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
 
         override def withProfile(profile:Profile) : Builder = {
@@ -102,7 +102,7 @@ class RootContext private[execution](
       * Returns the root context in a hierarchy of connected contexts
       * @return
       */
-    override def root : Context = this
+    override def root : RootContext = this
 
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this executor
@@ -195,11 +195,11 @@ class RootContext private[execution](
       * @param projectName
       * @return
       */
-    override def getProjectContext(projectName:String) : Context = {
+    private def getProjectContext(projectName:String) : Context = {
         require(projectName != null && projectName.nonEmpty)
         _children.getOrElseUpdate(projectName, createProjectContext(loadProject(projectName)))
     }
-    override def getProjectContext(project:Project) : Context = {
+    def getProjectContext(project:Project) : Context = {
         require(project != null)
         _children.getOrElseUpdate(project.name, createProjectContext(project))
     }

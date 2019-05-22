@@ -109,14 +109,14 @@ class Module {
       *
       * @return
       */
-    def config : Seq[(String,String)] = splitSettings(_config)
+    def config : Map[String,String] = splitSettings(_config).toMap
 
     /**
       * Returns the environment as a key-value-sequence
       *
       * @return
       */
-    def environment : Seq[(String,String)] = splitSettings(_environment)
+    def environment : Map[String,String] = splitSettings(_environment).toMap
 
     /**
       * Creates a new dataflow by merging this one with another one.

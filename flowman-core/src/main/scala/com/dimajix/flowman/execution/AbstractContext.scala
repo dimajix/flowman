@@ -35,7 +35,7 @@ import com.dimajix.flowman.templating.Velocity
 object AbstractContext {
     private lazy val rootContext = Velocity.newContext()
 
-    abstract class Builder(parent:Context, defaultSettingLevel:SettingLevel) extends Context.Builder {
+    abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) /*extends Context.Builder[B,C]*/ { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
         private var _connections = Seq[(String, ConnectionSpec, SettingLevel)]()
@@ -46,7 +46,7 @@ object AbstractContext {
           * Builds a new Context with the configuration as done before in the Builder
           * @return
           */
-        override def build() : AbstractContext = {
+        def build() : C = {
             val rawEnvironment = mutable.Map[String,(Any, Int)]()
             val rawConfig = mutable.Map[String,(String, Int)]()
             val rawConnections = mutable.Map[String, (ConnectionSpec, Int)]()
@@ -89,8 +89,8 @@ object AbstractContext {
             _environment.foreach(v => addEnvironment(v._1, v._2, v._3))
             _config.foreach(v => addConfig(v._1, v._2, v._3))
             _connections.foreach(v => addConnection(v._1, v._2, v._3))
-            val context = createContext(rawEnvironment.toMap, rawConfig.toMap, rawConnections.mapValues(_._1).toMap)
-            context
+
+            createContext(rawEnvironment.toMap, rawConfig.toMap, rawConnections.mapValues(_._1).toMap)
         }
 
         /**
@@ -98,17 +98,18 @@ object AbstractContext {
           * @param config
           * @return
           */
-        override def withConfig(config:Map[String,String]) : Builder = {
+        def withConfig(config:Map[String,String]) : B = {
             require(config != null)
             withConfig(config, defaultSettingLevel)
             this
         }
+
         /**
           * Set Spark configuration options
           * @param config
           * @return
           */
-        override def withConfig(config:Map[String,String], level:SettingLevel) : Builder = {
+        def withConfig(config:Map[String,String], level:SettingLevel) : B = {
             require(config != null)
             require(level != null)
             _config = _config ++ config.map(kv => (kv._1, kv._2, level))
@@ -120,7 +121,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        override def withConnections(connections:Map[String,ConnectionSpec]) : Builder = {
+        def withConnections(connections:Map[String,ConnectionSpec]) : B = {
             require(connections != null)
             withConnections(connections, defaultSettingLevel)
             this
@@ -130,7 +131,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        override def withConnections(connections:Map[String,ConnectionSpec], level:SettingLevel) : Builder = {
+        def withConnections(connections:Map[String,ConnectionSpec], level:SettingLevel) : B = {
             require(connections != null)
             require(level != null)
             _connections = _connections ++ connections.map(kv => (kv._1, kv._2, level))
@@ -143,7 +144,7 @@ object AbstractContext {
           * @param env
           * @return
           */
-        override def withEnvironment(env: Seq[(String, Any)]): Builder = {
+        def withEnvironment(env: Map[String, Any]): B = {
             require(env != null)
             withEnvironment(env, defaultSettingLevel)
             this
@@ -154,7 +155,7 @@ object AbstractContext {
           * @param env
           * @return
           */
-        override def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder = {
+        def withEnvironment(env:Map[String,Any], level:SettingLevel) : B = {
             require(env != null)
             require(level != null)
             _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
@@ -166,7 +167,7 @@ object AbstractContext {
           * @param profile
           * @return
           */
-        override def withProfile(profile:Profile) : Builder = {
+        def withProfile(profile:Profile) : B = {
             require(profile != null)
             withProfile(profile, defaultSettingLevel)
             this
@@ -176,16 +177,16 @@ object AbstractContext {
           * @param profile
           * @return
           */
-        protected def withProfile(profile:Profile, level:SettingLevel) : Builder = {
+        def withProfile(profile:Profile, level:SettingLevel) : B = {
             require(profile != null)
             require(level != null)
-            withConfig(profile.config.toMap, level)
+            withConfig(profile.config, level)
             withEnvironment(profile.environment, level)
             withConnections(profile.connections, level)
             this
         }
 
-        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : AbstractContext
+        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : C
     }
 }
 

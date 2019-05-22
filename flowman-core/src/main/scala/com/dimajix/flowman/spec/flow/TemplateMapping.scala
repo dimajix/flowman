@@ -15,18 +15,29 @@
  */
 
 package com.dimajix.flowman.spec.flow
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
 
-abstract class TemplateMapping extends BaseMapping {
-    @JsonProperty(value = "mapping", required = true) private var _mapping:String = _
-    @JsonProperty(value = "environment", required = true) private var _environment:Seq[String] = Seq()
+case class TemplateMapping(
+    instanceProperties:Mapping.Properties,
+    mapping:MappingIdentifier,
+    environment:Map[String,String]
+) extends BaseMapping {
+    val templateContext = ScopeContext.builder(context)
+        .withEnvironment(environment)
+        .build()
+    val mappingInstance = {
+        project.mappings(mapping.name).instantiate(templateContext)
+    }
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -34,7 +45,7 @@ abstract class TemplateMapping extends BaseMapping {
       * @return
       */
     override def dependencies: Array[MappingIdentifier] = {
-        ???
+        mappingInstance.dependencies
     }
 
     /**
@@ -47,7 +58,8 @@ abstract class TemplateMapping extends BaseMapping {
     override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]) : DataFrame = {
         require(executor != null)
         require(input != null)
-        ???
+
+        mappingInstance.execute(executor, input)
     }
 
     /**
@@ -57,7 +69,28 @@ abstract class TemplateMapping extends BaseMapping {
       */
     override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
-        ???
+
+        mappingInstance.describe(input)
     }
 }
 
+
+
+class TemplateMappingSpec extends MappingSpec {
+    @JsonProperty(value = "mapping", required = true) private var mapping:String = _
+    @JsonProperty(value = "environment", required = true) private var environment:Seq[String] = Seq()
+
+    /**
+      * Creates an instance of this specification and performs the interpolation of all variables
+      *
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): TemplateMapping = {
+        TemplateMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(mapping)),
+            splitSettings(environment).toMap
+        )
+    }
+}

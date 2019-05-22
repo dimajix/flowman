@@ -38,7 +38,7 @@ import com.dimajix.flowman.templating.FileWrapper
 
 
 object ProjectContext {
-    class Builder private[ProjectContext](parent:Context, project:Project) extends AbstractContext.Builder(parent, SettingLevel.PROJECT_SETTING) {
+    class Builder private[ProjectContext](parent:Context, project:Project) extends AbstractContext.Builder[Builder,ProjectContext](parent, SettingLevel.PROJECT_SETTING) {
         require(parent != null)
         require(project != null)
 
@@ -97,7 +97,7 @@ class ProjectContext private[execution](
       * Returns the root context in a hierarchy of connected contexts
       * @return
       */
-    override def root : Context = parent.root
+    override def root : RootContext = parent.root
 
     /**
       * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different
@@ -229,14 +229,5 @@ class ProjectContext private[execution](
         else {
             parent.getJob(identifier)
         }
-    }
-
-    override def getProjectContext(projectName:String) : Context = {
-        require(projectName != null && projectName.nonEmpty)
-        parent.getProjectContext(projectName)
-    }
-    override def getProjectContext(project:Project) : Context = {
-        require(project != null)
-        parent.getProjectContext(project)
     }
 }

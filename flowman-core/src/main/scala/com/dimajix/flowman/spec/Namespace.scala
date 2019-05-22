@@ -126,8 +126,8 @@ class Namespace {
 
     def name : String = _name
 
-    def config : Seq[(String,String)] = splitSettings(_config)
-    def environment : Seq[(String,String)] = splitSettings(_environment)
+    def config : Map[String,String] = splitSettings(_config).toMap
+    def environment : Map[String,String] = splitSettings(_environment).toMap
     def plugins : Seq[String] = _plugins
 
     def profiles : Map[String,Profile] = _profiles

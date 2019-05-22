@@ -33,7 +33,7 @@ class SessionBuilder {
     private var _sparkSession: SparkSession = _
     private var _sparkName = ""
     private var _sparkConfig = Map[String,String]()
-    private var _environment = Seq[(String,String)]()
+    private var _environment = Map[String,String]()
     private var _profiles = Set[String]()
     private var _project:Project = _
     private var _namespace:Namespace = _
@@ -99,7 +99,7 @@ class SessionBuilder {
     def withEnvironment(key:String,value:String) : SessionBuilder = {
         require(key != null)
         require(value != null)
-        _environment = _environment :+ (key -> value)
+        _environment = _environment + (key -> value)
         this
     }
 
@@ -186,15 +186,15 @@ object Session {
   * @param _jars
   */
 class Session private[execution](
-                                        _namespace:Namespace,
-                                        _project:Project,
-                                        _sparkSession:() => SparkSession,
-                                        _sparkName:String,
-                                        _sparkConfig:Map[String,String],
-                                        _environment: Seq[(String,String)],
-                                        _profiles:Set[String],
-                                        _jars:Set[String]
-                                    ) {
+    _namespace:Namespace,
+    _project:Project,
+    _sparkSession:() => SparkSession,
+    _sparkName:String,
+    _sparkConfig:Map[String,String],
+    _environment: Map[String,String],
+    _profiles:Set[String],
+    _jars:Set[String]
+) {
     require(_jars != null)
     require(_environment != null)
     require(_profiles != null)
@@ -286,7 +286,7 @@ class Session private[execution](
     }
     private var sparkSession:SparkSession = null
 
-    private lazy val rootContext : Context = {
+    private lazy val rootContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
@@ -407,7 +407,7 @@ class Session private[execution](
             () => spark.newSession(),
             _sparkName,
             _sparkConfig:Map[String,String],
-            _environment: Seq[(String,String)],
+            _environment: Map[String,String],
             _profiles:Set[String],
             Set()
         )

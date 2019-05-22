@@ -144,7 +144,8 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         project.mappings.size should be (2)
         project.mappings.contains("t0") should be (true)
@@ -155,7 +156,10 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("col2", 23)
         )).createOrReplaceTempView("my_table")
 
-        val df2 = executor.instantiate(MappingIdentifier("t1")).orderBy("_1", "_2")
+        val mapping = context.getMapping(MappingIdentifier("t1"))
+        mapping should not be null
+
+        val df2 = executor.instantiate(mapping).orderBy("_1", "_2")
         df2 should not be (null)
     }
 }

@@ -46,7 +46,8 @@ case class ShowMappingTask(
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Showing first $limit rows of mapping '$mapping'")
 
-        val table = executor.instantiate(mapping)
+        val instance = context.getMapping(mapping)
+        val table = executor.instantiate(instance)
         val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else

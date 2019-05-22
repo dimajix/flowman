@@ -47,7 +47,8 @@ class ExportSchemaCommand extends ActionCommand {
         logger.info(s"Exporting the schema of mapping '$mapping' to '$filename'")
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse(mapping))
+            val instance = context.getMapping(MappingIdentifier(mapping))
+            val table = executor.instantiate(instance)
             val schema = Field.of(table.schema)
             val file = context.fs.local(filename)
             new SchemaWriter(schema).format(format).save(file)

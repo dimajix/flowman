@@ -44,7 +44,8 @@ class ExplainCommand extends ActionCommand {
         logger.info(s"Explaining mapping '$mapping'")
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse(mapping))
+            val instance = context.getMapping(MappingIdentifier(mapping))
+            val table = executor.instantiate(instance)
             table.explain(extended)
         } match {
             case Success(_) =>

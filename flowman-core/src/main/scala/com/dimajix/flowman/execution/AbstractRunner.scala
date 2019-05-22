@@ -28,6 +28,7 @@ import org.slf4j.Logger
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.state.JobInstance
@@ -51,9 +52,9 @@ object AbstractRunner {
         override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
-        override def instantiate(identifier: MappingIdentifier) : DataFrame = _parent.instantiate(identifier)
+        override def instantiate(mapping: Mapping) : DataFrame = _parent.instantiate(mapping)
         override def cleanup() : Unit = _parent.cleanup()
-        override protected[execution] def cache : mutable.Map[(String,String),DataFrame] = _parent.cache
+        override protected[execution] def cache : mutable.Map[MappingIdentifier,DataFrame] = _parent.cache
     }
 }
 
@@ -266,9 +267,11 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
 
     private def buildTarget(executor: Executor, target:Target) : Unit = {
         logger.info("Resolving dependencies for target '{}'", target.identifier)
+        val context = target.context
         val dependencies = target.dependencies
-            .map(d => (d, executor.instantiate(d)))
+            .map(d => (d,context.getMapping(d)))
             .toMap
+            .mapValues(d => executor.instantiate(d))
 
         logger.info("Building target '{}'", target.identifier)
         target.build(executor, dependencies)

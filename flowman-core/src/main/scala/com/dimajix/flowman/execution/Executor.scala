@@ -28,6 +28,7 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.flow.Mapping
 
 
 abstract class Executor {
@@ -81,12 +82,13 @@ abstract class Executor {
       */
     def catalog: Catalog = session.catalog
 
+
     /**
-      * Creates an instance of a table of a Dataflow, or retrieves it from cache
+      * Creates an instance of a mapping, or retrieves it from cache
       *
-      * @param identifier
+      * @param mapping
       */
-    def instantiate(identifier: MappingIdentifier) : DataFrame
+    def instantiate(mapping:Mapping) : DataFrame
 
     /**
       * Releases any temporary tables
@@ -97,5 +99,5 @@ abstract class Executor {
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] def cache : mutable.Map[(String,String),DataFrame]
+    protected[execution] def cache : mutable.Map[MappingIdentifier,DataFrame]
 }

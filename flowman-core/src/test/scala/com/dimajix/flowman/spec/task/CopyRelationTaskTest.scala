@@ -97,11 +97,12 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
         val session = Session.builder().build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val targetFilename = new File(tempDir, "copy-relation-output.csv")
         targetFilename.exists() should be (false)
+
         val job = context.getJob(JobIdentifier("main"))
         job should not be (null)
         job.execute(executor, Map()) shouldBe (Status.SUCCESS)

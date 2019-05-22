@@ -74,7 +74,7 @@ class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession 
         val module = Module.read.string(spec)
         val project = module.toProject("test")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
 
         val job = project.jobs("dump").instantiate(session.context)
         job.execute(executor, Map()) should be(Status.FAILED)

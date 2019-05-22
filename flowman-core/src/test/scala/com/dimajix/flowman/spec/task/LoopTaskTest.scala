@@ -60,7 +60,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val job = project.jobs("loop").instantiate(context)
@@ -84,7 +84,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val job = project.jobs("loop").instantiate(context)

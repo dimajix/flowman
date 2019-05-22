@@ -78,8 +78,8 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("default")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
         val context = session.getContext(project)
+        val executor = session.executor
         val runner = executor.runner
 
         val job = context.getJob(JobIdentifier("default"))

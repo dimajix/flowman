@@ -47,7 +47,7 @@ class ValidateCommand extends ActionCommand {
                 else
                     project.mappings.keys.toSeq
 
-            val tables = mappingNames.map(MappingIdentifier.parse)
+            val tables = mappingNames.map(name => context.getMapping(MappingIdentifier(name)))
             tables.forall(table => executor.instantiate(table) != null)
         } match {
             case Success(true) =>

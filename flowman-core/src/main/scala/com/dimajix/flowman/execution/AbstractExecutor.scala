@@ -16,10 +16,13 @@
 
 package com.dimajix.flowman.execution
 
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.flow.Mapping
 
 
 abstract class AbstractExecutor(_session:Session) extends Executor {
@@ -55,4 +58,6 @@ abstract class AbstractExecutor(_session:Session) extends Executor {
       * @return
       */
     override def sparkRunning: Boolean = _session.sparkRunning
+
+    override def instantiate(mapping:Mapping) : DataFrame
 }

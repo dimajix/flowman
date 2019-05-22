@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,40 @@
 
 package com.dimajix.flowman.execution
 
-import java.util.NoSuchElementException
-
 import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.broadcast
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.flow.Mapping
 
 
-class RootExecutor private(session:Session, context:Context, sharedCache:Executor, isolated:Boolean)
+class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boolean)
     extends AbstractExecutor(session) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
     private val _cache = {
         if (sharedCache != null) {
             if (isolated)
-                mutable.Map[(String,String),DataFrame]()
+                mutable.Map[MappingIdentifier,DataFrame]()
             else
                 sharedCache.cache
         }
         else {
-            mutable.Map[(String,String),DataFrame]()
+            mutable.Map[MappingIdentifier,DataFrame]()
         }
     }
-    private val _children = mutable.Map[String,ProjectExecutor]()
     private val _namespace = session.namespace
 
-    def this(session: Session, context:Context) = {
-        this(session, context, null, true)
+    def this(session: Session) = {
+        this(session, null, true)
     }
-    def this(parent:Executor, context:Context, isolated:Boolean) = {
-        this(parent.session, context, parent, isolated)
+    def this(parent:Executor, isolated:Boolean) = {
+        this(parent.session, parent, isolated)
     }
 
     /**
@@ -63,17 +62,14 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
     override def root: Executor = this
 
     /**
-      * Creates an instance of a table of a Dataflow, or retrieves it from cache
+      * Creates an instance of a mapping, or retrieves it from cache
       *
-      * @param identifier
+      * @param mapping
       */
-    override def instantiate(identifier: MappingIdentifier): DataFrame = {
-        require(identifier != null)
+    override def instantiate(mapping:Mapping) : DataFrame = {
+        require(mapping != null)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchElementException("Expected project name in table specifier")
-        val child = getProjectExecutor(identifier.project.get)
-        child.instantiate(MappingIdentifier(identifier.name, None))
+        cache.getOrElseUpdate(mapping.identifier, createTable(mapping))
     }
 
     /**
@@ -85,35 +81,51 @@ class RootExecutor private(session:Session, context:Context, sharedCache:Executo
             val catalog = spark.catalog
             catalog.clearCache()
         }
-        _children.values.foreach(_.cleanup())
     }
 
     /**
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] override def cache : mutable.Map[(String,String),DataFrame] = _cache
+    protected[execution] override def cache : mutable.Map[MappingIdentifier,DataFrame] = _cache
 
-    def getProjectExecutor(project:Project) : ProjectExecutor = {
-        require(project != null)
-        _children.getOrElseUpdate(project.name, createProjectExecutor(project))
-    }
-    def getProjectExecutor(name:String) : ProjectExecutor = {
-        require(name != null && name.nonEmpty)
-        _children.getOrElseUpdate(name, createProjectExecutor(name))
-    }
+    /**
+      * Instantiates a table and recursively all its dependencies
+      *
+      * @param mapping
+      * @return
+      */
+    private def createTable(mapping:Mapping): DataFrame = {
+        // Ensure all dependencies are instantiated
+        logger.info(s"Ensuring dependencies for mapping '${mapping.identifier}'")
+        val context = mapping.context
+        val dependencies = mapping.dependencies.map(d => (d, instantiate(context.getMapping(d)))).toMap
 
-    private def createProjectExecutor(project:Project) : ProjectExecutor = {
-        val pcontext = context.getProjectContext(project)
-        val executor = new ProjectExecutor(this, project, pcontext)
-        _children.update(project.name, executor)
-        executor
-    }
-    private def createProjectExecutor(projectName:String) : ProjectExecutor = {
-        val pcontext = context.getProjectContext(projectName)
-        val project = pcontext.project
-        val executor = new ProjectExecutor(this, project, pcontext)
-        _children.update(project.name, executor)
-        executor
+        // Process table and register result as temp table
+        val doBroadcast = mapping.broadcast
+        val doCheckpoint = mapping.checkpoint
+        val cacheLevel = mapping.cache
+        val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
+        logger.info(s"Instantiating table for mapping '${mapping.identifier}' (broadcast=$doBroadcast, cache='$cacheDesc')")
+        val instance = mapping.execute(this, dependencies)
+
+        // Optionally checkpoint DataFrame
+        val df1 = if (doCheckpoint)
+            instance.checkpoint(false)
+        else
+            instance
+
+        // Optionally mark DataFrame to be broadcasted
+        val df2 = if (doBroadcast)
+            broadcast(df1)
+        else
+            df1
+
+        // Optionally cache the DataFrame
+        if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
+            df2.persist(cacheLevel)
+
+        cache.put(mapping.identifier, df2)
+        df2
     }
 }

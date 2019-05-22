@@ -49,14 +49,16 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
-        val df = executor.instantiate(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
+        mapping should not be null
+
+        val df = executor.instantiate(mapping)
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -87,14 +89,15 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
-        val df = executor.instantiate(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
+
+        val df = executor.instantiate(mapping)
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -131,14 +134,15 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
-        val df = executor.instantiate(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
+
+        val df = executor.instantiate(mapping)
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -172,15 +176,16 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
-        val df = executor.instantiate(MappingIdentifier("empty"))
+        val mapping = context.getMapping(MappingIdentifier("empty"))
+
+        val df = executor.instantiate(mapping)
         df.columns should contain("str_col")
         df.columns should contain("int_col")
         df.columns should contain("spart")
 
-        val mapping = context.getMapping(MappingIdentifier("empty"))
         val schema = mapping.describe(Map())
         schema should be (StructType(Seq(
             Field("str_col", StringType),
@@ -217,8 +222,13 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        val df = executor.instantiate(MappingIdentifier("empty"))
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val mapping = context.getMapping(MappingIdentifier("empty"))
+        mapping should not be null
+
+        val df = executor.instantiate(mapping)
         df.columns should contain("str_col")
         df.columns should contain("int_col")
         df.columns should contain("spart")

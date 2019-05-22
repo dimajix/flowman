@@ -244,15 +244,14 @@ case class Job (
             .withEnvironment(jobArgs.toSeq, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()
-        val rootExecutor = new RootExecutor(executor, rootContext, isolated)
+        val projectExecutor = new RootExecutor(executor, isolated)
         val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
-        val projectExecutor = if (context.project != null) rootExecutor.getProjectExecutor(context.project) else rootExecutor
 
         val result = runJob(projectContext, projectExecutor)
 
         // Release any resources
         if (isolated) {
-            rootExecutor.cleanup()
+            projectExecutor.cleanup()
         }
 
         result

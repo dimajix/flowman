@@ -39,7 +39,7 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val output = context.getTarget(TargetIdentifier("out"))

@@ -42,7 +42,8 @@ case class DescribeMappingTask(
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Describing mapping '$mapping")
 
-        val df = executor.instantiate(mapping)
+        val instance = context.getMapping(mapping)
+        val df = executor.instantiate(instance)
         df.printSchema()
         true
     }

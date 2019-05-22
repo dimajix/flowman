@@ -42,7 +42,8 @@ case class CountMappingTask(
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Counting records in mapping '$mapping")
 
-        val table = executor.instantiate(mapping)
+        val instance = context.getMapping(mapping)
+        val table = executor.instantiate(instance)
         val count = table.count()
         println(s"Mapping '$mapping' has $count records")
         true

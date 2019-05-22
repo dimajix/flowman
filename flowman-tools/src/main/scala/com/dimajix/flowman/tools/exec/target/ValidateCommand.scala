@@ -55,7 +55,7 @@ class ValidateCommand extends ActionCommand {
                         .map(t => context.getTarget(TargetIdentifier(t)))
                         .filter(_.enabled)
 
-            val tables = targets.flatMap(_.dependencies)
+            val tables = targets.flatMap(_.dependencies).map(context.getMapping)
             tables.forall(table => executor.instantiate(table) != null)
         } match {
             case Success(true) =>

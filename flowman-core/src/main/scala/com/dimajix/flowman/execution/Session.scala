@@ -21,12 +21,11 @@ import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spi.UdfProvider
 
 
@@ -303,7 +302,7 @@ class Session private[execution](
     }
 
     private lazy val rootExecutor : RootExecutor = {
-        val executor = new RootExecutor(this, rootContext)
+        val executor = new RootExecutor(this)
         executor
     }
 
@@ -394,16 +393,6 @@ class Session private[execution](
       */
     def getContext(project: Project) : Context = {
         rootContext.getProjectContext(project)
-    }
-
-    /**
-      * Either returns an existing or creates a new project specific executor
-      *
-      * @param project
-      * @return
-      */
-    def getExecutor(project: Project) : Executor = {
-        rootExecutor.getProjectExecutor(project)
     }
 
     /**

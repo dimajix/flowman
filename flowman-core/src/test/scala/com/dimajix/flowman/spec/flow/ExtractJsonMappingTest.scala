@@ -98,7 +98,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -134,7 +134,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -169,7 +169,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -209,7 +209,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -240,7 +240,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -280,7 +280,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -311,7 +311,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
@@ -342,7 +342,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
         val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(

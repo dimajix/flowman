@@ -74,7 +74,7 @@ object RootContext {
 
 class RootContext private[execution](
         _namespace:Namespace,
-        _profiles:Seq[String],
+        profiles:Seq[String],
         fullEnv:Map[String,(Any, Int)],
         fullConfig:Map[String,(String, Int)],
         nonNamespaceConnections:Map[String, ConnectionSpec]
@@ -85,9 +85,6 @@ class RootContext private[execution](
     private lazy val _fs = FileSystem(_hadoopConf)
 
     private val connections = mutable.Map[String,Connection]()
-
-
-    def profiles : Seq[String] = _profiles
 
     /**
       * Returns the namespace associated with this context. Can be null

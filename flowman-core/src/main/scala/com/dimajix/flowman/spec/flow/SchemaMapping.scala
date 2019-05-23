@@ -29,18 +29,11 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
-object SchemaMapping {
-    def apply(input:String, columns:Map[String,String]) : SchemaMapping = {
-        SchemaMapping(Mapping.Properties(), MappingIdentifier(input), columns.toSeq, null)
-    }
-}
-
-
 case class SchemaMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,
-    columns:Seq[(String,String)],
-    schema:Schema
+    columns:Seq[(String,String)] = Seq(),
+    schema:Schema = null
 )
 extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[SchemaMapping])

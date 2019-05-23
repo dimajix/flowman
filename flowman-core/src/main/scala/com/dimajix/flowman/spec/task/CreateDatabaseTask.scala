@@ -24,8 +24,12 @@ import com.dimajix.flowman.execution.Executor
 
 
 object CreateDatabaseTask {
-    def apply(database:String, ignoreIfExists:Boolean) : CreateDatabaseTask = {
-        CreateDatabaseTask(database, ignoreIfExists)
+    def apply(context: Context, database:String, ignoreIfExists:Boolean) : CreateDatabaseTask = {
+        CreateDatabaseTask(
+            Task.Properties(context),
+            database,
+            ignoreIfExists
+        )
     }
 }
 

@@ -26,13 +26,6 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-object DeduplicateMapping {
-    def apply(input:String, columns:Seq[String]) : DeduplicateMapping = {
-        DeduplicateMapping(Mapping.Properties(), MappingIdentifier(input), columns)
-    }
-}
-
-
 case class DeduplicateMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,

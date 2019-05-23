@@ -27,24 +27,12 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
-object UpdateMapping {
-    def apply(input:String, updates:String, keyColumns:Seq[String], filter:String="") : UpdateMapping = {
-        UpdateMapping(
-            Mapping.Properties(),
-            MappingIdentifier(input),
-            MappingIdentifier(updates),
-            filter,
-            keyColumns
-        )
-    }
-}
-
 case class UpdateMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,
     updates:MappingIdentifier,
-    filter:String,
-    keyColumns:Seq[String]
+    keyColumns:Seq[String],
+    filter:String = ""
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[UpdateMapping])
 
@@ -103,7 +91,7 @@ case class UpdateMapping(
 class UpdateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "updates", required = true) private var updates: String = _
-    @JsonProperty(value = "filter", required = false) private var filter: String = _
+    @JsonProperty(value = "filter", required = false) private var filter: String = ""
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns: Seq[String] = Seq()
 
     /**
@@ -116,8 +104,8 @@ class UpdateMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingIdentifier(context.evaluate(input)),
             MappingIdentifier.parse(context.evaluate(updates)),
-            context.evaluate(filter),
-            keyColumns.map(context.evaluate)
+            keyColumns.map(context.evaluate),
+            context.evaluate(filter)
         )
     }
 }

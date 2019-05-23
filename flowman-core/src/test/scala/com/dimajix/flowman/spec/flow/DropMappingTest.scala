@@ -57,7 +57,11 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val mapping = DropMapping("df", Seq("_1", "_3"))
+        val mapping = DropMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("df"),
+            Seq("_1", "_3")
+        )
         val expectedSchema = StructType(Seq(
             StructField("_2", StringType),
             StructField("_4", StringType)
@@ -81,7 +85,11 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val mapping = DropMapping("df", Seq("_1", "_3", "no_such_column"))
+        val mapping = DropMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("df"),
+            Seq("_1", "_3", "no_such_column")
+        )
         val expectedSchema = StructType(Seq(
             StructField("_2", StringType),
             StructField("_4", StringType)

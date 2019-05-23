@@ -25,18 +25,6 @@ import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.state.Status
 
 
-object CallTask {
-    def apply(context: Context, job:JobIdentifier, args:Map[String,String], force:Boolean=false) : CallTask = {
-        CallTask(
-            Task.Properties(context),
-            job,
-            args,
-            force
-        )
-    }
-
-}
-
 case class CallTask(
     instanceProperties:Task.Properties,
     job:JobIdentifier,

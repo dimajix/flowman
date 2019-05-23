@@ -32,10 +32,10 @@ case class TemplateMapping(
     mapping:MappingIdentifier,
     environment:Map[String,String]
 ) extends BaseMapping {
-    val templateContext = ScopeContext.builder(context)
+    private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
         .build()
-    val mappingInstance = {
+    private val mappingInstance = {
         project.mappings(mapping.name).instantiate(templateContext)
     }
 

@@ -29,7 +29,6 @@ case class ShowEnvironmentTask(
 class ShowEnvironmentTaskSpec extends TaskSpec {
     @JsonProperty(value = "variables", required = false) private var variables: Seq[String] = Seq()
 
-
     override def instantiate(context: Context): ShowEnvironmentTask = {
         ShowEnvironmentTask(
             instanceProperties(context),

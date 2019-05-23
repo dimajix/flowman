@@ -28,21 +28,10 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-object NullRelation {
-    def apply() : NullRelation = {
-        NullRelation(
-            Relation.Properties(null),
-            null,
-            Seq()
-        )
-    }
-}
-
-
 case class NullRelation(
     instanceProperties:Relation.Properties,
-    override val schema:Schema,
-    override val partitions: Seq[PartitionField]
+    override val schema:Schema = null,
+    override val partitions: Seq[PartitionField] = Seq()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
       * Reads data from the relation, possibly from specific partitions

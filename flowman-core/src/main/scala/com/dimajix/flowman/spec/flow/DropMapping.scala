@@ -27,17 +27,6 @@ import com.dimajix.flowman.transforms.Assembler
 import com.dimajix.flowman.types.StructType
 
 
-object DropMapping {
-    def apply(input:String, columns:Seq[String]) : DropMapping = {
-        DropMapping(
-            Mapping.Properties(),
-            MappingIdentifier(input),
-            columns
-        )
-    }
-}
-
-
 case class DropMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,

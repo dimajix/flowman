@@ -60,14 +60,18 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val spark = this.spark
         import spark.implicits._
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val inputRecords = Seq(inputJson.replace("\n",""))
         val inputDs = spark.createDataset(inputRecords)
         val inputDf = spark.read.json(inputDs)
 
-        val mapping = FlattenMapping("input_df", "snakeCase")
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val mapping = FlattenMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
+            "snakeCase"
+        )
 
         val expectedSchema = StructType(Seq(
             StructField("stupid_name_secret_struct_other_field", LongType),

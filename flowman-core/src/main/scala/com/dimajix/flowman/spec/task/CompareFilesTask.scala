@@ -36,16 +36,6 @@ import com.dimajix.common.tryWith
 import com.dimajix.common.TryWith
 
 
-object CompareFilesTask {
-    def apply(context: Context, actual:Path, expected:Path) : CompareFilesTask = {
-        CompareFilesTask(
-            Task.Properties(context),
-            actual,
-            expected
-        )
-    }
-}
-
 case class CompareFilesTask(
     instanceProperties:Task.Properties,
     actual:Path,

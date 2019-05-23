@@ -40,7 +40,11 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val mapping = SchemaMapping("myview", Map("_2" -> "int"))
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("myview"),
+            Seq("_2" -> "int")
+        )
 
         mapping.input should be (MappingIdentifier("myview"))
         mapping.columns should be (Seq("_2" -> "int"))
@@ -61,7 +65,11 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val mapping = SchemaMapping("myview", Map("_2" -> "int", "new" -> "string"))
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("myview"),
+            Seq("_2" -> "int", "new" -> "string")
+        )
 
         mapping.input should be (MappingIdentifier("myview"))
         mapping.columns should be (Seq("_2" -> "int", "new" -> "string"))

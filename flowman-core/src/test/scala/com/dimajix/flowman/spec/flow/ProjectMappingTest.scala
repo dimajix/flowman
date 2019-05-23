@@ -36,7 +36,11 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val mapping = ProjectMapping("myview", Seq("_2"))
+        val mapping = ProjectMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("myview"),
+            Seq("_2")
+        )
 
         mapping.input should be (MappingIdentifier("myview"))
         mapping.columns should be (Seq("_2"))

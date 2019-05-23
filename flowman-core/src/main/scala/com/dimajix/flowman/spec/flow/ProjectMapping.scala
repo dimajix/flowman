@@ -29,13 +29,6 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-object ProjectMapping {
-    def apply(input:String, columns:Seq[String]) : ProjectMapping = {
-        ProjectMapping(Mapping.Properties(), MappingIdentifier(input), columns)
-    }
-}
-
-
 case class ProjectMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,

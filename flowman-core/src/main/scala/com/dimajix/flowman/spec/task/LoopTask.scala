@@ -28,22 +28,12 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 
-object LoopTask {
-    def apply(context:Context, job:JobIdentifier, args:Map[String,FieldValue]) : LoopTask = {
-        LoopTask(
-            Task.Properties(context),
-            job,
-            args,
-            false
-        )
-    }
-}
 
 case class LoopTask(
     instanceProperties:Task.Properties,
     job:JobIdentifier,
     args:Map[String,FieldValue],
-    force:Boolean
+    force:Boolean = false
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[LoopTask])
 

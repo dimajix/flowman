@@ -22,28 +22,6 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.Instance
 
 
-object JdbcConnection {
-    /**
-      * Convenience constructor mainly used in unit tests
-      * @param driver
-      * @param url
-      * @param username
-      * @param password
-      * @param properties
-      * @return
-      */
-    def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : JdbcConnection = {
-        JdbcConnection(
-            Connection.Properties(null),
-            driver,
-            url,
-            username,
-            password,
-            properties
-        )
-    }
-}
-
 case class JdbcConnection(
     instanceProperties:Connection.Properties,
     driver:String,

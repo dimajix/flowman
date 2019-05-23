@@ -46,7 +46,11 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(context, source.path, dest.path)
+        val task = MergeFilesTask(
+            Task.Properties(context),
+            source.path,
+            dest.path
+        )
         task.execute(executor)
 
         dest.exists() should be (true)
@@ -81,7 +85,12 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(context, source.path, dest.path, "\n")
+        val task = MergeFilesTask(
+            Task.Properties(context),
+            source.path,
+            dest.path,
+            "\n"
+        )
         task.execute(executor)
 
         dest.exists() should be (true)

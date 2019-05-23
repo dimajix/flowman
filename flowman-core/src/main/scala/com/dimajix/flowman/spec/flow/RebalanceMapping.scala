@@ -25,13 +25,6 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-object RebalanceMapping {
-    def apply(context:Context, input:String, partitions:Int) : RebalanceMapping = {
-        RebalanceMapping(Mapping.Properties(context), MappingIdentifier(input), partitions)
-    }
-}
-
-
 case class RebalanceMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,

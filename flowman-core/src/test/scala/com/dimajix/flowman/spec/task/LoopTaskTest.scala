@@ -97,7 +97,11 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val loopJob = mock[Job]
         val context = mock[Context]
-        val loopTask = LoopTask(context, JobIdentifier("job"), Map("p1" -> ArrayValue("v1", "v2")))
+        val loopTask = LoopTask(
+            Task.Properties(context),
+            JobIdentifier("job"),
+            Map("p1" -> ArrayValue("v1", "v2"))
+        )
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType)))
@@ -116,7 +120,11 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val loopJob = mock[Job]
         val context = mock[Context]
-        val loopTask = LoopTask(context, JobIdentifier("job"), Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8")))
+        val loopTask = LoopTask(
+            Task.Properties(context),
+            JobIdentifier("job"),
+            Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8"))
+        )
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2")))
@@ -143,7 +151,11 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         val loopJob = mock[Job]
         val context = mock[Context]
-        val loopTask = LoopTask(context, JobIdentifier("job"), Map("p1" -> ArrayValue("v1", "v2")))
+        val loopTask = LoopTask(
+            Task.Properties(context),
+            JobIdentifier("job"),
+            Map("p1" -> ArrayValue("v1", "v2"))
+        )
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2", "4")))

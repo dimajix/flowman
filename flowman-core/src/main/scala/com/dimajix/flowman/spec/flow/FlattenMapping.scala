@@ -26,16 +26,6 @@ import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.types.StructType
 
 
-object FlattenMapping {
-    def apply(input:String, naming:String) : FlattenMapping = {
-        FlattenMapping(
-            Mapping.Properties(),
-            MappingIdentifier(input),
-            naming
-        )
-    }
-}
-
 case class FlattenMapping(
      instanceProperties:Mapping.Properties,
      input:MappingIdentifier,

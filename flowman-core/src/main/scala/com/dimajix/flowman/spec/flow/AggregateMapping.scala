@@ -27,32 +27,12 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-object AggregateMapping {
-    /**
-      * Convenience constructor mainly used in unit tests
-      * @param input
-      * @param dimensions
-      * @param aggregations
-      * @return
-      */
-    def apply(input:String, dimensions:Seq[String], aggregations:Map[String,String]) : AggregateMapping = {
-        AggregateMapping(
-            Mapping.Properties(null),
-            MappingIdentifier(input),
-            dimensions,
-            aggregations,
-            0
-        )
-    }
-}
-
-
 case class AggregateMapping(
     instanceProperties : Mapping.Properties,
     input : MappingIdentifier,
     dimensions : Seq[String],
     aggregations : Map[String,String],
-    partitions : Int
+    partitions : Int = 0
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[AggregateMapping])
 

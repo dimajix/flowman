@@ -44,7 +44,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
         val context = session.context
 
-        val task = CompareFilesTask(context,
+        val task = CompareFilesTask(
+            Task.Properties(context),
             new Path("test/data/data_1.csv"),
             new Path("test/data/data_1.csv")
         )
@@ -58,7 +59,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
         val context = session.context
 
-        val task = CompareFilesTask(context,
+        val task = CompareFilesTask(
+            Task.Properties(context),
             new Path("no_such_file"),
             new Path("test/data/data_1.csv")
         )
@@ -72,7 +74,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
         val context = session.context
 
-        val task = CompareFilesTask(context,
+        val task = CompareFilesTask(
+            Task.Properties(context),
             new Path("test/data/data_1.csv"),
             new Path("no_such_file")
         )
@@ -87,7 +90,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
         val context = session.context
 
-        val task = CompareFilesTask(context,
+        val task = CompareFilesTask(
+            Task.Properties(context),
             new Path("test/data/data_1.csv"),
             new Path("test/data")
         )
@@ -102,7 +106,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
         val context = session.context
 
-        val task = CompareFilesTask(context,
+        val task = CompareFilesTask(
+            Task.Properties(context),
             new Path("test/data"),
             new Path("test/data/data_1.csv")
         )
@@ -117,7 +122,8 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val executor = session.executor
         val context = session.context
 
-        val task = CompareFilesTask(context,
+        val task = CompareFilesTask(
+            Task.Properties(context),
             new Path("test/data/actual"),
             new Path("test/data/expected")
         )

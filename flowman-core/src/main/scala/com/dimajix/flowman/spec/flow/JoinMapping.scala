@@ -26,23 +26,12 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-object JoinMapping {
-    def apply(inputs:Seq[String], columns:Seq[String], mode:String) : JoinMapping = {
-        JoinMapping(Mapping.Properties(), inputs.map(MappingIdentifier(_)), columns, "", mode)
-    }
-
-    def apply(inputs:Seq[String], expr:String, mode:String) : JoinMapping = {
-        JoinMapping(Mapping.Properties(), inputs.map(MappingIdentifier(_)), Seq(), expr, mode)
-    }
-}
-
-
 case class JoinMapping(
     instanceProperties:Mapping.Properties,
     inputs:Seq[MappingIdentifier],
-    columns:Seq[String],
-    expression:String,
-    mode:String
+    columns:Seq[String] = Seq(),
+    condition:String = "",
+    mode:String = "left"
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[JoinMapping])
 
@@ -63,17 +52,17 @@ case class JoinMapping(
       * @return
       */
     override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
-        if (expression != null && expression.nonEmpty) {
-            logger.info(s"Joining mappings ${inputs.mkString(",")} on '$expression' with type $mode")
+        if (condition.nonEmpty) {
+            logger.info(s"Joining mappings ${inputs.mkString(",")} on '$condition' with type $mode")
             if (inputs.size != 2) {
-                logger.error("Joining using an expression only supports exactly two inputs")
-                throw new IllegalArgumentException("Joining using an expression only supports exactly two inputs")
+                logger.error("Joining using an condition only supports exactly two inputs")
+                throw new IllegalArgumentException("Joining using an condition only supports exactly two inputs")
             }
             val left = inputs(0)
             val right = inputs(1)
             val leftDf = tables(left).as(left.name)
             val rightDf = tables(right).as(right.name)
-            leftDf.join(rightDf, expr(expression), mode)
+            leftDf.join(rightDf, expr(condition), mode)
         }
         else {
             logger.info(s"Joining mappings ${inputs.mkString(",")} on columns ${columns.mkString("[",",","]")} with type $mode")
@@ -86,7 +75,7 @@ case class JoinMapping(
 class JoinMappingSpec extends MappingSpec {
     @JsonProperty(value = "inputs", required = true) private var inputs:Seq[String] = Seq()
     @JsonProperty(value = "columns", required = false) private var columns:Seq[String] = Seq()
-    @JsonProperty(value = "expression", required = false) private var expression:String = _
+    @JsonProperty(value = "condition", required = false) private var expression:String = ""
     @JsonProperty(value = "mode", required = true) private var mode:String = "left"
 
     /**

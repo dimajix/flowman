@@ -152,7 +152,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
                 AppendEntry("", Seq("lala", "lolo"), Seq()),
@@ -195,10 +196,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "provide a correct output schema" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
                 AppendEntry("", Seq("lala", "lolo"), Seq()),
@@ -242,7 +243,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 ExplodeEntry("array", "embedded.struct_array")
             )
@@ -270,7 +272,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 ExplodeEntry("embedded.struct_array")
             )
@@ -298,7 +301,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 ExplodeEntry("embedded.old_structure.value")
             )
@@ -318,10 +322,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "throw exceptions on explodes of non-existing paths" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 ExplodeEntry("no_such_path")
             )
@@ -335,7 +339,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val executor = session.executor
 
         val mapping = AssembleMapping(
-            "input_df",
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
             Seq(
                 RenameEntry("embedded", Map("new_elem" -> "old_structure"))
             )

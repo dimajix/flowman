@@ -33,22 +33,12 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-object ConformMapping {
-    def apply(input:String, types:Map[String,FieldType]) : ConformMapping = {
-        ConformMapping(Mapping.Properties(), MappingIdentifier(input), types, null, false)
-    }
-    def apply(input:String, caseFormat:String, flatten:Boolean=false) : ConformMapping = {
-        ConformMapping(Mapping.Properties(), MappingIdentifier(input), Map(), caseFormat, flatten)
-    }
-}
-
-
 case class ConformMapping(
     instanceProperties:Mapping.Properties,
     input : MappingIdentifier,
-    types : Map[String,FieldType],
-    naming : String,
-    flatten : Boolean
+    types : Map[String,FieldType] = Map(),
+    naming : String = null,
+    flatten : Boolean = false
 )
 extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])

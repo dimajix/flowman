@@ -27,17 +27,6 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-object ExtendMapping {
-    def apply(input:String, columns:Map[String,String]) : ExtendMapping = {
-        ExtendMapping(
-            Mapping.Properties(),
-            MappingIdentifier(input),
-            columns
-        )
-    }
-}
-
-
 case class ExtendMapping(
     instanceProperties:Mapping.Properties,
     input:MappingIdentifier,

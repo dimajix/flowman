@@ -27,24 +27,12 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 
 
-object MergeFilesTask {
-    def apply(context: Context, source:Path, target:Path, delimiter:String = null, overwrite:Boolean = true) : MergeFilesTask = {
-        MergeFilesTask(
-            Task.Properties(context),
-            source,
-            target,
-            delimiter,
-            overwrite
-        )
-    }
-}
-
 case class MergeFilesTask(
     instanceProperties:Task.Properties,
     source:Path,
     target:Path,
-    delimiter:String,
-    overwrite:Boolean
+    delimiter:String = null,
+    overwrite:Boolean = true
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[MergeFilesTask])
 

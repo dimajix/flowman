@@ -97,10 +97,6 @@ object AssembleMapping {
             }
         }
     }
-
-    def apply(input:String, columns:Seq[Entry]) : AssembleMapping = {
-        AssembleMapping(Mapping.Properties(), MappingIdentifier(input), columns)
-    }
 }
 
 

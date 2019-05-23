@@ -52,7 +52,12 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ).toDS
         val df = spark.read.json(json_1)
 
-        val mapping = LatestMapping("df1", Seq("id"), "ts")
+        val mapping = LatestMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("df1"),
+            Seq("id"),
+            "ts"
+        )
         mapping.input should be (MappingIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.versionColumn should be ("ts")
@@ -85,7 +90,12 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ).toDS
         val df = spark.read.json(json_1)
 
-        val mapping = LatestMapping("df1", Seq("id"), "ts")
+        val mapping = LatestMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("df1"),
+            Seq("id"),
+            "ts"
+        )
         val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
         result.schema should be (df.schema)
 
@@ -106,7 +116,12 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Record(("ts_0", 123), ("id_0", 7), "lala")
         ).toDF
 
-        val mapping = LatestMapping("df1", Seq("id._1"), "ts._2")
+        val mapping = LatestMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("df1"),
+            Seq("id._1"),
+            "ts._2"
+        )
         mapping.input should be (MappingIdentifier("df1"))
         mapping.keyColumns should be (Seq("id._1" ))
         mapping.versionColumn should be ("ts._2")

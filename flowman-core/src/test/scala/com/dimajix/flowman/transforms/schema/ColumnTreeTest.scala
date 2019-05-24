@@ -54,9 +54,9 @@ class ColumnTreeTest extends FlatSpec with Matchers {
 
         val columns = root.mkValue()
         val expected = struct(
-            col("col1") as "col1",
-            col("COL2") as "COL2",
-            col("col3") as "col3"
+            col("col1"),
+            col("COL2"),
+            col("col3")
         )
 
         // This doesn't work:
@@ -87,9 +87,9 @@ class ColumnTreeTest extends FlatSpec with Matchers {
         val columns = root.mkValue()
 
         val expected = struct(
-            col("col1") as "col1",
-            col("COL2") as "COL2",
-            col("col3") as "col3"
+            col("col1"),
+            col("COL2"),
+            col("col3")
         )
 
         // This doesn't work:
@@ -120,8 +120,8 @@ class ColumnTreeTest extends FlatSpec with Matchers {
         val columns = root.mkValue()
 
         val expected = struct(
-            col("COL2") as "COL2",
-            col("col3") as "col3"
+            col("COL2"),
+            col("col3")
         )
 
         // This doesn't work:
@@ -151,7 +151,7 @@ class ColumnTreeTest extends FlatSpec with Matchers {
         val columns = root.mkValue()
 
         val expected = struct(
-            col("col1") as "col1",
+            col("col1"),
             struct(
                 col("COL2.nested1") as "nested1",
                 col("COL2.nested3") as "nested3"
@@ -180,9 +180,9 @@ class ColumnTreeTest extends FlatSpec with Matchers {
         val columns = root.mkValue()
 
         val expected = struct(
-            col("col1") as "col1",
-            col("COL2") as "COL2",
-            col("col3") as "col3"
+            col("col1"),
+            col("COL2"),
+            col("col3")
         )
 
         // This doesn't work:

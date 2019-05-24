@@ -49,7 +49,6 @@ case class CreateNullableNamedStruct(children: Seq[Expression]) extends CreateNa
     override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
         val rowClass = classOf[GenericInternalRow].getName
         val values = ctx.freshName("values")
-        val allNull = ctx.freshName("allNull")
         val valCodes = valExprs.zipWithIndex.map { case (e, i) =>
             val eval = e.genCode(ctx)
             s"""
@@ -58,26 +57,23 @@ case class CreateNullableNamedStruct(children: Seq[Expression]) extends CreateNa
                |  $values[$i] = null;
                |} else {
                |  $values[$i] = ${eval.value};
-               |  $allNull = false;
+               |  ${ev.isNull} = false;
                |}
        """.stripMargin
         }
         val valuesCode = ctx.splitExpressionsWithCurrentInputs(
             expressions = valCodes,
             funcName = "createNullableNamedStruct",
-            extraArguments = "Object[]" -> values :: "boolean" -> allNull :: Nil)
+            extraArguments = "Object[]" -> values :: Nil)
 
         val code =
             s"""
                |Object[] $values = new Object[${valExprs.size}];
-               |boolean $allNull = true;
+               |boolean ${ev.isNull} = true;
                |InternalRow ${ev.value} = null;
                |$valuesCode
-               |if ($allNull) {
-               |  ${ev.isNull} = true;
-               |} else {
+               |if (!${ev.isNull}) {
                |  ${ev.value} = new $rowClass($values);
-               |  ${ev.isNull} = false;
                |}
                |$values = null;
             """.stripMargin

@@ -40,7 +40,8 @@ class NullableStructTest extends FlatSpec with Matchers with LocalSparkSession {
             Person(null, None)
         ))
 
-        val result = df.select(nullable_struct(col("name"), col("age")) alias "s")
+        val result = df.repartition(2).select(nullable_struct(col("name"), col("age")) alias "s")
+        //result.queryExecution.debug.codegen()
         val rows = result.orderBy(col("s.name"))
             .collect()
         rows.toSeq should be (Seq(

@@ -49,7 +49,8 @@ case class CreateNullableNamedStruct(children: Seq[Expression]) extends CreateNa
     override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
         val rowClass = classOf[GenericInternalRow].getName
         val values = ctx.freshName("values")
-        val valCodes = valExprs.zipWithIndex.map { case (e, i) =>
+        val nonnull = ctx.freshName("nonnull")
+        val evals = valExprs.zipWithIndex.map { case (e, i) =>
             val eval = e.genCode(ctx)
             s"""
                |${eval.code}
@@ -57,21 +58,39 @@ case class CreateNullableNamedStruct(children: Seq[Expression]) extends CreateNa
                |  $values[$i] = null;
                |} else {
                |  $values[$i] = ${eval.value};
-               |  ${ev.isNull} = false;
+               |  $nonnull = true;
                |}
        """.stripMargin
         }
-        val valuesCode = ctx.splitExpressionsWithCurrentInputs(
-            expressions = valCodes,
-            funcName = "createNullableNamedStruct",
-            extraArguments = "Object[]" -> values :: Nil)
+        val codes = ctx.splitExpressionsWithCurrentInputs(
+            expressions = evals,
+            funcName = "nullable_struct",
+            returnType = "boolean",
+            extraArguments = "Object[]" -> values :: "boolean" -> nonnull :: Nil,
+            makeSplitFunction = body =>
+                s"""
+                   |do {
+                   |  $body
+                   |} while (false);
+                   |return $nonnull;
+                 """.stripMargin,
+            foldFunctions = _.map { funcCall =>
+                s"""
+                   |$nonnull = $funcCall;
+                 """.stripMargin
+            }.mkString
+        )
 
         val code =
             s"""
                |Object[] $values = new Object[${valExprs.size}];
-               |boolean ${ev.isNull} = true;
+               |boolean $nonnull = false;
+               |do {
+               |  $codes
+               |} while (false);
+               |
+               |boolean ${ev.isNull} = !$nonnull;
                |InternalRow ${ev.value} = null;
-               |$valuesCode
                |if (!${ev.isNull}) {
                |  ${ev.value} = new $rowClass($values);
                |}

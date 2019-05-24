@@ -22,8 +22,9 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.struct
-import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.{types => stypes}
+
+import com.dimajix.spark.functions.nullable_struct
 
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.DecimalType
@@ -80,7 +81,7 @@ case class TypeReplacer(replace:Map[String, FieldType]) extends Transformer {
             else {
                 val columns = fields.map(f => f._2.getOrElse(f._1))
                 if (nullable) {
-                    Some(when(columns.map(_.isNotNull).reduce(_ || _), struct(columns:_*)))
+                    Some(nullable_struct(columns:_*))
                 }
                 else {
                     Some(struct(columns: _*))

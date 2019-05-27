@@ -44,6 +44,18 @@ object AssembleMapping {
         }
     }
 
+    case class FlattenEntry(path:String, keep:Seq[String], drop:Seq[String], prefix:String="", naming:String="snakeCase") extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
+            builder.flatten(
+                _.path(path)
+                    .keep(keep)
+                    .drop(drop)
+                    .prefix(prefix)
+                    .naming(naming)
+            )
+        }
+    }
+
     case class LiftEntry(path:String, columns:Seq[String]) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.lift(
@@ -161,6 +173,7 @@ object AssembleMappingSpec {
     @JsonSubTypes(value = Array(
         new JsonSubTypes.Type(name = "append", value = classOf[AppendEntry]),
         new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeEntry]),
+        new JsonSubTypes.Type(name = "flatten", value = classOf[FlattenEntry]),
         new JsonSubTypes.Type(name = "lift", value = classOf[LiftEntry]),
         new JsonSubTypes.Type(name = "nest", value = classOf[NestEntry]),
         new JsonSubTypes.Type(name = "rename", value = classOf[RenameEntry]),
@@ -177,10 +190,29 @@ object AssembleMappingSpec {
         @JsonProperty(value = "drop", required = false) private var drop:Seq[String] = Seq()
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
-            val path = context.evaluate(this.path)
-            val keep = this.keep.map(context.evaluate)
-            val drop = this.drop.map(context.evaluate)
-            AssembleMapping.AppendEntry(path, keep, drop)
+            AssembleMapping.AppendEntry(
+                context.evaluate(path),
+                keep.map(context.evaluate),
+                drop.map(context.evaluate)
+            )
+        }
+    }
+
+    class FlattenEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var path:String = ""
+        @JsonProperty(value = "keep", required = false) private var keep:Seq[String] = Seq()
+        @JsonProperty(value = "drop", required = false) private var drop:Seq[String] = Seq()
+        @JsonProperty(value = "prefix", required = false) private var prefix:String = ""
+        @JsonProperty(value = "naming", required = false) private var naming:String = "snakeCase"
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            AssembleMapping.FlattenEntry(
+                context.evaluate(path),
+                keep.map(context.evaluate),
+                drop.map(context.evaluate),
+                prefix,
+                naming
+            )
         }
     }
 
@@ -189,9 +221,10 @@ object AssembleMappingSpec {
         @JsonProperty(value = "columns", required = false) private var columns:Seq[String] = Seq()
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
-            val path = context.evaluate(this.path)
-            val columns = this.columns.map(context.evaluate)
-            AssembleMapping.LiftEntry(path, columns)
+            AssembleMapping.LiftEntry(
+                context.evaluate(path),
+                columns.map(context.evaluate)
+            )
         }
     }
 
@@ -200,9 +233,10 @@ object AssembleMappingSpec {
         @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
-            val path = context.evaluate(this.path)
-            val columns = this.columns.mapValues(context.evaluate)
-            AssembleMapping.RenameEntry(path, columns)
+            AssembleMapping.RenameEntry(
+                context.evaluate(path),
+                columns.mapValues(context.evaluate)
+            )
         }
     }
 
@@ -211,9 +245,10 @@ object AssembleMappingSpec {
         @JsonProperty(value = "columns", required = false) private var columns:Seq[Entry] = Seq()
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
-            val name = context.evaluate(this.name)
-            val columns = this.columns.map(_.instantiate(context))
-            AssembleMapping.StructEntry(name, columns)
+            AssembleMapping.StructEntry(
+                context.evaluate(name),
+                columns.map(_.instantiate(context))
+            )
         }
     }
 
@@ -224,11 +259,12 @@ object AssembleMappingSpec {
         @JsonProperty(value = "drop", required = false) private var drop:Seq[String] = Seq()
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
-            val name = context.evaluate(this.name)
-            val path = context.evaluate(this.path)
-            val keep = this.keep.map(context.evaluate)
-            val drop = this.drop.map(context.evaluate)
-            AssembleMapping.NestEntry(name, path, keep, drop)
+            AssembleMapping.NestEntry(
+                context.evaluate(name),
+                context.evaluate(path),
+                keep.map(context.evaluate),
+                drop.map(context.evaluate)
+            )
         }
     }
 
@@ -237,9 +273,10 @@ object AssembleMappingSpec {
         @JsonProperty(value = "path", required = true) private var path:String = ""
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
-            val name = context.evaluate(this.name)
-            val path = context.evaluate(this.path)
-            AssembleMapping.ExplodeEntry(name, path)
+            AssembleMapping.ExplodeEntry(
+                context.evaluate(name),
+                context.evaluate(path)
+            )
         }
     }
 }

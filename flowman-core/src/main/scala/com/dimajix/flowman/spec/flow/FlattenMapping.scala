@@ -77,7 +77,7 @@ case class FlattenMapping(
 
 class FlattenMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "naming", required = true) private var naming:String = _
+    @JsonProperty(value = "naming", required = true) private var naming:String = "snakeCase"
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed

@@ -20,8 +20,13 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
 
+import com.dimajix.common.text.CaseUtils
+import com.dimajix.flowman.transforms.FlattenTransformer.CAMEL_CASE
+import com.dimajix.flowman.transforms.FlattenTransformer.SNAKE_CASE
 import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.ColumnTree
+import com.dimajix.flowman.transforms.schema.LeafNode
+import com.dimajix.flowman.transforms.schema.MapNode
 import com.dimajix.flowman.transforms.schema.Node
 import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.Path
@@ -84,6 +89,47 @@ object Assembler {
         }
     }
 
+    class FlattenBuilder extends Builder {
+        private var _path = Path()
+        private val _keep = mutable.ListBuffer[Path]()
+        private val _drop = mutable.ListBuffer[Path]()
+        private var _prefix = ""
+        private var _naming = "snakeCase"
+
+        def path(p:String) : FlattenBuilder = {
+            _path = Path(p)
+            this
+        }
+        def keep(c:String) : FlattenBuilder = {
+            _keep += Path(c)
+            this
+        }
+        def keep(c:Seq[String]) : FlattenBuilder = {
+            _keep ++= c.map(Path(_))
+            this
+        }
+        def drop(c:String) : FlattenBuilder = {
+            _drop += Path(c)
+            this
+        }
+        def drop(c:Seq[String]) : FlattenBuilder = {
+            _drop ++= c.map(Path(_))
+            this
+        }
+        def prefix(p:String) : FlattenBuilder = {
+            _prefix = p
+            this
+        }
+        def naming(n:String) : FlattenBuilder = {
+            _naming = n
+            this
+        }
+
+        override def build(): Assembler = {
+            new FlattenAssembler(_path, _keep, _drop, _prefix, _naming)
+        }
+    }
+
     /**
       * This builder is used to lift nested columns to the top level
       */
@@ -116,6 +162,12 @@ object Assembler {
     class StructBuilder(name:String) extends RecursiveBuilder {
         def columns(spec:ColumnBuilder => Unit) : StructBuilder = {
             val builder = new ColumnBuilder()
+            spec(builder)
+            addChild(builder)
+            this
+        }
+        def flatten(spec:FlattenBuilder => Unit) : StructBuilder = {
+            val builder = new FlattenBuilder()
             spec(builder)
             addChild(builder)
             this
@@ -259,6 +311,41 @@ class ColumnAssembler private[transforms] (path:Path, keep:Seq[Path], drop:Seq[P
             else
                 start.map(_.drop(drop))
         node.toSeq.flatMap(_.children)
+    }
+}
+
+/**
+  * This Assembler will collect a bunch of columns and return them directly as a list
+  * @param path
+  * @param keep
+  * @param drop
+  */
+class FlattenAssembler private[transforms] (path:Path,keep:Seq[Path], drop:Seq[Path], prefix:String="", naming:String="snakeCase") extends Assembler {
+    private val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(naming))
+
+    private def rename(prefix:String, name:String) : String = {
+        caseFormat match {
+            case CAMEL_CASE => if (prefix.isEmpty) name else prefix + (name.head.toUpper + name.tail)
+            case SNAKE_CASE => if (prefix.isEmpty) name else prefix + "_" + name
+        }
+    }
+
+    private def flatten[T](node:Node[T], prefix:String) : Seq[Node[T]] = {
+        node match {
+            case leaf:LeafNode[T] => Seq(leaf.withName(rename(prefix, leaf.name)))
+            case struct:StructNode[T] => struct.children.flatMap(flatten(_, rename(prefix, struct.name)))
+            case array:ArrayNode[T] => Seq(array.withName(rename(prefix , array.name)))
+            case map:MapNode[T] => Seq(map.withName(rename(prefix, map.name)))
+        }
+    }
+
+    override def reassemble[T](root:Node[T])(implicit ops:NodeOps[T]) : Seq[Node[T]] = {
+        val start = root.find(path)
+        val node = if(keep.nonEmpty)
+            start.map(_.keep(keep).drop(drop))
+        else
+            start.map(_.drop(drop))
+        node.toSeq.flatMap(_.children.flatMap(flatten(_, prefix)))
     }
 }
 

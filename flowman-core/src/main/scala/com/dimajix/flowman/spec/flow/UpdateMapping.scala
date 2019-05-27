@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -52,6 +53,11 @@ case class UpdateMapping(
         val inputDf = tables(input)
         val updatesDf = tables(updates)
 
+        // Manual cache management
+        val autoCache = updatesDf.storageLevel == StorageLevel.NONE
+        if (autoCache)
+            updatesDf.cache()
+
         // Apply optional filter to updates (for example for removing DELETEs)
         val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
 
@@ -63,6 +69,10 @@ case class UpdateMapping(
         val joinCondition = keyColumns.map(col => inputDf(col) === updatesDf(col)).reduce(_ && _)
         inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
+
+        // Free up cache if automatic cache management was used
+        if (autoCache)
+            updatesDf.unpersist()
     }
 
     /**

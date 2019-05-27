@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
 
 
@@ -44,11 +45,12 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder()
             .withSparkSession(spark)
             .build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         import spark.implicits._
         val data = Seq(("v1", 12), ("v2", 23)).toDF()
-        val output = project.targets("out")
+        val output = context.getTarget(TargetIdentifier("out"))
 
         outputPath.toFile.exists() should be (false)
         output.build(executor, Map(MappingIdentifier("some_table") -> data))

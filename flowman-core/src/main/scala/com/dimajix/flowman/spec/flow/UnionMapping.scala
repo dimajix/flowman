@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,13 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class UnionMapping extends BaseMapping {
+case class UnionMapping(
+    instanceProperties:Mapping.Properties,
+    inputs:Seq[MappingIdentifier],
+    columns:Map[String,String],
+    distinct:Boolean
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[UnionMapping])
-
-    @JsonProperty(value="inputs", required=true) private[spec] var _inputs:Seq[String] = _
-    @JsonProperty(value="columns", required=false) private[spec] var _columns:Map[String,String] = _
-    @JsonProperty(value="distinct", required=false) var _distinct:String = "false"
-
-    def inputs(implicit context: Context) : Seq[MappingIdentifier] = _inputs.map(i => MappingIdentifier.parse(context.evaluate(i)))
-    def columns(implicit context: Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
-    def distinct(implicit context: Context) : Boolean = context.evaluate(_distinct).toBoolean
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -51,13 +48,10 @@ class UnionMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
-        val inputs = this.inputs
         val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
-        val fields = this.columns
-        val schema = if (fields != null) SchemaUtils.createSchema(fields.toSeq) else getCommonSchema(dfs)
+        val schema = if (columns != null) SchemaUtils.createSchema(columns.toSeq) else getCommonSchema(dfs)
         logger.info(s"Creating union from mappings ${inputs.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
 
         // Project all tables onto common schema
@@ -78,14 +72,13 @@ class UnionMapping extends BaseMapping {
     /**
       * Creates the list of required dependencies
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         inputs.toArray
     }
 
-    private def getCommonSchema(tables:Seq[DataFrame])(implicit context: Context) = {
+    private def getCommonSchema(tables:Seq[DataFrame]) = {
         def commonField(newField:StructField, fields:Map[String,StructField]) = {
             val existingField = fields.getOrElse(newField.name.toLowerCase(Locale.ROOT), newField)
             val nullable = existingField.nullable || newField.nullable
@@ -111,5 +104,27 @@ class UnionMapping extends BaseMapping {
             else
                 lit(null).cast(column.dataType).as(column.name)
         ):_*)
+    }
+}
+
+
+
+class UnionMappingSpec extends MappingSpec {
+    @JsonProperty(value="inputs", required=true) private[spec] var inputs:Seq[String] = Seq()
+    @JsonProperty(value="columns", required=false) private[spec] var columns:Map[String,String] = _
+    @JsonProperty(value="distinct", required=false) var distinct:String = "false"
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): UnionMapping = {
+        UnionMapping(
+            instanceProperties(context),
+            inputs.map(i => MappingIdentifier.parse(context.evaluate(i))),
+            if (columns != null) columns.mapValues(context.evaluate) else null,
+            context.evaluate(distinct).toBoolean
+        )
     }
 }

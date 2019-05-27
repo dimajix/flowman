@@ -234,7 +234,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
 
-        logger.info(s"Adding partition ${partition.spec} to table '$table' at '$location'")
+        logger.info(s"Adding partition ${partition.spec} to table $table at '$location'")
         val sparkPartition = partition.mapValues(_.toString).toMap
         val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
         cmd.run(spark)
@@ -259,7 +259,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
 
         val sparkPartition = partition.mapValues(_.toString).toMap
         if (partitionExists(table, partition)) {
-            logger.info(s"Replacing partition ${partition.spec} of table '$table' with location '$location'")
+            logger.info(s"Replacing partition ${partition.spec} of table $table with location '$location'")
             val cmd = AlterTableSetLocationCommand(table, Some(sparkPartition), location.toString)
             cmd.run(spark)
 
@@ -270,7 +270,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             }
         }
         else {
-            logger.info(s"Adding partition ${partition.spec} to table '$table' at '$location'")
+            logger.info(s"Adding partition ${partition.spec} to table $table at '$location'")
             val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
             cmd.run(spark)
 

@@ -52,9 +52,10 @@ class AvroSchemaTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[AvroSchemaSpec]
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[AvroSchema]
 
         val fields = result.fields
@@ -92,9 +93,10 @@ class AvroSchemaTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[AvroSchemaSpec]
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[AvroSchema]
         result.description should be ("Some Documentation")
 
@@ -114,9 +116,10 @@ class AvroSchemaTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[AvroSchemaSpec]
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[AvroSchema]
 
         val fields = result.fields

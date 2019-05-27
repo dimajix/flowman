@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,48 @@
 
 package com.dimajix.flowman.spec.connection
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.Resource
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Connection extends TypeRegistry[Connection] {
-    class NameResolver extends StdConverter[Map[String, Connection], Map[String, Connection]] {
-        override def convert(value: Map[String, Connection]): Map[String, Connection] = {
-            value.foreach(kv => kv._2._name = kv._1)
-            value
+object Connection {
+    object Properties {
+        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map()
+            )
         }
     }
+    case class Properties(
+        context:Context,
+        namespace:Namespace,
+        project:Project,
+        name:String,
+        kind:String,
+        labels:Map[String,String]
+     ) extends Instance.Properties
 }
 
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[JdbcConnection], visible = true)
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcConnection]),
-    new JsonSubTypes.Type(name = "ssh", value = classOf[SshConnection]),
-    new JsonSubTypes.Type(name = "sftp", value = classOf[SshConnection])
-))
-abstract class Connection extends Resource {
-    @JsonIgnore private var _name:String = ""
-
-    @JsonProperty(value="kind", required = true) private var _kind: String = _
-    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
+/**
+  * Base class to be used for all Connection instances
+  */
+abstract class Connection extends AbstractInstance {
+    protected override def instanceProperties : Connection.Properties
 
     /**
       * Returns the category of this resource
@@ -56,21 +66,54 @@ abstract class Connection extends Resource {
     final override def category: String = "connection"
 
     /**
-      * Returns the specific kind of this resource
+      * Returns an identifier for this connection
       * @return
       */
-    final override def kind: String = _kind
+    def identifier : ConnectionIdentifier
+}
 
-    /**
-      * Returns the name of the connection
-      * @return
-      */
-    final override def name : String = _name
 
+
+object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
+    class NameResolver extends StdConverter[Map[String, ConnectionSpec], Map[String, ConnectionSpec]] {
+        override def convert(value: Map[String, ConnectionSpec]): Map[String, ConnectionSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
+}
+
+/**
+  * The ConnectionSpec class contains the raw specification values, which may require interpolation.
+  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[JdbcConnectionSpec], visible = true)
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcConnectionSpec]),
+    new JsonSubTypes.Type(name = "ssh", value = classOf[SshConnectionSpec]),
+    new JsonSubTypes.Type(name = "sftp", value = classOf[SshConnectionSpec])
+))
+abstract class ConnectionSpec extends NamedSpec[Connection] {
     /**
-      * Returns a map of user defined labels
+      * Creates an instance of this specification and performs the interpolation of all variables
       * @param context
       * @return
       */
-    final override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
+    override def instantiate(context:Context) : Connection
+
+    /**
+      * Returns a set of common properties
+      * @param context
+      * @return
+      */
+    override protected def instanceProperties(context:Context) : Connection.Properties = {
+        require(context != null)
+        Connection.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            kind,
+            labels.mapValues(context.evaluate)
+        )
+    }
 }

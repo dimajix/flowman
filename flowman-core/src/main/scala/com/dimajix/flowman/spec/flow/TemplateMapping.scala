@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,26 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.transforms.Assembler
+import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
 
-case class DropMapping(
+case class TemplateMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
-    columns:Seq[String]
+    mapping:MappingIdentifier,
+    environment:Map[String,String]
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[DropMapping])
+    private val templateContext = ScopeContext.builder(context)
+        .withEnvironment(environment)
+        .build()
+    private val mappingInstance = {
+        project.mappings(mapping.name).instantiate(templateContext)
+    }
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -40,62 +45,52 @@ case class DropMapping(
       * @return
       */
     override def dependencies: Array[MappingIdentifier] = {
-        Array(input)
+        mappingInstance.dependencies
     }
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param deps
+      * @param input
       * @return
       */
-    override def execute(executor: Executor, deps: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]) : DataFrame = {
         require(executor != null)
-        require(deps != null)
+        require(input != null)
 
-        logger.info(s"Dropping columns ${columns.mkString(",")} from input mapping '$input'")
-
-        val df = deps(input)
-        val asm = assembler
-        asm.reassemble(df)
+        mappingInstance.execute(executor, input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param deps
+      * @param input
       * @return
       */
-    override def describe(deps:Map[MappingIdentifier,StructType]) : StructType = {
-        require(deps != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+        require(input != null)
 
-        val schema = deps(this.input)
-        val asm = assembler
-        asm.reassemble(schema)
-    }
-
-    private def assembler : Assembler = {
-        val builder = Assembler.builder()
-                .columns(_.drop(columns))
-        builder.build()
+        mappingInstance.describe(input)
     }
 }
 
 
-class DropMappingSpec extends MappingSpec {
-    @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+
+class TemplateMappingSpec extends MappingSpec {
+    @JsonProperty(value = "mapping", required = true) private var mapping:String = _
+    @JsonProperty(value = "environment", required = true) private var environment:Seq[String] = Seq()
 
     /**
-      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * Creates an instance of this specification and performs the interpolation of all variables
+      *
       * @param context
       * @return
       */
-    override def instantiate(context: Context): DropMapping = {
-        DropMapping(
+    override def instantiate(context: Context): TemplateMapping = {
+        TemplateMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
-            columns.map(context.evaluate)
+            MappingIdentifier(context.evaluate(mapping)),
+            splitSettings(environment).toMap
         )
     }
 }

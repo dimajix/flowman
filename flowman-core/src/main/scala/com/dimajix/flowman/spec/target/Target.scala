@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.target
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -25,43 +24,46 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Resource
+import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.state.TargetInstance
 
 
-object Target extends TypeRegistry[Target] {
-    class NameResolver extends StdConverter[Map[String,Target],Map[String,Target]] {
-        override def convert(value: Map[String,Target]): Map[String,Target] = {
-            value.foreach(kv => kv._2._name = kv._1)
-            value
+object Target {
+    object Properties {
+        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map(),
+                true,
+                MappingIdentifier.empty
+            )
         }
     }
+    case class Properties(
+        context:Context,
+        namespace:Namespace,
+        project:Project,
+        name:String,
+        kind:String,
+        labels:Map[String,String],
+        enabled: Boolean,
+        input: MappingIdentifier
+     ) extends Instance.Properties
 }
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTarget]),
-    new JsonSubTypes.Type(name = "count", value = classOf[CountTarget]),
-    new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTarget]),
-    new JsonSubTypes.Type(name = "local", value = classOf[LocalTarget]),
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTarget]),
-    new JsonSubTypes.Type(name = "stream", value = classOf[StreamTarget]))
-)
-abstract class Target extends Resource {
-    @JsonIgnore private var _name:String = ""
-
-    @JsonProperty(value="kind", required = true) private var _kind: String = _
-    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
-
-    /**
-      * Returns the name of the output
-      * @return
-      */
-    final override def name : String = _name
-
+abstract class Target extends AbstractInstance {
     /**
       * Returns the category of this resource
       * @return
@@ -69,39 +71,29 @@ abstract class Target extends Resource {
     final override def category: String = "target"
 
     /**
-      * Returns the specific kind of this resource
+      * Returns an identifier for this target
       * @return
       */
-    final override def kind: String = _kind
-
-    /**
-      * Returns a map of user defined labels
-      * @param context
-      * @return
-      */
-    final override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
+    def identifier : TargetIdentifier
 
     /**
       * Returns true if the output should be executed per default
-      * @param context
       * @return
       */
-    def enabled(implicit context:Context) : Boolean
+    def enabled : Boolean
 
     /**
       * Returns an instance representing this target with the context
-      * @param context
       * @return
       */
-    def instance(implicit context: Context) : TargetInstance
+    def instance : TargetInstance
 
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    def dependencies(implicit context: Context) : Array[MappingIdentifier]
+    def dependencies : Array[MappingIdentifier]
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -117,4 +109,52 @@ abstract class Target extends Resource {
       * @param executor
       */
     def clean(executor:Executor) : Unit
+}
+
+
+
+
+object TargetSpec extends TypeRegistry[TargetSpec] {
+    class NameResolver extends StdConverter[Map[String, TargetSpec], Map[String, TargetSpec]] {
+        override def convert(value: Map[String, TargetSpec]): Map[String, TargetSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
+}
+
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTargetSpec]),
+    new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
+    new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTargetSpec]),
+    new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTargetSpec]),
+    new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]))
+)
+abstract class TargetSpec extends NamedSpec[Target] {
+    @JsonProperty(value = "enabled", required=false) private var enabled:String = "true"
+    @JsonProperty(value = "input", required=true) private var input:String = _
+
+    override def instantiate(context: Context): Target
+
+    /**
+      * Returns a set of common properties
+      * @param context
+      * @return
+      */
+    override protected def instanceProperties(context:Context) : Target.Properties = {
+        require(context != null)
+        Target.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            kind,
+            labels.mapValues(context.evaluate),
+            context.evaluate(enabled).toBoolean,
+            MappingIdentifier.parse(context.evaluate(input))
+        )
+    }
 }

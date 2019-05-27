@@ -21,7 +21,12 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.model.NullRelationSpec
 
+
+@RelationType(kind="customRelation")
+class CustomRelationSpec extends NullRelationSpec {
+}
 
 
 class CustomRelationProviderTest extends FlatSpec with Matchers {
@@ -35,6 +40,6 @@ class CustomRelationProviderTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         module.relations.keys should contain("custom")
         val rel = module.relations("custom")
-        rel shouldBe a[CustomRelation]
+        rel shouldBe a[CustomRelationSpec]
     }
 }

@@ -30,6 +30,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.SingleValue
 
@@ -88,8 +89,10 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        val relation = project.relations("t0")
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),
@@ -176,8 +179,10 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        val relation = project.relations("t0")
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val df = spark.createDataFrame(Seq(
             ("lala", 1),

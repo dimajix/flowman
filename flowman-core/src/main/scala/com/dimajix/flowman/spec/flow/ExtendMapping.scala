@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,13 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
-object ExtendMapping {
-    def apply(input:String, columns:Map[String,String]) : ExtendMapping = {
-        val result = new ExtendMapping
-        result._input = input
-        result._columns = columns
-        result
-    }
-}
 
-class ExtendMapping extends BaseMapping {
+case class ExtendMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Map[String,String]
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ExtendMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = true) private var _columns:Map[String,String] = Map()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -52,10 +42,8 @@ class ExtendMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
         val allColumns = this.columns
         val columnNames = allColumns.keys.toSet
-        val input = this.input
 
         logger.info(s"Extending mapping '$input' with columns ${columnNames.mkString("[",",","]")}")
 
@@ -97,10 +85,29 @@ class ExtendMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
+      * @return
+      */
+    override def dependencies : Array[MappingIdentifier] = {
+        Array(input)
+    }
+}
+
+
+
+class ExtendMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private var columns: Map[String,String] = Map()
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
       * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
-        Array(input)
+    override def instantiate(context: Context): ExtendMapping = {
+        ExtendMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.mapValues(context.evaluate)
+        )
     }
 }

@@ -24,6 +24,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
@@ -46,23 +47,21 @@ class RunCommand extends ActionCommand {
     var force: Boolean = false
 
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val args = splitSettings(this.args).toMap
         Try {
             project.jobs(job)
         }
         match {
-            case Failure(e) =>
+            case Failure(_) =>
                 logger.error(s"Cannot find job $job")
                 false
             case Success(job) =>
-                executeJob(executor, job, args)
+                executeJob(executor, job.instantiate(context), args)
         }
     }
 
     private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
-        implicit val context = executor.context
         logger.info(s"Executing job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
         val runner = executor.runner
         val result = runner.execute(executor, job, args, force)

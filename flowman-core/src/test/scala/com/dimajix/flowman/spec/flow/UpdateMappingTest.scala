@@ -28,11 +28,16 @@ import com.dimajix.flowman.testing.LocalSparkSession
 
 class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     "The UpdateMapping" should "merge in updates" in {
-        val mapping = UpdateMapping("prev", "updates", Seq("_1"), "_3 != 'DELETE'")
-
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
+
+        val mapping = UpdateMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("prev"),
+            MappingIdentifier("updates"),
+            Seq("_1"),
+            "_3 != 'DELETE'"
+        )
 
         val prev = executor.spark.createDataFrame(Seq(
             ("id-123", "will_remain"),
@@ -57,11 +62,16 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "reorder columns correctly" in {
-        val mapping = UpdateMapping("prev", "updates", Seq("id"), "op != 'DELETE'")
-
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
+
+        val mapping = UpdateMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("prev"),
+            MappingIdentifier("updates"),
+            Seq("id"),
+            "op != 'DELETE'"
+        )
 
         val prev = executor.spark.createDataFrame(Seq(
                 ("CREATE", "id-125", "will_remain")
@@ -87,11 +97,16 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "add missing columns from updates" in {
-        val mapping = UpdateMapping("prev", "updates", Seq("_1"), "op != 'DELETE'")
-
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
+
+        val mapping = UpdateMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("prev"),
+            MappingIdentifier("updates"),
+            Seq("_1"),
+            "op != 'DELETE'"
+        )
 
         val prev = executor.spark.createDataFrame(Seq(
                 ("id-123", "will_remain", "col3"),
@@ -116,11 +131,16 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "remove entries with duplicate keys" in {
-        val mapping = UpdateMapping("prev", "updates", Seq("_1"), "op != 'DELETE'")
-
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
+
+        val mapping = UpdateMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("prev"),
+            MappingIdentifier("updates"),
+            Seq("_1"),
+            "op != 'DELETE'"
+        )
 
         val prev = executor.spark.createDataFrame(Seq(
             ("id-123", "subid-0", "will_remain_1", "v0"),
@@ -171,16 +191,15 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        implicit val context = executor.context
 
         project.mappings.size should be (1)
         project.mappings.contains("t0") should be (false)
         project.mappings.contains("t1") should be (true)
 
         val mapping = project.mappings("t1")
-        mapping shouldBe an[UpdateMapping]
-        val updateMapping = mapping.asInstanceOf[UpdateMapping]
+        mapping shouldBe an[UpdateMappingSpec]
+
+        val updateMapping = mapping.instantiate(session.context).asInstanceOf[UpdateMapping]
         updateMapping.dependencies.toSeq should be (Seq(MappingIdentifier("t0"),MappingIdentifier("t1")))
         updateMapping.input should be (MappingIdentifier("t0"))
         updateMapping.updates should be (MappingIdentifier("t1"))

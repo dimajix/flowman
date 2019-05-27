@@ -54,9 +54,11 @@ class ColumnNodeOps extends NodeOps[Column] {
         }
     }
 
-    override def array(name:String, element:Column, nullable:Boolean) : Column = ???
+    override def array(name:String, element:Column, nullable:Boolean) : Column =
+        throw new UnsupportedOperationException(s"Cannot create a Spark array for column $name with element $element")
 
-    override def map(name:String, keyType:Column, valueType:Column, nullable:Boolean) : Column = ???
+    override def map(name:String, keyType:Column, valueType:Column, nullable:Boolean) : Column =
+        throw new UnsupportedOperationException(s"Cannot create a Spark map for column $name with keys $keyType and values $valueType")
 
     override def explode(name: String, array: Column): Column = {
         withName(name, functions.explode(array))

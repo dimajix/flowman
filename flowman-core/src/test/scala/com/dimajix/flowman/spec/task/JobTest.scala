@@ -20,6 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
@@ -30,18 +31,21 @@ object GrabEnvironmentTask {
     var environment:Map[String,Any] = Map()
 }
 
-
-@TaskType(kind = "grabenv")
-class GrabEnvironmentTask extends BaseTask {
+case class GrabEnvironmentTask(instanceProperties:Task.Properties) extends BaseTask {
     /**
       * Abstract method which will perform the given task.
       *
       * @param executor
       */
     override def execute(executor: Executor): Boolean = {
-        GrabEnvironmentTask.environment = executor.context.environment
+        GrabEnvironmentTask.environment = context.environment
         true
     }
+}
+
+@TaskType(kind = "grabenv")
+class GrabEnvironmentTaskSpec extends TaskSpec {
+    override def instantiate(context: Context): GrabEnvironmentTask = GrabEnvironmentTask(instanceProperties(context))
 }
 
 
@@ -83,9 +87,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
@@ -111,9 +114,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
@@ -135,9 +137,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
@@ -156,9 +157,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
@@ -178,9 +178,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
@@ -200,7 +199,7 @@ class JobTest extends FlatSpec with Matchers {
         val executor = session.executor
         implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map()))
@@ -223,9 +222,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
         job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> 7))
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
@@ -249,9 +247,8 @@ class JobTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)

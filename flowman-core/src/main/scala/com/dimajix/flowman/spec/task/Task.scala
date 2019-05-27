@@ -16,44 +16,52 @@
 
 package com.dimajix.flowman.spec.task
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spi.TypeRegistry
 
 
-object Task extends TypeRegistry[Task] {
+object Task {
+    object Properties {
+        def apply(context:Context, kind:String="", description:String="") : Properties = {
+            require(context != null)
+            Properties(
+                context,
+                context.namespace,
+                context.project,
+                kind,
+                description
+            )
+        }
+    }
+    case class Properties(
+         context: Context,
+         namespace:Namespace,
+         project:Project,
+         kind:String,
+         description:String
+    ) extends Instance.Properties {
+        override val name: String = ""
+        override val labels: Map[String, String] = Map()
+    }
 }
 
+abstract class Task extends AbstractInstance {
+    /**
+      * Returns the category of this resource
+      * @return
+      */
+    final override def category: String = "task"
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "build", value = classOf[BuildTargetTask]),
-    new JsonSubTypes.Type(name = "call", value = classOf[CallTask]),
-    new JsonSubTypes.Type(name = "compareFiles", value = classOf[CompareFilesTask]),
-    new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTask]),
-    new JsonSubTypes.Type(name = "copyRelation", value = classOf[CopyRelationTask]),
-    new JsonSubTypes.Type(name = "countMapping", value = classOf[CountMappingTask]),
-    new JsonSubTypes.Type(name = "createDatabase", value = classOf[CreateDatabaseTask]),
-    new JsonSubTypes.Type(name = "createRelation", value = classOf[CreateRelationTask]),
-    new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTask]),
-    new JsonSubTypes.Type(name = "destroyRelation", value = classOf[DestroyRelationTask]),
-    new JsonSubTypes.Type(name = "describeRelation", value = classOf[DescribeRelationTask]),
-    new JsonSubTypes.Type(name = "describeMapping", value = classOf[DescribeMappingTask]),
-    new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTask]),
-    new JsonSubTypes.Type(name = "loop", value = classOf[LoopTask]),
-    new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTask]),
-    new JsonSubTypes.Type(name = "print", value = classOf[PrintTask]),
-    new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTask]),
-    new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTask]),
-    new JsonSubTypes.Type(name = "showMapping", value = classOf[ShowMappingTask]),
-    new JsonSubTypes.Type(name = "showRelation", value = classOf[ShowRelationTask]),
-    new JsonSubTypes.Type(name = "shell", value = classOf[ShellTask]),
-    new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTask])
-))
-abstract class Task {
     /**
       * Abstract method which will perform the given task.
       *
@@ -61,5 +69,54 @@ abstract class Task {
       */
     def execute(executor:Executor) : Boolean
 
-    def description(implicit context:Context) : String
+    def description : String
+}
+
+
+
+object TaskSpec extends TypeRegistry[TaskSpec] {
+}
+
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "build", value = classOf[BuildTargetTaskSpec]),
+    new JsonSubTypes.Type(name = "call", value = classOf[CallTaskSpec]),
+    new JsonSubTypes.Type(name = "compareFiles", value = classOf[CompareFilesTaskSpec]),
+    new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTaskSpec]),
+    new JsonSubTypes.Type(name = "copyRelation", value = classOf[CopyRelationTaskSpec]),
+    new JsonSubTypes.Type(name = "countMapping", value = classOf[CountMappingTaskSpec]),
+    new JsonSubTypes.Type(name = "createDatabase", value = classOf[CreateDatabaseTaskSpec]),
+    new JsonSubTypes.Type(name = "createRelation", value = classOf[CreateRelationTaskSpec]),
+    new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTaskSpec]),
+    new JsonSubTypes.Type(name = "destroyRelation", value = classOf[DestroyRelationTaskSpec]),
+    new JsonSubTypes.Type(name = "describeRelation", value = classOf[DescribeRelationTaskSpec]),
+    new JsonSubTypes.Type(name = "describeMapping", value = classOf[DescribeMappingTaskSpec]),
+    new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTaskSpec]),
+    new JsonSubTypes.Type(name = "loop", value = classOf[LoopTaskSpec]),
+    new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTaskSpec]),
+    new JsonSubTypes.Type(name = "print", value = classOf[PrintTaskSpec]),
+    new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTaskSpec]),
+    new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTaskSpec]),
+    new JsonSubTypes.Type(name = "showMapping", value = classOf[ShowMappingTaskSpec]),
+    new JsonSubTypes.Type(name = "showRelation", value = classOf[ShowRelationTaskSpec]),
+    new JsonSubTypes.Type(name = "shell", value = classOf[ShellTaskSpec]),
+    new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTaskSpec])
+))
+abstract class TaskSpec extends Spec[Task] {
+    @JsonProperty(value="kind", required=true) protected var kind:String = _
+    @JsonProperty(value="description", required=false) protected var description:String = _
+
+    override def instantiate(context:Context) : Task
+
+    def instanceProperties(context: Context) : Task.Properties = {
+        require(context != null)
+        Task.Properties(
+            context,
+            context.namespace,
+            context.project,
+            kind,
+            context.evaluate(description)
+        )
+    }
 }

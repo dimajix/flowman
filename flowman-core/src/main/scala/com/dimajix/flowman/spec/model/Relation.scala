@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.model
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -29,50 +28,53 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.Resource
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-object Relation extends TypeRegistry[Relation] {
-    class NameResolver extends StdConverter[Map[String,Relation],Map[String,Relation]] {
-        override def convert(value: Map[String,Relation]): Map[String,Relation] = {
-            value.foreach(kv => kv._2._name = kv._1)
-            value
+object Relation {
+    object Properties {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map(),
+                "",
+                Map()
+            )
         }
     }
+    case class Properties(
+         context:Context,
+         namespace:Namespace,
+         project:Project,
+         name:String,
+         kind:String,
+         labels:Map[String,String],
+         description:String,
+         options:Map[String,String]
+    )
+    extends Instance.Properties
 }
+
 
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelation]),
-    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelation]),
-    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelation]),
-    new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelation]),
-    new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelation]),
-    new JsonSubTypes.Type(name = "file", value = classOf[FileRelation]),
-    new JsonSubTypes.Type(name = "local", value = classOf[LocalRelation]),
-    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelation]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullRelation])
-))
-abstract class Relation extends Resource {
-    @JsonIgnore private var _name:String = ""
-
-    @JsonProperty(value="kind", required = true) private var _kind: String = _
-    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
-
-    /**
-      * Returns the name of the relation
-      * @return
-      */
-    final override def name : String = _name
-
+abstract class Relation extends AbstractInstance {
     /**
       * Returns the category of this resource
       * @return
@@ -80,38 +82,28 @@ abstract class Relation extends Resource {
     final override def category: String = "relation"
 
     /**
-      * Returns the specific kind of this resource
+      * Returns an identifier for this relation
       * @return
       */
-    final override def kind: String = _kind
-
-    /**
-      * Returns a map of user defined labels
-      * @param context
-      * @return
-      */
-    final override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
+    def identifier : RelationIdentifier
 
     /**
       * Returns a description of the relation
-      * @param context
       * @return
       */
-    def description(implicit context: Context) : String
+    def description : String
 
     /**
       * Returns the Schema object which describes all fields of the relation
-      * @param context
       * @return
       */
-    def schema(implicit context: Context) : Schema
+    def schema : Schema
 
     /**
       * Returns a list of fields
-      * @param context
       * @return
       */
-    def fields(implicit context: Context) : Seq[Field] = schema.fields
+    def fields : Seq[Field] = schema.fields
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -180,4 +172,57 @@ abstract class Relation extends Resource {
       * @param executor
       */
     def migrate(executor:Executor) : Unit
+}
+
+
+
+
+object RelationSpec extends TypeRegistry[RelationSpec] {
+    class NameResolver extends StdConverter[Map[String, RelationSpec], Map[String, RelationSpec]] {
+        override def convert(value: Map[String, RelationSpec]): Map[String, RelationSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
+}
+
+/**
+  * Interface class for declaring relations (for sources and sinks) as part of a model
+  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
+    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
+    new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
+    new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
+    new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
+    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
+))
+abstract class RelationSpec extends NamedSpec[Relation] {
+    @JsonProperty(value="description", required = false) private var description: String = _
+    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
+
+    override def instantiate(context:Context) : Relation
+
+    /**
+      * Returns a set of common properties
+      * @param context
+      * @return
+      */
+    override protected def instanceProperties(context:Context) : Relation.Properties = {
+        require(context != null)
+        Relation.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            kind,
+            labels.mapValues(context.evaluate),
+            context.evaluate(description),
+            options.mapValues(context.evaluate)
+        )
+    }
 }

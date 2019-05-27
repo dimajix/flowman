@@ -21,11 +21,11 @@ import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
+import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.state.StateStoreProvider
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spi.UdfProvider
 
 
@@ -33,7 +33,7 @@ class SessionBuilder {
     private var _sparkSession: SparkSession = _
     private var _sparkName = ""
     private var _sparkConfig = Map[String,String]()
-    private var _environment = Seq[(String,String)]()
+    private var _environment = Map[String,String]()
     private var _profiles = Set[String]()
     private var _project:Project = _
     private var _namespace:Namespace = _
@@ -99,7 +99,7 @@ class SessionBuilder {
     def withEnvironment(key:String,value:String) : SessionBuilder = {
         require(key != null)
         require(value != null)
-        _environment = _environment :+ (key -> value)
+        _environment = _environment + (key -> value)
         this
     }
 
@@ -186,15 +186,15 @@ object Session {
   * @param _jars
   */
 class Session private[execution](
-                                        _namespace:Namespace,
-                                        _project:Project,
-                                        _sparkSession:() => SparkSession,
-                                        _sparkName:String,
-                                        _sparkConfig:Map[String,String],
-                                        _environment: Seq[(String,String)],
-                                        _profiles:Set[String],
-                                        _jars:Set[String]
-                                    ) {
+    _namespace:Namespace,
+    _project:Project,
+    _sparkSession:() => SparkSession,
+    _sparkName:String,
+    _sparkConfig:Map[String,String],
+    _environment: Map[String,String],
+    _profiles:Set[String],
+    _jars:Set[String]
+) {
     require(_jars != null)
     require(_environment != null)
     require(_profiles != null)
@@ -212,7 +212,7 @@ class Session private[execution](
     }
     private val _runner = {
         if (_history  != null)
-            new MonitoredRunner(_history.createStateStore(this))
+            new MonitoredRunner(_history.instantiate(this))
         else
             new SimpleRunner
     }
@@ -286,7 +286,7 @@ class Session private[execution](
     }
     private var sparkSession:SparkSession = null
 
-    private lazy val rootContext : Context = {
+    private lazy val rootContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
@@ -302,13 +302,13 @@ class Session private[execution](
     }
 
     private lazy val rootExecutor : RootExecutor = {
-        val executor = new RootExecutor(this, rootContext)
+        val executor = new RootExecutor(this)
         executor
     }
 
     private lazy val _externalCatalog : ExternalCatalog = {
         if (_namespace != null && _namespace.catalog != null) {
-            _namespace.catalog.createCatalog(this)
+            _namespace.catalog.instantiate(this)
         }
         else {
             null
@@ -317,7 +317,7 @@ class Session private[execution](
     private lazy val _catalog = new Catalog(spark, _externalCatalog)
 
 
-    def monitor : StateStoreProvider = _history
+    def monitor : StateStoreSpec = _history
 
     /**
       * Returns the Namespace tied to this Flowman session.
@@ -367,6 +367,12 @@ class Session private[execution](
     def sparkRunning: Boolean = sparkSession != null
 
     /**
+      * Returns the FileSystem as configured in Hadoop
+      * @return
+      */
+    def fs : FileSystem = rootContext.fs
+
+    /**
       * Returns the root context of this session.
       */
     def context : Context = rootContext
@@ -390,16 +396,6 @@ class Session private[execution](
     }
 
     /**
-      * Either returns an existing or creates a new project specific executor
-      *
-      * @param project
-      * @return
-      */
-    def getExecutor(project: Project) : Executor = {
-        rootExecutor.getProjectExecutor(project)
-    }
-
-    /**
       * Returns a new detached Flowman Session sharing the same Spark Context.
       * @param project
       * @return
@@ -411,7 +407,7 @@ class Session private[execution](
             () => spark.newSession(),
             _sparkName,
             _sparkConfig:Map[String,String],
-            _environment: Seq[(String,String)],
+            _environment: Map[String,String],
             _profiles:Set[String],
             Set()
         )

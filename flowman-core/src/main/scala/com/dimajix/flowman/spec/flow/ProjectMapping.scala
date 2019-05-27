@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,24 +29,13 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-object ProjectMapping {
-    def apply(input:String, columns:Seq[String]) : ProjectMapping = {
-        val mapping = new ProjectMapping
-        mapping._input = input
-        mapping._columns = columns
-        mapping
-    }
-}
-
-
-class ProjectMapping extends BaseMapping {
+case class ProjectMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Seq[String]
+)
+extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
-
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var _columns:Seq[String] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -56,9 +45,6 @@ class ProjectMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
-        val columns = this.columns
-        val input = this.input
         logger.info(s"Projecting mapping '$input' onto columns ${columns.mkString(",")}")
 
         val df = tables(input)
@@ -69,31 +55,44 @@ class ProjectMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
-        val columns = this.columns
-        val mappingId = this.input
-        val schema = input(mappingId)
+        val schema = input(this.input)
         val inputFields = schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
         val outputFields = columns.map { name =>
-            inputFields.getOrElse(name.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Cannot find field $name in schema $mappingId"))
+            inputFields.getOrElse(name.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Cannot find field $name in schema ${this.input}"))
         }
         StructType(outputFields)
+    }
+}
+
+
+class ProjectMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): ProjectMapping = {
+        ProjectMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(context.evaluate)
+        )
     }
 }

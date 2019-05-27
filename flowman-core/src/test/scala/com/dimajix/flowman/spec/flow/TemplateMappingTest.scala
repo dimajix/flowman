@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,32 +22,37 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.testing.LocalSparkSession
 
 
-class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The ProvidedMapping" should "work" in {
+class TemplateMappingTest extends FlatSpec with Matchers {
+    "A TemplateMapping" should "work" in {
         val spec =
             """
               |mappings:
-              |  dummy:
-              |    kind: provided
-              |    table: my_table
+              |  xfs:
+              |    kind: schema
+              |    input: ${input}
+              |    columns:
+              |      _2: string
+              |      _1: string
+              |
+              |  template:
+              |    kind: template
+              |    mapping: xfs
+              |    environment:
+              |      - input=$default_input
             """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-        project.mappings.keys should contain("dummy")
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder()
+            .withEnvironment("default_input", "lala")
+            .build()
         val context = session.getContext(project)
 
-        executor.spark.emptyDataFrame.createOrReplaceTempView("my_table")
+        val mapping = context.getMapping(MappingIdentifier("template"))
+        mapping should not be (null)
+        mapping shouldBe a[TemplateMapping]
 
-        val mapping = context.getMapping(MappingIdentifier("dummy"))
-        mapping should not be null
-
-        val df = executor.instantiate(mapping)
-        df.count should be(0)
+        mapping.dependencies should be (Array(MappingIdentifier("lala")))
     }
-
 }

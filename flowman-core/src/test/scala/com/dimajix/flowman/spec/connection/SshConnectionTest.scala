@@ -30,10 +30,13 @@ class SshConnectionTest extends FlatSpec with Matchers {
               |kind: ssh
               |host: my_host
             """.stripMargin
-        val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Connection](spec)
+        val session = Session.builder().build()
+
+        val conSpec = ObjectMapper.parse[ConnectionSpec](spec)
+        conSpec shouldBe a[SshConnectionSpec]
+
+        val result = conSpec.instantiate(session.context)
         result shouldBe a[SshConnection]
         val ssh = result.asInstanceOf[SshConnection]
         ssh.host should be ("my_host")
@@ -47,9 +50,10 @@ class SshConnectionTest extends FlatSpec with Matchers {
               |host: my_host
             """.stripMargin
         val session = Session.builder().build()
-        implicit val context = session.context
+        val conSpec = ObjectMapper.parse[ConnectionSpec](spec)
+        conSpec shouldBe a[SshConnectionSpec]
 
-        val result = ObjectMapper.parse[Connection](spec)
+        val result = conSpec.instantiate(session.context)
         result shouldBe a[SshConnection]
         val ssh = result.asInstanceOf[SshConnection]
         ssh.host should be ("my_host")

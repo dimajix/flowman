@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,14 @@ import org.apache.spark.SparkConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
@@ -47,20 +48,6 @@ object SettingLevel {
     val NONE = new SettingLevel(0)
 }
 
-object Context {
-    abstract class Builder {
-        def withEnvironment(env: Seq[(String, Any)]): Builder
-        def withConfig(env:Map[String,String]) : Builder
-        def withConnections(env:Map[String,Connection]) : Builder
-        def withProfile(profile:Profile) : Builder
-
-        def withConfig(config:Map[String,String], level:SettingLevel) : Builder
-        def withConnections(env:Map[String,Connection], level:SettingLevel) : Builder
-        def withEnvironment(env:Seq[(String,Any)], level:SettingLevel) : Builder
-
-        def build() : Context
-    }
-}
 
 abstract class Context {
     /**
@@ -79,7 +66,7 @@ abstract class Context {
       * Returns the root context in a hierarchy of connected contexts
       * @return
       */
-    def root : Context
+    def root : RootContext
 
     /**
       * Evaluates a string containing expressions to be processed.
@@ -96,6 +83,7 @@ abstract class Context {
       * @return
       */
     def getConnection(identifier: ConnectionIdentifier): Connection
+
     /**
       * Returns a specific named Mapping. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -104,6 +92,7 @@ abstract class Context {
       * @return
       */
     def getMapping(identifier: MappingIdentifier) : Mapping
+
     /**
       * Returns a specific named Relation. The RelationType can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -112,6 +101,7 @@ abstract class Context {
       * @return
       */
     def getRelation(identifier: RelationIdentifier): Relation
+
     /**
       * Returns a specific named Target. The TargetType can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -120,6 +110,7 @@ abstract class Context {
       * @return
       */
     def getTarget(identifier: TargetIdentifier): Target
+
     /**
       * Returns a specific named Job. The JobType can either be inside this Contexts project or in a different
       * project within the same namespace
@@ -144,9 +135,6 @@ abstract class Context {
       */
     def environment: Map[String, Any]
     def rawEnvironment : Map[String,(Any, Int)]
-
-    def getProjectContext(projectName:String) : Context
-    def getProjectContext(project:Project) : Context
 
     /**
       * Returns the FileSystem as configured in Hadoop

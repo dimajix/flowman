@@ -51,13 +51,10 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
 
         project.mappings.size should be(1)
         project.mappings.contains("m0") should be(true)
-        project.mappings("m0") shouldBe an[UnpackJsonMapping]
+        project.mappings("m0") shouldBe an[UnpackJsonMappingSpec]
     }
 
     it should "work" in {
@@ -92,18 +89,15 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be(1)
-        project.mappings.contains("m0") should be(true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be(2)
         result.schema should be(StructType(
@@ -144,18 +138,15 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be(1)
-        project.mappings.contains("m0") should be(true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be(2)
         result.schema should be(StructType(
@@ -191,18 +182,15 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be(1)
-        project.mappings.contains("m0") should be(true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be(2)
         result.schema should be(StructType(

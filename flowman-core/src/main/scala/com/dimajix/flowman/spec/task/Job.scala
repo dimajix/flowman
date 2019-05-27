@@ -20,7 +20,6 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
@@ -30,8 +29,15 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
-import com.dimajix.flowman.spec.Resource
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.state.JobInstance
 import com.dimajix.flowman.state.Status
 import com.dimajix.flowman.types.FieldType
@@ -39,60 +45,13 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StringType
 
 
-class JobParameter {
-    @JsonProperty(value="name") private var _name:String = ""
-    @JsonProperty(value="description") private var _description:String = ""
-    @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
-    @JsonProperty(value="granularity", required = false) private var _granularity: String = _
-    @JsonProperty(value="default", required = false) private var _default: String = _
-
-    def this(name:String, ftype:FieldType, granularity:String = null, value:String = null, description:String = "") = {
-        this()
-        _name = name
-        _description = description
-        _type = ftype
-        _granularity = granularity
-        _default = value
-    }
-
-    /**
-      * Returns the name of the paramter
-      * @return
-      */
-
-    def name : String = _name
-    /**
-      * Returns the optional description of the paramter
-      * @return
-      */
-    def description : String = _description
-
-    /**
-      * Returns the data type of the parameter
-      * @return
-      */
-    def ftype : FieldType = _type
-
-    /**
-      * Returns the string representation of the granularity of the parameter.
-      * @param context
-      * @return
-      */
-    def granularity(implicit context: Context) : String = context.evaluate(_granularity)
-
-    /**
-      * Returns an optional default value of the parameter
-      * @param context
-      * @return
-      */
-    def default(implicit context:Context) : Any = {
-        val v = context.evaluate(_default)
-        if (v != null)
-            ftype.parse(v)
-        else
-            null
-    }
-
+case class JobParameter(
+    name:String,
+    ftype : FieldType,
+    granularity: String=null,
+    default: Any = null,
+    description:String=null
+) {
     /**
       * Interpolates a given FieldValue returning all values as an Iterable
       * @param value
@@ -106,108 +65,141 @@ class JobParameter {
     /**
       * Pasres a string representing a single value for the parameter
       * @param value
-      * @param context
       * @return
       */
-    def parse(value:String)(implicit context:Context) : Any = {
+    def parse(value:String) : Any = {
         ftype.parse(value)
     }
 }
 
 
 object Job {
-    def apply(tasks:Seq[Task], name:String, description:String) : Job = {
-        val job = new Job
-        job._tasks = tasks
-        job._name = name
-        job._description = description
-        job
+    object Properties {
+        def apply(context:Context, name:String="") : Properties = {
+            require(context != null)
+            Properties(
+                context,
+                context.namespace,
+                context.project,
+                name,
+                Map()
+            )
+        }
+    }
+    case class Properties(
+        context: Context,
+        namespace:Namespace,
+        project:Project,
+        name: String,
+        labels: Map[String, String]
+    ) extends Instance.Properties {
+        override val kind : String = "job"
     }
 
-    class Builder {
-        private val job = new Job
+    class Builder(context:Context) {
+        require(context != null)
+        private var name:String = ""
+        private var description:String = ""
+        private var logged:Boolean = true
+        private var parameters:Seq[JobParameter] = Seq()
+        private var tasks:Seq[TaskSpec] = Seq()
+        private var failure:Seq[TaskSpec] = Seq()
+        private var cleanup:Seq[TaskSpec] = Seq()
 
-        def build() : Job = job
+        def build() : Job = Job(
+            Job.Properties(context, name),
+            description,
+            parameters,
+            Map(),
+            tasks,
+            failure,
+            cleanup,
+            logged
+        )
 
         def setName(name:String) : Builder = {
-            job._name = name
+            require(name != null)
+            this.name = name
             this
         }
         def setDescription(desc:String) : Builder = {
-            job._description = desc
+            require(desc != null)
+            this.description = desc
             this
         }
         def setLogged(boolean: Boolean) : Builder = {
-            job._logged = boolean.toString
+            this.logged = boolean
             this
         }
         def setParameters(params:Seq[JobParameter]) : Builder = {
-            job._parameters = params
+            require(params != null)
+            this.parameters = params
             this
         }
         def addParameter(param:JobParameter) : Builder = {
-            job._parameters = job._parameters :+ param
+            require(param != null)
+            this.parameters = this.parameters :+ param
             this
         }
-        def addParameter(name:String, ftype:FieldType, granularity:String = null, value:String = null) : Builder = {
-            job._parameters = job._parameters :+ new JobParameter(name, ftype, granularity, value)
+        def addParameter(name:String, ftype:FieldType, granularity:String = null, value:Any = null) : Builder = {
+            require(name != null)
+            require(ftype != null)
+            this.parameters = this.parameters :+ JobParameter(name, ftype, granularity, value)
             this
         }
-        def setTasks(tasks:Seq[Task]) : Builder = {
-            job._tasks = tasks
+        def setTasks(tasks:Seq[TaskSpec]) : Builder = {
+            require(tasks != null)
+            this.tasks = tasks
+            this
+        }
+        def addTask(task:TaskSpec) : Builder = {
+            require(task != null)
+            this.tasks = this.tasks :+ task
             this
         }
         def addTask(task:Task) : Builder = {
-            job._tasks = job._tasks :+ task
+            require(task != null)
+            require(task.context eq context)
+            val wrapped = new TaskSpec {
+                override def instantiate(context: Context): Task = task
+            }
+            this.tasks = this.tasks :+ wrapped
             this
         }
     }
 
-    def builder() : Builder = new Builder
-
-    class NameResolver extends StdConverter[Map[String,Job],Map[String,Job]] {
-        override def convert(value: Map[String,Job]): Map[String,Job] = {
-            value.foreach(kv => kv._2._name = kv._1)
-            value
-        }
-    }
+    def builder(context: Context) : Builder = new Builder(context)
 }
 
 /**
   * A Job represents a collection of individual tasks. Jobs can be logged by appropriate runners.
   */
-class Job extends Resource {
+case class Job (
+    instanceProperties:Job.Properties,
+    description:String,
+    parameters:Seq[JobParameter],
+    environment:Map[String,String],
+    tasks:Seq[TaskSpec],
+    failure:Seq[TaskSpec],
+    cleanup:Seq[TaskSpec],
+    logged:Boolean
+) extends AbstractInstance {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
-    @JsonIgnore private var _name:String = ""
-    @JsonProperty(value="labels", required=false) private var _labels:Map[String,String] = Map()
-    @JsonProperty(value="description") private var _description:String = ""
-    @JsonProperty(value="logged") private var _logged:String = "true"
-    @JsonProperty(value="parameters") private var _parameters:Seq[JobParameter] = Seq()
-    @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
-    @JsonProperty(value="tasks") private var _tasks:Seq[Task] = Seq()
-    @JsonProperty(value="failure") private var _failure:Seq[Task] = Seq()
-    @JsonProperty(value="cleanup") private var _cleanup:Seq[Task] = Seq()
-
-    override def name : String = _name
     override def category: String = "job"
     override def kind : String = "job"
-    override def labels(implicit context: Context) : Map[String,String] = _labels.mapValues(context.evaluate)
 
-    def description(implicit context:Context) : String = context.evaluate(_description)
-    def logged(implicit context:Context) : Boolean = context.evaluate(_logged).toBoolean
-    def tasks : Seq[Task] = _tasks
-    def failure : Seq[Task] = _failure
-    def cleanup : Seq[Task] = _cleanup
-    def environment : Seq[(String,String)] = splitSettings(_environment)
-    def parameters: Seq[JobParameter] = _parameters
+    /**
+      * Returns an identifier for this job
+      * @return
+      */
+    def identifier : JobIdentifier = JobIdentifier(name, Option(project).map(_.name))
 
     /**
       * Returns a JobInstance used for state management
-      * @param context
       * @return
       */
-    def instance(args:Map[String,String])(implicit context: Context) : JobInstance = {
+    def instance(args:Map[String,String]) : JobInstance = {
         JobInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
@@ -219,10 +211,9 @@ class Job extends Resource {
     /**
       * Determine final arguments of this job, by performing granularity adjustments etc
       * @param args
-      * @param context
       * @return
       */
-    def arguments(args:Map[String,String])(implicit context:Context) : Map[String,Any] = {
+    def arguments(args:Map[String,String]) : Map[String,Any] = {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
             (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter '${kv._1}' not defined for job '$name'")).parse(kv._2)))
@@ -238,7 +229,6 @@ class Job extends Resource {
       * @return
       */
     def execute(executor:Executor, args:Map[String,String]) : Status = {
-        implicit val context = executor.context
         logger.info(s"Running job: '$name' ($description)")
 
         // Create a new execution environment.
@@ -250,41 +240,40 @@ class Job extends Resource {
         val isolated = args != null && args.nonEmpty
 
         // Create a new execution environment.
-        val jobContext = RootContext.builder(context)
-            .withEnvironment(jobArgs.toSeq, SettingLevel.SCOPE_OVERRIDE)
+        val rootContext = RootContext.builder(context)
+            .withEnvironment(jobArgs, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()
-        val jobExecutor = new RootExecutor(executor, jobContext, isolated)
-        val projectExecutor = if (context.project != null) jobExecutor.getProjectExecutor(context.project) else jobExecutor
+        val projectExecutor = new RootExecutor(executor, isolated)
+        val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
 
-        val result = runJob(projectExecutor)
+        val result = runJob(projectContext, projectExecutor)
 
         // Release any resources
         if (isolated) {
-            jobExecutor.cleanup()
+            projectExecutor.cleanup()
         }
 
         result
     }
 
-    private def runJob(executor:Executor) : Status = {
-        implicit val context = executor.context
-        val result = runTasks(executor, _tasks)
+    private def runJob(context:Context, executor:Executor) : Status = {
+        val result = runTasks(context, executor, tasks)
 
         // Execute failure action
-        if (_failure.nonEmpty) {
+        if (failure.nonEmpty) {
             result match {
                 case Success(false) | Failure(_) =>
                     logger.info(s"Running failure tasks for job '$name'")
-                    runTasks(executor, _failure)
+                    runTasks(context, executor, failure)
                 case Success(_) =>
             }
         }
 
         // Execute cleanup actions
-        if (_cleanup.nonEmpty) {
+        if (cleanup.nonEmpty) {
             logger.info(s"Running cleanup tasks for job '$name'")
-            runTasks(executor, _cleanup) match {
+            runTasks(context, executor, cleanup) match {
                 case Success(true) =>
                     logger.info(s"Successfully executed all cleanup tasks of job '$name'")
                 case Success(false) | Failure(_) =>
@@ -302,10 +291,10 @@ class Job extends Resource {
         }
     }
 
-    private def runTasks(executor:Executor, tasks:Seq[Task]) : Try[Boolean] = {
-        implicit val context = executor.context
+    private def runTasks(context:Context, executor:Executor, tasks:Seq[TaskSpec]) : Try[Boolean] = {
         val result = Try {
-            tasks.forall { task =>
+            tasks.forall { spec =>
+                val task = spec.instantiate(context)
                 logger.info(s"Executing task '${task.description}'")
                 task.execute(executor)
             }
@@ -319,5 +308,85 @@ class Job extends Resource {
                 logger.info(s"Successfully executed all tasks of job '$name'")
         }
         result
+    }
+}
+
+
+
+
+object JobSpec extends TypeRegistry[JobSpec] {
+    class NameResolver extends StdConverter[Map[String, JobSpec], Map[String, JobSpec]] {
+        override def convert(value: Map[String, JobSpec]): Map[String, JobSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
+}
+
+class JobSpec extends NamedSpec[Job] {
+    @JsonProperty(value="description") private var description:String = ""
+    @JsonProperty(value="logged") private var logged:String = "true"
+    @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
+    @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
+    @JsonProperty(value="tasks") private var tasks:Seq[TaskSpec] = Seq()
+    @JsonProperty(value="failure") private var failure:Seq[TaskSpec] = Seq()
+    @JsonProperty(value="cleanup") private var cleanup:Seq[TaskSpec] = Seq()
+
+    override def instantiate(context: Context): Job = {
+        Job(
+            instanceProperties(context),
+            context.evaluate(description),
+            parameters.map(_.instantiate(context)),
+            splitSettings(environment).toMap,
+            tasks,
+            failure,
+            cleanup,
+            context.evaluate(logged).toBoolean
+        )
+    }
+
+    /**
+      * Returns a set of common properties
+      * @param context
+      * @return
+      */
+    override protected def instanceProperties(context:Context) : Job.Properties = {
+        require(context != null)
+        Job.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            labels
+        )
+    }
+}
+
+
+class JobParameterSpec extends Spec[JobParameter] {
+    @JsonProperty(value = "name") private var name: String = ""
+    @JsonProperty(value = "description") private var description: String = ""
+    @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
+    @JsonProperty(value = "granularity", required = false) private var granularity: String = _
+    @JsonProperty(value = "default", required = false) private var default: String = _
+
+    override def instantiate(context: Context): JobParameter = {
+        require(context != null)
+
+        val default = {
+            val v = context.evaluate(this.default)
+            if (v != null)
+                ftype.parse(v)
+            else
+                null
+        }
+
+        JobParameter(
+            context.evaluate(name),
+            ftype,
+            context.evaluate(granularity),
+            default,
+            context.evaluate(description)
+        )
     }
 }

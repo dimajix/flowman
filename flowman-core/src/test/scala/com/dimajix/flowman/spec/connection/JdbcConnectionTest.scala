@@ -24,7 +24,7 @@ import com.dimajix.flowman.spec.ObjectMapper
 
 
 class JdbcConnectionTest extends FlatSpec with Matchers {
-    "A JdbConnction" should "be parseable" in {
+    "A JdbcConnction" should "be parseable" in {
         val spec =
             """
               |kind: jdbc
@@ -32,11 +32,11 @@ class JdbcConnectionTest extends FlatSpec with Matchers {
               |driver: my_driver
             """.stripMargin
         val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Connection](spec)
-        result shouldBe a[JdbcConnection]
-        val jdbc = result.asInstanceOf[JdbcConnection]
+        val result = ObjectMapper.parse[ConnectionSpec](spec)
+        result shouldBe a[JdbcConnectionSpec]
+
+        val jdbc = result.instantiate(session.context).asInstanceOf[JdbcConnection]
         jdbc.url should be ("my_url")
         jdbc.driver should be ("my_driver")
     }
@@ -48,11 +48,11 @@ class JdbcConnectionTest extends FlatSpec with Matchers {
               |driver: my_driver
             """.stripMargin
         val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Connection](spec)
-        result shouldBe a[JdbcConnection]
-        val jdbc = result.asInstanceOf[JdbcConnection]
+        val result = ObjectMapper.parse[ConnectionSpec](spec)
+        result shouldBe a[JdbcConnectionSpec]
+
+        val jdbc = result.instantiate(session.context).asInstanceOf[JdbcConnection]
         jdbc.url should be ("my_url")
         jdbc.driver should be ("my_driver")
     }

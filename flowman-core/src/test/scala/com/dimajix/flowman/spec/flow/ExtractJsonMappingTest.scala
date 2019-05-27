@@ -29,6 +29,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.spec.schema.SwaggerSchemaSpec
 import com.dimajix.flowman.testing.LocalSparkSession
 
 
@@ -58,14 +61,11 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
 
         project.mappings.size should be (1)
         project.mappings.contains("m0") should be (true)
         val mapping = project.mappings("m0")
-        mapping shouldBe an[ExtractJsonMapping]
+        mapping shouldBe an[ExtractJsonMappingSpec]
     }
 
     it should "work with an explicit schema" in {
@@ -98,18 +98,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be (1)
-        project.mappings.contains("m0") should be (true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (2)
         result.schema should be (StructType(
@@ -137,18 +134,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be (1)
-        project.mappings.contains("m0") should be (true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (2)
         result.schema should be (StructType(
@@ -175,18 +169,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be (1)
-        project.mappings.contains("m0") should be (true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (2)
         result.schema should be (StructType(
@@ -218,18 +209,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-
-        project.mappings.size should be (1)
-        project.mappings.contains("m0") should be (true)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (2)
         result.schema should be (StructType(
@@ -252,15 +240,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (1)
         result.schema should be (StructType(
@@ -292,15 +280,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         result.count() should be (1)
         result.schema should be (StructType(
@@ -323,15 +311,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         an[Exception] shouldBe thrownBy(mapping.execute(executor, Map(MappingIdentifier("p0") -> input)))
     }
 
@@ -354,15 +342,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
         val input = executor.spark.createDataFrame(Seq(
             ("""invalid_json""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = project.mappings("m0")
+        val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
         an[Exception] shouldBe thrownBy(result.count())
     }

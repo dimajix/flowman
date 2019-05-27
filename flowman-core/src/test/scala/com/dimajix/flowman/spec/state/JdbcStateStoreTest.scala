@@ -42,22 +42,22 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         tempDir.toFile.delete()
     }
 
-    "The JdbcStateStoreProvider" should "throw an exception on missing connection" in {
+    "The JdbcStateStoreSpec" should "throw an exception on missing connection" in {
         val db = tempDir.resolve("mydb")
         val spec =
             """
               |kind: jdbc
               |connection: logger
             """.stripMargin
-        val monitor = ObjectMapper.parse[StateStoreProvider](spec)
+        val monitor = ObjectMapper.parse[StateStoreSpec](spec)
 
-        val job = Job.builder()
-            .setName("job")
-            .build()
         val session = Session.builder()
             .build()
+        val job = Job.builder(session.context)
+            .setName("job")
+            .build()
 
-        a[NoSuchElementException] shouldBe thrownBy(monitor.createStateStore(session))
+        a[NoSuchElementException] shouldBe thrownBy(monitor.instantiate(session))
     }
 
     it should "be parseable" in {
@@ -67,7 +67,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
               |connection: logger
             """.stripMargin
 
-        val monitor = ObjectMapper.parse[StateStoreProvider](spec)
-        monitor shouldBe a[JdbcStateStoreProvider]
+        val monitor = ObjectMapper.parse[StateStoreSpec](spec)
+        monitor shouldBe a[JdbcStateStoreSpec]
     }
 }

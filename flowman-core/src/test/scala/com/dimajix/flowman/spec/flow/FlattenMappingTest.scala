@@ -42,7 +42,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val project = Module.read.string(spec).toProject("project")
         val mapping = project.mappings("my_structure")
 
-        mapping shouldBe an[FlattenMapping]
+        mapping shouldBe an[FlattenMappingSpec]
     }
 
     it should "flatten nested structures" in {
@@ -60,14 +60,18 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val spark = this.spark
         import spark.implicits._
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
         val inputRecords = Seq(inputJson.replace("\n",""))
         val inputDs = spark.createDataset(inputRecords)
         val inputDf = spark.read.json(inputDs)
 
-        val mapping = FlattenMapping("input_df", "snakeCase")
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val mapping = FlattenMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("input_df"),
+            "snakeCase"
+        )
 
         val expectedSchema = StructType(Seq(
             StructField("stupid_name_secret_struct_other_field", LongType),
@@ -77,7 +81,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(executor.context, Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
         outputSchema.sparkType should be (expectedSchema)
     }
 }

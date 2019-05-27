@@ -32,26 +32,23 @@ class SimpleRunner extends AbstractRunner {
 
     /**
       * Performs some checkJob, if the run is required. Returns false if the job is out of date and should be rerun
-      * @param context
       * @return
       */
-    override protected def checkJob(context:Context, job:JobInstance) : Boolean = false
+    override protected def checkJob(job:JobInstance) : Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
       *
-      * @param context
       * @return
       */
-    override protected def startJob(context:Context, job:JobInstance, parent:Option[JobToken]) : JobToken = null
+    override protected def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken = null
 
     /**
       * Marks a run as a success
       *
-      * @param context
       * @param token
       */
-    override protected def finishJob(context: Context, token:JobToken, status:Status) : Unit = {}
+    override protected def finishJob(token:JobToken, status:Status) : Unit = {}
 
     /**
       * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt
@@ -59,7 +56,7 @@ class SimpleRunner extends AbstractRunner {
       * @param target
       * @return
       */
-    protected override def checkTarget(context: Context, target: TargetInstance): Boolean = false
+    protected override def checkTarget(target: TargetInstance): Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -67,12 +64,12 @@ class SimpleRunner extends AbstractRunner {
       * @param target
       * @return
       */
-    override protected def startTarget(context: Context, target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
+    override protected def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    override protected def finishTarget(context: Context, token:TargetToken, status:Status) : Unit = {}
+    override protected def finishTarget(token:TargetToken, status:Status) : Unit = {}
 }

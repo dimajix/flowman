@@ -30,43 +30,12 @@ import com.dimajix.flowman.types.StructType
 
 
 object AssembleMapping {
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl=classOf[AppendEntry], visible = false)
-    @JsonSubTypes(value = Array(
-        new JsonSubTypes.Type(name = "append", value = classOf[AppendEntry]),
-        new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeEntry]),
-        new JsonSubTypes.Type(name = "lift", value = classOf[LiftEntry]),
-        new JsonSubTypes.Type(name = "nest", value = classOf[NestEntry]),
-        new JsonSubTypes.Type(name = "rename", value = classOf[RenameEntry]),
-        new JsonSubTypes.Type(name = "struct", value = classOf[StructEntry])
-    ))
     abstract class Entry {
-        def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder
+        def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder
     }
 
-
-    object AppendEntry {
-        def apply(path:String, keep:Seq[String], drop:Seq[String]) : AppendEntry = {
-            val result = new AppendEntry
-            result._path = path
-            result._keep = keep
-            result._drop = drop
-            result
-        }
-    }
-    class AppendEntry extends Entry {
-        @JsonProperty(value = "path", required = false) private var _path:String = ""
-        @JsonProperty(value = "keep", required = false) private var _keep:Seq[String] = Seq()
-        @JsonProperty(value = "drop", required = false) private var _drop:Seq[String] = Seq()
-
-        def path(implicit context: Context) : String = context.evaluate(_path)
-        def keep(implicit context: Context) : Seq[String] = _keep.map(context.evaluate)
-        def drop(implicit context: Context) : Seq[String] = _drop.map(context.evaluate)
-
-        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
-            val path = this.path
-            val keep = this.keep
-            val drop = this.drop
-
+    case class AppendEntry(path:String, keep:Seq[String], drop:Seq[String]) extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.columns(
                 _.path(path)
                  .keep(keep)
@@ -75,25 +44,8 @@ object AssembleMapping {
         }
     }
 
-    object LiftEntry {
-        def apply(path:String, columns:Seq[String]) : LiftEntry = {
-            val result = new LiftEntry
-            result._path = path
-            result._columns = columns
-            result
-        }
-    }
-    class LiftEntry extends Entry {
-        @JsonProperty(value = "path", required = false) private var _path:String = ""
-        @JsonProperty(value = "columns", required = false) private var _columns:Seq[String] = Seq()
-
-        def path(implicit context: Context) : String = context.evaluate(_path)
-        def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
-
-        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
-            val path = this.path
-            val columns = this.columns
-
+    case class LiftEntry(path:String, columns:Seq[String]) extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.lift(
                 _.path(path)
                     .columns(columns)
@@ -101,25 +53,8 @@ object AssembleMapping {
         }
     }
 
-    object RenameEntry {
-        def apply(path:String, columns:Map[String,String]) : RenameEntry = {
-            val result = new RenameEntry
-            result._path = path
-            result._columns = columns
-            result
-        }
-    }
-    class RenameEntry extends Entry {
-        @JsonProperty(value = "path", required = false) private var _path:String = ""
-        @JsonProperty(value = "columns", required = false) private var _columns:Map[String,String] = Map()
-
-        def path(implicit context: Context) : String = context.evaluate(_path)
-        def columns(implicit context: Context) : Map[String,String] = _columns.mapValues(context.evaluate)
-
-        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
-            val path = this.path
-            val columns = this.columns
-
+    case class RenameEntry(path:String, columns:Map[String,String]) extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.rename(
                 _.path(path)
                     .columns(columns.toSeq)
@@ -127,55 +62,14 @@ object AssembleMapping {
         }
     }
 
-    object StructEntry {
-        def apply(name:String, columns:Seq[Entry]) : StructEntry = {
-            val result = new StructEntry
-            result._name = name
-            result._columns = columns
-            result
-        }
-    }
-    class StructEntry extends Entry {
-        @JsonProperty(value = "name", required = true) private var _name:String = ""
-        @JsonProperty(value = "columns", required = false) private var _columns:Seq[Entry] = Seq()
-
-        def name(implicit context: Context) : String = context.evaluate(_name)
-        def columns(implicit context: Context) : Seq[Entry] = _columns
-
-        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
-            val name = this.name
-            val columns = this.columns
-
+    case class StructEntry(name:String, columns:Seq[Entry]) extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.assemble(name)(b => columns.foldLeft(b)((builder, entry) => entry.build(builder)))
         }
     }
 
-    object NestEntry {
-        def apply(name:String, path:String, keep:Seq[String], drop:Seq[String]) : NestEntry = {
-            val result = new NestEntry
-            result._name = name
-            result._path = path
-            result._keep = keep
-            result._drop = drop
-            result
-        }
-    }
-    class NestEntry extends Entry {
-        @JsonProperty(value = "name", required = true) private var _name:String = ""
-        @JsonProperty(value = "path", required = false) private var _path:String = ""
-        @JsonProperty(value = "keep", required = false) private var _keep:Seq[String] = Seq()
-        @JsonProperty(value = "drop", required = false) private var _drop:Seq[String] = Seq()
-
-        def name(implicit context: Context) : String = context.evaluate(_name)
-        def path(implicit context: Context) : String = context.evaluate(_path)
-        def keep(implicit context: Context) : Seq[String] = _keep.map(context.evaluate)
-        def drop(implicit context: Context) : Seq[String] = _drop.map(context.evaluate)
-
-        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
-            val path = this.path
-            val keep = this.keep
-            val drop = this.drop
-
+    case class NestEntry(name:String, path:String, keep:Seq[String], drop:Seq[String]) extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.nest(name)(
                 _.path(path)
                     .keep(keep)
@@ -186,28 +80,11 @@ object AssembleMapping {
 
     object ExplodeEntry {
         def apply(path:String) : ExplodeEntry = {
-            val result = new ExplodeEntry
-            result._path = path
-            result
-        }
-        def apply(name:String, path:String) : ExplodeEntry = {
-            val result = new ExplodeEntry
-            result._name = name
-            result._path = path
-            result
+            ExplodeEntry("", path)
         }
     }
-    class ExplodeEntry extends Entry {
-        @JsonProperty(value = "name", required = false) private var _name:String = ""
-        @JsonProperty(value = "path", required = true) private var _path:String = ""
-
-        def name(implicit context: Context) : String = context.evaluate(_name)
-        def path(implicit context: Context) : String = context.evaluate(_path)
-
-        override def build(builder:Assembler.StructBuilder)(implicit context: Context) : Assembler.StructBuilder = {
-            val path = this.path
-            val name = this.name
-
+    case class ExplodeEntry(name:String, path:String) extends Entry {
+        override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             if (name.nonEmpty) {
                 builder.explode(name)(
                     _.path(path)
@@ -220,34 +97,22 @@ object AssembleMapping {
             }
         }
     }
-
-    def apply(input:String, columns:Seq[Entry]) : AssembleMapping = {
-        val result = new AssembleMapping
-        result._input = input
-        result._columns = columns
-        result
-    }
 }
 
 
-class AssembleMapping extends BaseMapping {
-    import com.dimajix.flowman.spec.flow.AssembleMapping.Entry
-
+case class AssembleMapping(
+    instanceProperties : Mapping.Properties,
+    input : MappingIdentifier,
+    columns: Seq[AssembleMapping.Entry]
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[AssembleMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = false) private var _columns:Seq[Entry] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[Entry] = _columns
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
@@ -262,8 +127,6 @@ class AssembleMapping extends BaseMapping {
         require(executor != null)
         require(deps != null)
 
-        implicit val context = executor.context
-        val input = this.input
         logger.info(s"Reassembling input mapping '$input'")
 
         val df = deps(input)
@@ -273,22 +136,129 @@ class AssembleMapping extends BaseMapping {
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param deps
       * @return
       */
-    override def describe(context:Context, deps:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(deps:Map[MappingIdentifier,StructType]) : StructType = {
         require(deps != null)
 
-        implicit val icontext = context
         val schema = deps(this.input)
         val asm = assembler
         asm.reassemble(schema)
     }
 
-    private def assembler(implicit context:Context) : Assembler = {
+    private def assembler : Assembler = {
         val builder = columns.foldLeft(Assembler.builder())((builder, entry) => entry.build(builder))
         builder.build()
+    }
+}
+
+
+
+
+object AssembleMappingSpec {
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl=classOf[AppendEntry], visible = false)
+    @JsonSubTypes(value = Array(
+        new JsonSubTypes.Type(name = "append", value = classOf[AppendEntry]),
+        new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeEntry]),
+        new JsonSubTypes.Type(name = "lift", value = classOf[LiftEntry]),
+        new JsonSubTypes.Type(name = "nest", value = classOf[NestEntry]),
+        new JsonSubTypes.Type(name = "rename", value = classOf[RenameEntry]),
+        new JsonSubTypes.Type(name = "struct", value = classOf[StructEntry])
+    ))
+    abstract class Entry {
+        def instantiate(context: Context) : AssembleMapping.Entry
+    }
+
+
+    class AppendEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var path:String = ""
+        @JsonProperty(value = "keep", required = false) private var keep:Seq[String] = Seq()
+        @JsonProperty(value = "drop", required = false) private var drop:Seq[String] = Seq()
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            val path = context.evaluate(this.path)
+            val keep = this.keep.map(context.evaluate)
+            val drop = this.drop.map(context.evaluate)
+            AssembleMapping.AppendEntry(path, keep, drop)
+        }
+    }
+
+    class LiftEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var path:String = ""
+        @JsonProperty(value = "columns", required = false) private var columns:Seq[String] = Seq()
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            val path = context.evaluate(this.path)
+            val columns = this.columns.map(context.evaluate)
+            AssembleMapping.LiftEntry(path, columns)
+        }
+    }
+
+    class RenameEntry extends Entry {
+        @JsonProperty(value = "path", required = false) private var path:String = ""
+        @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            val path = context.evaluate(this.path)
+            val columns = this.columns.mapValues(context.evaluate)
+            AssembleMapping.RenameEntry(path, columns)
+        }
+    }
+
+    class StructEntry extends Entry {
+        @JsonProperty(value = "name", required = true) private var name:String = ""
+        @JsonProperty(value = "columns", required = false) private var columns:Seq[Entry] = Seq()
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            val name = context.evaluate(this.name)
+            val columns = this.columns.map(_.instantiate(context))
+            AssembleMapping.StructEntry(name, columns)
+        }
+    }
+
+    class NestEntry extends Entry {
+        @JsonProperty(value = "name", required = true) private var name:String = ""
+        @JsonProperty(value = "path", required = false) private var path:String = ""
+        @JsonProperty(value = "keep", required = false) private var keep:Seq[String] = Seq()
+        @JsonProperty(value = "drop", required = false) private var drop:Seq[String] = Seq()
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            val name = context.evaluate(this.name)
+            val path = context.evaluate(this.path)
+            val keep = this.keep.map(context.evaluate)
+            val drop = this.drop.map(context.evaluate)
+            AssembleMapping.NestEntry(name, path, keep, drop)
+        }
+    }
+
+    class ExplodeEntry extends Entry {
+        @JsonProperty(value = "name", required = false) private var name:String = ""
+        @JsonProperty(value = "path", required = true) private var path:String = ""
+
+        def instantiate(context: Context) : AssembleMapping.Entry = {
+            val name = context.evaluate(this.name)
+            val path = context.evaluate(this.path)
+            AssembleMapping.ExplodeEntry(name, path)
+        }
+    }
+}
+
+
+class AssembleMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = false) private var columns: Seq[AssembleMappingSpec.Entry] = Seq()
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): AssembleMapping = {
+        AssembleMapping(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(this.input)),
+            columns.map(_.instantiate(context))
+        )
     }
 }

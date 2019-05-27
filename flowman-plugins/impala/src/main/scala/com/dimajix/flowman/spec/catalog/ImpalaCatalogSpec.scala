@@ -29,16 +29,14 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 
 
 @CatalogType(kind = "impala")
-class ImpalaCatalogProvider extends CatalogProvider {
+class ImpalaCatalogSpec extends CatalogSpec {
     @JsonProperty(value="connection", required=true) private var _connection:String = ""
 
-    def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
-
-    override def createCatalog(session: Session): ExternalCatalog = {
-        implicit val context = session.context
-        val con = context.getConnection(this.connection)
+    override def instantiate(session: Session): ExternalCatalog = {
+        val context = session.context
+        val con = context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection)))
         val connection = con match {
-            case jdbc:JdbcConnection => new ImpalaExternalCatalog.Connection(
+            case jdbc:JdbcConnection => ImpalaExternalCatalog.Connection(
                 jdbc.url,
                 "",
                 -1,
@@ -47,7 +45,7 @@ class ImpalaCatalogProvider extends CatalogProvider {
                 jdbc.password,
                 jdbc.properties
             )
-            case impala:ImpalaConnection => new ImpalaExternalCatalog.Connection(
+            case impala:ImpalaConnection => ImpalaExternalCatalog.Connection(
                 "",
                 impala.host,
                 impala.port,

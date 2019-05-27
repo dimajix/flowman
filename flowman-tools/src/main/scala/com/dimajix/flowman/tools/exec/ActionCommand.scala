@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.tools.exec
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Project
@@ -26,14 +27,15 @@ abstract class ActionCommand extends Command {
         super.execute(project, session)
 
         // Create project specific executor
-        val executor = session.getExecutor(project)
-        val result = executeInternal(executor, project)
+        val executor = session.executor
+        val context = session.getContext(project)
+        val result = executeInternal(executor, context, project)
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured
-        session.executor.cleanup()
+        executor.cleanup()
 
         result
     }
 
-    def executeInternal(executor:Executor, project: Project) : Boolean
+    def executeInternal(executor:Executor, context:Context, project: Project) : Boolean
 }

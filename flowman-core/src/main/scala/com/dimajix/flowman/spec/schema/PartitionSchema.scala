@@ -16,16 +16,9 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.util.Locale
-
-import org.apache.commons.lang3.StringUtils
-import org.apache.hadoop.fs.Path
-
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.types._
-import com.dimajix.flowman.util.UtcTimestamp
 
 
 object PartitionSchema {
@@ -61,7 +54,7 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
       * @param partition
       * @return
       */
-    def spec(partition:Map[String,SingleValue])(implicit context:Context) : PartitionSpec = {
+    def spec(partition:Map[String,SingleValue]) : PartitionSpec = {
         val map = partition.map { case (name,value) =>
                 val field = get(name)
                 field.name -> field.parse(value.value)
@@ -72,10 +65,9 @@ class PartitionSchema(val fields:Seq[PartitionField]) {
     /**
       * Interpolates the given map of partition values to a map of interpolates values
       * @param partitions
-      * @param context
       * @return
       */
-    def interpolate(partitions: Map[String, FieldValue])(implicit context:Context) : Iterable[PartitionSpec] = {
+    def interpolate(partitions: Map[String, FieldValue]) : Iterable[PartitionSpec] = {
         val values = partitions.map { case (name,value) =>
                 val field = get(name)
                 field.name -> field.interpolate(value)

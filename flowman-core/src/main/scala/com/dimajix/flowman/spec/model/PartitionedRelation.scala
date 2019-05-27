@@ -24,24 +24,22 @@ import org.apache.spark.sql.functions.lit
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.spec.schema.PartitionFieldSpec
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
 trait PartitionedRelation { this:Relation =>
-    @JsonProperty(value = "partitions", required = false) private var _partitions: Seq[PartitionField] = Seq()
-
-    def partitions(implicit context: Context): Seq[PartitionField] = _partitions
+    def partitions : Seq[PartitionField]
 
     /**
       * Applies a partition filter using the given partition values
       * @param df
       * @param partitions
-      * @param context
       * @return
       */
-    protected def filterPartition(df:DataFrame, partitions: Map[String, FieldValue])(implicit context: Context) : DataFrame = {
+    protected def filterPartition(df:DataFrame, partitions: Map[String, FieldValue]) : DataFrame = {
         val partitionSchema = PartitionSchema(this.partitions)
 
         def applyPartitionFilter(df: DataFrame, partitionName: String, partitionValue: FieldValue): DataFrame = {
@@ -57,7 +55,7 @@ trait PartitionedRelation { this:Relation =>
       * Adds partition columns to an existing DataFrame
       *
       */
-    protected def addPartition(df:DataFrame, partition:Map[String,SingleValue])(implicit context: Context) : DataFrame = {
+    protected def addPartition(df:DataFrame, partition:Map[String,SingleValue]) : DataFrame = {
         val partitionSchema = PartitionSchema(this.partitions)
 
         def addPartitioColumn(df: DataFrame, partitionName: String, partitionValue: SingleValue): DataFrame = {
@@ -69,7 +67,7 @@ trait PartitionedRelation { this:Relation =>
         partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
     }
 
-    protected def requireValidPartitionKeys(map: Map[String,_])(implicit context: Context) : Unit = {
+    protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
         val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
         val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
         require(valueKeys.forall(key => partitionKeys.contains(key)))
@@ -77,3 +75,8 @@ trait PartitionedRelation { this:Relation =>
     }
 }
 
+
+
+trait PartitionedRelationSpec { this: RelationSpec =>
+    @JsonProperty(value = "partitions", required = false) protected var partitions: Seq[PartitionFieldSpec] = Seq()
+}

@@ -23,7 +23,9 @@ import scala.util.Try
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.DescribeMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -33,11 +35,11 @@ class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
-    var tablename: String = ""
+    var mapping: String = ""
 
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        val task = DescribeMappingTask(tablename)
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+        val task = DescribeMappingTask(context, MappingIdentifier(mapping))
 
         Try {
             task.execute(executor)
@@ -46,7 +48,7 @@ class DescribeCommand extends ActionCommand {
                 logger.info("Successfully finished describing mapping")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while describing mapping '$tablename'", e)
+                logger.error(s"Caught exception while describing mapping '$mapping'", e)
                 false
         }
     }

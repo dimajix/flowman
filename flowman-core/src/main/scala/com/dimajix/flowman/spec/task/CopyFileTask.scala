@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,44 @@
 package com.dimajix.flowman.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.hadoop.FileSystem
 
 
-class CopyFileTask extends BaseTask {
+case class CopyFileTask(
+    instanceProperties:Task.Properties,
+    source:Path,
+    target:Path,
+    overwrite:Boolean
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CopyFileTask])
 
-    @JsonProperty(value="source", required=true) private var _source:String = ""
-    @JsonProperty(value="target", required=true) private var _target:String = ""
-    @JsonProperty(value="overwrite", required=false) private var _overwrite:String = "true"
-
-    def source(implicit context:Context) : String = context.evaluate(_source)
-    def target(implicit context:Context) : String = context.evaluate(_target)
-    def overwrite(implicit context:Context) : Boolean = context.evaluate(_overwrite).toBoolean
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val fs = new FileSystem(executor.hadoopConf)
+        val fs = executor.fs
         val src = fs.file(source)
         val dst = fs.file(target)
         logger.info(s"Copying remote file '$src' to remote file '$dst' (overwrite=$overwrite)")
         src.copy(dst, overwrite)
         true
+    }
+}
+
+
+
+class CopyFileTaskSpec extends TaskSpec {
+    @JsonProperty(value = "source", required = true) private var source: String = ""
+    @JsonProperty(value = "target", required = true) private var target: String = ""
+    @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
+
+    override def instantiate(context: Context): CopyFileTask = {
+        CopyFileTask(
+            instanceProperties(context),
+            new Path(context.evaluate(source)),
+            new Path(context.evaluate(target)),
+            context.evaluate(overwrite).toBoolean
+        )
     }
 }

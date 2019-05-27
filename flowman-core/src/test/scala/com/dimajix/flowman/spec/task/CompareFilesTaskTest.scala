@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.task
 
 import java.io.IOException
 
+import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -27,105 +28,108 @@ import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The CompareFileTask" should "work on same files" in {
+    "The CompareFileTask" should "be parseable from YAML" in {
         val spec =
             """
               |kind: compareFiles
               |expected: test/data/data_1.csv
               |actual: test/data/data_1.csv
               |""".stripMargin
+        val task = ObjectMapper.parse[TaskSpec](spec)
+        task shouldBe a[CompareFilesTaskSpec]
+    }
+
+    it should "work on same files" in {
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
+        val context = session.context
 
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CompareFilesTask]
-        task.expected should be ("test/data/data_1.csv")
-        task.actual should be ("test/data/data_1.csv")
+        val task = CompareFilesTask(
+            Task.Properties(context),
+            new Path("test/data/data_1.csv"),
+            new Path("test/data/data_1.csv")
+        )
+        task.expected should be (new Path("test/data/data_1.csv"))
+        task.actual should be (new Path("test/data/data_1.csv"))
         task.execute(executor) should be (true)
     }
 
     it should "fail on non existing actual file" in {
-        val spec =
-            """
-              |kind: compareFiles
-              |expected: test/data/data_1.csv
-              |actual: no_such_file
-              |""".stripMargin
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
+        val context = session.context
 
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CompareFilesTask]
-        task.expected should be ("test/data/data_1.csv")
-        task.actual should be ("no_such_file")
+        val task = CompareFilesTask(
+            Task.Properties(context),
+            new Path("no_such_file"),
+            new Path("test/data/data_1.csv")
+        )
+        task.expected should be (new Path("test/data/data_1.csv"))
+        task.actual should be (new Path("no_such_file"))
         task.execute(executor) should be (false)
     }
 
     it should "throw an exception on an non existing expected file" in {
-        val spec =
-            """
-              |kind: compareFiles
-              |expected: no_such_file
-              |actual: test/data/data_1.csv
-              |""".stripMargin
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
+        val context = session.context
 
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CompareFilesTask]
-        task.expected should be ("no_such_file")
-        task.actual should be ("test/data/data_1.csv")
+        val task = CompareFilesTask(
+            Task.Properties(context),
+            new Path("test/data/data_1.csv"),
+            new Path("no_such_file")
+        )
+
+        task.expected should be (new Path("no_such_file"))
+        task.actual should be (new Path("test/data/data_1.csv"))
         an[IOException] shouldBe thrownBy(task.execute(executor))
     }
 
     it should "work with a directory as expected" in {
-        val spec =
-            """
-              |kind: compareFiles
-              |expected: test/data
-              |actual: test/data/data_1.csv
-              |""".stripMargin
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
+        val context = session.context
 
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CompareFilesTask]
-        task.expected should be ("test/data")
-        task.actual should be ("test/data/data_1.csv")
+        val task = CompareFilesTask(
+            Task.Properties(context),
+            new Path("test/data/data_1.csv"),
+            new Path("test/data")
+        )
+
+        task.expected should be (new Path("test/data"))
+        task.actual should be (new Path("test/data/data_1.csv"))
         task.execute(executor) should be (true)
     }
 
     it should "work with a directory as actual" in {
-        val spec =
-            """
-              |kind: compareFiles
-              |expected: test/data/data_1.csv
-              |actual: test/data
-              |""".stripMargin
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
+        val context = session.context
 
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CompareFilesTask]
-        task.expected should be ("test/data/data_1.csv")
-        task.actual should be ("test/data")
+        val task = CompareFilesTask(
+            Task.Properties(context),
+            new Path("test/data"),
+            new Path("test/data/data_1.csv")
+        )
+
+        task.expected should be (new Path("test/data/data_1.csv"))
+        task.actual should be (new Path("test/data"))
         task.execute(executor) should be (true)
     }
 
     it should "work with a directory as expected and actual" in {
-        val spec =
-            """
-              |kind: compareFiles
-              |expected: test/data/expected
-              |actual: test/data/actual
-              |""".stripMargin
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
+        val context = session.context
 
-        val task = ObjectMapper.parse[Task](spec).asInstanceOf[CompareFilesTask]
-        task.expected should be ("test/data/expected")
-        task.actual should be ("test/data/actual")
+        val task = CompareFilesTask(
+            Task.Properties(context),
+            new Path("test/data/actual"),
+            new Path("test/data/expected")
+        )
+
+        task.expected should be (new Path("test/data/expected"))
+        task.actual should be (new Path("test/data/actual"))
         task.execute(executor) should be (true)
     }
 }

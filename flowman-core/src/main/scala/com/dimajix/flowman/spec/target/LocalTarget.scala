@@ -37,37 +37,27 @@ import com.dimajix.flowman.state.TargetInstance
 /**
   * This class will provide output to the local filesystem of the driver.
   */
-class LocalTarget extends RelationTarget {
+case class LocalTarget(
+    instanceProperties:Target.Properties,
+    filename:String,
+    encoding:String,
+    header:Boolean,
+    newline:String,
+    delimiter:String,
+    quote:String,
+    escape:String,
+    columns:Seq[String]
+) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[LocalTarget])
-
-    @JsonProperty(value="filename", required=true) private var _filename:String = _
-    @JsonProperty(value="encoding", required=true) private var _encoding:String = "UTF-8"
-    @JsonProperty(value="header", required=true) private var _header:String = _
-    @JsonProperty(value="newline", required=true) private var _newline:String = "\n"
-    @JsonProperty(value="delimiter", required=true) private var _delimiter:String = ","
-    @JsonProperty(value="quote", required=true) private var _quote:String = "\""
-    @JsonProperty(value="escape", required=true) private var _escape:String = "\\"
-    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = _
-
-    def filename(implicit context: Context) : String = context.evaluate(_filename)
-    def encoding(implicit context: Context) : String = context.evaluate(_encoding)
-    def header(implicit context: Context) : Boolean = if (_header != null) context.evaluate(_header).toBoolean else false
-    def newline(implicit context: Context) : String = context.evaluate(_newline)
-    def delimiter(implicit context: Context) : String = context.evaluate(_delimiter)
-    def quote(implicit context: Context) : String = context.evaluate(_quote)
-    def escape(implicit context: Context) : String = context.evaluate(_escape)
-    def columns(implicit context: Context) : Seq[String] = if (_columns != null) _columns.map(context.evaluate) else null
-
 
     /**
       * Returns an instance representing this target with the context
-      * @param context
       * @return
       */
-    override def instance(implicit context: Context) : TargetInstance = {
+    override def instance : TargetInstance = {
         TargetInstance(
-            Option(context.namespace).map(_.name).getOrElse(""),
-            Option(context.project).map(_.name).getOrElse(""),
+            Option(namespace).map(_.name).getOrElse(""),
+            Option(project).map(_.name).getOrElse(""),
             name,
             Map("filename" -> filename)
         )
@@ -80,13 +70,12 @@ class LocalTarget extends RelationTarget {
       * @param input
       */
     override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
-        implicit var context = executor.context
         val outputFilename = this.filename
-        val inputMapping = this.input
+        val inputMapping = instanceProperties.input
         logger.info(s"Writing mapping '$inputMapping' to local file '$outputFilename'")
 
         val dfIn = input(inputMapping)
-        val cols = if (_columns != null && _columns.nonEmpty) columns else dfIn.columns.toSeq
+        val cols = if (columns.nonEmpty) columns else dfIn.columns.toSeq
         val dfOut = dfIn.select(cols.map(c => dfIn(c).cast(StringType)):_*)
 
         val outputFile = new File(outputFilename)
@@ -122,12 +111,39 @@ class LocalTarget extends RelationTarget {
       * @param executor
       */
     override def clean(executor: Executor): Unit = {
-        implicit var context = executor.context
         logger.info("Cleaning local file '{}'", filename)
 
         val outputFile = new File(filename)
         if (outputFile.exists()) {
             outputFile.delete()
         }
+    }
+}
+
+
+
+
+class LocalTargetSpec extends TargetSpec {
+    @JsonProperty(value="filename", required=true) private var _filename:String = _
+    @JsonProperty(value="encoding", required=true) private var _encoding:String = "UTF-8"
+    @JsonProperty(value="header", required=true) private var _header:String = "true"
+    @JsonProperty(value="newline", required=true) private var _newline:String = "\n"
+    @JsonProperty(value="delimiter", required=true) private var _delimiter:String = ","
+    @JsonProperty(value="quote", required=true) private var _quote:String = "\""
+    @JsonProperty(value="escape", required=true) private var _escape:String = "\\"
+    @JsonProperty(value="columns", required=true) private var _columns:Seq[String] = Seq()
+
+    override def instantiate(context: Context): LocalTarget = {
+        LocalTarget(
+            instanceProperties(context),
+            context.evaluate(_filename),
+            context.evaluate(_encoding),
+            context.evaluate(_header).toBoolean,
+            context.evaluate(_newline),
+            context.evaluate(_delimiter),
+            context.evaluate(_quote),
+            context.evaluate(_escape),
+            _columns.map(context.evaluate)
+        )
     }
 }

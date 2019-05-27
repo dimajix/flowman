@@ -26,21 +26,16 @@ import com.dimajix.flowman.state.Status
 
 
 object BuildTargetTask {
-    def apply(outputs:Seq[String], description:String) : BuildTargetTask = {
-        val task = new BuildTargetTask
-        task._targets = outputs
-        task._description = description
-        task
+    def apply(context: Context, targets:Seq[TargetIdentifier], description:String) : BuildTargetTask = {
+        BuildTargetTask(
+            Task.Properties(context),
+            targets
+        )
     }
 }
 
-
-class BuildTargetTask extends BaseTask {
+case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[TargetIdentifier]) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
-
-    @JsonProperty(value="targets", required=true) private var _targets:Seq[String] = Seq()
-
-    def targets(implicit context: Context) : Seq[TargetIdentifier] = _targets.map(i => TargetIdentifier.parse(context.evaluate(i)))
 
     /**
       * Executes all outputs defined in this task
@@ -49,13 +44,11 @@ class BuildTargetTask extends BaseTask {
       * @return
       */
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
         targets.forall(o => executeTarget(executor, o))
     }
 
-    private def executeTarget(executor: Executor, identifier:TargetIdentifier) : Boolean = {
-        implicit val context = executor.context
-        val target = context.getTarget(identifier)
+    private def executeTarget(executor: Executor, targetName:TargetIdentifier) : Boolean = {
+        val target = context.getTarget(targetName)
         val result = executor.runner.build(executor, target)
 
         // Only return true if status is SUCCESS or SKIPPED
@@ -63,5 +56,18 @@ class BuildTargetTask extends BaseTask {
             case Status.SUCCESS | Status.SKIPPED => true
             case _ => false
         }
+    }
+}
+
+
+
+class BuildTargetTaskSpec extends TaskSpec {
+    @JsonProperty(value="targets", required=true) private var targets:Seq[String] = Seq()
+
+    override def instantiate(context: Context): BuildTargetTask = {
+        BuildTargetTask(
+            instanceProperties(context),
+            targets.map(i => TargetIdentifier(context.evaluate(i)))
+        )
     }
 }

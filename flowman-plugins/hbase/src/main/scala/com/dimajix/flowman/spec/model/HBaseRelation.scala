@@ -56,60 +56,40 @@ object HBaseRelation {
     }
 
 
-    class Column {
-        @JsonProperty(value="family", required = true) private[HBaseRelation] var _family: String = _
-        @JsonProperty(value="column", required = true) private[HBaseRelation] var _column: String = _
-        @JsonProperty(value="alias", required = true) private[HBaseRelation] var _alias: String = _
-        @JsonProperty(value="type", required = true) private[HBaseRelation] var _dtype: FieldType = com.dimajix.flowman.types.StringType
-        @JsonProperty(value="description", required = false) private[HBaseRelation] var _description: String = _
-
-        def family(implicit context: Context) : String = context.evaluate(_family)
-        def column(implicit context: Context) : String = context.evaluate(_column)
-        def alias(implicit context: Context) : String = Option(context.evaluate(_alias)).filter(_.nonEmpty).getOrElse(column)
-        def dtype(implicit context: Context) : FieldType = _dtype
-        def description(implicit context: Context) : String = _description
-    }
+    case class Column(
+        family:String,
+        column:String,
+        alias:String,
+        dtype:FieldType=com.dimajix.flowman.types.StringType,
+        description:String=""
+    )
 
     def apply(namespace:String, table:String, rowKey:String, columns:Seq[Column]) : HBaseRelation = {
-        val relation = new HBaseRelation
-        relation._namespace = namespace
-        relation._table = table
-        relation._rowKey = rowKey
-        relation._columns = columns
-        relation
-    }
-
-    def column(family:String, name:String, alias:String, dtype:FieldType = com.dimajix.flowman.types.StringType) : Column = {
-        val result = new Column
-        result._family = family
-        result._column = name
-        result._alias = alias
-        result._dtype = dtype
-        result
+        HBaseRelation(
+            Relation.Properties(null),
+            namespace,
+            table,
+            rowKey,
+            columns
+        )
     }
 }
 
 
-@RelationType(kind = "hbase")
-class HBaseRelation extends BaseRelation {
+case class HBaseRelation(
+    instanceProperties:Relation.Properties,
+    tableSpace:String,
+    table:String,
+    rowKey:String,
+    columns:Seq[HBaseRelation.Column]
+) extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[HBaseRelation])
-
-    @JsonProperty(value="namespace", required = true) private var _namespace:String = "default"
-    @JsonProperty(value="table", required = true) private var _table:String = _
-    @JsonProperty(value="rowKey", required = true) private var _rowKey:String = _
-    @JsonProperty(value="columns", required = true) private var _columns:Seq[HBaseRelation.Column] = Seq()
-
-    def namespace(implicit context: Context) : String = context.evaluate(_namespace)
-    def table(implicit context: Context) : String = context.evaluate(_table)
-    def rowKey(implicit context: Context) : String = context.evaluate(_rowKey)
-    def columns(implicit context: Context) : Seq[HBaseRelation.Column] = _columns
 
     /**
       * Returns the schema of the relation
-      * @param context
       * @return
       */
-    override def schema(implicit context: Context) : Schema = {
+    override def schema : Schema = {
         val fields = Field(rowKey, StringType, nullable = false) +: columns.map(c => Field(c.alias, c.dtype, description=c.description))
         EmbeddedSchema(fields)
     }
@@ -123,8 +103,7 @@ class HBaseRelation extends BaseRelation {
       * @return
       */
     override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
-        implicit val context = executor.context
-        logger.info(s"Reading from HBase table '$namespace.$table'")
+        logger.info(s"Reading from HBase table '$tableSpace.$table'")
 
         val options = hbaseOptions
         val df = this.reader(executor)
@@ -143,8 +122,7 @@ class HBaseRelation extends BaseRelation {
       * @param partition - destination partition
       */
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
-        implicit val context = executor.context
-        logger.info(s"Writing to HBase table '$namespace.$table'")
+        logger.info(s"Writing to HBase table '$tableSpace.$table'")
 
         val options = hbaseOptions
         this.writer(executor, df)
@@ -155,10 +133,7 @@ class HBaseRelation extends BaseRelation {
     }
 
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        implicit val context = executor.context
-        val namespace = this.namespace
-        val table = this.table
-        logger.info(s"Truncating to HBase table '$namespace.$table'")
+        logger.info(s"Truncating to HBase table '$tableSpace.$table'")
 
         val config = hbaseConf
         val connection = ConnectionFactory.createConnection(config)
@@ -198,30 +173,28 @@ class HBaseRelation extends BaseRelation {
 
     /**
      * Return null, because SHC does not support explicit schemas on read
-     * @param context
      * @return
      */
-    override protected def inputSchema(implicit context:Context) : StructType = null
+    override protected def inputSchema : StructType = null
 
     /**
      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
-     * @param context
      * @return
      */
-    override protected def outputSchema(implicit context:Context) : StructType = {
+    override protected def outputSchema : StructType = {
         val fields = StructField(rowKey, org.apache.spark.sql.types.StringType, nullable = false) +:
             columns.map(c => StructField(c.alias, c.dtype.sparkType))
         StructType(fields)
     }
 
-    private def hbaseOptions(implicit context: Context) = {
+    private def hbaseOptions = {
         val keySpec = Seq(s""""$rowKey":{"cf":"rowkey", "col":"$rowKey", "type":"string"}""")
         val fieldSpec = columns.map(col => s""""${col.alias}":{"cf":"${col.family}", "col":"${col.column}", "type":"${col.dtype.sqlType}"}""")
         val columnsSpec = keySpec ++ fieldSpec
 
         val catalog = s"""{
-                         |"table":{"name":"${this.table}", "namespace":"${this.namespace}", "tableCoder":"PrimitiveType"},
-                         |"rowkey":"${this.rowKey}",
+                         |"table":{"name":"${table}", "namespace":"${tableSpace}", "tableCoder":"PrimitiveType"},
+                         |"rowkey":"${rowKey}",
                          |"columns":{ ${columnsSpec.mkString(",\n")} }
                          |}
                          |""".stripMargin
@@ -233,7 +206,7 @@ class HBaseRelation extends BaseRelation {
 
     }
 
-    private def hbaseConf(implicit context:Context) = {
+    private def hbaseConf = {
         val cFile = "/etc/hbase/conf/hbase-site.xml"
         val conf = HBaseConfiguration.create
         val xmlFile = XML.loadFile(cFile)
@@ -241,5 +214,45 @@ class HBaseRelation extends BaseRelation {
             x => conf.set((x \ "name").text, (x \ "value").text)
         )
         conf
+    }
+}
+
+
+
+object HBaseRelationSpec {
+    class Column {
+        @JsonProperty(value="family", required = true) private var family: String = _
+        @JsonProperty(value="column", required = true) private var column: String = _
+        @JsonProperty(value="alias", required = true) private var alias: String = _
+        @JsonProperty(value="type", required = true) private var dtype: FieldType = com.dimajix.flowman.types.StringType
+        @JsonProperty(value="description", required = false) private var description: String = _
+
+        def instantiate(context:Context) : HBaseRelation.Column = {
+            HBaseRelation.Column(
+                context.evaluate(family),
+                context.evaluate(column),
+                Option(context.evaluate(alias)).filter(_.nonEmpty).getOrElse(context.evaluate(column)),
+                dtype,
+                context.evaluate(description)
+            )
+        }
+    }
+}
+
+@RelationType(kind = "hbase")
+class HBaseRelationSpec extends RelationSpec {
+    @JsonProperty(value = "namespace", required = true) private var namespace: String = "default"
+    @JsonProperty(value = "table", required = true) private var table: String = _
+    @JsonProperty(value = "rowKey", required = true) private var rowKey: String = _
+    @JsonProperty(value = "columns", required = true) private var columns: Seq[HBaseRelationSpec.Column] = Seq()
+
+    override def instantiate(context: Context): Relation = {
+        HBaseRelation(
+            instanceProperties(context),
+            context.evaluate(namespace),
+            context.evaluate(table),
+            context.evaluate(rowKey),
+            columns.map(_.instantiate(context))
+        )
     }
 }

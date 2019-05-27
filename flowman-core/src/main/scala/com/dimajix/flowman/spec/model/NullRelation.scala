@@ -18,15 +18,21 @@ package com.dimajix.flowman.spec.model
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class NullRelation extends BaseRelation with SchemaRelation with PartitionedRelation {
+case class NullRelation(
+    instanceProperties:Relation.Properties,
+    override val schema:Schema = null,
+    override val partitions: Seq[PartitionField] = Seq()
+) extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -38,9 +44,6 @@ class NullRelation extends BaseRelation with SchemaRelation with PartitionedRela
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(executor != null)
         require(partitions != null)
-
-        implicit val context = executor.context
-        val inputSchema = this.inputSchema
 
         if (inputSchema == null && schema == null)
             throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
@@ -83,5 +86,22 @@ class NullRelation extends BaseRelation with SchemaRelation with PartitionedRela
     }
     override def migrate(executor: Executor): Unit = {
         require(executor != null)
+    }
+}
+
+
+
+class NullRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): NullRelation = {
+        NullRelation(
+            instanceProperties(context),
+            if (schema != null) schema.instantiate(context) else null,
+            partitions.map(_.instantiate(context))
+        )
     }
 }

@@ -28,7 +28,7 @@ import com.dimajix.flowman.state.TargetToken
 
 /**
   * This implementation of the Runner interface provides monitoring via calling appropriate methods in
-  * a StateStoreProvider
+  * a StateStoreSpec
   *
   * @param stateStore
   */
@@ -45,7 +45,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param job
       * @return
       */
-    protected override def checkJob(context: Context, job: JobInstance): Boolean = {
+    protected override def checkJob(job: JobInstance): Boolean = {
         stateStore.checkJob(job)
     }
 
@@ -55,7 +55,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param job
       * @return
       */
-    protected override def startJob(context: Context, job: JobInstance, parent: Option[JobToken]): JobToken = {
+    protected override def startJob(job: JobInstance, parent: Option[JobToken]): JobToken = {
         stateStore.startJob(job, parent)
     }
 
@@ -64,7 +64,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       *
       * @param token
       */
-    protected override def finishJob(context: Context, token: JobToken, status:Status): Unit = {
+    protected override def finishJob(token: JobToken, status:Status): Unit = {
         stateStore.finishJob(token, status)
     }
 
@@ -74,7 +74,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def checkTarget(context: Context, target: TargetInstance): Boolean = {
+    protected override def checkTarget(target: TargetInstance): Boolean = {
         stateStore.checkTarget(target)
     }
 
@@ -84,7 +84,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def startTarget(context: Context, target: TargetInstance, parent: Option[JobToken]): TargetToken = {
+    protected override def startTarget(target: TargetInstance, parent: Option[JobToken]): TargetToken = {
         stateStore.startTarget(target, parent)
     }
 
@@ -93,7 +93,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       *
       * @param token
       */
-    protected override def finishTarget(context: Context, token: TargetToken, status:Status): Unit = {
+    protected override def finishTarget(token: TargetToken, status:Status): Unit = {
         stateStore.finishTarget(token, status)
     }
 }

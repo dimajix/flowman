@@ -25,70 +25,38 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.flow.UnpackJsonMapping.ColumnMapping
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
 
 object UnpackJsonMapping {
-    class ColumnMapping {
-        @JsonProperty(value="name", required=true) private var _name:String = _
-        @JsonProperty(value="alias", required=true) private var _alias:String = _
-        @JsonProperty(value="schema", required=true) private var _schema: Schema = _
-
-        def name(implicit context: Context) : String = context.evaluate(_name)
-        def alias(implicit context: Context) : String = context.evaluate(_alias)
-        def schema(implicit context: Context) : Schema = _schema
-    }
+    case class ColumnMapping(name:String, alias:String, schema:Schema)
 }
 
 
-class UnpackJsonMapping extends BaseMapping {
+case class UnpackJsonMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns: Seq[UnpackJsonMapping.ColumnMapping],
+    corruptedColumn: String,
+    allowComments: Boolean,
+    allowUnquotedFieldNames: Boolean,
+    allowSingleQuotes: Boolean,
+    allowNumericLeadingZeros: Boolean,
+    allowNonNumericNumbers: Boolean,
+    allowBackslashEscapingAnyCharacter: Boolean,
+    allowUnquotedControlChars: Boolean
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[UnpackJsonMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input: String = _
-    @JsonProperty(value = "columns", required = true) private var _columns: Seq[ColumnMapping] = Seq()
-    @JsonProperty(value = "corruptedColumn", required = false) private var _corruptedColumn: String = "_corrupt_record"
-    @JsonProperty(value = "allowComments", required = false) private var _allowComments: String = "false"
-    @JsonProperty(value = "allowUnquotedFieldNames", required = false) private var _allowUnquotedFieldNames: String = "false"
-    @JsonProperty(value = "allowSingleQuotes", required = false) private var _allowSingleQuotes: String = "true"
-    @JsonProperty(value = "allowNumericLeadingZeros", required = false) private var _allowNumericLeadingZeros: String = "false"
-    @JsonProperty(value = "allowNonNumericNumbers", required = false) private var _allowNonNumericNumbers: String = "true"
-    @JsonProperty(value = "allowBackslashEscapingAnyCharacter", required = false) private var _allowBackslashEscapingAnyCharacter: String = "false"
-    @JsonProperty(value = "allowUnquotedControlChars", required = false) private var _allowUnquotedControlChars: String = "false"
-
-    def input(implicit context: Context): MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-
-    def columns(implicit context: Context): Seq[ColumnMapping] = _columns
-
-    def corruptedColumn(implicit context: Context): String = context.evaluate(_corruptedColumn)
-
-    def allowComments(implicit context: Context): Boolean = context.evaluate(_allowComments).toBoolean
-
-    def allowUnquotedFieldNames(implicit context: Context): Boolean = context.evaluate(_allowUnquotedFieldNames)
-        .toBoolean
-
-    def allowSingleQuotes(implicit context: Context): Boolean = context.evaluate(_allowSingleQuotes).toBoolean
-
-    def allowNumericLeadingZeros(implicit context: Context): Boolean = context.evaluate(_allowNumericLeadingZeros)
-        .toBoolean
-
-    def allowNonNumericNumbers(implicit context: Context): Boolean = context.evaluate(_allowNonNumericNumbers).toBoolean
-
-    def allowBackslashEscapingAnyCharacter(implicit context: Context): Boolean = context
-        .evaluate(_allowBackslashEscapingAnyCharacter).toBoolean
-
-    def allowUnquotedControlChars(implicit context: Context): Boolean = context.evaluate(_allowUnquotedControlChars)
-        .toBoolean
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
@@ -100,9 +68,6 @@ class UnpackJsonMapping extends BaseMapping {
       * @return
       */
     override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
-        val columns = this.columns
         logger.info(s"Unpacking JSON columns $columns from mapping '$input'")
 
         val table = tables(input)
@@ -127,17 +92,68 @@ class UnpackJsonMapping extends BaseMapping {
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       *
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context: Context, input: Map[MappingIdentifier, StructType]): StructType = {
-        require(context != null)
+    override def describe(input: Map[MappingIdentifier, StructType]): StructType = {
         require(input != null)
 
-        implicit val icontext = context
         val schema = input(this.input)
         val fields = schema.fields ++ columns.map(c => Field(Option(c.alias).getOrElse(c.name), StructType(c.schema.fields)))
         StructType(fields)
+    }
+}
+
+
+
+object UnpackJsonMappingSpec {
+    class ColumnMapping {
+        @JsonProperty(value="name", required=true) private var name:String = _
+        @JsonProperty(value="alias", required=true) private var alias:String = _
+        @JsonProperty(value="schema", required=true) private var schema: SchemaSpec = _
+
+        def instantiate(context:Context) : UnpackJsonMapping.ColumnMapping = {
+            UnpackJsonMapping.ColumnMapping(
+                context.evaluate(name),
+                context.evaluate(alias),
+                schema.instantiate(context)
+            )
+        }
+    }
+}
+
+
+
+class UnpackJsonMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private var columns: Seq[UnpackJsonMappingSpec.ColumnMapping] = Seq()
+    @JsonProperty(value = "corruptedColumn", required = false) private var corruptedColumn: String = "_corrupt_record"
+    @JsonProperty(value = "allowComments", required = false) private var allowComments: String = "false"
+    @JsonProperty(value = "allowUnquotedFieldNames", required = false) private var allowUnquotedFieldNames: String = "false"
+    @JsonProperty(value = "allowSingleQuotes", required = false) private var allowSingleQuotes: String = "true"
+    @JsonProperty(value = "allowNumericLeadingZeros", required = false) private var allowNumericLeadingZeros: String = "false"
+    @JsonProperty(value = "allowNonNumericNumbers", required = false) private var allowNonNumericNumbers: String = "true"
+    @JsonProperty(value = "allowBackslashEscapingAnyCharacter", required = false) private var allowBackslashEscapingAnyCharacter: String = "false"
+    @JsonProperty(value = "allowUnquotedControlChars", required = false) private var allowUnquotedControlChars: String = "false"
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): UnpackJsonMapping = {
+        UnpackJsonMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(_.instantiate(context)),
+            context.evaluate(corruptedColumn),
+            context.evaluate(allowComments).toBoolean,
+            context.evaluate(allowUnquotedFieldNames).toBoolean,
+            context.evaluate(allowSingleQuotes).toBoolean,
+            context.evaluate(allowNumericLeadingZeros).toBoolean,
+            context.evaluate(allowNonNumericNumbers).toBoolean,
+            context.evaluate(allowBackslashEscapingAnyCharacter).toBoolean,
+            context.evaluate(allowUnquotedControlChars).toBoolean
+        )
     }
 }

@@ -27,14 +27,7 @@ import com.dimajix.flowman.testing.LocalSparkSession
 
 
 class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The BuildTargetTask" should "support string assignments from code" in {
-        val session = Session.builder().build()
-        implicit val context = session.context
-        val task = BuildTargetTask(Seq("lala"), "test")
-        task.targets should equal(Seq(TargetIdentifier("lala",None)))
-    }
-
-    it should "support configuration via YML" in {
+    "The BuildTargetTask" should "support configuration via YML" in {
         val spec =
             """
               |jobs:
@@ -47,20 +40,18 @@ class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession 
             """.stripMargin
         val module = Module.read.string(spec)
         val session = Session.builder().build()
-        implicit val context = session.context
 
         module.jobs.size should be (1)
-        val job = module.jobs("dump")
+        val job = module.jobs("dump").instantiate(session.context)
         job.tasks.size should be (1)
-        val task = job.tasks(0).asInstanceOf[BuildTargetTask]
-        task.targets.size should be (1)
+        val task = job.tasks(0)
+        task shouldBe a[BuildTargetTaskSpec]
     }
 
     it should "throw exceptions on missing targets" in {
         val session = Session.builder().withSparkSession(spark).build()
-        implicit val context = session.context
 
-        val task = BuildTargetTask(Seq("no_such_output"), "test")
+        val task = BuildTargetTask(session.context, Seq(TargetIdentifier("no_such_output")), "test")
         an[Exception] shouldBe thrownBy(task.execute(session.executor))
     }
 
@@ -82,11 +73,10 @@ class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val module = Module.read.string(spec)
         val project = module.toProject("test")
-        val session = Session.builder().withProject(project).withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
 
-        val job = project.jobs("dump")
+        val job = project.jobs("dump").instantiate(session.context)
         job.execute(executor, Map()) should be(Status.FAILED)
     }
 }

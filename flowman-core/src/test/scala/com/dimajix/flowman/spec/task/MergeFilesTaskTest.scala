@@ -22,16 +22,16 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.testing.LocalTempDir
 
 
-class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
+class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
     "A MergeFilesTask" should "work" in {
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().build()
         val executor = session.executor
+        val context = session.context
+        val fs = session.fs
 
-        val fs = FileSystem(spark.sparkContext.hadoopConfiguration)
         val source = fs.local(tempDir) / ("input-" + System.currentTimeMillis())
         val dest = fs.local(tempDir) / ("output-" + System.currentTimeMillis())
         dest.exists() should be (false)
@@ -46,7 +46,11 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(source.toString, dest.toString)
+        val task = MergeFilesTask(
+            Task.Properties(context),
+            source.path,
+            dest.path
+        )
         task.execute(executor)
 
         dest.exists() should be (true)
@@ -62,10 +66,11 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "support delimiters" in {
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().build()
         val executor = session.executor
+        val context = session.context
+        val fs = session.fs
 
-        val fs = FileSystem(spark.sparkContext.hadoopConfiguration)
         val source = fs.local(tempDir) / ("input-" + System.currentTimeMillis())
         val dest = fs.local(tempDir) / ("output-" + System.currentTimeMillis())
         dest.exists() should be (false)
@@ -80,7 +85,12 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(source.toString, dest.toString, "\n")
+        val task = MergeFilesTask(
+            Task.Properties(context),
+            source.path,
+            dest.path,
+            "\n"
+        )
         task.execute(executor)
 
         dest.exists() should be (true)

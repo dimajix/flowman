@@ -26,23 +26,11 @@ import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.types.StructType
 
 
-object FlattenMapping {
-    def apply(input:String, caseFormat:String) : FlattenMapping  = {
-        val result = new FlattenMapping
-        result._input = input
-        result._naming = caseFormat
-        result
-    }
-}
-
-
-class FlattenMapping extends BaseMapping {
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "naming", required = false) private[spec] var _naming:String = _
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def naming(implicit context: Context) : String = context.evaluate(_naming)
-
+case class FlattenMapping(
+     instanceProperties:Mapping.Properties,
+     input:MappingIdentifier,
+     naming:String
+) extends BaseMapping {
     /**
       * Executes the mapping operation and returns a corresponding DataFrame
       *
@@ -54,9 +42,7 @@ class FlattenMapping extends BaseMapping {
         require(executor != null)
         require(input != null)
 
-        implicit val icontext = executor.context
-        val mappingId = this.input
-        val df = input(mappingId)
+        val df = input(this.input)
         val xfs = FlattenTransformer(naming)
 
         xfs.transform(df)
@@ -65,27 +51,44 @@ class FlattenMapping extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = Array(input)
+    override def dependencies : Array[MappingIdentifier] = {
+        Array(input)
+    }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
         val mappingId = this.input
         val schema = input(mappingId)
         val xfs = FlattenTransformer(naming)
 
         xfs.transform(schema)
     }
+}
 
+
+
+class FlattenMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "naming", required = true) private var naming:String = _
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): FlattenMapping = {
+        FlattenMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            context.evaluate(naming)
+        )
+    }
 }

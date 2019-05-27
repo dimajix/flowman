@@ -67,12 +67,14 @@ case class UpdateMapping(
 
         // Perform update operation
         val joinCondition = keyColumns.map(col => inputDf(col) === updatesDf(col)).reduce(_ && _)
-        inputDf.join(updatesDf, joinCondition, "left_anti")
+        val result = inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
 
         // Free up cache if automatic cache management was used
         if (autoCache)
             updatesDf.unpersist()
+
+        result
     }
 
     /**

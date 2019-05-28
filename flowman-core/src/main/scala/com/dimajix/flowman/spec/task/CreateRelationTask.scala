@@ -25,23 +25,21 @@ import com.dimajix.flowman.spec.RelationIdentifier
 
 
 object CreateRelationTask {
-    def apply(relations:Seq[String], ignoreIfExists:Boolean) : CreateRelationTask = {
-        val task = new CreateRelationTask
-        task._relations = relations
-        task._ignoreIfExists = ignoreIfExists.toString
-        task
+    def apply(context:Context, relations:Seq[RelationIdentifier], ignoreIfExists:Boolean) : CreateRelationTask = {
+        CreateRelationTask(
+            Task.Properties(context),
+            relations,
+            ignoreIfExists
+        )
     }
 }
 
-
-class CreateRelationTask extends BaseTask {
+case class CreateRelationTask(
+    instanceProperties:Task.Properties,
+    relations:Seq[RelationIdentifier],
+    ignoreIfExists:Boolean
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CreateRelationTask])
-
-    @JsonProperty(value="relation", required=true) private var _relations:Seq[String] = Seq()
-    @JsonProperty(value="ignoreIfExists", required=false) private var _ignoreIfExists:String = "false"
-
-    def relations(implicit context: Context) : Seq[RelationIdentifier] = _relations.map(i => RelationIdentifier.parse(context.evaluate(i)))
-    def ignoreIfExists(implicit context: Context) : Boolean = context.evaluate(_ignoreIfExists).toBoolean
 
     /**
       * Instantiates all outputs defined in this task
@@ -52,21 +50,33 @@ class CreateRelationTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
         relations.foreach(o => createRelation(executor, o))
         true
     }
 
-    private def createRelation(executor: Executor, identifier:RelationIdentifier) : Boolean = {
+    private def createRelation(executor: Executor, relationName:RelationIdentifier) : Boolean = {
         require(executor != null)
-        require(identifier != null)
+        require(relationName != null)
 
-        implicit val context = executor.context
-        val relation = context.getRelation(identifier)
-
-        logger.info("Creating relation '{}'", identifier.toString)
+        logger.info(s"Creating relation '${relationName}'")
+        val relation = context.getRelation(relationName)
         relation.create(executor, ignoreIfExists)
         true
     }
 }
 
+
+
+
+class CreateRelationTaskSpec extends TaskSpec {
+    @JsonProperty(value = "relation", required = true) private var relations: Seq[String] = Seq()
+    @JsonProperty(value = "ignoreIfExists", required = false) private var ignoreIfExists: String = "false"
+
+    override def instantiate(context: Context): Task = {
+        CreateRelationTask(
+            instanceProperties(context),
+            relations.map(i => RelationIdentifier(context.evaluate(i))),
+            context.evaluate(ignoreIfExists).toBoolean
+        )
+    }
+}

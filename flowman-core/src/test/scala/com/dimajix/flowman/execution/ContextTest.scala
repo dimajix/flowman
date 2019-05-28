@@ -24,16 +24,16 @@ import org.scalatest.Matchers
 class ContextTest extends FlatSpec with Matchers {
     "Evaluation" should "work (1)" in {
         val context = RootContext.builder()
-                .withEnvironment(Seq(("env_1", "value_1")), SettingLevel.NONE)
+                .withEnvironment(Map("env_1" -> "value_1"), SettingLevel.NONE)
                 .build()
         context.evaluate("$env_1") should be ("value_1")
     }
 
     it should "work (2)" in {
         val context = RootContext.builder()
-            .withEnvironment(Seq(("env_1", "value_1")), SettingLevel.NONE)
-            .withEnvironment(Seq(("env_2", "$env_1")), SettingLevel.NONE)
-            .withEnvironment(Seq(("env_3", "$env_2")), SettingLevel.NONE)
+            .withEnvironment(Map(("env_1", "value_1")), SettingLevel.NONE)
+            .withEnvironment(Map(("env_2", "$env_1")), SettingLevel.NONE)
+            .withEnvironment(Map(("env_3", "$env_2")), SettingLevel.NONE)
             .build()
         context.evaluate("$env_2") should be ("value_1")
         context.evaluate("$env_3") should be ("value_1")
@@ -41,21 +41,21 @@ class ContextTest extends FlatSpec with Matchers {
 
     it should "throw an exception on unknown vars" in {
         val context1 = RootContext.builder()
-            .withEnvironment(Seq(("env_1", "value_1")), SettingLevel.NONE)
+            .withEnvironment(Map(("env_1", "value_1")), SettingLevel.NONE)
             .build()
         a[MethodInvocationException] shouldBe thrownBy(context1.evaluate("$env_2"))
 
         val context2 = RootContext.builder()
-            .withEnvironment(Seq(("env_1", "value_1")), SettingLevel.NONE)
-            .withEnvironment(Seq(("env_2", "$env_1")), SettingLevel.NONE)
+            .withEnvironment(Map(("env_1", "value_1")), SettingLevel.NONE)
+            .withEnvironment(Map(("env_2", "$env_1")), SettingLevel.NONE)
             .build()
         context2.evaluate("$env_2") should be ("value_1")
     }
 
     it should "support arithmetic operations" in {
         val context = RootContext.builder()
-            .withEnvironment(Seq(("a", "3")), SettingLevel.NONE)
-            .withEnvironment(Seq(("b", "2")), SettingLevel.NONE)
+            .withEnvironment(Map(("a", "3")), SettingLevel.NONE)
+            .withEnvironment(Map(("b", "2")), SettingLevel.NONE)
             .build()
         context.evaluate("#set($r=$Integer.parse($a)+$Integer.parse($b))$r") should be ("5")
         context.evaluate("$r") should be ("5")
@@ -63,8 +63,8 @@ class ContextTest extends FlatSpec with Matchers {
 
     it should "support any types" in {
         val context = RootContext.builder()
-            .withEnvironment(Seq(("a", 3)), SettingLevel.NONE)
-            .withEnvironment(Seq(("b", 2)), SettingLevel.NONE)
+            .withEnvironment(Map(("a", 3)), SettingLevel.NONE)
+            .withEnvironment(Map(("b", 2)), SettingLevel.NONE)
             .build()
         context.evaluate("#set($r=$a+$b)$r") should be ("5")
         context.evaluate("$r") should be ("5")
@@ -72,10 +72,10 @@ class ContextTest extends FlatSpec with Matchers {
 
     it should "support boolean values" in {
         val context = RootContext.builder()
-            .withEnvironment(Seq(("true_val", true)), SettingLevel.NONE)
-            .withEnvironment(Seq(("true_str", "true")), SettingLevel.NONE)
-            .withEnvironment(Seq(("false_val", false)), SettingLevel.NONE)
-            .withEnvironment(Seq(("false_str", "false")), SettingLevel.NONE)
+            .withEnvironment(Map(("true_val", true)), SettingLevel.NONE)
+            .withEnvironment(Map(("true_str", "true")), SettingLevel.NONE)
+            .withEnvironment(Map(("false_val", false)), SettingLevel.NONE)
+            .withEnvironment(Map(("false_str", "false")), SettingLevel.NONE)
             .build()
         context.evaluate("#if(true)1#{else}2#end") should be ("1")
         context.evaluate("#if(false)1#{else}2#end") should be ("2")

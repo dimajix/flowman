@@ -29,7 +29,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
@@ -59,9 +61,10 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         project.relations.keys should contain("t0")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
-        val relation = project.relations("t0")
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
         relation.kind should be ("file")
 
         val fileRelation = relation.asInstanceOf[FileRelation]
@@ -101,9 +104,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("local")
+        val context = session.getContext(project)
 
+        val relation = context.getRelation(RelationIdentifier("local"))
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.location should be (new Path(outputPath.toUri))
 
@@ -162,9 +165,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("local")
+        val context = session.getContext(project)
 
+        val relation = context.getRelation(RelationIdentifier("local"))
         outputPath.toFile.exists() should be (false)
         relation.create(executor)
         outputPath.toFile.exists() should be (true)
@@ -233,11 +236,10 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val context = session.getContext(project)
 
-        val mapping = project.mappings("input")
-        val schema = mapping.describe(executor.context, Map())
+        val mapping = context.getMapping(MappingIdentifier("input"))
+        val schema = mapping.describe(Map())
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

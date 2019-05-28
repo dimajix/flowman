@@ -25,29 +25,37 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 
 
-class PrintTask extends BaseTask {
-    @JsonProperty(value="output", required=false) private var _output:String = "stdout"
-    @JsonProperty(value="text", required=true) private var _text:Seq[String] = Seq()
-
-    def output(implicit context: Context) : PrintStream = {
-        val out = context.evaluate(_output).toLowerCase(Locale.ROOT)
-        out match {
-            case "stdout" => Console.out
-            case "stderr" => Console.err
-            case _ => throw new IllegalArgumentException(s"Unsupported print output '$out'")
-        }
-    }
-    def text(implicit context: Context) : Seq[String] = _text.map(context.evaluate)
-
+case class PrintTask(
+    instanceProperties:Task.Properties,
+    output:PrintStream,
+    text:Seq[String]
+) extends BaseTask {
     /**
       * Abstract method which will perform the given task.
       *
       * @param executor
       */
     override def execute(executor: Executor): Boolean = {
-        implicit val context = executor.context
-        val out = output
-        text.foreach(out.println)
+        text.foreach(output.println)
         true
+    }
+}
+
+
+
+class PrintTaskSpec extends TaskSpec {
+    @JsonProperty(value = "output", required = false) private var _output: String = "stdout"
+    @JsonProperty(value = "text", required = true) private var _text: Seq[String] = Seq()
+
+    override def instantiate(context: Context): Task = {
+        PrintTask(
+            instanceProperties(context),
+            context.evaluate(_output).toLowerCase(Locale.ROOT) match {
+                case "stdout" => Console.out
+                case "stderr" => Console.err
+                case out:String => throw new IllegalArgumentException(s"Unsupported print output '$out'")
+            },
+            _text.map(context.evaluate)
+        )
     }
 }

@@ -20,8 +20,10 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.BuildTargetTask
 import com.dimajix.flowman.state.Status
@@ -37,21 +39,26 @@ class BuildCommand extends ActionCommand {
     var all: Boolean = false
 
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Processing outputs {}", if (targets != null) targets.mkString(",") else "all")
 
-        // Then build output operations
         val toRun =
             if (all)
                 project.targets.keys.toSeq
             else if (targets.nonEmpty)
                 targets.toSeq
             else
-                project.targets.filter(_._2.enabled).keys.toSeq
+                project.targets.keys.toSeq
+                    .map(t => context.getTarget(TargetIdentifier(t)))
+                    .filter(_.enabled)
+                    .map(_.name)
 
-        val task = BuildTargetTask(toRun, s"Building targets ${toRun.mkString(",")}")
-        val job = Job(Seq(task), "build-targets", "Build targets")
+        val task = BuildTargetTask(context, toRun.map(TargetIdentifier.parse), s"Building targets ${toRun.mkString(",")}")
+        val job = Job.builder(context)
+            .setName("build-targets")
+            .setDescription("Build targets")
+            .addTask(task)
+            .build()
 
         val runner = executor.runner
         val result = runner.execute(executor, job, Map(), true)

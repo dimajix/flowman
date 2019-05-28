@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -27,30 +28,14 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
-object UpdateMapping {
-    def apply(input:String, updates:String, keyColumns:Seq[String], filter:String="") : UpdateMapping = {
-        val mapping = new UpdateMapping
-        mapping._input = input
-        mapping._updates = updates
-        mapping._keyColumns = keyColumns
-        mapping._filter = filter
-        mapping
-    }
-}
-
-
-class UpdateMapping extends BaseMapping {
+case class UpdateMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    updates:MappingIdentifier,
+    keyColumns:Seq[String],
+    filter:String = ""
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[UpdateMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input: String = _
-    @JsonProperty(value = "updates", required = true) private var _updates: String = _
-    @JsonProperty(value = "filter", required = false) private var _filter: String = _
-    @JsonProperty(value = "keyColumns", required = true) private var _keyColumns: Seq[String] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def updates(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_updates))
-    def filter(implicit context: Context) : String = context.evaluate(_filter)
-    def keyColumns(implicit context: Context) : Seq[String] = _keyColumns.map(context.evaluate)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -60,12 +45,6 @@ class UpdateMapping extends BaseMapping {
       * @return
       */
     override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
-        val updates = this.updates
-        val filter = this.filter
-        val keyColumns = this.keyColumns
-
         logger.info(s"Updating table '$input' with records from '$updates' using key columns ${keyColumns.mkString(",")}")
         require(input != null && input.nonEmpty, "Missing input table")
         require(updates != null && updates.nonEmpty, "Missing updates table")
@@ -83,31 +62,53 @@ class UpdateMapping extends BaseMapping {
 
         // Perform update operation
         val joinCondition = keyColumns.map(col => inputDf(col) === updatesDf(col)).reduce(_ && _)
-        inputDf.join(updatesDf, joinCondition, "left_anti")
+        val result = inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
+
+        result
     }
 
     /**
       * Returns the dependencies of this mapping, which is the input table and the updates table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input, updates)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+
+class UpdateMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "updates", required = true) private var updates: String = _
+    @JsonProperty(value = "filter", required = false) private var filter: String = ""
+    @JsonProperty(value = "keyColumns", required = true) private var keyColumns: Seq[String] = Seq()
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): UpdateMapping = {
+        UpdateMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            MappingIdentifier.parse(context.evaluate(updates)),
+            keyColumns.map(context.evaluate),
+            context.evaluate(filter)
+        )
     }
 }

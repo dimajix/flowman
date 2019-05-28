@@ -26,45 +26,21 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-object JoinMapping {
-    def apply(inputs:Seq[String], columns:Seq[String], mode:String) : JoinMapping = {
-        val mapping = new JoinMapping
-        mapping._inputs = inputs
-        mapping._columns = columns
-        mapping._mode = mode
-        mapping
-    }
-
-    def apply(inputs:Seq[String], expr:String, mode:String) : JoinMapping = {
-        val mapping = new JoinMapping
-        mapping._inputs = inputs
-        mapping._expression = expr
-        mapping._mode = mode
-        mapping
-    }
-}
-
-
-class JoinMapping extends BaseMapping {
+case class JoinMapping(
+    instanceProperties:Mapping.Properties,
+    inputs:Seq[MappingIdentifier],
+    columns:Seq[String] = Seq(),
+    condition:String = "",
+    mode:String = "left"
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[JoinMapping])
-
-    @JsonProperty(value = "inputs", required = true) private var _inputs:Seq[String] = Seq()
-    @JsonProperty(value = "columns", required = false) private var _columns:Seq[String] = Seq()
-    @JsonProperty(value = "expression", required = false) private var _expression:String = _
-    @JsonProperty(value = "mode", required = true) private var _mode:String = "left"
-
-    def inputs(implicit context:Context) : Seq[MappingIdentifier] = _inputs.map(s => MappingIdentifier.parse(context.evaluate(s)))
-    def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
-    def expression(implicit context: Context) : String = context.evaluate(_expression)
-    def mode(implicit context: Context) : String = context.evaluate(_mode)
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         inputs.toArray
     }
 
@@ -76,27 +52,44 @@ class JoinMapping extends BaseMapping {
       * @return
       */
     override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val inputs = this.inputs
-        val expression = this.expression
-        val columns = this.columns
-        val mode = this.mode
-
-        if (expression != null && expression.nonEmpty) {
-            logger.info(s"Joining mappings ${inputs.mkString(",")} on '$expression' with type $mode")
+        if (condition.nonEmpty) {
+            logger.info(s"Joining mappings ${inputs.mkString(",")} on '$condition' with type $mode")
             if (inputs.size != 2) {
-                logger.error("Joining using an expression only supports exactly two inputs")
-                throw new IllegalArgumentException("Joining using an expression only supports exactly two inputs")
+                logger.error("Joining using an condition only supports exactly two inputs")
+                throw new IllegalArgumentException("Joining using an condition only supports exactly two inputs")
             }
             val left = inputs(0)
             val right = inputs(1)
             val leftDf = tables(left).as(left.name)
             val rightDf = tables(right).as(right.name)
-            leftDf.join(rightDf, expr(expression), mode)
+            leftDf.join(rightDf, expr(condition), mode)
         }
         else {
             logger.info(s"Joining mappings ${inputs.mkString(",")} on columns ${columns.mkString("[",",","]")} with type $mode")
             inputs.map(tables.apply).reduceLeft((l, r) => l.join(r, columns, mode))
         }
+    }
+}
+
+
+class JoinMappingSpec extends MappingSpec {
+    @JsonProperty(value = "inputs", required = true) private var inputs:Seq[String] = Seq()
+    @JsonProperty(value = "columns", required = false) private var columns:Seq[String] = Seq()
+    @JsonProperty(value = "condition", required = false) private var expression:String = ""
+    @JsonProperty(value = "mode", required = true) private var mode:String = "left"
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): JoinMapping = {
+        JoinMapping(
+            instanceProperties(context),
+            inputs.map(id => MappingIdentifier(context.evaluate(id))),
+            columns.map(context.evaluate),
+            context.evaluate(expression),
+            context.evaluate(mode)
+        )
     }
 }

@@ -20,12 +20,15 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+
+import com.dimajix.spark.{functions => ext_functions}
 
 
 class ColumnNodeOps extends NodeOps[Column] {
@@ -45,8 +48,7 @@ class ColumnNodeOps extends NodeOps[Column] {
                 col(null)
             }
             else {
-                val notAllNull = children.map(_.isNotNull).reduce(_ || _)
-                withName(name, functions.when(notAllNull, functions.struct(children: _*)))
+                withName(name, ext_functions.nullable_struct(children: _*))
             }
         }
         else {
@@ -54,9 +56,11 @@ class ColumnNodeOps extends NodeOps[Column] {
         }
     }
 
-    override def array(name:String, element:Column, nullable:Boolean) : Column = ???
+    override def array(name:String, element:Column, nullable:Boolean) : Column =
+        throw new UnsupportedOperationException(s"Cannot create a Spark array for column $name with element $element")
 
-    override def map(name:String, keyType:Column, valueType:Column, nullable:Boolean) : Column = ???
+    override def map(name:String, keyType:Column, valueType:Column, nullable:Boolean) : Column =
+        throw new UnsupportedOperationException(s"Cannot create a Spark map for column $name with keys $keyType and values $valueType")
 
     override def explode(name: String, array: Column): Column = {
         withName(name, functions.explode(array))
@@ -64,8 +68,9 @@ class ColumnNodeOps extends NodeOps[Column] {
 
     private def withName(name:String, value:Column) : Column = {
         if (name.nonEmpty) {
-            // Avoid multiple "as" expressions, this will confuse Spark 2.3
+            // Avoid multiple "as" or otherwise redundant alias expressions, since these will confuse Spark 2.3
             value.expr match {
+                case expr:NamedExpression if expr.name == name => value
                 case alias:Alias => new Column(alias.child).as(name)
                 case _ => value.as(name)
             }

@@ -42,12 +42,13 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
 
-        val xfs = new AggregateMapping
-        xfs._input = "myview"
-        xfs._dimensions = Array("_1", "_2")
-        xfs._aggregations = Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)")
+        val xfs = AggregateMapping(
+            Mapping.Properties(session.context),
+            MappingIdentifier("myview"),
+            Seq("_1", "_2"),
+            Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)")
+        )
 
         xfs.input should be (MappingIdentifier("myview"))
         xfs.dimensions should be (Array("_1", "_2"))
@@ -91,8 +92,8 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
         project.mappings.size should be (2)
         project.mappings.contains("t0") should be (true)
@@ -105,7 +106,11 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
             ("c1_v2", "c2_v2", 113, 118.0)
         )).createTempView("my_table")
 
-        val df2 = executor.instantiate(MappingIdentifier("t1")).orderBy("_1", "_2")
+        val mapping = context.getMapping(MappingIdentifier("t1"))
+        mapping should not be null
+        mapping.context should be theSameInstanceAs (context)
+
+        val df2 = executor.instantiate(mapping).orderBy("_1", "_2")
         df2.schema should be (
             StructType(
                 StructField("_1", StringType) ::

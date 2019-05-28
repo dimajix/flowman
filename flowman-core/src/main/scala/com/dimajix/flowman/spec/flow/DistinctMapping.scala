@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,18 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class DistinctMapping extends BaseMapping {
+case class DistinctMapping(
+   instanceProperties:Mapping.Properties,
+   input:MappingIdentifier
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DistinctMapping])
-
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
@@ -51,8 +49,6 @@ class DistinctMapping extends BaseMapping {
       * @return
       */
     override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
         logger.info(s"Filtering distinct rows from mapping '$input'")
 
         val df = tables(input)
@@ -61,15 +57,22 @@ class DistinctMapping extends BaseMapping {
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
-
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+class DistinctMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+
+    override def instantiate(context: Context): DistinctMapping = {
+        val props = instanceProperties(context)
+        val input = MappingIdentifier(context.evaluate(this.input))
+        DistinctMapping(props, input)
     }
 }

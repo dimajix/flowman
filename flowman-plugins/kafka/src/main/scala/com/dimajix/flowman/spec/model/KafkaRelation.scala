@@ -45,34 +45,29 @@ import com.dimajix.flowman.util.SchemaUtils
 
 object KafkaRelation {
     def apply(hosts:Seq[String], topics:Seq[String]): KafkaRelation = {
-        val relation = new KafkaRelation()
-        relation._hosts = hosts
-        relation._topics = topics
-        relation
+        KafkaRelation(
+            Relation.Properties(null),
+            hosts,
+            topics
+        )
     }
 }
 
 
-@RelationType(kind="kafka")
-class KafkaRelation extends BaseRelation {
+case class KafkaRelation(
+    instanceProperties:Relation.Properties,
+    hosts:Seq[String],
+    topics:Seq[String],
+    startOffset:String="earliest",
+    endOffset:String="latest"
+) extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[KafkaRelation])
-
-    @JsonProperty(value="hosts", required=false) private var _hosts:Seq[String] = Seq()
-    @JsonProperty(value="topics", required=false) private var _topics:Seq[String] = Seq()
-    @JsonProperty(value="startOffset", required=false) private var _startOffset:String = "earliest"
-    @JsonProperty(value="endOffset", required=false) private var _endOffset:String = "latest"
-
-    def hosts(implicit context:Context) : Seq[String] = _hosts.map(context.evaluate)
-    def topics(implicit context:Context) : Seq[String] = _topics.map(context.evaluate)
-    def startOffset(implicit context: Context) : String = context.evaluate(_startOffset)
-    def endOffset(implicit context: Context) : String = context.evaluate(_endOffset)
 
     /**
       * Returns the schema of the relation
-      * @param context
       * @return
       */
-    override def schema(implicit context: Context) : Schema = {
+    override def schema : Schema = {
         val fields =
             Field("key", BinaryType, nullable = true) ::
             Field("value", BinaryType, nullable = false) ::
@@ -94,10 +89,7 @@ class KafkaRelation extends BaseRelation {
       * @return
       */
     override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
-        implicit val context = executor.context
         val hosts = this.hosts.mkString(",")
-        val startOffset = this.startOffset
-        val endOffset = this.endOffset
         val topics = this.topics.mkString(",")
         logger.info(s"Reading Kafka topics '$topics' at hosts '$hosts'")
 
@@ -120,7 +112,6 @@ class KafkaRelation extends BaseRelation {
       * @param partition - destination partition
       */
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
-        implicit val context = executor.context
         val hosts = this.hosts.mkString(",")
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Writing to Kafka topic '$topic' at hosts '$hosts'")
@@ -145,9 +136,7 @@ class KafkaRelation extends BaseRelation {
       * @return
       */
     override def readStream(executor: Executor, schema: StructType): DataFrame = {
-        implicit val context = executor.context
         val hosts = this.hosts.mkString(",")
-        val startOffset = this.startOffset
         val topics = this.topics.mkString(",")
         logger.info(s"Streaming from Kafka topics '$topics' at hosts '$hosts'")
 
@@ -169,7 +158,6 @@ class KafkaRelation extends BaseRelation {
       * @return
       */
     override def writeStream(executor: Executor, df: DataFrame, mode: OutputMode, checkpointLocation: Path): StreamingQuery = {
-        implicit val context = executor.context
         val hosts = this.hosts.mkString(",")
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")
@@ -213,10 +201,9 @@ class KafkaRelation extends BaseRelation {
     /**
       * Returns empty schema, so we read in all columns from Kafka
       *
-      * @param context
       * @return
       */
-    override protected def inputSchema(implicit context: Context): StructType = {
+    override protected def inputSchema : StructType = {
         StructType(Seq(
             StructField("key", org.apache.spark.sql.types.BinaryType),
             StructField("value", org.apache.spark.sql.types.BinaryType),
@@ -231,8 +218,27 @@ class KafkaRelation extends BaseRelation {
     /**
       * Returns empty schema, so we write columns as they are given to Kafka
       *
-      * @param context
       * @return
       */
-    override protected def outputSchema(implicit context: Context): StructType = null
+    override protected def outputSchema : StructType = null
+}
+
+
+
+@RelationType(kind="kafka")
+class KafkaRelationSpec extends RelationSpec {
+    @JsonProperty(value = "hosts", required = false) private var hosts: Seq[String] = Seq()
+    @JsonProperty(value = "topics", required = false) private var topics: Seq[String] = Seq()
+    @JsonProperty(value = "startOffset", required = false) private var startOffset: String = "earliest"
+    @JsonProperty(value = "endOffset", required = false) private var endOffset: String = "latest"
+
+    override def instantiate(context: Context): Relation = {
+        KafkaRelation(
+            instanceProperties(context),
+            hosts.map(context.evaluate),
+            topics.map(context.evaluate),
+            context.evaluate(startOffset),
+            context.evaluate(endOffset)
+        )
+    }
 }

@@ -23,6 +23,7 @@ import scala.util.Try
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
@@ -35,8 +36,7 @@ class ValidateCommand extends ActionCommand {
     @Argument(usage = "specifies mappings to validate", metaVar = "<mapping>")
     var mappings: Array[String] = Array()
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        implicit val context = executor.context
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Validating mappings {}", if (mappings != null) mappings.mkString(",") else "all")
 
         // Then execute output operations
@@ -47,7 +47,7 @@ class ValidateCommand extends ActionCommand {
                 else
                     project.mappings.keys.toSeq
 
-            val tables = mappingNames.map(MappingIdentifier.parse)
+            val tables = mappingNames.map(name => context.getMapping(MappingIdentifier(name)))
             tables.forall(table => executor.instantiate(table) != null)
         } match {
             case Success(true) =>

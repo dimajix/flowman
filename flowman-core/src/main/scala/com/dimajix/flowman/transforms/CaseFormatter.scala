@@ -39,7 +39,7 @@ object CaseFormatter {
 case class CaseFormatter(format:String) extends TreeTransformer {
     import CaseFormatter._
 
-    val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(format))
+    private val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(format))
     if (!ALL_CASES.contains(caseFormat))
         throw new IllegalArgumentException(s"Case format '$format' not supported, please use one of ${ALL_CASES.mkString(",")}")
 
@@ -53,7 +53,7 @@ case class CaseFormatter(format:String) extends TreeTransformer {
         }
     }
 
-    override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
+    override def transform[T](root:Node[T]) : Node[T] = {
         root.transform(node => node.withName(rename(node.name)))
     }
 }

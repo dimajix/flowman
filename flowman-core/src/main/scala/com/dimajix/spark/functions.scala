@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.spark
 
-import com.dimajix.flowman.annotation.RelationType
-import com.dimajix.flowman.spec.model.NullRelation
+import org.apache.spark.sql.Column
+
+import com.dimajix.spark.expressions.CreateNullableStruct
 
 
-@RelationType(kind="customRelation")
-class CustomRelation extends NullRelation {
+object functions {
+    @scala.annotation.varargs
+    def nullable_struct(cols: Column*): Column = new Column(CreateNullableStruct(cols.map(_.expr)))
 }

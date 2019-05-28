@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,31 +19,62 @@ package com.dimajix.flowman.spec.connection
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.Instance
 
 
-object JdbcConnection {
-    def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : Connection = {
-        val connection = new JdbcConnection
-        connection._driver = driver
-        connection._url = url
-        connection._username = username
-        connection._password = password
-        connection._properties = properties
-        connection
-    }
+case class JdbcConnection(
+    instanceProperties:Connection.Properties,
+    driver:String,
+    url:String,
+    username:String,
+    password:String,
+    properties:Map[String,String]
+) extends BaseConnection {
 }
 
 
-class JdbcConnection extends Connection  {
-    @JsonProperty(value="driver", required=true) private var _driver:String = ""
-    @JsonProperty(value="url", required=true) private var _url:String = ""
-    @JsonProperty(value="username", required=false) private var _username:String = _
-    @JsonProperty(value="password", required=false) private var _password:String = _
-    @JsonProperty(value="properties", required=false) private var _properties:Map[String,String] = Map()
 
-    def driver(implicit context: Context) : String = context.evaluate(_driver)
-    def url(implicit context: Context) : String = context.evaluate(_url)
-    def username(implicit context: Context) : String  = context.evaluate(_username)
-    def password(implicit context: Context) : String = context.evaluate(_password)
-    def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
+object JdbcConnectionSpec {
+    /**
+      * Convenience constructor mainly used in unit tests
+      * @param driver
+      * @param url
+      * @param username
+      * @param password
+      * @param properties
+      * @return
+      */
+    def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : JdbcConnectionSpec = {
+        val con = new JdbcConnectionSpec()
+        con.driver = driver
+        con.url = url
+        con.username = username
+        con.password = password
+        con.properties = properties
+        con
+    }
+}
+
+class JdbcConnectionSpec extends ConnectionSpec  {
+    @JsonProperty(value="driver", required=true) private var driver:String = ""
+    @JsonProperty(value="url", required=true) private var url:String = ""
+    @JsonProperty(value="username", required=false) private var username:String = _
+    @JsonProperty(value="password", required=false) private var password:String = _
+    @JsonProperty(value="properties", required=false) private var properties:Map[String,String] = Map()
+
+    /**
+      * Creates the instance of the specified JdbcConnection with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): JdbcConnection = {
+        JdbcConnection(
+            instanceProperties(context),
+            context.evaluate(driver),
+            context.evaluate(url),
+            context.evaluate(username),
+            context.evaluate(password),
+            properties.mapValues(context.evaluate)
+        )
+    }
 }

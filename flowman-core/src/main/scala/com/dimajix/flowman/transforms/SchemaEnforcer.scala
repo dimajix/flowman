@@ -21,7 +21,6 @@ import java.util.Locale
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.types.ArrayType
@@ -29,6 +28,7 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.spark.functions.nullable_struct
 import com.dimajix.flowman.util.SchemaUtils
 
 
@@ -53,7 +53,7 @@ case class SchemaEnforcer(schema:StructType) {
                 case st:StructType =>
                     val columns = conformStruct(st, inputType.asInstanceOf[StructType], prefix + requiredField.name + ".")
                     if (requiredField.nullable) {
-                        when(columns.map(_.isNotNull).reduce(_ || _), struct(columns: _*))
+                        nullable_struct(columns: _*)
                     }
                     else {
                         struct(columns: _*)

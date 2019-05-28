@@ -38,27 +38,27 @@ import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRelation {
+case class JdbcRelation(
+    instanceProperties:Relation.Properties,
+    override val schema:Schema,
+    override val partitions: Seq[PartitionField],
+    connection: JdbcConnection,
+    properties: Map[String,String],
+    database: String,
+    table: String
+) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
-    @JsonProperty(value = "connection", required = true) private var _connection: String = _
-    @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
-    @JsonProperty(value = "database", required = true) private var _database: String = _
-    @JsonProperty(value = "table", required = true) private var _table: String = _
-
-    def connection(implicit context: Context) : ConnectionIdentifier = ConnectionIdentifier.parse(context.evaluate(_connection))
-    def properties(implicit context: Context) : Map[String,String] = _properties.mapValues(context.evaluate)
-    def database(implicit context:Context) : String = context.evaluate(_database)
-    def table(implicit context:Context) : String = context.evaluate(_table)
-
-    def fqTable(implicit context:Context) : String = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
-    def tableIdentifier(implicit context: Context) : TableIdentifier = TableIdentifier(table, Option(database))
+    def fqTable : String = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
+    def tableIdentifier : TableIdentifier = TableIdentifier(table, Option(database))
 
     /**
       * Reads the configured table from the source
@@ -67,12 +67,10 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
       * @return
       */
     override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        implicit val context = executor.context
-
-        logger.info(s"Reading data from JDBC source $tableIdentifier in database $connection using partition values $partitions")
+        logger.info(s"Reading data from JDBC source '$tableIdentifier' using connection '${connection.identifier}' using partition values $partitions")
 
         // Get Connection
-        val (url,props) = createProperties(context)
+        val (url,props) = createProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = executor.spark.read.options(options)
@@ -90,13 +88,10 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
       * @param mode
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
-        implicit val context = executor.context
-
-        val connection = this.connection
-        logger.info(s"Writing data to JDBC source $tableIdentifier in database $connection")
+        logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection.identifier}")
 
         // Get Connection
-        val (url,props) = createProperties(context)
+        val (url,props) = createProperties()
         val dialect = SqlDialects.get(url)
 
         // Write partition into DataBase
@@ -148,7 +143,6 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
       * @param partitions
       */
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        implicit val context = executor.context
         if (partitions.isEmpty) {
             logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $tableIdentifier")
             withConnection { (con, options) =>
@@ -174,7 +168,6 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     override def exists(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
         withConnection{ (con,options) =>
             JdbcUtils.tableExists(con, tableIdentifier, options)
         }
@@ -187,8 +180,6 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val tableIdentifier = this.tableIdentifier
         logger.info(s"Creating jdbc relation $name, this will create jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
@@ -210,8 +201,6 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
         require(executor != null)
 
-        implicit val context = executor.context
-        val tableIdentifier = this.tableIdentifier
         logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
@@ -224,11 +213,9 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
 
     /**
       * Creates a Spark schema from the list of fields.
-      * @param context
       * @return
       */
-    override protected def inputSchema(implicit context:Context) : StructType = {
-        val schema = this.schema
+    override protected def inputSchema : StructType = {
         if (schema != null) {
             StructType(schema.fields.map(_.sparkField) ++ partitions.map(_.sparkField))
         }
@@ -239,11 +226,9 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
 
     /**
       * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
-      * @param context
       * @return
       */
-    override protected def outputSchema(implicit context:Context) : StructType = {
-        val schema = this.schema
+    override protected def outputSchema : StructType = {
         if (schema != null) {
             StructType(schema.fields.map(_.sparkField) ++ partitions.map(_.sparkField))
         }
@@ -252,30 +237,28 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         }
     }
 
-    private def createProperties(implicit context: Context) = {
+    private def createProperties() = {
         // Get Connection
-        val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
         val props = new Properties()
-        Option(db.username).foreach(props.setProperty("user", _))
-        Option(db.password).foreach(props.setProperty("password", _))
-        props.setProperty("driver", db.driver)
+        Option(connection.username).foreach(props.setProperty("user", _))
+        Option(connection.password).foreach(props.setProperty("password", _))
+        props.setProperty("driver", connection.driver)
 
-        db.properties.foreach(kv => props.setProperty(kv._1, kv._2))
+        connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         properties.foreach(kv => props.setProperty(kv._1, kv._2))
 
-        logger.info("Connecting to jdbc source at {}", db.url)
+        logger.info("Connecting to jdbc source at {}", connection.url)
 
-        (db.url,props)
+        (connection.url,props)
     }
 
-    private def withConnection[T](fn:(Connection,JDBCOptions) => T)(implicit context: Context) : T = {
-        val db = context.getConnection(connection).asInstanceOf[JdbcConnection]
+    private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
         val props = scala.collection.mutable.Map[String,String]()
-        Option(db.username).foreach(props.update("user", _))
-        Option(db.password).foreach(props.update("password", _))
-        props.update("driver", db.driver)
+        Option(connection.username).foreach(props.update("user", _))
+        Option(connection.password).foreach(props.update("password", _))
+        props.update("driver", connection.driver)
 
-        val options = new JDBCOptions(db.url, tableIdentifier.unquotedString, props.toMap ++ db.properties ++ properties)
+        val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)
         try {
             fn(conn, options)
@@ -285,7 +268,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         }
     }
 
-    private def withStatement[T](fn:(Statement,JDBCOptions) => T)(implicit context: Context) : T = {
+    private def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
         withConnection { (con, options) =>
             val statement = con.createStatement()
             try {
@@ -298,7 +281,7 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         }
     }
 
-    private def checkPartition(partition:Map[String,SingleValue])(implicit context: Context) : Boolean = {
+    private def checkPartition(partition:Map[String,SingleValue]) : Boolean = {
         withConnection{ (connection, options) =>
             val dialect = SqlDialects.get(options.url)
             val condition = partitionCondition(dialect, partition)
@@ -306,12 +289,39 @@ class JdbcRelation extends BaseRelation with PartitionedRelation with SchemaRela
         }
     }
 
-    private def partitionCondition(dialect:SqlDialect, partitions: Map[String, FieldValue])(implicit context: Context) : String = {
+    private def partitionCondition(dialect:SqlDialect, partitions: Map[String, FieldValue]) : String = {
         val partitionSchema = PartitionSchema(this.partitions)
         partitions.map { case (name, value) =>
             val field = partitionSchema.get(name)
             dialect.expr.in(field.name, field.interpolate(value))
         }
         .mkString(" AND ")
+    }
+}
+
+
+
+
+class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
+    @JsonProperty(value = "connection", required = true) private var _connection: String = _
+    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "database", required = true) private var database: String = _
+    @JsonProperty(value = "table", required = true) private var table: String = _
+
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): JdbcRelation = {
+        JdbcRelation(
+            instanceProperties(context),
+            if (schema != null) schema.instantiate(context) else null,
+            partitions.map(_.instantiate(context)),
+            context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[JdbcConnection],
+            properties.mapValues(context.evaluate),
+            context.evaluate(database),
+            context.evaluate(table)
+        )
     }
 }

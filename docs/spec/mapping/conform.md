@@ -4,9 +4,9 @@ title: Flowman Conform Mapping
 permalink: /spec/mapping/conform.html
 ---
 # Conform Mapping
-The `conform` mapping performs a *projection* of an input mapping onto a specific set of columns
-and also performs type conversions. This corresponds to a simple SQL `SELECT` with a series of
-`CAST` expressions.
+The `conform` mapping performs simply name and type mangling transformations to conform data to some standard. For
+example you can replace all date columns by timestamp columns (this is required for older versions of Hive) or
+you can transform column names from camel case to snake case to better match SQL.
 
 ## Example
 ```
@@ -15,10 +15,8 @@ mappings:
     kind: conform
     input: facts
     naming: snakeCase
-    columns:
-      id: String
-      temperature: Float
-      wind_speed: Float
+    types:
+      date: timestamp
 ```
 
 ## Fields
@@ -45,8 +43,11 @@ Specifies the naming scheme used for the output. The following values are suppor
   * `snakeCase`
   * `camelCaseUpper`
 
-* `columns` **(optional)** *(type: map:string)*:
-Specifies the list of column names (key) with their type (value)
+* `types` **(optional)** *(type: map:string)*:
+Specifies the list of types and how they should be replaced
+
+* `flatten` **(optional)** *(type: boolean)* *(default: false)*:
+Flattens all nested structs into a flat list of columns if set to `true`
 
 
 ## Description

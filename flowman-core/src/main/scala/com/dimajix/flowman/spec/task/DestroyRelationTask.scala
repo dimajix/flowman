@@ -23,24 +23,23 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 
+
 object DestroyRelationTask {
-    def apply(relations:Seq[String], ignoreIfNotExists:Boolean) : DestroyRelationTask = {
-        val task = new DestroyRelationTask
-        task._relations = relations
-        task._ignoreIfNotExists = ignoreIfNotExists.toString
-        task
+    def apply(context: Context, relations:Seq[RelationIdentifier], ignoreIfNotExists:Boolean) : DestroyRelationTask = {
+        DestroyRelationTask(
+            Task.Properties(context),
+            relations,
+            ignoreIfNotExists
+        )
     }
 }
 
-
-class DestroyRelationTask extends BaseTask {
+case class DestroyRelationTask(
+    instanceProperties:Task.Properties,
+    relations:Seq[RelationIdentifier],
+    ignoreIfNotExists:Boolean
+) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[CreateRelationTask])
-
-    @JsonProperty(value="relation", required=true) private var _relations:Seq[String] = Seq()
-    @JsonProperty(value="ignoreIfNotExists", required=true) private var _ignoreIfNotExists:String = "false"
-
-    def relations(implicit context: Context) : Seq[RelationIdentifier] = _relations.map(i => RelationIdentifier.parse(context.evaluate(i)))
-    def ignoreIfNotExists(implicit context: Context) : Boolean = context.evaluate(_ignoreIfNotExists).toBoolean
 
     /**
       * Instantiates all outputs defined in this task
@@ -51,21 +50,32 @@ class DestroyRelationTask extends BaseTask {
     override def execute(executor:Executor) : Boolean = {
         require(executor != null)
 
-        implicit val context = executor.context
-        relations.foreach(o => createRelation(executor, o))
+        relations.foreach(o => destroyRelation(executor, o))
         true
     }
 
-    private def createRelation(executor: Executor, identifier:RelationIdentifier) : Boolean = {
+    private def destroyRelation(executor: Executor, relationName: RelationIdentifier) : Boolean = {
         require(executor != null)
-        require(identifier != null)
+        require(relationName != null)
 
-        implicit val context = executor.context
-        val relation = context.getRelation(identifier)
-
-        logger.info("Destroying relation '{}'", identifier.toString)
+        logger.info(s"Destroying relation '$relationName'")
+        val relation = context.getRelation(relationName)
         relation.destroy(executor, ignoreIfNotExists)
         true
     }
 }
 
+
+
+class DestroyRelationTaskSpec extends TaskSpec {
+    @JsonProperty(value = "relation", required = true) private var relations: Seq[String] = Seq()
+    @JsonProperty(value = "ignoreIfNotExists", required = false) private var ignoreIfNotExists: String = "false"
+
+    override def instantiate(context: Context): Task = {
+        DestroyRelationTask(
+            instanceProperties(context),
+            relations.map(i => RelationIdentifier(context.evaluate(i))),
+            context.evaluate(ignoreIfNotExists).toBoolean
+        )
+    }
+}

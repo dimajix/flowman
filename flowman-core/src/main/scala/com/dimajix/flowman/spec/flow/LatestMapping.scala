@@ -21,10 +21,10 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.row_number
-import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.functions.collect_list
+import org.apache.spark.sql.functions.row_number
 import org.apache.spark.sql.functions.struct
+import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.types.DecimalType
@@ -45,26 +45,13 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
-object LatestMapping {
-    def apply(input:String, keyColumns:Seq[String], versionColumn:String) : LatestMapping = {
-        val mapping = new LatestMapping
-        mapping._input = input
-        mapping._keyColumns = keyColumns
-        mapping._versionColumn = versionColumn
-        mapping
-    }
-}
-
-class LatestMapping extends BaseMapping {
+case class LatestMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    keyColumns:Seq[String],
+    versionColumn:String
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[LatestMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "versionColumn", required = true) private var _versionColumn:String = _
-    @JsonProperty(value = "keyColumns", required = true) private var _keyColumns:Seq[String] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def versionColumn(implicit context: Context) : String = context.evaluate(_versionColumn)
-    def keyColumns(implicit context: Context) : Seq[String] = _keyColumns.map(context.evaluate)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -74,10 +61,6 @@ class LatestMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
-        val keyColumns = this.keyColumns
-        val versionColumn = this.versionColumn
         logger.info(s"Selecting latest version in '$input' using key columns ${keyColumns.mkString(",")} and version column $versionColumn")
 
         val df = tables(input)
@@ -148,24 +131,40 @@ class LatestMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
-
-        implicit val icontext = context
         input(this.input)
+    }
+}
+
+
+class LatestMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input:String = _
+    @JsonProperty(value = "versionColumn", required = true) private var versionColumn:String = _
+    @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): LatestMapping = {
+        LatestMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            keyColumns.map(context.evaluate),
+            context.evaluate(versionColumn)
+        )
     }
 }

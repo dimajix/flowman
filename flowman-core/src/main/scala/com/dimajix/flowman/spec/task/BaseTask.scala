@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 
 package com.dimajix.flowman.spec.task
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
-import com.dimajix.flowman.execution.Context
-
 
 abstract class BaseTask extends Task {
-    @JsonProperty(value="description", required=true) private[task] var _description:String = _
+    override protected def instanceProperties: Task.Properties
 
-    def description(implicit context:Context) : String = context.evaluate(_description)
+    override def description : String = instanceProperties.description
 }

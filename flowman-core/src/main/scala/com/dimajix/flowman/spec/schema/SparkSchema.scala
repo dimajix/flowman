@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,55 @@
 
 package com.dimajix.flowman.spec.schema
 
+import java.net.URL
+
 import org.apache.spark.sql.types.DataType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field
 
 
-class SparkSchema extends ExternalSchema {
+case class SparkSchema(
+    instanceProperties:Schema.Properties,
+    override val file: File,
+    override val url: URL,
+    override val spec: String
+) extends ExternalSchema {
     protected override val logger = LoggerFactory.getLogger(classOf[SparkSchema])
 
     /**
       * Returns the list of all fields of the schema
-      * @param context
       * @return
       */
-    protected override def loadSchema(implicit context: Context): CachedSchema = {
-        val json = loadSchemaSpec(context)
+    protected override def loadSchema: CachedSchema = {
+        val json = loadSchemaSpec
         val sparkSchema = DataType.fromJson(json).asInstanceOf[org.apache.spark.sql.types.StructType]
 
         CachedSchema(
             Field.of(sparkSchema),
             ""
+        )
+    }
+}
+
+
+
+class SparkSchemaSpec extends ExternalSchemaSpec {
+    /**
+      * Creates the instance of the specified Schema with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): SparkSchema = {
+        SparkSchema(
+            Schema.Properties(context),
+            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
+            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull,
+            context.evaluate(spec)
         )
     }
 }

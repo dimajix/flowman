@@ -42,11 +42,8 @@ class SchemaTest extends FlatSpec with Matchers {
               |    type: integer
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
-        val result = mapper.readValue(spec, classOf[Schema])
-        result shouldBe a[EmbeddedSchema]
+        val result = mapper.readValue(spec, classOf[SchemaSpec])
+        result shouldBe a[EmbeddedSchemaSpec]
     }
 
     it should "provide a nice string representation (1)" in {
@@ -60,10 +57,10 @@ class SchemaTest extends FlatSpec with Matchers {
             """.stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val result = mapper.readValue(spec, classOf[Schema])
-        result.treeString should be (
+        val schema = result.instantiate(session.context)
+        schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
               | |-- int_col: integer (nullable = true)
@@ -84,10 +81,10 @@ class SchemaTest extends FlatSpec with Matchers {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val result = mapper.readValue(spec, classOf[Schema])
-        result.treeString should be (
+        val schema = result.instantiate(session.context)
+        schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
               | |-- array_col: array (nullable = true)
@@ -115,10 +112,10 @@ class SchemaTest extends FlatSpec with Matchers {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val result = mapper.readValue(spec, classOf[Schema])
-        result.treeString should be (
+        val schema = result.instantiate(session.context)
+        schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
               | |-- struct_col: struct (nullable = true)
@@ -150,10 +147,10 @@ class SchemaTest extends FlatSpec with Matchers {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
+        val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val result = mapper.readValue(spec, classOf[Schema])
-        result.treeString should be (
+        val schema = result.instantiate(session.context)
+        schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
               | |-- struct_col: struct (nullable = true)

@@ -79,9 +79,11 @@ class JsonSchemaTest extends FlatSpec with Matchers {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[JsonSchemaSpec]
+
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[JsonSchema]
         result.description should be ("Total amount for this Fee")
 
@@ -141,9 +143,11 @@ class JsonSchemaTest extends FlatSpec with Matchers {
               |""".stripMargin
 
         val session = Session.builder().build()
-        implicit val context = session.context
 
-        val result = ObjectMapper.parse[Schema](spec)
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[JsonSchemaSpec]
+
+        val result = schemaSpec.instantiate(session.context)
         result shouldBe an[JsonSchema]
         result.description should be ("Total amount for this Fee")
 

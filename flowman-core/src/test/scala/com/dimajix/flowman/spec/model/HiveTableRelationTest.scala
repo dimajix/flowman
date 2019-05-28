@@ -32,7 +32,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.util.SchemaUtils
@@ -62,7 +64,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0001", Some("default")))
@@ -112,8 +116,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        implicit val context = executor.context
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val hiveRelation = relation.asInstanceOf[HiveTableRelation]
         hiveRelation.location should be (new Path(location))
@@ -161,7 +166,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0003", Some("default")))
@@ -211,7 +218,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0004", Some("default")))
@@ -259,7 +268,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0005", Some("default")))
@@ -301,7 +312,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0006", Some("default")))
@@ -344,7 +357,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
@@ -390,7 +405,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
@@ -434,7 +451,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0008", Some("default")))
@@ -479,7 +498,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val relation = project.relations("t0")
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0009", Some("default")))
@@ -522,10 +543,12 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
                |          type: integer
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val relation = project.relations("t0")
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
@@ -581,10 +604,12 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
                |          type: integer
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val relation = project.relations("t0")
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
@@ -645,10 +670,12 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
                |        type: integer
                |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val relation = project.relations("t0")
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
@@ -705,11 +732,11 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context = executor.context
+        val context = session.getContext(project)
 
-        val mapping = project.mappings("input")
-        val schema = mapping.describe(executor.context, Map())
+        val mapping = context.getMapping(MappingIdentifier("input"))
+
+        val schema = mapping.describe(Map())
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,14 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 
 
-class AggregateMapping extends BaseMapping {
+case class AggregateMapping(
+    instanceProperties : Mapping.Properties,
+    input : MappingIdentifier,
+    dimensions : Seq[String],
+    aggregations : Map[String,String],
+    partitions : Int = 0
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[AggregateMapping])
-
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "dimensions", required = true) private[spec] var _dimensions:Array[String] = _
-    @JsonProperty(value = "aggregations", required = true) private[spec] var _aggregations:Map[String,String] = _
-    @JsonProperty(value = "partitions", required = false) private[spec] var _partitions:String = _
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def dimensions(implicit context: Context) : Seq[String] = _dimensions.map(context.evaluate)
-    def aggregations(implicit context: Context) : Map[String,String] = _aggregations.mapValues(context.evaluate)
-    def partitions(implicit context: Context) : Int = if (_partitions == null || _partitions.isEmpty) 0 else context.evaluate(_partitions).toInt
 
     /**
       * Creates an instance of the aggregated table.
@@ -48,9 +44,6 @@ class AggregateMapping extends BaseMapping {
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        implicit val context = executor.context
-        val input = this.input
-        val dimensions = this.dimensions
         logger.info(s"Aggregating mapping '$input' on dimensions ${dimensions.mkString(",")}")
 
         val df = tables(input)
@@ -66,10 +59,31 @@ class AggregateMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
+      * @return
+      */
+    override def dependencies : Array[MappingIdentifier] = {
+        Array(input)
+    }
+}
+
+
+class AggregateMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private[spec] var input: String = _
+    @JsonProperty(value = "dimensions", required = true) private[spec] var dimensions: Array[String] = _
+    @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: Map[String, String] = _
+    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
       * @param context
       * @return
       */
-    override def dependencies(implicit context:Context) : Array[MappingIdentifier] = {
-        Array(input)
+    override def instantiate(context:Context) : AggregateMapping = {
+        val props = instanceProperties(context)
+        val input = MappingIdentifier.parse(context.evaluate(this.input))
+        val dimensions = this.dimensions.map(context.evaluate)
+        val aggregations = this.aggregations.mapValues(context.evaluate)
+        val partitions = if (this.partitions == null || this.partitions.isEmpty) 0 else context.evaluate(this.partitions).toInt
+        AggregateMapping(props, input, dimensions, aggregations, partitions)
     }
 }

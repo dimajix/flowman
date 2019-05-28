@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
@@ -28,65 +33,79 @@ import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StructType
 
 
-object Schema extends TypeRegistry[Schema] {
+object Schema {
+    object Properties {
+        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                if (context != null) context.namespace else null,
+                if (context != null) context.project else null,
+                name,
+                kind,
+                Map()
+            )
+        }
+    }
+    case class Properties(
+        context:Context,
+        namespace:Namespace,
+        project:Project,
+        name: String,
+        kind: String,
+        labels: Map[String, String]
+    ) extends Instance.Properties {
+    }
 }
+
 
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[EmbeddedSchema])
-@JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchema]),
-    new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchema]),
-    new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchema]),
-    new JsonSubTypes.Type(name = "json", value = classOf[JsonSchema]),
-    new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchema]),
-    new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchema]),
-    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchema])
-))
-abstract class Schema {
+abstract class Schema extends AbstractInstance {
     /**
-      * Returns the description of the schema
-      * @param context
+      * Returns the category of the resource
+      *
       * @return
       */
-    def description(implicit context: Context) : String
+    override def category: String = "schema"
+
+    /**
+      * Returns the description of the schema
+ *
+      * @return
+      */
+    def description : String
 
     /**
       * Returns the list of all fields of the schema
-      * @param context
       * @return
       */
-    def fields(implicit context: Context) : Seq[Field]
+    def fields : Seq[Field]
 
     /**
       * Returns the list of primary keys. Can be empty of no PK is available
-      * @param context
       * @return
       */
-    def primaryKey(implicit context: Context) : Seq[String]
+    def primaryKey : Seq[String]
 
     /**
       * Returns a Spark schema for this schema
-      * @param context
       * @return
       */
-    def sparkSchema(implicit context: Context) : org.apache.spark.sql.types.StructType = {
+    def sparkSchema : org.apache.spark.sql.types.StructType = {
         org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
     }
 
     /**
       * Provides a human readable string representation of the schema
-      * @param context
       */
-    def printTree(implicit context: Context) : Unit = {
+    def printTree : Unit = {
         println(treeString)
     }
     /**
       * Provides a human readable string representation of the schema
-      * @param context
       */
-    def treeString(implicit context: Context) : String = {
+    def treeString : String = {
         val builder = new StringBuilder
         builder.append("root\n")
         val prefix = " |"
@@ -117,4 +136,26 @@ abstract class Schema {
             case _ =>
         }
     }
+}
+
+
+
+object SchemaSpec extends TypeRegistry[SchemaSpec] {
+}
+
+/**
+  * Interface class for declaring relations (for sources and sinks) as part of a model
+  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[EmbeddedSchemaSpec])
+@JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchemaSpec]),
+    new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchemaSpec]),
+    new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchemaSpec]),
+    new JsonSubTypes.Type(name = "json", value = classOf[JsonSchemaSpec]),
+    new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),
+    new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchemaSpec]),
+    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchemaSpec])
+))
+abstract class SchemaSpec extends Spec[Schema] {
+    override def instantiate(context:Context) : Schema
 }

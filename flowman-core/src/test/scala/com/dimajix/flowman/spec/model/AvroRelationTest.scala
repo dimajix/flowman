@@ -22,6 +22,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
 
 
@@ -58,10 +59,10 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context  = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
-        val relation = project.relations("t0")
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read
@@ -104,10 +105,10 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context  = executor.context
+        val executor = session.executor
+        val context = session.getContext(project)
 
-        val relation = project.relations("t0")
+        val relation = context.getRelation(RelationIdentifier("t0"))
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.templating
 
+import java.io.StringWriter
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -25,9 +26,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.Temporal
 
 import org.apache.hadoop.fs.Path
+import org.apache.velocity.VelocityContext
+import org.apache.velocity.app.VelocityEngine
 
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.util.UtcTimestamp
+
 
 case class FileWrapper(file:File) {
     override def toString: String = file.toString
@@ -40,7 +44,15 @@ case class FileWrapper(file:File) {
     def withName(name:String) : FileWrapper = FileWrapper(file.withName(name))
 }
 
-class StringWrapper {
+case class RecursiveValue(engine:VelocityEngine, context:VelocityContext, value:String) {
+    override def toString: String = {
+        val output = new StringWriter()
+        engine.evaluate(context, output, "RecursiveValue", value)
+        output.toString
+    }
+}
+
+object StringWrapper {
     def concat(c1:String, c2:String) : String = {
         c1 + c2
     }
@@ -55,7 +67,7 @@ class StringWrapper {
     }
 }
 
-class SystemWrapper {
+object SystemWrapper {
     def getenv(name:String) : String = {
         Option(System.getenv(name)).getOrElse("")
     }
@@ -70,7 +82,7 @@ class SystemWrapper {
     }
 }
 
-class TimestampWrapper {
+object TimestampWrapper {
     def parse(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def valueOf(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def toEpochSeconds(value:String) : Long = UtcTimestamp.toEpochSeconds(value)
@@ -78,7 +90,7 @@ class TimestampWrapper {
     def format(value:UtcTimestamp, format:String) : String = value.format(format)
 }
 
-class LocalDateWrapper {
+object LocalDateWrapper {
     def parse(value:String) : LocalDate = LocalDate.parse(value)
     def valueOf(value:String) : LocalDate = LocalDate.parse(value)
     def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDate.parse(value))
@@ -94,7 +106,7 @@ class LocalDateWrapper {
     def addYears(value:LocalDate, days:Int) : LocalDate = value.plusYears(days)
 }
 
-class LocalDateTimeWrapper {
+object LocalDateTimeWrapper {
     def parse(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def valueOf(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)
@@ -118,7 +130,7 @@ class LocalDateTimeWrapper {
     def addYears(value:LocalDateTime, days:Int) : LocalDateTime = value.plusYears(days)
 }
 
-class DurationWrapper {
+object DurationWrapper {
     def ofDays(days:String) : Duration = Duration.ofDays(days.toLong)
     def ofDays(days:Long) : Duration = Duration.ofDays(days)
     def ofHours(hours:String) : Duration = Duration.ofHours(hours.toLong)
@@ -136,7 +148,7 @@ class DurationWrapper {
     def valueOf(value:String) : Duration = Duration.parse(value)
 }
 
-class PeriodWrapper {
+object PeriodWrapper {
     def ofYears(years:String) : Period = Period.ofYears(years.toInt)
     def ofYears(years:Int) : Period = Period.ofYears(years)
     def ofMonths(months:String) : Period = Period.ofMonths(months.toInt)
@@ -149,20 +161,20 @@ class PeriodWrapper {
     def valueOf(value:String) : Period = Period.parse(value)
 }
 
-class BooleanWrapper {
+object BooleanWrapper {
     def parse(value:Boolean) : Boolean = value
     def parse(value:String) : Boolean = java.lang.Boolean.parseBoolean(value)
     def valueOf(value:String) : Boolean = java.lang.Boolean.parseBoolean(value)
 }
 
-class IntegerWrapper {
+object IntegerWrapper {
     def parse(value:Integer) : Int = value
     def valueOf(value:Integer) : Int = value
     def parse(value:String) : Int = java.lang.Integer.parseInt(value)
     def valueOf(value:String) : Int = java.lang.Integer.parseInt(value)
 }
 
-class FloatWrapper {
+object FloatWrapper {
     def parse(value:Integer) : Double = value.toDouble
     def valueOf(value:Integer) : Double = value.toDouble
     def parse(value:Double) : Double = value

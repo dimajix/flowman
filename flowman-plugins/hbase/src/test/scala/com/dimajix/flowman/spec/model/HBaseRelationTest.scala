@@ -72,17 +72,13 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
                |        type: string
                |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
-        implicit val context  = executor.context
-
         val relation = project.relations("t0")
-        relation shouldBe a[HBaseRelation]
+        relation shouldBe a[HBaseRelationSpec]
     }
 
     it should "support writing to" in {
         createTable("table1", "f")
-        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.column("f", "col1", "col_1")))
+        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.Column("f", "col1", "col_1")))
         val df = spark.range(1, 10).toDF().select(
             col("id").cast("string").as("pk"),
             (col("id")*lit(2)).cast("string").as("col_1")
@@ -97,7 +93,7 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
         (1 until 10).foreach { id =>
             val row = table.get(new Get(id.toString.getBytes))
             row.containsColumn("f".getBytes(), "col1".getBytes()) should be (true)
-            row.getColumnLatest("f".getBytes(), "col1".getBytes()).getValue.map(_.toChar).mkString("") should be ((id*2).toString)
+            row.getColumnLatestCell("f".getBytes(), "col1".getBytes()).getValue.map(_.toChar).mkString("") should be ((id*2).toString)
         }
     }
 
@@ -105,7 +101,7 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
         if (!HBaseRelation.supportsRead())
             cancel()
 
-        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.column("f", "col1", "col_1")))
+        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.Column("f", "col1", "col_1")))
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor

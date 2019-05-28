@@ -16,8 +16,9 @@
 
 package com.dimajix.flowman.spec.task
 
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Context
 
-class ShellTask extends BaseTask {
-    override def execute(executor:Executor) : Boolean = ???
+
+class ShellTaskSpec extends TaskSpec {
+    override def instantiate(context: Context): Task = ???
 }

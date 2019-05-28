@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.4.1</version>
+    <version>0.5.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -54,6 +54,7 @@
         <hbase.version>1.2.0</hbase.version>
         <spark.version>2.4.2</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
+        <spark-api.version>2.4</spark-api.version>
         <aws.version>1.10.6</aws.version>
         <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
@@ -113,30 +114,6 @@
     <profiles>
         <!-- First come the Hadoop distributon profiles -->
         <profile>
-            <id>CDH-5.13</id>
-            <repositories>
-                <repository>
-                    <id>cloudera</id>
-                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-                </repository>
-            </repositories>
-            <properties>
-                <cdh.version>cdh5.13.1</cdh.version>
-                <spark.version>2.2.0</spark.version>
-                <spark-hive.scope>provided</spark-hive.scope>
-                <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
-                <hbase.version>1.2.0-${cdh.version}</hbase.version>
-                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
-                <avro.version>1.7.6-${cdh.version}</avro.version>
-                <guava.version>12.0.1</guava.version>
-                <json4s.version>3.2.11</json4s.version>
-                <jackson.version>2.6.5</jackson.version>
-                <jackson.databind.version>2.6.5</jackson.databind.version>
-                <commons-lang.version>2.4</commons-lang.version>
-                <slf4j.version>1.7.5</slf4j.version>
-            </properties>
-        </profile>
-        <profile>
             <id>CDH-5.15</id>
             <repositories>
                 <repository>
@@ -148,6 +125,7 @@
                 <cdh.version>cdh5.15.1</cdh.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
+                <spark-api.version>2.3</spark-api.version>
                 <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
@@ -172,24 +150,11 @@
 
         <!-- Then come the individual package profiles, which can override distribution settings -->
         <profile>
-            <id>spark-2.2</id>
-            <properties>
-                <scala.version>2.11.8</scala.version>
-                <spark.version>2.2.3</spark.version>
-                <jackson.version>2.6.5</jackson.version>
-                <jackson.databind.version>2.6.5</jackson.databind.version>
-                <avro.version>1.7.7</avro.version>
-                <kafka.version>0.10.0.1</kafka.version>
-                <json4s.version>3.2.11</json4s.version>
-                <guava.version>12.0</guava.version>
-                <slf4j.version>1.7.16</slf4j.version>
-            </properties>
-        </profile>
-        <profile>
             <id>spark-2.3</id>
             <properties>
                 <scala.version>2.11.8</scala.version>
                 <spark.version>2.3.3</spark.version>
+                <spark-api.version>2.3</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <avro.version>1.7.7</avro.version>
@@ -204,6 +169,7 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <spark.version>2.4.2</spark.version>
+                <spark-api.version>2.4</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <avro.version>1.8.2</avro.version>
@@ -313,6 +279,25 @@
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.sourceDirectory}/../spark-${spark-api.version}</source>
+                            </sources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -38,11 +38,15 @@ class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         project.mappings.keys should contain("dummy")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.getExecutor(project)
+        val executor = session.executor
+        val context = session.getContext(project)
 
         executor.spark.emptyDataFrame.createOrReplaceTempView("my_table")
 
-        val df = executor.instantiate(MappingIdentifier("dummy"))
+        val mapping = context.getMapping(MappingIdentifier("dummy"))
+        mapping should not be null
+
+        val df = executor.instantiate(mapping)
         df.count should be(0)
     }
 

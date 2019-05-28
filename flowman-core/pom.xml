@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.4.1</version>
+        <version>0.5.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -26,15 +26,6 @@
         </profile>
 
         <!-- Then come the individual package profiles, which can override distribution settings -->
-        <profile>
-            <id>spark-2.2</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.databricks</groupId>
-                    <artifactId>spark-avro_${scala.api_version}</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
         <profile>
             <id>spark-2.3</id>
             <dependencies>

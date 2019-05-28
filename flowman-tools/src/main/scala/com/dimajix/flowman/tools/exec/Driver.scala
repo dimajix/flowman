@@ -104,7 +104,8 @@ class Driver(options:Arguments) {
 
         // Load Project. If no schema is specified, load from local file system
         val projectPath = new Path(options.projectFile)
-        if (projectPath.isAbsoluteAndSchemeAuthorityNull)
+        val projectUri = projectPath.toUri
+        if (projectUri.getAuthority == null && projectUri.getScheme == null)
             Project.read.file(fs.local(projectPath))
         else
             Project.read.file(fs.file(projectPath))

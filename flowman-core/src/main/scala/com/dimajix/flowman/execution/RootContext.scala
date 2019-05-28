@@ -35,6 +35,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
@@ -42,29 +43,26 @@ import com.dimajix.flowman.spec.task.Job
 
 
 object RootContext {
-    class Builder(_namespace:Namespace, _profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder {
-        override def withEnvironment(env: Seq[(String, Any)]): Builder = {
-            withEnvironment(env, SettingLevel.NAMESPACE_SETTING)
-            this
-        }
-        override def withConfig(config:Map[String,String]) : Builder = {
-            withConfig(config, SettingLevel.NAMESPACE_SETTING)
-            this
-        }
-        override def withConnections(connections:Map[String,Connection]) : Builder = {
-            withConnections(connections, SettingLevel.NAMESPACE_SETTING)
-            this
-        }
+    class Builder private[RootContext](namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](_parent, SettingLevel.NAMESPACE_SETTING) {
+        override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
+
         override def withProfile(profile:Profile) : Builder = {
             withProfile(profile, SettingLevel.NAMESPACE_PROFILE)
             this
         }
 
-        override def createContext(): RootContext = {
-            val context = new RootContext(_namespace, _profiles)
-            if (_parent != null)
-                context.updateFrom(_parent)
-            context
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : RootContext = {
+            case object NamespaceWrapper {
+                def getName() : String = namespace.name
+                override def toString: String = namespace.name
+            }
+
+            val fullEnv = if (namespace != null)
+                env + ("namespace" -> ((NamespaceWrapper, SettingLevel.SCOPE_OVERRIDE.level)))
+            else
+                env
+
+            new RootContext(namespace, profiles, fullEnv, config, connections)
         }
     }
 
@@ -74,15 +72,19 @@ object RootContext {
 }
 
 
-class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]) extends AbstractContext {
-    override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
+class RootContext private[execution](
+        _namespace:Namespace,
+        profiles:Seq[String],
+        fullEnv:Map[String,(Any, Int)],
+        fullConfig:Map[String,(String, Int)],
+        nonNamespaceConnections:Map[String, ConnectionSpec]
+) extends AbstractContext(null, fullEnv, fullConfig) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
     private lazy val _hadoopConf = SparkHadoopUtil.get.newConfiguration(_sparkConf)
-    private lazy val _fs = new FileSystem(_hadoopConf)
+    private lazy val _fs = FileSystem(_hadoopConf)
 
-
-    def profiles : Seq[String] = _profiles
+    private val connections = mutable.Map[String,Connection]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -100,7 +102,7 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       * Returns the root context in a hierarchy of connected contexts
       * @return
       */
-    override def root : Context = this
+    override def root : RootContext = this
 
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this executor
@@ -156,8 +158,15 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty) {
-            val con = Option(namespace).flatMap(_.connections.get(identifier.name))
-            con.getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
+            connections.getOrElseUpdate(identifier.name,
+                nonNamespaceConnections.get(identifier.name)
+                    .orElse(
+                        Option(namespace)
+                            .flatMap(_.connections.get(identifier.name))
+                    )
+                    .getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
+                    .instantiate(this)
+            )
         }
         else {
             val child = getProjectContext(identifier.project.get)
@@ -186,11 +195,11 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
       * @param projectName
       * @return
       */
-    override def getProjectContext(projectName:String) : Context = {
+    private def getProjectContext(projectName:String) : Context = {
         require(projectName != null && projectName.nonEmpty)
         _children.getOrElseUpdate(projectName, createProjectContext(loadProject(projectName)))
     }
-    override def getProjectContext(project:Project) : Context = {
+    def getProjectContext(project:Project) : Context = {
         require(project != null)
         _children.getOrElseUpdate(project.name, createProjectContext(project))
     }
@@ -199,7 +208,6 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
         val builder = ProjectContext.builder(this, project)
         profiles.foreach { prof =>
                 project.profiles.get(prof).foreach { profile =>
-                    logger.info(s"Applying project profile $prof")
                     builder.withProfile(profile)
                 }
             }
@@ -215,9 +223,23 @@ class RootContext private[execution](_namespace:Namespace, _profiles:Seq[String]
         _namespace.store.loadProject(name)
     }
 
+    /**
+      * Returns the FileSystem as configured in Hadoop
+      * @return
+      */
     override def fs : FileSystem = _fs
 
+    /**
+      * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
+      * is not necessarily the one used by the Spark Session!
+      * @return
+      */
     override def sparkConf: SparkConf = _sparkConf
 
+    /**
+      * Returns a Hadoop Configuration object which contains all settings form the configuration. The object is not
+      * necessarily the one used by the active Spark session
+      * @return
+      */
     override def hadoopConf: Configuration = _hadoopConf
 }

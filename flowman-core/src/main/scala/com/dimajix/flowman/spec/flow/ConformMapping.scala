@@ -26,46 +26,22 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.transforms.CaseFormatter
+import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.transforms.Transformer
 import com.dimajix.flowman.transforms.TypeReplacer
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-object ConformMapping {
-    private val typeAliases = Map(
-        "text" -> "string",
-        "long" -> "bigint",
-        "short" -> "tinyint"
-    )
-    def apply(input:String, types:Map[String,String]) : ConformMapping = {
-        val result = new ConformMapping
-        result._input = input
-        result._types = types
-        result
-    }
-    def apply(input:String, caseFormat:String) : ConformMapping = {
-        val result = new ConformMapping
-        result._input = input
-        result._naming = caseFormat
-        result
-    }
-}
-
-
-class ConformMapping extends BaseMapping {
-    import ConformMapping.typeAliases
+case class ConformMapping(
+    instanceProperties:Mapping.Properties,
+    input : MappingIdentifier,
+    types : Map[String,FieldType] = Map(),
+    naming : String = null,
+    flatten : Boolean = false
+)
+extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
-
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "types", required = false) private[spec] var _types:Map[String,String] = Map()
-    @JsonProperty(value = "naming", required = false) private[spec] var _naming:String = _
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def types(implicit context: Context) : Map[String,FieldType] = _types.map(kv =>
-        typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
-    )
-    def naming(implicit context: Context) : String = context.evaluate(_naming)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -78,9 +54,7 @@ class ConformMapping extends BaseMapping {
         require(executor != null)
         require(input != null)
 
-        implicit val icontext = executor.context
-        val mappingId = this.input
-        val df = input(mappingId)
+        val df = input(this.input)
         val transforms = this.transforms
 
         // Apply all transformations in order
@@ -90,34 +64,67 @@ class ConformMapping extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = Array(input)
+    override def dependencies: Array[MappingIdentifier] = {
+        Array(input)
+    }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
-        val mappingId = this.input
-        val schema = input(mappingId)
+        val schema = input(this.input)
         val transforms = this.transforms
 
         // Apply all transformations in order
         transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
     }
 
-    private def transforms(implicit context: Context) : Seq[Transformer] = {
+    private def transforms : Seq[Transformer] = {
         Seq(
             Option(types).filter(_.nonEmpty).map(t => TypeReplacer(t)),
-            Option(naming).filter(_.nonEmpty).map(f => CaseFormatter(f))
+            Option(naming).filter(_.nonEmpty).map(f => CaseFormatter(f)),
+            Option(flatten).filter(_ == true).map(_ => FlattenTransformer(Option(naming).filter(_.nonEmpty).getOrElse("snakeCase")))
         ).flatten
+    }
+}
+
+
+object ConformMappingSpec {
+    private val typeAliases = Map(
+        "text" -> "string",
+        "long" -> "bigint",
+        "short" -> "tinyint"
+    )
+}
+class ConformMappingSpec extends MappingSpec {
+    import ConformMappingSpec.typeAliases
+
+    @JsonProperty(value = "input", required = true) private[spec] var input: String = _
+    @JsonProperty(value = "types", required = false) private[spec] var types: Map[String, String] = Map()
+    @JsonProperty(value = "naming", required = false) private[spec] var naming: String = _
+    @JsonProperty(value = "flatten", required = false) private[spec] var flatten: String = "false"
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): Mapping = {
+        val types = this.types.map(kv =>
+            typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
+        )
+        ConformMapping(
+            instanceProperties(context),
+            MappingIdentifier.parse(context.evaluate(input)),
+            types,
+            context.evaluate(naming),
+            context.evaluate(flatten).toBoolean
+        )
     }
 }

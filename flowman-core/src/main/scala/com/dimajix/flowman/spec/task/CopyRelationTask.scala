@@ -29,45 +29,57 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class CopyRelationTask extends BaseTask  {
+case class CopyRelationTask(
+    instanceProperties:Task.Properties,
+    source:RelationIdentifier,
+    sourcePartitions:Map[String,FieldValue],
+    target:RelationIdentifier,
+    targetPartition:Map[String,SingleValue],
+    parallelism:Int,
+    columns:Map[String,String],
+    mode:String
+) extends BaseTask  {
     private val logger = LoggerFactory.getLogger(classOf[CopyRelationTask])
 
-    @JsonProperty(value="source", required=true) private var _source:String = ""
-    @JsonProperty(value="sourcePartitions", required=false) private var _sourcePartitions:Map[String,FieldValue] = Map()
-    @JsonProperty(value="target", required=true) private var _target:String = ""
-    @JsonProperty(value="targetPartition", required=false) private var _targetPartition:Map[String,String] = Map()
-    @JsonProperty(value="columns", required=false) private var _columns:Map[String,String] = _
-    @JsonProperty(value="parallelism", required=false) private var _parallelism:String = "16"
-    @JsonProperty(value="mode", required=false) private var _mode:String = "overwrite"
-
-    def source(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_source))
-    def sourcePartitions(implicit context:Context) : Map[String,FieldValue] = {
-        _sourcePartitions.mapValues {
-            case v: SingleValue => SingleValue(context.evaluate(v.value))
-            case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-            case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
-        }
-    }
-    def target(implicit context:Context) : RelationIdentifier = RelationIdentifier.parse(context.evaluate(_target))
-    def targetPartition(implicit context: Context) : Map[String,String] = _targetPartition.mapValues(context.evaluate)
-    def parallelism(implicit context: Context) : Integer = context.evaluate(_parallelism).toInt
-    def columns(implicit context:Context) : Map[String,String] = if (_columns != null) _columns.mapValues(context.evaluate) else null
-    def mode(implicit context:Context) : String = context.evaluate(_mode)
-
     override def execute(executor:Executor) : Boolean = {
-        implicit val context = executor.context
-        val source = this.source
-        val sourceRelation = context.getRelation(source)
-        val sourcePartitions = this.sourcePartitions
-        val target = this.target
-        val targetRelation = context.getRelation(target)
-        val targetPartition = this.targetPartition.mapValues(v => SingleValue(v))
-        logger.info(s"Copying from relation '$source' to relation '$target' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Copying from relation '${source}' to relation '${target}' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
-        val fields = this.columns
-        val schema = if (fields != null && fields.nonEmpty) SchemaUtils.createSchema(fields.toSeq) else null
-        val data = sourceRelation.read(executor, schema, sourcePartitions).coalesce(parallelism)
-        targetRelation.write(executor, data, targetPartition, mode)
+        val input = context.getRelation(source)
+        val output = context.getRelation(target)
+        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        val data = input.read(executor, schema, sourcePartitions).coalesce(parallelism)
+        output.write(executor, data, targetPartition, mode)
         true
+    }
+}
+
+
+
+class CopyRelationTaskSpec extends TaskSpec {
+    @JsonProperty(value = "source", required = true) private var source: String = ""
+    @JsonProperty(value = "sourcePartitions", required = false) private var sourcePartitions: Map[String, FieldValue] = Map()
+    @JsonProperty(value = "target", required = true) private var target: String = ""
+    @JsonProperty(value = "targetPartition", required = false) private var targetPartition: Map[String, String] = Map()
+    @JsonProperty(value = "columns", required = false) private var columns: Map[String, String] = Map()
+    @JsonProperty(value = "parallelism", required = false) private var parallelism: String = "16"
+    @JsonProperty(value = "mode", required = false) private var mode: String = "overwrite"
+
+
+    override def instantiate(context: Context): CopyRelationTask = {
+        CopyRelationTask(
+            instanceProperties(context),
+            RelationIdentifier.parse(context.evaluate(source)),
+            sourcePartitions.mapValues {
+                case v: SingleValue => SingleValue(context.evaluate(v.value))
+                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
+                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context
+                    .evaluate(v.step))
+            },
+            RelationIdentifier.parse(context.evaluate(target)),
+            targetPartition.mapValues(p => SingleValue(context.evaluate(p))),
+            context.evaluate(parallelism).toInt,
+            columns.mapValues(context.evaluate),
+            context.evaluate(mode)
+        )
     }
 }

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.spec.connection.Connection
+import com.dimajix.flowman.spec.connection.ConnectionSpec
 
 
 object Profile {
@@ -39,8 +40,8 @@ class Profile {
     @JsonProperty(value="enabled") private var _enabled : Boolean = true
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
-    @JsonDeserialize(converter=classOf[Connection.NameResolver])
-    @JsonProperty(value="connections") private var _databases: Map[String,Connection] = Map()
+    @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
+    @JsonProperty(value="connections") private var _connections: Map[String,ConnectionSpec] = Map()
 
     /**
       * Returns the name of the profile
@@ -60,19 +61,19 @@ class Profile {
       *
       * @return
       */
-    def connections : Map[String,Connection] = _databases
+    def connections : Map[String,ConnectionSpec] = _connections
 
     /**
       * Returns all configuration variables as a key-value sequence
       *
       * @return
       */
-    def config : Seq[(String,String)] = splitSettings(_config)
+    def config : Map[String,String] = splitSettings(_config).toMap
 
     /**
       * Returns the environment as a key-value-sequence
       *
       * @return
       */
-    def environment : Seq[(String,String)] = splitSettings(_environment)
+    def environment : Map[String,String] = splitSettings(_environment).toMap
 }

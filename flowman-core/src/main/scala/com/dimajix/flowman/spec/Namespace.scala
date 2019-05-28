@@ -24,10 +24,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.catalog.CatalogProvider
+import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.state.StateStoreProvider
-import com.dimajix.flowman.spec.state.NullStateStoreProvider
+import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.state.StateStoreSpec
+import com.dimajix.flowman.spec.state.NullStateStoreSpec
 import com.dimajix.flowman.spec.storage.Store
 
 
@@ -41,11 +42,11 @@ object Namespace {
             namespace._name = name
             this
         }
-        def setStateStore(monitor: StateStoreProvider) : Builder = {
+        def setStateStore(monitor: StateStoreSpec) : Builder = {
             namespace._monitor = monitor
             this
         }
-        def setCatalog(catalog: CatalogProvider) : Builder = {
+        def setCatalog(catalog: CatalogSpec) : Builder = {
             namespace._catalog = catalog
             this
         }
@@ -65,11 +66,11 @@ object Namespace {
             namespace._profiles = namespace._profiles + (name -> profile)
             this
         }
-        def setConnections(connections:Map[String,Connection]) : Builder = {
+        def setConnections(connections:Map[String,ConnectionSpec]) : Builder = {
             namespace._connections = connections
             this
         }
-        def addConnection(name:String, connection:Connection) : Builder = {
+        def addConnection(name:String, connection:ConnectionSpec) : Builder = {
             namespace._connections = namespace._connections + (name -> connection)
             this
         }
@@ -113,26 +114,26 @@ object Namespace {
 
 class Namespace {
     @JsonProperty(value="store") private var _store: Store = _
-    @JsonProperty(value="catalog") private var _catalog: CatalogProvider = _
+    @JsonProperty(value="catalog") private var _catalog: CatalogSpec = _
     @JsonProperty(value="name") private var _name: String = "default"
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
-    @JsonDeserialize(converter=classOf[Connection.NameResolver])
-    @JsonProperty(value="connections") private var _connections: Map[String,Connection] = Map()
-    @JsonProperty(value="statestore") private var _monitor : StateStoreProvider = new NullStateStoreProvider()
+    @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
+    @JsonProperty(value="connections") private var _connections: Map[String,ConnectionSpec] = Map()
+    @JsonProperty(value="statestore") private var _monitor : StateStoreSpec = new NullStateStoreSpec()
     @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
 
     def name : String = _name
 
-    def config : Seq[(String,String)] = splitSettings(_config)
-    def environment : Seq[(String,String)] = splitSettings(_environment)
+    def config : Map[String,String] = splitSettings(_config).toMap
+    def environment : Map[String,String] = splitSettings(_environment).toMap
     def plugins : Seq[String] = _plugins
 
     def profiles : Map[String,Profile] = _profiles
-    def connections : Map[String,Connection] = _connections
+    def connections : Map[String,ConnectionSpec] = _connections
     def projects : Seq[String] = _store.listProjects()
     def store : Store = _store
-    def catalog : CatalogProvider = _catalog
-    def monitor : StateStoreProvider = _monitor
+    def catalog : CatalogSpec = _catalog
+    def monitor : StateStoreSpec = _monitor
 }

@@ -24,13 +24,13 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SchemaWriter
-import com.dimajix.flowman.types.SchemaConverter
 
 
 class ExportSchemaCommand extends ActionCommand {
@@ -39,24 +39,25 @@ class ExportSchemaCommand extends ActionCommand {
     @Option(name="-f", aliases=Array("--format"), usage="Specifies the format", metaVar="<format>", required = false)
     var format: String = "spark"
     @Argument(usage = "specifies the mapping to save the schema", metaVar = "<mapping>", required = true)
-    var tablename: String = ""
+    var mapping: String = ""
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true)
     var filename: String = ""
 
-    override def executeInternal(executor:Executor, project: Project) : Boolean = {
-        logger.info(s"Exporting the schema of mapping '$tablename' to '$filename'")
+    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+        logger.info(s"Exporting the schema of mapping '$mapping' to '$filename'")
 
         Try {
-            val table = executor.instantiate(MappingIdentifier.parse(tablename))
+            val instance = context.getMapping(MappingIdentifier(mapping))
+            val table = executor.instantiate(instance)
             val schema = Field.of(table.schema)
-            val file = executor.context.fs.local(filename)
+            val file = context.fs.local(filename)
             new SchemaWriter(schema).format(format).save(file)
         } match {
             case Success(_) =>
                 logger.info("Successfully saved schema")
                 true
             case Failure(e) =>
-                logger.error(s"Caught exception while save the schema of mapping '$tablename'", e)
+                logger.error(s"Caught exception while save the schema of mapping '$mapping'", e)
                 false
         }
     }

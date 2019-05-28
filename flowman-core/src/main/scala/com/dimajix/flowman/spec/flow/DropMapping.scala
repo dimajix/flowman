@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,32 +27,19 @@ import com.dimajix.flowman.transforms.Assembler
 import com.dimajix.flowman.types.StructType
 
 
-object DropMapping {
-    def apply(input:String, columns:Seq[String]) : DropMapping = {
-        val result = new DropMapping
-        result._input = input
-        result._columns = columns
-        result
-    }
-}
-
-
-class DropMapping extends BaseMapping {
+case class DropMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Seq[String]
+) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DropMapping])
-
-    @JsonProperty(value = "input", required = true) private var _input:String = _
-    @JsonProperty(value = "columns", required = false) private var _columns:Seq[String] = Seq()
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[String] = _columns.map(context.evaluate)
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context): Array[MappingIdentifier] = {
+    override def dependencies: Array[MappingIdentifier] = {
         Array(input)
     }
 
@@ -67,9 +54,6 @@ class DropMapping extends BaseMapping {
         require(executor != null)
         require(deps != null)
 
-        implicit val context = executor.context
-        val input = this.input
-        val columns = this.columns
         logger.info(s"Dropping columns ${columns.mkString(",")} from input mapping '$input'")
 
         val df = deps(input)
@@ -79,23 +63,39 @@ class DropMapping extends BaseMapping {
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param deps
       * @return
       */
-    override def describe(context:Context, deps:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(deps:Map[MappingIdentifier,StructType]) : StructType = {
         require(deps != null)
 
-        implicit val icontext = context
         val schema = deps(this.input)
         val asm = assembler
         asm.reassemble(schema)
     }
 
-    private def assembler(implicit context:Context) : Assembler = {
+    private def assembler : Assembler = {
         val builder = Assembler.builder()
                 .columns(_.drop(columns))
         builder.build()
+    }
+}
+
+
+class DropMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): DropMapping = {
+        DropMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(input)),
+            columns.map(context.evaluate)
+        )
     }
 }

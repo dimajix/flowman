@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,30 +24,19 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
-object SchemaMapping {
-    def apply(input:String, columns:Map[String,String]) : SchemaMapping = {
-        val mapping = new SchemaMapping
-        mapping._input = input
-        mapping._columns = columns
-        mapping
-    }
-}
-
-
-class SchemaMapping extends BaseMapping {
+case class SchemaMapping(
+    instanceProperties:Mapping.Properties,
+    input:MappingIdentifier,
+    columns:Seq[(String,String)] = Seq(),
+    schema:Schema = null
+)
+extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[SchemaMapping])
-
-    @JsonProperty(value = "input", required = true) private[spec] var _input:String = _
-    @JsonProperty(value = "columns", required = false) private[spec] var _columns:Map[String,String] = Map()
-    @JsonProperty(value = "schema", required = false) private var _schema: Schema = _
-
-    def input(implicit context: Context) : MappingIdentifier = MappingIdentifier.parse(context.evaluate(_input))
-    def columns(implicit context: Context) : Seq[(String,String)] = _columns.mapValues(context.evaluate).toSeq
-    def schema(implicit context: Context): Schema = _schema
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -59,11 +48,6 @@ class SchemaMapping extends BaseMapping {
     override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
         require(executor != null)
         require(tables != null)
-
-        implicit val context = executor.context
-        val input = this.input
-        val schema = this.schema
-        val columns = this.columns
 
         val xfs = if (schema != null) {
             logger.info(s"Projecting mapping '$input' onto specified schema")
@@ -84,24 +68,42 @@ class SchemaMapping extends BaseMapping {
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
-      * @param context
       * @return
       */
-    override def dependencies(implicit context: Context) : Array[MappingIdentifier] = {
+    override def dependencies : Array[MappingIdentifier] = {
         Array(input)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(context:Context, input:Map[MappingIdentifier,StructType]) : StructType = {
-        require(context != null)
+    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
         require(input != null)
 
-        implicit val icontext = context
         StructType(schema.fields)
+    }
+}
+
+
+
+class SchemaMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
+
+    /**
+      * Creates the instance of the specified Mapping with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): SchemaMapping = {
+        SchemaMapping(
+            instanceProperties(context),
+            MappingIdentifier(context.evaluate(this.input)),
+            columns.mapValues(context.evaluate).toSeq,
+            if (schema != null) schema.instantiate(context) else null
+        )
     }
 }

@@ -27,15 +27,6 @@
 
         <!-- Then come the individual package profiles, which can override distribution settings -->
         <profile>
-            <id>spark-2.2</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.databricks</groupId>
-                    <artifactId>spark-avro_${scala.api_version}</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
             <id>spark-2.3</id>
             <dependencies>
                 <dependency>

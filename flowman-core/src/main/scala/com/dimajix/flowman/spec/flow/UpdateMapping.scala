@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -61,8 +62,10 @@ case class UpdateMapping(
 
         // Perform update operation
         val joinCondition = keyColumns.map(col => inputDf(col) === updatesDf(col)).reduce(_ && _)
-        inputDf.join(updatesDf, joinCondition, "left_anti")
+        val result = inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
+
+        result
     }
 
     /**

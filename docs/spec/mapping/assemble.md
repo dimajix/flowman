@@ -87,7 +87,24 @@ This part contains the assembling specification. It consists of an array with th
     * `drop` **(optional)** *(list: string)*:
         Specified a list of columns to be removed. The columns are relative to the optional path. All columns not
         mentioned in the list of `drop` columns will be appended.
-  * `explode` - Explodes a single array column into multiple output records
+  * `flatten` - Flattens and appends one or more columns from the input to the result. Flattening means that nested
+       columns will be resolved to non-nested columns.
+    * `kind` **(mandatory)** *(string)*: `flatten`
+    * `path` **(optional)** *(string)*: 
+        Specify a common subpath in the incoming data, from where columns should be extracted
+    * `prefix` **(optioal)** *(string)*:
+        Optional prefix to prepend to every resulting column         
+    * `naming` **(optioal)** *(string)* *(default: `snakeCase`)*:
+        Naming convention to use, either `snakeCase` or `camelCase`.         
+    * `keep` **(optional)** *(list: string)*: 
+        Specifies a list of columns to be kept. The columns are relative to the optional path. Only the columns
+        mentioned in the `keep` element will be appended, all other columns will be removed. 
+    * `drop` **(optional)** *(list: string)*:
+        Specified a list of columns to be removed. The columns are relative to the optional path. All columns not
+        mentioned in the list of `drop` columns will be appended.
+  * `explode` - Explodes a single array column into multiple output records. Note that you can only have a single
+    `explode` entry per assemble mapping. If more explodes are required, you need to create a chain of several 
+    `assemble` mappings with corresponding `explode` entries.
     * `kind` **(mandatory)** *(string)*: `explode`
     * `name` **(mandatory)** *(string)*:
         Specifies the name of the exploded column.
@@ -126,3 +143,7 @@ This part contains the assembling specification. It consists of an array with th
 
 
 ## Description
+
+The `assemble` mapping will recreate a new structure from the incoming mapping. This is useful for working with nested
+data, where only some subtrees are required or the structure should be changed otherwise. Note that currently modifying
+elements in arrays is not supported, you need to `explode` these arrays into multiple records first.

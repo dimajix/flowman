@@ -1,4 +1,9 @@
-# Version 0.4.2 - 2019-05-14
+# Version 0.5.0 - 2019-05-28
+
+* Refactoring of whole specification handling
+* Add new `flatten` entry in assembler
+* Implement new `flatten` mapping
+* Fix handling of local project definition in flowexec
 
 
 # Version 0.4.1 - 2019-05-11

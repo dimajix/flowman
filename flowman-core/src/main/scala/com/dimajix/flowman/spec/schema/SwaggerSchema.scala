@@ -59,6 +59,7 @@ import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DecimalType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -172,7 +173,10 @@ case class SwaggerSchema(
             case _:DateTimeProperty => TimestampType
             case _:FloatProperty => FloatType
             case _:DoubleProperty => DoubleType
-            case _:DecimalProperty => DoubleType
+            case d:DecimalProperty =>
+                val scale = if (d.getMultipleOf != null) d.getMultipleOf.scale() else DecimalType.USER_DEFAULT.scale
+                val precision = if (d.getMaximum != null) d.getMaximum.precision() else DecimalType.USER_DEFAULT.precision - scale
+                DecimalType(precision + scale, scale)
             case _:IntegerProperty => IntegerType
             case _:LongProperty => LongType
             case _:BaseIntegerProperty => IntegerType

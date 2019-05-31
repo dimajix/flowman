@@ -25,13 +25,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class ProjectMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Seq[String]
 )
 extends BaseMapping {
@@ -44,12 +44,17 @@ extends BaseMapping {
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         logger.info(s"Projecting mapping '$input' onto columns ${columns.mkString(",")}")
 
         val df = tables(input)
         val cols = columns.map(nv => col(nv))
-        df.select(cols:_*)
+        val result = df.select(cols:_*)
+
+        Map("default" -> result)
     }
 
     /**
@@ -57,8 +62,8 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -66,7 +71,7 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
         val schema = input(this.input)
@@ -74,7 +79,9 @@ extends BaseMapping {
         val outputFields = columns.map { name =>
             inputFields.getOrElse(name.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Cannot find field $name in schema ${this.input}"))
         }
-        StructType(outputFields)
+        val result = StructType(outputFields)
+
+        Map("default" -> result)
     }
 }
 
@@ -91,7 +98,7 @@ class ProjectMappingSpec extends MappingSpec {
     override def instantiate(context: Context): ProjectMapping = {
         ProjectMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate)
         )
     }

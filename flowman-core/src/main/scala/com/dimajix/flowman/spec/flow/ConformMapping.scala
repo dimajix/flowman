@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.CaseFormatter
 import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.transforms.Transformer
@@ -35,7 +35,7 @@ import com.dimajix.flowman.types.StructType
 
 case class ConformMapping(
     instanceProperties:Mapping.Properties,
-    input : MappingIdentifier,
+    input : MappingOutputIdentifier,
     types : Map[String,FieldType] = Map(),
     naming : String = null,
     flatten : Boolean = false
@@ -50,7 +50,7 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(input != null)
 
@@ -58,7 +58,9 @@ extends BaseMapping {
         val transforms = this.transforms
 
         // Apply all transformations in order
-        transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
+        val result = transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
+
+        Map("default" -> result)
     }
 
     /**
@@ -66,8 +68,8 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies: Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies: Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -75,14 +77,16 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
         val schema = input(this.input)
         val transforms = this.transforms
 
         // Apply all transformations in order
-        transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
+        val result = transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
+
+        Map("default" -> result)
     }
 
     private def transforms : Seq[Transformer] = {
@@ -121,7 +125,7 @@ class ConformMappingSpec extends MappingSpec {
         )
         ConformMapping(
             instanceProperties(context),
-            MappingIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             types,
             context.evaluate(naming),
             context.evaluate(flatten).toBoolean

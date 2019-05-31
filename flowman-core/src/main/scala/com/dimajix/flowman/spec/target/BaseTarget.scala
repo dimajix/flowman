@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.target
 
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.state.TargetInstance
 
@@ -53,11 +54,11 @@ abstract class BaseTarget extends Target {
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
+    override def dependencies : Seq[MappingOutputIdentifier] = {
         val mapping = instanceProperties.input
         if (mapping != null && mapping.nonEmpty)
-            Array(mapping)
+            Seq(mapping)
         else
-            Array()
+            Seq()
     }
 }

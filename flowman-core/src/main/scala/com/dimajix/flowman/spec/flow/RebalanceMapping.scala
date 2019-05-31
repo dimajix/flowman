@@ -21,13 +21,13 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class RebalanceMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     partitions:Int
 ) extends BaseMapping {
     /**
@@ -37,10 +37,15 @@ case class RebalanceMapping(
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
         val df = input(this.input)
         val parts = partitions
-        df.repartition(parts)
+        val result = df.repartition(parts)
+
+        Map("default" -> result)
     }
 
     /**
@@ -48,8 +53,8 @@ case class RebalanceMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -57,10 +62,12 @@ case class RebalanceMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        input(this.input)
+        val result = input(this.input)
+
+        Map("default" -> result)
     }
 }
 
@@ -78,7 +85,7 @@ class RebalanceMappingSpec extends MappingSpec {
     override def instantiate(context: Context): RebalanceMapping = {
         RebalanceMapping(
             instanceProperties(context),
-            MappingIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             context.evaluate(partitions).toInt
         )
     }

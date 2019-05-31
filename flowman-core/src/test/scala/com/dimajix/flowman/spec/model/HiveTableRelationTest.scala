@@ -736,7 +736,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         val mapping = context.getMapping(MappingIdentifier("input"))
 
-        val schema = mapping.describe(Map())
+        val schema = mapping.describe(Map())("default")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

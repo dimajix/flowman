@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.Assembler
 import com.dimajix.flowman.types.StructType
 
@@ -114,7 +114,7 @@ object AssembleMapping {
 
 case class AssembleMapping(
     instanceProperties : Mapping.Properties,
-    input : MappingIdentifier,
+    input : MappingOutputIdentifier,
     columns: Seq[AssembleMapping.Entry]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[AssembleMapping])
@@ -124,8 +124,8 @@ case class AssembleMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -135,7 +135,7 @@ case class AssembleMapping(
       * @param deps
       * @return
       */
-    override def execute(executor: Executor, deps: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(deps != null)
 
@@ -143,7 +143,9 @@ case class AssembleMapping(
 
         val df = deps(input)
         val asm = assembler
-        asm.reassemble(df)
+        val result = asm.reassemble(df)
+
+        Map("default" -> result)
     }
 
     /**
@@ -151,12 +153,14 @@ case class AssembleMapping(
       * @param deps
       * @return
       */
-    override def describe(deps:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(deps != null)
 
         val schema = deps(this.input)
         val asm = assembler
-        asm.reassemble(schema)
+        val result = asm.reassemble(schema)
+
+        Map("default" -> result)
     }
 
     private def assembler : Assembler = {
@@ -294,7 +298,7 @@ class AssembleMappingSpec extends MappingSpec {
     override def instantiate(context: Context): AssembleMapping = {
         AssembleMapping(
             instanceProperties(context),
-            MappingIdentifier.parse(context.evaluate(this.input)),
+            MappingOutputIdentifier.parse(context.evaluate(this.input)),
             columns.map(_.instantiate(context))
         )
     }

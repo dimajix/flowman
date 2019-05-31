@@ -88,7 +88,14 @@ abstract class Executor {
       *
       * @param mapping
       */
-    def instantiate(mapping:Mapping) : DataFrame
+    def instantiate(mapping:Mapping) : Map[String,DataFrame]
+
+    /**
+      * Creates an instance of a mapping, or retrieves it from cache
+      *
+      * @param mapping
+      */
+    def instantiate(mapping:Mapping, output:String) : DataFrame
 
     /**
       * Releases any temporary tables
@@ -99,5 +106,5 @@ abstract class Executor {
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] def cache : mutable.Map[MappingIdentifier,DataFrame]
+    protected[execution] def cache : mutable.Map[MappingIdentifier,Map[String,DataFrame]]
 }

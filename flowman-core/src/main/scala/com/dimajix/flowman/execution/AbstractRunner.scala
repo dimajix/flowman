@@ -52,9 +52,10 @@ object AbstractRunner {
         override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
-        override def instantiate(mapping: Mapping) : DataFrame = _parent.instantiate(mapping)
+        override def instantiate(mapping: Mapping) : Map[String,DataFrame] = _parent.instantiate(mapping)
+        override def instantiate(mapping: Mapping, output:String) : DataFrame = _parent.instantiate(mapping, output)
         override def cleanup() : Unit = _parent.cleanup()
-        override protected[execution] def cache : mutable.Map[MappingIdentifier,DataFrame] = _parent.cache
+        override protected[execution] def cache : mutable.Map[MappingIdentifier,Map[String,DataFrame]] = _parent.cache
     }
 }
 
@@ -269,9 +270,9 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         logger.info("Resolving dependencies for target '{}'", target.identifier)
         val context = target.context
         val dependencies = target.dependencies
-            .map(d => (d,context.getMapping(d)))
+            .map(d => (d,context.getMapping(d.mapping)))
+            .map{ case (id,mapping) => (id,executor.instantiate(mapping, id.output)) }
             .toMap
-            .mapValues(d => executor.instantiate(d))
 
         logger.info("Building target '{}'", target.identifier)
         target.build(executor, dependencies)

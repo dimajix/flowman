@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
@@ -43,7 +44,7 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
         val context = session.getContext(project)
 
         val output = context.getTarget(TargetIdentifier("out"))
-        output.build(executor, Map(MappingIdentifier("some_table") -> spark.emptyDataFrame))
+        output.build(executor, Map(MappingOutputIdentifier("some_table") -> spark.emptyDataFrame))
         output.clean(executor)
     }
 }

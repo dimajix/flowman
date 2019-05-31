@@ -24,12 +24,12 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class ExtendMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Map[String,String]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ExtendMapping])
@@ -38,10 +38,13 @@ case class ExtendMapping(
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
-      * @param tables
+      * @param deps
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, deps:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(deps != null)
+
         val allColumns = this.columns
         val columnNames = allColumns.keys.toSet
 
@@ -78,8 +81,10 @@ case class ExtendMapping(
         }
 
         // Now that we have a field order, we can transform the DataFrame
-        val table = tables(input)
-        orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
+        val table = deps(input)
+        val result = orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
+
+        Map("default" -> result)
     }
 
     /**
@@ -87,8 +92,8 @@ case class ExtendMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 }
 
@@ -106,7 +111,7 @@ class ExtendMappingSpec extends MappingSpec {
     override def instantiate(context: Context): ExtendMapping = {
         ExtendMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.mapValues(context.evaluate)
         )
     }

@@ -42,3 +42,38 @@ case class Identifier[T](name:String, project:Option[String]) {
             project.get + "/" + name
     }
 }
+
+
+
+object MappingOutputIdentifier {
+    val empty = MappingOutputIdentifier("", "", None)
+    def apply(name:String) : MappingOutputIdentifier = parse(name)
+
+    def parse(fqName:String) : MappingOutputIdentifier = {
+        if (fqName == null || fqName.isEmpty) {
+            empty
+        }
+        else {
+            val projectTailParts = fqName.split('/')
+            val mappingOutput = projectTailParts.last
+            val mappingOutputParts = mappingOutput.split(':')
+            val project = if (projectTailParts.size > 1) Some(projectTailParts.dropRight(1).mkString("/")) else None
+            val mapping = mappingOutputParts.head
+            val output = if (mappingOutputParts.size > 1) mappingOutputParts(1) else "default"
+            MappingOutputIdentifier(mapping, output, project)
+        }
+    }
+}
+
+case class MappingOutputIdentifier(name:String, output:String, project:Option[String]) {
+    def nonEmpty : Boolean = name.nonEmpty
+
+    def mapping : MappingIdentifier = MappingIdentifier(name, project)
+
+    override def toString : String = {
+        if (project.isEmpty)
+            name + ":" + output
+        else
+            project.get + "/" + name + ":" + output
+    }
+}

@@ -21,11 +21,11 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 object DescribeMappingTask {
-    def apply(context: Context, mapping:MappingIdentifier) : DescribeMappingTask = {
+    def apply(context: Context, mapping:MappingOutputIdentifier) : DescribeMappingTask = {
         DescribeMappingTask(
             Task.Properties(context),
             mapping
@@ -35,15 +35,15 @@ object DescribeMappingTask {
 
 case class DescribeMappingTask(
     instanceProperties:Task.Properties,
-    mapping:MappingIdentifier
+    mapping:MappingOutputIdentifier
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Describing mapping '$mapping")
 
-        val instance = context.getMapping(mapping)
-        val df = executor.instantiate(instance)
+        val instance = context.getMapping(mapping.mapping)
+        val df = executor.instantiate(instance, mapping.output)
         df.printSchema()
         true
     }
@@ -58,7 +58,7 @@ class DescribeMappingTaskSpec extends TaskSpec {
     override def instantiate(context: Context): DescribeMappingTask = {
         DescribeMappingTask(
             instanceProperties(context),
-            MappingIdentifier.parse(context.evaluate(_mapping))
+            MappingOutputIdentifier(context.evaluate(_mapping))
         )
     }
 }

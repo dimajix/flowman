@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.AssembleMapping.AppendEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.ExplodeEntry
@@ -153,7 +154,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
                 AppendEntry("", Seq("lala", "lolo"), Seq()),
@@ -165,7 +166,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
 
         val expectedSchema = StructType(Seq(
             StructField("clever_name", StructType(Seq(
@@ -199,7 +200,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
                 AppendEntry("", Seq("lala", "lolo"), Seq()),
@@ -234,7 +235,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             StructField("field", LongType)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -244,7 +245,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 ExplodeEntry("array", "embedded.struct_array")
             )
@@ -259,10 +260,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             ), true)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
     }
@@ -273,7 +274,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 ExplodeEntry("embedded.struct_array")
             )
@@ -288,10 +289,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 ), true)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
     }
@@ -302,7 +303,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 ExplodeEntry("embedded.old_structure.value")
             )
@@ -312,10 +313,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             StructField("value", LongType)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
     }
@@ -325,13 +326,13 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 ExplodeEntry("no_such_path")
             )
         )
 
-        an[IllegalArgumentException] shouldBe thrownBy(mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema))))
+        an[IllegalArgumentException] shouldBe thrownBy(mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema))))
     }
 
     it should "support rename operations" in {
@@ -340,7 +341,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Seq(
                 RenameEntry("embedded", Map("new_elem" -> "old_structure"))
             )
@@ -352,10 +353,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )))
        ))
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (1)
     }

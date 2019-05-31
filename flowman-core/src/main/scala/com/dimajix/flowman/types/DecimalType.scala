@@ -38,7 +38,8 @@ case class DecimalType(precision: Int, scale: Int) extends FieldType {
     override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
-            case ArrayValue(values) => values.map(v => parse(v,granularity))
-            case RangeValue(start,end,step) => throw new UnsupportedOperationException
+            case ArrayValue(values) => values.map(v => parse(v, granularity))
+            case RangeValue(start, end, step) => throw new UnsupportedOperationException
+        }
     }
 }

@@ -21,11 +21,11 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 object ShowMappingTask {
-    def apply(context: Context, mapping:MappingIdentifier, columns:Seq[String], limit:Int) : ShowMappingTask = {
+    def apply(context: Context, mapping:MappingOutputIdentifier, columns:Seq[String], limit:Int) : ShowMappingTask = {
         ShowMappingTask(
             Task.Properties(context),
             mapping,
@@ -37,7 +37,7 @@ object ShowMappingTask {
 
 case class ShowMappingTask(
     instanceProperties:Task.Properties,
-    mapping:MappingIdentifier,
+    mapping:MappingOutputIdentifier,
     columns:Seq[String],
     limit:Int
 ) extends BaseTask {
@@ -46,8 +46,8 @@ case class ShowMappingTask(
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Showing first $limit rows of mapping '$mapping'")
 
-        val instance = context.getMapping(mapping)
-        val table = executor.instantiate(instance)
+        val instance = context.getMapping(mapping.mapping)
+        val table = executor.instantiate(instance, mapping.output)
         val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else
@@ -69,7 +69,7 @@ class ShowMappingTaskSpec extends TaskSpec {
     override def instantiate(context: Context): ShowMappingTask = {
         ShowMappingTask(
             instanceProperties(context),
-            MappingIdentifier.parse(context.evaluate(mapping)),
+            MappingOutputIdentifier(context.evaluate(mapping)),
             columns.map(context.evaluate),
             context.evaluate(limit).toInt
         )

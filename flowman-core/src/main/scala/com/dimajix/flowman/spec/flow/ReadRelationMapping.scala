@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.model.PartitionedRelation
 import com.dimajix.flowman.spec.model.Relation
@@ -49,11 +50,16 @@ case class ReadRelationMapping(
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
         val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
         logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
         val rel = context.getRelation(relation)
-        rel.read(executor, schema, partitions)
+        val result = rel.read(executor, schema, partitions)
+
+        Map("default" -> result)
     }
 
     /**
@@ -61,8 +67,8 @@ case class ReadRelationMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array()
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq()
     }
 
     /**
@@ -70,10 +76,10 @@ case class ReadRelationMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        if (columns.nonEmpty) {
+        val result = if (columns.nonEmpty) {
             StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
@@ -82,6 +88,8 @@ case class ReadRelationMapping(
                 case relation:Relation => StructType(relation.schema.fields)
             }
         }
+
+        Map("default" -> result)
     }
 }
 

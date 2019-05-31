@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.{types => ftypes}
@@ -69,7 +70,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
 
         val mapping = FlattenMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             "snakeCase"
         )
 
@@ -78,10 +79,10 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
             StructField("stupid_name_secret_struct_secret_field", LongType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

@@ -21,7 +21,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class ProvidedMapping(
@@ -36,8 +36,13 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        executor.spark.table(table)
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
+        val result = executor.spark.table(table)
+
+        Map("default" -> result)
     }
 
     /**
@@ -45,8 +50,8 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array()
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq()
     }
 }
 

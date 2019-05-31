@@ -63,7 +63,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         val mapping = context.getMapping(MappingIdentifier("dedup"))
         mapping should not be null
 
-        val df = executor.instantiate(mapping)
+        val df = executor.instantiate(mapping, "default")
         val rows = df.as[Record].collect()
         rows.size should be(2)
     }

@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
@@ -37,11 +38,12 @@ import com.dimajix.flowman.types.StructType
 
 object Mapping {
     object Properties {
-        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
+            require(context != null)
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 kind,
                 Map(),
@@ -100,7 +102,13 @@ abstract class Mapping extends AbstractInstance {
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    def dependencies : Array[MappingIdentifier]
+    def dependencies : Seq[MappingOutputIdentifier]
+
+    /**
+      * Lists all outputs of this mapping. Every mapping should have one "default" output
+      * @return
+      */
+    def outputs : Seq[String]
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -109,14 +117,14 @@ abstract class Mapping extends AbstractInstance {
       * @param input
       * @return
       */
-    def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame
+    def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(input:Map[MappingIdentifier,StructType]) : StructType
+    def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
 }
 
 

@@ -22,13 +22,13 @@ import org.apache.spark.sql.functions.col
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class RepartitionMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Seq[String],
     partitions:Int,
     sort:Boolean
@@ -40,14 +40,19 @@ case class RepartitionMapping(
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
         val df = input(this.input)
         val cols = columns.map(col)
         val repartitioned = if (partitions > 0) df.repartition(partitions, cols:_*) else df.repartition(cols:_*)
-        if (sort)
+        val result = if (sort)
             repartitioned.sortWithinPartitions(cols:_*)
         else
             repartitioned
+
+        Map("default" -> result)
     }
 
     /**
@@ -55,8 +60,8 @@ case class RepartitionMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -64,10 +69,12 @@ case class RepartitionMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        input(this.input)
+        val result = input(this.input)
+
+        Map("default" -> result)
     }
 }
 
@@ -87,7 +94,7 @@ class RepartitionMappingSpec extends MappingSpec {
     override def instantiate(context: Context): RepartitionMapping = {
         RepartitionMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate),
             context.evaluate(partitions).toInt,
             context.evaluate(sort).toBoolean

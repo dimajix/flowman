@@ -21,14 +21,14 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.types.StructType
 
 
 case class FlattenMapping(
      instanceProperties:Mapping.Properties,
-     input:MappingIdentifier,
+     input:MappingOutputIdentifier,
      naming:String
 ) extends BaseMapping {
     /**
@@ -38,14 +38,16 @@ case class FlattenMapping(
       * @param input
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(input != null)
 
         val df = input(this.input)
         val xfs = FlattenTransformer(naming)
 
-        xfs.transform(df)
+        val result = xfs.transform(df)
+
+        Map("default" -> result)
     }
 
     /**
@@ -53,8 +55,8 @@ case class FlattenMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -62,14 +64,16 @@ case class FlattenMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
         val mappingId = this.input
         val schema = input(mappingId)
         val xfs = FlattenTransformer(naming)
 
-        xfs.transform(schema)
+        val result = xfs.transform(schema)
+
+        Map("default" -> result)
     }
 }
 
@@ -87,7 +91,7 @@ class FlattenMappingSpec extends MappingSpec {
     override def instantiate(context: Context): FlattenMapping = {
         FlattenMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(naming)
         )
     }

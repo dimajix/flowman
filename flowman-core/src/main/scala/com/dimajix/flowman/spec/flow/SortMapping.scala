@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class SortMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Seq[(String,String)]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[SortMapping])
@@ -41,7 +41,10 @@ case class SortMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         logger.info(s"Sorting mapping '$input' by columns ${columns.mkString(",")}")
 
         val df = tables(input)
@@ -51,15 +54,17 @@ case class SortMapping(
             else
                 col(nv._1).asc
         )
-        df.sort(cols:_*)
+        val result = df.sort(cols:_*)
+
+        Map("default" -> result)
     }
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -67,10 +72,12 @@ case class SortMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        input(this.input)
+        val result = input(this.input)
+
+        Map("default" -> result)
     }
 }
 
@@ -88,7 +95,7 @@ class SortMappingSpec extends MappingSpec {
     override def instantiate(context: Context): SortMapping = {
         SortMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.flatMap(_.mapValues(context.evaluate))
         )
     }

@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.util.SchemaUtils
 
 
 case class UnionMapping(
     instanceProperties:Mapping.Properties,
-    inputs:Seq[MappingIdentifier],
+    inputs:Seq[MappingOutputIdentifier],
     columns:Map[String,String],
     distinct:Boolean
 ) extends BaseMapping {
@@ -47,7 +47,10 @@ case class UnionMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
@@ -63,10 +66,12 @@ case class UnionMapping(
         val union = projectedTables.reduce((l,r) => l.union(r))
 
         // Optionally perform distinct operation
-        if (distinct)
-            union.distinct()
-        else
-            union
+        val result = if (distinct)
+                union.distinct()
+            else
+                union
+
+        Map("default" -> result)
     }
 
     /**
@@ -74,8 +79,8 @@ case class UnionMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        inputs.toArray
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        inputs
     }
 
     private def getCommonSchema(tables:Seq[DataFrame]) = {
@@ -122,7 +127,7 @@ class UnionMappingSpec extends MappingSpec {
     override def instantiate(context: Context): UnionMapping = {
         UnionMapping(
             instanceProperties(context),
-            inputs.map(i => MappingIdentifier.parse(context.evaluate(i))),
+            inputs.map(i => MappingOutputIdentifier.parse(context.evaluate(i))),
             if (columns != null) columns.mapValues(context.evaluate) else null,
             context.evaluate(distinct).toBoolean
         )

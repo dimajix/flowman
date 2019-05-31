@@ -35,12 +35,12 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
     private val _cache = {
         if (sharedCache != null) {
             if (isolated)
-                mutable.Map[MappingIdentifier,DataFrame]()
+                mutable.Map[MappingIdentifier,Map[String,DataFrame]]()
             else
                 sharedCache.cache
         }
         else {
-            mutable.Map[MappingIdentifier,DataFrame]()
+            mutable.Map[MappingIdentifier,Map[String,DataFrame]]()
         }
     }
     private val _namespace = session.namespace
@@ -66,10 +66,10 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
       *
       * @param mapping
       */
-    override def instantiate(mapping:Mapping) : DataFrame = {
+    override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
-        cache.getOrElseUpdate(mapping.identifier, createTable(mapping))
+        cache.getOrElseUpdate(mapping.identifier, createTables(mapping))
     }
 
     /**
@@ -87,7 +87,7 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] override def cache : mutable.Map[MappingIdentifier,DataFrame] = _cache
+    protected[execution] override def cache : mutable.Map[MappingIdentifier,Map[String,DataFrame]] = _cache
 
     /**
       * Instantiates a table and recursively all its dependencies
@@ -95,35 +95,41 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
       * @param mapping
       * @return
       */
-    private def createTable(mapping:Mapping): DataFrame = {
+    private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         // Ensure all dependencies are instantiated
         logger.info(s"Ensuring dependencies for mapping '${mapping.identifier}'")
         val context = mapping.context
-        val dependencies = mapping.dependencies.map(d => (d, instantiate(context.getMapping(d)))).toMap
+        val dependencies = mapping.dependencies.map { dep =>
+            val mapping = context.getMapping(dep.mapping)
+            if (!mapping.outputs.contains(dep.output))
+                throw new NoSuchElementException(s"Mapping ${mapping.identifier} does mot produce output '${dep.output}'")
+            val instances = instantiate(mapping)
+            (dep, instances(dep.output))
+        }.toMap
 
         // Process table and register result as temp table
         val doBroadcast = mapping.broadcast
         val doCheckpoint = mapping.checkpoint
         val cacheLevel = mapping.cache
         val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
-        logger.info(s"Instantiating table for mapping '${mapping.identifier}' (broadcast=$doBroadcast, cache='$cacheDesc')")
-        val instance = mapping.execute(this, dependencies)
+        logger.info(s"Instantiating mapping '${mapping.identifier}' with outputs ${mapping.outputs.map("'" + _ + "'").mkString(",")} (broadcast=$doBroadcast, cache='$cacheDesc')")
+        val instances = mapping.execute(this, dependencies)
 
         // Optionally checkpoint DataFrame
         val df1 = if (doCheckpoint)
-            instance.checkpoint(false)
+            instances.mapValues(_.checkpoint(false))
         else
-            instance
+            instances
 
         // Optionally mark DataFrame to be broadcasted
         val df2 = if (doBroadcast)
-            broadcast(df1)
+            df1.mapValues(broadcast)
         else
             df1
 
         // Optionally cache the DataFrame
         if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
-            df2.persist(cacheLevel)
+            df2.values.foreach(_.persist(cacheLevel))
 
         cache.put(mapping.identifier, df2)
         df2

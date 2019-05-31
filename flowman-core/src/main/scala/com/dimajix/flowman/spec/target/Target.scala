@@ -26,7 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
@@ -37,16 +37,16 @@ import com.dimajix.flowman.state.TargetInstance
 
 object Target {
     object Properties {
-        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 kind,
                 Map(),
                 true,
-                MappingIdentifier.empty
+                MappingOutputIdentifier.empty
             )
         }
     }
@@ -58,7 +58,7 @@ object Target {
         kind:String,
         labels:Map[String,String],
         enabled: Boolean,
-        input: MappingIdentifier
+        input: MappingOutputIdentifier
      ) extends Instance.Properties
 }
 
@@ -93,7 +93,7 @@ abstract class Target extends AbstractInstance {
       *
       * @return
       */
-    def dependencies : Array[MappingIdentifier]
+    def dependencies : Seq[MappingOutputIdentifier]
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -101,7 +101,7 @@ abstract class Target extends AbstractInstance {
       *
       * @param executor
       */
-    def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit
+    def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit
 
     /**
       * Cleans up a specific target
@@ -154,7 +154,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             kind,
             labels.mapValues(context.evaluate),
             context.evaluate(enabled).toBoolean,
-            MappingIdentifier.parse(context.evaluate(input))
+            MappingOutputIdentifier(context.evaluate(input))
         )
     }
 }

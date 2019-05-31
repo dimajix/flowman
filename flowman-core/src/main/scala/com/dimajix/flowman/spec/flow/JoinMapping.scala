@@ -23,12 +23,12 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class JoinMapping(
     instanceProperties:Mapping.Properties,
-    inputs:Seq[MappingIdentifier],
+    inputs:Seq[MappingOutputIdentifier],
     columns:Seq[String] = Seq(),
     condition:String = "",
     mode:String = "left"
@@ -40,8 +40,8 @@ case class JoinMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        inputs.toArray
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        inputs
     }
 
     /**
@@ -51,8 +51,11 @@ case class JoinMapping(
       * @param tables
       * @return
       */
-    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
-        if (condition.nonEmpty) {
+    override def execute(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
+        val result = if (condition.nonEmpty) {
             logger.info(s"Joining mappings ${inputs.mkString(",")} on '$condition' with type $mode")
             if (inputs.size != 2) {
                 logger.error("Joining using an condition only supports exactly two inputs")
@@ -68,6 +71,8 @@ case class JoinMapping(
             logger.info(s"Joining mappings ${inputs.mkString(",")} on columns ${columns.mkString("[",",","]")} with type $mode")
             inputs.map(tables.apply).reduceLeft((l, r) => l.join(r, columns, mode))
         }
+
+        Map("default" -> result)
     }
 }
 
@@ -86,7 +91,7 @@ class JoinMappingSpec extends MappingSpec {
     override def instantiate(context: Context): JoinMapping = {
         JoinMapping(
             instanceProperties(context),
-            inputs.map(id => MappingIdentifier(context.evaluate(id))),
+            inputs.map(id => MappingOutputIdentifier(context.evaluate(id))),
             columns.map(context.evaluate),
             context.evaluate(expression),
             context.evaluate(mode)

@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.flow
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
@@ -53,11 +54,17 @@ abstract class BaseMapping extends Mapping {
     override def cache : StorageLevel = instanceProperties.cache
 
     /**
+      * Lists all outputs of this mapping. Every mapping should have one "default" output
+      * @return
+      */
+    override def outputs : Seq[String] = Seq("default")
+
+    /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
         throw new UnsupportedOperationException(s"Schema inference not supported for mapping $name of type $category")

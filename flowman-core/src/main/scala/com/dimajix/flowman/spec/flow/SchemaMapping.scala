@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
@@ -31,7 +31,7 @@ import com.dimajix.flowman.types.StructType
 
 case class SchemaMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Seq[(String,String)] = Seq(),
     schema:Schema = null
 )
@@ -45,7 +45,7 @@ extends BaseMapping {
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(tables != null)
 
@@ -62,7 +62,9 @@ extends BaseMapping {
         }
 
         val df = tables(input)
-        xfs.transform(df)
+        val result = xfs.transform(df)
+
+        Map("default" -> result)
     }
 
     /**
@@ -70,8 +72,8 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -79,10 +81,12 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        StructType(schema.fields)
+        val result = StructType(schema.fields)
+
+        Map("default" -> result)
     }
 }
 
@@ -101,7 +105,7 @@ class SchemaMappingSpec extends MappingSpec {
     override def instantiate(context: Context): SchemaMapping = {
         SchemaMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(this.input)),
+            MappingOutputIdentifier(context.evaluate(this.input)),
             columns.mapValues(context.evaluate).toSeq,
             if (schema != null) schema.instantiate(context) else null
         )

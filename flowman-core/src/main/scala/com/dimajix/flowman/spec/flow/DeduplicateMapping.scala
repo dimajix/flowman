@@ -22,13 +22,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class DeduplicateMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Seq[String]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DeduplicateMapping])
@@ -40,12 +40,17 @@ case class DeduplicateMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
         logger.info(s"Deduplicating mapping '$input' on columns ${columns.mkString(",")}")
 
         val df = tables(input)
         val cols = if (columns.nonEmpty) columns else df.columns.toSeq
-        df.dropDuplicates(cols)
+        val result = df.dropDuplicates(cols)
+
+        Map("default" -> result)
     }
 
     /**
@@ -53,8 +58,8 @@ case class DeduplicateMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -62,9 +67,11 @@ case class DeduplicateMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
-        input(this.input)
+        val result = input(this.input)
+
+        Map("default" -> result)
     }
 }
 
@@ -81,7 +88,7 @@ class DeduplicateMappingSpec extends MappingSpec {
     override def instantiate(context: Context): DeduplicateMapping = {
         DeduplicateMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate)
         )
     }

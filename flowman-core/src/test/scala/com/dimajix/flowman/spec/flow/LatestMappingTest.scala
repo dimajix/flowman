@@ -23,7 +23,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
 import com.dimajix.flowman.testing.LocalSparkSession
@@ -54,16 +54,16 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = LatestMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("df1"),
+            MappingOutputIdentifier("df1"),
             Seq("id"),
             "ts"
         )
-        mapping.input should be (MappingIdentifier("df1"))
+        mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.versionColumn should be ("ts")
-        mapping.dependencies should be (Array(MappingIdentifier("df1")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("default")
         result.schema should be (df.schema)
 
         val rows = result.orderBy("id").collect()
@@ -92,11 +92,11 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = LatestMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("df1"),
+            MappingOutputIdentifier("df1"),
             Seq("id"),
             "ts"
         )
-        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("default")
         result.schema should be (df.schema)
 
         val rows = result.orderBy("id").collect()
@@ -118,16 +118,16 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = LatestMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("df1"),
+            MappingOutputIdentifier("df1"),
             Seq("id._1"),
             "ts._2"
         )
-        mapping.input should be (MappingIdentifier("df1"))
+        mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id._1" ))
         mapping.versionColumn should be ("ts._2")
-        mapping.dependencies should be (Array(MappingIdentifier("df1")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("df1") -> df))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("default")
         result.schema should be (df.schema)
 
         val rows = result.orderBy("id._1").as[Record].collect()
@@ -151,7 +151,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().build()
         val mapping = mappingSpec.instantiate(session.context)
         val latest = mapping.asInstanceOf[LatestMapping]
-        latest.input should be (MappingIdentifier("df1"))
+        latest.input should be (MappingOutputIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))
         latest.versionColumn should be ("v")
     }

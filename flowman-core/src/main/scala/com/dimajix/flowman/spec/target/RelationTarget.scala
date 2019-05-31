@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.state.TargetInstance
@@ -58,11 +59,11 @@ case class RelationTarget(
       * @param executor
       * @param tables
       */
-    override def build(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
         val partition = this.partition.mapValues(v => SingleValue(v))
         val input = instanceProperties.input
 
-        logger.info(s"Writing mapping '$input' to relation '${relation}' into partition $partition")
+        logger.info(s"Writing mapping '$input' to relation '$relation' into partition $partition")
         val table = if (rebalance)
             tables(input).repartition(parallelism)
         else
@@ -79,7 +80,7 @@ case class RelationTarget(
     override def clean(executor: Executor): Unit = {
         val partition = this.partition.mapValues(v => SingleValue(v))
 
-        logger.info(s"Cleaning partition $partition of relation '${relation}'")
+        logger.info(s"Cleaning partition $partition of relation '$relation'")
         val rel = context.getRelation(relation)
         rel.clean(executor, partition)
     }

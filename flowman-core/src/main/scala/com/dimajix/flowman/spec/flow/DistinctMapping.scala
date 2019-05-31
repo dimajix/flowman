@@ -22,13 +22,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class DistinctMapping(
    instanceProperties:Mapping.Properties,
-   input:MappingIdentifier
+   input:MappingOutputIdentifier
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DistinctMapping])
 
@@ -37,8 +37,8 @@ case class DistinctMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -48,11 +48,16 @@ case class DistinctMapping(
       * @param tables
       * @return
       */
-    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
         logger.info(s"Filtering distinct rows from mapping '$input'")
 
         val df = tables(input)
-        df.distinct()
+        val result = df.distinct()
+
+        Map("default" -> result)
     }
 
     /**
@@ -60,9 +65,11 @@ case class DistinctMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
-        input(this.input)
+
+        val result = input(this.input)
+        Map("default" -> result)
     }
 }
 
@@ -71,8 +78,9 @@ class DistinctMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
 
     override def instantiate(context: Context): DistinctMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        DistinctMapping(props, input)
+        DistinctMapping(
+            instanceProperties(context),
+            MappingOutputIdentifier(context.evaluate(input))
+        )
     }
 }

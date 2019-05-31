@@ -1,3 +1,8 @@
+# Version 0.5.1
+
+* Add multiple relations to `showRelation` task
+
+
 # Version 0.5.0 - 2019-05-28
 
 * Refactoring of whole specification handling

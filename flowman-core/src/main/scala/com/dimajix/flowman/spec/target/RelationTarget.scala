@@ -101,7 +101,7 @@ class RelationTargetSpec extends TargetSpec {
             instanceProperties(context),
             RelationIdentifier.parse(context.evaluate(relation)),
             context.evaluate(mode),
-            partition.mapValues(context.evaluate),
+            context.evaluate(partition),
             context.evaluate(parallelism).toInt,
             context.evaluate(rebalance).toBoolean
         )

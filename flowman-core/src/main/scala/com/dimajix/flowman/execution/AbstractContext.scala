@@ -242,6 +242,14 @@ abstract class AbstractContext(
     }
 
     /**
+      * Evaluates a string containing expressions to be processed.
+      *
+      * @param map
+      * @return
+      */
+    override def evaluate(map: Map[String,String]): Map[String,String] = map.map { case(name,value) => (name, evaluate(value)) }
+
+    /**
       * Returns the FileSystem as configured in Hadoop
       * @return
       */

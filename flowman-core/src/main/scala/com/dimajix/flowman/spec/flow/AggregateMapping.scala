@@ -85,7 +85,7 @@ class AggregateMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(input)),
             dimensions.map(context.evaluate),
-            aggregations.mapValues(context.evaluate),
+            context.evaluate(aggregations),
             if (partitions == null || partitions.isEmpty) 0 else context.evaluate(partitions).toInt
         )
     }

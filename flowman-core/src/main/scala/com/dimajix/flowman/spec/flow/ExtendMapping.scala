@@ -112,7 +112,7 @@ class ExtendMappingSpec extends MappingSpec {
         ExtendMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.mapValues(context.evaluate)
+            context.evaluate(columns)
         )
     }
 }

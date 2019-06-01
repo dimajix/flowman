@@ -221,9 +221,9 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate),
+            context.evaluate(labels),
             context.evaluate(description),
-            options.mapValues(context.evaluate)
+            context.evaluate(options)
         )
     }
 }

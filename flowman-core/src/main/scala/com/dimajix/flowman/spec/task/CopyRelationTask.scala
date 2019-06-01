@@ -69,16 +69,16 @@ class CopyRelationTaskSpec extends TaskSpec {
         CopyRelationTask(
             instanceProperties(context),
             RelationIdentifier.parse(context.evaluate(source)),
-            sourcePartitions.mapValues {
-                case v: SingleValue => SingleValue(context.evaluate(v.value))
-                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context
-                    .evaluate(v.step))
+            sourcePartitions.map{
+                case (name,v:SingleValue) => (name,SingleValue(context.evaluate(v.value)))
+                case (name,v:ArrayValue) => (name,ArrayValue(v.values.map(context.evaluate)))
+                case (name,v:RangeValue) => (name,RangeValue(context.evaluate(v.start), context.evaluate(v.end), context
+                    .evaluate(v.step)))
             },
             RelationIdentifier.parse(context.evaluate(target)),
-            targetPartition.mapValues(p => SingleValue(context.evaluate(p))),
+            targetPartition.map { case(n,p) => (n,SingleValue(context.evaluate(p))) },
             context.evaluate(parallelism).toInt,
-            columns.mapValues(context.evaluate),
+            context.evaluate(columns),
             context.evaluate(mode)
         )
     }

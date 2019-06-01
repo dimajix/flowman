@@ -73,10 +73,10 @@ class LoopTaskSpec extends TaskSpec {
         LoopTask(
             instanceProperties(context),
             JobIdentifier(context.evaluate(job)),
-            args.mapValues{
-                case SingleValue(value) => SingleValue(context.evaluate(value))
-                case ArrayValue(values) => ArrayValue(values.map(context.evaluate))
-                case RangeValue(start,end,step) => RangeValue(context.evaluate(start), context.evaluate(end), context.evaluate(step))
+            args.map {
+                case (name,SingleValue(value)) => (name,SingleValue(context.evaluate(value)))
+                case (name,ArrayValue(values)) => (name,ArrayValue(values.map(context.evaluate)))
+                case (name,RangeValue(start,end,step)) => (name,RangeValue(context.evaluate(start), context.evaluate(end), context.evaluate(step)))
             },
             context.evaluate(force).toBoolean
         )

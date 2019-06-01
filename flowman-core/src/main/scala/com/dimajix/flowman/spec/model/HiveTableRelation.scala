@@ -425,8 +425,8 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(_rowFormat),
             context.evaluate(_inputFormat),
             context.evaluate(_outputFormat),
-            _properties.mapValues(context.evaluate),
-            _serdeProperties.mapValues(context.evaluate),
+            context.evaluate(_properties),
+            context.evaluate(_serdeProperties),
             context.evaluate(_writer).toLowerCase(Locale.ROOT)
         )
     }

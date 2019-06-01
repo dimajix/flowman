@@ -60,7 +60,7 @@ class CallTaskSpec extends TaskSpec {
         CallTask(
             instanceProperties(context),
             JobIdentifier.parse(context.evaluate(job)),
-            args.mapValues(context.evaluate),
+            context.evaluate(args),
             context.evaluate(force).toBoolean
         )
     }

@@ -99,7 +99,7 @@ class ReadStreamMappingSpec extends MappingSpec {
         ReadStreamMapping(
             instanceProperties(context),
             RelationIdentifier(context.evaluate(relation)),
-            columns.mapValues(context.evaluate)
+            context.evaluate(columns)
         )
     }
 }

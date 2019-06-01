@@ -239,7 +239,7 @@ object AssembleMappingSpec {
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.RenameEntry(
                 context.evaluate(path),
-                columns.mapValues(context.evaluate)
+                context.evaluate(columns)
             )
         }
     }

@@ -199,7 +199,7 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate),
+            context.evaluate(labels),
             context.evaluate(broadcast).toBoolean,
             context.evaluate(checkpoint).toBoolean,
             StorageLevel.fromString(context.evaluate(cache))

@@ -319,7 +319,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),
             context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[JdbcConnection],
-            properties.mapValues(context.evaluate),
+            context.evaluate(properties),
             context.evaluate(database),
             context.evaluate(table)
         )

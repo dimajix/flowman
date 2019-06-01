@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -40,6 +41,18 @@ case class TemplateRelation(
     private val relationInstance = {
         project.relations(relation.name).instantiate(templateContext)
     }
+
+    /**
+      * Returns a description for the relation
+      * @return
+      */
+    override def description : String = relationInstance.description
+
+    /**
+      * Returns the schema of the relation
+      * @return
+      */
+    override def schema : Schema = relationInstance.schema
 
     /**
       * Reads data from the relation, possibly from specific partitions

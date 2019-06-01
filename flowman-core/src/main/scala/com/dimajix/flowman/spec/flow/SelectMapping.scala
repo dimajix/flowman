@@ -74,7 +74,7 @@ class SelectMappingSpec extends MappingSpec {
         SelectMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.mapValues(context.evaluate).toSeq
+            context.evaluate(columns).toSeq
         )
     }
 }

@@ -106,7 +106,7 @@ class SchemaMappingSpec extends MappingSpec {
         SchemaMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(this.input)),
-            columns.mapValues(context.evaluate).toSeq,
+            context.evaluate(columns).toSeq,
             if (schema != null) schema.instantiate(context) else null
         )
     }

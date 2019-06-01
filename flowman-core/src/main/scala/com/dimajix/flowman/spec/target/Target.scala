@@ -152,7 +152,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate),
+            context.evaluate(labels),
             context.evaluate(enabled).toBoolean,
             MappingOutputIdentifier(context.evaluate(input))
         )

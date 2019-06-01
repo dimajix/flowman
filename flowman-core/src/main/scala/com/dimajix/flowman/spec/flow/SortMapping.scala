@@ -96,7 +96,7 @@ class SortMappingSpec extends MappingSpec {
         SortMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.flatMap(_.mapValues(context.evaluate))
+            columns.flatMap(context.evaluate)
         )
     }
 }

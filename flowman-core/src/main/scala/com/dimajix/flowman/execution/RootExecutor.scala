@@ -22,6 +22,7 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.IdentityHashMap
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 
@@ -100,8 +101,11 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
     private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         // Ensure all dependencies are instantiated
         logger.info(s"Ensuring dependencies for mapping '${mapping.identifier}'")
+
         val context = mapping.context
         val dependencies = mapping.dependencies.map { dep =>
+            require(dep.mapping.nonEmpty)
+
             val mapping = context.getMapping(dep.mapping)
             if (!mapping.outputs.contains(dep.output))
                 throw new NoSuchElementException(s"Mapping ${mapping.identifier} does mot produce output '${dep.output}'")
@@ -109,6 +113,11 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
             (dep, instances(dep.output))
         }.toMap
 
+        // Retry cache (maybe it was inserted via dependencies)
+        cache.getOrElseUpdate(mapping, createTables(mapping, dependencies))
+    }
+
+    private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) = {
         // Process table and register result as temp table
         val doBroadcast = mapping.broadcast
         val doCheckpoint = mapping.checkpoint
@@ -119,13 +128,13 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
 
         // Optionally checkpoint DataFrame
         val df1 = if (doCheckpoint)
-            instances.mapValues(_.checkpoint(false))
+            instances.map { case (name,df) => (name, df.checkpoint(false)) }
         else
             instances
 
         // Optionally mark DataFrame to be broadcasted
         val df2 = if (doBroadcast)
-            df1.mapValues(broadcast)
+            df1.map { case (name,df) => (name, broadcast(df)) }
         else
             df1
 
@@ -133,7 +142,6 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
         if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
             df2.values.foreach(_.persist(cacheLevel))
 
-        cache.put(mapping, df2)
         df2
     }
 }

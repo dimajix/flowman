@@ -33,6 +33,7 @@ class IdentifierFactory[T] {
     }
 }
 case class Identifier[T](name:String, project:Option[String]) {
+    def isEmpty : Boolean = name.isEmpty
     def nonEmpty : Boolean = name.nonEmpty
 
     override def toString : String = {
@@ -66,6 +67,7 @@ object MappingOutputIdentifier {
 }
 
 case class MappingOutputIdentifier(name:String, output:String, project:Option[String]) {
+    def isEmpty : Boolean = name.isEmpty
     def nonEmpty : Boolean = name.nonEmpty
 
     def mapping : MappingIdentifier = MappingIdentifier(name, project)

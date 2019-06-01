@@ -54,7 +54,7 @@ case class UnionMapping(
         val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
-        val schema = if (columns != null) SchemaUtils.createSchema(columns.toSeq) else getCommonSchema(dfs)
+        val schema = if (columns != null && columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else getCommonSchema(dfs)
         logger.info(s"Creating union from mappings ${inputs.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
 
         // Project all tables onto common schema
@@ -116,7 +116,7 @@ case class UnionMapping(
 
 class UnionMappingSpec extends MappingSpec {
     @JsonProperty(value="inputs", required=true) private[spec] var inputs:Seq[String] = Seq()
-    @JsonProperty(value="columns", required=false) private[spec] var columns:Map[String,String] = _
+    @JsonProperty(value="columns", required=false) private[spec] var columns:Map[String,String] = Map()
     @JsonProperty(value="distinct", required=false) var distinct:String = "false"
 
     /**
@@ -128,7 +128,7 @@ class UnionMappingSpec extends MappingSpec {
         UnionMapping(
             instanceProperties(context),
             inputs.map(i => MappingOutputIdentifier.parse(context.evaluate(i))),
-            if (columns != null) columns.mapValues(context.evaluate) else null,
+            context.evaluate(columns),
             context.evaluate(distinct).toBoolean
         )
     }

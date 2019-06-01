@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
@@ -86,7 +87,7 @@ case class UnitMapping(
 
         mappingInstances
             .filter(_._2.outputs.contains("default"))
-            .mapValues(mapping => mapping.execute(executor, dependencies(mapping))("default"))
+            .map{ case (id,mapping) => (id,mapping.execute(executor, dependencies(mapping))("default")) }
     }
 
     /**
@@ -109,7 +110,7 @@ case class UnitMapping(
 
         mappingInstances
             .filter(_._2.outputs.contains("default"))
-            .mapValues(mapping => mapping.describe(dependencies(mapping))("default"))
+            .map { case(id,mapping) => (id,mapping.describe(dependencies(mapping))("default")) }
     }
 }
 
@@ -117,6 +118,7 @@ case class UnitMapping(
 
 class UnitMappingSpec extends MappingSpec {
     @JsonProperty(value = "environment", required = true) private var environment:Seq[String] = Seq()
+    @JsonDeserialize(converter=classOf[MappingSpec.NameResolver])
     @JsonProperty(value = "mappings", required = true) private var mappings:Map[String,MappingSpec] = Map()
 
     /**

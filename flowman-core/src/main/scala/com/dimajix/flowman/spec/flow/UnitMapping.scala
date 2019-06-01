@@ -75,19 +75,9 @@ case class UnitMapping(
       * @return
       */
     override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
-        def instantiate(context:Context, id:MappingOutputIdentifier) = {
-            val mapping = context.getMapping(id.mapping)
-            executor.instantiate(mapping, id.output)
-        }
-        def dependencies(mapping:Mapping) ={
-            mapping.dependencies
-                .map(dep => (dep, input.getOrElse(dep, instantiate(mapping.context, dep))))
-                .toMap
-        }
-
         mappingInstances
             .filter(_._2.outputs.contains("default"))
-            .map{ case (id,mapping) => (id,mapping.execute(executor, dependencies(mapping))("default")) }
+            .map{ case (id,mapping) => (id,executor.instantiate(mapping, "default")) }
     }
 
     /**

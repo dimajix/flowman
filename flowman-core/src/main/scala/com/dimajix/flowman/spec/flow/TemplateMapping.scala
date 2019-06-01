@@ -81,6 +81,19 @@ case class TemplateMapping(
 
         mappingInstance.describe(input)
     }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      *
+      * @param input
+      * @return
+      */
+    override def describe(input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
+        require(input != null)
+        require(output != null && output.nonEmpty)
+
+        mappingInstance.describe(input, output)
+    }
 }
 
 

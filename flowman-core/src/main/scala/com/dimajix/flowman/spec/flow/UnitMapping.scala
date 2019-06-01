@@ -97,10 +97,29 @@ case class UnitMapping(
       * @return
       */
     override def describe(input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+        require(input != null)
+
+        mappingInstances
+            .filter(_._2.outputs.contains("default"))
+            .keys
+            .map(name => (name, describe(input, name)))
+            .toMap
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      *
+      * @param input
+      * @return
+      */
+    override def describe(input: Map[MappingOutputIdentifier, StructType], output:String): StructType = {
+        require(input != null)
+        require(output != null && output.nonEmpty)
+
         def describe(context:Context, id:MappingOutputIdentifier) : StructType = {
             val mapping = context.getMapping(id.mapping)
             val deps = dependencies(mapping)
-            mapping.describe(deps)(id.output)
+            mapping.describe(deps, id.output)
         }
         def dependencies(mapping:Mapping) ={
             mapping.dependencies
@@ -110,7 +129,9 @@ case class UnitMapping(
 
         mappingInstances
             .filter(_._2.outputs.contains("default"))
-            .map { case(id,mapping) => (id,mapping.describe(dependencies(mapping))("default")) }
+            .get(output)
+            .map(mapping => mapping.describe(dependencies(mapping), "default"))
+            .getOrElse(throw new NoSuchElementException(s"Cannot find output '$output' in unit mapping '$identifier'"))
     }
 }
 

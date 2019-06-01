@@ -56,10 +56,10 @@ case class MappingSchema (
                 val map = context.getMapping(MappingIdentifier(mapping.name, mapping.project))
                 if (!map.outputs.contains(mapping.output))
                     throw new NoSuchElementException(s"Mapping ${map.identifier} does mot produce output '${mapping.output}'")
-                val deps = map.dependencies.map { id =>
-                    (id,describe(id))
-                }.toMap
-                map.describe(deps)(mapping.output)
+                val deps = map.dependencies
+                    .map(id => (id,describe(id)))
+                    .toMap
+                map.describe(deps, mapping.output)
             })
         }
 

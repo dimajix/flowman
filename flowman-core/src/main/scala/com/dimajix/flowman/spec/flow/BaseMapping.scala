@@ -69,4 +69,16 @@ abstract class BaseMapping extends Mapping {
 
         throw new UnsupportedOperationException(s"Schema inference not supported for mapping $name of type $category")
     }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param input
+      * @return
+      */
+    override def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
+        require(input != null)
+        require(output != null && output.nonEmpty)
+
+        describe(input)(output)
+    }
 }

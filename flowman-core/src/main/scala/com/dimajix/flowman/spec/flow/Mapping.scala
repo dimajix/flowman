@@ -125,6 +125,13 @@ abstract class Mapping extends AbstractInstance {
       * @return
       */
     def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param input
+      * @return
+      */
+    def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
 }
 
 

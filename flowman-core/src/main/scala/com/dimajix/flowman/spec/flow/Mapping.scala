@@ -170,6 +170,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateMappingSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
+    new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),
     new JsonSubTypes.Type(name = "update", value = classOf[UpdateMappingSpec])
 ))

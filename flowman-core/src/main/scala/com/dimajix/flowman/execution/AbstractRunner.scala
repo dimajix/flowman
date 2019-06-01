@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -25,8 +24,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
+import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Target
@@ -55,7 +54,7 @@ object AbstractRunner {
         override def instantiate(mapping: Mapping) : Map[String,DataFrame] = _parent.instantiate(mapping)
         override def instantiate(mapping: Mapping, output:String) : DataFrame = _parent.instantiate(mapping, output)
         override def cleanup() : Unit = _parent.cleanup()
-        override protected[execution] def cache : mutable.Map[MappingIdentifier,Map[String,DataFrame]] = _parent.cache
+        override protected[execution] def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _parent.cache
     }
 }
 

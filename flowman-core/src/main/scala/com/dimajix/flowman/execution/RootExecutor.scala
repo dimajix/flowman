@@ -16,14 +16,12 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.broadcast
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 
@@ -35,12 +33,12 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
     private val _cache = {
         if (sharedCache != null) {
             if (isolated)
-                mutable.Map[MappingIdentifier,Map[String,DataFrame]]()
+                IdentityHashMap[Mapping,Map[String,DataFrame]]()
             else
                 sharedCache.cache
         }
         else {
-            mutable.Map[MappingIdentifier,Map[String,DataFrame]]()
+            IdentityHashMap[Mapping,Map[String,DataFrame]]()
         }
     }
     private val _namespace = session.namespace
@@ -69,25 +67,29 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
     override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
-        cache.getOrElseUpdate(mapping.identifier, createTables(mapping))
+        cache.getOrElseUpdate(mapping, createTables(mapping))
     }
 
     /**
       * Perform Spark related cleanup operations (like deregistering temp tables, clearing caches, ...)
       */
     override def cleanup(): Unit = {
-        logger.info("Cleaning up root executor and all children")
+        logger.info("Cleaning up cached Spark tables")
         if (sparkRunning) {
             val catalog = spark.catalog
             catalog.clearCache()
         }
+
+        logger.info("Cleaning up cached Spark data frames in executor")
+        cache.values.foreach(_.values.foreach(_.unpersist(true)))
+        cache.clear()
     }
 
     /**
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] override def cache : mutable.Map[MappingIdentifier,Map[String,DataFrame]] = _cache
+    protected[execution] override def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _cache
 
     /**
       * Instantiates a table and recursively all its dependencies
@@ -131,7 +133,7 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
         if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
             df2.values.foreach(_.persist(cacheLevel))
 
-        cache.put(mapping.identifier, df2)
+        cache.put(mapping, df2)
         df2
     }
 }

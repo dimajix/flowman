@@ -59,5 +59,22 @@ abstract class AbstractExecutor(_session:Session) extends Executor {
       */
     override def sparkRunning: Boolean = _session.sparkRunning
 
-    override def instantiate(mapping:Mapping) : DataFrame
+    /**
+      * Creates an instance of a mapping, or retrieves it from cache
+      *
+      * @param mapping
+      */
+    override def instantiate(mapping:Mapping) : Map[String,DataFrame]
+
+    /**
+      * Creates an instance of a mapping, or retrieves it from cache
+      *
+      * @param mapping
+      */
+    override def instantiate(mapping:Mapping, output:String) : DataFrame = {
+        if (!mapping.outputs.contains(output))
+            throw new NoSuchElementException(s"Mapping '${mapping.identifier}' does not produce output '$output'")
+        val instances = instantiate(mapping)
+        instances(output)
+    }
 }

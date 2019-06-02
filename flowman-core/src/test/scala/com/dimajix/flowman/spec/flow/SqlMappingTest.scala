@@ -25,6 +25,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 
@@ -97,7 +98,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.dependencies should be (Array(MappingIdentifier("t0")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("t0")))
     }
 
     it should "also be correct with subqueries" in {
@@ -142,7 +143,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.dependencies.map(_.name).sorted should be (Array("other_table", "some_table", "some_table_archive"))
+        mapping.dependencies.map(_.name).sorted should be (Seq("other_table", "some_table", "some_table_archive"))
     }
 
     it should "execute the SQL query" in {
@@ -168,7 +169,8 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
+            .orderBy("_1", "_2")
         result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
         result.collect().size should be (2)
     }

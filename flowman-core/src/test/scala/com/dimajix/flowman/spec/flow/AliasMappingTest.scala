@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,34 +20,41 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 
 
-class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The ProvidedMapping" should "work" in {
+class AliasMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+    "An AliasMapping" should "be parseable" in {
         val spec =
             """
               |mappings:
-              |  dummy:
-              |    kind: provided
-              |    table: my_table
+              |  my_alias:
+              |    kind: alias
+              |    input: some_mapping
             """.stripMargin
+
         val project = Module.read.string(spec).toProject("project")
-        project.mappings.keys should contain("dummy")
+        val mapping = project.mappings("my_alias")
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
-        val context = session.getContext(project)
-
-        executor.spark.emptyDataFrame.createOrReplaceTempView("my_table")
-
-        val mapping = context.getMapping(MappingIdentifier("dummy"))
-        mapping should not be null
-
-        val df = executor.instantiate(mapping, "main")
-        df.count should be(0)
+        mapping shouldBe an[AliasMappingSpec]
     }
 
+    it should "support different outputs" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val mapping = AliasMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("input_df:output_2")
+        )
+
+        val inputDf = spark.emptyDataFrame
+        mapping.input should be (MappingOutputIdentifier("input_df:output_2"))
+        mapping.outputs should be (Seq("main"))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("input_df:output_2") -> inputDf))("main")
+        result.count() should be (0)
+    }
 }

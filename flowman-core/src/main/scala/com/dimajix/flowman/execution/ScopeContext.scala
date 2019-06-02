@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.mutable
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.ConnectionIdentifier
@@ -97,12 +99,27 @@ class ScopeContext(
     scopeConnections:Map[String,ConnectionSpec] = Map(),
     scopeJobs:Map[String,JobSpec] = Map()
 ) extends AbstractContext(parent, fullEnv, fullConfig) {
+    private val mappings = mutable.Map[String,Mapping]()
+    private val relations = mutable.Map[String,Relation]()
+    private val targets = mutable.Map[String,Target]()
+    private val connections = mutable.Map[String,Connection]()
+    private val jobs = mutable.Map[String,Job]()
+
     override def namespace: Namespace = parent.namespace
     override def project: Project = parent.project
     override def root: RootContext = parent.root
     override def getConnection(identifier: ConnectionIdentifier): Connection = {
         if (identifier.project.isEmpty) {
-            scopeConnections.get(identifier.name).map(_.instantiate(this)).getOrElse(parent.getConnection(identifier))
+            connections.get(identifier.name) match {
+                case Some(result) => result
+                case None => scopeConnections.get(identifier.name) match {
+                    case Some(spec) =>
+                        val result = spec.instantiate(this)
+                        connections.put(identifier.name, result)
+                        result
+                    case None => parent.getConnection(identifier)
+                }
+            }
         }
         else {
             parent.getConnection(identifier)
@@ -110,7 +127,16 @@ class ScopeContext(
     }
     override def getMapping(identifier: MappingIdentifier): Mapping = {
         if (identifier.project.isEmpty) {
-            scopeMappings.get(identifier.name).map(_.instantiate(this)).getOrElse(parent.getMapping(identifier))
+            mappings.get(identifier.name) match {
+                case Some(result) => result
+                case None => scopeMappings.get(identifier.name) match {
+                    case Some(spec) =>
+                        val result = spec.instantiate(this)
+                        mappings.put(identifier.name, result)
+                        result
+                    case None => parent.getMapping(identifier)
+                }
+            }
         }
         else {
             parent.getMapping(identifier)
@@ -118,7 +144,16 @@ class ScopeContext(
     }
     override def getRelation(identifier: RelationIdentifier): Relation = {
         if (identifier.project.isEmpty) {
-            scopeRelations.get(identifier.name).map(_.instantiate(this)).getOrElse(parent.getRelation(identifier))
+            relations.get(identifier.name) match {
+                case Some(result) => result
+                case None => scopeRelations.get(identifier.name) match {
+                    case Some(spec) =>
+                        val result = spec.instantiate(this)
+                        relations.put(identifier.name, result)
+                        result
+                    case None => parent.getRelation(identifier)
+                }
+            }
         }
         else {
             parent.getRelation(identifier)
@@ -126,7 +161,16 @@ class ScopeContext(
     }
     override def getTarget(identifier: TargetIdentifier): Target = {
         if (identifier.project.isEmpty) {
-            scopeTargets.get(identifier.name).map(_.instantiate(this)).getOrElse(parent.getTarget(identifier))
+            targets.get(identifier.name) match {
+                case Some(result) => result
+                case None => scopeTargets.get(identifier.name) match {
+                    case Some(spec) =>
+                        val result = spec.instantiate(this)
+                        targets.put(identifier.name, result)
+                        result
+                    case None => parent.getTarget(identifier)
+                }
+            }
         }
         else {
             parent.getTarget(identifier)
@@ -134,7 +178,16 @@ class ScopeContext(
     }
     override def getJob(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty) {
-            scopeJobs.get(identifier.name).map(_.instantiate(this)).getOrElse(parent.getJob(identifier))
+            jobs.get(identifier.name) match {
+                case Some(result) => result
+                case None => scopeJobs.get(identifier.name) match {
+                    case Some(spec) =>
+                        val result = spec.instantiate(this)
+                        jobs.put(identifier.name, result)
+                        result
+                    case None => parent.getJob(identifier)
+                }
+            }
         }
         else {
             parent.getJob(identifier)

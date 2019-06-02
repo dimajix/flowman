@@ -77,6 +77,14 @@ abstract class Context {
     def evaluate(string: String): String
 
     /**
+      * Evaluates a string containing expressions to be processed.
+      *
+      * @param map
+      * @return
+      */
+    def evaluate(map: Map[String,String]): Map[String,String]
+
+    /**
       * Try to retrieve the specified database connection. Performs lookups in parent context if required
       *
       * @param identifier

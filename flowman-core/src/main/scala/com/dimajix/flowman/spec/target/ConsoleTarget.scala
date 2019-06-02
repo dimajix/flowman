@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class ConsoleTarget(
@@ -39,7 +40,7 @@ case class ConsoleTarget(
       * @param executor
       * @param input
       */
-    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
         val dfIn = input(instanceProperties.input)
         val dfOut = if (columns.nonEmpty)
             dfIn.select(columns.map(c => dfIn(c)):_*)

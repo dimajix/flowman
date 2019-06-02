@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.Field
@@ -38,7 +38,7 @@ object UnpackJsonMapping {
 
 case class UnpackJsonMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns: Seq[UnpackJsonMapping.ColumnMapping],
     corruptedColumn: String,
     allowComments: Boolean,
@@ -56,8 +56,8 @@ case class UnpackJsonMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -67,7 +67,10 @@ case class UnpackJsonMapping(
       * @param tables
       * @return
       */
-    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         logger.info(s"Unpacking JSON columns $columns from mapping '$input'")
 
         val table = tables(input)
@@ -82,11 +85,13 @@ case class UnpackJsonMapping(
             "allowUnquotedControlChars" -> allowUnquotedControlChars.toString
         )
 
-        columns.foldLeft(table) { (t, c) =>
+        val result = columns.foldLeft(table) { (t, c) =>
             val sparkSchema = c.schema.sparkSchema
             t.withColumn(Option(c.alias).getOrElse(c.name), from_json(table(c.name)
                     .cast(StringType), sparkSchema, options))
         }
+
+        Map("main" -> result)
     }
 
     /**
@@ -95,12 +100,14 @@ case class UnpackJsonMapping(
       * @param input
       * @return
       */
-    override def describe(input: Map[MappingIdentifier, StructType]): StructType = {
+    override def describe(input: Map[MappingOutputIdentifier, StructType]): Map[String,StructType] = {
         require(input != null)
 
         val schema = input(this.input)
         val fields = schema.fields ++ columns.map(c => Field(Option(c.alias).getOrElse(c.name), StructType(c.schema.fields)))
-        StructType(fields)
+        val result = StructType(fields)
+
+        Map("main" -> result)
     }
 }
 
@@ -144,7 +151,7 @@ class UnpackJsonMappingSpec extends MappingSpec {
     override def instantiate(context: Context): UnpackJsonMapping = {
         UnpackJsonMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.map(_.instantiate(context)),
             context.evaluate(corruptedColumn),
             context.evaluate(allowComments).toBoolean,

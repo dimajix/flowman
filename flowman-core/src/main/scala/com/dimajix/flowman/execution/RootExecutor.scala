@@ -16,14 +16,13 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.broadcast
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.common.IdentityHashMap
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 
@@ -35,12 +34,12 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
     private val _cache = {
         if (sharedCache != null) {
             if (isolated)
-                mutable.Map[MappingIdentifier,DataFrame]()
+                IdentityHashMap[Mapping,Map[String,DataFrame]]()
             else
                 sharedCache.cache
         }
         else {
-            mutable.Map[MappingIdentifier,DataFrame]()
+            IdentityHashMap[Mapping,Map[String,DataFrame]]()
         }
     }
     private val _namespace = session.namespace
@@ -66,28 +65,32 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
       *
       * @param mapping
       */
-    override def instantiate(mapping:Mapping) : DataFrame = {
+    override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
-        cache.getOrElseUpdate(mapping.identifier, createTable(mapping))
+        cache.getOrElseUpdate(mapping, createTables(mapping))
     }
 
     /**
       * Perform Spark related cleanup operations (like deregistering temp tables, clearing caches, ...)
       */
     override def cleanup(): Unit = {
-        logger.info("Cleaning up root executor and all children")
+        logger.info("Cleaning up cached Spark tables")
         if (sparkRunning) {
             val catalog = spark.catalog
             catalog.clearCache()
         }
+
+        logger.info("Cleaning up cached Spark data frames in executor")
+        cache.values.foreach(_.values.foreach(_.unpersist(true)))
+        cache.clear()
     }
 
     /**
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] override def cache : mutable.Map[MappingIdentifier,DataFrame] = _cache
+    protected[execution] override def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _cache
 
     /**
       * Instantiates a table and recursively all its dependencies
@@ -95,37 +98,50 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
       * @param mapping
       * @return
       */
-    private def createTable(mapping:Mapping): DataFrame = {
+    private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         // Ensure all dependencies are instantiated
         logger.info(s"Ensuring dependencies for mapping '${mapping.identifier}'")
-        val context = mapping.context
-        val dependencies = mapping.dependencies.map(d => (d, instantiate(context.getMapping(d)))).toMap
 
+        val context = mapping.context
+        val dependencies = mapping.dependencies.map { dep =>
+            require(dep.mapping.nonEmpty)
+
+            val mapping = context.getMapping(dep.mapping)
+            if (!mapping.outputs.contains(dep.output))
+                throw new NoSuchElementException(s"Mapping ${mapping.identifier} does mot produce output '${dep.output}'")
+            val instances = instantiate(mapping)
+            (dep, instances(dep.output))
+        }.toMap
+
+        // Retry cache (maybe it was inserted via dependencies)
+        cache.getOrElseUpdate(mapping, createTables(mapping, dependencies))
+    }
+
+    private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) = {
         // Process table and register result as temp table
         val doBroadcast = mapping.broadcast
         val doCheckpoint = mapping.checkpoint
         val cacheLevel = mapping.cache
         val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
-        logger.info(s"Instantiating table for mapping '${mapping.identifier}' (broadcast=$doBroadcast, cache='$cacheDesc')")
-        val instance = mapping.execute(this, dependencies)
+        logger.info(s"Instantiating mapping '${mapping.identifier}' with outputs ${mapping.outputs.map("'" + _ + "'").mkString(",")} (broadcast=$doBroadcast, cache='$cacheDesc')")
+        val instances = mapping.execute(this, dependencies)
 
         // Optionally checkpoint DataFrame
         val df1 = if (doCheckpoint)
-            instance.checkpoint(false)
+            instances.map { case (name,df) => (name, df.checkpoint(false)) }
         else
-            instance
+            instances
 
         // Optionally mark DataFrame to be broadcasted
         val df2 = if (doBroadcast)
-            broadcast(df1)
+            df1.map { case (name,df) => (name, broadcast(df)) }
         else
             df1
 
         // Optionally cache the DataFrame
         if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
-            df2.persist(cacheLevel)
+            df2.values.foreach(_.persist(cacheLevel))
 
-        cache.put(mapping.identifier, df2)
         df2
     }
 }

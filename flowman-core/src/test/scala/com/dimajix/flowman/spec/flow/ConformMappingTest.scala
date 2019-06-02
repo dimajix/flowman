@@ -28,7 +28,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.{types => ftypes}
@@ -91,7 +91,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Map(
                 "string" -> ftypes.IntegerType
             )
@@ -110,11 +110,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("str_col", IntegerType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -124,13 +124,13 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             Map(
                 "long" -> ftypes.IntegerType
             )
         )
 
-        an[UnsupportedOperationException] shouldBe thrownBy(mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf)))
+        an[UnsupportedOperationException] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf)))
     }
 
     it should "support renaming fields" in {
@@ -139,7 +139,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             naming="camelCase"
         )
 
@@ -156,11 +156,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("strCol", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -170,7 +170,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("input_df"),
+            MappingOutputIdentifier("input_df"),
             naming="snakeCase",
             flatten=true
         )
@@ -186,11 +186,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("str_col", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("input_df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

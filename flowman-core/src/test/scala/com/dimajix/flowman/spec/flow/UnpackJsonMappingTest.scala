@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 
@@ -98,7 +99,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be(2)
         result.schema should be(StructType(
             StructField("_1", StructType(
@@ -147,7 +148,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be(2)
         result.schema should be(StructType(
             StructField("_1", StringType, true) ::
@@ -191,7 +192,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be(2)
         result.schema should be(StructType(
             StructField("_1", StringType, true) ::

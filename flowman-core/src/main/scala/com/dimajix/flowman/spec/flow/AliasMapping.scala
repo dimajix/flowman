@@ -21,13 +21,13 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class AliasMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier
+    input:MappingOutputIdentifier
 ) extends BaseMapping {
     /**
       * Executes this mapping by returning a DataFrame which corresponds to the specified input
@@ -35,8 +35,9 @@ case class AliasMapping(
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
-        input(this.input)
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        val result = input(this.input)
+        Map("main" -> result)
     }
 
     /**
@@ -44,8 +45,8 @@ case class AliasMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -53,9 +54,10 @@ case class AliasMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
-        input(this.input)
+        val result = input(this.input)
+        Map("main" -> result)
     }
 }
 
@@ -69,8 +71,9 @@ class AliasMappingSpec extends MappingSpec {
       * @return
       */
     override def instantiate(context: Context): AliasMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier(context.evaluate(this.input))
-        AliasMapping(props, input)
+        AliasMapping(
+            instanceProperties(context),
+            MappingOutputIdentifier(context.evaluate(input))
+        )
     }
 }

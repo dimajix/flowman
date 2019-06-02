@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.util.SchemaUtils
 
 
 case class UnionMapping(
     instanceProperties:Mapping.Properties,
-    inputs:Seq[MappingIdentifier],
+    inputs:Seq[MappingOutputIdentifier],
     columns:Map[String,String],
     distinct:Boolean
 ) extends BaseMapping {
@@ -47,11 +47,14 @@ case class UnionMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
-        val schema = if (columns != null) SchemaUtils.createSchema(columns.toSeq) else getCommonSchema(dfs)
+        val schema = if (columns != null && columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else getCommonSchema(dfs)
         logger.info(s"Creating union from mappings ${inputs.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
 
         // Project all tables onto common schema
@@ -63,10 +66,12 @@ case class UnionMapping(
         val union = projectedTables.reduce((l,r) => l.union(r))
 
         // Optionally perform distinct operation
-        if (distinct)
-            union.distinct()
-        else
-            union
+        val result = if (distinct)
+                union.distinct()
+            else
+                union
+
+        Map("main" -> result)
     }
 
     /**
@@ -74,8 +79,8 @@ case class UnionMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        inputs.toArray
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        inputs
     }
 
     private def getCommonSchema(tables:Seq[DataFrame]) = {
@@ -111,7 +116,7 @@ case class UnionMapping(
 
 class UnionMappingSpec extends MappingSpec {
     @JsonProperty(value="inputs", required=true) private[spec] var inputs:Seq[String] = Seq()
-    @JsonProperty(value="columns", required=false) private[spec] var columns:Map[String,String] = _
+    @JsonProperty(value="columns", required=false) private[spec] var columns:Map[String,String] = Map()
     @JsonProperty(value="distinct", required=false) var distinct:String = "false"
 
     /**
@@ -122,8 +127,8 @@ class UnionMappingSpec extends MappingSpec {
     override def instantiate(context: Context): UnionMapping = {
         UnionMapping(
             instanceProperties(context),
-            inputs.map(i => MappingIdentifier.parse(context.evaluate(i))),
-            if (columns != null) columns.mapValues(context.evaluate) else null,
+            inputs.map(i => MappingOutputIdentifier.parse(context.evaluate(i))),
+            context.evaluate(columns),
             context.evaluate(distinct).toBoolean
         )
     }

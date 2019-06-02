@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 
 
@@ -45,7 +45,7 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def build(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): Unit = {
+    override def build(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Unit = {
         val input = instanceProperties.input
 
         logger.info(s"Writing mapping '$input' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")

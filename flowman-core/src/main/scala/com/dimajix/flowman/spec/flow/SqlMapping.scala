@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.File
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class SqlMapping(
@@ -51,7 +51,10 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
         logger.info(s"Executing SQL statement $statement")
 
         // Register all input DataFrames as temp views
@@ -60,7 +63,8 @@ extends BaseMapping {
         val result = executor.spark.sql(statement)
         // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
         input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
-        result
+
+        Map("main" -> result)
     }
 
     /**
@@ -68,9 +72,9 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
+    override def dependencies : Seq[MappingOutputIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
-        resolveDependencies(plan).map(MappingIdentifier.parse).toArray
+        resolveDependencies(plan).map(MappingOutputIdentifier.parse)
     }
 
     private def resolveDependencies(plan:LogicalPlan) : Seq[String] = {

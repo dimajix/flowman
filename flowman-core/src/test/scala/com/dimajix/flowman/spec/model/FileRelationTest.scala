@@ -239,7 +239,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))
-        val schema = mapping.describe(Map())
+        val schema = mapping.describe(Map())("main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

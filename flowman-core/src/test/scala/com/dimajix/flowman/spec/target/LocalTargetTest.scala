@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.testing.LocalSparkSession
@@ -53,7 +54,7 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val output = context.getTarget(TargetIdentifier("out"))
 
         outputPath.toFile.exists() should be (false)
-        output.build(executor, Map(MappingIdentifier("some_table") -> data))
+        output.build(executor, Map(MappingOutputIdentifier("some_table") -> data))
         outputPath.toFile.exists() should be (true)
 
         outputPath.toFile.exists() should be (true)

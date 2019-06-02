@@ -22,14 +22,14 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.Assembler
 import com.dimajix.flowman.types.StructType
 
 
 case class DropMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     columns:Seq[String]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[DropMapping])
@@ -39,8 +39,8 @@ case class DropMapping(
       *
       * @return
       */
-    override def dependencies: Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies: Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -50,7 +50,7 @@ case class DropMapping(
       * @param deps
       * @return
       */
-    override def execute(executor: Executor, deps: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(deps != null)
 
@@ -58,7 +58,9 @@ case class DropMapping(
 
         val df = deps(input)
         val asm = assembler
-        asm.reassemble(df)
+        val result = asm.reassemble(df)
+
+        Map("main" -> result)
     }
 
     /**
@@ -66,12 +68,14 @@ case class DropMapping(
       * @param deps
       * @return
       */
-    override def describe(deps:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(deps != null)
 
         val schema = deps(this.input)
         val asm = assembler
-        asm.reassemble(schema)
+        val result = asm.reassemble(schema)
+
+        Map("main" -> result)
     }
 
     private def assembler : Assembler = {
@@ -94,7 +98,7 @@ class DropMappingSpec extends MappingSpec {
     override def instantiate(context: Context): DropMapping = {
         DropMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate)
         )
     }

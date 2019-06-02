@@ -20,10 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.types.StringType
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.{types => ftypes}
@@ -31,7 +32,7 @@ import com.dimajix.flowman.{types => ftypes}
 
 case class ExtractJsonMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     column: String,
     schema: Schema,
     parseMode: String,
@@ -44,27 +45,34 @@ case class ExtractJsonMapping(
     allowBackslashEscapingAnyCharacter: Boolean,
     allowUnquotedControlChars: Boolean
 ) extends BaseMapping {
+    private val logger = LoggerFactory.getLogger(classOf[ExtractJsonMapping])
+
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
-      * @param input
+      * @param deps
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(deps != null)
+
+        logger.info(s"Extracting JSON from input mapping '$input' in column '$column'")
+
         val spark = executor.spark
         val sparkSchema = Option(schema).map(schema => schema.sparkSchema).orNull
-        val table = input(this.input)
-        spark.read
+        val table = deps(this.input)
+        val result = spark.read
             .schema(sparkSchema)
             .option("mode", parseMode)
             .option("columnNameOfCorruptRecord", corruptedColumn)
@@ -76,18 +84,21 @@ case class ExtractJsonMapping(
             .option("allowBackslashEscapingAnyCharacter", allowBackslashEscapingAnyCharacter)
             .option("allowUnquotedControlChars", allowUnquotedControlChars)
             .json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
+
+        Map("main" -> result)
     }
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param context
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,ftypes.StructType]) : ftypes.StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
         require(input != null)
 
-        ftypes.StructType(schema.fields)
+        val result = ftypes.StructType(schema.fields)
+
+        Map("main" -> result)
     }
 }
 
@@ -115,7 +126,7 @@ class ExtractJsonMappingSpec extends MappingSpec {
     override def instantiate(context: Context): ExtractJsonMapping = {
         ExtractJsonMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(column),
             if (schema != null) schema.instantiate(context) else null,
             context.evaluate(parseMode),

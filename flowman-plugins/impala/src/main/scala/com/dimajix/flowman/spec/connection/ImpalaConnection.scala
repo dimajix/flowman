@@ -57,7 +57,7 @@ class ImpalaConnectionSpec extends ConnectionSpec {
             instanceProperties(context),
             context.evaluate(username),
             context.evaluate(password),
-            properties.mapValues(context.evaluate),
+            context.evaluate(properties),
             context.evaluate(driver),
             context.evaluate(host),
             context.evaluate(port).toInt

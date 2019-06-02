@@ -18,20 +18,19 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
 case class UpdateMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
-    updates:MappingIdentifier,
+    input:MappingOutputIdentifier,
+    updates:MappingOutputIdentifier,
     keyColumns:Seq[String],
     filter:String = ""
 ) extends BaseMapping {
@@ -44,7 +43,10 @@ case class UpdateMapping(
       * @param tables
       * @return
       */
-    override def execute(executor: Executor, tables: Map[MappingIdentifier, DataFrame]): DataFrame = {
+    override def execute(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         logger.info(s"Updating table '$input' with records from '$updates' using key columns ${keyColumns.mkString(",")}")
         require(input != null && input.nonEmpty, "Missing input table")
         require(updates != null && updates.nonEmpty, "Missing updates table")
@@ -65,7 +67,7 @@ case class UpdateMapping(
         val result = inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
 
-        result
+        Map("main" -> result)
     }
 
     /**
@@ -73,8 +75,8 @@ case class UpdateMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input, updates)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input, updates)
     }
 
     /**
@@ -82,10 +84,12 @@ case class UpdateMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        input(this.input)
+        val result = input(this.input)
+
+        Map("main" -> result)
     }
 }
 
@@ -105,8 +109,8 @@ class UpdateMappingSpec extends MappingSpec {
     override def instantiate(context: Context): UpdateMapping = {
         UpdateMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
-            MappingIdentifier.parse(context.evaluate(updates)),
+            MappingOutputIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(updates)),
             keyColumns.map(context.evaluate),
             context.evaluate(filter)
         )

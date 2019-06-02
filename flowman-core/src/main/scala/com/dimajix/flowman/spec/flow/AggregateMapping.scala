@@ -24,12 +24,12 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class AggregateMapping(
     instanceProperties : Mapping.Properties,
-    input : MappingIdentifier,
+    input : MappingOutputIdentifier,
     dimensions : Seq[String],
     aggregations : Map[String,String],
     partitions : Int = 0
@@ -43,17 +43,19 @@ case class AggregateMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]): DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         logger.info(s"Aggregating mapping '$input' on dimensions ${dimensions.mkString(",")}")
 
         val df = tables(input)
         val dims = dimensions.map(col)
         val aggs = aggregations.map(kv => expr(kv._2).as(kv._1))
         val parts = partitions
-        if (parts > 0)
+        val result = if (parts > 0)
             df.repartition(parts, dims:_*).groupBy(dims:_*).agg(aggs.head, aggs.tail.toSeq:_*)
         else
             df.groupBy(dims:_*).agg(aggs.head, aggs.tail.toSeq:_*)
+
+        Map("main" -> result)
     }
 
     /**
@@ -61,8 +63,8 @@ case class AggregateMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 }
 
@@ -79,11 +81,12 @@ class AggregateMappingSpec extends MappingSpec {
       * @return
       */
     override def instantiate(context:Context) : AggregateMapping = {
-        val props = instanceProperties(context)
-        val input = MappingIdentifier.parse(context.evaluate(this.input))
-        val dimensions = this.dimensions.map(context.evaluate)
-        val aggregations = this.aggregations.mapValues(context.evaluate)
-        val partitions = if (this.partitions == null || this.partitions.isEmpty) 0 else context.evaluate(this.partitions).toInt
-        AggregateMapping(props, input, dimensions, aggregations, partitions)
+        AggregateMapping(
+            instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
+            dimensions.map(context.evaluate),
+            context.evaluate(aggregations),
+            if (partitions == null || partitions.isEmpty) 0 else context.evaluate(partitions).toInt
+        )
     }
 }

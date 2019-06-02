@@ -199,6 +199,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
+    new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
@@ -220,9 +221,9 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate),
+            context.evaluate(labels),
             context.evaluate(description),
-            options.mapValues(context.evaluate)
+            context.evaluate(options)
         )
     }
 }

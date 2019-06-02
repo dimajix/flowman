@@ -22,10 +22,11 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 object CountMappingTask {
-    def apply(context: Context, mapping:MappingIdentifier) : CountMappingTask = {
+    def apply(context: Context, mapping:MappingOutputIdentifier) : CountMappingTask = {
         CountMappingTask(
             Task.Properties(context),
             mapping
@@ -35,15 +36,15 @@ object CountMappingTask {
 
 case class CountMappingTask(
     instanceProperties:Task.Properties,
-    mapping:MappingIdentifier
+    mapping:MappingOutputIdentifier
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Counting records in mapping '$mapping")
 
-        val instance = context.getMapping(mapping)
-        val table = executor.instantiate(instance)
+        val instance = context.getMapping(mapping.mapping)
+        val table = executor.instantiate(instance, mapping.output)
         val count = table.count()
         println(s"Mapping '$mapping' has $count records")
         true
@@ -58,7 +59,7 @@ class CountMappingTaskSpec extends TaskSpec {
     override def instantiate(context: Context): CountMappingTask = {
         CountMappingTask(
             instanceProperties(context),
-            MappingIdentifier.parse(context.evaluate(mapping))
+            MappingOutputIdentifier.parse(context.evaluate(mapping))
         )
     }
 }

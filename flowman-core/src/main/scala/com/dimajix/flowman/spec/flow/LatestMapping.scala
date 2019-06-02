@@ -70,7 +70,7 @@ case class LatestMapping(
 
         val result = execute_window(df, keyColumns, versionColumn)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -151,7 +151,7 @@ case class LatestMapping(
         require(input != null)
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

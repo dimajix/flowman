@@ -59,7 +59,7 @@ case class FilterMapping(
         val df = tables(input)
         val result = df.filter(condition)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -72,7 +72,7 @@ case class FilterMapping(
 
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

@@ -59,7 +59,7 @@ case class ReadRelationMapping(
         val rel = context.getRelation(relation)
         val result = rel.read(executor, schema, partitions)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -89,7 +89,7 @@ case class ReadRelationMapping(
             }
         }
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

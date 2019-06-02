@@ -37,7 +37,7 @@ case class AliasMapping(
       */
     override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         val result = input(this.input)
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -57,7 +57,7 @@ case class AliasMapping(
     override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
         val result = input(this.input)
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

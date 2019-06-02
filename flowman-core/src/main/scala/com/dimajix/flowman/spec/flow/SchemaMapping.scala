@@ -64,7 +64,7 @@ extends BaseMapping {
         val df = tables(input)
         val result = xfs.transform(df)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -86,7 +86,7 @@ extends BaseMapping {
 
         val result = StructType(schema.fields)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

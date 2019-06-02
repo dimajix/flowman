@@ -37,7 +37,7 @@ class ProvidedRelationTest extends FlatSpec with Matchers with LocalSparkSession
         val mapping = context.getMapping(MappingIdentifier("dummy"))
         mapping should not be null
 
-        val df = executor.instantiate(mapping, "default")
+        val df = executor.instantiate(mapping, "main")
         df.count should be (0)
     }
 

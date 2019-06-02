@@ -45,7 +45,7 @@ case class RebalanceMapping(
         val parts = partitions
         val result = df.repartition(parts)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -67,7 +67,7 @@ case class RebalanceMapping(
 
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

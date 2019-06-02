@@ -47,7 +47,7 @@ case class FlattenMapping(
 
         val result = xfs.transform(df)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -73,7 +73,7 @@ case class FlattenMapping(
 
         val result = xfs.transform(schema)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

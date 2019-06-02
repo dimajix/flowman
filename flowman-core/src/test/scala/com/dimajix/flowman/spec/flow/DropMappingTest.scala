@@ -68,10 +68,10 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("_4", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -96,10 +96,10 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("_4", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

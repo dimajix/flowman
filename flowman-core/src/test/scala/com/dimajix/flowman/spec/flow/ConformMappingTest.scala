@@ -110,11 +110,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("str_col", IntegerType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -156,11 +156,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("strCol", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -186,11 +186,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("str_col", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

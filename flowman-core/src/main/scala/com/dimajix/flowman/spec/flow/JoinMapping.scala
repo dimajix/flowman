@@ -72,7 +72,7 @@ case class JoinMapping(
             inputs.map(tables.apply).reduceLeft((l, r) => l.join(r, columns, mode))
         }
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

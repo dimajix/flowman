@@ -60,7 +60,7 @@ extends BaseMapping {
         // Apply all transformations in order
         val result = transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -86,7 +86,7 @@ extends BaseMapping {
         // Apply all transformations in order
         val result = transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     private def transforms : Seq[Transformer] = {

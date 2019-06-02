@@ -145,7 +145,7 @@ case class AssembleMapping(
         val asm = assembler
         val result = asm.reassemble(df)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -160,7 +160,7 @@ case class AssembleMapping(
         val asm = assembler
         val result = asm.reassemble(schema)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     private def assembler : Assembler = {

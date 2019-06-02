@@ -99,7 +99,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be(2)
         result.schema should be(StructType(
             StructField("_1", StructType(
@@ -148,7 +148,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be(2)
         result.schema should be(StructType(
             StructField("_1", StringType, true) ::
@@ -192,7 +192,7 @@ class UnpackJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessio
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be(2)
         result.schema should be(StructType(
             StructField("_1", StringType, true) ::

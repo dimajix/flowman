@@ -52,7 +52,7 @@ case class RepartitionMapping(
         else
             repartitioned
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -74,7 +74,7 @@ case class RepartitionMapping(
 
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

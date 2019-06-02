@@ -57,7 +57,7 @@ case class DistinctMapping(
         val df = tables(input)
         val result = df.distinct()
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -69,7 +69,7 @@ case class DistinctMapping(
         require(input != null)
 
         val result = input(this.input)
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

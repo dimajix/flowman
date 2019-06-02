@@ -56,7 +56,7 @@ case class SortMapping(
         )
         val result = df.sort(cols:_*)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -77,7 +77,7 @@ case class SortMapping(
 
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

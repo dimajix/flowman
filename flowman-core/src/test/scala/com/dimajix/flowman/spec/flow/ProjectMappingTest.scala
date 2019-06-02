@@ -46,7 +46,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.columns should be (Seq("_2"))
         mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_2").collect()
         result.size should be (2)
         result(0) should be (Row(12))
@@ -79,7 +79,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = project.mappings("t1").instantiate(session.context)
-        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("default").orderBy("_1", "_2")
+        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
     }
 
 }

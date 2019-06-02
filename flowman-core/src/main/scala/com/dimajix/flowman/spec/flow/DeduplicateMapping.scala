@@ -50,7 +50,7 @@ case class DeduplicateMapping(
         val cols = if (columns.nonEmpty) columns else df.columns.toSeq
         val result = df.dropDuplicates(cols)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -71,7 +71,7 @@ case class DeduplicateMapping(
         require(input != null)
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

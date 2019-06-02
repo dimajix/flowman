@@ -46,7 +46,7 @@ extends BaseMapping {
         val cols = columns.map { case (name,value) => functions.expr(value).as(name) }
         val result = df.select(cols:_*)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**

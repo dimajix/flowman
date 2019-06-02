@@ -71,7 +71,7 @@ case class UnionMapping(
             else
                 union
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**

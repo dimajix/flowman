@@ -46,7 +46,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         xfs.columns should be (Map("new_f" -> "2*_2"))
         xfs.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("default")
+        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1").collect()
         result.size should be (2)
         result(0) should be (Row("col1", 12, 24))
@@ -73,7 +73,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             )
         )
 
-        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("default")
+        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1")
         result.schema(0).name should be ("_1")
         result.schema(1).name should be ("_2")
@@ -105,7 +105,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             )
         )
 
-        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("default")
+        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1")
         result.schema(0).name should be ("_1")
         result.schema(1).name should be ("_2")
@@ -170,7 +170,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping should not be null
 
-        val df2 = executor.instantiate(mapping, "default").orderBy("_1", "_2")
+        val df2 = executor.instantiate(mapping, "main").orderBy("_1", "_2")
         df2 should not be (null)
     }
 }

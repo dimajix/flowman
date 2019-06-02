@@ -55,7 +55,7 @@ case class AggregateMapping(
         else
             df.groupBy(dims:_*).agg(aggs.head, aggs.tail.toSeq:_*)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**

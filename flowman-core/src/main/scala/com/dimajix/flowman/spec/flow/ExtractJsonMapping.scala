@@ -85,7 +85,7 @@ case class ExtractJsonMapping(
             .option("allowUnquotedControlChars", allowUnquotedControlChars)
             .json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -98,7 +98,7 @@ case class ExtractJsonMapping(
 
         val result = ftypes.StructType(schema.fields)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

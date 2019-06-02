@@ -67,7 +67,7 @@ case class UpdateMapping(
         val result = inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -89,7 +89,7 @@ case class UpdateMapping(
 
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

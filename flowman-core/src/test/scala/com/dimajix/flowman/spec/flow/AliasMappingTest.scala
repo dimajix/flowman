@@ -52,9 +52,9 @@ class AliasMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val inputDf = spark.emptyDataFrame
         mapping.input should be (MappingOutputIdentifier("input_df:output_2"))
-        mapping.outputs should be (Seq("default"))
+        mapping.outputs should be (Seq("main"))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("input_df:output_2") -> inputDf))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("input_df:output_2") -> inputDf))("main")
         result.count() should be (0)
     }
 }

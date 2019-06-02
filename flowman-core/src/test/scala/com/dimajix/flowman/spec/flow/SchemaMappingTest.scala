@@ -51,7 +51,7 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.columns should be (Seq("_2" -> "int"))
         mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_2").collect()
         result.size should be (2)
         result(0) should be (Row(12))
@@ -77,7 +77,7 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.columns should be (Seq("_2" -> "int", "new" -> "string"))
         mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_2")
         result.schema should be (StructType(Seq(
             StructField("_2", IntegerType, false),

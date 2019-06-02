@@ -42,7 +42,7 @@ extends BaseMapping {
 
         val result = executor.spark.table(table)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**

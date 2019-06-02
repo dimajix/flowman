@@ -60,7 +60,7 @@ object MappingOutputIdentifier {
             val mappingOutputParts = mappingOutput.split(':')
             val project = if (projectTailParts.size > 1) Some(projectTailParts.dropRight(1).mkString("/")) else None
             val mapping = mappingOutputParts.head
-            val output = if (mappingOutputParts.size > 1) mappingOutputParts(1) else "default"
+            val output = if (mappingOutputParts.size > 1) mappingOutputParts(1) else "main"
             MappingOutputIdentifier(mapping, output, project)
         }
     }

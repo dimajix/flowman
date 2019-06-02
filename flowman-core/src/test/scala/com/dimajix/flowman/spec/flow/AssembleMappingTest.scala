@@ -166,7 +166,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
 
         val expectedSchema = StructType(Seq(
             StructField("clever_name", StructType(Seq(
@@ -235,7 +235,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             StructField("field", LongType)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -260,10 +260,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             ), true)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
     }
@@ -289,10 +289,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                 ), true)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
     }
@@ -313,10 +313,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             StructField("value", LongType)
         ))
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
     }
@@ -353,10 +353,10 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             )))
        ))
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (1)
     }

@@ -79,10 +79,10 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
             StructField("stupid_name_secret_struct_secret_field", LongType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("default")
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("default")
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

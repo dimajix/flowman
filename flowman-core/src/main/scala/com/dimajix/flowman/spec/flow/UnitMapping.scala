@@ -48,7 +48,7 @@ case class UnitMapping(
       */
     override def outputs: Seq[String] = {
         mappingInstances
-            .filter(_._2.outputs.contains("default"))
+            .filter(_._2.outputs.contains("main"))
             .keys.toSeq
     }
 
@@ -61,7 +61,7 @@ case class UnitMapping(
         // For all mappings, find only external dependencies.
         val ownMappings = mappingInstances.keySet
         mappingInstances.values
-            .filter(_.outputs.contains("default"))
+            .filter(_.outputs.contains("main"))
             .flatMap(_.dependencies)
             .filter(dep => dep.project.nonEmpty || !ownMappings.contains(dep.name))
             .toSeq
@@ -76,8 +76,8 @@ case class UnitMapping(
       */
     override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
         mappingInstances
-            .filter(_._2.outputs.contains("default"))
-            .map{ case (id,mapping) => (id,executor.instantiate(mapping, "default")) }
+            .filter(_._2.outputs.contains("main"))
+            .map{ case (id,mapping) => (id,executor.instantiate(mapping, "main")) }
     }
 
     /**
@@ -90,7 +90,7 @@ case class UnitMapping(
         require(input != null)
 
         mappingInstances
-            .filter(_._2.outputs.contains("default"))
+            .filter(_._2.outputs.contains("main"))
             .keys
             .map(name => (name, describe(input, name)))
             .toMap
@@ -118,9 +118,9 @@ case class UnitMapping(
         }
 
         mappingInstances
-            .filter(_._2.outputs.contains("default"))
+            .filter(_._2.outputs.contains("main"))
             .get(output)
-            .map(mapping => mapping.describe(dependencies(mapping), "default"))
+            .map(mapping => mapping.describe(dependencies(mapping), "main"))
             .getOrElse(throw new NoSuchElementException(s"Cannot find output '$output' in unit mapping '$identifier'"))
     }
 }

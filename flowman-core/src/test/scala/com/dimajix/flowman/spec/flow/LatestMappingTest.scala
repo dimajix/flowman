@@ -63,7 +63,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.versionColumn should be ("ts")
         mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
 
         val rows = result.orderBy("id").collect()
@@ -96,7 +96,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Seq("id"),
             "ts"
         )
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
 
         val rows = result.orderBy("id").collect()
@@ -127,7 +127,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.versionColumn should be ("ts._2")
         mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
 
         val rows = result.orderBy("id._1").as[Record].collect()

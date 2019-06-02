@@ -91,7 +91,7 @@ case class UnpackJsonMapping(
                     .cast(StringType), sparkSchema, options))
         }
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -107,7 +107,7 @@ case class UnpackJsonMapping(
         val fields = schema.fields ++ columns.map(c => Field(Option(c.alias).getOrElse(c.name), StructType(c.schema.fields)))
         val result = StructType(fields)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

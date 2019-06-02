@@ -84,7 +84,7 @@ case class ExtendMapping(
         val table = deps(input)
         val result = orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**

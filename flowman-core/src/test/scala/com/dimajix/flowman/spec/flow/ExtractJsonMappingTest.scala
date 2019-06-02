@@ -108,7 +108,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -144,7 +144,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("a", ArrayType(DoubleType, true), true) ::
@@ -179,7 +179,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("_corrupt_record", StringType, true) ::
@@ -219,7 +219,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -250,7 +250,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (1)
         result.schema should be (StructType(
             StructField("a", ArrayType(DoubleType, true), true) ::
@@ -290,7 +290,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (1)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -352,7 +352,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         an[Exception] shouldBe thrownBy(result.count())
     }
 }

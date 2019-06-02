@@ -105,7 +105,7 @@ abstract class Mapping extends AbstractInstance {
     def dependencies : Seq[MappingOutputIdentifier]
 
     /**
-      * Lists all outputs of this mapping. Every mapping should have one "default" output
+      * Lists all outputs of this mapping. Every mapping should have one "main" output
       * @return
       */
     def outputs : Seq[String]

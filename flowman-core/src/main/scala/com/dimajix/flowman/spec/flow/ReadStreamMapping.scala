@@ -52,7 +52,7 @@ case class ReadStreamMapping (
         val rel = context.getRelation(relation)
         val result = rel.readStream(executor, schema)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -80,7 +80,7 @@ case class ReadStreamMapping (
             StructType(rel.schema.fields)
         }
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

@@ -44,7 +44,7 @@ case class CoalesceMapping(
         val df = input(this.input)
         val result = df.coalesce(partitions)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -65,7 +65,7 @@ case class CoalesceMapping(
         require(input != null)
         val result = input(this.input)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

@@ -41,7 +41,7 @@ case class TemplateMapping(
     }
 
     /**
-      * Lists all outputs of this mapping. Every mapping should have one "default" output
+      * Lists all outputs of this mapping. Every mapping should have one "main" output
       * @return
       */
     override def outputs : Seq[String] = {

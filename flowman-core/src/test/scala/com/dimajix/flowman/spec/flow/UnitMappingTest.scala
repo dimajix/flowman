@@ -152,8 +152,8 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val instance0 = context.getMapping(MappingIdentifier("alias"))
         instance0.dependencies should be (Seq(MappingOutputIdentifier("macro:input")))
-        instance0.outputs should be (Seq("default"))
-        val df0 = executor.instantiate(instance0, "default")
+        instance0.outputs should be (Seq("main"))
+        val df0 = executor.instantiate(instance0, "main")
         df0.collect() should be (inputDf0.collect())
     }
 }

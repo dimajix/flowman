@@ -54,10 +54,10 @@ abstract class BaseMapping extends Mapping {
     override def cache : StorageLevel = instanceProperties.cache
 
     /**
-      * Lists all outputs of this mapping. Every mapping should have one "default" output
+      * Lists all outputs of this mapping. Every mapping should have one "main" output
       * @return
       */
-    override def outputs : Seq[String] = Seq("default")
+    override def outputs : Seq[String] = Seq("main")
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema

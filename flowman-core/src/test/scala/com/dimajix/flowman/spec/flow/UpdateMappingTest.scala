@@ -51,7 +51,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("id-126", "will_be_added", "CREATE")
         ))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("_1").collect().toSeq
@@ -87,7 +87,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             .withColumnRenamed("_2", "data")
             .withColumnRenamed("_3", "op")
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("id").collect().toSeq
@@ -120,7 +120,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
                 ("id-126", "will_be_added", "CREATE")
             )).withColumnRenamed("_3", "op")
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("_1").collect().toSeq
@@ -162,7 +162,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("id-126", "subid-1", "will_be_added", "v1", "CREATE")
         )).withColumnRenamed("_5", "op")
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("_1", "_2").collect().toSeq

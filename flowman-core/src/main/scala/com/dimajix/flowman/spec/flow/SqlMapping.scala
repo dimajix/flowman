@@ -64,7 +64,7 @@ extends BaseMapping {
         // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
         input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**

@@ -169,7 +169,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("default")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
             .orderBy("_1", "_2")
         result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
         result.collect().size should be (2)

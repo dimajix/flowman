@@ -54,7 +54,7 @@ extends BaseMapping {
         val cols = columns.map(nv => col(nv))
         val result = df.select(cols:_*)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 
     /**
@@ -81,7 +81,7 @@ extends BaseMapping {
         }
         val result = StructType(outputFields)
 
-        Map("default" -> result)
+        Map("main" -> result)
     }
 }
 

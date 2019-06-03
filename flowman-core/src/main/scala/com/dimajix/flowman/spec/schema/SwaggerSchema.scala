@@ -133,8 +133,8 @@ case class SwaggerSchema(
             case obj:ObjectNode =>
                 if (obj.get("allOf") != null) {
                     val children = obj.get("allOf").elements().toSeq
-                    val required = children.flatMap(_.get("required").elements().toSeq)
-                    val properties = children.flatMap(_.get("properties").fields())
+                    val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements()))
+                    val properties = children.flatMap(c => Option(c.get("properties")).toSeq.flatMap(_.fields()))
                     val desc = children.flatMap(c => Option(c.get("description"))).headOption
                     obj.without("allOf")
                     obj.set("type", TextNode.valueOf("object"))

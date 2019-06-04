@@ -44,6 +44,16 @@ case class Path(segments:Seq[String]) {
         else
             segments.mkString(".")
     }
+
+    def isEmpty : Boolean = segments.isEmpty
+
+    def nonEmpty : Boolean = segments.nonEmpty
+
+    def head : Path = Path(Seq(segments.head))
+
+    def tail : Path = Path(segments.tail)
+
+    def last : Path = Path(Seq(segments.last))
 }
 
 
@@ -82,6 +92,10 @@ sealed abstract class Node[T] {
       * @return
       */
     def name : String
+
+    def isEmpty : Boolean
+
+    def nonEmpty : Boolean
 
     /**
       * List of all children
@@ -196,6 +210,10 @@ sealed abstract class Node[T] {
   * @tparam T
   */
 case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
+    override def isEmpty: Boolean = false
+
+    override def nonEmpty: Boolean = true
+
     override def children : Seq[Node[T]] = Seq()
 
     /**
@@ -302,6 +320,10 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
 
 case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
     private val nameToChild = children.map(node => (node.name.toLowerCase(Locale.ROOT), node)).toMap
+
+    override def isEmpty: Boolean = children.isEmpty
+
+    override def nonEmpty: Boolean = children.nonEmpty
 
     /**
       * Returns true if the node contains a child with the specified name
@@ -454,7 +476,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
                 Some(child)
             }
         )
-        replaceChildren(newChildren)
+        replaceChildren(newChildren.filter(_.nonEmpty))
     }
 
     /**
@@ -482,11 +504,13 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
             val newChildren = ht.map { case (head, tails) =>
                 get(head).get.keep(tails)
             }
-            replaceChildren(newChildren.toSeq)
+            replaceChildren(newChildren.filter(_.nonEmpty).toSeq)
         }
     }
 
     private def replaceChildren(newChildren:Seq[Node[T]]) : StructNode[T] = {
+        require(newChildren.forall(_.nonEmpty))
+
         // Check if something has changed
         if (newChildren.length != children.length || children.zip(newChildren).exists(xy => !(xy._1 eq xy._2))) {
             copy(value=None, children=newChildren)
@@ -499,6 +523,10 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
 
 
 case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
+    override def isEmpty: Boolean = elements.isEmpty
+
+    override def nonEmpty: Boolean = elements.nonEmpty
+
     override def children : Seq[Node[T]] = elements.children
 
     /**
@@ -642,6 +670,10 @@ case class ArrayNode[T](name:String, value:Option[T], elements:Node[T], nullable
 
 
 case class MapNode[T](name:String, value:Option[T], mapKey:Node[T], mapValue:Node[T], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
+    override def isEmpty: Boolean = mapValue.isEmpty
+
+    override def nonEmpty: Boolean = mapValue.nonEmpty
+
     override def children : Seq[Node[T]] = mapValue.children
 
     /**

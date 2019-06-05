@@ -164,6 +164,69 @@ class ColumnTreeTest extends FlatSpec with Matchers {
         columns.toString() should be (expected.toString())
     }
 
+    it should "support dropping everything" in {
+        val inputSchema = StructType(Seq(
+            StructField("col1", StringType, false),
+            StructField("COL2", StructType(
+                Seq(
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false),
+                    StructField("nested4", StructType(
+                        Seq(
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
+                        )
+                    ), false)
+                )
+            ), false)
+        ))
+        val root = ColumnTree.ofSchema(inputSchema)
+            .drop(Path("COL2.*"))
+        val columns = root.mkValue()
+
+        val expected = struct(
+            col("col1")
+        )
+
+        // This doesn't work:
+        //      columns should be (expected)
+        // therefore we compare string representation
+        columns.toString() should be (expected.toString())
+    }
+
+    it should "remove empty structures" in {
+        val inputSchema = StructType(Seq(
+            StructField("col1", StringType, false),
+            StructField("COL2", StructType(
+                Seq(
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false),
+                    StructField("nested4", StructType(
+                        Seq(
+                            StructField("nested4_1", StringType, false),
+                            StructField("nested4_2", FloatType, false)
+                        )
+                    ), false)
+                )
+            ), false)
+        ))
+        val root = ColumnTree.ofSchema(inputSchema)
+            .drop(Path("COL2.nested4.nested4_1"))
+            .drop(Path("COL2.nested4.nested4_2"))
+            .drop(Path("COL2.nested1"))
+            .drop(Path("COL2.nested3"))
+        val columns = root.mkValue()
+
+        val expected = struct(
+            col("col1")
+        )
+
+        // This doesn't work:
+        //      columns should be (expected)
+        // therefore we compare string representation
+        columns.toString() should be (expected.toString())
+    }
+
     it should "support dropping non existing nested paths" in {
         val inputSchema = StructType(Seq(
             StructField("col1", StringType, false),

@@ -16,16 +16,17 @@
 
 package com.dimajix.flowman.spec.flow
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.ExplodeTransformer
+import com.dimajix.flowman.transforms.FlattenTransformer
+import com.dimajix.flowman.transforms.IdentityTransformer
 import com.dimajix.flowman.transforms.LiftTransformer
-import com.dimajix.flowman.transforms.schema.ArrayNode
-import com.dimajix.flowman.transforms.schema.Node
-import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
 
@@ -75,7 +76,8 @@ case class ExplodeMapping(
 
         val in = deps(input)
         val exploded = explode.transform(in)
-        val result = lift.transform(exploded)
+        val lifted = lift.transform(exploded)
+        val result = flat.transform(lifted)
 
         Map("main" -> result, "explode" -> exploded)
     }
@@ -90,11 +92,57 @@ case class ExplodeMapping(
 
         val in = deps(input)
         val exploded = explode.transform(in)
-        val result = lift.transform(exploded)
+        val lifted = lift.transform(exploded)
+        val result = flat.transform(lifted)
 
         Map("main" -> result, "explode" -> exploded)
     }
 
     private def explode = ExplodeTransformer(array, outerColumns.keep, outerColumns.drop, outerColumns.rename)
     private def lift = LiftTransformer(array.last, innerColumns.keep, innerColumns.drop, innerColumns.rename)
+    private def flat = if (flatten) FlattenTransformer(naming) else IdentityTransformer()
+}
+
+
+
+object ExplodeMappingSpec {
+    class Columns {
+        @JsonProperty(value = "keep", required = true) private var keep: Seq[String] = Seq()
+        @JsonProperty(value = "drop", required = true) private var drop: Seq[String] = Seq()
+        @JsonProperty(value = "rename", required = true) private var rename: Map[String,String] = Map()
+
+        def instantiate(context: Context) : ExplodeMapping.Columns = {
+            ExplodeMapping.Columns(
+                keep.map(p => Path(context.evaluate(p))),
+                drop.map(p => Path(context.evaluate(p))),
+                rename.map { case (k,v) => (k, Path(context.evaluate(v))) }
+            )
+        }
+    }
+}
+class ExplodeMappingSpec extends MappingSpec {
+    @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "array", required = true) private var array: String = _
+    @JsonProperty(value = "flatten", required = false) private var flatten: String = "false"
+    @JsonProperty(value = "naming", required = false) private var naming: String = "snakeCase"
+    @JsonProperty(value = "outerColumns", required = false) private var outerColumns: ExplodeMappingSpec.Columns = new ExplodeMappingSpec.Columns()
+    @JsonProperty(value = "innerColumns", required = false) private var innerColumns: ExplodeMappingSpec.Columns = new ExplodeMappingSpec.Columns()
+
+    /**
+      * Creates an instance of this specification and performs the interpolation of all variables
+      *
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): ExplodeMapping = {
+        ExplodeMapping(
+            instanceProperties(context),
+            MappingOutputIdentifier(context.evaluate(input)),
+            Path(context.evaluate(array)),
+            outerColumns.instantiate(context),
+            innerColumns.instantiate(context),
+            context.evaluate(flatten).toBoolean,
+            context.evaluate(naming)
+        )
+    }
 }

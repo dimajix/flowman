@@ -465,17 +465,20 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
         val segments = path.segments
         val head = segments.head.toLowerCase(Locale.ROOT)
         val tail = segments.tail
-        val newChildren = children.flatMap(child =>
-            if (child.name.toLowerCase(Locale.ROOT) == head) {
-                if (tail.isEmpty)
-                    None
-                else
-                    Some(child.drop(Path(tail)))
-            }
-            else {
-                Some(child)
-            }
-        )
+        val newChildren = head match {
+            case "*" => Seq()
+            case _ => children.flatMap(child =>
+                if (child.name.toLowerCase(Locale.ROOT) == head) {
+                    if (tail.isEmpty)
+                        None
+                    else
+                        Some(child.drop(Path(tail)))
+                }
+                else {
+                    Some(child)
+                }
+            )
+        }
         replaceChildren(newChildren.filter(_.nonEmpty))
     }
 

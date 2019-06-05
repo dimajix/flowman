@@ -488,7 +488,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
       * @return
       */
     override def keep(paths:Seq[Path]) : StructNode[T] = {
-        if (paths.exists(_.segments.isEmpty)) {
+        if (paths.exists(p => p.segments.isEmpty || p.segments.head == "*")) {
             // Special case: One path was empty, which implies we keep everything
             this
         }

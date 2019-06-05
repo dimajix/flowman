@@ -124,6 +124,28 @@ class LiftTransformerTest extends FlatSpec with Matchers with LocalSparkSession 
         resultSchema.sparkType should be (resultDf.schema)
     }
 
+    it should "support keep all" in {
+        val xfs = LiftTransformer(
+            Path("some_struct.some_exploded_array"),
+            Seq(Path("*")),
+            Seq(),
+            Map()
+        )
+        val resultDf = xfs.transform(inputDf)
+        resultDf.schema should be(StructType(Seq(
+            StructField("outer_col0", StringType),
+            StructField("outer_col1", StringType),
+            StructField("some_struct", StructType(Seq(
+                StructField("some_field", StringType)
+            ))),
+            StructField("inner_col0", LongType),
+            StructField("inner_col1", LongType)
+        )))
+
+        val resultSchema = xfs.transform(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
+    }
+
     it should "support dropping all and renaming" in {
         val xfs = LiftTransformer(
             Path("some_struct.some_exploded_array"),

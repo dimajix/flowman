@@ -34,7 +34,7 @@ case class ExplodeTransformer(
         val pruned =
             if (keep.nonEmpty) {
                 root.keep(keep)
-                    .drop(drop)
+                    .drop(drop :+ array)
                     .children
             }
             else {

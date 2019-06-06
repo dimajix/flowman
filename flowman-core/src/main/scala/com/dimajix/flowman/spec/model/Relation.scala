@@ -47,8 +47,8 @@ object Relation {
         def apply(context:Context, name:String="", kind:String="") : Properties = {
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 kind,
                 Map(),

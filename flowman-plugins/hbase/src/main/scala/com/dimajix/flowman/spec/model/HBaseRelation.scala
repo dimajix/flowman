@@ -63,16 +63,6 @@ object HBaseRelation {
         dtype:FieldType=com.dimajix.flowman.types.StringType,
         description:String=""
     )
-
-    def apply(namespace:String, table:String, rowKey:String, columns:Seq[Column]) : HBaseRelation = {
-        HBaseRelation(
-            Relation.Properties(null),
-            namespace,
-            table,
-            rowKey,
-            columns
-        )
-    }
 }
 
 

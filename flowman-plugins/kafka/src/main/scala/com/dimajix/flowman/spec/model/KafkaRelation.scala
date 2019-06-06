@@ -43,17 +43,6 @@ import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.util.SchemaUtils
 
 
-object KafkaRelation {
-    def apply(hosts:Seq[String], topics:Seq[String]): KafkaRelation = {
-        KafkaRelation(
-            Relation.Properties(null),
-            hosts,
-            topics
-        )
-    }
-}
-
-
 case class KafkaRelation(
     instanceProperties:Relation.Properties,
     hosts:Seq[String],

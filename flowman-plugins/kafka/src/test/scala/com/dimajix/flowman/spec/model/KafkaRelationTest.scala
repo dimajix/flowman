@@ -81,15 +81,21 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import lspark.implicits._
         import org.apache.spark.sql.functions._
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.context
+
         val topic = newTopic()
         testUtils.createTopic(topic, partitions = 3)
         testUtils.sendMessages(topic, (0 to 9).map(_.toString).toArray, Some(0))
         testUtils.sendMessages(topic, (10 to 19).map(_.toString).toArray, Some(1))
         testUtils.sendMessages(topic, Array("20"), Some(2))
 
-        val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val relation = KafkaRelation(
+            Relation.Properties(context),
+            Seq(testUtils.brokerAddress),
+            Seq(topic)
+        )
 
         val schema = StructType(Seq(StructField("value", BinaryType)))
         val df = relation.read(executor, schema, Map()).select(expr("CAST(value AS STRING)"))
@@ -102,12 +108,18 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import lspark.implicits._
         import org.apache.spark.sql.functions._
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.context
+
         val topic = newTopic()
         testUtils.createTopic(topic, partitions = 3)
 
-        val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val relation = KafkaRelation(
+            Relation.Properties(context),
+            Seq(testUtils.brokerAddress),
+            Seq(topic)
+        )
 
         val values = (0 to 20).map(_.toString).toDF
         relation.write(executor, values, Map(), "append")
@@ -123,12 +135,18 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import lspark.implicits._
         import org.apache.spark.sql.functions._
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.context
+
         val topic = newTopic()
         testUtils.createTopic(topic, partitions = 3)
 
-        val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val relation = KafkaRelation(
+            Relation.Properties(context),
+            Seq(testUtils.brokerAddress),
+            Seq(topic)
+        )
 
         val values = (0 to 20).toDF.select(
             (col("value") * 2).cast(StringType) as "key",
@@ -143,15 +161,21 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
     }
 
     it should "support stream reading" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.context
+
         val topic = newTopic()
         testUtils.createTopic(topic, partitions = 3)
         testUtils.sendMessages(topic, (0 to 9).map(_.toString).toArray, Some(0))
         testUtils.sendMessages(topic, (10 to 19).map(_.toString).toArray, Some(1))
         testUtils.sendMessages(topic, Array("20"), Some(2))
 
-        val relation = KafkaRelation(Seq(testUtils.brokerAddress), Seq(topic))
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val relation = KafkaRelation(
+            Relation.Properties(context),
+            Seq(testUtils.brokerAddress),
+            Seq(topic)
+        )
 
         withTempDir { checkpointLocation =>
             val spark = session.spark

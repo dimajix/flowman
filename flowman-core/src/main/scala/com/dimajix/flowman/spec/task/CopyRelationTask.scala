@@ -42,11 +42,11 @@ case class CopyRelationTask(
     private val logger = LoggerFactory.getLogger(classOf[CopyRelationTask])
 
     override def execute(executor:Executor) : Boolean = {
-        logger.info(s"Copying from relation '${source}' to relation '${target}' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Copying from relation '$source' to relation '$target' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
         val input = context.getRelation(source)
         val output = context.getRelation(target)
-        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
         val data = input.read(executor, schema, sourcePartitions).coalesce(parallelism)
         output.write(executor, data, targetPartition, mode)
         true

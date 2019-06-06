@@ -46,8 +46,8 @@ case class ReadStreamMapping (
         require(executor != null)
         require(input != null)
 
-        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
-        logger.info(s"Reading from streaming relation '${relation}'")
+        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
+        logger.info(s"Reading from streaming relation '$relation'")
 
         val rel = context.getRelation(relation)
         val result = rel.readStream(executor, schema)

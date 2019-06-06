@@ -55,8 +55,9 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
         require(executor != null)
+        require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading from local location '$location' (partitions=$partitions)")

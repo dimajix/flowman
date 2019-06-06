@@ -98,7 +98,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         )
 
         val schema = StructType(Seq(StructField("value", BinaryType)))
-        val df = relation.read(executor, schema, Map()).select(expr("CAST(value AS STRING)"))
+        val df = relation.read(executor, Some(schema), Map()).select(expr("CAST(value AS STRING)"))
         df.count() should be (21)
         checkAnswer(df, (0 to 20).map(_.toString).toDF)
     }
@@ -125,7 +125,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         relation.write(executor, values, Map(), "append")
 
         val schema = StructType(Seq(StructField("value", BinaryType)))
-        val df = relation.read(executor, schema, Map()).select(expr("CAST(value AS STRING)"))
+        val df = relation.read(executor, Some(schema), Map()).select(expr("CAST(value AS STRING)"))
         df.count() should be (21)
         checkAnswer(df, (0 to 20).map(_.toString).toDF)
     }
@@ -155,7 +155,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         relation.write(executor, values, Map(), "append")
 
         val schema = StructType(Seq(StructField("key", BinaryType), StructField("value", BinaryType)))
-        val df = relation.read(executor, schema, Map()).select(expr("CONCAT(CAST(key AS STRING),'_',CAST(value AS STRING))"))
+        val df = relation.read(executor, Some(schema), Map()).select(expr("CONCAT(CAST(key AS STRING),'_',CAST(value AS STRING))"))
         df.count() should be (21)
         checkAnswer(df, (0 to 20).map(k => (k*2).toString + "_" + k.toString).toDF)
     }
@@ -183,7 +183,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
             import org.apache.spark.sql.functions._
 
             val schema = StructType(Seq(StructField("value", BinaryType)))
-            val values = relation.readStream(executor, schema).select(expr("CAST(value AS STRING)"))
+            val values = relation.readStream(executor, Some(schema)).select(expr("CAST(value AS STRING)"))
             val query = values.writeStream
                 .format("memory")
                 .queryName("kafka_dings")

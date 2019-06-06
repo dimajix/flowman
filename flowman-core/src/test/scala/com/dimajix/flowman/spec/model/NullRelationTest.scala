@@ -35,7 +35,7 @@ class NullRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val schema = StructType(
             StructField("lala", StringType) :: Nil
         )
-        val df = relation.read(executor, schema)
+        val df = relation.read(executor, Some(schema))
         df should not be (null)
     }
 }

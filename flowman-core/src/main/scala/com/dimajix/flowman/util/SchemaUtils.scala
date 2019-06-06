@@ -72,12 +72,8 @@ object SchemaUtils {
       * @param schema
       * @return
       */
-    def applySchema(df:DataFrame, schema:StructType) : DataFrame = {
-        // Apply requested Schema
-        if (schema != null)
-            df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)
-        else
-            df
+    def applySchema(df:DataFrame, schema:Option[StructType]) : DataFrame = {
+        schema.map(schema => df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)).getOrElse(df)
     }
 
     /**

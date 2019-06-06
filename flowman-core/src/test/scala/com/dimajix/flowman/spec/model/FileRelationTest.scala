@@ -71,7 +71,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         fileRelation.format should be ("csv")
         fileRelation.location should be (new Path("test/data/data_1.csv"))
 
-        val df = relation.read(executor, null)
+        val df = relation.read(executor, None)
         df.schema should be (StructType(
             StructField("f1", StringType) ::
                 StructField("f2", StringType) ::
@@ -180,7 +180,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             .withColumnRenamed("_2", "int_col")
         relation.write(executor, df, Map("p_col" -> SingleValue("2")), "overwrite")
 
-        val df_p1 = relation.read(executor, null, Map("p_col" -> SingleValue("1")))
+        val df_p1 = relation.read(executor, None, Map("p_col" -> SingleValue("1")))
         df_p1.count() should be (0)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
@@ -188,7 +188,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
                 StructField("p_col", IntegerType, false) ::
                 Nil
         ))
-        val df_p2 = relation.read(executor, null, Map("p_col" -> SingleValue("2")))
+        val df_p2 = relation.read(executor, None, Map("p_col" -> SingleValue("2")))
         df_p2.count() should be (2)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::

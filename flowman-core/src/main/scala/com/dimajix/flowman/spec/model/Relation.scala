@@ -113,7 +113,7 @@ abstract class Relation extends AbstractInstance {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -136,7 +136,7 @@ abstract class Relation extends AbstractInstance {
       * @param schema
       * @return
       */
-    def readStream(executor:Executor, schema:StructType) : DataFrame = ???
+    def readStream(executor:Executor, schema:Option[StructType]) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink

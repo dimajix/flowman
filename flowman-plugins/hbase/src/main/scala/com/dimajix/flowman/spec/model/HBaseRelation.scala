@@ -92,7 +92,7 @@ case class HBaseRelation(
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
         logger.info(s"Reading from HBase table '$tableSpace.$table'")
 
         val options = hbaseOptions

@@ -1,8 +1,9 @@
 # Version 0.6.0
 
 * Add multiple relations to `showRelation` task
-* github-33: Add new 'unit' mapping
-
+* github-33: Add new `unit` mapping
+* github-34: Fix NPE in Swagger schema reader
+* github-36: Add new `explode` mapping
 
 # Version 0.5.0 - 2019-05-28
 

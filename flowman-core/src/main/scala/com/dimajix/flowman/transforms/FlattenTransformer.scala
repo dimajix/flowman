@@ -21,6 +21,7 @@ import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.LeafNode
 import com.dimajix.flowman.transforms.schema.MapNode
 import com.dimajix.flowman.transforms.schema.Node
+import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.StructNode
 import com.dimajix.flowman.transforms.schema.TreeTransformer
 
@@ -56,7 +57,7 @@ case class FlattenTransformer(format:String) extends TreeTransformer {
         }
     }
 
-    override def transform[T](root:Node[T]) : Node[T] = {
+    override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
         val newChildren = root.children.flatMap(flatten(_, ""))
         root.asInstanceOf[StructNode[T]].withChildren(newChildren)
     }

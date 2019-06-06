@@ -67,10 +67,12 @@ class SchemaNodeOps extends NodeOps[Field] {
     }
 
     override def struct(name:String, children:Seq[Field], nullable:Boolean) : Field = {
+        require(children.nonEmpty)
         Field(name, StructType(children), nullable)
     }
 
     override def struct_pruned(name:String, children:Seq[Field], nullable:Boolean) : Field = {
+        require(children.nonEmpty)
         Field(name, StructType(children), nullable)
     }
 

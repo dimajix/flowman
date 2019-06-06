@@ -112,6 +112,9 @@ Use a [Deduplicate](deduplicate.html) mapping for deduplicating records based on
 * [`distinct`](distinct.html): 
 Use a [Distinct](distinct.html) mapping for removing duplicates based on all columns
 
+* [`explode`](exploe.html): 
+With [Explode](explode.html) you can create multiple records from an array
+
 * [`extend`](extend.html): 
 With [Extend](extend.html) you can add new columns to a mapping
 

@@ -381,7 +381,7 @@ class LiftAssembler private[transforms] (path:Path, columns:Seq[Path]) extends A
             .find(path)
             .getOrElse(throw new IllegalArgumentException(s"Path $path not found in rename"))
 
-        columns.map(p => node.find(p).getOrElse(throw new IllegalArgumentException(s"Column $p not found in path $path in lift")))
+        columns.flatMap(p => node.find(p))
     }
 }
 
@@ -396,10 +396,7 @@ class RenameAssembler private[transforms] (path:Path, columns:Seq[(String,Path)]
             .find(path)
             .getOrElse(throw new IllegalArgumentException(s"Path $path not found in rename"))
 
-        columns.map { p =>
-            val child = node.find(p._2).getOrElse(throw new IllegalArgumentException(s"Column ${p._2} not found in path $path in rename"))
-            child.withName(p._1)
-        }
+        columns.flatMap(p => node.find(p._2).map(_.withName(p._1)))
     }
 }
 

@@ -110,19 +110,22 @@ This part contains the assembling specification. It consists of an array with th
         Specifies the name of the exploded column.
     * `path` **(optional)** *(string)*:
         Specifies the path to be exploded. The path has to be an array (or a child of an array)
-  * `rename` - Renames some input columns
+  * `rename` - Renames some input columns. Note that it is *not* an error to try to rename non-existing columns. In this
+    case, no column will be appended.
     * `kind` **(mandatory)** *(string)*: `rename`
     * `path` **(optional)** *(string)*:
         Specify a common subpath in the incoming data, from where columns should be extracted and renamed 
     * `columns` **(optional)** *(map: string)*:
         A map containing rename information. The key is the new column name and the value the incoming column name.
-  * `lift` - Extracts specific columns of a nested path and appends these as simple columns
+  * `lift` - Extracts specific columns of a nested path and appends these as simple columns. Note that it is not an
+    error to specify non-existing columns. Such column will simply be ignored.
     * `kind` **(mandatory)** *(string)*: `lift`
     * `path` **(mandatory)** *(string)*:
         Specify the path in the incoming data which should be lifted to the top level
     * `columns` **(mandatory)** *(list: string)*:
         Specify all columns relative to the path of columns which should be lifted to the top level
-  * `nest` - Collects some columns and nests these into a new sub structure
+  * `nest` - Collects some columns and nests these into a new sub structure. Note that it is not an
+    error to specify non-existing columns. Such column will simply be ignored.
     * `kind` **(mandatory)** *(string)*: `nest`
     * `name` **(mandatory)** *(string)*:
         Specify the name of the new nested structure

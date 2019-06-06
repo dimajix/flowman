@@ -26,6 +26,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.{types => ftypes}
 
 
 class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -74,6 +75,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
           |}""".stripMargin
 
     private var inputDf:DataFrame = _
+    private var inputSchema: ftypes.StructType = _
 
     override def beforeAll() : Unit = {
         super.beforeAll()
@@ -84,6 +86,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         val inputRecords = Seq(inputJson.replace("\n",""))
         val inputDs = spark.createDataset(inputRecords)
         inputDf = spark.read.json(inputDs)
+        inputSchema = ftypes.StructType.of(inputDf.schema)
     }
 
     "The assembler" should "work" in {
@@ -110,7 +113,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
+        val resultDf = asm.reassemble(inputDf)
 
         val expectedSchema = StructType(Seq(
             StructField("clever_name", StructType(Seq(
@@ -134,8 +137,11 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )))
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support keep" in {
@@ -148,8 +154,6 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("embedded", StructType(Seq(
                 StructField("struct_array", ArrayType(
@@ -164,8 +168,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )))
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support nest" in {
@@ -176,8 +184,6 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("clever_name", StructType(Seq(
                 StructField("secret", StructType(Seq(
@@ -186,8 +192,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )))
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support lift" in {
@@ -198,14 +208,16 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("field", LongType)
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support assembling sub structures" in {
@@ -217,16 +229,18 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
             )))
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
 //    it should "support renaming a column via assemble" in {
@@ -258,14 +272,16 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("new_name", ArrayType(LongType), true)
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "not ignore non-existing paths and structs" in {
@@ -285,14 +301,16 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("value", LongType)
         ))
 
-        outputDf.count should be (2)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (2)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support top level explode on complex arrays with rename" in {
@@ -302,8 +320,6 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("array", StructType(Seq(
                 StructField("key", StringType),
@@ -311,8 +327,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )), true)
         ))
 
-        outputDf.count should be (2)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (2)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support nested explode on complex arrays" in {
@@ -322,8 +342,6 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("struct_array", StructType(Seq(
                 StructField("key", StringType),
@@ -331,8 +349,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )), true)
         ))
 
-        outputDf.count should be (2)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (2)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "support nested explode on complex arrays with rename" in {
@@ -342,8 +364,6 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("array", StructType(Seq(
                 StructField("key", StringType),
@@ -351,8 +371,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )), true)
         ))
 
-        outputDf.count should be (2)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (2)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "throw an error for explode with non-existing paths" in {
@@ -373,8 +397,6 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .build()
 
-        val outputDf = asm.reassemble(inputDf)
-
         val expectedSchema = StructType(Seq(
             StructField("s", StructType(Seq(
                 StructField("public", StringType),
@@ -384,8 +406,36 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )))
         ))
 
-        outputDf.count should be (1)
-        outputDf.schema should be (expectedSchema)
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
+    }
+
+    it should "support renaming non-existing columns" in {
+        val asm = Assembler.builder()
+            .columns(
+                _.path("embedded.structure")
+                    .keep("public")
+            )
+            .rename(
+                _.path("embedded")
+                    .column("s", "no_such_element")
+            )
+            .build()
+
+        val expectedSchema = StructType(Seq(
+            StructField("public", StringType)
+        ))
+
+        val resultDf = asm.reassemble(inputDf)
+        resultDf.count should be (1)
+        resultDf.schema should be (expectedSchema)
+
+        val resultSchema = asm.reassemble(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
     }
 
     it should "throw an exception on non-existing path in renam" in {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.AssembleMapping.AppendEntry
@@ -361,7 +360,28 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         outputDf.count() should be (1)
     }
 
-    it should "throw an exception on renames of non-existing fields" in {
+    it should "not throw an exception on renames of non-existing fields" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
 
+        val mapping = AssembleMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("input_df"),
+            Seq(
+                AppendEntry("embedded.structure", Seq("public"), Seq()),
+                RenameEntry("embedded", Map("new_elem" -> "no_such_field"))
+            )
+        )
+
+        val expectedSchema = StructType(Seq(
+            StructField("public", StringType)
+        ))
+
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
+        outputSchema.sparkType should be (expectedSchema)
+
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
+        outputDf.schema should be (expectedSchema)
+        outputDf.count() should be (1)
     }
 }

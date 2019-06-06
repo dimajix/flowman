@@ -54,7 +54,7 @@ case class ReadRelationMapping(
         require(executor != null)
         require(input != null)
 
-        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
         logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
         val rel = context.getRelation(relation)
         val result = rel.read(executor, schema, partitions)

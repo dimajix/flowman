@@ -66,7 +66,11 @@ case class JdbcRelation(
       * @param schema
       * @return
       */
-    override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(executor != null)
+        require(schema != null)
+        require(partitions != null)
+
         logger.info(s"Reading data from JDBC source '$tableIdentifier' using connection '${connection.identifier}' using partition values $partitions")
 
         // Get Connection
@@ -88,6 +92,10 @@ case class JdbcRelation(
       * @param mode
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partition != null)
+
         logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection.identifier}")
 
         // Get Connection

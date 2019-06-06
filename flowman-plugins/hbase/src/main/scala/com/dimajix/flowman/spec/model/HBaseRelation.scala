@@ -63,16 +63,6 @@ object HBaseRelation {
         dtype:FieldType=com.dimajix.flowman.types.StringType,
         description:String=""
     )
-
-    def apply(namespace:String, table:String, rowKey:String, columns:Seq[Column]) : HBaseRelation = {
-        HBaseRelation(
-            Relation.Properties(null),
-            namespace,
-            table,
-            rowKey,
-            columns
-        )
-    }
 }
 
 
@@ -102,7 +92,7 @@ case class HBaseRelation(
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
         logger.info(s"Reading from HBase table '$tableSpace.$table'")
 
         val options = hbaseOptions

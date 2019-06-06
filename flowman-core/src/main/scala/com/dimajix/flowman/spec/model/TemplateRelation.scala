@@ -62,8 +62,10 @@ case class TemplateRelation(
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
         require(executor != null)
+        require(schema != null)
+        require(partitions != null)
 
         relationInstance.read(executor, schema, partitions)
     }
@@ -78,6 +80,7 @@ case class TemplateRelation(
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
         require(executor != null)
         require(df != null)
+        require(partition != null)
 
         relationInstance.write(executor, df, partition, mode)
     }

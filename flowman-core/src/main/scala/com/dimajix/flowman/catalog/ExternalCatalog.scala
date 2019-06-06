@@ -40,4 +40,10 @@ abstract class ExternalCatalog {
     def dropPartition(table: CatalogTable, partition: CatalogTablePartition): Unit
 
     def truncatePartition(table: CatalogTable, partition: CatalogTablePartition): Unit
+
+    def createView(View: CatalogTable): Unit
+
+    def alterView(View: CatalogTable): Unit
+
+    def dropView(View: CatalogTable): Unit
 }

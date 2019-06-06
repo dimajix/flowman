@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.SchemaUtils
 
 
 case class ProvidedRelation(
@@ -40,10 +41,13 @@ case class ProvidedRelation(
       * @param partitions
       * @return
       */
-    override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(executor != null)
+        require(schema != null)
+        require(partitions != null)
 
-        executor.spark.table(table)
+        val df = executor.spark.table(table)
+        SchemaUtils.applySchema(df, schema)
     }
 
     /**

@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
+import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
@@ -382,6 +383,22 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
                 val t = getTable(table)
                 externalCatalog.createView(t)
             }
+        }
+    }
+
+    def alterView(table:TableIdentifier, select:String): Unit = {
+        require(table != null)
+
+        logger.info(s"Redefining Hive view $table")
+
+        val plan = spark.sql(select).queryExecution.logical
+        val cmd = AlterViewAsCommand(table, select, plan)
+        cmd.run(spark)
+
+        // Publish view to external catalog
+        if (externalCatalog != null) {
+            val t = getTable(table)
+            externalCatalog.alterView(t)
         }
     }
 

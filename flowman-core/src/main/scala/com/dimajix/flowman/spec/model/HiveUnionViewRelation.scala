@@ -20,8 +20,6 @@ import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.execution.command.CreateViewCommand
-import org.apache.spark.sql.execution.command.PersistedView
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -29,7 +27,6 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -55,6 +52,8 @@ case class HiveUnionViewRelation(
       * @param executor
       */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
+        logger.info(s"Creating Hive VIEW relation '$name' with table $tableIdentifier")
+
         executor.catalog.createView(tableIdentifier, sql, ifNotExists)
     }
 
@@ -76,7 +75,11 @@ case class HiveUnionViewRelation(
       * This will update any existing relation to the specified metadata.
       * @param executor
       */
-    override def migrate(executor:Executor) : Unit = ???
+    override def migrate(executor:Executor) : Unit = {
+        logger.info(s"Migrating Hive VIEW relation '$name' with table $tableIdentifier")
+
+        executor.catalog.alterView(tableIdentifier, sql)
+    }
 
     private def sql = {
         def castField(name:String, src:FieldType, dst:FieldType) = {
@@ -109,6 +112,7 @@ case class HiveUnionViewRelation(
                     .getOrElse(nullField(part.name, part.ftype))
             }
             val allFields = schemaFields ++ partitionFields
+
             "SELECT\n" +
                 allFields.mkString("    ",",\n    ","\n") +
                 "FROM " + rel.tableIdentifier

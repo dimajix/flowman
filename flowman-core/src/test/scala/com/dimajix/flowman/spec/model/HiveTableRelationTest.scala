@@ -69,6 +69,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val relation = context.getRelation(RelationIdentifier("t0"))
 
         relation.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (true)
+
         val table = session.catalog.getTable(TableIdentifier("lala_0001", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(Some("This is a test table"))
@@ -89,6 +91,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
 
         // Drop table
         relation.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (false)
+
         an[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
         relation.destroy(executor, true)
     }
@@ -124,6 +128,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         hiveRelation.location should be (new Path(location))
 
         relation.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (true)
+
         val table = session.catalog.getTable(TableIdentifier("lala_0002", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
@@ -137,7 +143,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should be (location)
+
         relation.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (false)
     }
 
     it should "support single partition columns" in {

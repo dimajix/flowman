@@ -30,7 +30,9 @@ import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
+import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
+import org.apache.spark.sql.execution.command.PersistedView
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -360,6 +362,29 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         }
     }
 
+    def createView(table:TableIdentifier, select:String, ignoreIfExists:Boolean): Unit = {
+        require(table != null)
+
+        val exists = tableExists(table)
+        if (!ignoreIfExists && exists) {
+            throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
+        }
+
+        if (!exists) {
+            logger.info(s"Creating Hive view $table")
+
+            val plan = spark.sql(select).queryExecution.logical
+            val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, PersistedView)
+            cmd.run(spark)
+
+            // Publish view to external catalog
+            if (externalCatalog != null) {
+                val t = getTable(table)
+                externalCatalog.createView(t)
+            }
+        }
+    }
+
     /**
       * Drops a whole table including all partitions and all files
       * @param table
@@ -383,7 +408,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
 
             // Remove table from external catalog
             if (externalCatalog != null) {
-                externalCatalog.dropTable(catalogTable)
+                externalCatalog.dropView(catalogTable)
             }
         }
     }

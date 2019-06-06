@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.model
 
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -80,8 +81,11 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
         )
 
         model.create(executor)
+        session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
         model.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
+
         context.getRelation(RelationIdentifier("t0")).destroy(executor)
         context.getRelation(RelationIdentifier("t1")).destroy(executor)
     }
@@ -144,8 +148,11 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
         )
 
         model.create(executor)
+        session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
         model.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
+
         context.getRelation(RelationIdentifier("t0")).destroy(executor)
         context.getRelation(RelationIdentifier("t1")).destroy(executor)
     }

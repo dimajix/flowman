@@ -20,6 +20,8 @@ import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.execution.command.CreateViewCommand
+import org.apache.spark.sql.execution.command.PersistedView
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -47,7 +49,36 @@ case class HiveUnionViewRelation(
 
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
+    /**
+      * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
+      * relation will not contain any data, but all metadata will be processed
+      * @param executor
+      */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
+        executor.catalog.createView(tableIdentifier, sql, ifNotExists)
+    }
+
+    /**
+      * This will delete any physical representation of the relation. Depending on the type only some meta data like
+      * a Hive table might be dropped or also the physical files might be deleted
+      * @param executor
+      */
+    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
+        logger.info(s"Destroying Hive VIEW relation '$name' with table $tableIdentifier")
+
+        val catalog = executor.catalog
+        if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            catalog.dropView(tableIdentifier)
+        }
+    }
+
+    /**
+      * This will update any existing relation to the specified metadata.
+      * @param executor
+      */
+    override def migrate(executor:Executor) : Unit = ???
+
+    private def sql = {
         def castField(name:String, src:FieldType, dst:FieldType) = {
             if (src == dst)
                 name
@@ -80,29 +111,11 @@ case class HiveUnionViewRelation(
             val allFields = schemaFields ++ partitionFields
             "SELECT\n" +
                 allFields.mkString("    ",",\n    ","\n") +
-            "FROM " + rel.tableIdentifier
+                "FROM " + rel.tableIdentifier
         }
 
-        val sql =
-            s"""
-               |CREATE VIEW $tableIdentifier AS
-               |${selects.mkString("\n\nUNION ALL\n\n")}
-             """.stripMargin
-
-        println(sql)
-        executor.spark.sql(sql)
+        selects.mkString("\n\nUNION ALL\n\n")
     }
-
-    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        logger.info(s"Destroying Hive VIEW relation '$name' with table $tableIdentifier")
-
-        val catalog = executor.catalog
-        if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            catalog.dropView(tableIdentifier)
-        }
-    }
-
-    override def migrate(executor:Executor) : Unit = ???
 }
 
 

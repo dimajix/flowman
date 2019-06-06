@@ -115,6 +115,30 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         }
     }
 
+    override def createView(table: CatalogTable): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for newly created view ${table.identifier}")
+        withStatement { stmt =>
+            val identifier = HiveDialect.quote(table.identifier)
+            stmt.execute(s"INVALIDATE METADATA $identifier")
+        }
+    }
+
+    override def alterView(table: CatalogTable): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for modified view ${table.identifier}")
+        withStatement { stmt =>
+            val identifier = HiveDialect.quote(table.identifier)
+            stmt.execute(s"REFRESH METADATA $identifier")
+        }
+    }
+
+    override def dropView(table: CatalogTable): Unit = {
+        logger.info(s"INVALIDATE Impala metadata for dropped view ${table.identifier}")
+        withStatement { stmt =>
+            val identifier = HiveDialect.quote(table.identifier)
+            stmt.execute(s"INVALIDATE METADATA $identifier")
+        }
+    }
+
     private def withConnection[T](fn:Connection => T) : T = {
         val conn = connect()
         try {

@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchPartitionException
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
@@ -101,7 +102,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     }
 
     /**
-      * Returns true if the specified Hive table actually exists
+      * Returns true if the specified Hive table or view actually exists
       * @param table
       * @return
       */
@@ -112,7 +113,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     }
 
     /**
-      * Returns information about a Hive table
+      * Returns information about a Hive table or view
       * @param table
       * @return
       */
@@ -129,8 +130,9 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       */
     def getTableLocation(table:TableIdentifier) : Path = {
         require(table != null)
-        // "DESCRIBE FORMATTED training.weather_raw"
-        new Path(catalog.getTableMetadata(table).location)
+        val meta = catalog.getTableMetadata(table)
+        require(meta.tableType != CatalogTableType.VIEW)
+        new Path(meta.location)
     }
 
     /**
@@ -146,16 +148,19 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         }
 
         if (exists) {
-            logger.info(s"Dropping Hive table $table")
-            // Delete all partitions
+            logger.info(s"Dropping Hive table/view $table")
             val catalogTable = catalog.getTableMetadata(table)
+            require(catalogTable.tableType != CatalogTableType.VIEW)
+
+            // Delete all partitions
             if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
                 catalog.listPartitions(table).foreach(p => deleteLocation(new Path(p.location)))
             }
 
-            // Delete table itself
             val location = getTableLocation(table)
             deleteLocation(location)
+
+            // Delete table itself
             val cmd = DropTableCommand(table, ignoreIfNotExists, false, purge)
             cmd.run(spark)
 
@@ -173,7 +178,10 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     def truncateTable(table:TableIdentifier) : Unit = {
         require(table != null)
         logger.info(s"Truncating Hive table $table")
+
         val catalogTable = catalog.getTableMetadata(table)
+        require(catalogTable.tableType != CatalogTableType.VIEW)
+
         val location = new Path(catalogTable.location)
         truncateLocation(location)
 
@@ -348,6 +356,34 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             sparkPartitions.foreach { partition =>
                 val catalogPartition = catalog.getPartition(table, partition)
                 externalCatalog.dropPartition(catalogTable, catalogPartition)
+            }
+        }
+    }
+
+    /**
+      * Drops a whole table including all partitions and all files
+      * @param table
+      */
+    def dropView(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
+        require(table != null)
+
+        val exists = tableExists(table)
+        if (!ignoreIfNotExists && !exists) {
+            throw new NoSuchTableException(table.database.getOrElse(""), table.table)
+        }
+
+        if (exists) {
+            logger.info(s"Dropping Hive view $table")
+            val catalogTable = catalog.getTableMetadata(table)
+            require(catalogTable.tableType == CatalogTableType.VIEW)
+
+            // Delete table itself
+            val cmd = DropTableCommand(table, ignoreIfNotExists, true, false)
+            cmd.run(spark)
+
+            // Remove table from external catalog
+            if (externalCatalog != null) {
+                externalCatalog.dropTable(catalogTable)
             }
         }
     }

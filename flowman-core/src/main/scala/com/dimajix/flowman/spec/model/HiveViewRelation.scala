@@ -41,7 +41,16 @@ case class HiveViewRelation(
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = ???
-    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = ???
+
+    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
+        logger.info(s"Destroying Hive VIEW relation '$name' with table $tableIdentifier")
+
+        val catalog = executor.catalog
+        if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            catalog.dropView(tableIdentifier)
+        }
+    }
+
     override def migrate(executor:Executor) : Unit = ???
 }
 

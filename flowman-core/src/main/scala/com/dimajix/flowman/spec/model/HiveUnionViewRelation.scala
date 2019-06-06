@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.model
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
@@ -26,6 +28,7 @@ import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
@@ -45,26 +48,38 @@ case class HiveUnionViewRelation(
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        def castField(src:Field, dst:Field) = {
-            if (src.ftype == dst.ftype)
-                src.name
+        def castField(name:String, src:FieldType, dst:FieldType) = {
+            if (src == dst)
+                name
             else
-                s"CAST(${src.name} AS ${dst.ftype.sqlType}) AS ${dst.name}"
+                s"CAST($name AS ${dst.sqlType}) AS ${name}"
         }
-
-        def nullField(dst:Field) = {
-            s"CAST(NULL AS ${dst.ftype.sqlType}) AS ${dst.name}"
+        def nullField(name:String, dst:FieldType) = {
+            s"CAST(NULL AS ${dst.sqlType}) AS ${name}"
         }
 
         val relations = input.map(id => context.getRelation(id).asInstanceOf[HiveRelation])
 
         val selects = relations.map { rel =>
-            val srcFields = rel.schema.fields.map(f => f.name -> f).toMap
-            val resultFields = schema.fields.map { field =>
-                srcFields.get(field.name).map(f => castField(f, field)).getOrElse(nullField(field))
+            val srcFields = rel.schema.fields.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
+            val srcPartitions = rel.partitions.map(p => p.name.toLowerCase(Locale.ROOT) -> p).toMap
+            val schemaFields = schema.fields.map { field =>
+                srcFields.get(field.name.toLowerCase(Locale.ROOT))
+                    .map(_.ftype)
+                    .orElse(srcPartitions.get(field.name.toLowerCase(Locale.ROOT)).map(_.ftype))
+                    .map(typ => castField(field.name, typ, field.ftype))
+                    .getOrElse(nullField(field.name, field.ftype))
             }
+            val partitionFields = partitions.map { part =>
+                srcPartitions.get(part.name.toLowerCase(Locale.ROOT))
+                    .map(_.ftype)
+                    .orElse(srcFields.get(part.name.toLowerCase(Locale.ROOT)).map(_.ftype))
+                    .map(typ => castField(part.name, typ, part.ftype))
+                    .getOrElse(nullField(part.name, part.ftype))
+            }
+            val allFields = schemaFields ++ partitionFields
             "SELECT\n" +
-                resultFields.mkString("    ",",\n    ","\n") +
+                allFields.mkString("    ",",\n    ","\n") +
             "FROM " + rel.tableIdentifier
         }
 
@@ -78,7 +93,15 @@ case class HiveUnionViewRelation(
         executor.spark.sql(sql)
     }
 
-    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = ???
+    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
+        logger.info(s"Destroying Hive VIEW relation '$name' with table $tableIdentifier")
+
+        val catalog = executor.catalog
+        if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            catalog.dropView(tableIdentifier)
+        }
+    }
+
     override def migrate(executor:Executor) : Unit = ???
 }
 

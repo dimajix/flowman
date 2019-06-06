@@ -22,7 +22,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.types.LongType
 
 
 class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -78,6 +80,74 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
         )
 
         model.create(executor)
+
+        model.destroy(executor)
+        context.getRelation(RelationIdentifier("t0")).destroy(executor)
+        context.getRelation(RelationIdentifier("t1")).destroy(executor)
+    }
+
+    it should "support partitions" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: hiveTable
+              |    database: default
+              |    table: t0
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: part0
+              |        type: long
+              |      - name: t0_exclusive_part
+              |        type: long
+              |
+              |  t1:
+              |    kind: hiveTable
+              |    database: default
+              |    table: t1
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: string
+              |    partitions:
+              |      - name: part0
+              |        type: string
+              |      - name: t1_exclusive_part
+              |        type: long
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        context.getRelation(RelationIdentifier("t0")).create(executor)
+        context.getRelation(RelationIdentifier("t1")).create(executor)
+
+        val schema = context.getRelation(RelationIdentifier("t0")).schema
+        val model = HiveUnionViewRelation(
+            Relation.Properties(context),
+            "default",
+            "v0",
+            Seq(RelationIdentifier("t0"), RelationIdentifier("t1")),
+            schema,
+            Seq(PartitionField("part0", LongType))
+        )
+
+        model.create(executor)
+
+        model.destroy(executor)
+        context.getRelation(RelationIdentifier("t0")).destroy(executor)
+        context.getRelation(RelationIdentifier("t1")).destroy(executor)
     }
 
     it should "be parseable from YML" in {

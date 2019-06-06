@@ -195,6 +195,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveUnionView", value = classOf[HiveUnionViewRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),

@@ -43,7 +43,7 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
               |          type: integer
               |        - name: t0_exclusive_col
               |          type: long
-              |          
+              |
               |  t1:
               |    kind: hiveTable
               |    database: default
@@ -78,5 +78,30 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
         )
 
         model.create(executor)
+    }
+
+    it should "be parseable from YML" in {
+        val spec =
+            """
+              |relations:
+              |  v0:
+              |    kind: hiveUnionView
+              |    database: default
+              |    view: t0
+              |    input:
+              |      - t0
+              |      - t1
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |        - name: t0_exclusive_col
+              |          type: long
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        project.relations("v0") shouldBe a[HiveUnionViewRelationSpec]
     }
 }

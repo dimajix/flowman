@@ -16,9 +16,11 @@
 
 package com.dimajix.flowman.spec.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -78,4 +80,28 @@ case class HiveUnionViewRelation(
 
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = ???
     override def migrate(executor:Executor) : Unit = ???
+}
+
+
+
+class HiveUnionViewRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec{
+    @JsonProperty(value="database") private var database: String = _
+    @JsonProperty(value="view") private var view: String = _
+    @JsonProperty(value="input") private var input: Seq[String] = Seq()
+
+    /**
+      * Creates the instance of the specified Relation with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): HiveUnionViewRelation = {
+        HiveUnionViewRelation(
+            instanceProperties(context),
+            context.evaluate(database),
+            context.evaluate(view),
+            input.map(i => RelationIdentifier(context.evaluate(i))),
+            if (schema != null) schema.instantiate(context) else null,
+            partitions.map(_.instantiate(context))
+        )
+    }
 }

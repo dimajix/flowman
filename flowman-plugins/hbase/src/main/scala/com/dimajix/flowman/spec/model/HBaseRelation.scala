@@ -81,7 +81,11 @@ case class HBaseRelation(
       */
     override def schema : Schema = {
         val fields = Field(rowKey, StringType, nullable = false) +: columns.map(c => Field(c.alias, c.dtype, description=c.description))
-        EmbeddedSchema(fields)
+        EmbeddedSchema(
+            Schema.Properties(context),
+            None,
+            fields,
+            Nil)
     }
 
     /**

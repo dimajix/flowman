@@ -278,7 +278,7 @@ case class HiveTableRelation(
             schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
             partitionColumnNames = partitions.map(_.name),
             properties = properties,
-            comment = Option(description)
+            comment = description
         )
 
         // Create table

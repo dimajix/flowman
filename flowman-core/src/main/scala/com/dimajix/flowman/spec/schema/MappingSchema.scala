@@ -42,7 +42,7 @@ case class MappingSchema (
       * Returns the description of the schema
       * @return
       */
-    override def description : String = s"Inferred from mapping $mapping"
+    override def description : Option[String] = Some(s"Inferred from mapping $mapping")
 
     /**
       * Returns the list of all fields of the schema

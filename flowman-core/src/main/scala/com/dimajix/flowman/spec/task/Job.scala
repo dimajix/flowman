@@ -55,10 +55,9 @@ case class JobParameter(
     /**
       * Interpolates a given FieldValue returning all values as an Iterable
       * @param value
-      * @param context
       * @return
       */
-    def interpolate(value:FieldValue)(implicit context:Context) : Iterable[Any] = {
+    def interpolate(value:FieldValue) : Iterable[Any] = {
         ftype.interpolate(value, granularity)
     }
 
@@ -99,7 +98,7 @@ object Job {
     class Builder(context:Context) {
         require(context != null)
         private var name:String = ""
-        private var description:String = ""
+        private var description:Option[String] = None
         private var logged:Boolean = true
         private var parameters:Seq[JobParameter] = Seq()
         private var tasks:Seq[TaskSpec] = Seq()
@@ -124,7 +123,7 @@ object Job {
         }
         def setDescription(desc:String) : Builder = {
             require(desc != null)
-            this.description = desc
+            this.description = Some(desc)
             this
         }
         def setLogged(boolean: Boolean) : Builder = {
@@ -176,7 +175,7 @@ object Job {
   */
 case class Job (
     instanceProperties:Job.Properties,
-    description:String,
+    description:Option[String],
     parameters:Seq[JobParameter],
     environment:Map[String,String],
     tasks:Seq[TaskSpec],
@@ -231,7 +230,8 @@ case class Job (
     def execute(executor:Executor, args:Map[String,String]) : Status = {
         require(args != null)
 
-        logger.info(s"Running job: '$name' ($description)")
+        val description = this.description.map("(" + _ + ")").getOrElse("")
+        logger.info(s"Running job: '$name' $description")
 
         // Create a new execution environment.
         val jobArgs = arguments(args)
@@ -297,7 +297,7 @@ case class Job (
         val result = Try {
             tasks.forall { spec =>
                 val task = spec.instantiate(context)
-                logger.info(s"Executing task '${task.description}'")
+                logger.info(s"Executing next task ${task.description.map("'" + _ + "'").getOrElse("")}")
                 task.execute(executor)
             }
         }
@@ -326,7 +326,7 @@ object JobSpec extends TypeRegistry[JobSpec] {
 }
 
 class JobSpec extends NamedSpec[Job] {
-    @JsonProperty(value="description") private var description:String = ""
+    @JsonProperty(value="description") private var description:Option[String] = None
     @JsonProperty(value="logged") private var logged:String = "true"
     @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
@@ -337,7 +337,7 @@ class JobSpec extends NamedSpec[Job] {
     override def instantiate(context: Context): Job = {
         Job(
             instanceProperties(context),
-            context.evaluate(description),
+            description.map(context.evaluate),
             parameters.map(_.instantiate(context)),
             splitSettings(environment).toMap,
             tasks,

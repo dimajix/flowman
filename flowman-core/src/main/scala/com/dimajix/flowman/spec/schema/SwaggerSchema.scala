@@ -100,7 +100,7 @@ case class SwaggerSchema(
 
         CachedSchema(
             fromSwaggerModel(model, nullable),
-            Option(swagger.getInfo).map(_.getDescription).orNull
+            Option(swagger.getInfo).map(_.getDescription)
         )
     }
 

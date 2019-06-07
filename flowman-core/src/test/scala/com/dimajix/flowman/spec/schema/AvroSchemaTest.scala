@@ -57,6 +57,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[AvroSchema]
+        result.description should be (None)
 
         val fields = result.fields
         fields.size should be (2)
@@ -98,7 +99,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[AvroSchema]
-        result.description should be ("Some Documentation")
+        result.description should be (Some("Some Documentation"))
 
         val fields = result.fields
         fields.size should be (1)

@@ -32,7 +32,7 @@ case class RelationSchema(
       *
       * @return
       */
-    override def description: String = {
+    override def description: Option[String] = {
         val rel = context.getRelation(relation)
 
         rel.schema.description

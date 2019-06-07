@@ -52,7 +52,7 @@ object Relation {
                 name,
                 kind,
                 Map(),
-                "",
+                None,
                 Map()
             )
         }
@@ -64,7 +64,7 @@ object Relation {
          name:String,
          kind:String,
          labels:Map[String,String],
-         description:String,
+         description:Option[String],
          options:Map[String,String]
     )
     extends Instance.Properties
@@ -91,7 +91,7 @@ abstract class Relation extends AbstractInstance {
       * Returns a description of the relation
       * @return
       */
-    def description : String
+    def description : Option[String]
 
     /**
       * Returns the Schema object which describes all fields of the relation
@@ -204,7 +204,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
-    @JsonProperty(value="description", required = false) private var description: String = _
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     override def instantiate(context:Context) : Relation
@@ -223,7 +223,7 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             name,
             kind,
             context.evaluate(labels),
-            context.evaluate(description),
+            description.map(context.evaluate),
             context.evaluate(options)
         )
     }

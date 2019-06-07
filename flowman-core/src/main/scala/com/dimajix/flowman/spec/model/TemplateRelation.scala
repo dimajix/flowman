@@ -46,7 +46,7 @@ case class TemplateRelation(
       * Returns a description for the relation
       * @return
       */
-    override def description : String = relationInstance.description
+    override def description : Option[String] = relationInstance.description
 
     /**
       * Returns the schema of the relation

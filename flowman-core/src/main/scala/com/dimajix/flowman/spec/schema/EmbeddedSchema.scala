@@ -23,16 +23,9 @@ import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.types.Field
 
 
-object EmbeddedSchema {
-    def apply(fields:Seq[Field], description:String=null) : EmbeddedSchema = {
-        EmbeddedSchema(Schema.Properties(), description, fields, Seq())
-    }
-}
-
-
 case class EmbeddedSchema(
     instanceProperties : Schema.Properties,
-    description : String,
+    description : Option[String],
     fields : Seq[Field],
     primaryKey : Seq[String]
 )
@@ -43,7 +36,7 @@ extends Schema {
 
 class EmbeddedSchemaSpec extends SchemaSpec {
     @JsonProperty(value="fields", required=false) private var fields: Seq[Field] = _
-    @JsonProperty(value="description", required = false) private var description: String = _
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value="primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
 
     /**
@@ -54,7 +47,7 @@ class EmbeddedSchemaSpec extends SchemaSpec {
     override def instantiate(context: Context): EmbeddedSchema = {
         EmbeddedSchema(
             Schema.Properties(context),
-            context.evaluate(description),
+            description.map(context.evaluate),
             fields,
             primaryKey.map(context.evaluate)
         )

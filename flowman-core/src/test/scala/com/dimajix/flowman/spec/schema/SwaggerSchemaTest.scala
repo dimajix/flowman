@@ -74,7 +74,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
-        result.description should be ("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification")
+        result.description should be (Some("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification"))
 
         val fields = result.fields
         fields.size should be (3)
@@ -143,7 +143,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
-        result.description should be ("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification")
+        result.description should be (Some("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification"))
 
         val fields = result.fields
         fields.size should be (3)
@@ -278,6 +278,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
+        result.description should be (None)
 
         val fields = result.fields
         fields.size should be (6)

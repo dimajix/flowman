@@ -49,7 +49,7 @@ class DerbyJdbcTest extends FlatSpec with Matchers with LocalTempDir {
                 Field("str_field", StringType),
                 Field("int_field", IntegerType)
             ),
-            "",
+            None,
             Seq()
         )
         JdbcUtils.tableExists(conn, table.identifier, options) should be (false)

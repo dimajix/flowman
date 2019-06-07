@@ -85,7 +85,7 @@ class JsonSchemaTest extends FlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[JsonSchema]
-        result.description should be ("Total amount for this Fee")
+        result.description should be (Some("Total amount for this Fee"))
 
         val fields = result.fields
         fields.size should be (2)
@@ -149,7 +149,7 @@ class JsonSchemaTest extends FlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[JsonSchema]
-        result.description should be ("Total amount for this Fee")
+        result.description should be (Some("Total amount for this Fee"))
 
         val fields = result.fields
         fields.size should be (2)

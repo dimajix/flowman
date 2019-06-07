@@ -66,7 +66,12 @@ case class KafkaRelation(
             Field("timestamp", TimestampType, nullable = false) ::
             Field("timestampType", IntegerType, nullable = false) ::
             Nil
-        EmbeddedSchema(fields)
+        EmbeddedSchema(
+            Schema.Properties(context),
+            description,
+            fields,
+            Nil
+        )
     }
 
     /**

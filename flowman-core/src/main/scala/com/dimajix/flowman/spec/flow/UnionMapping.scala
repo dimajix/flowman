@@ -26,6 +26,7 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
@@ -61,18 +62,25 @@ case class UnionMapping(
         val dfs = inputs.map(tables(_))
 
         // Create a common schema from collected columns
-        val schema = this.schema.map(_.sparkSchema).getOrElse(getCommonSchema(dfs))
-        logger.info(s"Creating union from mappings ${inputs.mkString(",")} using columns ${schema.fields.map(_.name).mkString(",")}}")
-
-        // Project all tables onto common schema
-        val schemaEnforcer = SchemaEnforcer(schema)
-        val projectedTables = dfs.map(schemaEnforcer.transform)
+        logger.info(s"Creating union from mappings ${inputs.mkString(",")}")
 
         // Now create a union of all tables
-        val union = projectedTables.reduce((l,r) => l.union(r))
+        val union =
+            if (schema.nonEmpty) {
+                // Project all tables onto specified schema
+                val schemaEnforcer = SchemaEnforcer(schema.get.sparkSchema)
+                val projectedTables = dfs.map(schemaEnforcer.transform)
+                projectedTables.reduce((l,r) => l.union(r))
+            }
+            else {
+                // Dynamically create common schema
+                val xfs = UnionTransformer()
+                xfs.transformDataFrames(dfs)
+            }
 
         // Optionally perform distinct operation
-        val result = if (distinct)
+        val result =
+            if (distinct)
                 union.distinct()
             else
                 union
@@ -83,18 +91,17 @@ case class UnionMapping(
     override def describe(input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
         require(input != null)
 
-        val result = schema
-            .map(s => StructType(s.fields))
-            .getOrElse {
-                val schemas = input.values.map(_.sparkType).toSeq
-                StructType.of(SchemaUtils.union(schemas))
+        val result =
+            if (schema.nonEmpty) {
+                StructType(schema.get.fields)
+            }
+            else {
+                val xfs = UnionTransformer()
+                val schemas = input.values.toSeq
+                xfs.transformSchemas(schemas)
             }
 
         Map("main" -> result)
-    }
-
-    private def getCommonSchema(tables:Seq[DataFrame]) = {
-        SchemaUtils.union(tables.map(_.schema))
     }
 }
 

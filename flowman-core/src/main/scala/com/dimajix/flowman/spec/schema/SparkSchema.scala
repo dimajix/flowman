@@ -46,7 +46,7 @@ case class SparkSchema(
 
         CachedSchema(
             Field.of(sparkSchema),
-            ""
+            None
         )
     }
 }

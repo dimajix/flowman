@@ -47,7 +47,7 @@ case class AvroSchema(
         val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
         CachedSchema(
             AvroSchemaUtils.fromAvro(avroSchema),
-            avroSchema.getDoc
+            Option(avroSchema.getDoc)
         )
     }
 }

@@ -32,7 +32,7 @@ import com.dimajix.flowman.spi.TypeRegistry
 
 object Task {
     object Properties {
-        def apply(context:Context, kind:String="", description:String="") : Properties = {
+        def apply(context:Context, kind:String="", description:Option[String]=None) : Properties = {
             require(context != null)
             Properties(
                 context,
@@ -48,7 +48,7 @@ object Task {
          namespace:Namespace,
          project:Project,
          kind:String,
-         description:String
+         description:Option[String]
     ) extends Instance.Properties {
         override val name: String = ""
         override val labels: Map[String, String] = Map()
@@ -69,7 +69,11 @@ abstract class Task extends AbstractInstance {
       */
     def execute(executor:Executor) : Boolean
 
-    def description : String
+    /**
+      * Returns an optional description of this Task
+      * @return
+      */
+    def description : Option[String]
 }
 
 
@@ -105,7 +109,7 @@ object TaskSpec extends TypeRegistry[TaskSpec] {
 ))
 abstract class TaskSpec extends Spec[Task] {
     @JsonProperty(value="kind", required=true) protected var kind:String = _
-    @JsonProperty(value="description", required=false) protected var description:String = _
+    @JsonProperty(value="description", required=false) protected var description:Option[String] = None
 
     override def instantiate(context:Context) : Task
 
@@ -116,7 +120,7 @@ abstract class TaskSpec extends Spec[Task] {
             context.namespace,
             context.project,
             kind,
-            context.evaluate(description)
+            description.map(context.evaluate)
         )
     }
 }

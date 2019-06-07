@@ -74,7 +74,7 @@ case class JsonSchema(
 
         CachedSchema(
             fromJsonObject(jsonSchema.asInstanceOf[ObjectSchema]).fields,
-            jsonSchema.getDescription
+            Option(jsonSchema.getDescription)
         )
     }
 

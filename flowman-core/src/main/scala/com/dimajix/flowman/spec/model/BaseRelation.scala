@@ -47,7 +47,7 @@ abstract class BaseRelation extends Relation {
       * Returns a description for the relation
       * @return
       */
-    override def description : String = instanceProperties.description
+    override def description : Option[String] = instanceProperties.description
 
     /**
       * Returns the schema of the relation

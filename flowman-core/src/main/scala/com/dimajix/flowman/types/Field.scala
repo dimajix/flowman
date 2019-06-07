@@ -23,7 +23,7 @@ import org.apache.spark.sql.types.StructField
 
 
 object Field {
-    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:String=null, default:String=null, size:Option[Int] = None, format:String=null) : Field = {
+    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:Option[String]=None, default:Option[String]=None, size:Option[Int]=None, format:Option[String]=None) : Field = {
         val field = new Field()
         field._name = name
         field._type = ftype
@@ -37,10 +37,10 @@ object Field {
 
     def of(field:org.apache.spark.sql.types.StructField) : Field = {
         val ftype = FieldType.of(field.dataType)
-        val description = field.getComment().orNull
+        val description = field.getComment()
         val size = if (field.metadata.contains("size")) Some(field.metadata.getLong("size").toInt) else None
-        val default = if (field.metadata.contains("default")) field.metadata.getString("default") else null
-        val format = if (field.metadata.contains("format")) field.metadata.getString("format") else null
+        val default = if (field.metadata.contains("default")) Some(field.metadata.getString("default")) else None
+        val format = if (field.metadata.contains("format")) Some(field.metadata.getString("format")) else None
         Field(field.name, ftype, field.nullable, description, default, size, format)
     }
 
@@ -60,10 +60,10 @@ class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = _
     @JsonProperty(value="nullable", required = true) private var _nullable: Boolean = true
-    @JsonProperty(value="description", required = false) private var _description: String = _
-    @JsonProperty(value="default", required = false) private var _default: String = _
+    @JsonProperty(value="description", required = false) private var _description: Option[String] = None
+    @JsonProperty(value="default", required = false) private var _default: Option[String] = None
     @JsonProperty(value="size", required = false) private var _size: Option[Int] = None
-    @JsonProperty(value="format", required = false) private var _format: String = _
+    @JsonProperty(value="format", required = false) private var _format: Option[String] = None
 
     /**
       * The name of the field
@@ -87,28 +87,27 @@ class Field {
       * Returns an optional description. If there is no description, null will be returned
       * @return
       */
-    def description : String = _description
+    def description : Option[String] = _description
 
     /**
       * Returns the size of the field. The size is an optional parameter used in fixed-width file formats. It is
-      * therefore complementary to any size specification in data types (like char, varchar or decimal). If no
-      * size is specified, 0 is returned
+      * therefore complementary to any size specification in data types (like char, varchar or decimal).
       * @return
       */
-    def size : Int = _size.getOrElse(0)
+    def size : Option[Int] = _size
 
     /**
-      * Returns an optional default value as a string. If no default value is specified, null is returned instead.
+      * Returns an optional default value as a string.
       * @return
       */
-    def default : String = _default
+    def default : Option[String] = _default
 
     /**
       * Returns an optional format specification as a string. The format specification can be used by relations or
       * file formats, for example to specify the date and time formats
       * @return
       */
-    def format : String = _format
+    def format : Option[String] = _format
 
     /**
       * Returns an appropriate (Hive) SQL type for this field. These can be directly used in CREATE TABLE statements.
@@ -136,10 +135,10 @@ class Field {
       */
     def sparkField : StructField = {
         val metadata = new MetadataBuilder()
-        Option(description).map(_.trim).filter(_.nonEmpty).foreach(d => metadata.putString("comment", d))
-        Option(default).foreach(d => metadata.putString("default", d))
-        Option(format).filter(_.nonEmpty).foreach(f => metadata.putString("format", f))
-        if (size > 0) metadata.putLong("size", size)
+        description.map(_.trim).filter(_.nonEmpty).foreach(d => metadata.putString("comment", d))
+        default.foreach(d => metadata.putString("default", d))
+        format.filter(_.nonEmpty).foreach(f => metadata.putString("format", f))
+        size.foreach(s => metadata.putLong("size", s))
         StructField(name, sparkType, nullable, metadata.build())
     }
 
@@ -169,10 +168,10 @@ class Field {
     def copy(name:String=_name,
              ftype:FieldType=_type,
              nullable:Boolean=_nullable,
-             description:String=_description,
-             default:String=_default,
+             description:Option[String]=_description,
+             default:Option[String]=_default,
              size:Option[Int]=_size,
-             format:String=_format) = {
+             format:Option[String]=_format) : Field = {
         Field(name, ftype, nullable, description, default, size, format)
     }
 }

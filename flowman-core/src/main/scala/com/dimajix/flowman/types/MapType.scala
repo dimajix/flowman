@@ -33,12 +33,12 @@ case class MapType(
       @JsonProperty(value="valueType") valueType:FieldType,
       @JsonProperty(value="containsNull") containsNull:Boolean = true
 ) extends ContainerType {
-    override def sparkType : DataType = {
+    override def sparkType : org.apache.spark.sql.types.MapType = {
         org.apache.spark.sql.types.MapType(keyType.sparkType, valueType.sparkType, containsNull)
     }
 
-    override def parse(value:String, granularity: String) : Any = ???
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+    override def parse(value:String, granularity:Option[String]=None) : Any = ???
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???
 }
 
 /*

@@ -22,29 +22,29 @@ import org.apache.spark.sql.types.DataType
 case object LongType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.LongType
 
-    override def parse(value:String, granularity: String) : Long = {
-        if (granularity != null && granularity.nonEmpty)
-            value.toLong / granularity.toLong * granularity.toLong
+    override def parse(value:String, granularity:Option[String]=None) : Long = {
+        if (granularity.nonEmpty)
+            value.toLong / granularity.get.toLong * granularity.get.toLong
         else
             value.toLong
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Long] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Long] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
             case RangeValue(start,end,step) => {
-                if (step != null && step.nonEmpty) {
-                    val range = start.toLong.until(end.toLong).by(step.toLong)
-                    if (granularity != null && granularity.nonEmpty) {
-                        val mod = granularity.toLong
+                if (step.nonEmpty) {
+                    val range = start.toLong.until(end.toLong).by(step.get.toLong)
+                    if (granularity.nonEmpty) {
+                        val mod = granularity.get.toLong
                         range.map(_ / mod * mod).distinct
                     }
                     else {
                         range
                     }
                 }
-                else if (granularity != null && granularity.nonEmpty) {
-                    val mod = granularity.toLong
+                else if (granularity.nonEmpty) {
+                    val mod = granularity.get.toLong
                     (start.toLong  / mod * mod).until(end.toLong / mod * mod).by(mod)
                 }
                 else {

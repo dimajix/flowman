@@ -34,17 +34,17 @@ class SchemaNodeOps extends NodeOps[Field] {
     override def empty : Field = Field("", NullType)
 
     override def metadata(value:Field, meta:Map[String,String]) : Field = {
-        val description = if (meta.contains("comment")) meta("comment") else value.description
-        val default = if (meta.contains("default")) meta("default") else value.default
-        val format = if (meta.contains("format")) meta("format") else value.format
-        val size = if (meta.contains("size")) meta("size").toInt else value.size
+        val description = meta.get("comment").orElse(value.description)
+        val default = meta.get("default").orElse(value.default)
+        val format = meta.get("format").orElse(value.format)
+        val size = meta.get("size").map(_.toInt).orElse(value.size)
         Field(
             value.name,
             value.ftype,
             value.nullable,
             description,
             default,
-            if (size > 0) Some(size) else None,
+            size,
             format
         )
     }
@@ -60,7 +60,7 @@ class SchemaNodeOps extends NodeOps[Field] {
                 nullable,
                 value.description,
                 value.default,
-                if (value.size > 0) Some(value.size) else None,
+                value.size,
                 value.format
             )
         }
@@ -116,14 +116,10 @@ object SchemaTree {
             }
 
             val metadata = mutable.Map[String,String]()
-            if (field.description != null)
-                metadata.update("comment", field.description)
-            if (field.default != null)
-                metadata.update("default", field.default)
-            if (field.format != null)
-                metadata.update("format", field.format)
-            if (field.size > 0)
-                metadata.update("size", field.size.toString)
+            field.description.foreach(metadata.update("comment", _))
+            field.default.foreach(metadata.update("default", _))
+            field.format.foreach(metadata.update("format", _))
+            field.size.foreach(s => metadata.update("size", s.toString))
 
             node.withNullable(field.nullable)
                 .withMetadata(metadata.toMap)

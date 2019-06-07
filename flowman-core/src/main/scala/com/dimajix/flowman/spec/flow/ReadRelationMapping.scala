@@ -109,7 +109,7 @@ class ReadRelationMappingSpec extends MappingSpec {
         val partitions= this.partitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context.evaluate(v.step))
+                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
             }
         ReadRelationMapping(
             instanceProperties(context),

@@ -61,7 +61,7 @@ object HBaseRelation {
         column:String,
         alias:String,
         dtype:FieldType=com.dimajix.flowman.types.StringType,
-        description:String=""
+        description:Option[String]=None
     )
 }
 
@@ -215,7 +215,7 @@ object HBaseRelationSpec {
         @JsonProperty(value="column", required = true) private var column: String = _
         @JsonProperty(value="alias", required = true) private var alias: String = _
         @JsonProperty(value="type", required = true) private var dtype: FieldType = com.dimajix.flowman.types.StringType
-        @JsonProperty(value="description", required = false) private var description: String = _
+        @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
         def instantiate(context:Context) : HBaseRelation.Column = {
             HBaseRelation.Column(
@@ -223,7 +223,7 @@ object HBaseRelationSpec {
                 context.evaluate(column),
                 Option(context.evaluate(alias)).filter(_.nonEmpty).getOrElse(context.evaluate(column)),
                 dtype,
-                context.evaluate(description)
+                description.map(context.evaluate)
             )
         }
     }

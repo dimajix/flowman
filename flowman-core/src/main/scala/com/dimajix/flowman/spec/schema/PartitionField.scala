@@ -29,7 +29,7 @@ object PartitionField {
         PartitionField(
             field.name,
             FieldType.of(field.dataType),
-            field.getComment().orNull
+            field.getComment()
         )
     }
 }
@@ -42,8 +42,8 @@ object PartitionField {
 case class PartitionField(
     name: String,
     ftype: FieldType,
-    description: String = null,
-    granularity: String = null
+    description: Option[String] = None,
+    granularity: Option[String] = None
 ) {
     def field : Field = Field(name, ftype, false, description)
 
@@ -63,15 +63,15 @@ case class PartitionField(
 class PartitionFieldSpec {
     @JsonProperty(value="name", required = true) private var name: String = _
     @JsonProperty(value="type", required = false) private var ftype: FieldType = _
-    @JsonProperty(value="description", required = false) private var description: String = _
-    @JsonProperty(value="granularity", required = false) private var granularity: String = _
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
+    @JsonProperty(value="granularity", required = false) private var granularity: Option[String] = None
 
     def instantiate(context: Context) : PartitionField = {
         PartitionField(
             context.evaluate(name),
             ftype,
-            context.evaluate(description),
-            context.evaluate(granularity)
+            description.map(context.evaluate),
+            granularity.map(context.evaluate)
         )
     }
 }

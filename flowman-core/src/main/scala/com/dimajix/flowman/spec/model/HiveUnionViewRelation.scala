@@ -37,10 +37,12 @@ case class HiveUnionViewRelation(
     override val database: String,
     override val table: String,
     input: Seq[RelationIdentifier],
-    override val schema:Schema,
+    customSchema:Option[Schema],
     override val partitions: Seq[PartitionField]
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveUnionViewRelation])
+
+    override def schema : Schema = customSchema.orNull
 
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
 
@@ -140,7 +142,7 @@ class HiveUnionViewRelationSpec extends RelationSpec with SchemaRelationSpec wit
             context.evaluate(database),
             context.evaluate(view),
             input.map(i => RelationIdentifier(context.evaluate(i))),
-            if (schema != null) schema.instantiate(context) else null,
+            Option(schema).map(_.instantiate(context)),
             partitions.map(_.instantiate(context))
         )
     }

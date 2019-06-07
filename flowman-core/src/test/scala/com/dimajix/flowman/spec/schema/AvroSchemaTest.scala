@@ -62,12 +62,12 @@ class AvroSchemaTest extends FlatSpec with Matchers {
         fields.size should be (2)
         fields(0).nullable should be (false)
         fields(0).name should be ("AccessDateTime")
-        fields(0).description should be ("AccessDateTime as a string")
+        fields(0).description should be (Some("AccessDateTime as a string"))
         fields(0).ftype should be (StringType)
 
         fields(1).nullable should be (false)
         fields(1).name should be ("Event")
-        fields(1).description should be ("Event as a string")
+        fields(1).description should be (Some("Event as a string"))
         fields(1).ftype should be (StringType)
     }
 
@@ -104,7 +104,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
         fields.size should be (1)
         fields(0).nullable should be (true)
         fields(0).name should be ("AccessDateTime")
-        fields(0).description should be ("AccessDateTime as a string")
+        fields(0).description should be (Some("AccessDateTime as a string"))
         fields(0).ftype should be (StringType)
     }
 
@@ -126,7 +126,7 @@ class AvroSchemaTest extends FlatSpec with Matchers {
         fields.size should be (1)
         fields(0).nullable should be (true)
         fields(0).name should be ("AccessDateTime")
-        fields(0).description should be ("AccessDateTime as a string")
+        fields(0).description should be (Some("AccessDateTime as a string"))
         fields(0).ftype should be (StringType)
     }
 }

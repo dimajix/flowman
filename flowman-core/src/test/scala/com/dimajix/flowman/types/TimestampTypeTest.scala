@@ -47,30 +47,30 @@ class TimestampTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of SingleValues" in {
-        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), null).head.toTimestamp should be (parseDateTime("2017-12-20T10:11:12"))
+        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), None).head.toTimestamp should be (parseDateTime("2017-12-20T10:11:12"))
     }
 
     it should "support interpolation of SingleValues with granularity" in {
-        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), "PT1H").head.toTimestamp should be (parseDateTime("2017-12-20T10:00:00"))
-        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), "P1D").head.toTimestamp should be (parseDateTime("2017-12-20T00:00:00"))
+        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), Some("PT1H")).head.toTimestamp should be (parseDateTime("2017-12-20T10:00:00"))
+        TimestampType.interpolate(SingleValue("2017-12-20T10:11:12"), Some("P1D")).head.toTimestamp should be (parseDateTime("2017-12-20T00:00:00"))
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = TimestampType.interpolate(ArrayValue(Array("2017-12-10T12:21:20","2017-12-10T12:21:40")), null).toSeq
+        val result = TimestampType.interpolate(ArrayValue(Array("2017-12-10T12:21:20","2017-12-10T12:21:40")), None).toSeq
         result.size should be (2)
         result(0).toTimestamp should be (parseDateTime("2017-12-10T12:21:20"))
         result(1).toTimestamp should be (parseDateTime("2017-12-10T12:21:40"))
     }
 
     it should "support interpolation of ArrayValues with granularity" in {
-        val result = TimestampType.interpolate(ArrayValue(Array("2017-12-10T12:21:20","2017-12-10T12:21:40")), "PT1H").toSeq
+        val result = TimestampType.interpolate(ArrayValue(Array("2017-12-10T12:21:20","2017-12-10T12:21:40")), Some("PT1H")).toSeq
         result.size should be (2)
         result(0).toTimestamp should be (parseDateTime("2017-12-10T12:00:00"))
         result(1).toTimestamp should be (parseDateTime("2017-12-10T12:00:00"))
     }
 
     it should "support interpolation of Ranges" in {
-        val result = TimestampType.interpolate(RangeValue("2017-12-10T01:02:03","2017-12-10T01:02:07"), null).toSeq
+        val result = TimestampType.interpolate(RangeValue("2017-12-10T01:02:03","2017-12-10T01:02:07"), None).toSeq
         result.size should be (4)
         result(0).toTimestamp should be (parseDateTime("2017-12-10T01:02:03"))
         result(1).toTimestamp should be (parseDateTime("2017-12-10T01:02:04"))
@@ -78,51 +78,51 @@ class TimestampTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of Ranges with granularity" in {
-        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00"), "P2D").toSeq
+        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00"), Some("P2D")).toSeq
         result.size should be (4)
         result(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00"), "P2D").toSeq
+        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00"), Some("P2D")).toSeq
         result2.size should be (4)
         result2(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result2(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result2(2).toTimestamp should be (parseDateTime("2017-12-14T00:00:00"))
         result2(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00"), "P2D").toSeq
+        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00"), Some("P2D")).toSeq
         result3.size should be (4)
         result3(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result3(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result3(2).toTimestamp should be (parseDateTime("2017-12-14T00:00:00"))
         result3(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result4 = TimestampType.interpolate(RangeValue("2017-12-11T00:00:00","2017-12-13T00:00:00"), "P1D").toSeq
+        val result4 = TimestampType.interpolate(RangeValue("2017-12-11T00:00:00","2017-12-13T00:00:00"), Some("P1D")).toSeq
         result4.size should be (2)
         result4(0).toTimestamp should be (parseDateTime("2017-12-11T00:00:00"))
         result4(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
 
-        val result5 = TimestampType.interpolate(RangeValue("2017-12-11T00:00:00","2017-12-12T23:00:00"), "P1D").toSeq
+        val result5 = TimestampType.interpolate(RangeValue("2017-12-11T00:00:00","2017-12-12T23:00:00"), Some("P1D")).toSeq
         result5.size should be (1)
         result5(0).toTimestamp should be (parseDateTime("2017-12-11T00:00:00"))
     }
 
     it should "support interpolation of Ranges with steps" in {
-        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00","P2D"), null).toSeq
+        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00",Some("P2D"))).toSeq
         result.size should be (4)
         result(0).toTimestamp should be (parseDateTime("2017-12-10T12:00:00"))
         result(1).toTimestamp should be (parseDateTime("2017-12-12T12:00:00"))
         result(3).toTimestamp should be (parseDateTime("2017-12-16T12:00:00"))
 
-        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00", "P2D"), null).toSeq
+        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00", Some("P2D"))).toSeq
         result2.size should be (4)
         result2(0).toTimestamp should be (parseDateTime("2017-12-10T12:00:00"))
         result2(1).toTimestamp should be (parseDateTime("2017-12-12T12:00:00"))
         result2(2).toTimestamp should be (parseDateTime("2017-12-14T12:00:00"))
         result2(3).toTimestamp should be (parseDateTime("2017-12-16T12:00:00"))
 
-        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00", "P2D"), null).toSeq
+        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00", Some("P2D"))).toSeq
         result3.size should be (4)
         result3(0).toTimestamp should be (parseDateTime("2017-12-11T12:00:00"))
         result3(1).toTimestamp should be (parseDateTime("2017-12-13T12:00:00"))
@@ -131,32 +131,32 @@ class TimestampTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of Ranges with steps and granularity" in {
-        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00","P2D"), "P2D").toSeq
+        val result = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00",Some("P2D")), Some("P2D")).toSeq
         result.size should be (4)
         result(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result0 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00","P1D"), "P2D").toSeq
+        val result0 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00",Some("P1D")), Some("P2D")).toSeq
         result0.size should be (4)
         result0(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result0(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result0(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result1 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00","P3D"), "P2D").toSeq
+        val result1 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T00:00:00",Some("P3D")), Some("P2D")).toSeq
         result1.size should be (3)
         result1(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result1(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result1(2).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00", "P2D"), "P2D").toSeq
+        val result2 = TimestampType.interpolate(RangeValue("2017-12-10T12:00:00","2017-12-18T01:00:00", Some("P2D")), Some("P2D")).toSeq
         result2.size should be (4)
         result2(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result2(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))
         result2(2).toTimestamp should be (parseDateTime("2017-12-14T00:00:00"))
         result2(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
 
-        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00", "P2D"), "P2D").toSeq
+        val result3 = TimestampType.interpolate(RangeValue("2017-12-11T12:00:00","2017-12-19T01:00:00", Some("P2D")), Some("P2D")).toSeq
         result3.size should be (4)
         result3(0).toTimestamp should be (parseDateTime("2017-12-10T00:00:00"))
         result3(1).toTimestamp should be (parseDateTime("2017-12-12T00:00:00"))

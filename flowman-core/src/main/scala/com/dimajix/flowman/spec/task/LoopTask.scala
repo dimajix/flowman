@@ -76,7 +76,7 @@ class LoopTaskSpec extends TaskSpec {
             args.map {
                 case (name,SingleValue(value)) => (name,SingleValue(context.evaluate(value)))
                 case (name,ArrayValue(values)) => (name,ArrayValue(values.map(context.evaluate)))
-                case (name,RangeValue(start,end,step)) => (name,RangeValue(context.evaluate(start), context.evaluate(end), context.evaluate(step)))
+                case (name,RangeValue(start,end,step)) => (name,RangeValue(context.evaluate(start), context.evaluate(end), step.map(context.evaluate)))
             },
             context.evaluate(force).toBoolean
         )

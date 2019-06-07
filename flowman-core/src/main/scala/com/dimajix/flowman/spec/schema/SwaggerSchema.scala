@@ -160,7 +160,7 @@ case class SwaggerSchema(
     }
 
     private def fromSwaggerProperty(name:String, property:Property, prefix:String, nullable:Boolean) : Field = {
-        Field(name, fromSwaggerType(property, prefix + name, nullable), nullable || !property.getRequired, property.getDescription)
+        Field(name, fromSwaggerType(property, prefix + name, nullable), nullable || !property.getRequired, Option(property.getDescription))
     }
 
     private def fromSwaggerType(property:Property, fqName:String, nullable:Boolean) : FieldType = {

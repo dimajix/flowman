@@ -22,9 +22,9 @@ import org.apache.spark.sql.types.DataType
 case object DoubleType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.DoubleType
 
-    override def parse(value:String, granularity: String) : Double = {
-        if (granularity != null && granularity.nonEmpty) {
-            val step = granularity.toDouble
+    override def parse(value:String, granularity:Option[String]=None) : Double = {
+        if (granularity.nonEmpty) {
+            val step = granularity.get.toDouble
             val v = value.toDouble
             v - (v % step)
         }
@@ -32,23 +32,23 @@ case object DoubleType extends FieldType {
             value.toDouble
         }
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Double] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Double] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(v => parse(v,granularity))
             case RangeValue(start,end,step) => {
-                if (step != null && step.nonEmpty) {
-                    val range = start.toDouble.until(end.toDouble).by(step.toDouble)
-                    if (granularity != null && granularity.nonEmpty) {
-                        val mod = granularity.toDouble
+                if (step.nonEmpty) {
+                    val range = start.toDouble.until(end.toDouble).by(step.get.toDouble)
+                    if (granularity.nonEmpty) {
+                        val mod = granularity.get.toDouble
                         range.map(x => math.floor(x / mod) * mod).distinct
                     }
                     else {
                         range
                     }
                 }
-                else if (granularity != null && granularity.nonEmpty) {
-                    val mod = granularity.toDouble
+                else if (granularity.nonEmpty) {
+                    val mod = granularity.get.toDouble
                     start.toDouble.until(end.toDouble).by(mod).map(x => math.floor(x / mod) * mod)
                 }
                 else {

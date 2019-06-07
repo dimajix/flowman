@@ -48,7 +48,7 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
                     .getOrElse(throw JsonMappingException.from(jp, "Missing 'start' value for RangeValue"))
                 val end = Option(node.get("end")).map(_.asText)
                     .getOrElse(throw JsonMappingException.from(jp, "Missing 'end' value for RangeValue"))
-                val step = Option(node.get("step")).map(_.asText).orNull
+                val step = Option(node.get("step")).map(_.asText)
                 RangeValue(start, end, step)
             }
             case _ => throw JsonMappingException.from(jp, "Wrong type for value/range")
@@ -64,7 +64,7 @@ case class SingleValue(value:String) extends FieldValue {
 case class ArrayValue(values:Seq[String]) extends FieldValue {
     require(values != null)
 }
-case class RangeValue(start:String, end:String, step:String=null) extends FieldValue {
+case class RangeValue(start:String, end:String, step:Option[String]=None) extends FieldValue {
     require(start != null)
     require(end != null)
 }

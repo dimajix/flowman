@@ -81,7 +81,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(0).nullable should be (false)
         fields(0).name should be ("name")
-        fields(0).description should be ("The Pets name")
+        fields(0).description should be (Some("The Pets name"))
         fields(0).ftype should be (StringType)
 
         fields(1).nullable should be (true)
@@ -90,7 +90,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(2).nullable should be (false)
         fields(2).name should be ("id")
-        fields(2).description should be ("The Pets ID")
+        fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
     }
 
@@ -150,7 +150,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(0).nullable should be (false)
         fields(0).name should be ("name")
-        fields(0).description should be ("The Pets name")
+        fields(0).description should be (Some("The Pets name"))
         fields(0).ftype should be (StringType)
 
         fields(1).nullable should be (true)
@@ -159,7 +159,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(2).nullable should be (false)
         fields(2).name should be ("id")
-        fields(2).description should be ("The Pets ID")
+        fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
     }
 

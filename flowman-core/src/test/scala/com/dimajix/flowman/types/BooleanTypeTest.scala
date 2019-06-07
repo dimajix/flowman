@@ -27,11 +27,11 @@ class BooleanTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of SingleValues" in {
-        BooleanType.interpolate(SingleValue("true"), null).head should be (true)
+        BooleanType.interpolate(SingleValue("true")).head should be (true)
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = BooleanType.interpolate(ArrayValue(Array("true","false")), null)
+        val result = BooleanType.interpolate(ArrayValue(Array("true","false")))
         result.head should be (true)
         result.drop(1).head should be (false)
     }

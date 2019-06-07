@@ -76,7 +76,7 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
             "default",
             "v0",
             Seq(RelationIdentifier("t0"), RelationIdentifier("t1")),
-            schema,
+            Some(schema),
             Seq()
         )
 
@@ -143,7 +143,7 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
             "default",
             "v0",
             Seq(RelationIdentifier("t0"), RelationIdentifier("t1")),
-            schema,
+            Some(schema),
             Seq(PartitionField("part0", LongType))
         )
 

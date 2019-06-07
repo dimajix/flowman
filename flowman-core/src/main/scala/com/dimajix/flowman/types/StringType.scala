@@ -22,15 +22,15 @@ import org.apache.spark.sql.types.DataType
 case object StringType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
 
-    override def parse(value:String, granularity: String) : String = {
+    override def parse(value:String, granularity:Option[String]=None) : String = {
         if (granularity != null && granularity.nonEmpty)
             throw new UnsupportedOperationException("String types cannot have a granularity")
         value
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[String] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[String] = {
         value match {
             case SingleValue(v) => Seq(v)
-            case ArrayValue(values) => values.toSeq
+            case ArrayValue(values) => values
             case RangeValue(start,end,step) => ???
         }
     }

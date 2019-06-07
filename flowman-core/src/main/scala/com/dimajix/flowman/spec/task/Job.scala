@@ -48,9 +48,9 @@ import com.dimajix.flowman.types.StringType
 case class JobParameter(
     name:String,
     ftype : FieldType,
-    granularity: String=null,
-    default: Any = null,
-    description:String=null
+    granularity: Option[String]=None,
+    default: Option[Any] = None,
+    description: Option[String]=None
 ) {
     /**
       * Interpolates a given FieldValue returning all values as an Iterable
@@ -141,7 +141,7 @@ object Job {
             this.parameters = this.parameters :+ param
             this
         }
-        def addParameter(name:String, ftype:FieldType, granularity:String = null, value:Any = null) : Builder = {
+        def addParameter(name:String, ftype:FieldType, granularity:Option[String] = None, value:Option[Any] = None) : Builder = {
             require(name != null)
             require(ftype != null)
             this.parameters = this.parameters :+ JobParameter(name, ftype, granularity, value)
@@ -217,7 +217,7 @@ case class Job (
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
             (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter '${kv._1}' not defined for job '$name'")).parse(kv._2)))
-        parameters.map(p => (p.name, p.default)).toMap ++ processedArgs
+        parameters.map(p => (p.name, p.default.orNull)).toMap ++ processedArgs
     }
 
     /**
@@ -229,6 +229,8 @@ case class Job (
       * @return
       */
     def execute(executor:Executor, args:Map[String,String]) : Status = {
+        require(args != null)
+
         logger.info(s"Running job: '$name' ($description)")
 
         // Create a new execution environment.
@@ -237,7 +239,7 @@ case class Job (
 
         // Check if the job should run isolated. This is required if arguments are specified, which could
         // result in different DataFrames with different arguments
-        val isolated = args != null && args.nonEmpty
+        val isolated = args.nonEmpty
 
         // Create a new execution environment.
         val rootContext = RootContext.builder(context)
@@ -365,28 +367,20 @@ class JobSpec extends NamedSpec[Job] {
 
 class JobParameterSpec extends Spec[JobParameter] {
     @JsonProperty(value = "name") private var name: String = ""
-    @JsonProperty(value = "description") private var description: String = ""
+    @JsonProperty(value = "description") private var description: Option[String] = None
     @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
-    @JsonProperty(value = "granularity", required = false) private var granularity: String = _
-    @JsonProperty(value = "default", required = false) private var default: String = _
+    @JsonProperty(value = "granularity", required = false) private var granularity: Option[String] = None
+    @JsonProperty(value = "default", required = false) private var default: Option[String] = None
 
     override def instantiate(context: Context): JobParameter = {
         require(context != null)
 
-        val default = {
-            val v = context.evaluate(this.default)
-            if (v != null)
-                ftype.parse(v)
-            else
-                null
-        }
-
         JobParameter(
             context.evaluate(name),
             ftype,
-            context.evaluate(granularity),
-            default,
-            context.evaluate(description)
+            granularity.map(context.evaluate),
+            default.map(context.evaluate).map(d => ftype.parse(d)),
+            description.map(context.evaluate)
         )
     }
 }

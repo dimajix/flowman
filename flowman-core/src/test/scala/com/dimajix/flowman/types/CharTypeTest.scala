@@ -39,11 +39,11 @@ class CharTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of SingleValues" in {
-        CharType(100).interpolate(SingleValue("lala"), null).head should be ("lala")
+        CharType(100).interpolate(SingleValue("lala"), None).head should be ("lala")
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = CharType(100).interpolate(ArrayValue(Array("12","27")), null).toSeq
+        val result = CharType(100).interpolate(ArrayValue(Array("12","27")), None).toSeq
         result(0) should be ("12")
         result(1) should be ("27")
     }

@@ -22,29 +22,29 @@ import org.apache.spark.sql.types.DataType
 case object IntegerType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.IntegerType
 
-    override def parse(value:String, granularity: String) : Int = {
-        if (granularity != null && granularity.nonEmpty)
-            value.toInt / granularity.toInt * granularity.toInt
+    override def parse(value:String, granularity:Option[String]=None) : Int = {
+        if (granularity.nonEmpty)
+            value.toInt / granularity.get.toInt * granularity.get.toInt
         else
             value.toInt
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Int] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Int] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
             case RangeValue(start,end,step) => {
-                if (step != null && step.nonEmpty) {
-                    val range = start.toInt.until(end.toInt).by(step.toInt)
-                    if (granularity != null && granularity.nonEmpty) {
-                        val mod = granularity.toInt
+                if (step.nonEmpty) {
+                    val range = start.toInt.until(end.toInt).by(step.get.toInt)
+                    if (granularity.nonEmpty) {
+                        val mod = granularity.get.toInt
                         range.map(_ / mod * mod).distinct
                     }
                     else {
                         range
                     }
                 }
-                else if (granularity != null && granularity.nonEmpty) {
-                    val mod = granularity.toInt
+                else if (granularity.nonEmpty) {
+                    val mod = granularity.get.toInt
                     (start.toInt / mod * mod).until(end.toInt / mod * mod).by(mod)
                 }
                 else {

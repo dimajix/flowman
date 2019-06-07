@@ -29,12 +29,12 @@ case class VarcharType(length: Int) extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
     override def sqlType : String = s"varchar($length)"
 
-    override def parse(value:String, granularity: String) : String = {
-        if (granularity != null && granularity.nonEmpty)
+    override def parse(value:String, granularity:Option[String]=None) : String = {
+        if (granularity.nonEmpty)
             throw new UnsupportedOperationException("Varchar types cannot have a granularity")
         value
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[String] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[String] = {
         value match {
             case SingleValue(v) => Seq(v)
             case ArrayValue(values) => values.toSeq

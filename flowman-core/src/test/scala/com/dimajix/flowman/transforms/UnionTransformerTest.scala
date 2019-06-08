@@ -29,8 +29,8 @@ import com.dimajix.flowman.{types => ftypes}
 
 
 object UnionTransformerTest {
-    case class Class1(col0:String, col1:Int)
-    case class Class2(col0:String, col2:Boolean)
+    case class Class1(colx:String, col0:String, col1:Int, col2:Int)
+    case class Class2(coly:String, coly0:String, col0:String, col0a:Int, col0b:Int, col1:Int, col3:Boolean)
     case class Class3(col0:Double, col1:Int)
 }
 
@@ -43,14 +43,20 @@ class UnionTransformerTest extends FlatSpec with Matchers with LocalSparkSession
 
         val xfs = UnionTransformer()
 
-        val df1 = Seq(Class1("x", 2)).toDF
-        val df2 = Seq(Class2("x", false)).toDF
+        val df1 = Seq(Class1("x", "y", 2, 3)).toDF
+        val df2 = Seq(Class2("y", "y0", "y", 2, 3, 4, false)).toDF
         val resultDf = xfs.transformDataFrames(Seq(df1, df2))
         resultDf.schema should be (
             StructType(Seq(
+                StructField("colx", StringType, true),
+                StructField("coly", StringType, true),
+                StructField("coly0", StringType, true),
                 StructField("col0", StringType, true),
-                StructField("col1", IntegerType, true),
-                StructField("col2", BooleanType, true)
+                StructField("col0a", IntegerType, true),
+                StructField("col0b", IntegerType, true),
+                StructField("col1", IntegerType, false),
+                StructField("col3", BooleanType, true),
+                StructField("col2", IntegerType, true)
             ))
         )
 

@@ -33,8 +33,14 @@ case class UnionTransformer() {
       */
     def transformDataFrames(input:Seq[DataFrame]) : DataFrame = {
         val schemas = input.map(_.schema)
-        val allColumns = schemas.foldLeft(UnionSchema[StructField]())((union, schema) => {
-            schema.foldLeft(union)((union,field) => union.withField(field.name, field, mergeFields))
+        val allColumns = schemas.foldLeft(UnionSchema[StructField]())((union, fields) => {
+            val fieldNames = fields.map(_.name)
+            fields.zipWithIndex
+                .foldLeft(union) { case (union,(field, idx)) =>
+                    val prev = fieldNames.take(idx)
+                    val next = fieldNames.drop(idx + 1)
+                    union.withField(field.name, prev, next, field, mergeFields)
+                }
         }).fields
 
         val projectedDf = input.map { df =>
@@ -59,8 +65,15 @@ case class UnionTransformer() {
       * @return
       */
     def transformSchemas(input:Seq[ftypes.StructType]) : ftypes.StructType = {
-        val allColumns = input.foldLeft(UnionSchema[ftypes.Field]())((union, schema) => {
-            schema.fields.foldLeft(union)((union,field) => union.withField(field.name, field, mergeFields))
+        val schemas = input.map(_.fields)
+        val allColumns = schemas.foldLeft(UnionSchema[ftypes.Field]())((union, fields) => {
+            val fieldNames = fields.map(_.name)
+            fields.zipWithIndex
+                .foldLeft(union) { case (union,(field,idx)) =>
+                    val prev = fieldNames.take(idx)
+                    val next = fieldNames.drop(idx + 1)
+                    union.withField(field.name, prev, next, field, mergeFields)
+                }
         })
 
         // Fix "nullable" property of columns not present in all input schemas
@@ -87,24 +100,37 @@ case class UnionTransformer() {
         def withField(name:String, newField:T) : UnionSchema[T] = {
             val lowerName = name.toLowerCase(Locale.ROOT)
             val newFieldByName = fieldsByName.updated(lowerName, newField)
-            val newFieldNames = if (fieldsByName.contains(lowerName))
-                fieldNames
-            else
-                fieldNames :+ lowerName
+            val newFieldNames =
+                if (fieldsByName.contains(lowerName)) {
+                    fieldNames
+                }
+                else {
+                    fieldNames :+ lowerName
+                }
 
             UnionSchema(
                 newFieldByName,
                 newFieldNames
             )
         }
-        def withField(name:String, field:T, merge:(T,T) => T) : UnionSchema[T] = {
+        def withField(name:String, prev:Seq[String], next:Seq[String], field:T, merge:(T,T) => T) : UnionSchema[T] = {
             val lowerName = name.toLowerCase(Locale.ROOT)
             val newField = fieldsByName.get(lowerName).map(merge(_, field)).getOrElse(field)
             val newFieldByName = fieldsByName.updated(lowerName, newField)
-            val newFieldNames = if (fieldsByName.contains(lowerName))
-                    fieldNames
-                else
-                    fieldNames :+ lowerName
+            val newFieldNames =
+                if (fieldsByName.contains(lowerName)) {
+                        fieldNames
+                }
+                else {
+                    val fieldIndexByName = fieldNames.zipWithIndex.toMap
+                    val insertAfter = prev.flatMap(fieldIndexByName.get).reverse.headOption
+                    val insertBefore = next.flatMap(fieldIndexByName.get).headOption
+                    (insertAfter, insertBefore) match {
+                        case (Some(idx), _) => (fieldNames.take(idx + 1) :+ lowerName) ++ fieldNames.drop(idx + 1)
+                        case (_ ,Some(idx)) => (fieldNames.take(idx) :+ lowerName) ++ fieldNames.drop(idx)
+                        case (None,None) => fieldNames :+ lowerName
+                    }
+                }
 
             UnionSchema(
                 newFieldByName,

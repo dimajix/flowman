@@ -52,7 +52,7 @@ case class ShowRelationTask(
         logger.info(s"Showing first $limit rows of relation '$relation'")
 
         val rel = context.getRelation(relation)
-        val table = rel.read(executor, null)
+        val table = rel.read(executor, None)
         val projection = if (columns.nonEmpty)
             table.select(columns.map(c => table(c)):_*)
         else

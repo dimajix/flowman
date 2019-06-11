@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 
 
@@ -53,6 +54,6 @@ class TemplateMappingTest extends FlatSpec with Matchers {
         mapping should not be (null)
         mapping shouldBe a[TemplateMapping]
 
-        mapping.dependencies should be (Array(MappingIdentifier("lala")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("lala")))
     }
 }

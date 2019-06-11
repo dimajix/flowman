@@ -77,15 +77,21 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
     }
 
     it should "support writing to" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.context
+
         createTable("table1", "f")
-        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.Column("f", "col1", "col_1")))
+        val relation = HBaseRelation(
+            Relation.Properties(context),
+            "default", "table1", "pk",
+            Seq(HBaseRelation.Column("f", "col1", "col_1"))
+        )
         val df = spark.range(1, 10).toDF().select(
             col("id").cast("string").as("pk"),
             (col("id")*lit(2)).cast("string").as("col_1")
         )
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
         relation.write(executor, df)
 
         val connection = ConnectionFactory.createConnection(hbaseTestingUtility.getConfiguration)
@@ -101,11 +107,17 @@ class HBaseRelationTest extends FlatSpec with Matchers  with LocalSparkSession {
         if (!HBaseRelation.supportsRead())
             cancel()
 
-        val relation = HBaseRelation("default", "table1", "pk", Seq(HBaseRelation.Column("f", "col1", "col_1")))
-
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
-        val df = relation.read(executor, null, Map())
+        val context = session.context
+
+        val relation = HBaseRelation(
+            Relation.Properties(context),
+            "default", "table1", "pk",
+            Seq(HBaseRelation.Column("f", "col1", "col_1"))
+        )
+
+        val df = relation.read(executor, None, Map())
         val rows = df.sort("pk").collect()
 
         rows.toSeq should be((1 until 10).map(i => Row(i.toString, (2*i).toString)))

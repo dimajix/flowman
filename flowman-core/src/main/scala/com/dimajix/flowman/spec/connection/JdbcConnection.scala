@@ -74,7 +74,7 @@ class JdbcConnectionSpec extends ConnectionSpec  {
             context.evaluate(url),
             context.evaluate(username),
             context.evaluate(password),
-            properties.mapValues(context.evaluate)
+            context.evaluate(properties)
         )
     }
 }

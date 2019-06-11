@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.{types => ftypes}
@@ -59,7 +60,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = DropMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("df"),
+            MappingOutputIdentifier("df"),
             Seq("_1", "_3")
         )
         val expectedSchema = StructType(Seq(
@@ -67,10 +68,10 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("_4", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -87,7 +88,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = DropMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("df"),
+            MappingOutputIdentifier("df"),
             Seq("_1", "_3", "no_such_column")
         )
         val expectedSchema = StructType(Seq(
@@ -95,10 +96,10 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("_4", StringType)
         ))
 
-        val outputDf = mapping.execute(executor, Map(MappingIdentifier("df") -> inputDf))
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

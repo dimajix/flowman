@@ -26,32 +26,32 @@ class ByteTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of SingleValues" in {
-        ByteType.interpolate(SingleValue("12"), null).head should be (12)
+        ByteType.interpolate(SingleValue("12")).head should be (12)
     }
 
     it should "support interpolation of SingleValues with granularity" in {
-        ByteType.interpolate(SingleValue("12"), "3").head should be (12)
-        ByteType.interpolate(SingleValue("13"), "3").head should be (12)
-        ByteType.interpolate(SingleValue("14"), "3").head should be (12)
-        ByteType.interpolate(SingleValue("15"), "3").head should be (15)
+        ByteType.interpolate(SingleValue("12"), Some("3")).head should be (12)
+        ByteType.interpolate(SingleValue("13"), Some("3")).head should be (12)
+        ByteType.interpolate(SingleValue("14"), Some("3")).head should be (12)
+        ByteType.interpolate(SingleValue("15"), Some("3")).head should be (15)
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = ByteType.interpolate(ArrayValue(Array("12","27")), null)
+        val result = ByteType.interpolate(ArrayValue(Array("12","27")))
         result.head should be (12)
         result.drop(1).head should be (27)
     }
 
     it should "support interpolation of Ranges" in {
-        val result = ByteType.interpolate(RangeValue("12","16"), null)
+        val result = ByteType.interpolate(RangeValue("12","16"))
         result.toSeq should be (Seq(12,13,14,15).map(_.toByte))
     }
 
     it should "support interpolation of Ranges with granularity" in {
-        val result = ByteType.interpolate(RangeValue("12","16"), "2")
+        val result = ByteType.interpolate(RangeValue("12","16"), Some("2"))
         result.toSeq should be (Seq(12,14).map(_.toByte))
 
-        val result2 = ByteType.interpolate(RangeValue("13","17"), "2")
+        val result2 = ByteType.interpolate(RangeValue("13","17"), Some("2"))
         result2.toSeq should be (Seq(12,14).map(_.toByte))
     }
 }

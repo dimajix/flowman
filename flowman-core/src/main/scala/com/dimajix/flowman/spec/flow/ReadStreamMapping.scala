@@ -22,9 +22,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
@@ -43,12 +42,17 @@ case class ReadStreamMapping (
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]): DataFrame = {
-        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
-        logger.info(s"Reading from streaming relation '${relation}'")
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+        require(executor != null)
+        require(input != null)
+
+        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
+        logger.info(s"Reading from streaming relation '$relation'")
 
         val rel = context.getRelation(relation)
-        rel.readStream(executor, schema)
+        val result = rel.readStream(executor, schema)
+
+        Map("main" -> result)
     }
 
     /**
@@ -56,8 +60,8 @@ case class ReadStreamMapping (
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array()
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq()
     }
 
     /**
@@ -65,16 +69,18 @@ case class ReadStreamMapping (
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        if (columns.nonEmpty) {
+        val result = if (columns.nonEmpty) {
             StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
             val rel = context.getRelation(relation)
             StructType(rel.schema.fields)
         }
+
+        Map("main" -> result)
     }
 }
 
@@ -93,7 +99,7 @@ class ReadStreamMappingSpec extends MappingSpec {
         ReadStreamMapping(
             instanceProperties(context),
             RelationIdentifier(context.evaluate(relation)),
-            columns.mapValues(context.evaluate)
+            context.evaluate(columns)
         )
     }
 }

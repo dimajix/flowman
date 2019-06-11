@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.util
+
 import scala.collection.mutable
 
 import org.apache.hadoop.conf.Configuration
@@ -23,6 +25,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
 
+import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.MappingIdentifier
@@ -88,7 +91,14 @@ abstract class Executor {
       *
       * @param mapping
       */
-    def instantiate(mapping:Mapping) : DataFrame
+    def instantiate(mapping:Mapping) : Map[String,DataFrame]
+
+    /**
+      * Creates an instance of a mapping, or retrieves it from cache
+      *
+      * @param mapping
+      */
+    def instantiate(mapping:Mapping, output:String) : DataFrame
 
     /**
       * Releases any temporary tables
@@ -99,5 +109,5 @@ abstract class Executor {
       * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
       * @return
       */
-    protected[execution] def cache : mutable.Map[MappingIdentifier,DataFrame]
+    protected[execution] def cache : IdentityHashMap[Mapping,Map[String,DataFrame]]
 }

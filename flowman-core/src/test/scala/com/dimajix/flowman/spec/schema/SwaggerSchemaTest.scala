@@ -22,6 +22,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.DecimalType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.StringType
@@ -71,14 +74,14 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
-        result.description should be ("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification")
+        result.description should be (Some("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification"))
 
         val fields = result.fields
         fields.size should be (3)
 
         fields(0).nullable should be (false)
         fields(0).name should be ("name")
-        fields(0).description should be ("The Pets name")
+        fields(0).description should be (Some("The Pets name"))
         fields(0).ftype should be (StringType)
 
         fields(1).nullable should be (true)
@@ -87,7 +90,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(2).nullable should be (false)
         fields(2).name should be ("id")
-        fields(2).description should be ("The Pets ID")
+        fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
     }
 
@@ -140,14 +143,14 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[SwaggerSchema]
-        result.description should be ("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification")
+        result.description should be (Some("A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification"))
 
         val fields = result.fields
         fields.size should be (3)
 
         fields(0).nullable should be (false)
         fields(0).name should be ("name")
-        fields(0).description should be ("The Pets name")
+        fields(0).description should be (Some("The Pets name"))
         fields(0).ftype should be (StringType)
 
         fields(1).nullable should be (true)
@@ -156,7 +159,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(2).nullable should be (false)
         fields(2).name should be ("id")
-        fields(2).description should be ("The Pets ID")
+        fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
     }
 
@@ -237,5 +240,71 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
         struct.fields(2).nullable should be (false)
         struct.fields(2).name should be ("num")
         struct.fields(2).ftype should be (IntegerType)
+    }
+
+    it should "support integers, floats, doubles and decimals" in {
+        val spec =
+            """
+              |kind: swagger
+              |entity: Numbers
+              |spec: |
+              |    swagger: "2.0"
+              |    definitions:
+              |      Numbers:
+              |        properties:
+              |          int32:
+              |            type: integer
+              |            format: int32
+              |          int64:
+              |            type: integer
+              |            format: int64
+              |          float:
+              |            type: number
+              |            format: float
+              |          double:
+              |            type: number
+              |            format: double
+              |          number:
+              |            type: number
+              |          decimal:
+              |            type: number
+              |            multipleOf: 0.01
+              |            maximum: 10000000
+              |""".stripMargin
+
+        val session = Session.builder().build()
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[SwaggerSchemaSpec]
+
+        val result = schemaSpec.instantiate(session.context)
+        result shouldBe an[SwaggerSchema]
+        result.description should be (None)
+
+        val fields = result.fields
+        fields.size should be (6)
+
+        fields(0).nullable should be (true)
+        fields(0).name should be ("int32")
+        fields(0).ftype should be (IntegerType)
+
+        fields(1).nullable should be (true)
+        fields(1).name should be ("int64")
+        fields(1).ftype should be (LongType)
+
+        fields(2).nullable should be (true)
+        fields(2).name should be ("float")
+        fields(2).ftype should be (FloatType)
+
+        fields(3).nullable should be (true)
+        fields(3).name should be ("double")
+        fields(3).ftype should be (DoubleType)
+
+        fields(4).nullable should be (true)
+        fields(4).name should be ("number")
+        fields(4).ftype should be (DecimalType(10,0))
+
+        fields(5).nullable should be (true)
+        fields(5).name should be ("decimal")
+        fields(5).ftype should be (DecimalType(10,2))
     }
 }

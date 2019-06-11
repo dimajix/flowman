@@ -22,6 +22,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 
@@ -33,8 +34,8 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("prev"),
-            MappingIdentifier("updates"),
+            MappingOutputIdentifier("prev"),
+            MappingOutputIdentifier("updates"),
             Seq("_1"),
             "_3 != 'DELETE'"
         )
@@ -50,7 +51,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("id-126", "will_be_added", "CREATE")
         ))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("_1").collect().toSeq
@@ -67,8 +68,8 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("prev"),
-            MappingIdentifier("updates"),
+            MappingOutputIdentifier("prev"),
+            MappingOutputIdentifier("updates"),
             Seq("id"),
             "op != 'DELETE'"
         )
@@ -86,7 +87,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             .withColumnRenamed("_2", "data")
             .withColumnRenamed("_3", "op")
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("id").collect().toSeq
@@ -102,8 +103,8 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("prev"),
-            MappingIdentifier("updates"),
+            MappingOutputIdentifier("prev"),
+            MappingOutputIdentifier("updates"),
             Seq("_1"),
             "op != 'DELETE'"
         )
@@ -119,7 +120,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
                 ("id-126", "will_be_added", "CREATE")
             )).withColumnRenamed("_3", "op")
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("_1").collect().toSeq
@@ -136,8 +137,8 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("prev"),
-            MappingIdentifier("updates"),
+            MappingOutputIdentifier("prev"),
+            MappingOutputIdentifier("updates"),
             Seq("_1"),
             "op != 'DELETE'"
         )
@@ -161,7 +162,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("id-126", "subid-1", "will_be_added", "v1", "CREATE")
         )).withColumnRenamed("_5", "op")
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("prev") -> prev, MappingIdentifier("updates") -> updates))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("prev") -> prev, MappingOutputIdentifier("updates") -> updates))("main")
         result.schema should be (prev.schema)
 
         val rows = result.orderBy("_1", "_2").collect().toSeq
@@ -200,9 +201,9 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping shouldBe an[UpdateMappingSpec]
 
         val updateMapping = mapping.instantiate(session.context).asInstanceOf[UpdateMapping]
-        updateMapping.dependencies.toSeq should be (Seq(MappingIdentifier("t0"),MappingIdentifier("t1")))
-        updateMapping.input should be (MappingIdentifier("t0"))
-        updateMapping.updates should be (MappingIdentifier("t1"))
+        updateMapping.dependencies should be (Seq(MappingOutputIdentifier("t0"),MappingOutputIdentifier("t1")))
+        updateMapping.input should be (MappingOutputIdentifier("t0"))
+        updateMapping.updates should be (MappingOutputIdentifier("t1"))
         updateMapping.keyColumns should be (Seq("id"))
         updateMapping.filter should be ("operation != 'DELETE'")
     }

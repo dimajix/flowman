@@ -47,12 +47,12 @@ object Relation {
         def apply(context:Context, name:String="", kind:String="") : Properties = {
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 kind,
                 Map(),
-                "",
+                None,
                 Map()
             )
         }
@@ -64,7 +64,7 @@ object Relation {
          name:String,
          kind:String,
          labels:Map[String,String],
-         description:String,
+         description:Option[String],
          options:Map[String,String]
     )
     extends Instance.Properties
@@ -91,7 +91,7 @@ abstract class Relation extends AbstractInstance {
       * Returns a description of the relation
       * @return
       */
-    def description : String
+    def description : Option[String]
 
     /**
       * Returns the Schema object which describes all fields of the relation
@@ -113,7 +113,7 @@ abstract class Relation extends AbstractInstance {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -136,7 +136,7 @@ abstract class Relation extends AbstractInstance {
       * @param schema
       * @return
       */
-    def readStream(executor:Executor, schema:StructType) : DataFrame = ???
+    def readStream(executor:Executor, schema:Option[StructType]) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink
@@ -195,14 +195,16 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveUnionView", value = classOf[HiveUnionViewRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
+    new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
-    @JsonProperty(value="description", required = false) private var description: String = _
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     override def instantiate(context:Context) : Relation
@@ -220,9 +222,9 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate),
-            context.evaluate(description),
-            options.mapValues(context.evaluate)
+            context.evaluate(labels),
+            description.map(context.evaluate),
+            context.evaluate(options)
         )
     }
 }

@@ -74,7 +74,7 @@ case class JsonSchema(
 
         CachedSchema(
             fromJsonObject(jsonSchema.asInstanceOf[ObjectSchema]).fields,
-            jsonSchema.getDescription
+            Option(jsonSchema.getDescription)
         )
     }
 
@@ -85,7 +85,7 @@ case class JsonSchema(
     }
 
     private def fromJsonField(name:String, schema:JSchema, required: Boolean) : Field = {
-        Field(name, fromJsonType(schema), !required && Option(schema.isNullable).forall(_.booleanValue()), schema.getDescription)
+        Field(name, fromJsonType(schema), !required && Option(schema.isNullable).forall(_.booleanValue()), Option(schema.getDescription))
     }
 
     private def fromJsonType(schema:JSchema) : FieldType = {

@@ -50,6 +50,8 @@ case class SchemaEnforcer(schema:StructType) {
     def transform(inputSchema:StructType) : Seq[Column] = {
         def conformField(requiredField:StructField, inputType:DataType, prefix:String) : Column = {
             requiredField.dataType match {
+                // Simple match: DataType is already correct
+                case `inputType` => col(prefix + requiredField.name)
                 case st:StructType =>
                     val columns = conformStruct(st, inputType.asInstanceOf[StructType], prefix + requiredField.name + ".")
                     if (requiredField.nullable) {
@@ -58,6 +60,7 @@ case class SchemaEnforcer(schema:StructType) {
                     else {
                         struct(columns: _*)
                     }
+                // Arrays are not completely supported...
                 case _:ArrayType => col(prefix + requiredField.name)
                 case _:DataType => col(prefix + requiredField.name).cast(requiredField.dataType)
             }

@@ -22,39 +22,44 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
 
 object MappingSchema {
     def apply(context:Context, mapping:String) : MappingSchema = {
-        MappingSchema(Schema.Properties(context), MappingIdentifier(mapping))
+        MappingSchema(Schema.Properties(context), MappingOutputIdentifier(mapping))
     }
 }
 
 
 case class MappingSchema (
     instanceProperties:Schema.Properties,
-    mapping: MappingIdentifier
+    mapping: MappingOutputIdentifier
 ) extends Schema {
     /**
       * Returns the description of the schema
       * @return
       */
-    override def description : String = s"Inferred from mapping $mapping"
+    override def description : Option[String] = Some(s"Inferred from mapping $mapping")
 
     /**
       * Returns the list of all fields of the schema
       * @return
       */
     override def fields : Seq[Field] = {
-        val schemaCache = mutable.Map[MappingIdentifier, StructType]()
+        val schemaCache = mutable.Map[MappingOutputIdentifier, StructType]()
 
-        def describe(mapping:MappingIdentifier) : StructType = {
+        def describe(mapping:MappingOutputIdentifier) : StructType = {
             schemaCache.getOrElseUpdate(mapping, {
-                val map = context.getMapping(mapping)
-                val deps = map.dependencies.map(id => (id,describe(id))).toMap
-                map.describe(deps)
+                val map = context.getMapping(MappingIdentifier(mapping.name, mapping.project))
+                if (!map.outputs.contains(mapping.output))
+                    throw new NoSuchElementException(s"Mapping ${map.identifier} does mot produce output '${mapping.output}'")
+                val deps = map.dependencies
+                    .map(id => (id,describe(id)))
+                    .toMap
+                map.describe(deps, mapping.output)
             })
         }
 
@@ -78,10 +83,10 @@ class MappingSchemaSpec extends SchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): Schema = {
+    override def instantiate(context: Context): MappingSchema = {
         MappingSchema(
             Schema.Properties(context),
-            MappingIdentifier(context.evaluate(mapping))
+            MappingOutputIdentifier(context.evaluate(mapping))
         )
     }
 }

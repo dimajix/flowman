@@ -22,6 +22,6 @@ import org.apache.spark.sql.types.DataType
 case object NullType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.NullType
 
-    override def parse(value:String, granularity: String) : Any = ???
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+    override def parse(value:String, granularity:Option[String]=None) : Any = ???
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???
 }

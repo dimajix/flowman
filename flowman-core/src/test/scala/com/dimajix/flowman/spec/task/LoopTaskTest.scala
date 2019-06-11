@@ -127,7 +127,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         )
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
-        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2")))
+        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, Some("2"))))
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "4"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "6"))).thenReturn(Status.SUCCESS)
@@ -158,7 +158,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
         )
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
-        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, "2", "4")))
+        when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, Some("2"), Some("4"))))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 

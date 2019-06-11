@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -44,8 +45,9 @@ class ExplainCommand extends ActionCommand {
         logger.info(s"Explaining mapping '$mapping'")
 
         Try {
-            val instance = context.getMapping(MappingIdentifier(mapping))
-            val table = executor.instantiate(instance)
+            val id = MappingOutputIdentifier(mapping)
+            val instance = context.getMapping(id.mapping)
+            val table = executor.instantiate(instance, id.output)
             table.explain(extended)
         } match {
             case Success(_) =>

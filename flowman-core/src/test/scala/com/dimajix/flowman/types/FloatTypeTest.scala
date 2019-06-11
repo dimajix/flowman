@@ -26,11 +26,11 @@ class FloatTypeTest extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of SingleValues" in {
-        FloatType.interpolate(SingleValue("1.0"), null).head should be (1.0)
+        FloatType.interpolate(SingleValue("1.0")).head should be (1.0)
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = FloatType.interpolate(ArrayValue("1.0", "2.0"), null).toSeq
+        val result = FloatType.interpolate(ArrayValue("1.0", "2.0")).toSeq
         result(0) should be (1.0)
         result(1) should be (2.0)
     }

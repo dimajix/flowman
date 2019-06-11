@@ -23,12 +23,13 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class FilterMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     condition:String
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[FilterMapping])
@@ -38,8 +39,8 @@ case class FilterMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -49,11 +50,16 @@ case class FilterMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         logger.info(s"Filtering mapping '$input' with condition '$condition'")
 
         val df = tables(input)
-        df.filter(condition)
+        val result = df.filter(condition)
+
+        Map("main" -> result)
     }
 
     /**
@@ -61,10 +67,12 @@ case class FilterMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        input(this.input)
+        val result = input(this.input)
+
+        Map("main" -> result)
     }
 }
 
@@ -83,7 +91,7 @@ class FilterMappingSpec extends MappingSpec {
     override def instantiate(context: Context): FilterMapping = {
         FilterMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(condition)
         )
     }

@@ -20,7 +20,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class BlackholeTarget(
@@ -32,7 +32,7 @@ case class BlackholeTarget(
       *
       * @param executor
       */
-    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
         input(instanceProperties.input).write.format("null").save()
     }
 

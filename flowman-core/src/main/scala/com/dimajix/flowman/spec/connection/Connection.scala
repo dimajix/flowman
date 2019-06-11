@@ -113,7 +113,7 @@ abstract class ConnectionSpec extends NamedSpec[Connection] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate)
+            context.evaluate(labels)
         )
     }
 }

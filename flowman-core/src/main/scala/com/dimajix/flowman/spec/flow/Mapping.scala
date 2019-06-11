@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
@@ -37,11 +38,12 @@ import com.dimajix.flowman.types.StructType
 
 object Mapping {
     object Properties {
-        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
+            require(context != null)
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 kind,
                 Map(),
@@ -100,7 +102,13 @@ abstract class Mapping extends AbstractInstance {
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    def dependencies : Array[MappingIdentifier]
+    def dependencies : Seq[MappingOutputIdentifier]
+
+    /**
+      * Lists all outputs of this mapping. Every mapping should have one "main" output
+      * @return
+      */
+    def outputs : Seq[String]
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -109,14 +117,21 @@ abstract class Mapping extends AbstractInstance {
       * @param input
       * @return
       */
-    def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame
+    def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(input:Map[MappingIdentifier,StructType]) : StructType
+    def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      * @param input
+      * @return
+      */
+    def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
 }
 
 
@@ -143,6 +158,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMappingSpec]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMappingSpec]),
     new JsonSubTypes.Type(name = "drop", value = classOf[DropMappingSpec]),
+    new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeMappingSpec]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMappingSpec]),
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMappingSpec]),
@@ -162,6 +178,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateMappingSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
+    new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),
     new JsonSubTypes.Type(name = "update", value = classOf[UpdateMappingSpec])
 ))
@@ -190,7 +207,7 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
             context.project,
             name,
             kind,
-            labels.mapValues(context.evaluate),
+            context.evaluate(labels),
             context.evaluate(broadcast).toBoolean,
             context.evaluate(checkpoint).toBoolean,
             StorageLevel.fromString(context.evaluate(cache))

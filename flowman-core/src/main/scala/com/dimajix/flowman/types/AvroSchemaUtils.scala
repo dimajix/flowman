@@ -61,7 +61,7 @@ object AvroSchemaUtils {
     private def toAvro(field:Field, ns:String) : AField = {
         val schema = toAvro(field.ftype, ns, field.name, field.nullable)
         val default = toAvroDefault(field)
-        new AField(field.name, schema, field.description, default:Object)
+        new AField(field.name, schema, field.description.orNull, default:Object)
     }
     private def toAvro(ftype:FieldType, ns:String, name:String, nullable:Boolean) : ASchema = {
         val atype = ftype match {
@@ -103,27 +103,24 @@ object AvroSchemaUtils {
             atype
     }
     private def toAvroDefault(field:Field) : JsonNode = {
-        if (field.default != null) {
+        field.default.map  { default =>
             field.ftype match {
-                case StringType => new TextNode(field.default)
-                case CharType(_) => new TextNode(field.default)
-                case VarcharType(_) => new TextNode(field.default)
-                case BinaryType => new TextNode(field.default)
-                case IntegerType => new IntNode(field.default.toInt)
-                case ByteType => new IntNode(field.default.toInt)
-                case ShortType => new IntNode(field.default.toInt)
-                case LongType => new LongNode(field.default.toLong)
-                case FloatType => new DoubleNode(field.default.toDouble)
-                case DoubleType => new DoubleNode(field.default.toDouble)
-                case DecimalType(_,_) => new TextNode(field.default)
-                case BooleanType => if (field.default.toBoolean) BooleanNode.TRUE else BooleanNode.FALSE
+                case StringType => new TextNode(default)
+                case CharType(_) => new TextNode(default)
+                case VarcharType(_) => new TextNode(default)
+                case BinaryType => new TextNode(default)
+                case IntegerType => new IntNode(default.toInt)
+                case ByteType => new IntNode(default.toInt)
+                case ShortType => new IntNode(default.toInt)
+                case LongType => new LongNode(default.toLong)
+                case FloatType => new DoubleNode(default.toDouble)
+                case DoubleType => new DoubleNode(default.toDouble)
+                case DecimalType(_,_) => new TextNode(default)
+                case BooleanType => if (default.toBoolean) BooleanNode.TRUE else BooleanNode.FALSE
                 case NullType => NullNode.instance
                 case _ => null
             }
-        }
-        else {
-            null
-        }
+        }.orNull
     }
 
     /**
@@ -141,7 +138,7 @@ object AvroSchemaUtils {
 
     def fromAvro(field: AField) : Field = {
         val (ftype,nullable) = fromAvroType(field.schema())
-        Field(field.name(), ftype, nullable, field.doc())
+        Field(field.name(), ftype, nullable, Option(field.doc()))
     }
     private def fromAvroType(schema: ASchema): (FieldType,Boolean) = {
         schema.getType match {
@@ -158,7 +155,7 @@ object AvroSchemaUtils {
             case RECORD =>
                 val fields = schema.getFields.map { f =>
                     val (schemaType,nullable) = fromAvroType(f.schema())
-                    Field(f.name, schemaType, nullable, f.doc())
+                    Field(f.name, schemaType, nullable, Option(f.doc()))
                 }
                 (StructType(fields), false)
 

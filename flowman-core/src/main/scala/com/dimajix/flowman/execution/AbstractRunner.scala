@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -25,8 +24,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
+import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Target
@@ -52,9 +51,10 @@ object AbstractRunner {
         override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
-        override def instantiate(mapping: Mapping) : DataFrame = _parent.instantiate(mapping)
+        override def instantiate(mapping: Mapping) : Map[String,DataFrame] = _parent.instantiate(mapping)
+        override def instantiate(mapping: Mapping, output:String) : DataFrame = _parent.instantiate(mapping, output)
         override def cleanup() : Unit = _parent.cleanup()
-        override protected[execution] def cache : mutable.Map[MappingIdentifier,DataFrame] = _parent.cache
+        override protected[execution] def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _parent.cache
     }
 }
 
@@ -269,9 +269,9 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         logger.info("Resolving dependencies for target '{}'", target.identifier)
         val context = target.context
         val dependencies = target.dependencies
-            .map(d => (d,context.getMapping(d)))
+            .map(d => (d,context.getMapping(d.mapping)))
+            .map{ case (id,mapping) => (id,executor.instantiate(mapping, id.output)) }
             .toMap
-            .mapValues(d => executor.instantiate(d))
 
         logger.info("Building target '{}'", target.identifier)
         target.build(executor, dependencies)

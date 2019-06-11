@@ -59,6 +59,7 @@ import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DecimalType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -99,7 +100,7 @@ case class SwaggerSchema(
 
         CachedSchema(
             fromSwaggerModel(model, nullable),
-            Option(swagger.getInfo).map(_.getDescription).orNull
+            Option(swagger.getInfo).map(_.getDescription)
         )
     }
 
@@ -132,8 +133,8 @@ case class SwaggerSchema(
             case obj:ObjectNode =>
                 if (obj.get("allOf") != null) {
                     val children = obj.get("allOf").elements().toSeq
-                    val required = children.flatMap(_.get("required").elements().toSeq)
-                    val properties = children.flatMap(_.get("properties").fields())
+                    val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements()))
+                    val properties = children.flatMap(c => Option(c.get("properties")).toSeq.flatMap(_.fields()))
                     val desc = children.flatMap(c => Option(c.get("description"))).headOption
                     obj.without("allOf")
                     obj.set("type", TextNode.valueOf("object"))
@@ -159,7 +160,7 @@ case class SwaggerSchema(
     }
 
     private def fromSwaggerProperty(name:String, property:Property, prefix:String, nullable:Boolean) : Field = {
-        Field(name, fromSwaggerType(property, prefix + name, nullable), nullable || !property.getRequired, property.getDescription)
+        Field(name, fromSwaggerType(property, prefix + name, nullable), nullable || !property.getRequired, Option(property.getDescription))
     }
 
     private def fromSwaggerType(property:Property, fqName:String, nullable:Boolean) : FieldType = {
@@ -172,7 +173,10 @@ case class SwaggerSchema(
             case _:DateTimeProperty => TimestampType
             case _:FloatProperty => FloatType
             case _:DoubleProperty => DoubleType
-            case _:DecimalProperty => DoubleType
+            case d:DecimalProperty =>
+                val scale = if (d.getMultipleOf != null) d.getMultipleOf.scale() else DecimalType.USER_DEFAULT.scale
+                val precision = if (d.getMaximum != null) d.getMaximum.precision() else DecimalType.USER_DEFAULT.precision - scale
+                DecimalType(precision + scale, scale)
             case _:IntegerProperty => IntegerType
             case _:LongProperty => LongType
             case _:BaseIntegerProperty => IntegerType

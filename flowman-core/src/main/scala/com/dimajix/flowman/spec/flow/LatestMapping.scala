@@ -40,14 +40,14 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
 case class LatestMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     keyColumns:Seq[String],
     versionColumn:String
 ) extends BaseMapping {
@@ -60,12 +60,17 @@ case class LatestMapping(
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(executor != null)
+        require(tables != null)
+
         logger.info(s"Selecting latest version in '$input' using key columns ${keyColumns.mkString(",")} and version column $versionColumn")
 
         val df = tables(input)
 
-        execute_window(df, keyColumns, versionColumn)
+        val result = execute_window(df, keyColumns, versionColumn)
+
+        Map("main" -> result)
     }
 
     /**
@@ -133,8 +138,8 @@ case class LatestMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -142,9 +147,11 @@ case class LatestMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
-        input(this.input)
+        val result = input(this.input)
+
+        Map("main" -> result)
     }
 }
 
@@ -162,7 +169,7 @@ class LatestMappingSpec extends MappingSpec {
     override def instantiate(context: Context): LatestMapping = {
         LatestMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
             context.evaluate(versionColumn)
         )

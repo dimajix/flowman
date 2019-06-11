@@ -85,18 +85,18 @@ class JsonSchemaTest extends FlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[JsonSchema]
-        result.description should be ("Total amount for this Fee")
+        result.description should be (Some("Total amount for this Fee"))
 
         val fields = result.fields
         fields.size should be (2)
         fields(0).nullable should be (false)
         fields(0).name should be ("AmountValue")
-        fields(0).description should be ("Amount, includes Sign and Decimal Places from formats, plus Currency Code as an attribute")
+        fields(0).description should be (Some("Amount, includes Sign and Decimal Places from formats, plus Currency Code as an attribute"))
         fields(0).ftype shouldBe a[StructType]
 
         fields(1).nullable should be (true)
         fields(1).name should be ("NetGrossIndicator")
-        fields(1).description should be ("Indicates whether this amount is net or gross")
+        fields(1).description should be (Some("Indicates whether this amount is net or gross"))
         fields(1).ftype should be (StringType)
     }
 
@@ -149,18 +149,18 @@ class JsonSchemaTest extends FlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[JsonSchema]
-        result.description should be ("Total amount for this Fee")
+        result.description should be (Some("Total amount for this Fee"))
 
         val fields = result.fields
         fields.size should be (2)
         fields(0).nullable should be (false)
         fields(0).name should be ("AmountValue")
-        fields(0).description should be ("Number Array")
+        fields(0).description should be (Some("Number Array"))
         fields(0).ftype should be (ArrayType(DoubleType))
 
         fields(1).nullable should be (true)
         fields(1).name should be ("NetGrossIndicator")
-        fields(1).description should be ("Indicates whether this amount is net or gross")
+        fields(1).description should be (Some("Indicates whether this amount is net or gross"))
         fields(1).ftype should be (StringType)
     }
 }

@@ -1,9 +1,18 @@
+# Version 0.6.0
+
+* Add multiple relations to `showRelation` task
+* github-33: Add new `unit` mapping
+* github-34: Fix NPE in Swagger schema reader
+* github-36: Add new `explode` mapping
+
 # Version 0.5.0 - 2019-05-28
 
-* Refactoring of whole specification handling
+* github-32: Improve handling of nullable structs
+* github-30: Refactoring of whole specification handling
+* github-30: Add new 'template' mapping
 * Add new `flatten` entry in assembler
 * Implement new `flatten` mapping
-* Fix handling of local project definition in flowexec
+* github-31: Fix handling of local project definition in flowexec
 
 
 # Version 0.4.1 - 2019-05-11

@@ -114,31 +114,31 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             result.next() should be (false)
         }
 
-        relation.read(executor, null).count() should be (0)
+        relation.read(executor, None).count() should be (0)
 
         // Write records
         relation.write(executor, df, mode="overwrite")
-        relation.read(executor, null).count() should be (2)
+        relation.read(executor, None).count() should be (2)
 
         // Append records
         relation.write(executor, df, mode="append")
-        relation.read(executor, null).count() should be (4)
+        relation.read(executor, None).count() should be (4)
 
 
         // Try write records
         relation.write(executor, df, mode="ignore")
-        relation.read(executor, null).count() should be (4)
+        relation.read(executor, None).count() should be (4)
 
         relation.clean(executor)
-        relation.read(executor, null).count() should be (0)
+        relation.read(executor, None).count() should be (0)
 
         relation.write(executor, df, mode="ignore")
-        relation.read(executor, null).count() should be (0)
+        relation.read(executor, None).count() should be (0)
 
 
         // Try write records
         an[Exception] shouldBe thrownBy(relation.write(executor, df, mode="error"))
-        relation.read(executor, null).count() should be (0)
+        relation.read(executor, None).count() should be (0)
 
 
         relation.destroy(executor)
@@ -205,65 +205,65 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             result.next() should be (false)
         }
 
-        relation.read(executor, null).count() should be (0)
+        relation.read(executor, None).count() should be (0)
 
         // Write records
         relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("1")))
-        relation.read(executor, null).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("1")))
-        relation.read(executor, null).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("2")))
-        relation.read(executor, null).count() should be (4)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (4)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Append records
         relation.write(executor, df, mode="append", partition=Map("p_col" -> SingleValue("1")))
-        relation.read(executor, null).count() should be (6)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (6)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Try write records
         relation.write(executor, df, mode="ignore", partition=Map("p_col" -> SingleValue("1")))
-        relation.read(executor, null).count() should be (6)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (6)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Try write records
         relation.write(executor, df, mode="ignore", partition=Map("p_col" -> SingleValue("3")))
-        relation.read(executor, null).count() should be (8)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("3"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (8)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Try write records
         an[Exception] shouldBe thrownBy(relation.write(executor, df, mode="error"))
-        relation.read(executor, null).count() should be (8)
+        relation.read(executor, None).count() should be (8)
 
         // Clean table
         relation.clean(executor, Map("p_col" -> SingleValue("2")))
-        relation.read(executor, null).count() should be (6)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (0)
-        relation.read(executor, null, Map("p_col" -> SingleValue("3"))).count() should be (2)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (6)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(executor, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Clean table
         relation.clean(executor)
-        relation.read(executor, null).count() should be (0)
-        relation.read(executor, null, Map("p_col" -> SingleValue("1"))).count() should be (0)
-        relation.read(executor, null, Map("p_col" -> SingleValue("2"))).count() should be (0)
-        relation.read(executor, null, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(executor, None).count() should be (0)
+        relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (0)
+        relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         relation.destroy(executor)
         withDatabase(driver, url) { statement =>

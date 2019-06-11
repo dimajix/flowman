@@ -41,16 +41,17 @@ case class NullRelation(
       * @param partitions
       * @return
       */
-    override def read(executor:Executor, schema:StructType, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(executor != null)
+        require(schema != null)
         require(partitions != null)
 
-        if (inputSchema == null && schema == null)
+        if (inputSchema == null && schema.isEmpty)
             throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
 
         // Add partitions values as columns
         val fullSchema = Option(inputSchema).map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
-        val readSchema = Option(schema).orElse(fullSchema).get
+        val readSchema = schema.orElse(fullSchema).get
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
         executor.spark.createDataFrame(rdd, readSchema)
     }

@@ -26,11 +26,11 @@ class DoubleTypeTest  extends FlatSpec with Matchers {
     }
 
     it should "support interpolation of SingleValues" in {
-        DoubleType.interpolate(SingleValue("1.0"), null).head should be (1.0)
+        DoubleType.interpolate(SingleValue("1.0"), None).head should be (1.0)
     }
 
     it should "support interpolation of ArrayValues" in {
-        val result = DoubleType.interpolate(ArrayValue("1.0", "2.0"), null).toSeq
+        val result = DoubleType.interpolate(ArrayValue("1.0", "2.0"), None).toSeq
         result(0) should be (1.0)
         result(1) should be (2.0)
     }

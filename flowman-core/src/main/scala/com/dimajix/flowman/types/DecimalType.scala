@@ -30,6 +30,16 @@ case class DecimalType(precision: Int, scale: Int) extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
     override def sqlType : String = s"decimal($precision,$scale)"
 
-    override def parse(value:String, granularity: String) : Any = ???
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+    override def parse(value:String, granularity: Option[String]=None) : Any = {
+        if (granularity.nonEmpty)
+            throw new UnsupportedOperationException
+        new java.math.BigDecimal(value)
+    }
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = {
+        value match {
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(v => parse(v, granularity))
+            case RangeValue(start, end, step) => throw new UnsupportedOperationException
+        }
+    }
 }

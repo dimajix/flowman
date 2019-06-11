@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
@@ -40,11 +41,19 @@ case class TemplateMapping(
     }
 
     /**
+      * Lists all outputs of this mapping. Every mapping should have one "main" output
+      * @return
+      */
+    override def outputs : Seq[String] = {
+        mappingInstance.outputs
+    }
+
+    /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
       * @return
       */
-    override def dependencies: Array[MappingIdentifier] = {
+    override def dependencies: Seq[MappingOutputIdentifier] = {
         mappingInstance.dependencies
     }
 
@@ -55,7 +64,7 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingIdentifier, DataFrame]) : DataFrame = {
+    override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(input != null)
 
@@ -67,10 +76,23 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
         mappingInstance.describe(input)
+    }
+
+    /**
+      * Returns the schema as produced by this mapping, relative to the given input schema
+      *
+      * @param input
+      * @return
+      */
+    override def describe(input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
+        require(input != null)
+        require(output != null && output.nonEmpty)
+
+        mappingInstance.describe(input, output)
     }
 }
 

@@ -54,8 +54,8 @@ case class HiveTableRelation(
     instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
-    database: String,
-    table: String,
+    override val database: String,
+    override val table: String,
     external: Boolean,
     location: Path,
     format: String,
@@ -65,31 +65,8 @@ case class HiveTableRelation(
     properties: Map[String, String],
     serdeProperties: Map[String, String],
     writer: String
-) extends BaseRelation with SchemaRelation with PartitionedRelation {
-    private val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
-
-    protected def tableIdentifier: TableIdentifier = new TableIdentifier(table, Option(database))
-
-    /**
-      * Reads data from the relation, possibly from specific partitions
-      *
-      * @param executor
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
-      * @param partitions - List of partitions. If none are specified, all the data will be read
-      * @return
-      */
-    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue] = Map()): DataFrame = {
-        require(executor != null)
-        require(partitions != null)
-
-        logger.info(s"Reading from Hive table $tableIdentifier using partition values $partitions")
-
-        val reader = executor.spark.read.options(options)
-        val tableDf = reader.table(tableIdentifier.unquotedString)
-        val df = filterPartition(tableDf, partitions)
-
-        SchemaUtils.applySchema(df, schema)
-    }
+) extends HiveRelation with SchemaRelation {
+    protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -241,18 +218,6 @@ case class HiveTableRelation(
     }
 
     /**
-      * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
-      * @return
-      */
-    override def exists(executor:Executor) : Boolean = {
-        require(executor != null)
-
-        val catalog = executor.catalog
-        catalog.tableExists(tableIdentifier)
-    }
-
-    /**
       * Creates a Hive table by executing the appropriate DDL
       *
       * @param executor
@@ -313,7 +278,7 @@ case class HiveTableRelation(
             schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
             partitionColumnNames = partitions.map(_.name),
             properties = properties,
-            comment = Option(description)
+            comment = description
         )
 
         // Create table
@@ -425,8 +390,8 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(_rowFormat),
             context.evaluate(_inputFormat),
             context.evaluate(_outputFormat),
-            _properties.mapValues(context.evaluate),
-            _serdeProperties.mapValues(context.evaluate),
+            context.evaluate(_properties),
+            context.evaluate(_serdeProperties),
             context.evaluate(_writer).toLowerCase(Locale.ROOT)
         )
     }

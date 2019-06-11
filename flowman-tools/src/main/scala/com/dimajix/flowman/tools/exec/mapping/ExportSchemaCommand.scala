@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
 import com.dimajix.flowman.types.Field
@@ -47,8 +48,9 @@ class ExportSchemaCommand extends ActionCommand {
         logger.info(s"Exporting the schema of mapping '$mapping' to '$filename'")
 
         Try {
-            val instance = context.getMapping(MappingIdentifier(mapping))
-            val table = executor.instantiate(instance)
+            val id = MappingOutputIdentifier(mapping)
+            val instance = context.getMapping(id.mapping)
+            val table = executor.instantiate(instance, id.output)
             val schema = Field.of(table.schema)
             val file = context.fs.local(filename)
             new SchemaWriter(schema).format(format).save(file)

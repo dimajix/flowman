@@ -21,13 +21,13 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 case class CoalesceMapping(
     instanceProperties:Mapping.Properties,
-    input:MappingIdentifier,
+    input:MappingOutputIdentifier,
     partitions:Int
 ) extends BaseMapping {
     /**
@@ -37,12 +37,14 @@ case class CoalesceMapping(
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : DataFrame = {
+    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(input != null)
 
         val df = input(this.input)
-        df.coalesce(partitions)
+        val result = df.coalesce(partitions)
+
+        Map("main" -> result)
     }
 
     /**
@@ -50,8 +52,8 @@ case class CoalesceMapping(
       *
       * @return
       */
-    override def dependencies : Array[MappingIdentifier] = {
-        Array(input)
+    override def dependencies : Seq[MappingOutputIdentifier] = {
+        Seq(input)
     }
 
     /**
@@ -59,9 +61,11 @@ case class CoalesceMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingIdentifier,StructType]) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
-        input(this.input)
+        val result = input(this.input)
+
+        Map("main" -> result)
     }
 }
 
@@ -78,7 +82,7 @@ class CoalesceMappingSpec extends MappingSpec {
     override def instantiate(context: Context): CoalesceMapping = {
         CoalesceMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(input)),
+            MappingOutputIdentifier(context.evaluate(input)),
             Option(context.evaluate(partitions)).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
         )
     }

@@ -21,7 +21,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 
@@ -38,15 +38,16 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ProjectMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("myview"),
+            MappingOutputIdentifier("myview"),
             Seq("_2")
         )
 
-        mapping.input should be (MappingIdentifier("myview"))
+        mapping.input should be (MappingOutputIdentifier("myview"))
         mapping.columns should be (Seq("_2"))
-        mapping.dependencies should be (Array(MappingIdentifier("myview")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_2").collect()
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
+            .orderBy("_2").collect()
         result.size should be (2)
         result(0) should be (Row(12))
         result(1) should be (Row(23))
@@ -78,7 +79,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = project.mappings("t1").instantiate(session.context)
-        mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
+        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
     }
 
 }

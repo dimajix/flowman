@@ -32,7 +32,7 @@ import com.dimajix.flowman.types.Field
 object ExternalSchema {
     case class CachedSchema(
         fields:Seq[Field],
-        description: String,
+        description: Option[String],
         primaryKey: Seq[String] = Seq()
     )
 }
@@ -50,7 +50,7 @@ abstract class ExternalSchema extends Schema {
       * Returns the description of the schema. This will be cached once and for ever
       * @return
       */
-    override def description : String = {
+    override def description : Option[String] = {
         cache.description
     }
 

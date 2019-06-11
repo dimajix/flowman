@@ -56,7 +56,7 @@ class FieldValueTest extends FlatSpec with Matchers {
               |step: 2
             """.stripMargin
         val value = ObjectMapper.parse[FieldValue](spec)
-        value should be (RangeValue("12", "24", "2"))
+        value should be (RangeValue("12", "24", Some("2")))
     }
 
     it should "be deserializable as a RangeValue without a step" in {
@@ -66,6 +66,6 @@ class FieldValueTest extends FlatSpec with Matchers {
               |end: 24
             """.stripMargin
         val value = ObjectMapper.parse[FieldValue](spec)
-        value should be (RangeValue("12", "24", null))
+        value should be (RangeValue("12", "24"))
     }
 }

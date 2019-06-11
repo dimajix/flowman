@@ -18,11 +18,8 @@ package com.dimajix.flowman.util
 
 import java.util.Locale
 
-import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
@@ -33,6 +30,7 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.MapType
 import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.types.MetadataBuilder
+import org.apache.spark.sql.types.NullType
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -72,12 +70,8 @@ object SchemaUtils {
       * @param schema
       * @return
       */
-    def applySchema(df:DataFrame, schema:StructType) : DataFrame = {
-        // Apply requested Schema
-        if (schema != null)
-            df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)
-        else
-            df
+    def applySchema(df:DataFrame, schema:Option[StructType]) : DataFrame = {
+        schema.map(schema => df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)).getOrElse(df)
     }
 
     /**
@@ -107,6 +101,27 @@ object SchemaUtils {
 
         val segments = name.toLowerCase(Locale.ROOT).split('.')
         findStruct(struct, segments.head, segments.tail)
+    }
+
+    def union(schemas:Seq[StructType]) : StructType = {
+        def commonField(newField:StructField, fields:Map[String,StructField]) = {
+            val existingField = fields.getOrElse(newField.name.toLowerCase(Locale.ROOT), newField)
+            val nullable = existingField.nullable || newField.nullable
+            val dataType = if (existingField.dataType == NullType) newField.dataType else existingField.dataType
+            val result = existingField.copy(dataType=dataType, nullable=nullable)
+
+            val comment = existingField.getComment().orElse(newField.getComment())
+            comment.map(result.withComment).getOrElse(result)
+        }
+        val allColumns = schemas.foldLeft(Map[String,StructField]())((columns, schema) => {
+            val tableColumns = schema
+                .map(field => field.name.toLowerCase(Locale.ROOT) -> commonField(field, columns))
+                .toMap
+            columns ++ tableColumns
+        })
+
+        // Create a common schema from collected columns
+        StructType(allColumns.values.toSeq.sortBy(_.name.toLowerCase(Locale.ROOT)))
     }
 
     /**

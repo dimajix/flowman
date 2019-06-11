@@ -28,6 +28,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.SchemaSpec
@@ -107,7 +108,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -143,7 +144,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("a", ArrayType(DoubleType, true), true) ::
@@ -178,7 +179,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("_corrupt_record", StringType, true) ::
@@ -218,7 +219,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -249,7 +250,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (1)
         result.schema should be (StructType(
             StructField("a", ArrayType(DoubleType, true), true) ::
@@ -289,7 +290,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (1)
         result.schema should be (StructType(
             StructField("s", StringType, true) ::
@@ -320,7 +321,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        an[Exception] shouldBe thrownBy(mapping.execute(executor, Map(MappingIdentifier("p0") -> input)))
+        an[Exception] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input)))
     }
 
     it should "fail on invalid data with an explicit schema" in {
@@ -351,7 +352,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ))
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingIdentifier("p0") -> input))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         an[Exception] shouldBe thrownBy(result.count())
     }
 }

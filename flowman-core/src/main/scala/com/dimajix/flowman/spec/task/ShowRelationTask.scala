@@ -25,10 +25,10 @@ import com.dimajix.flowman.spec.RelationIdentifier
 
 
 object ShowRelationTask {
-    def apply(context:Context, relation:RelationIdentifier, columns:Seq[String], limit:Int) : ShowRelationTask = {
+    def apply(context:Context, relations:Seq[RelationIdentifier], columns:Seq[String], limit:Int) : ShowRelationTask = {
         ShowRelationTask(
             Task.Properties(context),
-            relation,
+            relations,
             columns,
             limit
         )
@@ -37,13 +37,18 @@ object ShowRelationTask {
 
 case class ShowRelationTask(
     instanceProperties:Task.Properties,
-    relation:RelationIdentifier,
+    relations:Seq[RelationIdentifier],
     columns:Seq[String],
     limit:Int
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[ShowRelationTask])
 
     override def execute(executor:Executor) : Boolean = {
+        relations.foreach(r => showRelation(executor, r))
+        true
+    }
+
+    private def showRelation(executor:Executor, relation:RelationIdentifier) : Unit = {
         logger.info(s"Showing first $limit rows of relation '$relation'")
 
         val rel = context.getRelation(relation)
@@ -54,7 +59,6 @@ case class ShowRelationTask(
             table
 
         projection.show(limit, truncate = false)
-        true
     }
 }
 
@@ -62,14 +66,14 @@ case class ShowRelationTask(
 
 
 class ShowRelationTaskSpec extends TaskSpec {
-    @JsonProperty(value = "relation", required = true) private var relation: String = _
+    @JsonProperty(value = "relation", required = true) private var relation: Seq[String] = Seq()
     @JsonProperty(value = "limit", required = true) private var limit: String = "100"
     @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
 
     override def instantiate(context: Context): Task = {
         ShowRelationTask(
             instanceProperties(context),
-            RelationIdentifier(context.evaluate(relation)),
+            relation.map(r => RelationIdentifier(context.evaluate(r))),
             columns.map(context.evaluate),
             context.evaluate(limit).toInt
         )

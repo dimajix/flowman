@@ -43,17 +43,6 @@ import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.util.SchemaUtils
 
 
-object KafkaRelation {
-    def apply(hosts:Seq[String], topics:Seq[String]): KafkaRelation = {
-        KafkaRelation(
-            Relation.Properties(null),
-            hosts,
-            topics
-        )
-    }
-}
-
-
 case class KafkaRelation(
     instanceProperties:Relation.Properties,
     hosts:Seq[String],
@@ -77,7 +66,12 @@ case class KafkaRelation(
             Field("timestamp", TimestampType, nullable = false) ::
             Field("timestampType", IntegerType, nullable = false) ::
             Nil
-        EmbeddedSchema(fields)
+        EmbeddedSchema(
+            Schema.Properties(context),
+            description,
+            fields,
+            Nil
+        )
     }
 
     /**
@@ -88,7 +82,11 @@ case class KafkaRelation(
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: StructType, partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+        require(executor != null)
+        require(schema != null)
+        require(partitions != null)
+
         val hosts = this.hosts.mkString(",")
         val topics = this.topics.mkString(",")
         logger.info(s"Reading Kafka topics '$topics' at hosts '$hosts'")
@@ -112,6 +110,10 @@ case class KafkaRelation(
       * @param partition - destination partition
       */
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+        require(executor != null)
+        require(df != null)
+        require(partition != null)
+
         val hosts = this.hosts.mkString(",")
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Writing to Kafka topic '$topic' at hosts '$hosts'")
@@ -135,7 +137,10 @@ case class KafkaRelation(
       * @param schema
       * @return
       */
-    override def readStream(executor: Executor, schema: StructType): DataFrame = {
+    override def readStream(executor: Executor, schema: Option[StructType]): DataFrame = {
+        require(executor != null)
+        require(schema != null)
+
         val hosts = this.hosts.mkString(",")
         val topics = this.topics.mkString(",")
         logger.info(s"Streaming from Kafka topics '$topics' at hosts '$hosts'")
@@ -158,6 +163,9 @@ case class KafkaRelation(
       * @return
       */
     override def writeStream(executor: Executor, df: DataFrame, mode: OutputMode, checkpointLocation: Path): StreamingQuery = {
+        require(executor != null)
+        require(df != null)
+
         val hosts = this.hosts.mkString(",")
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")

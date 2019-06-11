@@ -73,7 +73,7 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         implicit val context = session.context
         val partitions = Map(
             "p1" -> ArrayValue("lala", "lolo"),
-            "p2" -> RangeValue("123", "127", "2")
+            "p2" -> RangeValue("123", "127", Some("2"))
         )
 
         val all = partitionSchema.interpolate(partitions)

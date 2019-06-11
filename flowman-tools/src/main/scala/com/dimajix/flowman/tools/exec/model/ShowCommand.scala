@@ -45,7 +45,7 @@ class ShowCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val columns = this.columns.split(",").filter(_.nonEmpty)
-        val task = ShowRelationTask(context, RelationIdentifier(relation), columns, limit)
+        val task = ShowRelationTask(context, Seq(RelationIdentifier(relation)), columns, limit)
 
         Try {
             task.execute(executor)

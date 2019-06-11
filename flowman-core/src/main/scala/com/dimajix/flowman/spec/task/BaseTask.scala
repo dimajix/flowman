@@ -20,5 +20,5 @@ package com.dimajix.flowman.spec.task
 abstract class BaseTask extends Task {
     override protected def instanceProperties: Task.Properties
 
-    override def description : String = instanceProperties.description
+    override def description : Option[String] = instanceProperties.description
 }

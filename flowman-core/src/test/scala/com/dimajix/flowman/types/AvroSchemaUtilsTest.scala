@@ -134,8 +134,8 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
 
     it should "support doc strings" in {
         val schema = Seq(
-            Field("str_field", StringType, false, "This is a doc"),
-            Field("int_field", IntegerType, true, "This is a nullable doc")
+            Field("str_field", StringType, false, Some("This is a doc")),
+            Field("int_field", IntegerType, true, Some("This is a nullable doc"))
         )
 
         val result = AvroSchemaUtils.toAvro(schema)

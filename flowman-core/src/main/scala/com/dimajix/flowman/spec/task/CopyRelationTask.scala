@@ -42,11 +42,11 @@ case class CopyRelationTask(
     private val logger = LoggerFactory.getLogger(classOf[CopyRelationTask])
 
     override def execute(executor:Executor) : Boolean = {
-        logger.info(s"Copying from relation '${source}' to relation '${target}' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Copying from relation '$source' to relation '$target' with partitions ${sourcePartitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
 
         val input = context.getRelation(source)
         val output = context.getRelation(target)
-        val schema = if (columns.nonEmpty) SchemaUtils.createSchema(columns.toSeq) else null
+        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
         val data = input.read(executor, schema, sourcePartitions).coalesce(parallelism)
         output.write(executor, data, targetPartition, mode)
         true
@@ -69,16 +69,15 @@ class CopyRelationTaskSpec extends TaskSpec {
         CopyRelationTask(
             instanceProperties(context),
             RelationIdentifier.parse(context.evaluate(source)),
-            sourcePartitions.mapValues {
-                case v: SingleValue => SingleValue(context.evaluate(v.value))
-                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), context
-                    .evaluate(v.step))
+            sourcePartitions.map{
+                case (name,v:SingleValue) => (name,SingleValue(context.evaluate(v.value)))
+                case (name,v:ArrayValue) => (name,ArrayValue(v.values.map(context.evaluate)))
+                case (name,v:RangeValue) => (name,RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate)))
             },
             RelationIdentifier.parse(context.evaluate(target)),
-            targetPartition.mapValues(p => SingleValue(context.evaluate(p))),
+            targetPartition.map { case(n,p) => (n,SingleValue(context.evaluate(p))) },
             context.evaluate(parallelism).toInt,
-            columns.mapValues(context.evaluate),
+            context.evaluate(columns),
             context.evaluate(mode)
         )
     }

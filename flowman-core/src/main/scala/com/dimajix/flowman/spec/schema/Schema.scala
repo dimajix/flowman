@@ -35,11 +35,11 @@ import com.dimajix.flowman.types.StructType
 
 object Schema {
     object Properties {
-        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
             Properties(
                 context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
+                context.namespace,
+                context.project,
                 name,
                 kind,
                 Map()
@@ -74,7 +74,7 @@ abstract class Schema extends AbstractInstance {
  *
       * @return
       */
-    def description : String
+    def description : Option[String]
 
     /**
       * Returns the list of all fields of the schema
@@ -153,6 +153,7 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchemaSpec]),
     new JsonSubTypes.Type(name = "json", value = classOf[JsonSchemaSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationSchemaSpec]),
     new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchemaSpec]),
     new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchemaSpec])
 ))

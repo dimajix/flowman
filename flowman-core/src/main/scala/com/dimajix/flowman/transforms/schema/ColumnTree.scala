@@ -39,17 +39,14 @@ class ColumnNodeOps extends NodeOps[Column] {
     override def leaf(name:String, value:Column, nullable:Boolean) : Column = withName(name, value)
 
     override def struct(name:String, children:Seq[Column], nullable:Boolean) : Column = {
+        require(children.nonEmpty)
         withName(name, functions.struct(children: _*))
     }
 
     override def struct_pruned(name:String, children:Seq[Column], nullable:Boolean) : Column = {
+        require(children.nonEmpty)
         if (nullable) {
-            if (children.isEmpty) {
-                col(null)
-            }
-            else {
-                withName(name, ext_functions.nullable_struct(children: _*))
-            }
+            withName(name, ext_functions.nullable_struct(children: _*))
         }
         else {
             withName(name, functions.struct(children: _*))

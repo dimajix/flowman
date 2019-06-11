@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.state.TargetInstance
 
 
@@ -69,7 +69,7 @@ case class LocalTarget(
       * @param executor
       * @param input
       */
-    override def build(executor:Executor, input:Map[MappingIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
         val outputFilename = this.filename
         val inputMapping = instanceProperties.input
         logger.info(s"Writing mapping '$inputMapping' to local file '$outputFilename'")

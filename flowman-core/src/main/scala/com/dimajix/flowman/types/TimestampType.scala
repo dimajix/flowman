@@ -35,10 +35,10 @@ case object TimestampType extends FieldType {
       * @param granularity
       * @return
       */
-    override def parse(value:String, granularity: String) : UtcTimestamp = {
-        if (granularity != null && granularity.nonEmpty) {
+    override def parse(value:String, granularity:Option[String]=None) : UtcTimestamp = {
+        if (granularity.nonEmpty) {
             val msecs = UtcTimestamp.toEpochSeconds(value) * 1000l
-            val step = Duration.parse(granularity).getSeconds * 1000l
+            val step = Duration.parse(granularity.get).getSeconds * 1000l
             new UtcTimestamp(msecs / step * step)
         }
         else {
@@ -52,7 +52,7 @@ case object TimestampType extends FieldType {
       * @param granularity
       * @return
       */
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[UtcTimestamp] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[UtcTimestamp] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
@@ -60,18 +60,18 @@ case object TimestampType extends FieldType {
                 val startDate = UtcTimestamp.toEpochSeconds(start)
                 val endDate = UtcTimestamp.toEpochSeconds(end)
 
-                val result = if (step != null && step.nonEmpty) {
-                    val range = startDate.until(endDate).by(Duration.parse(step).getSeconds)
-                    if (granularity != null && granularity.nonEmpty) {
-                        val mod = Duration.parse(granularity).getSeconds
+                val result = if (step.nonEmpty) {
+                    val range = startDate.until(endDate).by(Duration.parse(step.get).getSeconds)
+                    if (granularity.nonEmpty) {
+                        val mod = Duration.parse(granularity.get).getSeconds
                         range.map(_ / mod * mod).distinct
                     }
                     else {
                         range
                     }
                 }
-                else if (granularity != null && granularity.nonEmpty) {
-                    val mod = Duration.parse(granularity).getSeconds
+                else if (granularity.nonEmpty) {
+                    val mod = Duration.parse(granularity.get).getSeconds
                     (startDate / mod * mod).until(endDate / mod * mod).by(mod)
                 }
                 else {

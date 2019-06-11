@@ -42,7 +42,7 @@ case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED) (
       *
       * @return
       */
-    override def sparkType : DataType = {
+    override def sparkType : org.apache.spark.sql.types.ArrayType = {
         org.apache.spark.sql.types.ArrayType(elementType.sparkType, containsNull)
     }
 
@@ -54,8 +54,8 @@ case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED) (
         "array<" + elementType.sqlType + ">"
     }
 
-    override def parse(value:String, granularity:String) : Any = ???
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+    override def parse(value:String, granularity:Option[String]=None) : Any = ???
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???
 }
 
 /*

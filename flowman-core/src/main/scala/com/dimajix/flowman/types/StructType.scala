@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.types
 
-import org.apache.spark.sql.types.DataType
 import org.codehaus.jackson.annotate.JsonProperty
 
 
@@ -31,12 +30,12 @@ case class StructType(
     @JsonProperty(value = "fields") fields:Seq[Field]
                      ) extends ContainerType {
     def this() = { this(Seq()) }
-    override def sparkType : DataType = {
+    override def sparkType : org.apache.spark.sql.types.StructType = {
         org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
     }
     override def sqlType : String = {
         "struct<" + fields.map(f => f.name + ":" + f.sqlType).mkString(",") + ">"
     }
-    override def parse(value:String, granularity: String) : Any = ???
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Any] = ???
+    override def parse(value:String, granularity:Option[String]=None) : Any = ???
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???
 }

@@ -59,7 +59,10 @@ class RunCommand extends ActionCommand {
     }
 
     private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
-        logger.info(s"Executing job '${job.name}' (${job.description}) with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+        val jobDescription = job.description.map("(" + _ + ")").getOrElse("")
+        val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
+        logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
+
         val runner = executor.runner
         val result = runner.execute(executor, job, args, force)
         result match {

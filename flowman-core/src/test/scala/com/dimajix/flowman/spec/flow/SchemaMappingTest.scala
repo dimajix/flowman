@@ -26,6 +26,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
 
@@ -42,15 +43,16 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = SchemaMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("myview"),
+            MappingOutputIdentifier("myview"),
             Seq("_2" -> "int")
         )
 
-        mapping.input should be (MappingIdentifier("myview"))
+        mapping.input should be (MappingOutputIdentifier("myview"))
         mapping.columns should be (Seq("_2" -> "int"))
-        mapping.dependencies should be (Array(MappingIdentifier("myview")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_2").collect()
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
+            .orderBy("_2").collect()
         result.size should be (2)
         result(0) should be (Row(12))
         result(1) should be (Row(23))
@@ -67,15 +69,16 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = SchemaMapping(
             Mapping.Properties(session.context),
-            MappingIdentifier("myview"),
+            MappingOutputIdentifier("myview"),
             Seq("_2" -> "int", "new" -> "string")
         )
 
-        mapping.input should be (MappingIdentifier("myview"))
+        mapping.input should be (MappingOutputIdentifier("myview"))
         mapping.columns should be (Seq("_2" -> "int", "new" -> "string"))
-        mapping.dependencies should be (Array(MappingIdentifier("myview")))
+        mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
-        val result = mapping.execute(executor, Map(MappingIdentifier("myview") -> df)).orderBy("_2")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
+            .orderBy("_2")
         result.schema should be (StructType(Seq(
             StructField("_2", IntegerType, false),
             StructField("new", StringType, true)
@@ -113,7 +116,7 @@ class SchemaMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.execute(executor, Map(MappingIdentifier("t0") -> df)).orderBy("_1", "_2")
+        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))
     }
 
 }

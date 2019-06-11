@@ -123,7 +123,7 @@ abstract class FieldType {
       * @param granularity
       * @return
       */
-    def parse(value:String, granularity:String=null) : Any
+    def parse(value:String, granularity:Option[String]=None) : Any
 
     /**
       * Function for interpolating a FieldValue as a sequence of the given FieldType. This method
@@ -132,7 +132,7 @@ abstract class FieldType {
       * @param granularity
       * @return
       */
-    def interpolate(value: FieldValue, granularity:String) : Iterable[Any]
+    def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any]
 }
 
 @JsonDeserialize

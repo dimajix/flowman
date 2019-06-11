@@ -22,9 +22,9 @@ import org.apache.spark.sql.types.DataType
 case object FloatType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.FloatType
 
-    override def parse(value:String, granularity: String) : Float = {
-        if (granularity != null && granularity.nonEmpty) {
-            val step = granularity.toFloat
+    override def parse(value:String, granularity:Option[String]=None) : Float = {
+        if (granularity.nonEmpty) {
+            val step = granularity.get.toFloat
             val v = value.toFloat
             v - (v % step)
         }
@@ -32,23 +32,23 @@ case object FloatType extends FieldType {
             value.toFloat
         }
     }
-    override def interpolate(value: FieldValue, granularity:String) : Iterable[Float] = {
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Float] = {
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(v => parse(v,granularity))
             case RangeValue(start,end,step) => {
-                if (step != null && step.nonEmpty) {
-                    val range = start.toFloat.until(end.toFloat).by(step.toFloat)
-                    if (granularity != null && granularity.nonEmpty) {
-                        val mod = granularity.toFloat
+                if (step.nonEmpty) {
+                    val range = start.toFloat.until(end.toFloat).by(step.get.toFloat)
+                    if (granularity.nonEmpty) {
+                        val mod = granularity.get.toFloat
                         range.map(x => math.floor(x / mod) * mod).map(_.toFloat).distinct
                     }
                     else {
                         range
                     }
                 }
-                else if (granularity != null && granularity.nonEmpty) {
-                    val mod = granularity.toFloat
+                else if (granularity.nonEmpty) {
+                    val mod = granularity.get.toFloat
                     start.toFloat.until(end.toFloat).by(mod).map(x => math.floor(x / mod) * mod).map(_.toFloat)
                 }
                 else {

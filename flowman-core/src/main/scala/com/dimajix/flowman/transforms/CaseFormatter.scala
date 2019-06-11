@@ -53,7 +53,7 @@ case class CaseFormatter(format:String) extends TreeTransformer {
         }
     }
 
-    override def transform[T](root:Node[T]) : Node[T] = {
+    override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
         root.transform(node => node.withName(rename(node.name)))
     }
 }

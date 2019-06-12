@@ -1,3 +1,9 @@
+# Version 0.6.2
+* "explode" mapping supports simple data types
+
+# Version 0.6.1
+* Fix NPE in ShowRelationTask
+
 # Version 0.6.0
 
 * Add multiple relations to `showRelation` task

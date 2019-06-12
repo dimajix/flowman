@@ -16,8 +16,11 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -74,9 +77,21 @@ case class ExplodeMapping(
 
         logger.info(s"Reassembling input mapping '$input'")
 
+        def isSimpleArray(df:DataFrame) : Boolean = {
+            val field = df.schema.fields.find(_.name.toLowerCase(Locale.ROOT) == array.last.toString.toLowerCase(Locale.ROOT)).get
+            field.dataType match {
+                case _:st.StructType => false
+                case _ => true
+            }
+        }
+
         val in = deps(input)
         val exploded = explode.transform(in)
-        val lifted = lift.transform(exploded)
+        val lifted =
+            if (isSimpleArray(exploded))
+                exploded
+            else
+                lift.transform(exploded)
         val result = flat.transform(lifted)
 
         Map("main" -> result, "explode" -> exploded)
@@ -90,9 +105,21 @@ case class ExplodeMapping(
     override def describe(deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(deps != null)
 
+        def isSimpleArray(dt:StructType) : Boolean = {
+            val field = dt.fields.find(_.name.toLowerCase(Locale.ROOT) == array.last.toString.toLowerCase(Locale.ROOT)).get
+            field.ftype match {
+                case _:StructType => false
+                case _ => true
+            }
+        }
+
         val in = deps(input)
         val exploded = explode.transform(in)
-        val lifted = lift.transform(exploded)
+        val lifted =
+            if (isSimpleArray(exploded))
+                exploded
+            else
+                lift.transform(exploded)
         val result = flat.transform(lifted)
 
         Map("main" -> result, "explode" -> exploded)

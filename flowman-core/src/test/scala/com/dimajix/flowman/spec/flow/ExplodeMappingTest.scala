@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.flow
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -44,7 +45,8 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
           |        "inner_col0":123,
           |        "inner_col1":456
           |      }
-          |    ]
+          |    ],
+          |    "simple_array" : [1,2]
           |  }
           |}""".stripMargin
     private var inputDf:DataFrame = _
@@ -111,10 +113,10 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
-        outputDf.printSchema()
         val expectedSchema = StructType(Seq(
             StructField("outer_col0", StringType),
             StructField("outer_col1", StringType),
+            StructField("some_struct_simple_array", ArrayType(LongType)),
             StructField("some_struct_some_field", StringType),
             StructField("inner_col0", LongType),
             StructField("inner_col1", LongType)
@@ -143,6 +145,43 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ExplodeMapping.Columns(
                 Seq(Path("*")),
                 Seq(Path("inner_col0")),
+                Map()
+            ),
+            true,
+            "snakeCase"
+        )
+
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
+        val expectedSchema = StructType(Seq(
+            StructField("outer_col0", StringType),
+            StructField("outer_col1", StringType),
+            StructField("some_struct_simple_array", ArrayType(LongType)),
+            StructField("inner_col1", LongType)
+        ))
+
+        outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        outputSchema.sparkType should be (expectedSchema)
+    }
+
+    it should "support renaming columns" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val mapping = ExplodeMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("input_df"),
+            Path("some_struct.some_array"),
+            ExplodeMapping.Columns(
+                Seq(Path("*")),
+                Seq(Path("some_struct.some_field"), Path("some_struct.simple_array")),
+                Map("some_field" -> Path("some_struct.some_field"))
+            ),
+            ExplodeMapping.Columns(
+                Seq(Path("*")),
+                Seq(Path("inner_col0")),
                 Map("result" -> Path("inner_col0"))
             ),
             true,
@@ -153,11 +192,47 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val expectedSchema = StructType(Seq(
             StructField("outer_col0", StringType),
             StructField("outer_col1", StringType),
+            StructField("some_field", StringType),
             StructField("inner_col1", LongType),
             StructField("result", LongType)
         ))
 
         outputDf.count should be (1)
+        outputDf.schema should be (expectedSchema)
+
+        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        outputSchema.sparkType should be (expectedSchema)
+    }
+
+    it should "explode simple arrays" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val mapping = ExplodeMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("input_df"),
+            Path("some_struct.simple_array"),
+            ExplodeMapping.Columns(
+                Seq(Path("outer_col0")),
+                Seq(),
+                Map()
+            ),
+            ExplodeMapping.Columns(
+                Seq(Path("*")),
+                Seq(),
+                Map()
+            ),
+            true,
+            "snakeCase"
+        )
+
+        val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
+        val expectedSchema = StructType(Seq(
+            StructField("outer_col0", StringType),
+            StructField("simple_array", LongType)
+        ))
+
+        outputDf.count should be (2)
         outputDf.schema should be (expectedSchema)
 
         val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")

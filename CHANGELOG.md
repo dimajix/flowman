@@ -1,3 +1,6 @@
+# Verison 0.6.3
+* CopyRelationTask also performs projection
+
 # Version 0.6.2
 * "explode" mapping supports simple data types
 

@@ -17,11 +17,13 @@
 package com.dimajix.flowman.spec.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
@@ -48,7 +50,9 @@ case class CopyRelationTask(
         val output = context.getRelation(target)
         val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
         val data = input.read(executor, schema, sourcePartitions).coalesce(parallelism)
-        output.write(executor, data, targetPartition, mode)
+        val xfs = SchemaEnforcer(StructType(output.schema.fields.map(_.sparkField)))
+        val conformed = xfs.transform(data)
+        output.write(executor, conformed, targetPartition, mode)
         true
     }
 }

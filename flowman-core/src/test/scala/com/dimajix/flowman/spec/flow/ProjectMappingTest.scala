@@ -24,6 +24,8 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.transforms.ProjectTransformer
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.LongType
@@ -44,11 +46,11 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = ProjectMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("myview"),
-            Seq(ProjectMapping.Column("_2"))
+            Seq(ProjectTransformer.Column(Path("_2")))
         )
 
         mapping.input should be (MappingOutputIdentifier("myview"))
-        mapping.columns should be (Seq(ProjectMapping.Column("_2")))
+        mapping.columns should be (Seq(ProjectTransformer.Column(Path("_2"))))
         mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
@@ -96,7 +98,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = project.mappings("t1").instantiate(session.context)
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
         result.schema should be (expectedSchema.sparkType)
 
         val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
@@ -133,7 +135,46 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val mapping = project.mappings("t1").instantiate(session.context)
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
+        result.schema should be (expectedSchema.sparkType)
+
+        val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
+        schema("main") should be (expectedSchema)
+    }
+
+    it should "support nested columns" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val spec =
+            """
+              |mappings:
+              |  t1:
+              |    kind: project
+              |    input: t0
+              |    columns:
+              |      - name: my_field
+              |        column: some_struct.field
+              |        type: Long
+              |      - other_struct.integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val df = spark.read.json(Seq(
+            """{"some_struct":{"field":12},"other_struct":{"integer":13}}"""
+        ).toDS)
+
+        val expectedSchema = StructType(Seq(
+            Field("my_field", LongType, true),
+            Field("integer", LongType, true)
+        ))
+
+        val mapping = project.mappings("t1").instantiate(session.context)
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
         result.schema should be (expectedSchema.sparkType)
 
         val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))

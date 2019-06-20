@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.flow
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -28,28 +26,21 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.flow.ProjectMapping.Column
+import com.dimajix.flowman.transforms.ProjectTransformer
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-object ProjectMapping {
-    case class Column(
-        column:String,
-        name:Option[String]=None,
-        dtype:Option[FieldType]=None
-    )
-}
 case class ProjectMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[ProjectMapping.Column]
+    columns:Seq[ProjectTransformer.Column]
 )
 extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
@@ -67,21 +58,8 @@ extends BaseMapping {
 
         logger.info(s"Projecting mapping '$input' onto columns ${columns.mkString(",")}")
 
-        def column(spec: Column) = {
-            val input = col(spec.column)
-            val typed = spec.dtype match {
-                case None => input
-                case Some(ft) => input.cast(ft.sparkType)
-            }
-            spec.name match {
-                case None => typed
-                case Some(name) => typed.as(name)
-            }
-        }
-
         val df = tables(input)
-        val cols = columns.map(column)
-        val result = df.select(cols:_*)
+        val result = xfs.transform(df)
 
         Map("main" -> result)
     }
@@ -104,17 +82,12 @@ extends BaseMapping {
         require(input != null)
 
         val schema = input(this.input)
-        val inputFields = schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
-        val outputFields = columns.map { col =>
-            val inputCol = inputFields.getOrElse(col.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Cannot find field $name in schema ${this.input}"))
-            val outputName = col.name.getOrElse(inputCol.name)
-            val outputType = col.dtype.getOrElse(inputCol.ftype)
-            inputCol.copy(name=outputName, ftype=outputType)
-        }
-        val result = StructType(outputFields)
+        val result = xfs.transform(schema)
 
         Map("main" -> result)
     }
+
+    private def xfs : ProjectTransformer = ProjectTransformer(columns)
 }
 
 
@@ -131,9 +104,9 @@ object ProjectMappingSpec {
         @JsonProperty(value = "name", required = true) private var name:Option[String] = None
         @JsonProperty(value = "type", required = true) private var dtype:Option[FieldType] = None
 
-        def instantiate(context: Context) : ProjectMapping.Column = {
-            ProjectMapping.Column(
-                context.evaluate(column),
+        def instantiate(context: Context) : ProjectTransformer.Column = {
+            ProjectTransformer.Column(
+                Path(context.evaluate(column)),
                 name.map(context.evaluate),
                 dtype
             )

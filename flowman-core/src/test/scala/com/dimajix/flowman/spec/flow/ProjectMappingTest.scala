@@ -24,6 +24,11 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 
 
 class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -39,11 +44,11 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = ProjectMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("myview"),
-            Seq("_2")
+            Seq(ProjectMapping.Column("_2"))
         )
 
         mapping.input should be (MappingOutputIdentifier("myview"))
-        mapping.columns should be (Seq("_2"))
+        mapping.columns should be (Seq(ProjectMapping.Column("_2")))
         mapping.dependencies should be (Seq(MappingOutputIdentifier("myview")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
@@ -51,6 +56,13 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         result.size should be (2)
         result(0) should be (Row(12))
         result(1) should be (Row(23))
+
+        val schema = mapping.describe(Map(MappingOutputIdentifier("myview") -> StructType.of(df.schema)))
+        schema("main") should be (
+            StructType(Seq(
+                Field("_2", IntegerType, false)
+            ))
+        )
     }
 
     "An appropriate Dataflow" should "be readable from YML" in {
@@ -80,6 +92,49 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val mapping = project.mappings("t1").instantiate(session.context)
         mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+
+        val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
+        schema("main") should be (
+            StructType(Seq(
+                Field("_2", IntegerType, false),
+                Field("_1", StringType, true)
+            ))
+        )
     }
 
+    it should "support renaming and retyping" in {
+        val spec =
+            """
+              |mappings:
+              |  t1:
+              |    kind: project
+              |    input: t0
+              |    columns:
+              |      - name: second
+              |        column: _2
+              |        type: Long
+              |      - name: first
+              |        column: _1
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val df = spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+
+        val mapping = project.mappings("t1").instantiate(session.context)
+        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+
+        val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
+        schema("main") should be (
+            StructType(Seq(
+                Field("second", LongType, false),
+                Field("first", StringType, true)
+            ))
+        )
+    }
 }

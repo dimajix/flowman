@@ -90,16 +90,17 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("col2", 23)
         ))
 
+        val expectedSchema = StructType(Seq(
+            Field("_2", IntegerType, false),
+            Field("_1", StringType, true)
+        ))
+
         val mapping = project.mappings("t1").instantiate(session.context)
-        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+        result.schema should be (expectedSchema.sparkType)
 
         val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
-        schema("main") should be (
-            StructType(Seq(
-                Field("_2", IntegerType, false),
-                Field("_1", StringType, true)
-            ))
-        )
+        schema("main") should be (expectedSchema)
     }
 
     it should "support renaming and retyping" in {
@@ -126,15 +127,16 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             ("col2", 23)
         ))
 
+        val expectedSchema = StructType(Seq(
+            Field("second", LongType, false),
+            Field("first", StringType, true)
+        ))
+
         val mapping = project.mappings("t1").instantiate(session.context)
-        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main").orderBy("_1", "_2")
+        result.schema should be (expectedSchema.sparkType)
 
         val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
-        schema("main") should be (
-            StructType(Seq(
-                Field("second", LongType, false),
-                Field("first", StringType, true)
-            ))
-        )
+        schema("main") should be (expectedSchema)
     }
 }

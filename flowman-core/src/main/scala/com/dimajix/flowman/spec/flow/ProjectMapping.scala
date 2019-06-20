@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.flow.ProjectMapping.Column
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
@@ -66,11 +67,20 @@ extends BaseMapping {
 
         logger.info(s"Projecting mapping '$input' onto columns ${columns.mkString(",")}")
 
+        def column(spec: Column) = {
+            val input = col(spec.column)
+            val typed = spec.dtype match {
+                case None => input
+                case Some(ft) => input.cast(ft.sparkType)
+            }
+            spec.name match {
+                case None => typed
+                case Some(name) => typed.as(name)
+            }
+        }
+
         val df = tables(input)
-        val cols = columns.map(nv => nv.name match {
-            case None => col(nv.column)
-            case Some(name) => col(nv.column).as(name)
-        })
+        val cols = columns.map(column)
         val result = df.select(cols:_*)
 
         Map("main" -> result)

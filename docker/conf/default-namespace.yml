@@ -29,5 +29,4 @@ plugins:
   - flowman-example
   - flowman-hbase
   - flowman-kafka
-  - flowman-impala
   - flowman-mariadb

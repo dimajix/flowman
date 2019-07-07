@@ -140,6 +140,10 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-tools</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-server</artifactId>
+        </dependency>
     </dependencies>
 </project>
 

@@ -1,6 +1,6 @@
 name: "default"
 
-statestore:
+history:
   kind: jdbc
   connection: flowman_state
   retries: 3
@@ -18,6 +18,10 @@ config:
   - hive.metastore.uris=
   - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
   - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
+
+store:
+  kind: file
+  location: /opt/flowman/examples
 
 plugins:
   - flowman-aws

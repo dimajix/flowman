@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.spec.Module
 
+
 class SessionTest extends FlatSpec with Matchers {
     "A Session" should "be buildable" in {
         val session = Session.builder()
@@ -46,6 +47,15 @@ class SessionTest extends FlatSpec with Matchers {
         session.sparkRunning should be (false)
         session.spark should not be (null)
         session.sparkRunning should be (true)
+    }
+
+    it should "throw an exception when accessing Spark when it is disabled" in {
+        val session = Session.builder()
+            .disableSpark()
+            .build()
+        session.sparkRunning should be (false)
+        an[IllegalStateException] shouldBe thrownBy(session.spark)
+        session.sparkRunning should be (false)
     }
 
     it should "apply configs in correct order" in {

@@ -1,6 +1,6 @@
 name: "default"
 
-statestore:
+history:
   kind: jdbc
   connection: flowman_state
   retries: 3

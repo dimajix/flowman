@@ -44,10 +44,17 @@ import com.dimajix.flowman.spec.task.Job
 
 object RootContext {
     class Builder private[RootContext](namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](_parent, SettingLevel.NAMESPACE_SETTING) {
+        private var projectResolver:Option[String => Option[Project]] = None
+
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
 
         override def withProfile(profile:Profile) : Builder = {
             withProfile(profile, SettingLevel.NAMESPACE_PROFILE)
+            this
+        }
+
+        def withProjectResolver(resolver:String => Option[Project]) : Builder = {
+            projectResolver = Some(resolver)
             this
         }
 
@@ -62,7 +69,7 @@ object RootContext {
             else
                 env
 
-            new RootContext(namespace, profiles, fullEnv, config, connections)
+            new RootContext(namespace, projectResolver, profiles, fullEnv, config, connections)
         }
     }
 
@@ -74,6 +81,7 @@ object RootContext {
 
 class RootContext private[execution](
         _namespace:Namespace,
+        projectResolver:Option[String => Option[Project]],
         profiles:Seq[String],
         fullEnv:Map[String,(Any, Int)],
         fullConfig:Map[String,(String, Int)],
@@ -114,7 +122,7 @@ class RootContext private[execution](
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Cannot find mapping with name '$identifier'")
+            throw new NoSuchMappingException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getMapping(MappingIdentifier(identifier.name, None))
     }
@@ -128,7 +136,7 @@ class RootContext private[execution](
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Cannot find relation with name '$identifier'")
+            throw new NoSuchRelationException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getRelation(RelationIdentifier(identifier.name, None))
     }
@@ -143,7 +151,7 @@ class RootContext private[execution](
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Cannot find output with name '$identifier'")
+            throw new NoSuchTargetException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getTarget(TargetIdentifier(identifier.name, None))
     }
@@ -164,7 +172,7 @@ class RootContext private[execution](
                         Option(namespace)
                             .flatMap(_.connections.get(identifier.name))
                     )
-                    .getOrElse(throw new NoSuchElementException(s"Cannot find connection with name '$identifier'"))
+                    .getOrElse(throw new NoSuchConnectionException(identifier))
                     .instantiate(this)
             )
         }
@@ -184,7 +192,7 @@ class RootContext private[execution](
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
-            throw new NoSuchElementException(s"Cannot find Job with name '$identifier'")
+            throw new NoSuchJobException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getJob(JobIdentifier(identifier.name, None))
     }
@@ -220,7 +228,7 @@ class RootContext private[execution](
         context
     }
     private def loadProject(name: String): Project = {
-        _namespace.store.loadProject(name)
+        projectResolver.flatMap(f => f(name)).getOrElse(throw new NoSuchProjectException(name))
     }
 
     /**

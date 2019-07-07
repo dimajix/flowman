@@ -38,8 +38,8 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
-import com.dimajix.flowman.state.JobInstance
-import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.history.JobInstance
+import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StringType

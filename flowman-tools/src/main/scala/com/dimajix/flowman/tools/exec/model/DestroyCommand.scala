@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.task.DestroyRelationTask
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 

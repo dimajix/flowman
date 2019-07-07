@@ -25,11 +25,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.catalog.CatalogSpec
-import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.state.StateStoreSpec
-import com.dimajix.flowman.spec.state.NullStateStoreSpec
-import com.dimajix.flowman.spec.storage.Store
+import com.dimajix.flowman.spec.history.HistorySpec
+import com.dimajix.flowman.spec.history.NullHistorySpec
+import com.dimajix.flowman.spec.storage.StorageSpec
 
 
 object Namespace {
@@ -42,8 +41,8 @@ object Namespace {
             namespace._name = name
             this
         }
-        def setStateStore(monitor: StateStoreSpec) : Builder = {
-            namespace._monitor = monitor
+        def setStateStore(monitor: HistorySpec) : Builder = {
+            namespace._history = monitor
             this
         }
         def setCatalog(catalog: CatalogSpec) : Builder = {
@@ -113,15 +112,16 @@ object Namespace {
 
 
 class Namespace {
-    @JsonProperty(value="store") private var _store: Store = _
+    @JsonProperty(value="store") private var _store: StorageSpec = _
     @JsonProperty(value="catalog") private var _catalog: CatalogSpec = _
     @JsonProperty(value="name") private var _name: String = "default"
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
+    @JsonDeserialize(converter=classOf[Profile.NameResolver])
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,ConnectionSpec] = Map()
-    @JsonProperty(value="statestore") private var _monitor : StateStoreSpec = new NullStateStoreSpec()
+    @JsonProperty(value="history") private var _history : HistorySpec = new NullHistorySpec()
     @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
 
     def name : String = _name
@@ -132,8 +132,7 @@ class Namespace {
 
     def profiles : Map[String,Profile] = _profiles
     def connections : Map[String,ConnectionSpec] = _connections
-    def projects : Seq[String] = _store.listProjects()
-    def store : Store = _store
+    def storage : StorageSpec = _store
     def catalog : CatalogSpec = _catalog
-    def monitor : StateStoreSpec = _monitor
+    def history : HistorySpec = _history
 }

@@ -30,11 +30,11 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.state.JobInstance
-import com.dimajix.flowman.state.JobToken
-import com.dimajix.flowman.state.Status
-import com.dimajix.flowman.state.TargetInstance
-import com.dimajix.flowman.state.TargetToken
+import com.dimajix.flowman.history.JobInstance
+import com.dimajix.flowman.history.JobToken
+import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.history.TargetInstance
+import com.dimajix.flowman.history.TargetToken
 
 
 object AbstractRunner {

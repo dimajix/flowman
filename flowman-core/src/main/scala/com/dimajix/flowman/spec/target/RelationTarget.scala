@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.state.TargetInstance
+import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.types.SingleValue
 
 

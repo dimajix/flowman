@@ -37,7 +37,7 @@ object Profile {
 
 class Profile {
     @JsonIgnore private var _name:String = ""
-    @JsonProperty(value="enabled") private var _enabled : Boolean = true
+    @JsonProperty(value="enabled") private var _enabled : Boolean = false
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
@@ -50,7 +50,7 @@ class Profile {
     def name : String = _name
 
     /**
-      * Returns true if the profile is enabled
+      * Returns true if the profile is enabled per default
       *
       * @return
       */

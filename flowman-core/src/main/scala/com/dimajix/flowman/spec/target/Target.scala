@@ -32,7 +32,7 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
-import com.dimajix.flowman.state.TargetInstance
+import com.dimajix.flowman.history.TargetInstance
 
 
 object Target {

@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
-import com.dimajix.flowman.spec.state.StateStoreSpec
+import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.task.TaskSpec
 import com.dimajix.flowman.spi.Registration
@@ -50,9 +50,9 @@ object ObjectMapper {
       */
     def mapper : JacksonMapper = {
         Registration.load()
-        val stateStoreTypes = StateStoreSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val stateStoreTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val catalogTypes = CatalogSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val monitorTypes = StateStoreSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val monitorTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val relationTypes = RelationSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = MappingSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val outputTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))

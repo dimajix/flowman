@@ -43,4 +43,13 @@ object Converter {
             project.basedir.toString
         )
     }
+
+    def ofSpec(job:spec.task.Job) : Job = {
+        Job(
+            job.name,
+            job.description,
+            job.parameters.map(_.name),
+            job.environment
+        )
+    }
 }

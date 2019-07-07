@@ -23,12 +23,12 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a StateStoreSpec to be used as part of a Namespace. The specific StateStoreSpec itself has
- * to derive from the StateStoreSpec class
+ * This annotation marks a specific class as a history store to be used as part of a Namespace. The specific
+ * history store itself has to derive from the StateStoreSpec class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface MonitorType {
+public @interface HistoryType {
     /**
      * Specifies the kind of the state which is used in namespace specifications.
      * @return

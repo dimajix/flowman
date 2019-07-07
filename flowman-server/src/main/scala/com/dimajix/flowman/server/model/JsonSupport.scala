@@ -24,6 +24,7 @@ import spray.json.RootJsonFormat
 trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport{
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
     implicit val projectFormat: RootJsonFormat[Project] = jsonFormat8(Project)
+    implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job)
 }
 
 

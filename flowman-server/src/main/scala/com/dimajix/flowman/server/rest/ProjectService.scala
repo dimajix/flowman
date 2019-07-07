@@ -20,6 +20,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
@@ -32,9 +33,12 @@ import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.storage.Store
 
 
@@ -64,11 +68,11 @@ class ProjectService(store:Store) {
                 ~
                 pathPrefix(Segment) { job => (
                     pathEndOrSingleSlash {
-                        infoJob()
+                        infoJob(project, job)
                     }
                     ~
                     path("run") {
-                        runJob()
+                        runJob(project, job)
                     }
                 )}
             )}
@@ -80,11 +84,11 @@ class ProjectService(store:Store) {
                 ~
                 path(Segment) { target => (
                     pathEndOrSingleSlash {
-                        infoTarget()
+                        infoTarget(project, target)
                     }
                     ~
                     path("build") {
-                        buildTarget()
+                        buildTarget(project, target)
                     }
                 )}
             )}
@@ -119,8 +123,9 @@ class ProjectService(store:Store) {
                 complete(result)
             case Failure(x:NoSuchProjectException) =>
                 logger.error(s"Project ${x.project} not found")
-                reject()
-
+                complete(StatusCodes.NotFound)
+            case Failure(ex) =>
+                complete(StatusCodes.InternalServerError)
         }
     }
 
@@ -134,12 +139,21 @@ class ProjectService(store:Store) {
         new ApiResponse(code = 200, message = "List of jobs", response = classOf[model.Project])
     ))
     def listJobs(@ApiParam(hidden = true) project:String): server.Route = {
-        val prj = store.loadProject(project)
-        complete(prj.jobs.keys.toSeq)
+        Try {
+            store.loadProject(project)
+        } match {
+            case Success(p) =>
+                complete(p.jobs.keys.toSeq)
+            case Failure(x:NoSuchProjectException) =>
+                logger.error(s"Project ${x.project} not found")
+                complete(StatusCodes.NotFound)
+            case Failure(ex) =>
+                complete(StatusCodes.InternalServerError)
+        }
     }
 
     @Path("/{project}/job/{job}")
-    @ApiOperation(value = "List all jobs within a project", nickname = "getJob", httpMethod = "GET")
+    @ApiOperation(value = "Retrieve information about an individual job within a project", nickname = "getJob", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "name of project", required = true,
             dataType = "string", paramType = "path"),
@@ -149,8 +163,27 @@ class ProjectService(store:Store) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Information on job", response = classOf[model.Project])
     ))
-    def infoJob(): server.Route = {
-        reject
+    def infoJob(@ApiParam(hidden = true) project:String, @ApiParam(hidden = true) job:String): server.Route = {
+        Try {
+            val p = store.loadProject(project)
+            val session = Session.builder()
+                .withProject(p)
+                .disableSpark()
+                .build()
+            val context = session.getContext(p)
+            context.getJob(JobIdentifier(job))
+        } match {
+            case Success(j) =>
+                complete(Converter.ofSpec(j))
+            case Failure(x:NoSuchProjectException) =>
+                logger.error(s"Project ${x.project} not found")
+                complete(StatusCodes.NotFound)
+            case Failure(x:NoSuchJobException) =>
+                logger.error(s"Job ${x.job} not found")
+                complete(StatusCodes.NotFound)
+            case Failure(ex) =>
+                complete(StatusCodes.InternalServerError)
+        }
     }
 
     @Path("/{project}/job/{job}")
@@ -164,7 +197,7 @@ class ProjectService(store:Store) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "List of jobs", response = classOf[model.Project])
     ))
-    def runJob() : server.Route = {
+    def runJob(@ApiParam(hidden = true) project:String, @ApiParam(hidden = true) job:String) : server.Route = {
         post {
             reject
         }
@@ -180,12 +213,21 @@ class ProjectService(store:Store) {
         new ApiResponse(code = 200, message = "List of jobs", response = classOf[model.Project])
     ))
     def listTargets(@ApiParam(hidden = true)project:String): server.Route = {
-        val prj = store.loadProject(project)
-        complete(prj.targets.keys.toSeq)
+        Try {
+            store.loadProject(project)
+        } match {
+            case Success(p) =>
+                complete(p.targets.keys.toSeq)
+            case Failure(x:NoSuchProjectException) =>
+                logger.error(s"Project ${x.project} not found")
+                complete(StatusCodes.NotFound)
+            case Failure(ex) =>
+                complete(StatusCodes.InternalServerError)
+        }
     }
 
     @Path("/{project}/target/{target}")
-    @ApiOperation(value = "List all jobs within a project", nickname = "getTarget", httpMethod = "GET")
+    @ApiOperation(value = "Retrieve information on a single target within a project", nickname = "getTarget", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "name of project", required = true,
             dataType = "string", paramType = "path"),
@@ -195,7 +237,7 @@ class ProjectService(store:Store) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Information on target", response = classOf[model.Project])
     ))
-    def infoTarget(): server.Route = {
+    def infoTarget(@ApiParam(hidden = true) project:String, @ApiParam(hidden = true) target:String): server.Route = {
         reject
     }
 
@@ -210,7 +252,7 @@ class ProjectService(store:Store) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "List of jobs", response = classOf[model.Project])
     ))
-    def buildTarget() : server.Route = {
+    def buildTarget(@ApiParam(hidden = true) project:String, @ApiParam(hidden = true) target:String) : server.Route = {
         post {
             reject
         }

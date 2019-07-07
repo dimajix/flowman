@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.server.executor
+package com.dimajix.flowman.server.model
 
-class LocalExecutor {
 
+case class Job(
+    name:String,
+    description:Option[String],
+    parameters:Seq[String],
+    environment:Map[String,String]
+) {
 }
+

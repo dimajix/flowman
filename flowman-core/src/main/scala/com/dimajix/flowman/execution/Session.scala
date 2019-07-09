@@ -270,6 +270,11 @@ class Session private[execution](
     private def createSession() : SparkSession = {
         val spark = createOrReuseSession()
 
+        // Set checkpoint directory if not already specified
+        if (spark.sparkContext.getCheckpointDir.isEmpty) {
+            sparkConfig.get("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
+        }
+
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)
 

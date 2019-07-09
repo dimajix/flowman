@@ -42,6 +42,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         val localMetastorePath = new File(tempDir, "metastore").getCanonicalPath
         val localWarehousePath = new File(tempDir, "wharehouse").getCanonicalPath
         val checkpointPath  = new File(tempDir, "checkpoints").getCanonicalPath
+        val streamingCheckpointPath  = new File(tempDir, "streamingCheckpoints").getCanonicalPath
 
         // We have to mask all properties in hive-site.xml that relates to metastore
         // data source as we used a local metastore here.
@@ -55,13 +56,14 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         builder.config("javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=$localMetastorePath;create=true")
             .config("datanucleus.rdbms.datastoreAdapterClassName", "org.datanucleus.store.rdbms.adapter.DerbyAdapter")
             .config(ConfVars.METASTOREURIS.varname, "")
-            .config("spark.sql.streaming.checkpointLocation", checkpointPath.toString)
+            .config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath.toString)
             .config("spark.sql.warehouse.dir", localWarehousePath)
             .config(conf)
             .enableHiveSupport()
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
         sc = spark.sparkContext
+        sc.setCheckpointDir(checkpointPath)
 
         // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown
         spark.emptyDataFrame.count()

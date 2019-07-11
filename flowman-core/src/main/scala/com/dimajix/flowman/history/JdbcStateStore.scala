@@ -20,230 +20,14 @@ import java.security.MessageDigest
 import java.sql.SQLRecoverableException
 import java.sql.Timestamp
 import java.time.Clock
-import java.time.ZoneId
-import java.util.Locale
-import java.util.Properties
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 import slick.jdbc.DerbyProfile
 import slick.jdbc.H2Profile
-import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
-import slick.jdbc.meta.MTable
 
-import com.dimajix.flowman.history.JdbcJobRepository.TargetRun
-
-
-private object JdbcJobRepository {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcJobRepository])
-
-    case class JobRun(
-         id:Long,
-         parent_id:Option[Long],
-         namespace: String,
-         project:String,
-         job:String,
-         args_hash:String,
-         start_ts:Timestamp,
-         end_ts:Timestamp,
-         status:String
-     ) extends JobToken
-
-    case class JobArgument(
-        job_id:Long,
-        name:String,
-        value:String
-    )
-
-    case class TargetRun(
-        id:Long,
-        job_id:Option[Long],
-        namespace: String,
-        project:String,
-        target:String,
-        partitions_hash:String,
-        start_ts:Timestamp,
-        end_ts:Timestamp,
-        status:String
-    ) extends TargetToken
-
-    case class TargetPartition(
-        target_id:Long,
-        name:String,
-        value:String
-    )
-}
-
-
-private class JdbcJobRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) {
-    import profile.api._
-
-    import JdbcJobRepository._
-
-    private lazy val db = {
-        val url = connection.url
-        val user = connection.user
-        val password = connection.password
-        val driver = connection.driver
-        val props = new Properties()
-        connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
-        logger.info(s"Connecting via JDBC to $url with driver $driver")
-        Database.forURL(url, user=user, password=password, prop=props, driver=driver)
-    }
-
-    val jobRuns = TableQuery[JobRuns]
-    val jobArgs = TableQuery[JobArguments]
-    val targetRuns = TableQuery[TargetRuns]
-    val targetPartitions = TableQuery[TargetPartitions]
-
-    class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
-        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def parent_id = column[Option[Long]]("parent_id")
-        def namespace = column[String]("namespace")
-        def project = column[String]("project")
-        def job = column[String]("job")
-        def args_hash = column[String]("args_hash")
-        def start_ts = column[Timestamp]("start_ts")
-        def end_ts = column[Timestamp]("end_ts")
-        def status = column[String]("status")
-
-        def idx = index("JOB_RUN_IDX", (namespace, project, job, args_hash, status), unique = false)
-        def parent_job = foreignKey("JOB_RUN_PARENT_FK", parent_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
-
-        def * = (id, parent_id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
-    }
-
-    class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
-        def job_id = column[Long]("job_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
-
-        def pk = primaryKey("JOB_ARGUMENT_PK", (job_id, name))
-        def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
-
-        def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
-    }
-
-    class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
-        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def job_id = column[Option[Long]]("job_id")
-        def namespace = column[String]("namespace")
-        def project = column[String]("project")
-        def target = column[String]("target")
-        def partitions_hash = column[String]("partitions_hash")
-        def start_ts = column[Timestamp]("start_ts")
-        def end_ts = column[Timestamp]("end_ts")
-        def status = column[String]("status")
-
-        def idx = index("TARGET_RUN_IDX", (namespace, project, target, partitions_hash, status), unique = false)
-        def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
-
-        def * = (id, job_id, namespace, project, target, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
-    }
-
-    class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
-        def target_id = column[Long]("target_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
-
-        def pk = primaryKey("TARGET_PARTITION_PK", (target_id, name))
-        def target = foreignKey("TARGET_PARTITION_TARGET_RUN_FK", target_id, targetRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
-
-        def * = (target_id, name, value) <> (TargetPartition.tupled, TargetPartition.unapply)
-    }
-
-    def create() : Unit = {
-        import scala.concurrent.ExecutionContext.Implicits.global
-        val tables = Seq(jobRuns, jobArgs, targetRuns, targetPartitions)
-
-        val existing = db.run(profile.defaultTables)
-        val query = existing.flatMap( v => {
-            val names = v.map(mt => mt.name.name.toLowerCase(Locale.ROOT))
-            val createIfNotExist = tables
-                .filter(table => !names.contains(table.baseTableRow.tableName.toLowerCase(Locale.ROOT)))
-                .map(_.schema.create)
-            db.run(DBIO.sequence(createIfNotExist))
-        })
-        Await.result(query, Duration.Inf)
-    }
-
-    def getJobState(run:JobRun) : Option[JobState] = {
-        val q = jobRuns.filter(_.id === jobRuns.filter(r =>
-            r.namespace === run.namespace
-                && r.project === run.project
-                && r.job === run.job
-                && r.args_hash === run.args_hash
-                && r.status =!= Status.SKIPPED.value
-        ).map(_.id).max
-        )
-        Await.result(db.run(q.result), Duration.Inf)
-            .headOption
-            .map(state => JobState(
-                Status.ofString(state.status),
-                Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
-            ))
-    }
-
-    def setJobStatus(run:JobRun) : Unit = {
-        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
-        Await.result(db.run(q), Duration.Inf)
-    }
-
-    def insertJobRun(run:JobRun, args:Map[String,String]) : JobRun = {
-        val runQuery = (jobRuns returning jobRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
-        val runResult = Await.result(db.run(runQuery), Duration.Inf)
-
-        val runArgs = args.map(kv => JobArgument(runResult.id, kv._1, kv._2))
-        val argsQuery = jobArgs ++= runArgs
-        Await.result(db.run(argsQuery), Duration.Inf)
-
-        runResult
-    }
-
-    def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
-        val latestId = targetRuns
-            .filter(tr => tr.namespace === target.namespace
-                && tr.project === target.project
-                && tr.target === target.target
-                && tr.partitions_hash === target.partitions_hash
-                && tr.status =!= Status.SKIPPED.value
-            )
-            .map(_.id)
-            .max
-
-        // Finally select the run with the calculated ID
-        val q = targetRuns.filter(r => r.id === latestId)
-        Await.result(db.run(q.result), Duration.Inf)
-            .headOption
-            .map(state => TargetState(
-                Status.ofString(state.status),
-                Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
-            ))
-    }
-
-    def setTargetStatus(run:TargetRun) : Unit = {
-        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
-        Await.result(db.run(q), Duration.Inf)
-    }
-
-    def insertTargetRun(run:TargetRun, partitions:Map[String,String]) : TargetRun = {
-        val runQuery = (targetRuns returning targetRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
-        val runResult = Await.result(db.run(runQuery), Duration.Inf)
-
-        val runPartitions = partitions.map(kv => TargetPartition(runResult.id, kv._1, kv._2))
-        val argsQuery = targetPartitions ++= runPartitions
-        Await.result(db.run(argsQuery), Duration.Inf)
-
-        runResult
-    }
-}
 
 
 object JdbcStateStore {
@@ -258,7 +42,7 @@ object JdbcStateStore {
 
 
 class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateStore {
-    import com.dimajix.flowman.history.JdbcJobRepository.JobRun
+    import JdbcStateRepository._
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])
 
@@ -418,6 +202,24 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
         }
     }
 
+    /**
+      * Returns a list of job matching the query criteria
+      * @param query
+      * @param limit
+      * @param offset
+      * @return
+      */
+    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+
+    /**
+      * Returns a list of job matching the query criteria
+      * @param query
+      * @param limit
+      * @param offset
+      * @return
+      */
+    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
+
     private def hashArgs(job:JobInstance) : String = {
          hashMap(job.args)
     }
@@ -440,7 +242,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @tparam T
       * @return
       */
-    private def withSession[T](query: JdbcJobRepository => T) : T = {
+    private def withSession[T](query: JdbcStateRepository => T) : T = {
         def retry[T](n:Int)(fn: => T) : T = {
             try {
                 fn
@@ -461,7 +263,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
 
     private var tablesCreated:Boolean = false
 
-    private def newRepository() : JdbcJobRepository = {
+    private def newRepository() : JdbcStateRepository = {
         // Get Connection
         val derbyPattern = """.*\.derby\..*""".r
         val h2Pattern = """.*\.h2\..*""".r
@@ -475,7 +277,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }
 
-        val repository = new JdbcJobRepository(connection, profile)
+        val repository = new JdbcStateRepository(connection, profile)
 
         // Create Database if not exists
         if (!tablesCreated) {

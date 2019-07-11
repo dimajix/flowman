@@ -79,4 +79,22 @@ abstract class StateStore {
       * @param status
       */
     def finishTarget(token:TargetToken, status:Status) : Unit
+
+    /**
+      * Returns a list of job matching the query criteria
+      * @param query
+      * @param limit
+      * @param offset
+      * @return
+      */
+    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
+
+    /**
+      * Returns a list of job matching the query criteria
+      * @param query
+      * @param limit
+      * @param offset
+      * @return
+      */
+    def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState]
 }

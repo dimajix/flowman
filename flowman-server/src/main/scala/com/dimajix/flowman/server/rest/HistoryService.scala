@@ -14,18 +14,18 @@ class HistoryService(history:StateStore) {
         }
         ~
         pathPrefix(Segment) { project => (
-            pathEndOrSingleSlash {
-                reject
-            }
-            ~
             pathPrefix("job") {(
                 pathEndOrSingleSlash {
-                    reject
+                    parameterMap { params =>
+                        reject
+                    }
                 }
                 ~
                 pathPrefix(Segment) { job => (
                     pathEndOrSingleSlash {
-                        reject
+                        parameterMap { params =>
+                            reject
+                        }
                     }
                 )}
             )}
@@ -37,10 +37,23 @@ class HistoryService(history:StateStore) {
                 ~
                 pathPrefix(Segment) { target => (
                     pathEndOrSingleSlash {
-                        reject
+                        parameterMap { params =>
+                            reject
+                        }
                     }
                 )}
             )}
         )}
     )}
+
+    private def parseQuery(params:Map[String,String]) = {
+        params.get("from")
+        params.get("to")
+        params.get("state")
+        params.get("id")
+        params.get("name")
+        params.get("parent_name")
+        params.get("parent_id")
+        params.flatMap(kv => "p\\[(.+)\\]".r.unapplySeq(kv._1).flatMap(_.headOption).map(k => (k,kv._2)))
+    }
 }

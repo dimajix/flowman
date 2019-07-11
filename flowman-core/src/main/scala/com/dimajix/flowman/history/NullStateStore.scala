@@ -51,7 +51,7 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    def getTargetState(target:TargetInstance) : Option[TargetState] = None
+    override def getTargetState(target:TargetInstance) : Option[TargetState] = None
 
     /**
       * Performs some checkTarget, if the run is required
@@ -73,4 +73,22 @@ class NullStateStore extends StateStore {
       * @param status
       */
     override def finishTarget(token:TargetToken, status:Status) : Unit = {}
+
+    /**
+      * Returns a list of job matching the query criteria
+      * @param query
+      * @param limit
+      * @param offset
+      * @return
+      */
+    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+
+    /**
+      * Returns a list of job matching the query criteria
+      * @param query
+      * @param limit
+      * @param offset
+      * @return
+      */
+    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
 }

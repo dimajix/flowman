@@ -23,5 +23,5 @@ abstract class Store {
     def loadProject(name:String) : Project
     def storeProject(project: Project) : Unit
     def removeProject(name:String) : Unit
-    def listProjects() : Seq[String]
+    def listProjects() : Seq[Project]
 }

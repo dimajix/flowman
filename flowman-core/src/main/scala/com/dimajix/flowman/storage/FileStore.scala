@@ -39,10 +39,9 @@ class FileStore(root:File) extends Store {
 
     override def removeProject(name: String): Unit = ???
 
-    override def listProjects(): Seq[String] = {
+    override def listProjects(): Seq[Project] = {
         root.glob(globPattern)
             .flatMap(loadProjectManifest)
-            .map(_.name)
     }
 
     private def loadProjectManifest(project:File) : Option[Project] = {

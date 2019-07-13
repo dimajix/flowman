@@ -27,5 +27,5 @@ class NullStore extends Store {
 
     override def removeProject(name: String): Unit = ???
 
-    override def listProjects(): Seq[String] = Seq()
+    override def listProjects(): Seq[Project] = Seq()
 }

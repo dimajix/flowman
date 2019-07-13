@@ -98,11 +98,11 @@ class ProjectService(store:Store) {
     @Path("/")
     @ApiOperation(value = "Retrieve a list of all projects", nickname = "getProjects", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Project information", response = classOf[Seq[String]])
+        new ApiResponse(code = 200, message = "Project information", response = classOf[Seq[model.Project]])
     ))
     def listProjects(): server.Route = {
         val result = store.listProjects()
-        complete(result)
+        complete(result.map(Converter.ofSpec))
     }
 
     @Path("/{project}")

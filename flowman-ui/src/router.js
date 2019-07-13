@@ -28,7 +28,7 @@ export default new Router({
     },
     {
       path: '/project/:name',
-      name: "project",
+      name: 'project',
       component: Project,
       props: route => ({
         projectName: route.params.name

@@ -38,6 +38,7 @@
           .then(response => {
             this.name = response.name
             this.version = response.version
+            this.description = response.description
             this.jobs = response.jobs
             this.targets = response.targets
           })

@@ -228,6 +228,7 @@
         <module>flowman-testing</module>
         <module>flowman-core</module>
         <module>flowman-tools</module>
+        <module>flowman-ui</module>
         <module>flowman-server</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
@@ -367,6 +368,11 @@
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -573,6 +579,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

@@ -34,6 +34,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-ui</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
         </dependency>

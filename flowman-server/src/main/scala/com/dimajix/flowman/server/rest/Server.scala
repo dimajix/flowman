@@ -68,6 +68,12 @@ class Server(
                     ~
                     getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
                 )}
+                ~
+                pathEndOrSingleSlash {
+                    getFromResource("META-INF/resources/webjars/flowman-ui/index.html")
+                }
+                ~
+                getFromResourceDirectory("META-INF/resources/webjars/flowman-ui")
             )
 
         logger.info("Starting http server")

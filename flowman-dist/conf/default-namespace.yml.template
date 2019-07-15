@@ -25,5 +25,9 @@ plugins:
   - flowman-aws
   - flowman-azure
   - flowman-kafka
-  - flowman-impala
   - flowman-mariadb
+
+store:
+  kind: file
+  location: /home/kaya/Dimajix/flowman-0.7.0-SNAPSHOT/examples
+

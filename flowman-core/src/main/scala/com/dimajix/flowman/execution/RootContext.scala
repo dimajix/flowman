@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import java.util.NoSuchElementException
-
 import scala.collection.mutable
 
 import org.apache.hadoop.conf.Configuration

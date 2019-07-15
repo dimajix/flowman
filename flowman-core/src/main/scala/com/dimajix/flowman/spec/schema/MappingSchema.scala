@@ -21,6 +21,8 @@ import scala.collection.mutable
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.NoSuchMappingOutputException
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.Field
@@ -49,21 +51,7 @@ case class MappingSchema (
       * @return
       */
     override def fields : Seq[Field] = {
-        val schemaCache = mutable.Map[MappingOutputIdentifier, StructType]()
-
-        def describe(mapping:MappingOutputIdentifier) : StructType = {
-            schemaCache.getOrElseUpdate(mapping, {
-                val map = context.getMapping(MappingIdentifier(mapping.name, mapping.project))
-                if (!map.outputs.contains(mapping.output))
-                    throw new NoSuchElementException(s"Mapping ${map.identifier} does mot produce output '${mapping.output}'")
-                val deps = map.dependencies
-                    .map(id => (id,describe(id)))
-                    .toMap
-                map.describe(deps, mapping.output)
-            })
-        }
-
-        describe(mapping).fields
+        MappingUtils.describe(context, mapping).fields
     }
 
     /**

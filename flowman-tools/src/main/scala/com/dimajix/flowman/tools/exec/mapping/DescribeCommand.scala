@@ -21,6 +21,7 @@ import scala.util.Success
 import scala.util.Try
 
 import org.kohsuke.args4j.Argument
+import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -36,10 +37,11 @@ class DescribeCommand extends ActionCommand {
 
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
     var mapping: String = ""
-
+    @Option(name = "-s", usage = "use Spark to derive final schema")
+    var spark: Boolean = false
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping))
+        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping), spark)
 
         Try {
             task.execute(executor)

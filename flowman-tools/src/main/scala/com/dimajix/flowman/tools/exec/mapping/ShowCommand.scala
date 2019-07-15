@@ -46,7 +46,7 @@ class ShowCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val columns = this.columns.split(",").filter(_.nonEmpty)
-        val task = ShowMappingTask(context, MappingOutputIdentifier(mapping), columns, limit)
+        val task = ShowMappingTask(context, Seq(MappingOutputIdentifier(mapping)), columns, limit)
 
         Try {
             task.execute(executor)

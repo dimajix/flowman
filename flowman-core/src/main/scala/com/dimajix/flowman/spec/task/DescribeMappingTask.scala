@@ -21,21 +21,24 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 object DescribeMappingTask {
-    def apply(context: Context, mapping:MappingOutputIdentifier) : DescribeMappingTask = {
+    def apply(context: Context, mapping:MappingOutputIdentifier, useSpark:Boolean) : DescribeMappingTask = {
         DescribeMappingTask(
             Task.Properties(context),
-            mapping
+            mapping,
+            useSpark
         )
     }
 }
 
 case class DescribeMappingTask(
     instanceProperties:Task.Properties,
-    mapping:MappingOutputIdentifier
+    mapping:MappingOutputIdentifier,
+    useSpark:Boolean
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[DescribeMappingTask])
 
@@ -43,8 +46,14 @@ case class DescribeMappingTask(
         logger.info(s"Describing mapping '$mapping")
 
         val instance = context.getMapping(mapping.mapping)
-        val df = executor.instantiate(instance, mapping.output)
-        df.printSchema()
+        if (useSpark) {
+            val df = executor.instantiate(instance, mapping.output)
+            df.printSchema()
+        }
+        else {
+            val schema = MappingUtils.describe(instance, mapping.output)
+            schema.printTree()
+        }
         true
     }
 }
@@ -54,11 +63,11 @@ case class DescribeMappingTask(
 class DescribeMappingTaskSpec extends TaskSpec {
     @JsonProperty(value = "mapping", required = true) private var _mapping: String = _
 
-
     override def instantiate(context: Context): DescribeMappingTask = {
         DescribeMappingTask(
             instanceProperties(context),
-            MappingOutputIdentifier(context.evaluate(_mapping))
+            MappingOutputIdentifier(context.evaluate(_mapping)),
+            true
         )
     }
 }

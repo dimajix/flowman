@@ -27,8 +27,8 @@ import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.history.Status
-import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession {

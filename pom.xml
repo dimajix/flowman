@@ -225,8 +225,10 @@
     </profiles>
 
     <modules>
-        <module>flowman-testing</module>
+        <module>flowman-spark-testing</module>
+        <module>flowman-spark-sources</module>
         <module>flowman-core</module>
+        <module>flowman-testing</module>
         <module>flowman-tools</module>
         <module>flowman-ui</module>
         <module>flowman-server</module>
@@ -281,25 +283,6 @@
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.sourceDirectory}/../spark-${spark-api.version}</source>
-                            </sources>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -359,7 +342,6 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <!-- Disable Maven Java compiler plugin -->
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -368,6 +350,11 @@
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -565,14 +552,26 @@
         <dependencies>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-testing</artifactId>
+                <artifactId>flowman-spark-testing</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spark-sources</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

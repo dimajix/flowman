@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.testing
+package com.dimajix.spark.testing
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers

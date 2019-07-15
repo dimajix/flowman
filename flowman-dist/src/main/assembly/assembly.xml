@@ -60,8 +60,9 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>com.dimajix.flowman:flowman-tools</include>
+                <include>com.dimajix.flowman:flowman-spark-sources</include>
                 <include>com.dimajix.flowman:flowman-core</include>
+                <include>com.dimajix.flowman:flowman-tools</include>
                 <include>com.dimajix.flowman:flowman-server</include>
             </includes>
             <outputDirectory>lib</outputDirectory>

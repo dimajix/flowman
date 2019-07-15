@@ -31,8 +31,8 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {

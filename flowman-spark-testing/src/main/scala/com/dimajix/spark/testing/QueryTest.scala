@@ -1,4 +1,4 @@
-package com.dimajix.flowman.testing
+package com.dimajix.spark.testing
 
 import java.util.TimeZone
 

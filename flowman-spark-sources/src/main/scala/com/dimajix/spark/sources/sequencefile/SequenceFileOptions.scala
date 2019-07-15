@@ -40,7 +40,7 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 
-import com.dimajix.flowman.hadoop.SerializableConfiguration
+import com.dimajix.hadoop.SerializableConfiguration
 
 
 case class WritableConverter[W <: org.apache.hadoop.io.Writable,V](

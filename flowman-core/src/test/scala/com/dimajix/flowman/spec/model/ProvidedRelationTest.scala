@@ -6,7 +6,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 case class Record(c1:String, c2:String)
 

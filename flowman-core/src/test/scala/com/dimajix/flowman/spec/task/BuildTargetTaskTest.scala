@@ -23,7 +23,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.history.Status
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession {

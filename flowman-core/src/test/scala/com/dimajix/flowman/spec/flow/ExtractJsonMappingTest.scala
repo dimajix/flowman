@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.schema.SwaggerSchemaSpec
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSession {

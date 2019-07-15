@@ -23,7 +23,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.history.Status
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
     "The Module" should "be loadable from a string" in {

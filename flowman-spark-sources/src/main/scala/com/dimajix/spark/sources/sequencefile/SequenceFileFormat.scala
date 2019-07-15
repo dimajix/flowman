@@ -26,7 +26,6 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.CodecStreams

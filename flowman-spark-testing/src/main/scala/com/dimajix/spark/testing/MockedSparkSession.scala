@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.testing
+package com.dimajix.spark.testing
 
 import org.apache.spark.sql.SparkSession
 import org.mockito.Mockito.when

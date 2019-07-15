@@ -92,7 +92,12 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-testing</artifactId>
+            <artifactId>flowman-spark-sources</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spark-testing</artifactId>
         </dependency>
 
         <dependency>

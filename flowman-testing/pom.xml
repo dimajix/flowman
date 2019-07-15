@@ -28,8 +28,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-core</artifactId>
         </dependency>
 
         <dependency>
@@ -38,26 +38,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.api_version}</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scalamock</groupId>
-            <artifactId>scalamock_${scala.api_version}</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

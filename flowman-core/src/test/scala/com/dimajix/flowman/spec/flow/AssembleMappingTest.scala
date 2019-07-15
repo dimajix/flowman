@@ -34,8 +34,8 @@ import com.dimajix.flowman.spec.flow.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.RenameEntry
 import com.dimajix.flowman.spec.flow.AssembleMapping.StructEntry
-import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession {

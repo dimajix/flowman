@@ -101,6 +101,7 @@ object TaskSpec extends TypeRegistry[TaskSpec] {
     new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTaskSpec]),
     new JsonSubTypes.Type(name = "print", value = classOf[PrintTaskSpec]),
     new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTaskSpec]),
+    new JsonSubTypes.Type(name = "saveMapping", value = classOf[SaveMappingTaskSpec]),
     new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTaskSpec]),
     new JsonSubTypes.Type(name = "showMapping", value = classOf[ShowMappingTaskSpec]),
     new JsonSubTypes.Type(name = "showRelation", value = classOf[ShowRelationTaskSpec]),

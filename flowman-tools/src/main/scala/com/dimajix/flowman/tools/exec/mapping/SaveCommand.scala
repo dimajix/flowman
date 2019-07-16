@@ -31,8 +31,7 @@ import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.spec.target.FileTarget
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.task.SaveMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -46,32 +45,16 @@ class SaveCommand extends ActionCommand {
     @Argument(usage = "specifies the mapping to save", metaVar = "<mapping>", required = true, index = 0)
     var mapping: String = ""
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true, index = 1)
-    var filename: String = ""
+    var location: String = ""
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        logger.info(s"Saving contents of mapping '$mapping' to '$filename'")
+        val task = SaveMappingTask(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
         Try {
-            val id = MappingOutputIdentifier(mapping)
-            val target = FileTarget(
-                Target.Properties(context).copy(input=id),
-                new Path(filename),
-                format,
-                splitSettings(options).toMap,
-                "overwrite",
-                8,
-                false
-            )
-
-            val dependencies = target.dependencies
-                .map(d => (d,context.getMapping(d.mapping)))
-                .map{ case (id,mapping) => (id,executor.instantiate(mapping, id.output)) }
-                .toMap
-
-            target.build(executor, dependencies)
+            task.execute(executor)
         } match {
             case Success(_) =>
-                logger.info(s"Successfully saved mapping '$mapping' to '$filename'")
+                logger.info(s"Successfully saved mapping '$mapping' to '$location'")
                 true
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")

@@ -36,13 +36,13 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
+    @Option(name = "-s", aliases=Array("--spark"), usage = "use Spark to derive final schema")
+    var useSpark: Boolean = false
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
     var mapping: String = ""
-    @Option(name = "-s", usage = "use Spark to derive final schema")
-    var spark: Boolean = false
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping), spark)
+        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping), useSpark)
 
         Try {
             task.execute(executor)

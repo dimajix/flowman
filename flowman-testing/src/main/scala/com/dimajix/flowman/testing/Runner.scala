@@ -20,15 +20,14 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.net.URL
-import java.util
 import java.util.UUID
 
 import scala.collection.JavaConverters._
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
+import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -41,6 +40,23 @@ import com.dimajix.flowman.spec.Project
 
 
 object Runner {
+    private def setupLogging() : Unit = {
+        val log4j = System.getProperty("log4j.configuration")
+        if (log4j == null || log4j.isEmpty) {
+            val loader = Thread.currentThread.getContextClassLoader
+            val url = loader.getResource("com/dimajix/flowman/testing/log4j-defaults.properties")
+            PropertyConfigurator.configure(url)
+        }
+
+        // Adjust Spark logging level
+        val l = org.apache.log4j.Level.toLevel("WARN")
+        org.apache.log4j.Logger.getLogger("org").setLevel(l)
+        org.apache.log4j.Logger.getLogger("akka").setLevel(l)
+        org.apache.log4j.Logger.getLogger("hive").setLevel(l)
+    }
+
+    setupLogging()
+
     class Builder {
         private var namespace:Namespace = Namespace.read.default()
         private var project:Project = _
@@ -117,6 +133,7 @@ class Runner private(
     environment: Map[String,String],
     profiles: Seq[String],
     sparkMaster:String) {
+
     val tempDir : File = createTempDir()
 
     val metastorePath : String = new File(tempDir, "metastore").getCanonicalPath

@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.ShowMappingTask
@@ -54,6 +54,9 @@ class ShowCommand extends ActionCommand {
             case Success(_) =>
                 logger.info("Successfully finished dumping mapping")
                 true
+            case Failure(ex:NoSuchMappingException) =>
+                logger.error(s"Cannot resolve mapping '${ex.mapping}'")
+                false
             case Failure(e) =>
                 logger.error(s"Caught exception while dumping mapping '$mapping", e)
                 false

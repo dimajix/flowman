@@ -1,0 +1,4 @@
+profiles:
+  test:
+    environment:
+      - text=Hello World (test profile)

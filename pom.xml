@@ -228,10 +228,6 @@
         <module>flowman-spark-testing</module>
         <module>flowman-spark-sources</module>
         <module>flowman-core</module>
-        <module>flowman-testing</module>
-        <module>flowman-tools</module>
-        <module>flowman-ui</module>
-        <module>flowman-server</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
@@ -239,6 +235,10 @@
         <module>flowman-plugins/hbase</module>
         <module>flowman-plugins/impala</module>
         <module>flowman-plugins/mariadb</module>
+        <module>flowman-testing</module>
+        <module>flowman-tools</module>
+        <module>flowman-ui</module>
+        <module>flowman-server</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -370,14 +370,30 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.1.0</version>
-                    <configuration>
-                        <resources>
-                            <resource>
-                                <directory>src/main/resources</directory>
-                                <filtering>true</filtering>
-                            </resource>
-                        </resources>
-                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-resources</id>
+                            <configuration>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/resources</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>test-resources</id>
+                            <configuration>
+                                <resources>
+                                    <resource>
+                                        <directory>src/test/resources</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -674,6 +690,20 @@
                 <groupId>org.scalamock</groupId>
                 <artifactId>scalamock_${scala.api_version}</artifactId>
                 <version>4.1.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>5.5.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.12.2</version>
                 <scope>test</scope>
             </dependency>
 

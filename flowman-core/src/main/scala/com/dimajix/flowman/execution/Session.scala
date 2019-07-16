@@ -243,7 +243,8 @@ class Session private[execution](
             .map { injectedSession =>
                 logger.info("Reusing provided Spark session")
                 // Set all session properties that can be changed in an existing session
-                sparkConfig.foreach { case (key, value) =>
+                val config = context.sparkConf.getAll.toMap ++ sparkConfig
+                config.foreach { case (key, value) =>
                     if (!SQLConf.staticConfKeys.contains(key)) {
                         injectedSession.conf.set(key, value)
                     }
@@ -461,5 +462,12 @@ class Session private[execution](
       */
     def newSession() : Session = {
         newSession(_project)
+    }
+
+    def shutdown() : Unit = {
+        if (sparkSession != null) {
+            sparkSession.stop()
+            sparkSession = null
+        }
     }
 }

@@ -233,6 +233,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 case JobOrder.BY_DATETIME => t => t.start_ts
                 case JobOrder.BY_ID => t => t.id
                 case JobOrder.BY_NAME => t => t.job
+                case JobOrder.BY_STATUS => t => t.status
             }
         }
         def mapOrderDirection(order:JobOrder) : slick.ast.Ordering = {

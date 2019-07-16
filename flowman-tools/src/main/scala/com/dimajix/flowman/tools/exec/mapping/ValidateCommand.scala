@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -55,6 +56,9 @@ class ValidateCommand extends ActionCommand {
                 true
             case Success(false) =>
                 logger.error("Validation of mappings failed")
+                false
+            case Failure(ex:NoSuchMappingException) =>
+                logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
             case Failure(e) =>
                 logger.error("Caught exception while validating mapping", e)

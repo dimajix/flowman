@@ -29,7 +29,7 @@ import org.scalatest.Suite
 trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var spark: SparkSession = _
     var sc: SparkContext = _
-    val conf = new SparkConf
+    val conf = new SparkConf(false)
 
     override def beforeAll() : Unit = {
         super.beforeAll()

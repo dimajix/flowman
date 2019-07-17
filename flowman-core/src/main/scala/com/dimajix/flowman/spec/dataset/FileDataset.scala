@@ -26,7 +26,6 @@ import org.apache.spark.sql.sources.SchemaRelationProvider
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
@@ -37,7 +36,7 @@ case class FileDataset(
     location:Path,
     format:String,
     options:Map[String,String],
-    schema:Option[Schema]
+    columns:Option[StructType]
 ) extends Dataset {
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -53,7 +52,7 @@ case class FileDataset(
             .options(options)
             .format(format)
 
-        val reader = this.schema.map(s => baseReader.schema(s.sparkSchema)).getOrElse(baseReader)
+        val reader = columns.map(s => baseReader.schema(s.sparkType)).getOrElse(baseReader)
 
         // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
         // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
@@ -76,7 +75,7 @@ case class FileDataset(
       * @param df - dataframe to write
       */
     override def write(executor: Executor, df: DataFrame, mode: String) : Unit = {
-        val outputDf = SchemaUtils.applySchema(df, schema.map(_.sparkSchema))
+        val outputDf = SchemaUtils.applySchema(df, columns.map(_.sparkType))
 
         outputDf.write
             .options(options)
@@ -90,8 +89,8 @@ case class FileDataset(
       *
       * @return
       */
-    override def describe(): Option[StructType] = {
-        schema.map(s => StructType(s.fields))
+    override def schema: Option[StructType] = {
+        columns
     }
 }
 
@@ -104,12 +103,13 @@ class FileDatasetSpec extends DatasetSpec {
     @JsonProperty(value="schema", required = false) protected var schema: SchemaSpec = _
 
     override def instantiate(context: Context): FileDataset = {
+        val location = new Path(context.evaluate(this.location))
         FileDataset(
-            instanceProperties(context),
-            new Path(context.evaluate(location)),
+            instanceProperties(context, location.toString),
+            location,
             context.evaluate(format),
             context.evaluate(options),
-            Option(schema).map(_.instantiate(context))
+            Option(schema).map(s => StructType(s.instantiate(context).fields))
         )
     }
 }

@@ -34,7 +34,7 @@ case class ShowTask(
     private val logger = LoggerFactory.getLogger(classOf[ShowTask])
 
     override def execute(executor: Executor): Boolean = {
-        logger.info(s"Showing first $limit rows of specified dataset")
+        logger.info(s"Showing first $limit rows of dataset ${dataset.name}")
 
         val table = dataset.read(executor, None)
         val projection = if (columns.nonEmpty)

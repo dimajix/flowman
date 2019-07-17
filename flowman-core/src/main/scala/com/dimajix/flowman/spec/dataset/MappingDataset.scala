@@ -59,7 +59,7 @@ case class MappingDataset(
       *
       * @return
       */
-    override def describe(): Option[StructType] = {
+    override def schema: Option[StructType] = {
         try {
             Some(MappingUtils.describe(context, mapping))
         }
@@ -75,9 +75,10 @@ class MappingDatasetSpec extends DatasetSpec {
     @JsonProperty(value="mapping", required = true) private var mapping: String = _
 
     override def instantiate(context: Context): MappingDataset = {
+        val id = MappingOutputIdentifier(context.evaluate(mapping))
         MappingDataset(
-            instanceProperties(context),
-            MappingOutputIdentifier(context.evaluate(mapping))
+            instanceProperties(context, id.toString),
+            id
         )
     }
 }

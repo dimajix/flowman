@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.dataset
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.DataFrame
@@ -27,24 +28,11 @@ import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
-import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
 
 object Dataset {
-    object Properties {
-        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
-            Properties(
-                context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
-                name,
-                kind,
-                Map()
-            )
-        }
-    }
     case class Properties(
         context:Context,
         namespace:Namespace,
@@ -84,20 +72,22 @@ abstract class Dataset extends AbstractInstance {
       * Returns the schema as produced by this dataset, relative to the given input schema
       * @return
       */
-    def describe() : Option[StructType]
+    def schema : Option[StructType]
 }
 
 
 object DatasetSpec extends TypeRegistry[DatasetSpec] {
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "file", value = classOf[FileDatasetSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingDatasetSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationDatasetSpec])
 ))
 abstract class DatasetSpec extends Spec[Dataset] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
+
     override def instantiate(context:Context) : Dataset
 
     /**
@@ -105,8 +95,15 @@ abstract class DatasetSpec extends Spec[Dataset] {
       * @param context
       * @return
       */
-    protected def instanceProperties(context:Context) : Dataset.Properties = {
+    protected def instanceProperties(context:Context, name:String) : Dataset.Properties = {
         require(context != null)
-        Dataset.Properties(context)
+        Dataset.Properties(
+            context,
+            context.namespace,
+            context.project,
+            kind + "(" + name + ")",
+            kind,
+            Map()
+        )
     }
 }

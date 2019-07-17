@@ -59,7 +59,7 @@ case class RelationDataset(
       *
       * @return
       */
-    override def describe(): Option[StructType] = {
+    override def schema: Option[StructType] = {
         val instance = context.getRelation(relation)
         Some(StructType(instance.schema.fields))
     }
@@ -71,9 +71,10 @@ class RelationDatasetSpec extends DatasetSpec {
     @JsonProperty(value="partition", required = false) private var partition: Map[String, String] = Map()
 
     override def instantiate(context: Context): RelationDataset = {
+        val id = RelationIdentifier(context.evaluate(relation))
         RelationDataset(
-            instanceProperties(context),
-            RelationIdentifier(context.evaluate(relation)),
+            instanceProperties(context, id.toString),
+            id,
             partition.map { case(n,p) => (n,SingleValue(context.evaluate(p))) }
         )
     }

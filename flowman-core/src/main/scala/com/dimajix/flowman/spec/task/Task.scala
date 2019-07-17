@@ -86,6 +86,7 @@ object TaskSpec extends TypeRegistry[TaskSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "build", value = classOf[BuildTargetTaskSpec]),
     new JsonSubTypes.Type(name = "call", value = classOf[CallTaskSpec]),
+    new JsonSubTypes.Type(name = "compare", value = classOf[CompareTaskSpec]),
     new JsonSubTypes.Type(name = "compareFiles", value = classOf[CompareFilesTaskSpec]),
     new JsonSubTypes.Type(name = "copy", value = classOf[CopyTaskSpec]),
     new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTaskSpec]),

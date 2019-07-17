@@ -23,6 +23,7 @@ import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMa
 
 import com.dimajix.flowman.annotation.CatalogType
 import com.dimajix.flowman.annotation.ConnectionType
+import com.dimajix.flowman.annotation.DatasetType
 import com.dimajix.flowman.annotation.HistoryType
 import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.annotation.RelationType
@@ -33,6 +34,7 @@ import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.model.RelationSpec
@@ -87,6 +89,7 @@ object Registration {
         (classOf[CatalogType], (clazz:Class[_]) => CatalogSpec.register(clazz.getAnnotation(classOf[CatalogType]).kind(), clazz.asInstanceOf[Class[_ <: CatalogSpec]])),
         (classOf[StoreType], (clazz:Class[_]) => StorageSpec.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: StorageSpec]])),
         (classOf[ConnectionType], (clazz:Class[_]) => ConnectionSpec.register(clazz.getAnnotation(classOf[ConnectionType]).kind(), clazz.asInstanceOf[Class[_ <: ConnectionSpec]])),
+        (classOf[DatasetType], (clazz:Class[_]) => DatasetSpec.register(clazz.getAnnotation(classOf[DatasetType]).kind(), clazz.asInstanceOf[Class[_ <: DatasetSpec]])),
         (classOf[TemplateObject], (clazz:Class[_]) => Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz))
     )
 

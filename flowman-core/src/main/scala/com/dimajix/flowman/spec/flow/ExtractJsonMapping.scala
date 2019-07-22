@@ -96,9 +96,13 @@ case class ExtractJsonMapping(
     override def describe(input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
         require(input != null)
 
-        val result = ftypes.StructType(schema.fields)
-
-        Map("main" -> result)
+        if (schema != null) {
+            val result = ftypes.StructType(schema.fields)
+            Map("main" -> result)
+        }
+        else {
+            Map()
+        }
     }
 }
 

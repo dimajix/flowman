@@ -167,7 +167,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         result.schema should be (expectedSchema)
 
         val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
-        resultSchema.get.sparkType should be (expectedSchema)
+        resultSchema should be (None)
     }
 
     it should "work with invalid data" in {

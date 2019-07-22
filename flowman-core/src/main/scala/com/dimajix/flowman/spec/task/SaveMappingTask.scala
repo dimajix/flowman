@@ -16,10 +16,6 @@
 
 package com.dimajix.flowman.spec.task
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory

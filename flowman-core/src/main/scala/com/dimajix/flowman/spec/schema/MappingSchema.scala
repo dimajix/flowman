@@ -16,17 +16,12 @@
 
 package com.dimajix.flowman.spec.schema
 
-import scala.collection.mutable
-
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.MappingUtils
-import com.dimajix.flowman.execution.NoSuchMappingOutputException
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.StructType
 
 
 object MappingSchema {

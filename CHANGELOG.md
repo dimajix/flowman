@@ -1,3 +1,6 @@
+# Version 0.7.1
+* Fix build with CDH-5.15 profile
+
 # Version 0.7.0
 * Implement initial REST server
 * Implement initial prototype of UI

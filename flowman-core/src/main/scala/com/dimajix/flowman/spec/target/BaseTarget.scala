@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.target
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.state.TargetInstance
+import com.dimajix.flowman.history.TargetInstance
 
 
 abstract class BaseTarget extends Target {

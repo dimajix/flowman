@@ -32,7 +32,7 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
-import com.dimajix.flowman.state.TargetInstance
+import com.dimajix.flowman.history.TargetInstance
 
 
 object Target {
@@ -129,6 +129,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTargetSpec]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
     new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTargetSpec]),
+    new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTargetSpec]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]))

@@ -35,10 +35,10 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSession {

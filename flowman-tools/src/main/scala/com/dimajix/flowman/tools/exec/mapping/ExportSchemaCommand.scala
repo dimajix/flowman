@@ -26,7 +26,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -39,9 +40,11 @@ class ExportSchemaCommand extends ActionCommand {
 
     @Option(name="-f", aliases=Array("--format"), usage="Specifies the format", metaVar="<format>", required = false)
     var format: String = "spark"
-    @Argument(usage = "specifies the mapping to save the schema", metaVar = "<mapping>", required = true)
+    @Option(name="-s", aliases=Array("--spark"), usage = "use Spark to derive final schema")
+    var useSpark: Boolean = false
+    @Argument(usage = "specifies the mapping to save the schema", metaVar = "<mapping>", required = true, index = 0)
     var mapping: String = ""
-    @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true)
+    @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true, index = 1)
     var filename: String = ""
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
@@ -50,14 +53,25 @@ class ExportSchemaCommand extends ActionCommand {
         Try {
             val id = MappingOutputIdentifier(mapping)
             val instance = context.getMapping(id.mapping)
-            val table = executor.instantiate(instance, id.output)
-            val schema = Field.of(table.schema)
+            val schema =
+                if (useSpark) {
+                    val table = executor.instantiate(instance, id.output)
+                    Field.of(table.schema)
+                }
+                else {
+                    MappingUtils.describe(instance, id.output).map(_.fields)
+                        .getOrElse(throw new UnsupportedOperationException(s"Cannot infer schema for mapping '$mapping"))
+                }
+
             val file = context.fs.local(filename)
             new SchemaWriter(schema).format(format).save(file)
         } match {
             case Success(_) =>
                 logger.info("Successfully saved schema")
                 true
+            case Failure(ex:NoSuchMappingException) =>
+                logger.error(s"Cannot resolve mapping '${ex.mapping}'")
+                false
             case Failure(e) =>
                 logger.error(s"Caught exception while save the schema of mapping '$mapping'", e)
                 false

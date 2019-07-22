@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.schema.SwaggerSchemaSpec
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -106,11 +106,9 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
+        val inputSchema = com.dimajix.flowman.types.StructType.of(input.schema)
 
-        val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
-        result.count() should be (2)
-        result.schema should be (StructType(
+        val expectedSchema = StructType(
             StructField("s", StringType, true) ::
                 StructField("i", IntegerType, true) ::
                 StructField("st", StructType(
@@ -120,7 +118,15 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
                 )) ::
                 StructField("a", ArrayType(DoubleType), true) ::
                 Nil
-        ))
+        )
+
+        val mapping = context.getMapping(MappingIdentifier("m0"))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
+        result.count() should be (2)
+        result.schema should be (expectedSchema)
+
+        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
+        resultSchema.get.sparkType should be (expectedSchema)
     }
 
     it should "work without an explicit schema" in {
@@ -142,20 +148,26 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
+        val inputSchema = com.dimajix.flowman.types.StructType.of(input.schema)
+
+        val expectedSchema = StructType(
+            StructField("a", ArrayType(DoubleType, true), true) ::
+                StructField("i", LongType, true) ::
+                StructField("s", StringType, true) ::
+                StructField("st", StructType(
+                    StructField("lolo", StringType, true) ::
+                        Nil
+                )) ::
+                Nil
+        )
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
-        result.schema should be (StructType(
-            StructField("a", ArrayType(DoubleType, true), true) ::
-            StructField("i", LongType, true) ::
-            StructField("s", StringType, true) ::
-            StructField("st", StructType(
-                StructField("lolo", StringType, true) ::
-                Nil
-            )) ::
-            Nil
-        ))
+        result.schema should be (expectedSchema)
+
+        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
+        resultSchema should be (None)
     }
 
     it should "work with invalid data" in {

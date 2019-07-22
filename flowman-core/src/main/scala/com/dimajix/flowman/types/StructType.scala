@@ -38,4 +38,46 @@ case class StructType(
     }
     override def parse(value:String, granularity:Option[String]=None) : Any = ???
     override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???
+
+    /**
+      * Provides a human readable string representation of the schema
+      */
+    def printTree() : Unit = {
+        println(treeString)
+    }
+
+    /**
+      * Provides a human readable string representation of the schema
+      */
+    def treeString : String = {
+        val builder = new StringBuilder
+        builder.append("root\n")
+        val prefix = " |"
+        fields.foreach(field => buildTreeString(field, prefix, builder))
+
+        builder.toString()
+    }
+
+    private def buildTreeString(field:Field, prefix:String, builder:StringBuilder) : Unit = {
+        builder.append(s"$prefix-- ${field.name}: ${field.typeName} (nullable = ${field.nullable})\n")
+        buildTreeString(field.ftype, s"$prefix    |", builder)
+    }
+
+    private def buildTreeString(ftype:FieldType, prefix:String, builder:StringBuilder) : Unit = {
+        ftype match {
+            case struct:StructType =>
+                struct.fields.foreach(field => buildTreeString(field, prefix, builder))
+            case map:MapType =>
+                builder.append(s"$prefix-- key: ${map.keyType.typeName}\n")
+                builder.append(s"$prefix-- value: ${map.valueType.typeName} " +
+                    s"(containsNull = ${map.containsNull})\n")
+                buildTreeString(map.keyType, s"$prefix    |", builder)
+                buildTreeString(map.valueType, s"$prefix    |", builder)
+            case array:ArrayType =>
+                builder.append(
+                    s"$prefix-- element: ${array.elementType.typeName} (containsNull = ${array.containsNull})\n")
+                buildTreeString(array.elementType, s"$prefix    |", builder)
+            case _ =>
+        }
+    }
 }

@@ -99,6 +99,15 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
             .map(_._2)
     }
 
+    def glob(pattern:Path) : Seq[File] = {
+        if (!isDirectory())
+            throw new IOException(s"File '$path' is not a directory - cannot list files")
+        fs.globStatus(new Path(path, pattern))
+            .map(item => (item.getPath.toString, File(fs, item.getPath)))
+            .sortBy(_._1)
+            .map(_._2)
+    }
+
     /**
       * Renames the file to a different name. The destination has to be on the same FileSystem, otherwise an
       * exception will be thrown

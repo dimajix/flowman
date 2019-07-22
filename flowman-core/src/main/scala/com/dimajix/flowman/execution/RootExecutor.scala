@@ -108,7 +108,7 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
 
             val mapping = context.getMapping(dep.mapping)
             if (!mapping.outputs.contains(dep.output))
-                throw new NoSuchElementException(s"Mapping ${mapping.identifier} does mot produce output '${dep.output}'")
+                throw new NoSuchMappingOutputException(mapping.identifier, dep.output)
             val instances = instantiate(mapping)
             (dep, instances(dep.output))
         }.toMap

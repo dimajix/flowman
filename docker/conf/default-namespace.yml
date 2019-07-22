@@ -1,6 +1,6 @@
 name: "default"
 
-statestore:
+history:
   kind: jdbc
   connection: flowman_state
   retries: 3
@@ -19,11 +19,14 @@ config:
   - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
   - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
+store:
+  kind: file
+  location: /opt/flowman/examples
+
 plugins:
   - flowman-aws
   - flowman-azure
   - flowman-example
   - flowman-hbase
   - flowman-kafka
-  - flowman-impala
   - flowman-mariadb

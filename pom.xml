@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.6.4</version>
+    <version>0.7.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -52,7 +52,7 @@
     <properties>
         <hadoop.version>2.8.5</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.2</spark.version>
+        <spark.version>2.4.3</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
         <aws.version>1.10.6</aws.version>
@@ -90,7 +90,7 @@
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <httpclient.version>4.5.2</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
-        <swagger-parser.version>1.0.36</swagger-parser.version>
+        <swagger-parser.version>1.0.45</swagger-parser.version>
         <!-- Language versions -->
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -168,7 +168,7 @@
             <id>spark-2.4</id>
             <properties>
                 <scala.version>2.11.12</scala.version>
-                <spark.version>2.4.2</spark.version>
+                <spark.version>2.4.3</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
@@ -225,9 +225,9 @@
     </profiles>
 
     <modules>
-        <module>flowman-testing</module>
+        <module>flowman-spark-testing</module>
+        <module>flowman-spark-sources</module>
         <module>flowman-core</module>
-        <module>flowman-tools</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
@@ -235,6 +235,10 @@
         <module>flowman-plugins/hbase</module>
         <module>flowman-plugins/impala</module>
         <module>flowman-plugins/mariadb</module>
+        <module>flowman-testing</module>
+        <module>flowman-tools</module>
+        <module>flowman-ui</module>
+        <module>flowman-server</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -283,28 +287,9 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.sourceDirectory}/../spark-${spark-api.version}</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.11.0</version>
+                <version>1.12.0</version>
                 <configuration>
                     <installProject>false</installProject>
                     <verbose>true</verbose>
@@ -357,7 +342,6 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <!-- Disable Maven Java compiler plugin -->
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -368,6 +352,16 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.1.0</version>
@@ -376,14 +370,30 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.1.0</version>
-                    <configuration>
-                        <resources>
-                            <resource>
-                                <directory>src/main/resources</directory>
-                                <filtering>true</filtering>
-                            </resource>
-                        </resources>
-                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-resources</id>
+                            <configuration>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/resources</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>test-resources</id>
+                            <configuration>
+                                <resources>
+                                    <resource>
+                                        <directory>src/test/resources</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -558,9 +568,15 @@
         <dependencies>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-testing</artifactId>
+                <artifactId>flowman-spark-testing</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spark-sources</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
@@ -571,7 +587,25 @@
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-testing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -656,6 +690,20 @@
                 <groupId>org.scalamock</groupId>
                 <artifactId>scalamock_${scala.api_version}</artifactId>
                 <version>4.1.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>5.5.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.12.2</version>
                 <scope>test</scope>
             </dependency>
 
@@ -901,6 +949,12 @@
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-ext</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>

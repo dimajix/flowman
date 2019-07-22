@@ -1,0 +1,6 @@
+name: "resource-test"
+version: "1.0"
+
+modules:
+  - job
+  - config

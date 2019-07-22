@@ -225,9 +225,10 @@ class FileCollector(hadoopConf:Configuration) {
 
     private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
         if (fs.isDirectory(path)) {
-            // If path is a directory, simply list all files
             logger.info(s"Collecting files in directory $path")
-            fs.listStatus(path).sorted.map(_.getPath).toSeq
+            // If path is a directory, simply list all files
+            //fs.listStatus(path).sorted.map(_.getPath).toSeq
+            Seq(path)
         }
         else {
             // Otherwise assume a file pattern and try to glob all files

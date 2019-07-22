@@ -21,10 +21,12 @@ import scala.util.Success
 import scala.util.Try
 
 import org.kohsuke.args4j.Argument
+import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.task.DescribeMappingTask
@@ -34,12 +36,13 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class DescribeCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
+    @Option(name = "-s", aliases=Array("--spark"), usage = "use Spark to derive final schema")
+    var useSpark: Boolean = false
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping))
+        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping), useSpark)
 
         Try {
             task.execute(executor)
@@ -47,6 +50,9 @@ class DescribeCommand extends ActionCommand {
             case Success(_) =>
                 logger.info("Successfully finished describing mapping")
                 true
+            case Failure(ex:NoSuchMappingException) =>
+                logger.error(s"Cannot resolve mapping '${ex.mapping}'")
+                false
             case Failure(e) =>
                 logger.error(s"Caught exception while describing mapping '$mapping'", e)
                 false

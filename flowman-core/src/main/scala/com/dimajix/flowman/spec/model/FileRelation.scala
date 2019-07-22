@@ -66,12 +66,11 @@ case class FileRelation(
         require(executor != null)
         require(partitions != null)
 
+        // TODO: If no partitions are specified, recursively read all files
         requireValidPartitionKeys(partitions)
 
         val data = mapFiles(executor, partitions) { (partition, paths) =>
             paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
-            //if (inputFiles.isEmpty)
-            //    throw new IllegalArgumentException("No input files found")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)
@@ -80,7 +79,7 @@ case class FileRelation(
             // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
             // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
             // underlying format implementation
-            val providingClass = lookupDataSource(format, executor.spark.sessionState.conf)
+            val providingClass = DataSource.lookupDataSource(format, executor.spark.sessionState.conf)
             val df = providingClass.newInstance() match {
                 case _: RelationProvider => reader.load(pathNames.mkString(","))
                 case _: SchemaRelationProvider => reader.load(pathNames.mkString(","))
@@ -93,22 +92,6 @@ case class FileRelation(
         }
         val allData = data.reduce(_ union _)
         SchemaUtils.applySchema(allData, schema)
-    }
-
-    private def lookupDataSource(provider: String, conf: SQLConf): Class[_] = {
-        // Check appropriate method, depending on Spark version
-        try {
-            // Spark 2.2.x
-            val method = DataSource.getClass.getDeclaredMethod("lookupDataSource", classOf[String])
-            method.invoke(DataSource, provider).asInstanceOf[Class[_]]
-        }
-        catch {
-            case _:NoSuchMethodException => {
-                // Spark 2.3.x
-                val method = DataSource.getClass.getDeclaredMethod("lookupDataSource", classOf[String], classOf[SQLConf])
-                method.invoke(DataSource, provider, conf).asInstanceOf[Class[_]]
-            }
-        }
     }
 
     /**
@@ -149,7 +132,7 @@ case class FileRelation(
             cleanUnpartitionedFiles(executor)
     }
 
-    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) : Unit = {
         requireValidPartitionKeys(partitions)
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
@@ -158,7 +141,7 @@ case class FileRelation(
         collector(executor).delete(resolvedPartitions)
     }
 
-    private def cleanUnpartitionedFiles(executor: Executor) = {
+    private def cleanUnpartitionedFiles(executor: Executor) : Unit = {
         collector(executor).delete()
     }
 

@@ -19,7 +19,7 @@ package com.dimajix.flowman
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 class SparkSessionTest extends FlatSpec with Matchers with LocalSparkSession {
     "A SparkSession" should "have configurable properties" in {

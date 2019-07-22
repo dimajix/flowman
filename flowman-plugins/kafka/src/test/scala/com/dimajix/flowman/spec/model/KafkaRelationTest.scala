@@ -28,8 +28,8 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.testing.LocalSparkSession
-import com.dimajix.flowman.testing.QueryTest
+import com.dimajix.spark.testing.LocalSparkSession
+import com.dimajix.spark.testing.QueryTest
 
 
 class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with LocalSparkSession {

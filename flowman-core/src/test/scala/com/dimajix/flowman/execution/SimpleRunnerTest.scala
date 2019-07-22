@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.types.StringType
 
 

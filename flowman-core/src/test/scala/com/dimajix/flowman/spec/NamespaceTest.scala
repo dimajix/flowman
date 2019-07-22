@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.state.NullStateStoreSpec
+import com.dimajix.flowman.spec.history.NullHistorySpec
 
 
 class NamespaceTest extends FlatSpec with Matchers {
@@ -30,7 +30,9 @@ class NamespaceTest extends FlatSpec with Matchers {
               | - lala=lolo
               |config:
               | - cfg1=cfg2=lala
-              |statestore:
+              |history:
+              |  kind: null
+              |store:
               |  kind: null
             """.stripMargin
         val ns = Namespace.read.string(spec)
@@ -42,6 +44,6 @@ class NamespaceTest extends FlatSpec with Matchers {
         val ns = Namespace.read.default()
         ns should not be (null)
         ns.name should be ("default")
-        ns.monitor shouldBe a[NullStateStoreSpec]
+        ns.history shouldBe a[NullHistorySpec]
     }
 }

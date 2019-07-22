@@ -26,7 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.RangeValue

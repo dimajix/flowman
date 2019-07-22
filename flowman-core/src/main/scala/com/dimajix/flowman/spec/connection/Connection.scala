@@ -31,18 +31,6 @@ import com.dimajix.flowman.spi.TypeRegistry
 
 
 object Connection {
-    object Properties {
-        def apply(context:Context=null, name:String="", kind:String="") : Properties = {
-            Properties(
-                context,
-                if (context != null) context.namespace else null,
-                if (context != null) context.project else null,
-                name,
-                kind,
-                Map()
-            )
-        }
-    }
     case class Properties(
         context:Context,
         namespace:Namespace,

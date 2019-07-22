@@ -23,8 +23,9 @@ import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMa
 
 import com.dimajix.flowman.annotation.CatalogType
 import com.dimajix.flowman.annotation.ConnectionType
+import com.dimajix.flowman.annotation.DatasetType
+import com.dimajix.flowman.annotation.HistoryType
 import com.dimajix.flowman.annotation.MappingType
-import com.dimajix.flowman.annotation.MonitorType
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.annotation.StoreType
@@ -33,11 +34,12 @@ import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
-import com.dimajix.flowman.spec.state.StateStoreSpec
-import com.dimajix.flowman.spec.storage.Store
+import com.dimajix.flowman.spec.storage.StorageSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.task.TaskSpec
 import com.dimajix.flowman.templating.Velocity
@@ -83,10 +85,11 @@ object Registration {
         (classOf[TargetType], (clazz:Class[_]) => TargetSpec.register(clazz.getAnnotation(classOf[TargetType]).kind(), clazz.asInstanceOf[Class[_ <: TargetSpec]])),
         (classOf[SchemaType], (clazz:Class[_]) => SchemaSpec.register(clazz.getAnnotation(classOf[SchemaType]).kind(), clazz.asInstanceOf[Class[_ <: SchemaSpec]])),
         (classOf[TaskType], (clazz:Class[_]) => TaskSpec.register(clazz.getAnnotation(classOf[TaskType]).kind(), clazz.asInstanceOf[Class[_ <: TaskSpec]])),
-        (classOf[MonitorType], (clazz:Class[_]) => StateStoreSpec.register(clazz.getAnnotation(classOf[MonitorType]).kind(), clazz.asInstanceOf[Class[_ <: StateStoreSpec]])),
+        (classOf[HistoryType], (clazz:Class[_]) => HistorySpec.register(clazz.getAnnotation(classOf[HistoryType]).kind(), clazz.asInstanceOf[Class[_ <: HistorySpec]])),
         (classOf[CatalogType], (clazz:Class[_]) => CatalogSpec.register(clazz.getAnnotation(classOf[CatalogType]).kind(), clazz.asInstanceOf[Class[_ <: CatalogSpec]])),
-        (classOf[StoreType], (clazz:Class[_]) => Store.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: Store]])),
+        (classOf[StoreType], (clazz:Class[_]) => StorageSpec.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: StorageSpec]])),
         (classOf[ConnectionType], (clazz:Class[_]) => ConnectionSpec.register(clazz.getAnnotation(classOf[ConnectionType]).kind(), clazz.asInstanceOf[Class[_ <: ConnectionSpec]])),
+        (classOf[DatasetType], (clazz:Class[_]) => DatasetSpec.register(clazz.getAnnotation(classOf[DatasetType]).kind(), clazz.asInstanceOf[Class[_ <: DatasetSpec]])),
         (classOf[TemplateObject], (clazz:Class[_]) => Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz))
     )
 

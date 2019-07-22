@@ -39,7 +39,7 @@ case class DestroyRelationTask(
     relations:Seq[RelationIdentifier],
     ignoreIfNotExists:Boolean
 ) extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[CreateRelationTask])
+    private val logger = LoggerFactory.getLogger(classOf[DestroyRelationTask])
 
     /**
       * Instantiates all outputs defined in this task

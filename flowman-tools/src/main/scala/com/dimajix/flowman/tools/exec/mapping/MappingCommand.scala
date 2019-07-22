@@ -36,6 +36,7 @@ class MappingCommand extends NestedCommand {
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="validate",impl=classOf[ValidateCommand]),
         new SubCommand(name="export-schema",impl=classOf[ExportSchemaCommand]),
+        new SubCommand(name="save",impl=classOf[SaveCommand]),
         new SubCommand(name="show",impl=classOf[ShowCommand])
     ))
     override var command:Command = _

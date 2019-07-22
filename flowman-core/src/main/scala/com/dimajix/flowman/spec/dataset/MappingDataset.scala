@@ -60,12 +60,7 @@ case class MappingDataset(
       * @return
       */
     override def schema: Option[StructType] = {
-        try {
-            Some(MappingUtils.describe(context, mapping))
-        }
-        catch {
-            case _:UnsupportedOperationException => None
-        }
+        MappingUtils.describe(context, mapping)
     }
 }
 

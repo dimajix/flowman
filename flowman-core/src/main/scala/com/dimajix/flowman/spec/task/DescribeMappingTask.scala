@@ -52,7 +52,10 @@ case class DescribeMappingTask(
         }
         else {
             val schema = MappingUtils.describe(instance, mapping.output)
-            schema.printTree()
+            schema match {
+                case Some(s) => s.printTree()
+                case None => logger.error(s"Cannot infer schema of mapping output $mapping")
+            }
         }
         true
     }

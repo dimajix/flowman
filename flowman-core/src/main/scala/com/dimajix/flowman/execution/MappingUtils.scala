@@ -24,26 +24,33 @@ import com.dimajix.flowman.types.StructType
 
 
 object MappingUtils {
-    def describe(mapping:Mapping, output:String) : StructType = {
-        val schemaCache = mutable.Map[MappingOutputIdentifier, StructType]()
+    def describe(mapping:Mapping, output:String) : Option[StructType] = {
+        val schemaCache = mutable.Map[MappingOutputIdentifier, Option[StructType]]()
 
-        def describe(mapping:Mapping, output:String) : StructType = {
+        def describe(mapping:Mapping, output:String) : Option[StructType] = {
             val oid = MappingOutputIdentifier(mapping.identifier, output)
             schemaCache.getOrElseUpdate(oid, {
                 if (!mapping.outputs.contains(output))
                     throw new NoSuchMappingOutputException(oid)
                 val context = mapping.context
                 val deps = mapping.dependencies
-                    .map(id => (id,describe(context.getMapping(id.mapping), id.output)))
+                    .flatMap(id => describe(context.getMapping(id.mapping), id.output).map(s => (id,s)))
                     .toMap
-                mapping.describe(deps, output)
+
+                // Only return a schema if all dependencies are present
+                if (mapping.dependencies.forall(d => deps.contains(d))) {
+                    mapping.describe(deps, output)
+                }
+                else {
+                    None
+                }
             })
         }
 
         describe(mapping, output)
     }
 
-    def describe(context:Context, output:MappingOutputIdentifier) : StructType = {
+    def describe(context:Context, output:MappingOutputIdentifier) : Option[StructType] = {
         val mapping = context.getMapping(output.mapping)
         describe(mapping, output.output)
     }

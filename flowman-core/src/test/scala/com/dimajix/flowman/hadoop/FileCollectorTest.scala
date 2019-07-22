@@ -67,13 +67,14 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         fileSystem.delete(workingDirectory, true)
     }
 
-    "The file collector" should "enumerate all files" in {
+    "The file collector" should "not enumerate all files" in {
         val collector = new FileCollector(hadoopConf).path(new Path(workingDirectory, "data/2016/02/01"))
         val files = collector.collect()
-        files.size should be (4)
+        files.size should be (1)
+        files should be (Seq(new Path(workingDirectory, "data/2016/02/01")))
     }
 
-    it should "collect all files in given daily range (1)" in {
+    it should "collect all directories in given daily range (1)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.FEBRUARY, 2, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -83,7 +84,13 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
         val files = collector.collect(partitions)
 
-        files.size should be (8)
+        files.size should be (4)
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/03"),
+            new Path(workingDirectory, "data/2016/01/04"),
+            new Path(workingDirectory, "data/2016/01/05"),
+            new Path(workingDirectory, "data/2016/02/01")
+        ))
     }
 
     it should "collect all files in given daily range (2)" in {
@@ -96,7 +103,10 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
         val files = collector.collect(partitions)
 
-        files.size should be (0)
+        files.size should be (1)
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/04")
+        ))
     }
 
     it should "collect all files in given daily range (3)" in {
@@ -109,7 +119,10 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val collector = new FileCollector(hadoopConf).path(workingDirectory).pattern("data/$ts.format('yyyy/MM/dd')")
         val files = collector.collect(partitions)
 
-        files.size should be (0)
+        files.size should be (1)
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/04")
+        ))
     }
 
     it should "collect all files in given daily range (4)" in {
@@ -123,8 +136,8 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val files = collector.collect(partitions)
 
         files.size should be (2)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
-        files(1).toString should be(workingDirectory.toString + "/data/2016/01/05/02.seq")
+        files(0).toString should be(workingDirectory.toString + "/data/2016/01/04")
+        files(1).toString should be(workingDirectory.toString + "/data/2016/01/05")
     }
 
     it should "collect all files in given daily range (5)" in {
@@ -138,8 +151,8 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val files = collector.collect(partitions)
 
         files.size should be (2)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
-        files(1).toString should be(workingDirectory.toString + "/data/2016/01/05/02.seq")
+        files(0).toString should be(workingDirectory.toString + "/data/2016/01/04")
+        files(1).toString should be(workingDirectory.toString + "/data/2016/01/05")
     }
 
     it should "collect all files in given hourly range (1)" in {

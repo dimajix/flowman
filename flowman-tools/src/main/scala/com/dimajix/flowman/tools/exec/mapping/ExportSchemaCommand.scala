@@ -59,7 +59,8 @@ class ExportSchemaCommand extends ActionCommand {
                     Field.of(table.schema)
                 }
                 else {
-                    MappingUtils.describe(instance, id.output).fields
+                    MappingUtils.describe(instance, id.output).map(_.fields)
+                        .getOrElse(throw new UnsupportedOperationException(s"Cannot infer schema for mapping '$mapping"))
                 }
 
             val file = context.fs.local(filename)

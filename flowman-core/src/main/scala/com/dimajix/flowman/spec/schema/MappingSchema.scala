@@ -46,7 +46,8 @@ case class MappingSchema (
       * @return
       */
     override def fields : Seq[Field] = {
-        MappingUtils.describe(context, mapping).fields
+        MappingUtils.describe(context, mapping).map(_.fields)
+            .getOrElse(throw new UnsupportedOperationException(s"Cannot infer schema from mapping '$mapping'"))
     }
 
     /**

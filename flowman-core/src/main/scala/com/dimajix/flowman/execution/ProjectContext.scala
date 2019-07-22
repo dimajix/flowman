@@ -113,7 +113,7 @@ class ProjectContext private[execution](
             mappings.getOrElseUpdate(identifier.name,
                 project.mappings
                     .getOrElse(identifier.name,
-                        throw new NoSuchElementException(s"Mapping '$identifier' not found in project ${project.name}")
+                        throw new NoSuchMappingException(identifier)
                     )
                     .instantiate(this)
             )
@@ -137,7 +137,7 @@ class ProjectContext private[execution](
             relations.getOrElseUpdate(identifier.name,
                 project.relations
                     .getOrElse(identifier.name,
-                        throw new NoSuchElementException(s"Relation '$identifier' not found in project ${project.name}")
+                        throw new NoSuchRelationException(identifier)
                     )
                     .instantiate(this)
             )
@@ -161,7 +161,7 @@ class ProjectContext private[execution](
             targets.getOrElseUpdate(identifier.name,
                 project.targets
                     .getOrElse(identifier.name,
-                        throw new NoSuchElementException(s"Target '$identifier' not found in project ${project.name}")
+                        throw new NoSuchTargetException(identifier)
                     )
                     .instantiate(this)
             )
@@ -186,7 +186,7 @@ class ProjectContext private[execution](
                     // Explicit project identifier specified, only look in project connections
                     project.connections
                         .getOrElse(identifier.name,
-                            throw new NoSuchElementException(s"Connection '$identifier' not found in project ${project.name}")
+                            throw new NoSuchConnectionException(identifier)
                         )
                         .instantiate(this)
                 }
@@ -195,7 +195,7 @@ class ProjectContext private[execution](
                     nonProjectConnections.getOrElse(identifier.name,
                         project.connections
                             .getOrElse(identifier.name,
-                                throw new NoSuchElementException(s"Connection '$identifier' not found in project ${project.name}")
+                                throw new NoSuchConnectionException(identifier)
                             )
                     )
                     .instantiate(this)
@@ -221,7 +221,7 @@ class ProjectContext private[execution](
             jobs.getOrElseUpdate(identifier.name,
                 project.jobs
                     .getOrElse(identifier.name,
-                        throw new NoSuchElementException(s"Job $identifier not found in project ${project.name}")
+                        throw new NoSuchJobException(identifier)
                     )
                     .instantiate(this)
             )

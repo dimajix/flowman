@@ -22,6 +22,7 @@ import org.slf4j.Logger
 
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 
 
@@ -73,7 +74,7 @@ abstract class AbstractExecutor(_session:Session) extends Executor {
       */
     override def instantiate(mapping:Mapping, output:String) : DataFrame = {
         if (!mapping.outputs.contains(output))
-            throw new NoSuchElementException(s"Mapping '${mapping.identifier}' does not produce output '$output'")
+            throw new NoSuchMappingOutputException(MappingOutputIdentifier(mapping.identifier.name, output, mapping.identifier.project))
         val instances = instantiate(mapping)
         instances(output)
     }

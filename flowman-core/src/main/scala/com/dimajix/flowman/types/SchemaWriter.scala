@@ -52,14 +52,14 @@ class SchemaWriter(fields:Seq[Field]) {
 
     private def saveAsSpark(file:File) : Unit = {
         val schema = SchemaConverter.toSpark(fields)
-        writeSchemaFile(file, schema.json)
+        writeSchemaFile(file, schema.prettyJson)
     }
 
     private def writeSchemaFile(file:File, schema:String) : Unit = {
         // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
         val bytes = Charset.forName("UTF-8").encode(schema)
         val output = file.create(true)
-        output.write(bytes.array())
+        output.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
         output.close()
     }
 

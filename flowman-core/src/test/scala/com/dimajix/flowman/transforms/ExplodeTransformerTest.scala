@@ -24,9 +24,9 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class ExplodeTransformerTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -135,6 +135,25 @@ class ExplodeTransformerTest extends FlatSpec with Matchers with LocalSparkSessi
         val resultDf = xfs.transform(inputDf)
         resultDf.schema should be(StructType(Seq(
             StructField("result", StringType),
+            StructField("some_array", StructType(Seq(
+                StructField("inner_col0", LongType),
+                StructField("inner_col1", LongType)
+            )))
+        )))
+
+        val resultSchema = xfs.transform(inputSchema)
+        resultSchema.sparkType should be (resultDf.schema)
+    }
+
+    it should "support dropping all and keeping" in {
+        val xfs = ExplodeTransformer(
+            Path("some_struct.some_array"),
+            Seq(Path("some_struct.some_field")),
+            Seq(Path("*")),
+            Map()
+        )
+        val resultDf = xfs.transform(inputDf)
+        resultDf.schema should be(StructType(Seq(
             StructField("some_array", StructType(Seq(
                 StructField("inner_col0", LongType),
                 StructField("inner_col1", LongType)

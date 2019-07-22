@@ -23,7 +23,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.flow.DeduplicateMappingTest.Record
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 object DeduplicateMappingTest {

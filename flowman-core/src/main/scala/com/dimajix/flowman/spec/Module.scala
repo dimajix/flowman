@@ -85,6 +85,7 @@ object Module {
 class Module {
     @JsonProperty(value="environment") private var _environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var _config: Seq[String] = Seq()
+    @JsonDeserialize(converter=classOf[Profile.NameResolver])
     @JsonProperty(value="profiles") private var _profiles: Map[String,Profile] = Map()
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,ConnectionSpec] = Map()

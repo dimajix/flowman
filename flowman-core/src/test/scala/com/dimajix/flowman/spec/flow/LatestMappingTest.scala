@@ -26,7 +26,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
-import com.dimajix.flowman.testing.LocalSparkSession
+import com.dimajix.spark.testing.LocalSparkSession
 
 object LatestMappingTest {
     case class Record(ts:(String,Long), id:(String,Int), data:String)

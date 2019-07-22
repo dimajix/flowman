@@ -131,7 +131,7 @@ abstract class Mapping extends AbstractInstance {
       * @param input
       * @return
       */
-    def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
+    def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : Option[StructType]
 }
 
 

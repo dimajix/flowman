@@ -88,7 +88,7 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def describe(input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
+    override def describe(input: Map[MappingOutputIdentifier, StructType], output: String): Option[StructType] = {
         require(input != null)
         require(output != null && output.nonEmpty)
 

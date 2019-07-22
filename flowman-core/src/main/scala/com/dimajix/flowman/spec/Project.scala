@@ -47,17 +47,39 @@ object Project {
             }
         }
 
+        /**
+          * Read in only main definition file without additonal modules
+          * @param file
+          * @return
+          */
+        def manifest(file:File) : Project = {
+            if (!file.isAbsolute()) {
+                manifest(file.absolute)
+            }
+            else if (file.isDirectory) {
+                logger.info(s"Reading project manifest in directory $file")
+                manifest(file / "project.yml")
+            }
+            else {
+                logger.info(s"Reading project manifest from $file")
+                val project = ObjectMapper.read[Project](file)
+                project._filename = file.absolute
+                project._basedir = file.absolute.parent
+                project
+            }
+        }
+
         def string(text:String) : Project = {
             ObjectMapper.parse[Project](text)
         }
 
         private def readFile(file:File) : Project = {
             if (file.isDirectory) {
-                logger.info(s"Reading project in directory ${file.toString}")
+                logger.info(s"Reading project in directory $file")
                 this.file(file / "project.yml")
             }
             else {
-                logger.info(s"Reading project from ${file.toString}")
+                logger.info(s"Reading project from $file")
                 val project = ObjectMapper.read[Project](file)
                 loadModules(project, file.parent)
                 project._filename = file.absolute
@@ -92,7 +114,7 @@ object Project {
             this
         }
         def setDescription(desc:String) : Builder = {
-            project._description = desc
+            project._description = Some(desc)
             this
         }
 
@@ -162,7 +184,7 @@ object Project {
 
 class Project {
     @JsonProperty(value="name", required = true) private var _name: String = _
-    @JsonProperty(value="description", required = false) private var _description: String = _
+    @JsonProperty(value="description", required = false) private var _description: Option[String] = None
     @JsonProperty(value="version", required = false) private var _version: String = _
     @JsonProperty(value="main", required = false) private var _main: Seq[String] = Seq("main")
     @JsonProperty(value="modules", required = true) private var _modules: Seq[String] = Seq()
@@ -180,7 +202,7 @@ class Project {
     private var _jobs: Map[String,JobSpec] = Map()
 
     def name : String = _name
-    def description : String = _description
+    def description : Option[String] = _description
     def version : String = _version
     def modules : Seq[String] = _modules
     def filename : File = _filename

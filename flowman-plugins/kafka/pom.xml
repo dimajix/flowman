@@ -60,7 +60,7 @@
 
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-testing</artifactId>
+            <artifactId>flowman-spark-testing</artifactId>
             <scope>test</scope>
         </dependency>
 

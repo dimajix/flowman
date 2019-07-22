@@ -28,9 +28,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.testing.LocalSparkSession
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -126,7 +126,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
 
         val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
-        outputSchema.sparkType should be (expectedSchema)
+        outputSchema.get.sparkType should be (expectedSchema)
     }
 
     it should "select specified columns" in {
@@ -163,7 +163,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
 
         val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
-        outputSchema.sparkType should be (expectedSchema)
+        outputSchema.get.sparkType should be (expectedSchema)
     }
 
     it should "support renaming columns" in {
@@ -201,7 +201,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
 
         val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
-        outputSchema.sparkType should be (expectedSchema)
+        outputSchema.get.sparkType should be (expectedSchema)
     }
 
     it should "explode simple arrays" in {
@@ -236,6 +236,6 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.schema should be (expectedSchema)
 
         val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
-        outputSchema.sparkType should be (expectedSchema)
+        outputSchema.get.sparkType should be (expectedSchema)
     }
 }

@@ -38,7 +38,6 @@ case class CopyRelationTask(
     target:RelationIdentifier,
     targetPartition:Map[String,SingleValue],
     parallelism:Int,
-    columns:Map[String,String],
     mode:String
 ) extends BaseTask  {
     private val logger = LoggerFactory.getLogger(classOf[CopyRelationTask])
@@ -48,8 +47,7 @@ case class CopyRelationTask(
 
         val input = context.getRelation(source)
         val output = context.getRelation(target)
-        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
-        val data = input.read(executor, schema, sourcePartitions).coalesce(parallelism)
+        val data = input.read(executor, None, sourcePartitions).coalesce(parallelism)
         val xfs = SchemaEnforcer(StructType(output.schema.fields.map(_.sparkField)))
         val conformed = xfs.transform(data)
         output.write(executor, conformed, targetPartition, mode)
@@ -64,7 +62,6 @@ class CopyRelationTaskSpec extends TaskSpec {
     @JsonProperty(value = "sourcePartitions", required = false) private var sourcePartitions: Map[String, FieldValue] = Map()
     @JsonProperty(value = "target", required = true) private var target: String = ""
     @JsonProperty(value = "targetPartition", required = false) private var targetPartition: Map[String, String] = Map()
-    @JsonProperty(value = "columns", required = false) private var columns: Map[String, String] = Map()
     @JsonProperty(value = "parallelism", required = false) private var parallelism: String = "16"
     @JsonProperty(value = "mode", required = false) private var mode: String = "overwrite"
 
@@ -81,7 +78,6 @@ class CopyRelationTaskSpec extends TaskSpec {
             RelationIdentifier.parse(context.evaluate(target)),
             targetPartition.map { case(n,p) => (n,SingleValue(context.evaluate(p))) },
             context.evaluate(parallelism).toInt,
-            context.evaluate(columns),
             context.evaluate(mode)
         )
     }

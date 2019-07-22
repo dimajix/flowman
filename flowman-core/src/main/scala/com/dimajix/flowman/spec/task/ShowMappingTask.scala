@@ -25,10 +25,10 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 object ShowMappingTask {
-    def apply(context: Context, mapping:MappingOutputIdentifier, columns:Seq[String], limit:Int) : ShowMappingTask = {
+    def apply(context: Context, mappings:Seq[MappingOutputIdentifier], columns:Seq[String], limit:Int) : ShowMappingTask = {
         ShowMappingTask(
             Task.Properties(context),
-            mapping,
+            mappings,
             columns,
             limit
         )
@@ -37,13 +37,18 @@ object ShowMappingTask {
 
 case class ShowMappingTask(
     instanceProperties:Task.Properties,
-    mapping:MappingOutputIdentifier,
+    mappings:Seq[MappingOutputIdentifier],
     columns:Seq[String],
     limit:Int
 ) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[ShowMappingTask])
 
     override def execute(executor:Executor) : Boolean = {
+        mappings.foreach(m => showMapping(executor, m))
+        true
+    }
+
+    private def showMapping(executor:Executor, mapping:MappingOutputIdentifier) : Boolean = {
         logger.info(s"Showing first $limit rows of mapping '$mapping'")
 
         val instance = context.getMapping(mapping.mapping)
@@ -61,7 +66,7 @@ case class ShowMappingTask(
 
 
 class ShowMappingTaskSpec extends TaskSpec {
-    @JsonProperty(value = "mapping", required = true) private var mapping: String = _
+    @JsonProperty(value = "mapping", required = true) private var mapping: Seq[String] = Seq()
     @JsonProperty(value = "limit", required = false) private var limit: String = "100"
     @JsonProperty(value = "columns", required = false) private var columns: Seq[String] = Seq()
 
@@ -69,7 +74,7 @@ class ShowMappingTaskSpec extends TaskSpec {
     override def instantiate(context: Context): ShowMappingTask = {
         ShowMappingTask(
             instanceProperties(context),
-            MappingOutputIdentifier(context.evaluate(mapping)),
+            mapping.map(r => MappingOutputIdentifier(context.evaluate(r))),
             columns.map(context.evaluate),
             context.evaluate(limit).toInt
         )

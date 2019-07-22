@@ -2,7 +2,7 @@ jobs:
   main:
     description: "Upload File via SFTP"
     tasks:
-      - kind: sftp-upload
+      - kind: sftpUpload
         description: Upload file via SFTP
         connection: sftp
         source: "${project.basedir}/data/example.csv"

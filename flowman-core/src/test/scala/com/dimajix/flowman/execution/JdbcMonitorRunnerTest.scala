@@ -25,9 +25,9 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.connection.JdbcConnectionSpec
-import com.dimajix.flowman.spec.state.JdbcStateStoreSpec
+import com.dimajix.flowman.spec.history.JdbcHistorySpec
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.types.StringType
 
 
@@ -55,8 +55,8 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .setName("job")
             .build()
 
-        val monitor = JdbcStateStoreSpec("logger")
-        val runner = new MonitoredRunner(monitor.instantiate(session))
+        val monitor = JdbcHistorySpec("logger")
+        val runner = new MonitoredRunner(monitor.instantiate(session.context))
         runner.execute(session.executor, job) should be (Status.SUCCESS)
         runner.execute(session.executor, job) should be (Status.SKIPPED)
         runner.execute(session.executor, job, force=true) should be (Status.SUCCESS)
@@ -64,7 +64,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     it should "be used in a Session" in {
         val db = tempDir.resolve("mydb")
-        val monitor = JdbcStateStoreSpec("logger")
+        val monitor = JdbcHistorySpec("logger")
         val ns = Namespace.builder()
             .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
             .setStateStore(monitor)
@@ -96,8 +96,8 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .addParameter("p0", StringType)
             .build()
 
-        val monitor = JdbcStateStoreSpec("logger")
-        val runner = new MonitoredRunner(monitor.instantiate(session))
+        val monitor = JdbcHistorySpec("logger")
+        val runner = new MonitoredRunner(monitor.instantiate(session.context))
         runner.execute(session.executor, job) should be (Status.FAILED)
         runner.execute(session.executor, job) should be (Status.FAILED)
     }
@@ -115,8 +115,8 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .addParameter("p1", StringType)
             .build()
 
-        val monitor = JdbcStateStoreSpec("logger")
-        val runner = new MonitoredRunner(monitor.instantiate(session))
+        val monitor = JdbcHistorySpec("logger")
+        val runner = new MonitoredRunner(monitor.instantiate(session.context))
         runner.execute(session.executor, job, Map("p1" -> "v1")) should be (Status.SUCCESS)
         runner.execute(session.executor, job, Map("p1" -> "v1")) should be (Status.SKIPPED)
         runner.execute(session.executor, job, Map("p1" -> "v2")) should be (Status.SUCCESS)

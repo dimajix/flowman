@@ -18,7 +18,7 @@ package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.state.Status
+import com.dimajix.flowman.history.Status
 
 
 /**

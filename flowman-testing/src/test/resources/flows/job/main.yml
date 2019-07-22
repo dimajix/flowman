@@ -1,0 +1,6 @@
+jobs:
+  main:
+    description: "Simply print 'Hello World'"
+    tasks:
+      - kind: print
+        text: $text

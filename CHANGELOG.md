@@ -1,3 +1,14 @@
+# Version 0.7.0
+* Implement initial REST server
+* Implement initial prototype of UI
+* Implement new datasets for new tasks (copy/compare/...)
+
+# Version 0.6.5
+* Add support for checkpoint directory
+
+# Verison 0.6.4
+* Implement column renaming in projections
+
 # Verison 0.6.3
 * CopyRelationTask also performs projection
 

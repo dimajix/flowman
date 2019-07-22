@@ -60,25 +60,27 @@ abstract class BaseMapping extends Mapping {
     override def outputs : Seq[String] = Seq("main")
 
     /**
-      * Returns the schema as produced by this mapping, relative to the given input schema
+      * Returns the schema as produced by this mapping, relative to the given input schema. The map might not contain
+      * schema information for all outputs, if the schema cannot be inferred.
       * @param input
       * @return
       */
     override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        throw new UnsupportedOperationException(s"Schema inference not supported for mapping $name of type $category")
+        Map()
     }
 
     /**
-      * Returns the schema as produced by this mapping, relative to the given input schema
+      * Returns the schema as produced by this mapping, relative to the given input schema. If the schema cannot
+      * be inferred, None will be returned
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
+    override def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : Option[StructType] = {
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        describe(input)(output)
+        describe(input).get(output)
     }
 }

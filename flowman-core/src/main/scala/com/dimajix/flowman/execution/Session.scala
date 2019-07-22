@@ -23,14 +23,17 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.history.NullStateStore
+import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.state.StateStoreSpec
 import com.dimajix.flowman.spi.UdfProvider
+import com.dimajix.flowman.storage.NullStore
+import com.dimajix.flowman.storage.Store
 
 
 class SessionBuilder {
-    private var _sparkSession: SparkSession = _
+    private var _sparkSession: () => SparkSession = () => null
     private var _sparkName = ""
     private var _sparkConfig = Map[String,String]()
     private var _environment = Map[String,String]()
@@ -44,9 +47,14 @@ class SessionBuilder {
       * @param session
       * @return
       */
-    def withSparkSession(session:SparkSession) : SessionBuilder = {
+    def withSparkSession(session:() => SparkSession) : SessionBuilder = {
         require(session != null)
         _sparkSession = session
+        this
+    }
+    def withSparkSession(session:SparkSession) : SessionBuilder = {
+        require(session != null)
+        _sparkSession = () => session
         this
     }
     def withSparkName(name:String) : SessionBuilder = {
@@ -84,7 +92,7 @@ class SessionBuilder {
       * @param env
       * @return
       */
-    def withEnvironment(env:Seq[(String,String)]) : SessionBuilder = {
+    def withEnvironment(env:Map[String,String]) : SessionBuilder = {
         require(env != null)
         _environment = _environment ++ env
         this
@@ -156,12 +164,17 @@ class SessionBuilder {
         this
     }
 
+    def disableSpark() : SessionBuilder = {
+        _sparkSession = () => throw new IllegalStateException("Spark session disable in Flowman session")
+        this
+    }
+
     /**
       * Build the Flowman session and applies all previously specified options
       * @return
       */
     def build() : Session = {
-        val session = new Session(_namespace, _project, () => _sparkSession, _sparkName, _sparkConfig, _environment, _profiles, _jars)
+        val session = new Session(_namespace, _project, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles, _jars)
         session
     }
 }
@@ -204,20 +217,6 @@ class Session private[execution](
 
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
-    private val _history = {
-        if (_namespace != null && _namespace.monitor != null)
-            _namespace.monitor
-        else
-            null
-    }
-    private val _runner = {
-        if (_history  != null)
-            new MonitoredRunner(_history.instantiate(this))
-        else
-            new SimpleRunner
-    }
-
-
     private def sparkConfig : Map[String,String] = {
         if (_project != null) {
             logger.info("Using project specific Spark configuration settings")
@@ -239,36 +238,43 @@ class Session private[execution](
       * @return
       */
     private def createOrReuseSession() : SparkSession = {
-        val injectedSession = _sparkSession()
-        if (injectedSession != null) {
-            logger.info("Reusing provided Spark session")
-            // Set all session properties that can be changed in an existing session
-            sparkConfig.foreach { case (key, value) =>
-                if (!SQLConf.staticConfKeys.contains(key)) {
-                    injectedSession.conf.set(key, value)
+        Option(_sparkSession)
+            .flatMap(builder => Option(builder()))
+            .map { injectedSession =>
+                logger.info("Reusing provided Spark session")
+                // Set all session properties that can be changed in an existing session
+                val config = context.sparkConf.getAll.toMap ++ sparkConfig
+                config.foreach { case (key, value) =>
+                    if (!SQLConf.staticConfKeys.contains(key)) {
+                        injectedSession.conf.set(key, value)
+                    }
                 }
+                injectedSession
             }
-            injectedSession
-        }
-        else {
-            logger.info("Creating new Spark session")
-            val sparkConf = context.sparkConf
-                .setAppName(_sparkName)
-                .setAll(sparkConfig.toSeq)
-            val master = System.getProperty("spark.master")
-            if (master == null || master.isEmpty) {
-                logger.info("No Spark master specified - using local[*]")
-                sparkConf.setMaster("local[*]")
-                sparkConf.set("spark.sql.shuffle.partitions", "16")
+            .getOrElse {
+                logger.info("Creating new Spark session")
+                val sparkConf = context.sparkConf
+                    .setAppName(_sparkName)
+                    .setAll(sparkConfig.toSeq)
+                val master = System.getProperty("spark.master")
+                if (master == null || master.isEmpty) {
+                    logger.info("No Spark master specified - using local[*]")
+                    sparkConf.setMaster("local[*]")
+                    sparkConf.set("spark.sql.shuffle.partitions", "16")
+                }
+                SparkSession.builder()
+                    .config(sparkConf)
+                    .enableHiveSupport()
+                    .getOrCreate()
             }
-            SparkSession.builder()
-                .config(sparkConf)
-                .enableHiveSupport()
-                .getOrCreate()
-        }
     }
     private def createSession() : SparkSession = {
         val spark = createOrReuseSession()
+
+        // Set checkpoint directory if not already specified
+        if (spark.sparkContext.getCheckpointDir.isEmpty) {
+            sparkConfig.get("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
+        }
 
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)
@@ -287,9 +293,14 @@ class Session private[execution](
     private var sparkSession:SparkSession = null
 
     private lazy val rootContext : RootContext = {
+        def loadProject(name:String) : Option[Project] = {
+            Some(store.loadProject(name))
+        }
+
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
+            .withProjectResolver(loadProject)
         if (_namespace != null) {
             _profiles.foreach(p => namespace.profiles.get(p).foreach { profile =>
                 logger.info(s"Applying namespace profile $p")
@@ -316,8 +327,28 @@ class Session private[execution](
     }
     private lazy val _catalog = new Catalog(spark, _externalCatalog)
 
+    private lazy val _projecStore : Store = {
+        if (_namespace != null && _namespace.storage != null) {
+            _namespace.storage.instantiate(rootContext)
+        }
+        else {
+            new NullStore
+        }
+    }
 
-    def monitor : StateStoreSpec = _history
+    private lazy val _history = {
+        if (_namespace != null && _namespace.history != null)
+            _namespace.history.instantiate(rootContext)
+        else
+            new NullStateStore
+    }
+    private lazy val _runner = {
+        if (_namespace != null && _namespace.history != null)
+            new MonitoredRunner(_history)
+        else
+            new SimpleRunner
+    }
+
 
     /**
       * Returns the Namespace tied to this Flowman session.
@@ -326,10 +357,22 @@ class Session private[execution](
     def namespace : Namespace = _namespace
 
     /**
+      * Returns the storage used to manage projects
+      * @return
+      */
+    def store : Store = _projecStore
+
+    /**
       * Returns the Project tied to this Flowman session.
       * @return
       */
     def project : Project = _project
+
+    /**
+      * Returns the history store
+      * @return
+      */
+    def history : StateStore = _history
 
     /**
       * Returns the appropriate runner
@@ -419,5 +462,12 @@ class Session private[execution](
       */
     def newSession() : Session = {
         newSession(_project)
+    }
+
+    def shutdown() : Unit = {
+        if (sparkSession != null) {
+            sparkSession.stop()
+            sparkSession = null
+        }
     }
 }

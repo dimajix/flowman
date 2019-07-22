@@ -55,7 +55,6 @@ object Plugin {
           */
         def file(file:File) : Plugin = {
             if (file.isDirectory) {
-                logger.info(s"Reading plugin in directory ${file.toString}")
                 loadFile(new File(file, "plugin.yml"))
             }
             else {

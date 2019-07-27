@@ -19,6 +19,7 @@ package com.dimajix.flowman.execution
 import java.io.StringWriter
 
 import scala.collection.mutable
+import scala.collection.JavaConversions._
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
@@ -208,6 +209,30 @@ abstract class AbstractContext(
         templateContext.put(key, finalValue)
     }
 
+    private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) = {
+        val output = new StringWriter()
+        val context = if (additionalValues.nonEmpty)
+            new VelocityContext(additionalValues, templateContext)
+        else
+            templateContext
+        templateEngine.evaluate(context, output, "context", string)
+        output.getBuffer.toString
+    }
+
+    /**
+      * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
+      * with additional values to be used for evaluation
+      *
+      * @param string
+      * @return
+      */
+    override def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String = {
+        if (string != null)
+            evaluateNotNull(string, additionalValues)
+        else
+            null
+    }
+
     /**
       * Evaluates a string containing expressions to be processed.
       *
@@ -216,14 +241,20 @@ abstract class AbstractContext(
       */
     override def evaluate(string:String) : String = {
         if (string != null) {
-            val output = new StringWriter()
-            templateEngine.evaluate(templateContext, output, "context", string)
-            output.getBuffer.toString
+            evaluateNotNull(string, Map())
         }
         else {
             null
         }
     }
+
+    /**
+      * Evaluates a key value map containing expressions to be processed.
+      *
+      * @param map
+      * @return
+      */
+    override def evaluate(map: Map[String,String]): Map[String,String] = map.map { case(name,value) => (name, evaluate(value)) }
 
     /**
       * Returns all configuration options as a key-value map
@@ -240,14 +271,6 @@ abstract class AbstractContext(
         case (s:String,_) => evaluate(s)
         case (any,_) => any
     }
-
-    /**
-      * Evaluates a string containing expressions to be processed.
-      *
-      * @param map
-      * @return
-      */
-    override def evaluate(map: Map[String,String]): Map[String,String] = map.map { case(name,value) => (name, evaluate(value)) }
 
     /**
       * Returns the FileSystem as configured in Hadoop

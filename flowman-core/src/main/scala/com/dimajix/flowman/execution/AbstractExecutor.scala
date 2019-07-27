@@ -21,7 +21,7 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.metric.MetricRegistry
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 
@@ -45,6 +45,12 @@ abstract class AbstractExecutor(_session:Session) extends Executor {
       * @return
       */
     override def runner: Runner = _session.runner
+
+    /**
+      * Returns the MetricRegistry of this executor
+      * @return
+      */
+    def metrics : MetricRegistry = _session.metrics
 
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global

@@ -35,6 +35,7 @@ import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.metric.MetricRegistry
 
 
 object AbstractRunner {
@@ -48,6 +49,7 @@ object AbstractRunner {
         override def namespace : Namespace = _parent.namespace
         override def root: Executor = _parent.root
         override def runner: Runner = _runner
+        override def metrics: MetricRegistry = _parent.metrics
         override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
@@ -76,7 +78,7 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         require(executor != null)
         require(args != null)
 
-        // Now run the job
+        executor.metrics.doSomething()
         val result = if (job.logged) {
             runLogged(executor, job, args, force)
         }
@@ -193,7 +195,7 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * Builds a single target
       */
     override def build(executor: Executor, target: Target, logged:Boolean=true): Status = {
-        // Now run the job
+        executor.metrics.doSomething()
         val force = true
         if (logged) {
             buildLogged(executor, target, force)

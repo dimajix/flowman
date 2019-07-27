@@ -77,6 +77,15 @@ abstract class Context {
     def evaluate(string: String): String
 
     /**
+      * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
+      * with additional values to be used for evaluation
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String
+
+    /**
       * Evaluates a string containing expressions to be processed.
       *
       * @param map

@@ -355,12 +355,13 @@ object JobSpec extends TypeRegistry[JobSpec] {
 
 class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="description") private var description:Option[String] = None
-    @JsonProperty(value="logged") private var logged:String = "true"
     @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="tasks") private var tasks:Seq[TaskSpec] = Seq()
     @JsonProperty(value="failure") private var failure:Seq[TaskSpec] = Seq()
     @JsonProperty(value="cleanup") private var cleanup:Seq[TaskSpec] = Seq()
+    @JsonProperty(value="logged") private var logged:String = "true"
+    @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
 
     override def instantiate(context: Context): Job = {
         Job(
@@ -371,7 +372,8 @@ class JobSpec extends NamedSpec[Job] {
             tasks,
             failure,
             cleanup,
-            context.evaluate(logged).toBoolean
+            context.evaluate(logged).toBoolean,
+            metrics
         )
     }
 

@@ -25,4 +25,15 @@ case class Metadata(
     kind: String,
     labels: Map[String,String]
 ) {
+    def asMap : Map[String,String] = {
+        Map(
+            "name" -> name,
+            "category" -> category,
+            "kind" -> kind
+        ) ++
+        namespace.map("namespace" -> _).toMap ++
+        project.map("project" -> _).toMap ++
+        version.map("version" -> _).toMap ++
+        labels
+    }
 }

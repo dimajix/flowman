@@ -204,7 +204,7 @@ case class FileRelation(
       * @param partitions
       * @return
       */
-    private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    protected def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
         require(executor != null)
 
@@ -230,7 +230,7 @@ case class FileRelation(
         fn(PartitionSpec(), collector(executor).collect())
     }
 
-    private def collector(executor: Executor) = {
+    protected def collector(executor: Executor) : FileCollector = {
         new FileCollector(executor.spark)
             .path(location)
             .pattern(pattern)

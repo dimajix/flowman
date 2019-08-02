@@ -20,6 +20,7 @@ import java.sql.Connection
 import java.sql.Statement
 import java.util.Locale
 import java.util.Properties
+import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
@@ -52,13 +53,13 @@ case class JdbcRelation(
     override val partitions: Seq[PartitionField],
     connection: JdbcConnection,
     properties: Map[String,String],
-    database: String,
-    table: String
+    database: Option[String],
+    table: Option[String],
+    query: Option[String]
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
-    def fqTable : String = Option(database).filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
-    def tableIdentifier : TableIdentifier = TableIdentifier(table, Option(database))
+    def tableIdentifier : TableIdentifier = TableIdentifier(table.getOrElse(""), database)
 
     /**
       * Reads the configured table from the source
@@ -71,14 +72,26 @@ case class JdbcRelation(
         require(schema != null)
         require(partitions != null)
 
-        logger.info(s"Reading data from JDBC source '$tableIdentifier' using connection '${connection.identifier}' using partition values $partitions")
-
         // Get Connection
         val (url,props) = createProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = executor.spark.read.options(options)
-        val tableDf = reader.jdbc(url, tableIdentifier.unquotedString, props)
+
+        val tableDf =
+            if (query.nonEmpty) {
+                logger.info(s"Reading data from JDBC source '$identifier' using connection '${connection.identifier}' using partition values $partitions")
+                reader.format("jdbc")
+                    .option("query", query.get)
+                    .option("url", url)
+                    .options(props.asScala)
+                    .load()
+            }
+            else {
+                logger.info(s"Reading data from JDBC table '$tableIdentifier' using connection '${connection.identifier}' using partition values $partitions")
+                reader.jdbc(url, tableIdentifier.unquotedString, props)
+            }
+
         val df = filterPartition(tableDf, partitions)
         SchemaUtils.applySchema(df, schema)
     }
@@ -95,6 +108,9 @@ case class JdbcRelation(
         require(executor != null)
         require(df != null)
         require(partition != null)
+
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot write into JDBC relation $identifier which is defined by an SQL query")
 
         logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection.identifier}")
 
@@ -137,7 +153,7 @@ case class JdbcRelation(
                         writePartition()
                     }
                     else {
-                        throw new PartitionAlreadyExistsException(database, table, partition.mapValues(_.value))
+                        throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
                     }
                 case _ => throw new IllegalArgumentException(s"Unknown save mode: $mode. " +
                     "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
@@ -151,6 +167,12 @@ case class JdbcRelation(
       * @param partitions
       */
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        require(executor != null)
+        require(partitions != null)
+
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot clean JDBC relation $identifier which is defined by an SQL query")
+
         if (partitions.isEmpty) {
             logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $tableIdentifier")
             withConnection { (con, options) =>
@@ -188,6 +210,9 @@ case class JdbcRelation(
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)
 
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot create JDBC relation $identifier which is defined by an SQL query")
+
         logger.info(s"Creating jdbc relation $name, this will create jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
@@ -208,6 +233,9 @@ case class JdbcRelation(
       */
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
         require(executor != null)
+
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot destroy JDBC relation $identifier which is defined by an SQL query")
 
         logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
         withConnection{ (con,options) =>
@@ -313,8 +341,9 @@ case class JdbcRelation(
 class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
     @JsonProperty(value = "connection", required = true) private var _connection: String = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
-    @JsonProperty(value = "database", required = true) private var database: String = _
-    @JsonProperty(value = "table", required = true) private var table: String = _
+    @JsonProperty(value = "database", required = false) private var database: Option[String] = None
+    @JsonProperty(value = "table", required = false) private var table: Option[String] = None
+    @JsonProperty(value = "query", required = false) private var query: Option[String] = None
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -328,8 +357,9 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             partitions.map(_.instantiate(context)),
             context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[JdbcConnection],
             context.evaluate(properties),
-            context.evaluate(database),
-            context.evaluate(table)
+            database.map(context.evaluate).filter(_.nonEmpty),
+            table.map(context.evaluate).filter(_.nonEmpty),
+            query.map(context.evaluate).filter(_.nonEmpty)
         )
     }
 }

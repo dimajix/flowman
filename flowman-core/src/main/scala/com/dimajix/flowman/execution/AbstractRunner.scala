@@ -26,22 +26,20 @@ import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
-import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.MultiMetricBundle
 import com.dimajix.flowman.metric.Selector
-import com.dimajix.flowman.metric.SingletonMetricBundle
 import com.dimajix.flowman.metric.WallTimeMetric
 import com.dimajix.flowman.spec.Metadata
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.task.Job
 
 
 object AbstractRunner {

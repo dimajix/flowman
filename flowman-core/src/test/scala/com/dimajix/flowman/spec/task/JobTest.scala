@@ -18,6 +18,10 @@ package com.dimajix.flowman.spec.task
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.any
 
 import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.execution.Context
@@ -25,6 +29,9 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.metric.MetricBoard
+import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.spec.JobIdentifier
 
 
 object GrabEnvironmentTask {
@@ -49,7 +56,7 @@ class GrabEnvironmentTaskSpec extends TaskSpec {
 }
 
 
-class JobTest extends FlatSpec with Matchers {
+class JobTest extends FlatSpec with Matchers with MockitoSugar {
     "A Job" should "be deseializable from" in {
         val spec =
             """
@@ -253,5 +260,52 @@ class JobTest extends FlatSpec with Matchers {
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy"))
+    }
+
+    it should "support metrics" in {
+        val spec =
+            """
+              |jobs:
+              |  main:
+              |    labels:
+              |      job_label: xyz
+              |    parameters:
+              |      - name: p1
+              |    environment:
+              |      - p2=$p1
+              |      - p3=xx${p2}yy
+              |    metrics:
+              |      labels:
+              |        metric_label: abc
+              |      metrics:
+              |        - name: metric_1
+              |          labels:
+              |            p1: $p1
+              |            p2: $p2
+              |            p3: $p3
+              |          selector:
+              |            name: job_runtime
+              |            labels:
+              |              name: main
+              |    tasks:
+              |      - kind: grabenv
+            """.stripMargin
+
+        val project  = Module.read.string(spec).toProject("default")
+        val session = Session.builder().build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val metricSystem = executor.metrics
+        val metricSink = mock[MetricSink]
+        metricSystem.addSink(metricSink)
+
+        val job = context.getJob(JobIdentifier("main"))
+        job.labels should be (Map("job_label" -> "xyz"))
+
+        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        verify(metricSink).addBoard(any())
+        verify(metricSink).commit(any())
+        verify(metricSink).removeBoard(any())
     }
 }

@@ -19,16 +19,27 @@ package com.dimajix.flowman.metric
 import java.time.Instant
 
 
-class WallTimeMetric(override val labels:Map[String,String]) extends GaugeMetric {
-    private var start = now()
+class WallTimeMetric(override val name:String, override val labels:Map[String,String]) extends GaugeMetric {
+    private var startTime = now()
+    private var endTime:Option[Long] = None
 
-    override def value: Double = now() - start
+    override def value: Double = endTime.getOrElse(now()) - startTime
 
     /**
       * Resets this metric
       */
     override def reset(): Unit = {
-        start = now()
+        startTime = now()
+        endTime = None
+    }
+
+    def start() : Unit = {
+        startTime = now()
+        endTime = None
+    }
+
+    def stop() : Unit = {
+        endTime = Some(now())
     }
 
     private def now() : Long = Instant.now().toEpochMilli

@@ -25,7 +25,7 @@ import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
-import com.dimajix.flowman.metric.MetricRegistry
+import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spi.UdfProvider
@@ -350,7 +350,7 @@ class Session private[execution](
             new SimpleRunner
     }
 
-    private val metricRegistry = new MetricRegistry
+    private val metricRegistry = new MetricSystem
 
 
     /**
@@ -422,7 +422,7 @@ class Session private[execution](
       * Returns the MetricRegistry of this session
       * @return
       */
-    def metrics : MetricRegistry = metricRegistry
+    def metrics : MetricSystem = metricRegistry
 
     /**
       * Returns the root context of this session.

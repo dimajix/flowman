@@ -220,6 +220,14 @@ abstract class AbstractContext(
     }
 
     /**
+      * Evaluates a string containing expressions to be processed.
+      *
+      * @param string
+      * @return
+      */
+    override def evaluate(string:String) : String = evaluate(string, Map())
+
+    /**
       * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
       * with additional values to be used for evaluation
       *
@@ -234,27 +242,23 @@ abstract class AbstractContext(
     }
 
     /**
-      * Evaluates a string containing expressions to be processed.
-      *
-      * @param string
-      * @return
-      */
-    override def evaluate(string:String) : String = {
-        if (string != null) {
-            evaluateNotNull(string, Map())
-        }
-        else {
-            null
-        }
-    }
-
-    /**
-      * Evaluates a key value map containing expressions to be processed.
+      * Evaluates a key-value map containing values with expressions to be processed.
       *
       * @param map
       * @return
       */
-    override def evaluate(map: Map[String,String]): Map[String,String] = map.map { case(name,value) => (name, evaluate(value)) }
+    def evaluate(map: Map[String,String]): Map[String,String] = evaluate(map, Map())
+
+    /**
+      * Evaluates a key-value map containing values with expressions to be processed.  This variant also accepts a
+      * key-value Map with additional values to be used for evaluation
+      *
+      * @param map
+      * @return
+      */
+    override def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String] = {
+        map.map { case(name,value) => (name, evaluate(value, additionalValues)) }
+    }
 
     /**
       * Returns all configuration options as a key-value map

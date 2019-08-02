@@ -16,29 +16,30 @@
 
 package com.dimajix.flowman.metric
 
-/**
-  * A MetricBundle encapsulates multiple metrics of the same kind belonging together. While the set of MetricBundles
-  * is more or less static (i.e. each MetricBundle has to be registered with the MetricRegistry), the metrics inside
-  * each bundle may be dynamic (i.e. change over time)
-  */
-abstract class MetricBundle {
+
+class SingletonMetricBundle(metric: Metric) extends MetricBundle {
     /**
-      * Returns all labels associated with this metrics. A label is an arbitrary key-value pair used to
-      * distinguish between different metrics. They are also used in the MetricRegistry to find specific metrics
-      * and metric bundles
+      * Returns the name of the metric as the bundles name
       * @return
       */
-    def labels : Map[String,String]
+    override def name: String = metric.name
+
+    /**
+      * Returns all labels of the single metric as the bundles labels
+      * @return
+      */
+    override def labels: Map[String, String] = metric.labels
 
     /**
       * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
       * dynamic and change over time
+      *
       * @return
       */
-    def metrics : Seq[Metric]
+    override def metrics: Seq[Metric] = Seq(metric)
 
     /**
       * Resets and/or removes all metrics in this bundle.
       */
-    def reset() : Unit
+    override def reset(): Unit = metric.reset()
 }

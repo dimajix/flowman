@@ -16,6 +16,13 @@
 
 package com.dimajix.flowman.spec.metric
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.metric.ConsoleMetricSink
+import com.dimajix.flowman.metric.MetricSink
+
 
 class ConsoleMetricSinkSpec extends MetricSinkSpec {
+    override def instantiate(context: Context): MetricSink = {
+        new ConsoleMetricSink()
+    }
 }

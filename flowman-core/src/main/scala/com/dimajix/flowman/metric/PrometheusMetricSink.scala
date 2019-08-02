@@ -28,14 +28,14 @@ import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
 
-case class PrometheusMetricSink(
+class PrometheusMetricSink(
     url:String,
     labels:Map[String,String]
 )
-extends MetricSink {
+extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
 
-    override def publish(metricFamilies:Seq[MetricFamily]): Unit = {
+    override def commit(board:MetricBoard) : Unit = {
         val labels = Seq(
             "job" -> this.labels.getOrElse("job","flowman"),
             "instance" -> this.labels.getOrElse("instance", "default")
@@ -52,9 +52,9 @@ extends MetricSink {
           another_metric 2398.283
         */
 
-        val payload = metricFamilies.map { family =>
-            val name = family.name
-            val metrics = family.metrics.map { metric =>
+        val payload = board.bundles.map { bundle =>
+            val name = bundle.name
+            val metrics = bundle.metrics.map { metric =>
                 val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
                 metric match {
                     case gauge:GaugeMetric => s"$name$labels ${gauge.value}"

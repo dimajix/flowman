@@ -16,28 +16,21 @@
 
 package com.dimajix.flowman.spec.metric
 
-import java.io.IOException
-import java.net.URI
-
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.http.HttpResponse
-import org.apache.http.client.HttpResponseException
-import org.apache.http.client.ResponseHandler
-import org.apache.http.client.methods.HttpPut
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClients
-import org.slf4j.LoggerFactory
 
-import com.smartclip.sxp.datatool.execution.Context
-import com.smartclip.sxp.datatool.metric.GaugeMetric
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.metric.PrometheusMetricSink
 
 
 class PrometheusMetricSinkSpec extends MetricSinkSpec {
-    private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSinkSpec])
+    @JsonProperty(value = "url", required = true) private var url:String = _
+    @JsonProperty(value = "labels", required = false) var labels:Map[String,String] = Map()
 
-    @JsonProperty(value = "url", required = true) private[spec] var _url:String = _
-    @JsonProperty(value = "job", required = true) private[spec] var _job:String = "datatool"
-    @JsonProperty(value = "instance", required = true) private[spec] var _instance:String = "default"
-    @JsonProperty(value = "labels", required = true) private[spec] var _labels:Map[String,String] = Map()
-
+    override def instantiate(context: Context): MetricSink = {
+        new PrometheusMetricSink(
+            context.evaluate(url),
+            context.evaluate(labels)
+        )
+    }
 }

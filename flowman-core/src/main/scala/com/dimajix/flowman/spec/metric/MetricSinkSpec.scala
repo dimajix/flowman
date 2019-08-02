@@ -16,12 +16,16 @@
 
 package com.dimajix.flowman.spec.metric
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.spi.TypeRegistry
 
+
+object MetricSinkSpec extends TypeRegistry[MetricSinkSpec] {
+}
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(value = Array(
@@ -30,6 +34,5 @@ import com.dimajix.flowman.execution.Context
     new JsonSubTypes.Type(name = "prometheus", value = classOf[PrometheusMetricSinkSpec])
 ))
 abstract class MetricSinkSpec {
-    @JsonProperty(value = "metrics", required = true) private[spec] var _metrics:Seq[MetricFamily] = Seq()
-
+    def instantiate(context:Context) : MetricSink
 }

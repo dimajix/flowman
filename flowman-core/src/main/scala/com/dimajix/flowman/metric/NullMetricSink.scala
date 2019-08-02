@@ -16,6 +16,6 @@
 
 package com.dimajix.flowman.metric
 
-class NullMetricSink extends MetricSink {
-    override def publish(metricFamilies:Seq[MetricFamily]): Unit = { }
+class NullMetricSink extends AbstractMetricSink {
+    override def commit(board:MetricBoard) : Unit = {}
 }

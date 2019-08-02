@@ -19,15 +19,7 @@ package com.dimajix.flowman.metric
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
-class CounterAccumulatorMetricBundle(counters:CounterAccumulator, bundleLabels:Map[String,String], metricKey: String) extends MetricBundle {
-    /**
-      * Returns all labels associated with this metrics. A label is an arbitrary key-value pair used to
-      * distinguish between different metrics. They are also used in the MetricRegistry to find specific metrics
-      * and metric bundles
-      * @return
-      */
-    override def labels: Map[String, String] = bundleLabels
-
+class CounterAccumulatorMetricBundle(override val name:String, override val labels:Map[String,String], counters:CounterAccumulator, metricKey: String) extends MetricBundle {
     /**
       * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
       * dynamic and change over time
@@ -42,10 +34,12 @@ class CounterAccumulatorMetricBundle(counters:CounterAccumulator, bundleLabels:M
         counters.reset
     }
 
-    private class Gauge(name:String) extends GaugeMetric {
-        private val metricLabels = bundleLabels.updated(metricKey, name)
+    private class Gauge(label:String) extends GaugeMetric {
+        private val metricLabels = CounterAccumulatorMetricBundle.this.labels.updated(metricKey, label)
 
-        override def value: Double = counters.get(name).getOrElse(0l).toDouble
+        override def value: Double = counters.get(label).getOrElse(0l).toDouble
+
+        override def name: String = CounterAccumulatorMetricBundle.this.name
 
         override def labels: Map[String, String] = metricLabels
 

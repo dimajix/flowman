@@ -16,48 +16,54 @@
 
 package com.dimajix.flowman.metric
 
+import scala.collection.mutable
 
-abstract class MetricSink {
+import com.dimajix.common.IdentityHashSet
+
+
+abstract class AbstractMetricSink extends MetricSink {
+    private val metricBoards : mutable.Set[MetricBoard] = IdentityHashSet()
+
     /**
-      * Adds a MetricBoard to be published by this sink. Publishing could happen on a periodic base in the background
+      * Adds a MetricBundle to be published by this sink. Publishing could happen on a periodic base in the background
       * or via an explicit call to commit
       * @param board
       */
-    def addBoard(board:MetricBoard) : Unit
+    override def addBoard(board:MetricBoard) : Unit = {
+        metricBoards.add(board)
+    }
 
     /**
-      * Removes a metric board  from the sink again
+      * Removes a bundle  from the sink again
       * @param board
       */
-    def removeBoard(board:MetricBoard) : Unit
-
-    /**
-      * Returns all metric boards currently registered to this sink
-      * @return
-      */
-    def boards : Seq[MetricBoard]
+    override def removeBoard(board:MetricBoard) : Unit = {
+        metricBoards.remove(board)
+    }
 
     /**
       * Returns all bundles currently registered to this sink
       * @return
       */
-    def bundles : Seq[MetricBundle]
+    override def boards : Seq[MetricBoard] = metricBoards.toSeq
+
+    /**
+      * Returns all bundles currently registered to this sink
+      * @return
+      */
+    override def bundles : Seq[MetricBundle] = boards.flatMap(_.bundles)
 
     /**
       * Returns all metrics of all bundles currently registered to this sink
       * @return
       */
-    def metrics : Seq[Metric]
+    override def metrics : Seq[Metric] = bundles.flatMap(_.metrics)
 
     /**
       * Commits all currently registered metrics. This may be required for some sink for example the PrometheusSink
       * which uses the Prometheus push gateway.
       */
-    def commit() : Unit
-
-    /**
-      * Commits all metrics of a previously registered board. This may be required for some sink for example the
-      * PrometheusSink which uses the Prometheus push gateway.
-      */
-    def commit(board:MetricBoard) : Unit
+    override def commit() : Unit = {
+        metricBoards.foreach(board => commit(board))
+    }
 }

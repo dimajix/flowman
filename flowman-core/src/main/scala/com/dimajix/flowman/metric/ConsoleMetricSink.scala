@@ -17,11 +17,11 @@
 package com.dimajix.flowman.metric
 
 
-class ConsoleMetricSink extends MetricSink {
-    override def publish(metricFamilies:Seq[MetricFamily]): Unit = {
-        metricFamilies.foreach{ family =>
-            val name = family.name
-            family.metrics.foreach { metric =>
+class ConsoleMetricSink extends AbstractMetricSink {
+    override def commit(board:MetricBoard): Unit = {
+        board.bundles.foreach{ bundle =>
+            val name = bundle.name
+            bundle.metrics.foreach { metric =>
                 val labels = metric.labels.map(kv => kv._1 + "=" + kv._2)
                 metric match {
                     case gauge: GaugeMetric => println(s"MetricFamily($name) GaugeMetric(${labels.mkString(",")})=${gauge.value}")

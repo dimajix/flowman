@@ -16,6 +16,13 @@
 
 package com.dimajix.flowman.spec.metric
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.metric.NullMetricSink
+
 
 class NullMetricSinkSpec extends MetricSinkSpec {
+    override def instantiate(context: Context): MetricSink = {
+        new NullMetricSink()
+    }
 }

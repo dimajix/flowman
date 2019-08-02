@@ -35,7 +35,13 @@ import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
-import com.dimajix.flowman.metric.MetricRegistry
+import com.dimajix.flowman.metric.MetricBoard
+import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.metric.MultiMetricBundle
+import com.dimajix.flowman.metric.Selector
+import com.dimajix.flowman.metric.SingletonMetricBundle
+import com.dimajix.flowman.metric.WallTimeMetric
+import com.dimajix.flowman.spec.Metadata
 
 
 object AbstractRunner {
@@ -49,7 +55,7 @@ object AbstractRunner {
         override def namespace : Namespace = _parent.namespace
         override def root: Executor = _parent.root
         override def runner: Runner = _runner
-        override def metrics: MetricRegistry = _parent.metrics
+        override def metrics: MetricSystem = _parent.metrics
         override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
@@ -78,15 +84,48 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         require(executor != null)
         require(args != null)
 
-        executor.metrics.doSomething()
-        val result = if (job.logged) {
-            runLogged(executor, job, args, force)
-        }
-        else {
-            runUnlogged(executor, job, args)
+        val result = withWallTime(executor.metrics, job.metadata) {
+            val result = if (job.logged) {
+                runLogged(executor, job, args, force)
+            }
+            else {
+                runUnlogged(executor, job, args)
+            }
+
+            result
         }
 
         result
+    }
+
+    private def withWallTime(registry: MetricSystem, metadata : Metadata)(fn: => Status) : Status = {
+        // Create and register bundle
+        val metricName = metadata.kind + "_runtime"
+        val bundleLabels = Map(
+            "category" -> metadata.category,
+            "kind" -> metadata.kind,
+            "namespace" -> metadata.namespace.getOrElse(""),
+            "project" -> metadata.project.getOrElse("")
+        )
+        val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels), new MultiMetricBundle(metricName, bundleLabels))
+
+        // Create and register metric
+        val metricLabels = bundleLabels ++ Map("name" -> metadata.name) ++ metadata.labels
+        val metric = bundle.getOrCreateMetric(Selector(Some(metricName), metricLabels), new WallTimeMetric(metricName, metricLabels))
+        metric.reset()
+
+        // Execute function itself, and catch any exception
+        val result = Try {
+            fn
+        }
+
+        metric.stop()
+
+        // Rethrow original exception if some occurred
+        result match {
+            case Success(s) => s
+            case Failure(ex) => throw ex
+        }
     }
 
     /**
@@ -195,13 +234,15 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * Builds a single target
       */
     override def build(executor: Executor, target: Target, logged:Boolean=true): Status = {
-        executor.metrics.doSomething()
         val force = true
-        if (logged) {
-            buildLogged(executor, target, force)
-        }
-        else {
-            buildUnlogged(executor, target)
+
+        withWallTime(executor.metrics, target.metadata) {
+            if (logged) {
+                buildLogged(executor, target, force)
+            }
+            else {
+                buildUnlogged(executor, target)
+            }
         }
     }
 

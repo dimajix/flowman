@@ -19,16 +19,8 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 
-class FixedGaugeMetricBundle(bundleLabels:Map[String,String], metricKey: String) extends MetricBundle {
+class FixedGaugeMetricBundle(override val name:String, override val labels:Map[String,String], metricKey: String) extends MetricBundle {
     private val gauges = mutable.Map[String, FixedGaugeMetric]()
-
-    /**
-      * Returns all labels associated with this metrics. A label is an arbitrary key-value pair used to
-      * distinguish between different metrics. They are also used in the MetricRegistry to find specific metrics
-      * and metric bundles
-      * @return
-      */
-    override def labels: Map[String, String] = bundleLabels
 
     /**
       * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
@@ -46,7 +38,12 @@ class FixedGaugeMetricBundle(bundleLabels:Map[String,String], metricKey: String)
         gauges.clear()
     }
 
+    /**
+      * Updates an individual value using the specified name
+      * @param name
+      * @param value
+      */
     def update(name:String, value:Double) = {
-        gauges.update(name, new FixedGaugeMetric(value, bundleLabels.updated(metricKey, name)))
+        gauges.update(name, new FixedGaugeMetric(this.name, labels.updated(metricKey, name), value))
     }
 }

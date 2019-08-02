@@ -74,7 +74,7 @@ abstract class Context {
       * @param string
       * @return
       */
-    def evaluate(string: String): String
+    def evaluate(string:String) : String
 
     /**
       * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
@@ -86,12 +86,21 @@ abstract class Context {
     def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String
 
     /**
-      * Evaluates a string containing expressions to be processed.
+      * Evaluates a key-value map containing values with expressions to be processed.
       *
       * @param map
       * @return
       */
     def evaluate(map: Map[String,String]): Map[String,String]
+
+    /**
+      * Evaluates a key-value map containing values with expressions to be processed.  This variant also accepts a
+      * key-value Map with additional values to be used for evaluation
+      *
+      * @param map
+      * @return
+      */
+    def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String]
 
     /**
       * Try to retrieve the specified database connection. Performs lookups in parent context if required

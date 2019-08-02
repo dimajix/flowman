@@ -24,7 +24,7 @@ import org.apache.spark.sql.SparkSession
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.metric.MetricRegistry
+import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 
@@ -47,7 +47,7 @@ abstract class Executor {
       * Returns the MetricRegistry of this executor
       * @return
       */
-    def metrics : MetricRegistry
+    def metrics : MetricSystem
 
     /**
       * Returns the FileSystem as configured in Hadoop

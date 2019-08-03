@@ -19,3 +19,14 @@ Use [Console Target](console.html) to dump the contents of a mapping onto the co
 
 * [`blackhole`](blackhole.html): 
 Use a [Blackhole Target](blackhole.html) to execute mappings without using the results
+
+
+## Metrics
+
+For each target Flowman provides the following execution metric:
+* metric: "target_runtime"
+* labels: 
+  * category: "target"
+  * kind:
+  * namespace: 
+  * project: 

@@ -71,6 +71,17 @@ be executed after the `tasks` list.
 * `failure` **(optional)** *(type: list:task)* *(default: empty)*:
 A list of tasks, which will be executed when a task fails.
 
+## Metrics
+
+For each job Flowman provides the following execution metrics:
+* metric: "job_runtime"
+* labels: 
+  * category: "job"
+  * kind: "job"
+  * namespace: 
+  * project: 
+
+
 
 ## Job Parameters
 
@@ -94,3 +105,6 @@ Job will be executed in a logically isolated environment, where all cached data 
 after the Job is finished. This way it is ensured that all mappings which rely on specific
 parameter values, are reevaluated when the same Job is run mutliple times within a project.
 
+## Metrics
+
+Each job can define a set of metrics to be published

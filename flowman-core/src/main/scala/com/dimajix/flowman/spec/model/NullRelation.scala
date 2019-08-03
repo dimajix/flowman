@@ -28,8 +28,8 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class NullRelation(
-    instanceProperties:Relation.Properties,
+class NullRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema = null,
     override val partitions: Seq[PartitionField] = Seq()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
@@ -99,7 +99,7 @@ class NullRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
       * @return
       */
     override def instantiate(context: Context): NullRelation = {
-        NullRelation(
+        new NullRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context))

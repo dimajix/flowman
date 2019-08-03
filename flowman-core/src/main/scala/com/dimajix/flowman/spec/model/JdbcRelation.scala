@@ -47,15 +47,15 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-case class JdbcRelation(
-    instanceProperties:Relation.Properties,
+class JdbcRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
-    connection: JdbcConnection,
-    properties: Map[String,String],
-    database: Option[String],
-    table: Option[String],
-    query: Option[String]
+    val connection: JdbcConnection,
+    val properties: Map[String,String],
+    val database: Option[String],
+    val table: Option[String],
+    val query: Option[String]
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
@@ -351,7 +351,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
       * @return
       */
     override def instantiate(context: Context): JdbcRelation = {
-        JdbcRelation(
+        new JdbcRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),

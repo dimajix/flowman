@@ -28,7 +28,7 @@ import com.dimajix.flowman.metric.SelectorMetricBundle
 
 class MetricSpec {
     @JsonProperty(value = "name", required = true) var name:String = _
-    @JsonProperty(value = "labels", required = true) var labels:Map[String,String] = Map()
+    @JsonProperty(value = "labels", required = false) var labels:Map[String,String] = Map()
     @JsonProperty(value = "selector", required = true) var selector:SelectorSpec = _
 
     def instantiate(context:Context, metricSystem: MetricSystem) : MetricBundle = {

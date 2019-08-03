@@ -32,10 +32,7 @@ import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.metric.MultiMetricBundle
-import com.dimajix.flowman.metric.Selector
-import com.dimajix.flowman.metric.WallTimeMetric
-import com.dimajix.flowman.spec.Metadata
+import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Target
@@ -94,36 +91,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         }
 
         result
-    }
-
-    private def withWallTime(registry: MetricSystem, metadata : Metadata)(fn: => Status) : Status = {
-        // Create and register bundle
-        val metricName = metadata.kind + "_runtime"
-        val bundleLabels = Map(
-            "category" -> metadata.category,
-            "kind" -> metadata.kind,
-            "namespace" -> metadata.namespace.getOrElse(""),
-            "project" -> metadata.project.getOrElse("")
-        )
-        val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels), new MultiMetricBundle(metricName, bundleLabels))
-
-        // Create and register metric
-        val metricLabels = bundleLabels ++ Map("name" -> metadata.name) ++ metadata.labels
-        val metric = bundle.getOrCreateMetric(Selector(Some(metricName), metricLabels), new WallTimeMetric(metricName, metricLabels))
-        metric.reset()
-
-        // Execute function itself, and catch any exception
-        val result = Try {
-            fn
-        }
-
-        metric.stop()
-
-        // Rethrow original exception if some occurred
-        result match {
-            case Success(s) => s
-            case Failure(ex) => throw ex
-        }
     }
 
     /**

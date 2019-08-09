@@ -26,6 +26,7 @@ import org.apache.spark.SparkConf
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.ConnectionSpec
@@ -281,6 +282,12 @@ abstract class AbstractContext(
       * @return
       */
     override def fs: FileSystem = root.fs
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    override def flowmanConf : FlowmanConf = root.flowmanConf
 
     /**
       * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object

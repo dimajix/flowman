@@ -16,12 +16,15 @@
 
 package com.dimajix.flowman.execution
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
@@ -263,10 +266,11 @@ class Session private[execution](
                     sparkConf.setMaster("local[*]")
                     sparkConf.set("spark.sql.shuffle.partitions", "16")
                 }
-                SparkSession.builder()
+                val sessionBuilder = SparkSession.builder()
                     .config(sparkConf)
-                    .enableHiveSupport()
-                    .getOrCreate()
+                if (context.flowmanConf.sparkEnableHive)
+                    sessionBuilder.enableHiveSupport()
+                sessionBuilder.getOrCreate()
             }
     }
     private def createSession() : SparkSession = {
@@ -411,6 +415,10 @@ class Session private[execution](
       * @return
       */
     def sparkRunning: Boolean = sparkSession != null
+
+    def flowmanConf : FlowmanConf = rootContext.flowmanConf
+    def sparkConf : SparkConf = rootContext.sparkConf
+    def hadoopConf : Configuration = rootContext.hadoopConf
 
     /**
       * Returns the FileSystem as configured in Hadoop

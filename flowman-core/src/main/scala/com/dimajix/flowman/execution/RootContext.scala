@@ -20,9 +20,9 @@ import scala.collection.mutable
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
-import org.apache.spark.deploy.SparkHadoopUtil
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
@@ -86,9 +86,8 @@ class RootContext private[execution](
         nonNamespaceConnections:Map[String, ConnectionSpec]
 ) extends AbstractContext(null, fullEnv, fullConfig) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
-    private lazy val _sparkConf = new SparkConf().setAll(config.toSeq)
-    private lazy val _hadoopConf = SparkHadoopUtil.get.newConfiguration(_sparkConf)
-    private lazy val _fs = FileSystem(_hadoopConf)
+    private val _configuration = new com.dimajix.flowman.config.Configuration(config)
+    private lazy val _fs = FileSystem(hadoopConf)
 
     private val connections = mutable.Map[String,Connection]()
 
@@ -236,16 +235,22 @@ class RootContext private[execution](
     override def fs : FileSystem = _fs
 
     /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    override def flowmanConf : FlowmanConf = _configuration.flowmanConf
+
+    /**
       * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
       * is not necessarily the one used by the Spark Session!
       * @return
       */
-    override def sparkConf: SparkConf = _sparkConf
+    override def sparkConf: SparkConf = _configuration.sparkConf
 
     /**
       * Returns a Hadoop Configuration object which contains all settings form the configuration. The object is not
       * necessarily the one used by the active Spark session
       * @return
       */
-    override def hadoopConf: Configuration = _hadoopConf
+    override def hadoopConf: Configuration = _configuration.hadoopConf
 }

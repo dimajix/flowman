@@ -1,5 +1,6 @@
 .idea/
 *.iml
+.flattened-pom.xml
 velocity.log*
 derby.log
 dependency-reduced-pom.xml

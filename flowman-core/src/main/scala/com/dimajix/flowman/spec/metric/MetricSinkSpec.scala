@@ -27,7 +27,7 @@ import com.dimajix.flowman.spi.TypeRegistry
 object MetricSinkSpec extends TypeRegistry[MetricSinkSpec] {
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "console", value = classOf[ConsoleMetricSinkSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullMetricSinkSpec]),

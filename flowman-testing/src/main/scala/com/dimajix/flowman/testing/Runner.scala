@@ -26,10 +26,10 @@ import scala.collection.JavaConverters._
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.internal.SQLConf
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
@@ -145,9 +145,11 @@ class Runner private(
     private val sparkOverrides = Map(
         "javax.jdo.option.ConnectionURL" -> s"jdbc:derby:;databaseName=$metastorePath;create=true",
         "datanucleus.rdbms.datastoreAdapterClassName" -> "org.datanucleus.store.rdbms.adapter.DerbyAdapter",
-        ConfVars.METASTOREURIS.varname -> "",
-        "spark.sql.streaming.checkpointLocation" -> streamingCheckpointPath.toString,
-        "spark.sql.warehouse.dir" -> warehousePath
+        HiveConf.ConfVars.METASTOREURIS.varname -> "",
+        SQLConf.CHECKPOINT_LOCATION.key -> streamingCheckpointPath.toString,
+        "spark.sql.warehouse.dir" -> warehousePath,
+        "spark.sql.shuffle.partitions" -> "8",
+        "spark.ui.enabled" -> "false"
     )
     // Spark override properties for Hive related configuration stuff
     private val hiveOverrides = {
@@ -168,12 +170,12 @@ class Runner private(
       * Provides access to the Flowman session
       */
     val session : Session = Session.builder()
-        .withSparkSession(() => createSparkSession())
+        .withSparkSession(conf => createSparkSession(conf))
         .withNamespace(namespace)
         .withProject(project)
         .withEnvironment(environment)
-        .withSparkConfig(hiveOverrides)
-        .withSparkConfig(sparkOverrides)
+        .withConfig(hiveOverrides)
+        .withConfig(sparkOverrides)
         .withProfiles(profiles)
         .build()
 
@@ -214,17 +216,11 @@ class Runner private(
       * Creates a Spark session
       * @return
       */
-    private def createSparkSession() : SparkSession = {
-        val conf = new SparkConf(false)
-            .setAll(hiveOverrides)
-            .setAll(sparkOverrides)
-        val builder = SparkSession.builder()
-            .master(sparkMaster)
-            .config("spark.ui.enabled", "false")
-            .config("spark.sql.shuffle.partitions", "8")
+    private def createSparkSession(conf:SparkConf) : SparkSession = {
+        val spark = SparkSession.builder()
             .config(conf)
             .enableHiveSupport()
-        val spark = builder.getOrCreate()
+            .getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
         val sc = spark.sparkContext
         sc.setCheckpointDir(checkpointPath)

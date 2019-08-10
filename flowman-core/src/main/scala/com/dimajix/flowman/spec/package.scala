@@ -29,7 +29,9 @@ package object spec {
     }
     def splitSetting(setting: String) : (String,String) = {
         val sep = setting.indexOf('=')
-        (setting.take(sep), setting.drop(sep + 1).trim.replaceAll("^\"|\"$","").trim)
+        val key = setting.take(sep).trim
+        val value = setting.drop(sep + 1).trim.replaceAll("^\"|\"$","")
+        (key, value)
     }
 
     type MappingIdentifier = Identifier[Mapping]

@@ -37,9 +37,10 @@ import com.dimajix.flowman.storage.Store
 
 
 class SessionBuilder {
-    private var _sparkSession: () => SparkSession = () => null
-    private var _sparkName = ""
-    private var _sparkConfig = Map[String,String]()
+    private var _sparkSession: SparkConf => SparkSession = (_ => null)
+    private var _sparkMaster = Option(System.getProperty("spark.master")).filter(_.nonEmpty).getOrElse("local[*]")
+    private var _sparkName = "Flowman"
+    private var _config = Map[String,String]()
     private var _environment = Map[String,String]()
     private var _profiles = Set[String]()
     private var _project:Project = _
@@ -51,19 +52,24 @@ class SessionBuilder {
       * @param session
       * @return
       */
-    def withSparkSession(session:() => SparkSession) : SessionBuilder = {
+    def withSparkSession(session:SparkConf => SparkSession) : SessionBuilder = {
         require(session != null)
         _sparkSession = session
         this
     }
     def withSparkSession(session:SparkSession) : SessionBuilder = {
         require(session != null)
-        _sparkSession = () => session
+        _sparkSession = (_:SparkConf) => session
         this
     }
     def withSparkName(name:String) : SessionBuilder = {
         require(name != null)
         _sparkName = name
+        this
+    }
+    def withSparkMaster(master:String) : SessionBuilder = {
+        require(master != null)
+        _sparkMaster = master
         this
     }
 
@@ -72,9 +78,9 @@ class SessionBuilder {
       * @param config
       * @return
       */
-    def withSparkConfig(config:Map[String,String]) : SessionBuilder = {
+    def withConfig(config:Map[String,String]) : SessionBuilder = {
         require(config != null)
-        _sparkConfig = _sparkConfig ++ config
+        _config = _config ++ config
         this
     }
 
@@ -84,10 +90,10 @@ class SessionBuilder {
       * @param value
       * @return
       */
-    def withSparkConfig(key:String,value:String) : SessionBuilder = {
+    def withConfig(key:String, value:String) : SessionBuilder = {
         require(key != null)
         require(value != null)
-        _sparkConfig = _sparkConfig.updated(key, value)
+        _config = _config.updated(key, value)
         this
     }
 
@@ -169,7 +175,7 @@ class SessionBuilder {
     }
 
     def disableSpark() : SessionBuilder = {
-        _sparkSession = () => throw new IllegalStateException("Spark session disable in Flowman session")
+        _sparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
         this
     }
 
@@ -178,7 +184,7 @@ class SessionBuilder {
       * @return
       */
     def build() : Session = {
-        val session = new Session(_namespace, _project, _sparkSession, _sparkName, _sparkConfig, _environment, _profiles, _jars)
+        val session = new Session(_namespace, _project, _sparkSession, _sparkMaster, _sparkName, _config, _environment, _profiles, _jars)
         session
     }
 }
@@ -196,8 +202,9 @@ object Session {
   * @param _namespace
   * @param _project
   * @param _sparkSession
+  * @param _sparkMaster
   * @param _sparkName
-  * @param _sparkConfig
+  * @param _config
   * @param _environment
   * @param _profiles
   * @param _jars
@@ -205,9 +212,10 @@ object Session {
 class Session private[execution](
     _namespace:Namespace,
     _project:Project,
-    _sparkSession:() => SparkSession,
+    _sparkSession:SparkConf => SparkSession,
+    _sparkMaster:String,
     _sparkName:String,
-    _sparkConfig:Map[String,String],
+    _config:Map[String,String],
     _environment: Map[String,String],
     _profiles:Set[String],
     _jars:Set[String]
@@ -216,8 +224,9 @@ class Session private[execution](
     require(_environment != null)
     require(_profiles != null)
     require(_sparkSession != null)
+    require(_sparkMaster != null)
     require(_sparkName != null)
-    require(_sparkConfig != null)
+    require(_config != null)
 
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
@@ -242,10 +251,15 @@ class Session private[execution](
       * @return
       */
     private def createOrReuseSession() : SparkSession = {
+        val sparkConf = context.sparkConf
+            .setMaster(_sparkMaster)
+            .setAppName(_sparkName)
+            .setAll(sparkConfig.toSeq)
+
         Option(_sparkSession)
-            .flatMap(builder => Option(builder()))
+            .flatMap(builder => Option(builder(sparkConf)))
             .map { injectedSession =>
-                logger.info("Reusing provided Spark session")
+                logger.info("Creating Spark session using provided builder")
                 // Set all session properties that can be changed in an existing session
                 val config = context.sparkConf.getAll.toMap ++ sparkConfig
                 config.foreach { case (key, value) =>
@@ -257,15 +271,6 @@ class Session private[execution](
             }
             .getOrElse {
                 logger.info("Creating new Spark session")
-                val sparkConf = context.sparkConf
-                    .setAppName(_sparkName)
-                    .setAll(sparkConfig.toSeq)
-                val master = System.getProperty("spark.master")
-                if (master == null || master.isEmpty) {
-                    logger.info("No Spark master specified - using local[*]")
-                    sparkConf.setMaster("local[*]")
-                    sparkConf.set("spark.sql.shuffle.partitions", "16")
-                }
                 val sessionBuilder = SparkSession.builder()
                     .config(sparkConf)
                 if (context.flowmanConf.sparkEnableHive)
@@ -304,7 +309,7 @@ class Session private[execution](
 
         val builder = RootContext.builder(_namespace, _profiles.toSeq)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
-            .withConfig(_sparkConfig, SettingLevel.GLOBAL_OVERRIDE)
+            .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
             .withProjectResolver(loadProject)
         if (_namespace != null) {
             _profiles.foreach(p => namespace.profiles.get(p).foreach { profile =>
@@ -354,7 +359,14 @@ class Session private[execution](
             new SimpleRunner
     }
 
-    private val metricRegistry = new MetricSystem
+    private lazy val metricSystem = {
+        val system = new MetricSystem
+        if (_namespace != null && _namespace.metrics != null) {
+            val sink = _namespace.metrics.instantiate(rootContext)
+            system.addSink(sink)
+        }
+        system
+    }
 
 
     /**
@@ -430,7 +442,7 @@ class Session private[execution](
       * Returns the MetricRegistry of this session
       * @return
       */
-    def metrics : MetricSystem = metricRegistry
+    def metrics : MetricSystem = metricSystem
 
     /**
       * Returns the root context of this session.
@@ -464,9 +476,10 @@ class Session private[execution](
         new Session(
             _namespace,
             project,
-            () => spark.newSession(),
+            _ => spark.newSession(),
+            _sparkMaster,
             _sparkName,
-            _sparkConfig:Map[String,String],
+            _config:Map[String,String],
             _environment: Map[String,String],
             _profiles:Set[String],
             Set()

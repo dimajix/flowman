@@ -62,10 +62,8 @@ object RootContext {
                 override def toString: String = namespace.name
             }
 
-            val fullEnv = if (namespace != null)
-                env + ("namespace" -> ((NamespaceWrapper, SettingLevel.SCOPE_OVERRIDE.level)))
-            else
-                env
+            val fullEnv = env ++
+                Option(namespace).map(ns => "namespace" -> (NamespaceWrapper -> SettingLevel.SCOPE_OVERRIDE.level)).toMap
 
             new RootContext(namespace, projectResolver, profiles, fullEnv, config, connections)
         }

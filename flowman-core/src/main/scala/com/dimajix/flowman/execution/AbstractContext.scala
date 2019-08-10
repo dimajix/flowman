@@ -163,6 +163,31 @@ object AbstractContext {
             _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
+        /**
+         * Set environment variables. All variables will be interpolated using the previously defined
+         * variables
+         * @param key
+         * @param value
+         * @return
+         */
+        def withEnvironment(key: String, value:Any): B = {
+            require(key != null)
+            withEnvironment(key, value, defaultSettingLevel)
+            this
+        }
+        /**
+         * Set environment variables. All variables will be interpolated using the previously defined
+         * variables
+         * @param key
+         * @param value
+         * @return
+         */
+        def withEnvironment(key: String, value:Any, level:SettingLevel) : B = {
+            require(key != null)
+            require(level != null)
+            _environment = _environment :+ ((key, value, level))
+            this
+        }
 
         /**
           * Activate some profile

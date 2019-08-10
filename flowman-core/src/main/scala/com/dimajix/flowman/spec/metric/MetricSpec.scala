@@ -36,7 +36,7 @@ class MetricSpec {
 
         new SelectorMetricBundle(
             context.evaluate(name),
-            context.evaluate(labels),
+            labels,
             metricSystem,
             selector.instantiate(context),
             relabel

@@ -231,7 +231,7 @@ case class Job (
       * @param args
       * @return
       */
-    def execute(executor:Executor, args:Map[String,String]) : Status = {
+    def execute(executor:Executor, args:Map[String,String], force:Boolean=true) : Status = {
         require(args != null)
 
         val description = this.description.map("(" + _ + ")").getOrElse("")
@@ -247,6 +247,7 @@ case class Job (
 
         // Create a new execution environment.
         val rootContext = RootContext.builder(context)
+            .withEnvironment("force", force)
             .withEnvironment(jobArgs, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()

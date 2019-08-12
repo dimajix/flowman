@@ -44,14 +44,14 @@ class Arguments(args:Array[String]) {
     var profiles: Array[String] = Array()
     @Option(name = "-D", aliases=Array("--env"), usage = "set environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
+    @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
+    var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark job name", metaVar = "<job_name>")
     var sparkName: String = "flowman"
-    @Option(name = "--spark-conf", usage = "set a Spark config", metaVar = "<confname>=<value>")
-    var sparkConfig: Array[String] = Array()
 
     @Argument(required=false,index=0,metaVar="group",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(

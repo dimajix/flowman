@@ -112,8 +112,8 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         loopTask.execute(executor)
 
-        verify(loopJob).execute(executor, Map("p1" -> "v1"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2"), false)
     }
 
     it should "loop as expected with a multiple parameter" in {
@@ -140,12 +140,12 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         loopTask.execute(executor)
 
-        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "2"))
-        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "4"))
-        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "6"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "2"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "4"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "6"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "2"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "4"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "6"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "2"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "4"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "6"), false)
     }
 
     it should "loop as expected with a single parameter and predefined value" in {
@@ -168,7 +168,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         loopTask.execute(executor)
 
-        verify(loopJob).execute(executor, Map("p1" -> "v1"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2"), false)
     }
 }

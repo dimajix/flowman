@@ -99,10 +99,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> true))
 
         job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> true))
     }
 
     it should "support overriding global parameters" in {
@@ -126,7 +126,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "2"))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "2", "force" -> true))
     }
 
     it should "support typed parameters" in {
@@ -149,7 +149,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> 2))
+        GrabEnvironmentTask.environment should be (Map("p1" -> 2, "force" -> true))
     }
 
     it should "fail on undefined parameters" in {
@@ -259,7 +259,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy"))
+        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> true))
     }
 
     it should "support metrics" in {

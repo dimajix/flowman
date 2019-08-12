@@ -30,13 +30,11 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-tools</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-ui</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>

@@ -18,6 +18,8 @@ package com.dimajix.spark.testing
 
 import java.io.File
 
+import scala.util.Try
+
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.spark.SparkConf
@@ -44,22 +46,32 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         val checkpointPath  = new File(tempDir, "checkpoints").getCanonicalPath
         val streamingCheckpointPath  = new File(tempDir, "streamingCheckpoints").getCanonicalPath
 
-        // We have to mask all properties in hive-site.xml that relates to metastore
-        // data source as we used a local metastore here.
-        val hiveConfVars = HiveConf.ConfVars.values()
-        hiveConfVars.foreach { confvar =>
-            if (confvar.varname.contains("datanucleus") ||
-                confvar.varname.contains("jdo")) {
-                builder.config(confvar.varname, confvar.getDefaultExpr())
+        // Test Hive support
+        val supportsHive = Try {
+            org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
+            true
+        }.getOrElse(false)
+
+        // Only enable Hive support when it actually works. Currently Spark 2.x will not support Hadoop 3.x
+        if (supportsHive) {
+            // We have to mask all properties in hive-site.xml that relates to metastore
+            // data source as we used a local metastore here.
+            val hiveConfVars = HiveConf.ConfVars.values()
+            hiveConfVars.foreach { confvar =>
+                if (confvar.varname.contains("datanucleus") ||
+                    confvar.varname.contains("jdo")) {
+                    builder.config(confvar.varname, confvar.getDefaultExpr())
+                }
             }
+            builder.config("javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=$localMetastorePath;create=true")
+                .config("datanucleus.rdbms.datastoreAdapterClassName", "org.datanucleus.store.rdbms.adapter.DerbyAdapter")
+                .config(ConfVars.METASTOREURIS.varname, "")
+                .enableHiveSupport()
         }
-        builder.config("javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=$localMetastorePath;create=true")
-            .config("datanucleus.rdbms.datastoreAdapterClassName", "org.datanucleus.store.rdbms.adapter.DerbyAdapter")
-            .config(ConfVars.METASTOREURIS.varname, "")
-            .config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath.toString)
+
+        builder.config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath.toString)
             .config("spark.sql.warehouse.dir", localWarehousePath)
             .config(conf)
-            .enableHiveSupport()
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
         sc = spark.sparkContext
@@ -68,6 +80,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown
         spark.emptyDataFrame.count()
     }
+
     override def afterAll() : Unit = {
         if (spark != null) {
             spark.stop()

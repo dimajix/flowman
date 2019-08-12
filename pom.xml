@@ -205,6 +205,12 @@
             </properties>
         </profile>
         <profile>
+            <id>hadoop-3.1</id>
+            <properties>
+                <hadoop.version>3.1.2</hadoop.version>
+            </properties>
+        </profile>
+        <profile>
             <id>hbase-1.2</id>
             <properties>
                 <hbase.version>1.2.6.1</hbase.version>

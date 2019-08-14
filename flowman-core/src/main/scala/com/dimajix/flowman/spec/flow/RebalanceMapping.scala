@@ -42,8 +42,7 @@ case class RebalanceMapping(
         require(input != null)
 
         val df = input(this.input)
-        val parts = partitions
-        val result = df.repartition(parts)
+        val result = df.repartition(partitions)
 
         Map("main" -> result)
     }
@@ -75,7 +74,7 @@ case class RebalanceMapping(
 
 class RebalanceMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
+    @JsonProperty(value = "partitions", required = true) private[spec] var partitions: String = _
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed

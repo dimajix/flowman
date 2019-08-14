@@ -31,7 +31,7 @@ class NullRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val relation = NullRelation(Relation.Properties(session.context))
+        val relation = new NullRelation(Relation.Properties(session.context))
         val schema = StructType(
             StructField("lala", StringType) :: Nil
         )

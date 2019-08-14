@@ -26,15 +26,17 @@ import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.metric.withWallTime
+import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.task.Job
 
 
 object AbstractRunner {
@@ -48,6 +50,7 @@ object AbstractRunner {
         override def namespace : Namespace = _parent.namespace
         override def root: Executor = _parent.root
         override def runner: Runner = _runner
+        override def metrics: MetricSystem = _parent.metrics
         override def fs: FileSystem = _parent.fs
         override def spark: SparkSession = _parent.spark
         override def sparkRunning: Boolean = _parent.sparkRunning
@@ -76,12 +79,15 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         require(executor != null)
         require(args != null)
 
-        // Now run the job
-        val result = if (job.logged) {
-            runLogged(executor, job, args, force)
-        }
-        else {
-            runUnlogged(executor, job, args)
+        val result = withWallTime(executor.metrics, job.metadata) {
+            val result = if (job.logged) {
+                runLogged(executor, job, args, force)
+            }
+            else {
+                runUnlogged(executor, job, args, force)
+            }
+
+            result
         }
 
         result
@@ -116,7 +122,7 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
                 Try {
                     logger.info(s"Running job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
                     val jobExecutor = new JobExecutor(executor, jobRunner(token))
-                    job.execute(jobExecutor, args)
+                    job.execute(jobExecutor, args, force)
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
@@ -159,10 +165,10 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param args
       * @return
       */
-    private def runUnlogged(executor: Executor, job:Job, args:Map[String,String]) : Status = {
+    private def runUnlogged(executor: Executor, job:Job, args:Map[String,String], force:Boolean) : Status = {
         Try {
             logger.info(s"Running job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-            job.execute(executor, args)
+            job.execute(executor, args, force)
         }
         match {
             case Success(status @ Status.SUCCESS) =>
@@ -192,14 +198,14 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
     /**
       * Builds a single target
       */
-    override def build(executor: Executor, target: Target, logged:Boolean=true): Status = {
-        // Now run the job
-        val force = true
-        if (logged) {
-            buildLogged(executor, target, force)
-        }
-        else {
-            buildUnlogged(executor, target)
+    override def build(executor: Executor, target: Target, logged:Boolean=true, force:Boolean=true): Status = {
+        withWallTime(executor.metrics, target.metadata) {
+            if (logged) {
+                buildLogged(executor, target, force)
+            }
+            else {
+                buildUnlogged(executor, target)
+            }
         }
     }
 

@@ -40,6 +40,9 @@ import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.metric.MetricBoard
+import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StringType
@@ -179,9 +182,10 @@ case class Job (
     parameters:Seq[JobParameter],
     environment:Map[String,String],
     tasks:Seq[TaskSpec],
-    failure:Seq[TaskSpec],
-    cleanup:Seq[TaskSpec],
-    logged:Boolean
+    failure:Seq[TaskSpec]=Seq(),
+    cleanup:Seq[TaskSpec]=Seq(),
+    logged:Boolean=true,
+    metrics:Option[MetricBoardSpec] = None
 ) extends AbstractInstance {
     private val logger = LoggerFactory.getLogger(classOf[Job])
 
@@ -227,7 +231,7 @@ case class Job (
       * @param args
       * @return
       */
-    def execute(executor:Executor, args:Map[String,String]) : Status = {
+    def execute(executor:Executor, args:Map[String,String], force:Boolean=true) : Status = {
         require(args != null)
 
         val description = this.description.map("(" + _ + ")").getOrElse("")
@@ -243,17 +247,42 @@ case class Job (
 
         // Create a new execution environment.
         val rootContext = RootContext.builder(context)
+            .withEnvironment("force", force)
             .withEnvironment(jobArgs, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
             .build()
         val projectExecutor = new RootExecutor(executor, isolated)
         val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
 
-        val result = runJob(projectContext, projectExecutor)
+        // Register and publish metrics
+        withMetrics(projectContext, projectExecutor.metrics) {
+            val result = runJob(projectContext, projectExecutor)
 
-        // Release any resources
-        if (isolated) {
-            projectExecutor.cleanup()
+            // Release any resources
+            if (isolated) {
+                projectExecutor.cleanup()
+            }
+
+            result
+        }
+    }
+
+    private def withMetrics[T](context:Context, metricSystem:MetricSystem)(fn: => T) : T = {
+        val metrics = this.metrics.map(_.instantiate(context, metricSystem))
+
+        // Publish metrics
+        metrics.foreach { metrics =>
+            metrics.reset()
+            metricSystem.addBoard(metrics)
+        }
+
+        // Run original function
+        val result = fn
+
+        // Unpublish metrics
+        metrics.foreach { metrics =>
+            metricSystem.commitBoard(metrics)
+            metricSystem.removeBoard(metrics)
         }
 
         result
@@ -327,12 +356,13 @@ object JobSpec extends TypeRegistry[JobSpec] {
 
 class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="description") private var description:Option[String] = None
-    @JsonProperty(value="logged") private var logged:String = "true"
     @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="tasks") private var tasks:Seq[TaskSpec] = Seq()
     @JsonProperty(value="failure") private var failure:Seq[TaskSpec] = Seq()
     @JsonProperty(value="cleanup") private var cleanup:Seq[TaskSpec] = Seq()
+    @JsonProperty(value="logged") private var logged:String = "true"
+    @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
 
     override def instantiate(context: Context): Job = {
         Job(
@@ -343,7 +373,8 @@ class JobSpec extends NamedSpec[Job] {
             tasks,
             failure,
             cleanup,
-            context.evaluate(logged).toBoolean
+            context.evaluate(logged).toBoolean,
+            metrics
         )
     }
 

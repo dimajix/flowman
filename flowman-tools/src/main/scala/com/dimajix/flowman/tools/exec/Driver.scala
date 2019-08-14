@@ -63,11 +63,11 @@ class Driver(options:Arguments) extends Tool {
         val project = loadProject(new Path(options.projectFile))
 
         // Create Flowman Session, which also includes a Spark Session
-        val sparkConfig = splitSettings(options.sparkConfig)
+        val config = splitSettings(options.config)
         val environment = splitSettings(options.environment)
         val session = createSession(options.sparkName,
             project = Some(project),
-            additionalConfigs = sparkConfig.toMap,
+            additionalConfigs = config.toMap,
             additionalEnvironment = environment.toMap,
             profiles = options.profiles
         )

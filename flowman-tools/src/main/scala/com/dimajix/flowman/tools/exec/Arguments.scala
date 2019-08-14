@@ -38,20 +38,20 @@ import com.dimajix.flowman.tools.exec.project.ProjectCommand
 class Arguments(args:Array[String]) {
     @Option(name = "-h", aliases=Array("--help"), usage = "show help", help=true)
     var _help: Boolean = false
-    @Option(name = "-f", aliases=Array("--project"), usage = "project file", metaVar = "<project_file>")
+    @Option(name = "-f", aliases=Array("--project"), usage = "project file or directory", metaVar = "<project_file>")
     var projectFile: String = "project.yml"
-    @Option(name = "-P", aliases=Array("--profile"), usage = "profile to enable", metaVar = "<profile>")
+    @Option(name = "-P", aliases=Array("--profile"), usage = "activate profile with specified name", metaVar = "<profile>")
     var profiles: Array[String] = Array()
-    @Option(name = "-D", aliases=Array("--env"), usage = "sets environment variables which can be accessed inside config", metaVar = "<key=value>")
+    @Option(name = "-D", aliases=Array("--env"), usage = "set environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
+    @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
+    var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false
-    @Option(name = "--spark-logging", usage = "sets the log level for Spark", metaVar = "<spark_logging>")
+    @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
-    @Option(name = "--spark-name", usage = "sets the Spark job name", metaVar = "<job_name>")
+    @Option(name = "--spark-name", usage = "set the Spark job name", metaVar = "<job_name>")
     var sparkName: String = "flowman"
-    @Option(name = "--spark-conf", usage = "sets a Spark config", metaVar = "<confname>=<value>")
-    var sparkConfig: Array[String] = Array()
 
     @Argument(required=false,index=0,metaVar="group",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(

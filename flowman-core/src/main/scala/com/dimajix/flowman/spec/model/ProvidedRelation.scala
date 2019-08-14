@@ -28,10 +28,10 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-case class ProvidedRelation(
-    instanceProperties:Relation.Properties,
+class ProvidedRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema,
-    table:String
+    val table:String
 ) extends BaseRelation with SchemaRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -95,7 +95,7 @@ class ProvidedRelationSpec extends RelationSpec with SchemaRelationSpec {
     @JsonProperty(value="table") private var table: String = _
 
     override def instantiate(context: Context): Relation = {
-        ProvidedRelation(
+        new ProvidedRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             context.evaluate(table)

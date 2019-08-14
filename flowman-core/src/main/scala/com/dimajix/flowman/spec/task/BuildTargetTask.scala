@@ -26,15 +26,16 @@ import com.dimajix.flowman.history.Status
 
 
 object BuildTargetTask {
-    def apply(context: Context, targets:Seq[TargetIdentifier], description:String) : BuildTargetTask = {
+    def apply(context: Context, targets:Seq[TargetIdentifier], description:String, force:Boolean=true) : BuildTargetTask = {
         BuildTargetTask(
             Task.Properties(context),
-            targets
+            targets,
+            force
         )
     }
 }
 
-case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[TargetIdentifier]) extends BaseTask {
+case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[TargetIdentifier], force:Boolean) extends BaseTask {
     private val logger = LoggerFactory.getLogger(classOf[BuildTargetTask])
 
     /**
@@ -49,7 +50,7 @@ case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[Targe
 
     private def executeTarget(executor: Executor, targetName:TargetIdentifier) : Boolean = {
         val target = context.getTarget(targetName)
-        val result = executor.runner.build(executor, target)
+        val result = executor.runner.build(executor, target, force=force)
 
         // Only return true if status is SUCCESS or SKIPPED
         result match {
@@ -62,12 +63,14 @@ case class BuildTargetTask(instanceProperties:Task.Properties, targets:Seq[Targe
 
 
 class BuildTargetTaskSpec extends TaskSpec {
+    @JsonProperty(value="force", required=false) private var force:String = "true"
     @JsonProperty(value="targets", required=true) private var targets:Seq[String] = Seq()
 
     override def instantiate(context: Context): BuildTargetTask = {
         BuildTargetTask(
             instanceProperties(context),
-            targets.map(i => TargetIdentifier(context.evaluate(i)))
+            targets.map(i => TargetIdentifier(context.evaluate(i))),
+            context.evaluate(force).toBoolean
         )
     }
 }

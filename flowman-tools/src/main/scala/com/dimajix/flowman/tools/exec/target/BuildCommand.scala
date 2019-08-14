@@ -37,7 +37,8 @@ class BuildCommand extends ActionCommand {
     var targets: Array[String] = Array()
     @Option(name = "-a", aliases=Array("--all"), usage = "builds all targets, even the disabled ones")
     var all: Boolean = false
-
+    @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
+    var force: Boolean = false
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Processing outputs {}", if (targets != null) targets.mkString(",") else "all")
@@ -53,7 +54,7 @@ class BuildCommand extends ActionCommand {
                     .filter(_.enabled)
                     .map(_.name)
 
-        val task = BuildTargetTask(context, toRun.map(TargetIdentifier.parse), s"Building targets ${toRun.mkString(",")}")
+        val task = BuildTargetTask(context, toRun.map(TargetIdentifier.parse), s"Building targets ${toRun.mkString(",")}", force)
         val job = Job.builder(context)
             .setName("build-targets")
             .setDescription("Build targets")
@@ -61,7 +62,7 @@ class BuildCommand extends ActionCommand {
             .build()
 
         val runner = executor.runner
-        val result = runner.execute(executor, job, Map(), true)
+        val result = runner.execute(executor, job, Map(), force=true)
 
         result match {
             case Status.SUCCESS => true

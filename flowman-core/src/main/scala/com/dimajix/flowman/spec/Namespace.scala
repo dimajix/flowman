@@ -28,6 +28,8 @@ import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.history.NullHistorySpec
+import com.dimajix.flowman.spec.metric.MetricSinkSpec
+import com.dimajix.flowman.spec.metric.NullMetricSinkSpec
 import com.dimajix.flowman.spec.storage.StorageSpec
 
 
@@ -122,6 +124,7 @@ class Namespace {
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
     @JsonProperty(value="connections") private var _connections: Map[String,ConnectionSpec] = Map()
     @JsonProperty(value="history") private var _history : HistorySpec = new NullHistorySpec()
+    @JsonProperty(value="metrics") private var _metrics : MetricSinkSpec = new NullMetricSinkSpec()
     @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
 
     def name : String = _name
@@ -135,4 +138,5 @@ class Namespace {
     def storage : StorageSpec = _store
     def catalog : CatalogSpec = _catalog
     def history : HistorySpec = _history
+    def metrics : MetricSinkSpec = _metrics
 }

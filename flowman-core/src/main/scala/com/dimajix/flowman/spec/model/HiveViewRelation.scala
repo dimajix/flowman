@@ -27,11 +27,11 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class HiveViewRelation(
-    instanceProperties:Relation.Properties,
+class HiveViewRelation(
+    override val instanceProperties:Relation.Properties,
     override val database: String,
     override val table: String,
-    definition: String,
+    val definition: String,
     override val partitions: Seq[PartitionField]
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
@@ -67,7 +67,7 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
       * @return
       */
     override def instantiate(context: Context): HiveViewRelation = {
-        HiveViewRelation(
+        new HiveViewRelation(
             instanceProperties(context),
             context.evaluate(database),
             context.evaluate(view),

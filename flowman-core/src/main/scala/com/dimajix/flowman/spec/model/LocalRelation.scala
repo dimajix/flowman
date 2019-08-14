@@ -36,13 +36,13 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-case class LocalRelation(
-    instanceProperties:Relation.Properties,
+class LocalRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
-    location:Path,
-    pattern:String,
-    format:String
+    val location:Path,
+    val pattern:String,
+    val format:String
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
@@ -239,7 +239,7 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
       * @return
       */
     override def instantiate(context: Context): LocalRelation = {
-        LocalRelation(
+        new LocalRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),

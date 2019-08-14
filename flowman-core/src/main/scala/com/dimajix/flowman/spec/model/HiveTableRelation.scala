@@ -50,21 +50,21 @@ object HiveTableRelation {
 }
 
 
-case class HiveTableRelation(
-    instanceProperties:Relation.Properties,
+class HiveTableRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
     override val database: String,
     override val table: String,
-    external: Boolean,
-    location: Path,
-    format: String,
-    rowFormat: String,
-    inputFormat: String,
-    outputFormat: String,
-    properties: Map[String, String],
-    serdeProperties: Map[String, String],
-    writer: String
+    val external: Boolean,
+    val location: Path,
+    val format: String,
+    val rowFormat: String,
+    val inputFormat: String,
+    val outputFormat: String,
+    val properties: Map[String, String],
+    val serdeProperties: Map[String, String],
+    val writer: String
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
@@ -378,7 +378,7 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
       * @return
       */
     override def instantiate(context: Context): Relation = {
-        HiveTableRelation(
+        new HiveTableRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),

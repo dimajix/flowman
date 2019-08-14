@@ -71,7 +71,7 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
         context.getRelation(RelationIdentifier("t1")).create(executor)
 
         val schema = context.getRelation(RelationIdentifier("t0")).schema
-        val model = HiveUnionViewRelation(
+        val model = new HiveUnionViewRelation(
             Relation.Properties(context),
             "default",
             "v0",
@@ -138,7 +138,7 @@ class HiveUnionViewRelationTest extends FlatSpec with Matchers with LocalSparkSe
         context.getRelation(RelationIdentifier("t1")).create(executor)
 
         val schema = context.getRelation(RelationIdentifier("t0")).schema
-        val model = HiveUnionViewRelation(
+        val model = new HiveUnionViewRelation(
             Relation.Properties(context),
             "default",
             "v0",

@@ -45,12 +45,18 @@ case class RepartitionMapping(
         require(input != null)
 
         val df = input(this.input)
-        val cols = columns.map(col)
-        val repartitioned = if (partitions > 0) df.repartition(partitions, cols:_*) else df.repartition(cols:_*)
-        val result = if (sort)
-            repartitioned.sortWithinPartitions(cols:_*)
-        else
-            repartitioned
+        val result =
+            if (columns.isEmpty) {
+                df.repartition(partitions)
+            }
+            else {
+                val cols = columns.map(col)
+                val repartitioned = if (partitions > 0) df.repartition(partitions, cols:_*) else df.repartition(cols:_*)
+                if (sort)
+                    repartitioned.sortWithinPartitions(cols:_*)
+                else
+                    repartitioned
+            }
 
         Map("main" -> result)
     }
@@ -82,9 +88,9 @@ case class RepartitionMapping(
 
 class RepartitionMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "columns", required = true) private[spec] var columns:Seq[String] = _
-    @JsonProperty(value = "partitions", required = false) private[spec] var partitions:String = _
-    @JsonProperty(value = "sort", required = false) private[spec] var sort:String = _
+    @JsonProperty(value = "columns", required = false) private[spec] var columns:Seq[String] = Seq()
+    @JsonProperty(value = "partitions", required = true) private[spec] var partitions:Option[String] = None
+    @JsonProperty(value = "sort", required = false) private[spec] var sort:String = "false"
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -96,7 +102,7 @@ class RepartitionMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate),
-            context.evaluate(partitions).toInt,
+            partitions.map(context.evaluate).map(_.toInt).getOrElse(0),
             context.evaluate(sort).toBoolean
         )
     }

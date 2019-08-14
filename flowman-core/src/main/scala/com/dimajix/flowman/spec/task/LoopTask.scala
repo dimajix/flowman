@@ -66,7 +66,7 @@ case class LoopTask(
 
 class LoopTaskSpec extends TaskSpec {
     @JsonProperty(value = "job", required = true) private var job: String = ""
-    @JsonProperty(value = "force") private var force: String = "false"
+    @JsonProperty(value = "force") private var force: String = "$force"
     @JsonProperty(value = "args", required = true) private var args: Map[String, FieldValue] = Map()
 
     override def instantiate(context: Context): LoopTask = {

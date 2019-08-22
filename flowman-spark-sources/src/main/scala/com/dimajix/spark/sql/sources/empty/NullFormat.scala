@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.spark.sources.empty
+package com.dimajix.spark.sql.sources.empty
 
 import scala.collection.immutable.Map
 

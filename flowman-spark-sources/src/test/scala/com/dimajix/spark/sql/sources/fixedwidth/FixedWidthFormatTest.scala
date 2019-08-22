@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.spark.sources.fixedwidth
+package com.dimajix.spark.sql.sources.fixedwidth
 
 import java.sql.Date
 import java.sql.Timestamp

@@ -22,25 +22,39 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.catalyst.SQLBuilder
 
 
 class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
     override val database: String,
     override val table: String,
-    val definition: String,
-    override val partitions: Seq[PartitionField]
+    override val partitions: Seq[PartitionField],
+    val sql: Option[String],
+    val mapping: Option[MappingOutputIdentifier]
 ) extends HiveRelation {
-    protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
+    protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
 
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
 
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
-    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = ???
+    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
+        logger.info(s"Creating Hive VIEW relation '$name' with table $tableIdentifier")
+
+      val select = sql
+        .orElse(mapping.map(id => buildMappingSql(executor, id)))
+        .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
+
+      val catalog = executor.catalog
+      if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
+        catalog.createView(tableIdentifier, select, ifNotExists)
+      }
+    }
 
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
         logger.info(s"Destroying Hive VIEW relation '$name' with table $tableIdentifier")
@@ -52,6 +66,12 @@ class HiveViewRelation(
     }
 
     override def migrate(executor:Executor) : Unit = ???
+
+    private def buildMappingSql(executor: Executor, output:MappingOutputIdentifier) : String = {
+        val mapping = context.getMapping(output.mapping)
+        val df = executor.instantiate(mapping, output.output)
+        new SQLBuilder(df).toSQL
+    }
 }
 
 
@@ -59,7 +79,8 @@ class HiveViewRelation(
 class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
     @JsonProperty(value="database") private var database: String = _
     @JsonProperty(value="view") private var view: String = _
-    @JsonProperty(value="definition") private var definition: String = _
+    @JsonProperty(value="sql") private var sql: String = _
+    @JsonProperty(value="mapping") private var mapping: String = _
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -71,8 +92,9 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             instanceProperties(context),
             context.evaluate(database),
             context.evaluate(view),
-            context.evaluate(definition),
-            partitions.map(_.instantiate(context))
+            partitions.map(_.instantiate(context)),
+            Option(context.evaluate(sql)).map(_.trim).filter(_.nonEmpty),
+            Option(context.evaluate(mapping)).map(_.trim).filter(_.nonEmpty).map(MappingOutputIdentifier.parse)
         )
     }
 }

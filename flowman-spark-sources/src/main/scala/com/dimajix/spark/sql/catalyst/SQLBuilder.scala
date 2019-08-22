@@ -27,8 +27,13 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.optimizer.CollapseProject
+import org.apache.spark.sql.catalyst.optimizer.CombineFilters
 import org.apache.spark.sql.catalyst.optimizer.CombineUnions
+import org.apache.spark.sql.catalyst.optimizer.PushDownPredicate
+import org.apache.spark.sql.catalyst.optimizer.PushProjectionThroughUnion
 import org.apache.spark.sql.catalyst.optimizer.RemoveRedundantAliases
+import org.apache.spark.sql.catalyst.optimizer.SimplifyCasts
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.catalyst.rules.RuleExecutor
@@ -81,7 +86,8 @@ class SQLBuilder private(
     val aliasedOutput = canonicalizedPlan.output.zip(outputNames).map {
       case (attr, name) => Alias(attr.withQualifier(Seq()), name)()
     }
-    val finalPlan = Project(aliasedOutput, SubqueryAlias(finalName, canonicalizedPlan))
+    //val finalPlan = Project(aliasedOutput, SubqueryAlias(finalName, canonicalizedPlan))
+    val finalPlan = Simplifier.execute(Project(aliasedOutput, canonicalizedPlan))
 
     try {
       val replaced = finalPlan.transformAllExpressions {
@@ -489,7 +495,8 @@ class SQLBuilder private(
         val aliasedOutput = table.output.map { attr =>
           Alias(attr, normalizedName(attr))(exprId = attr.exprId)
         }
-        addSubquery(Project(aliasedOutput, table))
+        //addSubquery(Project(aliasedOutput, table))
+        Project(aliasedOutput, table)
       }
     }
 
@@ -510,7 +517,7 @@ class SQLBuilder private(
 
         case w @ Window(_, _, _, f @ Filter(_, _: Aggregate)) => w.copy(child = addSubquery(f))
 
-        case p: Project => p.copy(child = addSubqueryIfNeeded(p.child))
+        //case p: Project => p.copy(child = addSubqueryIfNeeded(p.child))
 
         // We will generate "SELECT ... FROM ..." for Window operator, so its child operator should
         // be able to put in the FROM clause, or we wrap it with a subquery.
@@ -599,6 +606,32 @@ class SQLBuilder private(
       case _: Generate => plan
       case _: OneRowRelation => plan
       case _ => addSubquery(plan)
+    }
+  }
+
+  object Simplifier extends RuleExecutor[LogicalPlan] {
+    override protected def batches: Seq[Batch] = Seq(
+      Batch("Simplify plan", FixedPoint(100),
+        // It is a good idea to bring projections as near as possible to the inputs, since this
+        // prevents additional subqueries
+        PushProjectionThroughUnion,
+        // Predicates should be pushed dpwn to the sources as well
+        PushDownPredicate,
+        // When we now have pushed down everything, try combine stuff
+        CombineFilters,
+        // When we now have pushed down everything, try combine stuff
+        CollapseProject,
+        // Remove aliases
+        RemoveRedundantAliases,
+        // Remove redundants casts
+        SimplifyCasts
+      )
+    )
+
+    object RemoveSubqueries extends Rule[LogicalPlan] {
+      override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
+        case Project(_, t @ ExtractSQLTable(_)) => t
+      }
     }
   }
 

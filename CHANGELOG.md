@@ -1,5 +1,6 @@
 # Version 0.8.0
 * Add new metric system
+* Add Hive view generation from mappings
 
 # Version 0.7.1
 * Fix build with CDH-5.15 profile

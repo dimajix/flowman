@@ -115,10 +115,10 @@ class SQLBuilder private(
         case e => e
       }
 
-      println("== Original Plan ==")
-      println(logicalPlan.toString())
-      println("== Mangeled Plan ==")
-      println(replaced.toString())
+      //println("== Original Plan ==")
+      //println(logicalPlan.toString())
+      //println("== Mangeled Plan ==")
+      //println(replaced.toString())
 
       val generatedSQL = toSQL(replaced)
       logDebug(
@@ -627,6 +627,17 @@ class SQLBuilder private(
         // Predicates should be pushed dpwn to the sources as well
         PushDownPredicate,
         // Remove subqueries
+        RemoveSubqueries
+      ),
+      Batch("Replace complex operators", Once,
+        // Replace window nodes by simple projections again
+        ReplaceWindow
+      ),
+      Batch("Collapse project and filter", FixedPoint(100),
+        // It is a good idea to bring projections as near as possible to the inputs, since this
+        // prevents additional subqueries
+        PushProjectionThroughUnion,
+        // Remove subqueries
         RemoveSubqueries,
         // When we now have pushed down everything, try combine stuff
         CombineFilters,
@@ -634,10 +645,17 @@ class SQLBuilder private(
         CollapseProject,
         // Remove aliases
         RemoveRedundantAliases,
-        // Remove redundants casts
+        // Remove redundant casts
         SimplifyCasts
       )
     )
+
+    object ReplaceWindow  extends Rule[LogicalPlan] {
+        override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
+            case Window(expressions, _, _, child) =>
+                Project(child.output ++ expressions, child)
+        }
+    }
 
     object RemoveSubqueries extends Rule[LogicalPlan] {
       override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
@@ -654,7 +672,7 @@ class SQLBuilder private(
         case p @ Project(_, a @ SubqueryAlias(_, f @ Filter(_, c))) => p.copy(child = f.copy(child = a.copy(child=c)))
 
         // Pull up project, this will be optimized further by PushDownPredicate
-        case f @ Filter(_, a @ SubqueryAlias(_, p @ Project(_, c))) => f.copy(child = p.copy(child = a.copy(child=c)))
+        //case f @ Filter(_, a @ SubqueryAlias(_, p @ Project(_, c))) => f.copy(child = p.copy(child = a.copy(child=c)))
       }
     }
   }

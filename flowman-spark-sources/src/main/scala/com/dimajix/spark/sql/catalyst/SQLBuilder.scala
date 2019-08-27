@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import scala.collection.mutable.Map
 import scala.util.control.NonFatal
+import scala.language.implicitConversions
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Dataset
@@ -47,7 +48,7 @@ import org.apache.spark.sql.types.NullType
 
 object SQLBuilder {
     // Helper method for creating API compatibility for Spark 2.3 and Spark 2.4
-    private implicit def optionToSeq[T](o:Option[T]) : Seq[T] = o.toSeq
+    private implicit def optionToSeq[T](o:Option[T]) : Seq[T] = o.toList
 }
 
 /**
@@ -114,10 +115,10 @@ class SQLBuilder private(
         case e => e
       }
 
-      //println("== Original Plan ==")
-      //println(logicalPlan.toString())
-      //println("== Mangeled Plan ==")
-      //println(replaced.toString())
+      println("== Original Plan ==")
+      println(logicalPlan.toString())
+      println("== Mangeled Plan ==")
+      println(replaced.toString())
 
       val generatedSQL = toSQL(replaced)
       logDebug(
@@ -525,7 +526,7 @@ class SQLBuilder private(
 
         case w @ Window(_, _, _, f @ Filter(_, _: Aggregate)) => w.copy(child = addSubquery(f))
 
-        //case p: Project => p.copy(child = addSubqueryIfNeeded(p.child))
+        case p: Project => p.copy(child = addSubqueryIfNeeded(p.child))
 
         // We will generate "SELECT ... FROM ..." for Window operator, so its child operator should
         // be able to put in the FROM clause, or we wrap it with a subquery.
@@ -625,6 +626,8 @@ class SQLBuilder private(
         PushProjectionThroughUnion,
         // Predicates should be pushed dpwn to the sources as well
         PushDownPredicate,
+        // Remove subqueries
+        RemoveSubqueries,
         // When we now have pushed down everything, try combine stuff
         CombineFilters,
         // When we now have pushed down everything, try combine stuff
@@ -639,6 +642,19 @@ class SQLBuilder private(
     object RemoveSubqueries extends Rule[LogicalPlan] {
       override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
         case Project(_, t @ ExtractSQLTable(_)) => t
+
+        case SubqueryAlias(_, t @ SQLTable(_,_,_,_)) => t
+
+        case SubqueryAlias(_, a2 @ SubqueryAlias(_,_)) => a2
+
+        // Move projections together, they will be merged by CollapseProject
+        case p1 @ Project(_, a @ SubqueryAlias(_, p2 @ Project(_, c))) => p1.copy(child = p2.copy(child = a.copy(child = c)))
+
+        // Move project and filter together, since this is a natural SELECT ... WHERE
+        case p @ Project(_, a @ SubqueryAlias(_, f @ Filter(_, c))) => p.copy(child = f.copy(child = a.copy(child=c)))
+
+        // Pull up project, this will be optimized further by PushDownPredicate
+        case f @ Filter(_, a @ SubqueryAlias(_, p @ Project(_, c))) => f.copy(child = p.copy(child = a.copy(child=c)))
       }
     }
   }

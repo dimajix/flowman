@@ -268,6 +268,27 @@ abstract class AbstractContext(
     }
 
     /**
+      * Evaluates a string containing expressions to be processed.
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:Option[String]) : Option[String] = {
+        string.map(evaluate).map(_.trim).filter(_.nonEmpty)
+    }
+
+    /**
+      * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
+      * with additional values to be used for evaluation
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String] = {
+        string.map(s => evaluate(s, additionalValues)).map(_.trim).filter(_.nonEmpty)
+    }
+
+    /**
       * Evaluates a key-value map containing values with expressions to be processed.
       *
       * @param map

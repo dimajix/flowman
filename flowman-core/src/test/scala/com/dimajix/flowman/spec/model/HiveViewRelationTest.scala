@@ -61,7 +61,7 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
 
     val relation = new HiveViewRelation(
       Relation.Properties(context),
-      "default",
+      Some("default"),
       "v0",
       Seq(),
       None,
@@ -132,7 +132,7 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
 
     val relation = new HiveViewRelation(
       Relation.Properties(context),
-      "default",
+      Some("default"),
       "v0",
       Seq(),
       None,

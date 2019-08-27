@@ -85,6 +85,23 @@ abstract class Context {
     def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String
 
     /**
+      * Evaluates a string containing expressions to be processed.
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:Option[String]) : Option[String]
+
+    /**
+      * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
+      * with additional values to be used for evaluation
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String]
+
+    /**
       * Evaluates a key-value map containing values with expressions to be processed.
       *
       * @param map

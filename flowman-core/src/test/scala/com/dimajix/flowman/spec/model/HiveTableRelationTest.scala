@@ -125,7 +125,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val relation = context.getRelation(RelationIdentifier("t0"))
 
         val hiveRelation = relation.asInstanceOf[HiveTableRelation]
-        hiveRelation.location should be (new Path(location))
+        hiveRelation.location should be (Some(new Path(location)))
 
         relation.create(executor)
         session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (true)

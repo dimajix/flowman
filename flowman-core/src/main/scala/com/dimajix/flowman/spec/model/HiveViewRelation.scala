@@ -31,7 +31,7 @@ import com.dimajix.spark.sql.catalyst.SQLBuilder
 
 class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
-    override val database: String,
+    override val database: Option[String],
     override val table: String,
     override val partitions: Seq[PartitionField],
     val sql: Option[String],
@@ -77,10 +77,10 @@ class HiveViewRelation(
 
 
 class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
-    @JsonProperty(value="database") private var database: String = _
-    @JsonProperty(value="view") private var view: String = _
-    @JsonProperty(value="sql") private var sql: String = _
-    @JsonProperty(value="mapping") private var mapping: String = _
+    @JsonProperty(value="database", required = false) private var database: Option[String] = None
+    @JsonProperty(value="view", required = true) private var view: String = _
+    @JsonProperty(value="sql", required = false) private var sql: Option[String] = None
+    @JsonProperty(value="mapping", required = false) private var mapping: Option[String] = None
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -93,8 +93,8 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             context.evaluate(database),
             context.evaluate(view),
             partitions.map(_.instantiate(context)),
-            Option(context.evaluate(sql)).map(_.trim).filter(_.nonEmpty),
-            Option(context.evaluate(mapping)).map(_.trim).filter(_.nonEmpty).map(MappingOutputIdentifier.parse)
+            context.evaluate(sql),
+            context.evaluate(mapping).map(MappingOutputIdentifier.parse)
         )
     }
 }

@@ -33,6 +33,11 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var sc: SparkContext = _
     val conf = new SparkConf(false)
 
+    val hiveSupported: Boolean = Try {
+          org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
+          true
+        }.getOrElse(false)
+
     override def beforeAll() : Unit = {
         super.beforeAll()
 
@@ -46,14 +51,8 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         val checkpointPath  = new File(tempDir, "checkpoints").getCanonicalPath
         val streamingCheckpointPath  = new File(tempDir, "streamingCheckpoints").getCanonicalPath
 
-        // Test Hive support
-        val supportsHive = Try {
-            org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
-            true
-        }.getOrElse(false)
-
         // Only enable Hive support when it actually works. Currently Spark 2.x will not support Hadoop 3.x
-        if (supportsHive) {
+        if (hiveSupported) {
             // We have to mask all properties in hive-site.xml that relates to metastore
             // data source as we used a local metastore here.
             val hiveConfVars = HiveConf.ConfVars.values()

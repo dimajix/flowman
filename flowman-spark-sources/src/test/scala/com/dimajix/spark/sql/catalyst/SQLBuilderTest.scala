@@ -23,7 +23,9 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class SQLBuilderTest extends FlatSpec with Matchers with LocalSparkSession {
-  "The SQLBuilder" should "support basic selects" in {
+  behavior of "The SQLBuilder"
+
+  it should "support basic selects" in (if (hiveSupported) {
     spark.sql(
       """
               CREATE TABLE sql_builder_0(
@@ -79,5 +81,5 @@ class SQLBuilderTest extends FlatSpec with Matchers with LocalSparkSession {
     val sql6 = new SQLBuilder(df6.queryExecution.analyzed).toSQL
     noException shouldBe thrownBy(spark.sql(sql6))
     println(sql6)
-  }
+  })
 }

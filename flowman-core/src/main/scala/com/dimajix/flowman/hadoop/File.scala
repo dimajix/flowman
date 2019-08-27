@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.hadoop
 
+import java.io.FileNotFoundException
 import java.io.IOException
 
 import org.apache.hadoop.conf.Configuration
@@ -196,7 +197,12 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * @return
       */
     def isDirectory() : Boolean = {
-        fs.isDirectory(path)
+      try {
+         fs.getFileStatus(path).isDirectory
+      }
+      catch {
+        case _: FileNotFoundException => false
+      }
     }
 
     /**
@@ -204,7 +210,12 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * @return
       */
     def isFile() : Boolean = {
-        fs.isFile(path)
+      try {
+        fs.getFileStatus(path).isFile
+      }
+      catch {
+        case _: FileNotFoundException => false
+      }
     }
 
     /**

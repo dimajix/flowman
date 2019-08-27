@@ -1,5 +1,7 @@
 # Version 0.8.0
 * Add new metric system
+* Add Hive view generation from mappings
+* Support for Hadoop 3.1 and 3.2 (without Hive)
 
 # Version 0.7.1
 * Fix build with CDH-5.15 profile

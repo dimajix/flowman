@@ -117,7 +117,9 @@ class SQLBuilder private(
 
       //println("== Original Plan ==")
       //println(logicalPlan.toString())
-      //println("== Mangeled Plan ==")
+      //println("== Canonicalized Plan ==")
+      //println(canonicalizedPlan.toString())
+      //println("== Final Plan ==")
       //println(replaced.toString())
 
       val generatedSQL = toSQL(replaced)
@@ -470,6 +472,8 @@ class SQLBuilder private(
       override def apply(plan: LogicalPlan): LogicalPlan = plan.transform {
         // Do not replace column names in HiveTableRelation, otherwise an assertion will fail
         case relation:HiveTableRelation => relation
+        // Also do not replace column names in other relations
+        case relation:LogicalRelation => relation
         case p => normalizeAttributes(p)
       }
 
@@ -652,6 +656,9 @@ class SQLBuilder private(
 
     object ReplaceWindow  extends Rule[LogicalPlan] {
         override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
+            case Window(expressions, _, _, p @ Project(_, child)) =>
+                Project(p.projectList ++ expressions, child)
+
             case Window(expressions, _, _, child) =>
                 Project(child.output ++ expressions, child)
         }

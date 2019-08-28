@@ -44,12 +44,9 @@ class HiveViewRelation(
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        logger.info(s"Creating Hive VIEW relation '$name' with table $tableIdentifier")
+        logger.info(s"Creating Hive view relation '$name' with VIEW name $tableIdentifier")
 
-      val select = sql
-        .orElse(mapping.map(id => buildMappingSql(executor, id)))
-        .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
-
+      val select = getSelect(executor)
       val catalog = executor.catalog
       if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
         catalog.createView(tableIdentifier, select, ifNotExists)
@@ -57,7 +54,7 @@ class HiveViewRelation(
     }
 
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        logger.info(s"Destroying Hive VIEW relation '$name' with table $tableIdentifier")
+        logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
 
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
@@ -65,7 +62,25 @@ class HiveViewRelation(
         }
     }
 
-    override def migrate(executor:Executor) : Unit = ???
+    override def migrate(executor:Executor) : Unit = {
+        logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
+
+        val catalog = executor.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            catalog.dropView(tableIdentifier)
+            val select = getSelect(executor)
+            catalog.createView(tableIdentifier, select, false)
+        }
+    }
+
+    private def getSelect(executor: Executor) : String = {
+        val select = sql.orElse(mapping.map(id => buildMappingSql(executor, id)))
+            .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
+
+        logger.debug(s"Hive SQL SELECT statement for VIEW $tableIdentifier: $sql")
+
+        select
+    }
 
     private def buildMappingSql(executor: Executor, output:MappingOutputIdentifier) : String = {
         val mapping = context.getMapping(output.mapping)

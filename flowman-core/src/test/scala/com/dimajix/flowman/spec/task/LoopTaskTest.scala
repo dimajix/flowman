@@ -27,6 +27,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.spec.Metadata
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.RangeValue
@@ -105,13 +106,14 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType)))
+        when(loopJob.metadata).thenReturn(Metadata(None, None, "main", None, "job", "job", Map()))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 
         loopTask.execute(executor)
 
-        verify(loopJob).execute(executor, Map("p1" -> "v1"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2"), false)
     }
 
     it should "loop as expected with a multiple parameter" in {
@@ -128,6 +130,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, Some("2"))))
+        when(loopJob.metadata).thenReturn(Metadata(None, None, "main", None, "job", "job", Map()))
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "4"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "6"))).thenReturn(Status.SUCCESS)
@@ -137,12 +140,12 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         loopTask.execute(executor)
 
-        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "2"))
-        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "4"))
-        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "6"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "2"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "4"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "6"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "2"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "4"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v1", "p2" -> "6"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "2"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "4"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2", "p2" -> "6"), false)
     }
 
     it should "loop as expected with a single parameter and predefined value" in {
@@ -159,12 +162,13 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
 
         when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, Some("2"), Some("4"))))
+        when(loopJob.metadata).thenReturn(Metadata(None, None, "main", None, "job", "job", Map()))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
         when(loopJob.execute(executor, Map("p1" -> "v2"))).thenReturn(Status.SUCCESS)
 
         loopTask.execute(executor)
 
-        verify(loopJob).execute(executor, Map("p1" -> "v1"))
-        verify(loopJob).execute(executor, Map("p1" -> "v2"))
+        verify(loopJob).execute(executor, Map("p1" -> "v1"), false)
+        verify(loopJob).execute(executor, Map("p1" -> "v2"), false)
     }
 }

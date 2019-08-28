@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.7.1</version>
+        <version>0.8.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -30,13 +30,11 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-tools</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-ui</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>

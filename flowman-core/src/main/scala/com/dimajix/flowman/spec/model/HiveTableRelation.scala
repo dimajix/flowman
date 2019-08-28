@@ -50,21 +50,21 @@ object HiveTableRelation {
 }
 
 
-case class HiveTableRelation(
-    instanceProperties:Relation.Properties,
+class HiveTableRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
-    override val database: String,
+    override val database: Option[String],
     override val table: String,
-    external: Boolean,
-    location: Path,
-    format: String,
-    rowFormat: String,
-    inputFormat: String,
-    outputFormat: String,
-    properties: Map[String, String],
-    serdeProperties: Map[String, String],
-    writer: String
+    val external: Boolean,
+    val location: Option[Path],
+    val format: String,
+    val rowFormat: Option[String],
+    val inputFormat: Option[String],
+    val outputFormat: Option[String],
+    val properties: Map[String, String],
+    val serdeProperties: Map[String, String],
+    val writer: String
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 
@@ -116,7 +116,7 @@ case class HiveTableRelation(
 
             val overwrite = mode.toLowerCase(Locale.ROOT) == "overwrite"
             val cmd = InsertIntoTable(
-                table = UnresolvedRelation(TableIdentifier(table, Option(database))),
+                table = UnresolvedRelation(TableIdentifier(table, database)),
                 partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
                 query = outputDf.queryExecution.logical,
                 overwrite = overwrite,
@@ -169,10 +169,10 @@ case class HiveTableRelation(
 
         logger.info(s"Writing to Hive table $tableIdentifier with partition values $partitionSpec using direct mode")
 
-        if (location == null)
+        if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
 
-        val outputPath = partitionSpec.path(location, partitions.map(_.name))
+        val outputPath = partitionSpec.path(location.get, partitions.map(_.name))
 
         // Perform Hive => Spark format mapping
         val format = this.format.toLowerCase(Locale.ROOT) match {
@@ -258,16 +258,16 @@ case class HiveTableRelation(
         //  1. use explicitly specified format
         //  2. use format from file storage
         //  3. use default format
-        val inputFormat = Option(this.inputFormat).filter(_.nonEmpty).orElse(fileStorage.inputFormat).orElse(defaultStorage.inputFormat)
-        val outputFormat = Option(this.outputFormat).filter(_.nonEmpty).orElse(fileStorage.outputFormat).orElse(defaultStorage.outputFormat)
-        val rowFormat = Option(this.rowFormat).filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
+        val inputFormat = this.inputFormat.filter(_.nonEmpty).orElse(fileStorage.inputFormat).orElse(defaultStorage.inputFormat)
+        val outputFormat = this.outputFormat.filter(_.nonEmpty).orElse(fileStorage.outputFormat).orElse(defaultStorage.outputFormat)
+        val rowFormat = this.rowFormat.filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
 
         // Configure catalog table by assembling all options
         val catalogTable = CatalogTable(
             identifier = tableIdentifier,
             tableType = if (external) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(
-                locationUri = Option(location).map(_.toUri),
+                locationUri = location.map(_.toUri),
                 inputFormat = inputFormat,
                 outputFormat = outputFormat,
                 serde = rowFormat,
@@ -360,17 +360,17 @@ case class HiveTableRelation(
 
 
 class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
-    @JsonProperty(value = "database", required = false) private var _database: String = ""
-    @JsonProperty(value = "table", required = true) private var _table: String = ""
-    @JsonProperty(value = "external", required = false) private var _external: String = "false"
-    @JsonProperty(value = "location", required = false) private var _location: String = ""
-    @JsonProperty(value = "format", required = false) private var _format: String = _
-    @JsonProperty(value = "rowFormat", required = false) private var _rowFormat: String = _
-    @JsonProperty(value = "inputFormat", required = false) private var _inputFormat: String = _
-    @JsonProperty(value = "outputFormat", required = false) private var _outputFormat: String = _
-    @JsonProperty(value = "properties", required = false) private var _properties: Map[String, String] = Map()
-    @JsonProperty(value = "serdeProperties", required = false) private var _serdeProperties: Map[String, String] = Map()
-    @JsonProperty(value = "writer", required = false) private var _writer: String = "hive"
+    @JsonProperty(value = "database", required = false) private var database: Option[String] = None
+    @JsonProperty(value = "table", required = true) private var table: String = ""
+    @JsonProperty(value = "external", required = false) private var external: String = "false"
+    @JsonProperty(value = "location", required = false) private var location: Option[String] = None
+    @JsonProperty(value = "format", required = false) private var format: String = _
+    @JsonProperty(value = "rowFormat", required = false) private var rowFormat: Option[String] = None
+    @JsonProperty(value = "inputFormat", required = false) private var inputFormat: Option[String] = None
+    @JsonProperty(value = "outputFormat", required = false) private var outputFormat: Option[String] = None
+    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "serdeProperties", required = false) private var serdeProperties: Map[String, String] = Map()
+    @JsonProperty(value = "writer", required = false) private var writer: String = "hive"
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -378,21 +378,21 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
       * @return
       */
     override def instantiate(context: Context): Relation = {
-        HiveTableRelation(
+        new HiveTableRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),
-            context.evaluate(_database),
-            context.evaluate(_table),
-            context.evaluate(_external).toBoolean,
-            Option(_location).filter(_.nonEmpty).map(p => new Path(context.evaluate(p))).orNull,
-            context.evaluate(_format),
-            context.evaluate(_rowFormat),
-            context.evaluate(_inputFormat),
-            context.evaluate(_outputFormat),
-            context.evaluate(_properties),
-            context.evaluate(_serdeProperties),
-            context.evaluate(_writer).toLowerCase(Locale.ROOT)
+            context.evaluate(database),
+            context.evaluate(table),
+            context.evaluate(external).toBoolean,
+            context.evaluate(location).map(p => new Path(context.evaluate(p))),
+            context.evaluate(format),
+            context.evaluate(rowFormat),
+            context.evaluate(inputFormat),
+            context.evaluate(outputFormat),
+            context.evaluate(properties),
+            context.evaluate(serdeProperties),
+            context.evaluate(writer).toLowerCase(Locale.ROOT)
         )
     }
 }

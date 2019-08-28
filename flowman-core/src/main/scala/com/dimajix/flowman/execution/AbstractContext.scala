@@ -19,12 +19,14 @@ package com.dimajix.flowman.execution
 import java.io.StringWriter
 
 import scala.collection.mutable
+import scala.collection.JavaConversions._
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.Profile
 import com.dimajix.flowman.spec.connection.ConnectionSpec
@@ -161,6 +163,31 @@ object AbstractContext {
             _environment = _environment ++ env.map(kv => (kv._1, kv._2, level))
             this
         }
+        /**
+         * Set environment variables. All variables will be interpolated using the previously defined
+         * variables
+         * @param key
+         * @param value
+         * @return
+         */
+        def withEnvironment(key: String, value:Any): B = {
+            require(key != null)
+            withEnvironment(key, value, defaultSettingLevel)
+            this
+        }
+        /**
+         * Set environment variables. All variables will be interpolated using the previously defined
+         * variables
+         * @param key
+         * @param value
+         * @return
+         */
+        def withEnvironment(key: String, value:Any, level:SettingLevel) : B = {
+            require(key != null)
+            require(level != null)
+            _environment = _environment :+ ((key, value, level))
+            this
+        }
 
         /**
           * Activate some profile
@@ -208,21 +235,76 @@ abstract class AbstractContext(
         templateContext.put(key, finalValue)
     }
 
+    private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) = {
+        val output = new StringWriter()
+        val context = if (additionalValues.nonEmpty)
+            new VelocityContext(additionalValues, templateContext)
+        else
+            templateContext
+        templateEngine.evaluate(context, output, "context", string)
+        output.getBuffer.toString
+    }
+
     /**
       * Evaluates a string containing expressions to be processed.
       *
       * @param string
       * @return
       */
-    override def evaluate(string:String) : String = {
-        if (string != null) {
-            val output = new StringWriter()
-            templateEngine.evaluate(templateContext, output, "context", string)
-            output.getBuffer.toString
-        }
-        else {
+    override def evaluate(string:String) : String = evaluate(string, Map())
+
+    /**
+      * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
+      * with additional values to be used for evaluation
+      *
+      * @param string
+      * @return
+      */
+    override def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String = {
+        if (string != null)
+            evaluateNotNull(string, additionalValues)
+        else
             null
-        }
+    }
+
+    /**
+      * Evaluates a string containing expressions to be processed.
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:Option[String]) : Option[String] = {
+        string.map(evaluate).map(_.trim).filter(_.nonEmpty)
+    }
+
+    /**
+      * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
+      * with additional values to be used for evaluation
+      *
+      * @param string
+      * @return
+      */
+    def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String] = {
+        string.map(s => evaluate(s, additionalValues)).map(_.trim).filter(_.nonEmpty)
+    }
+
+    /**
+      * Evaluates a key-value map containing values with expressions to be processed.
+      *
+      * @param map
+      * @return
+      */
+    def evaluate(map: Map[String,String]): Map[String,String] = evaluate(map, Map())
+
+    /**
+      * Evaluates a key-value map containing values with expressions to be processed.  This variant also accepts a
+      * key-value Map with additional values to be used for evaluation
+      *
+      * @param map
+      * @return
+      */
+    override def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String] = {
+        map.map { case(name,value) => (name, evaluate(value, additionalValues)) }
     }
 
     /**
@@ -242,18 +324,16 @@ abstract class AbstractContext(
     }
 
     /**
-      * Evaluates a string containing expressions to be processed.
-      *
-      * @param map
-      * @return
-      */
-    override def evaluate(map: Map[String,String]): Map[String,String] = map.map { case(name,value) => (name, evaluate(value)) }
-
-    /**
       * Returns the FileSystem as configured in Hadoop
       * @return
       */
     override def fs: FileSystem = root.fs
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    override def flowmanConf : FlowmanConf = root.flowmanConf
 
     /**
       * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object

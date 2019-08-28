@@ -30,10 +30,10 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class TemplateRelation(
-       instanceProperties:Relation.Properties,
-       relation:RelationIdentifier,
-       environment:Map[String,String]
+class TemplateRelation(
+       override val instanceProperties:Relation.Properties,
+       val relation:RelationIdentifier,
+       val environment:Map[String,String]
 ) extends BaseRelation {
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
@@ -159,7 +159,7 @@ class TemplateRelationSpec extends RelationSpec {
       * @return
       */
     override def instantiate(context: Context): TemplateRelation = {
-        TemplateRelation(
+        new TemplateRelation(
             instanceProperties(context),
             RelationIdentifier(context.evaluate(relation)),
             splitSettings(environment).toMap

@@ -99,7 +99,7 @@ class Tool {
             .withNamespace(namespace)
             .withProject(project.orNull)
             .withSparkName(name)
-            .withSparkConfig(additionalConfigs)
+            .withConfig(additionalConfigs)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
             .withJars(plugins.jars.map(_.toString))

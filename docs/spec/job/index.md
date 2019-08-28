@@ -18,12 +18,16 @@ upload tasks or simply printing some information onto the console.
 
 Each job consits of one or multiple tasks, which are executed sequentially.
 
+* [`build`](build-target.html)
 * [`call`](call.html)
+* [`compare`](compare.html)
 * [`compare-files`](compare-files.html)
+* [`copy`](copy.html)
 * [`copy-file`](copy-file.html)
 * [`copy-relation`](copy-relation.html)
 * [`create-relation`](create-relation.html)
 * [`delete-file`](delete-file.html)
+* [`describe`](describe.html)
 * [`describe-mapping`](describe-mapping.html)
 * [`describe-relation`](describe-relation.html)
 * [`destroy-relation`](destroy-relation.html)
@@ -34,5 +38,7 @@ Each job consits of one or multiple tasks, which are executed sequentially.
 * [`print`](print.html)
 * [`put-file`](put-file.html)
 * [`sftp-upload`](sftp-upload.html)
+* [`show`](show.html)
 * [`show-environment`](show-environment.html)
 * [`show-mapping`](show-mapping.html)
+* [`show-relation`](show-relation.html)

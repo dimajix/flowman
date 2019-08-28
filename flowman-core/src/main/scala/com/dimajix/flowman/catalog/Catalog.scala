@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.catalog
 
+import java.io.FileNotFoundException
+
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
@@ -96,6 +98,9 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             logger.info(s"Creating Hive table ${table.identifier}")
             val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
             cmd.run(spark)
+
+            // Create directory if not exists
+            table.storage.locationUri.foreach(location => createLocation(new Path(location)))
 
             // Publish table to external catalog
             if (externalCatalog != null) {
@@ -431,15 +436,27 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     }
 
     private def truncateLocation(location:Path): Unit = {
-        val fs = location.getFileSystem(hadoopConf)
-        if (fs.isDirectory(location)) {
+      val fs = location.getFileSystem(hadoopConf)
+      try {
+        val status = fs.getFileStatus(location)
+        if (status.isDirectory()) {
             logger.info(s"Deleting all files in directory '$location'")
             fs.listStatus(location).foreach(f => fs.delete(f.getPath, true))
         }
-        else if (fs.isFile(location)) {
+        else if (status.isFile()) {
             logger.info(s"Deleting single file '$location'")
             fs.delete(location, false)
         }
+      } catch {
+        case _:FileNotFoundException =>
+      }
+    }
+    private def createLocation(location:Path) : Unit = {
+      val fs = location.getFileSystem(hadoopConf)
+      if (!fs.exists(location)) {
+        logger.info(s"Creating directory '$location'")
+        fs.mkdirs(location)
+      }
     }
     private def deleteLocation(location:Path): Unit = {
         val fs = location.getFileSystem(hadoopConf)

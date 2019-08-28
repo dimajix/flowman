@@ -29,9 +29,9 @@ import com.dimajix.flowman.util.SchemaUtils
 abstract class HiveRelation extends BaseRelation with PartitionedRelation {
     protected val logger:Logger
 
-    def database: String
+    def database: Option[String]
     def table: String
-    def tableIdentifier: TableIdentifier = new TableIdentifier(table, Option(database))
+    def tableIdentifier: TableIdentifier = new TableIdentifier(table, database)
 
     /**
       * Reads data from the relation, possibly from specific partitions

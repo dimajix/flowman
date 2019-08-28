@@ -30,4 +30,6 @@ Flowman has a couple of different main entities, which are documented seperately
 * [Schema](schema/index.html): Documentation of available schema descriptions
 * [Connections](connection/index.html): Documentation of connection specifications
 * [Jobs & Tasks](job/index.html): Documentation of creating jobs and executing tasks
+* [Datasets](dataset/index.html): Documentation of using datasets
+* [Metrics](metric/index.html): Documentation of publishing metrics
 

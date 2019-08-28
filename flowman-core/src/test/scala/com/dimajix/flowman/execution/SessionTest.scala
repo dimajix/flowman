@@ -70,7 +70,7 @@ class SessionTest extends FlatSpec with Matchers {
         val module = Module.read.string(spec)
         val project = module.toProject("project")
         val session = Session.builder()
-            .withSparkConfig(Map("spark.lala" -> "lala_cmdline", "spark.lolo" -> "lolo_cmdline"))
+            .withConfig(Map("spark.lala" -> "lala_cmdline", "spark.lolo" -> "lolo_cmdline"))
             .withProject(project)
             .build()
         session.spark.conf.get("spark.lala") should be ("lala_cmdline")
@@ -100,7 +100,7 @@ class SessionTest extends FlatSpec with Matchers {
 
     it should "set all Spark configs" in {
         val session = Session.builder()
-            .withSparkConfig(Map("spark.lala" -> "lolo"))
+            .withConfig(Map("spark.lala" -> "lolo"))
             .build()
 
         val newSession = session.newSession(null)

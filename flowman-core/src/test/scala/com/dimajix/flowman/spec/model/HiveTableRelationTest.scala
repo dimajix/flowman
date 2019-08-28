@@ -125,7 +125,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val relation = context.getRelation(RelationIdentifier("t0"))
 
         val hiveRelation = relation.asInstanceOf[HiveTableRelation]
-        hiveRelation.location should be (new Path(location))
+        hiveRelation.location should be (Some(new Path(location)))
 
         relation.create(executor)
         session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (true)
@@ -389,7 +389,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         relation.destroy(executor)
     }
 
-    it should "support csv format" in {
+    it should "support csv format" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -436,7 +436,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"))
         table.storage.properties should be (Map("separatorChar" -> "\t", "serialization.format" -> "1"))
         relation.destroy(executor)
-    }
+    })
 
     it should "support a row format" in {
         val spec =
@@ -564,21 +564,24 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         // Test create
         relation.create(executor)
         location.exists() should be (true)
-        spark.catalog.getTable("default", "lala_0010") should not be (null)
-        spark.read.table("default.lala_0010").count() should be (0)
 
-        // Test write
-        val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
+        if (hiveSupported) {
+          spark.catalog.getTable("default", "lala_0010") should not be (null)
+          spark.read.table("default.lala_0010").count() should be(0)
+
+          // Test write
+          val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        relation.write(executor, df)
-        spark.read.table("default.lala_0010").count() should be (2)
+          relation.write(executor, df)
+          spark.read.table("default.lala_0010").count() should be(2)
 
-        // Test clean
-        relation.clean(executor)
-        location.exists() should be (true)
-        spark.catalog.getTable("default", "lala_0010") should not be (null)
-        spark.read.table("default.lala_0010").count() should be (0)
+          // Test clean
+          relation.clean(executor)
+          location.exists() should be(true)
+          spark.catalog.getTable("default", "lala_0010") should not be (null)
+          spark.read.table("default.lala_0010").count() should be(0)
+        }
 
         // Test destroy
         relation.destroy(executor)
@@ -625,21 +628,23 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         // Test create
         relation.create(executor)
         location.exists() should be (true)
-        spark.catalog.getTable("default", "lala_0011") should not be (null)
-        spark.read.table("default.lala_0011").count() should be (0)
+        if (hiveSupported) {
+            spark.catalog.getTable("default", "lala_0011") should not be (null)
+            spark.read.table("default.lala_0011").count() should be(0)
 
-        // Test write
-        val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
-            .withColumnRenamed("_1", "str_col")
-            .withColumnRenamed("_2", "int_col")
-        relation.write(executor, df)
-        spark.read.table("default.lala_0011").count() should be (2)
+            // Test write
+            val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
+                .withColumnRenamed("_1", "str_col")
+                .withColumnRenamed("_2", "int_col")
+            relation.write(executor, df)
+            spark.read.table("default.lala_0011").count() should be(2)
 
-        // Test clean
-        relation.clean(executor)
-        location.exists() should be (true)
-        spark.catalog.getTable("default", "lala_0011") should not be (null)
-        spark.read.table("default.lala_0011").count() should be (0)
+            // Test clean
+            relation.clean(executor)
+            location.exists() should be(true)
+            spark.catalog.getTable("default", "lala_0011") should not be (null)
+            spark.read.table("default.lala_0011").count() should be(0)
+        }
 
         // Test destroy
         relation.destroy(executor)
@@ -692,13 +697,17 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         relation.create(executor)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
-        spark.read.table("default.lala_0012").count() should be (0)
+        if (hiveSupported) {
+            spark.read.table("default.lala_0012").count() should be(0)
+        }
 
         // Test clean
         relation.clean(executor)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
-        spark.read.table("default.lala_0012").count() should be (0)
+        if (hiveSupported) {
+            spark.read.table("default.lala_0012").count() should be(0)
+        }
 
         // Test destroy
         relation.destroy(executor)

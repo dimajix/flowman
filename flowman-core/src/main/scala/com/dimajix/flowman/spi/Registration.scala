@@ -26,6 +26,7 @@ import com.dimajix.flowman.annotation.ConnectionType
 import com.dimajix.flowman.annotation.DatasetType
 import com.dimajix.flowman.annotation.HistoryType
 import com.dimajix.flowman.annotation.MappingType
+import com.dimajix.flowman.annotation.MetricSinkType
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.annotation.StoreType
@@ -37,6 +38,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
 import com.dimajix.flowman.spec.history.HistorySpec
+import com.dimajix.flowman.spec.metric.MetricSinkSpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.storage.StorageSpec
@@ -88,6 +90,7 @@ object Registration {
         (classOf[HistoryType], (clazz:Class[_]) => HistorySpec.register(clazz.getAnnotation(classOf[HistoryType]).kind(), clazz.asInstanceOf[Class[_ <: HistorySpec]])),
         (classOf[CatalogType], (clazz:Class[_]) => CatalogSpec.register(clazz.getAnnotation(classOf[CatalogType]).kind(), clazz.asInstanceOf[Class[_ <: CatalogSpec]])),
         (classOf[StoreType], (clazz:Class[_]) => StorageSpec.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: StorageSpec]])),
+        (classOf[MetricSinkType], (clazz:Class[_]) => MetricSinkSpec.register(clazz.getAnnotation(classOf[MetricSinkType]).kind(), clazz.asInstanceOf[Class[_ <: MetricSinkSpec]])),
         (classOf[ConnectionType], (clazz:Class[_]) => ConnectionSpec.register(clazz.getAnnotation(classOf[ConnectionType]).kind(), clazz.asInstanceOf[Class[_ <: ConnectionSpec]])),
         (classOf[DatasetType], (clazz:Class[_]) => DatasetSpec.register(clazz.getAnnotation(classOf[DatasetType]).kind(), clazz.asInstanceOf[Class[_ <: DatasetSpec]])),
         (classOf[TemplateObject], (clazz:Class[_]) => Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz))

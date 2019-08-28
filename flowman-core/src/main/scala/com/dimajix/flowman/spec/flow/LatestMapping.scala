@@ -18,31 +18,15 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.collect_list
 import org.apache.spark.sql.functions.row_number
-import org.apache.spark.sql.functions.struct
-import org.apache.spark.sql.functions.udf
-import org.apache.spark.sql.types.ByteType
-import org.apache.spark.sql.types.DateType
-import org.apache.spark.sql.types.DecimalType
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.types.FloatType
-import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.types.ShortType
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.TimestampType
-import org.apache.spark.sql.types.VarcharType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
 
 
 case class LatestMapping(
@@ -68,69 +52,12 @@ case class LatestMapping(
 
         val df = tables(input)
 
-        val result = execute_window(df, keyColumns, versionColumn)
+        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(col(versionColumn).desc)
+        val result = df.select(col("*"), row_number().over(window) as "flowman_gen_rank")
+            .filter(col("flowman_gen_rank") === 1)
+            .drop(col("flowman_gen_rank"))
 
         Map("main" -> result)
-    }
-
-    /**
-      * Spark native implementation using Window functions
-      * @param df
-      * @param keyColumns
-      * @param versionColumn
-      * @return
-      */
-    private def execute_window(df:DataFrame, keyColumns:Seq[String], versionColumn:String) = {
-        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(col(versionColumn).desc)
-        df.select(struct(col("*")) as "record", row_number().over(window) as "rank")
-            .filter(col("rank") === 1)
-            .select(col("record.*"))
-    }
-
-    /**
-      * Alternative implementation using UDFs
-      * @param df
-      * @param keyColumns
-      * @param versionColumn
-      * @return
-      */
-    private def execute_udf(df:DataFrame, keyColumns:Seq[String], versionColumn:String) = {
-        // Get appropriate function for extracting latest version
-        val versionField = SchemaUtils.find(df.schema,versionColumn)
-            .getOrElse(throw new IllegalArgumentException(s"Version column $versionColumn not found in schema ${df.schema}"))
-        val latest = versionField.dataType match {
-            case ShortType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Short.MinValue else row.getShort(0)).getStruct(1)
-            case IntegerType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Int.MinValue else row.getInt(0)).getStruct(1)
-            case LongType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getLong(0)).getStruct(1)
-            case FloatType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Float.MinValue else row.getFloat(0)).getStruct(1)
-            case DoubleType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Double.MinValue else row.getDouble(0)).getStruct(1)
-            case _:DecimalType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) new java.math.BigDecimal(Long.MinValue) else row.getDecimal(0)).getStruct(1)
-            case TimestampType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getTimestamp(0).getTime).getStruct(1)
-            case DateType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Long.MinValue else row.getDate(0).toInstant.getEpochSecond).getStruct(1)
-            case ByteType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) Byte.MinValue else row.getByte(0)).getStruct(1)
-            case StringType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) "" else row.getString(0)).getStruct(1)
-            case _:VarcharType => records:Seq[Row] => records.maxBy(row => if (row.isNullAt(0)) "" else row.getString(0)).getStruct(1)
-        }
-        val latest_udf = udf(latest, df.schema)
-
-        // Create projection expression
-        val cols = Seq(
-            struct(keyColumns.map(col):_*) as "key",
-            struct(
-                // Extract version
-                col(versionColumn) as "version",
-                // Extract full record
-                struct(col("*")) as "record"
-            ) as "payload"
-        )
-
-        df.select(cols:_*)
-            .groupBy(col("key"))
-            .agg(
-                collect_list(col("payload")) as "records"
-            )
-            .select(latest_udf(col("records")) as "record")
-            .select(col("record.*"))
     }
 
     /**

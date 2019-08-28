@@ -44,13 +44,13 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 
 
-case class FileRelation(
-    instanceProperties:Relation.Properties,
+class FileRelation(
+    override val instanceProperties:Relation.Properties,
     override val schema:Schema,
     override val partitions: Seq[PartitionField],
-    location:Path,
-    pattern:String,
-    format:String
+    val location:Path,
+    val pattern:String,
+    val format:String
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
@@ -204,7 +204,7 @@ case class FileRelation(
       * @param partitions
       * @return
       */
-    private def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    protected def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
         require(executor != null)
 
@@ -230,7 +230,7 @@ case class FileRelation(
         fn(PartitionSpec(), collector(executor).collect())
     }
 
-    private def collector(executor: Executor) = {
+    protected def collector(executor: Executor) : FileCollector = {
         new FileCollector(executor.spark)
             .path(location)
             .pattern(pattern)
@@ -250,7 +250,7 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
       * @return
       */
     override def instantiate(context: Context): FileRelation = {
-        FileRelation(
+        new FileRelation(
             instanceProperties(context),
             if (schema != null) schema.instantiate(context) else null,
             partitions.map(_.instantiate(context)),

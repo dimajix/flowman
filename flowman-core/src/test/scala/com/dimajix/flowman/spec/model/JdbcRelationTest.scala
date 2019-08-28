@@ -270,4 +270,61 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
         }
     }
+
+    it should "support SQL queries" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |relations:
+               |  t0:
+               |    kind: jdbc
+               |    connection: c0
+               |    table: lala_001
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |  t1:
+               |    kind: jdbc
+               |    connection: c0
+               |    query: "SELECT * FROM lala_001"
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation_t0 = context.getRelation(RelationIdentifier("t0"))
+        val relation_t1 = context.getRelation(RelationIdentifier("t1"))
+
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+
+        relation_t0.create(executor)
+        relation_t0.write(executor, df, mode="overwrite")
+
+        // Spark up until 2.4.3 has problems with Derby
+        if (spark.version > "2.4.3") {
+            relation_t0.read(executor, None).count() should be(2)
+            relation_t1.read(executor, None).count() should be(2)
+        }
+
+        relation_t0.destroy(executor)
+    }
 }

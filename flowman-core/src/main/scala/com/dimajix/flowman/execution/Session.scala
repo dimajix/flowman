@@ -273,8 +273,10 @@ class Session private[execution](
                 logger.info("Creating new Spark session")
                 val sessionBuilder = SparkSession.builder()
                     .config(sparkConf)
-                if (context.flowmanConf.sparkEnableHive)
+                if (context.flowmanConf.sparkEnableHive) {
+                    logger.info("Enabling Spark Hive support")
                     sessionBuilder.enableHiveSupport()
+                }
                 sessionBuilder.getOrCreate()
             }
     }

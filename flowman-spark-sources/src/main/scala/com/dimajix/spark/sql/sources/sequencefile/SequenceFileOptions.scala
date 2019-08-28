@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.spark.sources.sequencefile
+package com.dimajix.spark.sql.sources.sequencefile
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.BytesWritable

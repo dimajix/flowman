@@ -163,6 +163,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),
     new JsonSubTypes.Type(name = "filter", value = classOf[FilterMappingSpec]),
     new JsonSubTypes.Type(name = "flatten", value = classOf[FlattenMappingSpec]),
+    new JsonSubTypes.Type(name = "historize", value = classOf[HistorizeMappingSpec]),
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMappingSpec]),
     new JsonSubTypes.Type(name = "latest", value = classOf[LatestMappingSpec]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),

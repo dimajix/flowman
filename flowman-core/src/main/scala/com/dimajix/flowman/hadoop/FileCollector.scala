@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.hadoop
 
+import java.io.FileNotFoundException
 import java.io.StringWriter
 
 import scala.math.Ordering
@@ -210,34 +211,37 @@ class FileCollector(hadoopConf:Configuration) {
     }
 
     private def deletePath(fs:HadoopFileSystem, path:Path) : Unit = {
-        if (fs.isDirectory(path)) {
-            logger.info(s"Deleting directory $path")
-            fs.delete(path, true)
+        val isDirectory = try fs.getFileStatus(path).isDirectory catch { case _:FileNotFoundException => false }
+
+        if (isDirectory) {
+          logger.info(s"Deleting directory $path")
+          fs.delete(path, true)
         }
         else {
-            logger.info(s"Deleting file(s) $path")
-            val files = fs.globStatus(path)
-            if (files != null)
-                files.foreach(f => fs.delete(f.getPath, true))
+          logger.info(s"Deleting file(s) $path")
+          val files = fs.globStatus(path)
+          if (files != null)
+            files.foreach(f => fs.delete(f.getPath, true))
         }
     }
 
 
     private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
-        if (fs.isDirectory(path)) {
-            logger.info(s"Collecting files in directory $path")
-            // If path is a directory, simply list all files
-            //fs.listStatus(path).sorted.map(_.getPath).toSeq
-            Seq(path)
+        val isDirectory = try fs.getFileStatus(path).isDirectory catch { case _:FileNotFoundException => false }
+        if (isDirectory) {
+          logger.info(s"Collecting files in directory '$path'")
+          // If path is a directory, simply list all files
+          //fs.listStatus(path).sorted.map(_.getPath).toSeq
+          Seq(path)
         }
         else {
-            // Otherwise assume a file pattern and try to glob all files
-            logger.info(s"Collecting file(s) $path")
-            val files = fs.globStatus(path)
-            if (files != null)
-                files.sorted.map(_.getPath).toSeq
-            else
-                Seq()
+          // Otherwise assume a file pattern and try to glob all files
+          logger.info(s"Collecting file(s) using glob pattern '$path'")
+          val files = fs.globStatus(path)
+          if (files != null)
+            files.sorted.map(_.getPath).toSeq
+          else
+            Seq()
         }
     }
 }

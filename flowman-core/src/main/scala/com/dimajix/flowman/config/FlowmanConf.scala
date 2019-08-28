@@ -34,7 +34,7 @@ object FlowmanConf {
     val SPARK_ENABLE_HIVE = buildConf("flowman.spark.enableHive")
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
-        .createWithDefault(false)
+        .createWithDefault(true)
 
 }
 

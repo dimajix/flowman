@@ -23,9 +23,12 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
+import com.dimajix.spark.sql.catalyst.SQLBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 object LatestMappingTest {
@@ -155,4 +158,48 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         latest.keyColumns should be (Seq("id"))
         latest.versionColumn should be ("v")
     }
+
+    it should "be convertible to SQL" in (if (hiveSupported) {
+        spark.sql(
+            """
+              CREATE TABLE some_table(
+                col_0 INT,
+                col_1 STRING,
+                ts TIMESTAMP
+              )
+            """)
+
+        val spec =
+            """
+              |relations:
+              |  some_table:
+              |    kind: hiveTable
+              |    table: some_table
+              |
+              |mappings:
+              |  some_table:
+              |    kind: readRelation
+              |    relation: some_table
+              |
+              |  latest:
+              |    kind: latest
+              |    input: some_table
+              |    keyColumns: col_0
+              |    versionColumn: ts
+              |""".stripMargin
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val project = Module.read.string(spec).toProject("default")
+        val context = session.getContext(project)
+        val executor = session.executor
+
+        val mapping = context.getMapping(MappingIdentifier("latest"))
+        val  df = executor.instantiate(mapping, "main")
+
+        val sql = new SQLBuilder(df).toSQL
+        sql should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1`, `gen_attr_2` AS `ts` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, `ts` AS `gen_attr_2`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` DESC NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `gen_attr_3` FROM `default`.`some_table`) AS gen_subquery_2 WHERE (`gen_attr_3` = 1)")
+        noException shouldBe thrownBy(spark.sql(sql))
+
+        spark.sql("DROP TABLE some_table")
+    })
 }

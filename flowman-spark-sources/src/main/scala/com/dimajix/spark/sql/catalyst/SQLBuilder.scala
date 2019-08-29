@@ -263,10 +263,40 @@ class SQLBuilder private(
     build(
       "SELECT",
       if (isDistinct) "DISTINCT" else "",
-      plan.projectList.map(_.sql).mkString(", "),
+      plan.projectList.map(expr => expressionToSQL(expr)).mkString(", "),
       plan.child match { case _:OneRowRelation => ""; case _ => "FROM" },
       toSQL(plan.child)
     )
+  }
+
+  private def expressionToSQL(expr:NamedExpression) : String = {
+      expr match {
+          case alias @ Alias(expr @ WindowExpression(RowNumber(), _), name) =>
+              unboundedWindowExpressionToSql(alias, expr)
+          case alias @ Alias(expr @ WindowExpression(Lead(_,_,_), _), name) =>
+              unboundedWindowExpressionToSql(alias, expr)
+          case alias @ Alias(expr @ WindowExpression(Lag(_,_,_), _), name) =>
+              unboundedWindowExpressionToSql(alias, expr)
+          case _ => expr.sql
+      }
+  }
+
+  private def unboundedWindowExpressionToSql(alias:Alias, expr:WindowExpression) : String = {
+      val wf = expr.windowFunction
+      val ws = expr.windowSpec
+      val qualifierPrefix = alias.qualifier.map(_ + ".").headOption.getOrElse("")
+      s"${wf.sql + " OVER " + unboundedWindowSpecToSQL(ws)} AS $qualifierPrefix${quoteIdentifier(alias.name)}"
+  }
+
+  private def unboundedWindowSpecToSQL(spec:WindowSpecDefinition) : String = {
+      def toSql(exprs: Seq[Expression], prefix: String): Seq[String] = {
+          Seq(exprs).filter(_.nonEmpty).map(_.map(_.sql).mkString(prefix, ", ", ""))
+      }
+
+      val elements =
+          toSql(spec.partitionSpec, "PARTITION BY ") ++
+              toSql(spec.orderSpec, "ORDER BY ")
+      elements.mkString("(", " ", ")")
   }
 
   private def scriptTransformationToSQL(plan: ScriptTransformation): String = {

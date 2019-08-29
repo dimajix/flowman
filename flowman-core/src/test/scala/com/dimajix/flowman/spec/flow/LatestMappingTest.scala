@@ -197,7 +197,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val  df = executor.instantiate(mapping, "main")
 
         val sql = new SQLBuilder(df).toSQL
-        sql should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1`, `gen_attr_2` AS `ts` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, `ts` AS `gen_attr_2`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` DESC NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `gen_attr_3` FROM `default`.`some_table`) AS gen_subquery_2 WHERE (`gen_attr_3` = 1)")
+        sql should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1`, `gen_attr_2` AS `ts` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, `ts` AS `gen_attr_2`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` DESC NULLS LAST) AS `gen_attr_3` FROM `default`.`some_table`) AS gen_subquery_2 WHERE (`gen_attr_3` = 1)")
         noException shouldBe thrownBy(spark.sql(sql))
 
         spark.sql("DROP TABLE some_table")

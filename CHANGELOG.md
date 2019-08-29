@@ -1,3 +1,6 @@
+# Version 0.8.1
+* Improve generation of SQL code containing window functions
+
 # Version 0.8.0
 * Add new metric system
 * Add Hive view generation from mappings

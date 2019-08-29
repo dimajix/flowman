@@ -77,7 +77,7 @@ class HiveViewRelation(
         val select = sql.orElse(mapping.map(id => buildMappingSql(executor, id)))
             .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
 
-        logger.debug(s"Hive SQL SELECT statement for VIEW $tableIdentifier: $sql")
+        logger.debug(s"Hive SQL SELECT statement for VIEW $tableIdentifier: $select")
 
         select
     }

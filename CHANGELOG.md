@@ -1,3 +1,6 @@
+# Version 0.8.2
+* Add optional filter condition to 'latest' mapping
+
 # Version 0.8.1
 * Improve generation of SQL code containing window functions
 

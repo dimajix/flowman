@@ -37,7 +37,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
             Seq("_1"),
-            "_3 != 'DELETE'"
+            Some("_3 != 'DELETE'")
         )
 
         val prev = executor.spark.createDataFrame(Seq(
@@ -71,7 +71,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
             Seq("id"),
-            "op != 'DELETE'"
+            Some("op != 'DELETE'")
         )
 
         val prev = executor.spark.createDataFrame(Seq(
@@ -106,7 +106,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
             Seq("_1"),
-            "op != 'DELETE'"
+            Some("op != 'DELETE'")
         )
 
         val prev = executor.spark.createDataFrame(Seq(
@@ -140,7 +140,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
             Seq("_1"),
-            "op != 'DELETE'"
+            Some("op != 'DELETE'")
         )
 
         val prev = executor.spark.createDataFrame(Seq(
@@ -205,6 +205,6 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         updateMapping.input should be (MappingOutputIdentifier("t0"))
         updateMapping.updates should be (MappingOutputIdentifier("t1"))
         updateMapping.keyColumns should be (Seq("id"))
-        updateMapping.filter should be ("operation != 'DELETE'")
+        updateMapping.filter should be (Some("operation != 'DELETE'"))
     }
 }

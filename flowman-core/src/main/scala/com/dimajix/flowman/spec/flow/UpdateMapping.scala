@@ -32,7 +32,7 @@ case class UpdateMapping(
     input:MappingOutputIdentifier,
     updates:MappingOutputIdentifier,
     keyColumns:Seq[String],
-    filter:String = ""
+    filter:Option[String] = None
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[UpdateMapping])
 
@@ -56,7 +56,7 @@ case class UpdateMapping(
         val updatesDf = tables(updates)
 
         // Apply optional filter to updates (for example for removing DELETEs)
-        val filteredUpdates = if (filter != null && filter.nonEmpty) updatesDf.where(filter) else updatesDf
+        val filteredUpdates = filter.map(f => updatesDf.where(f)).getOrElse(updatesDf)
 
         // Project updates DataFrame to schema of input DataFrame
         val conformer = new SchemaEnforcer(inputDf.schema)
@@ -98,8 +98,8 @@ case class UpdateMapping(
 class UpdateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "updates", required = true) private var updates: String = _
-    @JsonProperty(value = "filter", required = false) private var filter: String = ""
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns: Seq[String] = Seq()
+    @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -112,7 +112,7 @@ class UpdateMappingSpec extends MappingSpec {
             MappingOutputIdentifier(context.evaluate(input)),
             MappingOutputIdentifier(context.evaluate(updates)),
             keyColumns.map(context.evaluate),
-            context.evaluate(filter)
+            filter.map(context.evaluate).map(_.trim).filter(_.nonEmpty)
         )
     }
 }

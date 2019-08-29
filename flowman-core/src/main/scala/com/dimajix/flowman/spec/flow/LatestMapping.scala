@@ -33,7 +33,8 @@ case class LatestMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     keyColumns:Seq[String],
-    versionColumn:String
+    versionColumn:String,
+    filter:Option[String] = None
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[LatestMapping])
 
@@ -53,9 +54,12 @@ case class LatestMapping(
         val df = tables(input)
 
         val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(col(versionColumn).desc)
-        val result = df.select(col("*"), row_number().over(window) as "flowman_gen_rank")
+        val latest = df.select(col("*"), row_number().over(window) as "flowman_gen_rank")
             .filter(col("flowman_gen_rank") === 1)
             .drop(col("flowman_gen_rank"))
+
+        // Apply optional filter to updates (for example for removing DELETEs)
+        val result = filter.map(f => latest.where(f)).getOrElse(latest)
 
         Map("main" -> result)
     }
@@ -87,6 +91,7 @@ class LatestMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input:String = _
     @JsonProperty(value = "versionColumn", required = true) private var versionColumn:String = _
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
+    @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -98,7 +103,8 @@ class LatestMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
-            context.evaluate(versionColumn)
+            context.evaluate(versionColumn),
+            filter.map(context.evaluate).map(_.trim).filter(_.nonEmpty)
         )
     }
 }

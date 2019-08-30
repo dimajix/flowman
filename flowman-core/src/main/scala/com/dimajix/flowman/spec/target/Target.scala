@@ -45,8 +45,7 @@ object Target {
                 name,
                 kind,
                 Map(),
-                true,
-                MappingOutputIdentifier.empty
+                true
             )
         }
     }
@@ -57,8 +56,7 @@ object Target {
         name:String,
         kind:String,
         labels:Map[String,String],
-        enabled: Boolean,
-        input: MappingOutputIdentifier
+        enabled: Boolean
      ) extends Instance.Properties
 }
 
@@ -89,19 +87,12 @@ abstract class Target extends AbstractInstance {
     def instance : TargetInstance
 
     /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    def dependencies : Seq[MappingOutputIdentifier]
-
-    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
       * @param executor
       */
-    def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit
+    def build(executor:Executor) : Unit
 
     /**
       * Cleans up a specific target
@@ -136,7 +127,6 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
 )
 abstract class TargetSpec extends NamedSpec[Target] {
     @JsonProperty(value = "enabled", required=false) private var enabled:String = "true"
-    @JsonProperty(value = "input", required=true) private var input:String = _
 
     override def instantiate(context: Context): Target
 
@@ -154,8 +144,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             name,
             kind,
             context.evaluate(labels),
-            context.evaluate(enabled).toBoolean,
-            MappingOutputIdentifier(context.evaluate(input))
+            context.evaluate(enabled).toBoolean
         )
     }
 }

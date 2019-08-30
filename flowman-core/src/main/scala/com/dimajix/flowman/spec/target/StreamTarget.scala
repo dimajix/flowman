@@ -32,6 +32,7 @@ import com.dimajix.flowman.spec.RelationIdentifier
 
 case class StreamTarget(
     instanceProperties:Target.Properties,
+    mapping:MappingOutputIdentifier,
     relation:RelationIdentifier,
     mode:OutputMode,
     parallelism:Int,
@@ -45,12 +46,11 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def build(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Unit = {
-        val input = instanceProperties.input
-
-        logger.info(s"Writing mapping '$input' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")
+    override def build(executor: Executor): Unit = {
+        logger.info(s"Writing mapping '${this.mapping}' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")
+        val mapping = context.getMapping(this.mapping.mapping)
         val rel = context.getRelation(relation)
-        val table = tables(input).coalesce(parallelism)
+        val table = executor.instantiate(mapping, this.mapping.output).coalesce(parallelism)
         rel.writeStream(executor, table, mode, checkpointLocation)
     }
 
@@ -70,11 +70,11 @@ case class StreamTarget(
 
 
 class StreamTargetSpec extends TargetSpec {
+    @JsonProperty(value="input", required=true) private var input:String = _
     @JsonProperty(value="relation", required=true) private var relation:String = _
     @JsonProperty(value="mode", required=false) private var mode:String = OutputMode.Update().toString
     @JsonProperty(value="checkpointLocation", required=false) private var checkpointLocation:String = _
     @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
-
 
     override def instantiate(context: Context): Target = {
         val  mode = context.evaluate(this.mode).toUpperCase(Locale.ROOT) match {
@@ -92,6 +92,7 @@ class StreamTargetSpec extends TargetSpec {
 
         StreamTarget(
             instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             RelationIdentifier.parse(context.evaluate(relation)),
             mode,
             context.evaluate(parallelism).toInt,

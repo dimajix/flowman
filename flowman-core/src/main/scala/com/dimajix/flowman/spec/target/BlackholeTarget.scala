@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.spec.target
 
-import org.apache.spark.sql.DataFrame
+import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -24,7 +24,8 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class BlackholeTarget(
-    instanceProperties:Target.Properties
+    instanceProperties:Target.Properties,
+    mapping:MappingOutputIdentifier
 ) extends BaseTarget {
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -32,8 +33,10 @@ case class BlackholeTarget(
       *
       * @param executor
       */
-    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
-        input(instanceProperties.input).write.format("null").save()
+    override def build(executor:Executor) : Unit = {
+        val mapping = context.getMapping(this.mapping.mapping)
+        val df = executor.instantiate(mapping, this.mapping.output)
+        df.write.format("null").save()
     }
 
     /**
@@ -48,9 +51,12 @@ case class BlackholeTarget(
 
 
 class BlackholeTargetSpec extends TargetSpec {
+    @JsonProperty(value = "input", required=true) private var input:String = _
+
     override def instantiate(context: Context): BlackholeTarget = {
         BlackholeTarget(
-            instanceProperties(context)
+            instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input))
         )
     }
 }

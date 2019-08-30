@@ -32,6 +32,7 @@ import com.dimajix.flowman.types.SingleValue
 
 case class RelationTarget(
     instanceProperties: Target.Properties,
+    mapping:MappingOutputIdentifier,
     relation: RelationIdentifier,
     mode: String,
     partition: Map[String,String],
@@ -57,17 +58,17 @@ case class RelationTarget(
       * Builds the target using the given input tables
       *
       * @param executor
-      * @param tables
       */
-    override def build(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor) : Unit = {
         val partition = this.partition.mapValues(v => SingleValue(v))
-        val input = instanceProperties.input
 
-        logger.info(s"Writing mapping '$input' to relation '$relation' into partition $partition")
+        logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition")
+        val mapping = context.getMapping(this.mapping.mapping)
+        val dfIn = executor.instantiate(mapping, this.mapping.output)
         val table = if (rebalance)
-            tables(input).repartition(parallelism)
+            dfIn.repartition(parallelism)
         else
-            tables(input).coalesce(parallelism)
+            dfIn.coalesce(parallelism)
 
         val rel = context.getRelation(relation)
         rel.write(executor, table, partition, mode)
@@ -90,6 +91,7 @@ case class RelationTarget(
 
 
 class RelationTargetSpec extends TargetSpec {
+    @JsonProperty(value="input", required=true) private var input:String = _
     @JsonProperty(value="relation", required=true) private var relation:String = _
     @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
@@ -99,6 +101,7 @@ class RelationTargetSpec extends TargetSpec {
     override def instantiate(context: Context): Target = {
         RelationTarget(
             instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             RelationIdentifier.parse(context.evaluate(relation)),
             context.evaluate(mode),
             context.evaluate(partition),

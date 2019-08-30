@@ -68,7 +68,8 @@ case class SaveMappingTask(
         logger.info(s"Saving contents of mapping '$mapping' to '$location'")
 
         val target = FileTarget(
-            Target.Properties(context).copy(input = mapping),
+            Target.Properties(context),
+            mapping,
             location,
             format,
             options,
@@ -77,13 +78,7 @@ case class SaveMappingTask(
             rebalance
         )
 
-        // Instantiate all required dependencies (there should only be one)
-        val dependencies = target.dependencies
-            .map(d => (d, context.getMapping(d.mapping)))
-            .map { case (id, mapping) => (id, executor.instantiate(mapping, id.output)) }
-            .toMap
-
-        target.build(executor, dependencies)
+        target.build(executor)
         true
     }
 }

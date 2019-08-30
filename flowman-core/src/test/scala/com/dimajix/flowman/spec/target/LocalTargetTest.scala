@@ -36,6 +36,11 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val spec =
             s"""
+               |mappings:
+               |  some_table:
+               |    kind: provided
+               |    table: some_table
+               |
                |targets:
                |  out:
                |    kind: local
@@ -51,10 +56,11 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
 
         import spark.implicits._
         val data = Seq(("v1", 12), ("v2", 23)).toDF()
+        data.createOrReplaceTempView("some_table")
         val output = context.getTarget(TargetIdentifier("out"))
 
         outputPath.toFile.exists() should be (false)
-        output.build(executor, Map(MappingOutputIdentifier("some_table") -> data))
+        output.build(executor)
         outputPath.toFile.exists() should be (true)
 
         outputPath.toFile.exists() should be (true)

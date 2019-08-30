@@ -16,10 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.history.TargetInstance
+import com.dimajix.flowman.spec.TargetIdentifier
 
 
 abstract class BaseTarget extends Target {
@@ -47,18 +45,5 @@ abstract class BaseTarget extends Target {
             Option(project).map(_.name).getOrElse(""),
             name
         )
-    }
-
-    /**
-      * Returns the dependencies of this taret, which is exactly one input mapping
-      *
-      * @return
-      */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
-        val mapping = instanceProperties.input
-        if (mapping != null && mapping.nonEmpty)
-            Seq(mapping)
-        else
-            Seq()
     }
 }

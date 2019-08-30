@@ -28,6 +28,7 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 case class ConsoleTarget(
     instanceProperties:Target.Properties,
+    mapping:MappingOutputIdentifier,
     limit:Int,
     header:Boolean,
     columns:Seq[String]
@@ -38,10 +39,12 @@ case class ConsoleTarget(
       * Build the "console" target by dumping records to stdout
       *
       * @param executor
-      * @param input
       */
-    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
-        val dfIn = input(instanceProperties.input)
+    override def build(executor:Executor) : Unit = {
+        require(executor != null)
+
+        val mapping = context.getMapping(this.mapping.mapping)
+        val dfIn = executor.instantiate(mapping, this.mapping.output)
         val dfOut = if (columns.nonEmpty)
             dfIn.select(columns.map(c => dfIn(c)):_*)
         else
@@ -66,18 +69,18 @@ case class ConsoleTarget(
 
 
 class ConsoleTargetSpec extends TargetSpec {
-    @JsonProperty(value="limit", required=true) private var limit:String = "100"
-    @JsonProperty(value="header", required=true) private var header:String = "true"
-    @JsonProperty(value="columns", required=true) private var columns:Seq[String] = Seq()
-
+    @JsonProperty(value="input", required=true) private var input:String = _
+    @JsonProperty(value="limit", required=false) private var limit:String = "100"
+    @JsonProperty(value="header", required=false) private var header:String = "true"
+    @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq()
 
     override def instantiate(context: Context): Target = {
         ConsoleTarget(
             instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             context.evaluate(limit).toInt,
             context.evaluate(header).toBoolean,
             columns.map(context.evaluate)
         )
     }
-
 }

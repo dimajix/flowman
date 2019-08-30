@@ -18,12 +18,17 @@ package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
+import org.apache.spark.sql.DataFrame
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.types.StructType
 
 
 object MappingUtils {
+    private val logger = LoggerFactory.getLogger(MappingUtils.getClass)
+
     def describe(mapping:Mapping, output:String) : Option[StructType] = {
         val schemaCache = mutable.Map[MappingOutputIdentifier, Option[StructType]]()
 

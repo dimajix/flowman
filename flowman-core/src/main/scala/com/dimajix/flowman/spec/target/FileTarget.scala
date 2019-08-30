@@ -28,6 +28,7 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 case class FileTarget(
     instanceProperties: Target.Properties,
+    mapping:MappingOutputIdentifier,
     location:Path,
     format:String,
     options:Map[String,String],
@@ -43,17 +44,17 @@ case class FileTarget(
       *
       * @param executor
       */
-    override def build(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Unit = {
+    override def build(executor: Executor): Unit = {
         require(executor != null)
-        require(tables != null)
 
-        val input = instanceProperties.input
+        val mapping = context.getMapping(this.mapping.mapping)
+        val dfIn = executor.instantiate(mapping, this.mapping.output)
         val table = if (rebalance)
-            tables(input).repartition(parallelism)
+            dfIn.repartition(parallelism)
         else
-            tables(input).coalesce(parallelism)
+            dfIn.coalesce(parallelism)
 
-        logger.info(s"Writing mapping '$input' to directory '$location'")
+        logger.info(s"Writing mapping '$mapping' to directory '$location'")
         table.write
             .options(options)
             .format(format)
@@ -80,6 +81,7 @@ case class FileTarget(
 
 
 class FileTargetSpec extends TargetSpec {
+    @JsonProperty(value = "input", required=true) private var input:String = _
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="format", required=false) private var format:String = "csv"
     @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
@@ -90,6 +92,7 @@ class FileTargetSpec extends TargetSpec {
     override def instantiate(context: Context): FileTarget = {
         FileTarget(
             instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             new Path(context.evaluate(location)),
             context.evaluate(format),
             context.evaluate(options),

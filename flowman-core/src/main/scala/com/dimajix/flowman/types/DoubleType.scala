@@ -20,43 +20,12 @@ import org.apache.spark.sql.types.DataType
 
 
 case object DoubleType extends FractionalType[Double] {
-    protected def parseRaw(value:String) : Double = value.toDouble
+    override protected def fractionalNum = scala.math.Numeric.DoubleIsFractional
+    override protected def integralNum = scala.math.Numeric.DoubleAsIfIntegral
+
+    override protected def roundToGranularity(value:Double, granularity:Double) : Double = (value - (value % granularity))
+
+    override protected def parseRaw(value:String) : Double = value.toDouble
 
     override def sparkType : DataType = org.apache.spark.sql.types.DoubleType
-
-    override def parse(value:String, granularity:Option[String]=None) : Double = {
-        if (granularity.nonEmpty) {
-            val step = granularity.get.toDouble
-            val v = value.toDouble
-            v - (v % step)
-        }
-        else {
-            value.toDouble
-        }
-    }
-    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Double] = {
-        value match {
-            case SingleValue(v) => Seq(parse(v, granularity))
-            case ArrayValue(values) => values.map(v => parse(v,granularity))
-            case RangeValue(start,end,step) => {
-                if (step.nonEmpty) {
-                    val range = start.toDouble.until(end.toDouble).by(step.get.toDouble)
-                    if (granularity.nonEmpty) {
-                        val mod = granularity.get.toDouble
-                        range.map(x => math.floor(x / mod) * mod).distinct
-                    }
-                    else {
-                        range
-                    }
-                }
-                else if (granularity.nonEmpty) {
-                    val mod = granularity.get.toDouble
-                    start.toDouble.until(end.toDouble).by(mod).map(x => math.floor(x / mod) * mod)
-                }
-                else {
-                    start.toDouble.until(end.toDouble).by(1.0)
-                }
-            }
-        }
-    }
 }

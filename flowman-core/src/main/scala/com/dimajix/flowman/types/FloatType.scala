@@ -20,43 +20,12 @@ import org.apache.spark.sql.types.DataType
 
 
 case object FloatType extends FractionalType[Float] {
+    override protected def fractionalNum = scala.math.Numeric.FloatIsFractional
+    override protected def integralNum = scala.math.Numeric.FloatAsIfIntegral
+
+    override protected def roundToGranularity(value:Float, granularity:Float) : Float = value - (value % granularity)
+
     protected def parseRaw(value:String) : Float = value.toFloat
 
     override def sparkType : DataType = org.apache.spark.sql.types.FloatType
-
-    override def parse(value:String, granularity:Option[String]=None) : Float = {
-        if (granularity.nonEmpty) {
-            val step = granularity.get.toFloat
-            val v = value.toFloat
-            v - (v % step)
-        }
-        else {
-            value.toFloat
-        }
-    }
-    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Float] = {
-        value match {
-            case SingleValue(v) => Seq(parse(v, granularity))
-            case ArrayValue(values) => values.map(v => parse(v,granularity))
-            case RangeValue(start,end,step) => {
-                if (step.nonEmpty) {
-                    val range = start.toFloat.until(end.toFloat).by(step.get.toFloat)
-                    if (granularity.nonEmpty) {
-                        val mod = granularity.get.toFloat
-                        range.map(x => math.floor(x / mod) * mod).map(_.toFloat).distinct
-                    }
-                    else {
-                        range
-                    }
-                }
-                else if (granularity.nonEmpty) {
-                    val mod = granularity.get.toFloat
-                    start.toFloat.until(end.toFloat).by(mod).map(x => math.floor(x / mod) * mod).map(_.toFloat)
-                }
-                else {
-                    start.toFloat.until(end.toFloat).by(1.0f)
-                }
-            }
-        }
-    }
 }

@@ -31,6 +31,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.apache.spark.sql.types.DataType
 
+import com.dimajix.flowman.types.DoubleType.parse
+
 
 object FieldType {
     private val nonDecimalNameToType = {
@@ -152,8 +154,6 @@ abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
             parseRaw(value)
     }
     override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[T] = {
-        def one(implicit ops:Integral[T]) : T = ops.one
-
         value match {
             case SingleValue(v) => Seq(parse(v, granularity))
             case ArrayValue(values) => values.map(parse(_, granularity))
@@ -173,14 +173,59 @@ abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
                     NumericRange(parseRaw(start) / mod * mod, parseRaw(end) / mod * mod, mod)
                 }
                 else {
-                    NumericRange(parseRaw(start), parseRaw(end), one)
+                    val num = implicitly[Integral[T]]
+                    NumericRange(parseRaw(start), parseRaw(end), num.one)
                 }
             }
         }
     }
 }
-abstract class FractionalType[T : scala.math.Fractional] extends NumericType[T] {
+
+abstract class FractionalType[T : Fractional] extends NumericType[T] {
+    protected implicit def fractionalNum: Fractional[T]
+    protected implicit def integralNum: Integral[T]
+
     protected def parseRaw(value:String) : T
+
+    protected def roundToGranularity(value:T, granularity:T) : T
+
+    override def parse(value:String, granularity:Option[String]=None) : T = {
+        if (granularity.nonEmpty) {
+            val step = parseRaw(granularity.get)
+            val v = parseRaw(value)
+            roundToGranularity(v, step)
+        }
+        else {
+            parseRaw(value)
+        }
+    }
+
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[T] = {
+        value match {
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(v => parse(v,granularity))
+            case RangeValue(start,end,step) => {
+                if (step.nonEmpty) {
+                    val range = NumericRange(parseRaw(start), parseRaw(end), parseRaw(step.get))
+                    if (granularity.nonEmpty) {
+                        val mod = parseRaw(granularity.get)
+                        range.map(x => roundToGranularity(x, mod)).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity.nonEmpty) {
+                    val mod = parseRaw(granularity.get)
+                    val range = NumericRange(parseRaw(start), parseRaw(end), mod)
+                    range.map(x => roundToGranularity(x, mod)).distinct
+                }
+                else {
+                    NumericRange(parseRaw(start), parseRaw(end), fractionalNum.one)
+                }
+            }
+        }
+    }
 }
 
 

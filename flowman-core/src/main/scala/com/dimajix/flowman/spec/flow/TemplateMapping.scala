@@ -53,8 +53,8 @@ case class TemplateMapping(
       *
       * @return
       */
-    override def dependencies: Seq[MappingOutputIdentifier] = {
-        mappingInstance.dependencies
+    override def inputs: Seq[MappingOutputIdentifier] = {
+        mappingInstance.inputs
     }
 
     /**

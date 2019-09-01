@@ -18,6 +18,8 @@ package com.dimajix.flowman.types
 
 import java.util.Locale
 
+import scala.collection.immutable.NumericRange
+
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.JsonParser
@@ -134,6 +136,53 @@ abstract class FieldType {
       */
     def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any]
 }
+
+
+abstract class NumericType[T : scala.math.Numeric] extends FieldType {
+}
+abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
+    import scala.math.Integral.Implicits._
+
+    protected def parseRaw(value:String) : T
+
+    override def parse(value:String, granularity:Option[String]=None) : T =  {
+        if (granularity.nonEmpty)
+            (parseRaw(value) / parseRaw(granularity.get) * parseRaw(granularity.get))
+        else
+            parseRaw(value)
+    }
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[T] = {
+        def one(implicit ops:Integral[T]) : T = ops.one
+
+        value match {
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(parse(_, granularity))
+            case RangeValue(start,end,step) => {
+                if (step.nonEmpty) {
+                    val range = NumericRange(parseRaw(start), parseRaw(end), parseRaw(step.get))
+                    if (granularity.nonEmpty) {
+                        val mod = parseRaw(granularity.get)
+                        range.map(_ / mod * mod).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity.nonEmpty) {
+                    val mod = parseRaw(granularity.get)
+                    NumericRange(parseRaw(start) / mod * mod, parseRaw(end) / mod * mod, mod)
+                }
+                else {
+                    NumericRange(parseRaw(start), parseRaw(end), one)
+                }
+            }
+        }
+    }
+}
+abstract class FractionalType[T : scala.math.Fractional] extends NumericType[T] {
+    protected def parseRaw(value:String) : T
+}
+
 
 @JsonDeserialize
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")

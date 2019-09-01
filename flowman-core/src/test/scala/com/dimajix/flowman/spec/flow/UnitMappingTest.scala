@@ -78,13 +78,13 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val instance0 = context.getMapping(MappingIdentifier("instance_0"))
-        instance0.dependencies should be (Seq())
+        instance0.inputs should be (Seq())
         instance0.outputs should be (Seq("input"))
         val df0 = executor.instantiate(instance0, "input")
         df0.collect() should be (inputDf0.collect())
 
         val instance1 = context.getMapping(MappingIdentifier("instance_1"))
-        instance1.dependencies should be (Seq())
+        instance1.inputs should be (Seq())
         instance1.outputs should be (Seq("input"))
         val df1 = executor.instantiate(instance1, "input")
         df1.collect() should be (inputDf1.collect())
@@ -118,7 +118,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val unit = context.getMapping(MappingIdentifier("macro"))
-        unit.dependencies should be (Seq(MappingOutputIdentifier("outside")))
+        unit.inputs should be (Seq(MappingOutputIdentifier("outside")))
         unit.outputs.sorted should be (Seq("inside", "output"))
 
         val df_inside = executor.instantiate(unit, "inside")
@@ -151,7 +151,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
 
         val instance0 = context.getMapping(MappingIdentifier("alias"))
-        instance0.dependencies should be (Seq(MappingOutputIdentifier("macro:input")))
+        instance0.inputs should be (Seq(MappingOutputIdentifier("macro:input")))
         instance0.outputs should be (Seq("main"))
         val df0 = executor.instantiate(instance0, "main")
         df0.collect() should be (inputDf0.collect())

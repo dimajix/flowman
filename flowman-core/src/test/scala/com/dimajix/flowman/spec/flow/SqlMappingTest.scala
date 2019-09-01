@@ -98,7 +98,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("t0")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("t0")))
     }
 
     it should "also be correct with subqueries" in {
@@ -143,7 +143,7 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.dependencies.map(_.name).sorted should be (Seq("other_table", "some_table", "some_table_archive"))
+        mapping.inputs.map(_.name).sorted should be (Seq("other_table", "some_table", "some_table_archive"))
     }
 
     it should "execute the SQL query" in {

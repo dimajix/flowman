@@ -38,12 +38,12 @@ object MappingUtils {
                 if (!mapping.outputs.contains(output))
                     throw new NoSuchMappingOutputException(oid)
                 val context = mapping.context
-                val deps = mapping.dependencies
+                val deps = mapping.inputs
                     .flatMap(id => describe(context.getMapping(id.mapping), id.output).map(s => (id,s)))
                     .toMap
 
                 // Only return a schema if all dependencies are present
-                if (mapping.dependencies.forall(d => deps.contains(d))) {
+                if (mapping.inputs.forall(d => deps.contains(d))) {
                     mapping.describe(deps, output)
                 }
                 else {

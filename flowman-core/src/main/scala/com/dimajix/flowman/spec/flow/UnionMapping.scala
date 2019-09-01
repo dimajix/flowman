@@ -33,7 +33,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 case class UnionMapping(
     instanceProperties:Mapping.Properties,
-    inputs:Seq[MappingOutputIdentifier],
+    input:Seq[MappingOutputIdentifier],
     schema:Option[Schema],
     distinct:Boolean
 ) extends BaseMapping {
@@ -44,8 +44,8 @@ case class UnionMapping(
       *
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
-        inputs
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        input
     }
 
     /**

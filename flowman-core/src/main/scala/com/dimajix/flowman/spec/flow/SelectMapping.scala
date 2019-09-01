@@ -54,7 +54,7 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
+    override def inputs : Seq[MappingOutputIdentifier] = {
         Seq(input)
     }
 }

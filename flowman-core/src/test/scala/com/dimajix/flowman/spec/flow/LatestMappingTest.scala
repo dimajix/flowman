@@ -64,7 +64,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.versionColumn should be ("ts")
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
@@ -128,7 +128,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id._1" ))
         mapping.versionColumn should be ("ts._2")
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)

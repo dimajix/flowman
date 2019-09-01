@@ -57,6 +57,7 @@ class ValidateCommand extends ActionCommand {
 
             //val tables = targets.flatMap(_.dependencies).map(mid => context.getMapping(mid.mapping))
             //tables.forall(table => executor.instantiate(table) != null)
+            true
         } match {
             case Success(true) =>
                 logger.info("Successfully validated targets")

@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 case class JoinMapping(
     instanceProperties:Mapping.Properties,
-    inputs:Seq[MappingOutputIdentifier],
+    input:Seq[MappingOutputIdentifier],
     columns:Seq[String] = Seq(),
     condition:String = "",
     mode:String = "left"
@@ -40,8 +40,8 @@ case class JoinMapping(
       *
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
-        inputs
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        input
     }
 
     /**

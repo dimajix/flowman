@@ -65,7 +65,7 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         )
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         mapping.columns should be (Seq("key" ))
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
             .orderBy("key").collect()
@@ -106,7 +106,7 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         )
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         mapping.condition should be ("df1.key = df2.key")
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
             .orderBy("df1.key").collect()
@@ -132,6 +132,6 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val join = mapping.instantiate(session.context).asInstanceOf[JoinMapping]
         join.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         join.condition should be ("df1.key = df2.key")
-        join.dependencies should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
+        join.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
     }
 }

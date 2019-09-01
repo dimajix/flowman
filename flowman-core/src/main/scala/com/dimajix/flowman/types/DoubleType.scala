@@ -19,7 +19,9 @@ package com.dimajix.flowman.types
 import org.apache.spark.sql.types.DataType
 
 
-case object DoubleType extends FieldType {
+case object DoubleType extends FractionalType[Double] {
+    protected def parseRaw(value:String) : Double = value.toDouble
+
     override def sparkType : DataType = org.apache.spark.sql.types.DoubleType
 
     override def parse(value:String, granularity:Option[String]=None) : Double = {

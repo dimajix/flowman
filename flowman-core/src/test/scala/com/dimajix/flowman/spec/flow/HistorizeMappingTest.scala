@@ -66,7 +66,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         mapping.timeColumn should be ("ts")
         mapping.validFromColumn should be ("valid_from")
         mapping.validToColumn should be ("valid_to")
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("df1")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val expectedSchema = StructType(Seq(
             StructField("a", ArrayType(LongType)),

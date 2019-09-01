@@ -55,7 +55,7 @@ class AggregateMappingTest extends FlatSpec with Matchers with LocalSparkSession
         xfs.outputs should be (Seq("main"))
         xfs.dimensions should be (Array("_1", "_2"))
         xfs.aggregations should be (Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)"))
-        xfs.dependencies should be (Seq(MappingOutputIdentifier("myview")))
+        xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
 
         val df2 = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1", "_2")

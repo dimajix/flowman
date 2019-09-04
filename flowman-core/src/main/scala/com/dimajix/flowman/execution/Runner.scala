@@ -31,13 +31,13 @@ abstract class Runner {
       * execute a specific job, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overriden with the force flag
       * @param executor
-      * @param exec
+      * @param bundle
       * @param phase
       * @param args
       * @param force
       * @return
       */
-    def execute(executor: Executor, exec:Bundle, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status
+    def execute(executor: Executor, bundle:Bundle, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status
 
     /**
       * Creates the container for a single target

@@ -18,6 +18,7 @@ package com.dimajix.flowman.history
 
 import java.time.ZonedDateTime
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 
 /**
@@ -27,7 +28,7 @@ import com.dimajix.flowman.execution.Status
   * @param job
   * @param args
   */
-case class JobInstance(
+case class BundleInstance(
     namespace:String,
     project:String,
     job:String,
@@ -52,25 +53,24 @@ case class JobInstance(
   * @param to
   * @param args
   */
-case class JobQuery(
+case class BundleQuery(
     namespace:Option[String],
     project:Option[String],
     name:Option[String],
     status:Option[Status],
-    parentName:Option[String],
-    parentId:Option[String],
+    phase:Option[Phase],
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     args:Map[String,String] = Map()
 )
 
 
-case class JobState(
+case class BundleState(
     id:String,
-    parentId:Option[String],
     namespace:String,
     project:String,
-    job:String,
+    bundle:String,
+    phase: String,
     args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,
@@ -78,16 +78,15 @@ case class JobState(
 )
 
 
-sealed case class JobOrder(isAscending:Boolean=true) {
-    def asc() : JobOrder = copy(true)
-    def desc() : JobOrder = copy(false)
+sealed case class BundleOrder(isAscending:Boolean=true) {
+    def asc() : BundleOrder = copy(true)
+    def desc() : BundleOrder = copy(false)
 }
 
-object JobOrder {
-    object BY_DATETIME extends JobOrder
-    object BY_NAME extends JobOrder
-    object BY_ID extends JobOrder
-    object BY_STATUS extends JobOrder
-    object BY_PARENT_NAME extends JobOrder
-    object BY_PARENT_ID extends JobOrder
+object BundleOrder {
+    object BY_DATETIME extends BundleOrder
+    object BY_NAME extends BundleOrder
+    object BY_ID extends BundleOrder
+    object BY_STATUS extends BundleOrder
+    object BY_PHASE extends BundleOrder
 }

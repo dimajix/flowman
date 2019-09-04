@@ -21,6 +21,8 @@ import java.sql.SQLRecoverableException
 import java.sql.Timestamp
 import java.time.Clock
 
+import scala.annotation.tailrec
+
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 import slick.jdbc.DerbyProfile
@@ -28,6 +30,7 @@ import slick.jdbc.H2Profile
 import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 
 
@@ -53,35 +56,21 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param job
       * @return
       */
-    override def getJobState(job: JobInstance): Option[JobState] = {
-        val run =  JobRun(
+    override def getBundleState(job: BundleInstance, phase: Phase): Option[BundleState] = {
+        val run =  BundleRun(
             0,
-            None,
             Option(job.namespace).getOrElse(""),
             Option(job.project).getOrElse(""),
             job.job,
+            phase.value,
             hashArgs(job),
             null,
             null,
             null
         )
-        logger.info(s"Checking last state for job ${run.namespace}/${run.project}/${run.job} in state database")
+        logger.info(s"Checking last state for phase '${phase}' of bundle ${run.namespace}/${run.project}/${run.bundle} in state database")
         withSession { repository =>
-            repository.getJobState(run)
-        }
-    }
-
-    /**
-      * Performs some checkJob, if the run is required
-      * @param job
-      * @return
-      */
-    override def checkJob(job:JobInstance) : Boolean = {
-        val state = getJobState(job).map(_.status)
-        state match {
-            case Some(Status.SUCCESS) => true
-            case Some(_) => false
-            case None => false
+            repository.getBundleState(run)
         }
     }
 
@@ -90,23 +79,23 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param job
       * @return
       */
-    override def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken = {
+    override def startBundle(job:BundleInstance, phase: Phase) : BundleToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        val run =  JobRun(
+        val run =  BundleRun(
             0,
-            parent.map(_.asInstanceOf[JobRun].id),
             Option(job.namespace).getOrElse(""),
             Option(job.project).getOrElse(""),
             job.job,
+            phase.value,
             hashArgs(job),
             now,
             new Timestamp(0),
             Status.RUNNING.value
         )
 
-        logger.info(s"Writing startJob marker for job ${run.namespace}/${run.project}/${run.job} into state database")
+        logger.info(s"Writing startJob marker for phase '${phase}' of bundle ${run.namespace}/${run.project}/${run.bundle} into state database")
         withSession { repository =>
-            repository.insertJobRun(run, job.args)
+            repository.insertBundleRun(run, job.args)
         }
     }
 
@@ -115,14 +104,14 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       *
       * @param token
       */
-    override def finishJob(token:JobToken, status: Status) : Unit = {
-        val run = token.asInstanceOf[JobRun]
-        logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.job} as $status in state database")
+    override def finishBundle(token:BundleToken, status: Status) : Unit = {
+        val run = token.asInstanceOf[BundleRun]
+        logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.bundle} as $status in state database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setJobStatus(run.copy(end_ts = now, status=status.value))
+            repository.setBundleStatus(run.copy(end_ts = now, status=status.value))
         }
     }
 
@@ -131,19 +120,20 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param target
       * @return
       */
-    def getTargetState(target:TargetInstance) : Option[TargetState] = {
+    override def getTargetState(target:TargetInstance, phase: Phase) : Option[TargetState] = {
         val run =  TargetRun(
             0,
             None,
             Option(target.namespace).getOrElse(""),
             Option(target.project).getOrElse(""),
             target.target,
+            phase.value,
             hashPartitions(target),
             null,
             null,
             null
         )
-        logger.info(s"Checking last state for target ${run.namespace}/${run.project}/${run.target} in state database")
+        logger.info(s"Checking last state for phase '$phase' of target ${run.namespace}/${run.project}/${run.target} in state database")
         withSession { repository =>
             repository.getTargetState(run, target.partitions)
         }
@@ -154,8 +144,8 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param target
       * @return
       */
-    override def checkTarget(target:TargetInstance) : Boolean = {
-        val state = getTargetState(target).map(_.status)
+    override def checkTarget(target:TargetInstance, phase: Phase) : Boolean = {
+        val state = getTargetState(target, phase).map(_.status)
         state match {
             case Some(Status.SUCCESS) => true
             case Some(_) => false
@@ -168,21 +158,22 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = {
+    override def startTarget(target:TargetInstance, phase: Phase, parent:Option[BundleToken]) : TargetToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  TargetRun(
             0,
-            parent.map(_.asInstanceOf[JobRun].id),
+            parent.map(_.asInstanceOf[BundleRun].id),
             Option(target.namespace).getOrElse(""),
             Option(target.project).getOrElse(""),
             target.target,
+            phase.value,
             hashPartitions(target),
             now,
             new Timestamp(0),
             Status.RUNNING.value
         )
 
-        logger.info(s"Writing startTarget marker for target ${run.namespace}/${run.project}/${run.target} into state database")
+        logger.info(s"Writing start marker for phase '$phase' of target ${run.namespace}/${run.project}/${run.target} into state database")
         withSession { repository =>
             repository.insertTargetRun(run, target.partitions)
         }
@@ -211,7 +202,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param offset
       * @return
       */
-    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+    override def findBundles(query:BundleQuery, order:Seq[BundleOrder], limit:Int, offset:Int) : Seq[BundleState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria
@@ -222,7 +213,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       */
     override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
 
-    private def hashArgs(job:JobInstance) : String = {
+    private def hashArgs(job:BundleInstance) : String = {
          hashMap(job.args)
     }
 
@@ -245,6 +236,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @return
       */
     private def withSession[T](query: JdbcStateRepository => T) : T = {
+        @tailrec
         def retry[T](n:Int)(fn: => T) : T = {
             try {
                 fn

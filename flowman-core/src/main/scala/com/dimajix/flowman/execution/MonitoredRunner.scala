@@ -19,8 +19,8 @@ package com.dimajix.flowman.execution
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.history.StateStore
-import com.dimajix.flowman.history.JobInstance
-import com.dimajix.flowman.history.JobToken
+import com.dimajix.flowman.history.BundleInstance
+import com.dimajix.flowman.history.BundleToken
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 
@@ -31,10 +31,10 @@ import com.dimajix.flowman.history.TargetToken
   *
   * @param stateStore
   */
-class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None) extends AbstractRunner {
+class MonitoredRunner(stateStore: StateStore, parentJob:Option[BundleToken] = None) extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[MonitoredRunner])
 
-    override protected def jobRunner(job:JobToken) : Runner = {
+    override protected def jobRunner(job:BundleToken) : Runner = {
         new MonitoredRunner(stateStore, Some(job))
     }
 
@@ -44,7 +44,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param job
       * @return
       */
-    protected override def checkJob(job: JobInstance): Boolean = {
+    protected override def checkJob(job: BundleInstance): Boolean = {
         stateStore.checkJob(job)
     }
 
@@ -54,8 +54,8 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param job
       * @return
       */
-    protected override def startJob(job: JobInstance, parent: Option[JobToken]): JobToken = {
-        stateStore.startJob(job, parent)
+    protected override def startBundle(job: BundleInstance, parent: Option[BundleToken]): BundleToken = {
+        stateStore.startBundle(job, parent)
     }
 
     /**
@@ -63,8 +63,8 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       *
       * @param token
       */
-    protected override def finishJob(token: JobToken, status:Status): Unit = {
-        stateStore.finishJob(token, status)
+    protected override def finishBundle(token: BundleToken, status:Status): Unit = {
+        stateStore.finishBundle(token, status)
     }
 
     /**
@@ -83,7 +83,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def startTarget(target: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken = {
+    protected override def startTarget(target: TargetInstance, phase: Phase, parent: Option[BundleToken]): TargetToken = {
         stateStore.startTarget(target, phase, parent)
     }
 

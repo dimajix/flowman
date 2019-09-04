@@ -10,7 +10,7 @@ import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.history.JobInstance
+import com.dimajix.flowman.history.BundleInstance
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.JobIdentifier
@@ -125,8 +125,8 @@ case class Bundle(
       * Returns a JobInstance used for state management
       * @return
       */
-    def instance(args:Map[String,String]) : JobInstance = {
-        JobInstance(
+    def instance(args:Map[String,String]) : BundleInstance = {
+        BundleInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
             name,

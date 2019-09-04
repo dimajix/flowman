@@ -27,7 +27,7 @@ import com.dimajix.flowman.spec.task.Job
 
 class NullStateStoreTest extends FlatSpec with Matchers {
     "The NullStateStore" should "support jobs" in {
-        val job = JobInstance(
+        val job = BundleInstance(
             "default",
             "project",
             "job_01",
@@ -36,13 +36,13 @@ class NullStateStoreTest extends FlatSpec with Matchers {
 
         val monitor = new NullStateStore
         monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job, None)
-        monitor.getJobState(job) should be (None)
+        monitor.getBundleState(job) should be (None)
+        val token = monitor.startBundle(job, None)
+        monitor.getBundleState(job) should be (None)
         monitor.checkJob(job) should be(false)
-        monitor.finishJob(token, Status.SUCCESS)
+        monitor.finishBundle(token, Status.SUCCESS)
         monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
+        monitor.getBundleState(job) should be (None)
     }
 
     it should "support targets" in {

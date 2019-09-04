@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 
 
@@ -25,49 +26,42 @@ class NullStateStore extends StateStore {
       * @param job
       * @return
       */
-    def getJobState(job:JobInstance) : Option[JobState] = None
-
-    /**
-      * Performs some checkJob, if the run is required
-      * @param job
-      * @return
-      */
-    override def checkJob(job:JobInstance) : Boolean = false
+    def getBundleState(job:BundleInstance, phase:Phase) : Option[BundleState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param job
       * @return
       */
-    override def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken = null
+    override def startBundle(job:BundleInstance, phase:Phase) : BundleToken = null
 
     /**
       * Sets the status of a job after it has been started
       * @param token
       * @param status
       */
-    override def finishJob(token:JobToken, status:Status) : Unit = {}
+    override def finishBundle(token:BundleToken, status:Status) : Unit = {}
 
     /**
       * Returns the state of a target
       * @param target
       * @return
       */
-    override def getTargetState(target:TargetInstance) : Option[TargetState] = None
+    override def getTargetState(target:TargetInstance, phase:Phase) : Option[TargetState] = None
 
     /**
       * Performs some checkTarget, if the run is required
       * @param target
       * @return
       */
-    override def checkTarget(target:TargetInstance) : Boolean = false
+    override def checkTarget(target:TargetInstance, phase:Phase) : Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[BundleToken]) : TargetToken = null
 
     /**
       * Sets the status of a target after it has been started
@@ -83,7 +77,7 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+    override def findBundles(query:BundleQuery, order:Seq[BundleOrder], limit:Int, offset:Int) : Seq[BundleState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria

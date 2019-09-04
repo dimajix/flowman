@@ -20,7 +20,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 
 
-abstract class JobToken
+abstract class BundleToken
 
 abstract class TargetToken
 
@@ -31,29 +31,21 @@ abstract class StateStore {
       * @param job
       * @return
       */
-    def getJobState(job:JobInstance) : Option[JobState]
-
-    /**
-      * Performs some checkJob, if the run is required, i.e. if there either is no previous
-      * run or the previous run failed
-      * @param job
-      * @return
-      */
-    def checkJob(job:JobInstance) : Boolean
+    def getBundleState(job:BundleInstance, phase:Phase) : Option[BundleState]
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param job
       * @return
       */
-    def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken
+    def startBundle(job:BundleInstance, phase:Phase) : BundleToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    def finishJob(token:JobToken, status:Status) : Unit
+    def finishBundle(token:BundleToken, status:Status) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -74,7 +66,7 @@ abstract class StateStore {
       * @param target
       * @return
       */
-    def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
+    def startTarget(target:TargetInstance, phase:Phase, parent:Option[BundleToken]) : TargetToken
 
     /**
       * Sets the status of a job after it has been started
@@ -90,7 +82,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
+    def findBundles(query:BundleQuery, order:Seq[BundleOrder], limit:Int, offset:Int) : Seq[BundleState]
 
     /**
       * Returns a list of job matching the query criteria

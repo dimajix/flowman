@@ -91,6 +91,7 @@ object TargetOrder {
     object BY_NAME extends TargetOrder
     object BY_ID extends TargetOrder
     object BY_STATUS extends TargetOrder
+    object BY_PHASE extends TargetOrder
     object BY_PARENT_NAME extends TargetOrder
     object BY_PARENT_ID extends TargetOrder
 }

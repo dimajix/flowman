@@ -27,6 +27,10 @@ case class BlackholeTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
+    override def create(executor: Executor) : Unit = {}
+
+    override def migrate(executor: Executor) : Unit = {}
+
     /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
@@ -43,9 +47,9 @@ case class BlackholeTarget(
       * "Cleaning" a blackhole essentially is a no-op
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {}
 
-    }
+    override def destroy(executor: Executor) : Unit = {}
 }
 
 

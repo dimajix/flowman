@@ -35,6 +35,10 @@ case class ConsoleTarget(
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[ConsoleTarget])
 
+    override def create(executor: Executor) : Unit = {}
+
+    override def migrate(executor: Executor) : Unit = {}
+
     /**
       * Build the "console" target by dumping records to stdout
       *
@@ -61,9 +65,9 @@ case class ConsoleTarget(
       * Clean operation of dump essentially is a no-op
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {}
 
-    }
+    override def destroy(executor: Executor) : Unit = {}
 }
 
 

@@ -55,6 +55,30 @@ case class RelationTarget(
     }
 
     /**
+      * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
+      * @param executor
+      */
+    override def create(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Creating relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.create(executor, true)
+    }
+
+    /**
+      * Tries to migrate the given target to the newest schema
+      * @param executor
+      */
+    override def migrate(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Migrating relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.migrate(executor)
+    }
+
+    /**
       * Builds the target using the given input tables
       *
       * @param executor
@@ -79,11 +103,25 @@ case class RelationTarget(
       * @param executor
       */
     override def truncate(executor: Executor): Unit = {
+        require(executor != null)
+
         val partition = this.partition.mapValues(v => SingleValue(v))
 
-        logger.info(s"Cleaning partition $partition of relation '$relation'")
+        logger.info(s"Truncating partition $partition of relation '$relation'")
         val rel = context.getRelation(relation)
         rel.clean(executor, partition)
+    }
+
+    /**
+      * Destroys both the logical relation and the physical data
+      * @param executor
+      */
+    override def destroy(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Destroying relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.destroy(executor, true)
     }
 }
 

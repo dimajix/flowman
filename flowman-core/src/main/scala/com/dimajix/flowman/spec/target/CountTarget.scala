@@ -31,6 +31,10 @@ case class CountTarget(
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CountTarget])
 
+    override def create(executor: Executor) : Unit = {}
+
+    override def migrate(executor: Executor) : Unit = {}
+
     /**
       * Build the "count" target by printing the number of records onto the console
       *
@@ -49,9 +53,9 @@ case class CountTarget(
       * Cleaning a count target is a no-op
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = { }
 
-    }
+    override def destroy(executor: Executor) : Unit = {}
 }
 
 

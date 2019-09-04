@@ -41,6 +41,30 @@ case class StreamTarget(
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
 
     /**
+      * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
+      * @param executor
+      */
+    override def create(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Creating relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.create(executor, true)
+    }
+
+    /**
+      * Tries to migrate the given target to the newest schema
+      * @param executor
+      */
+    override def migrate(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Migrating relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.migrate(executor)
+    }
+
+    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
@@ -63,6 +87,18 @@ case class StreamTarget(
         logger.info(s"Cleaining streaming relation '$relation'")
         val rel = context.getRelation(relation)
         rel.clean(executor)
+    }
+
+    /**
+      * Destroys both the logical relation and the physical data
+      * @param executor
+      */
+    override def destroy(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Destroying relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.destroy(executor, true)
     }
 }
 

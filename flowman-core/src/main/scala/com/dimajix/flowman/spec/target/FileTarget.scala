@@ -38,6 +38,10 @@ case class FileTarget(
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[FileTarget])
 
+    override def create(executor: Executor) : Unit = ???
+
+    override def migrate(executor: Executor) : Unit = ???
+
     /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
@@ -76,6 +80,8 @@ case class FileTarget(
             fs.delete(location, true)
         }
     }
+
+    override def destroy(executor: Executor) : Unit = ???
 }
 
 

@@ -64,6 +64,10 @@ case class LocalTarget(
         )
     }
 
+    override def create(executor: Executor) : Unit = ???
+
+    override def migrate(executor: Executor) : Unit = ???
+
     /**
       * Build the target by writing a file to the local file system of the driver
       *
@@ -118,6 +122,8 @@ case class LocalTarget(
             outputFile.delete()
         }
     }
+
+    override def destroy(executor: Executor) : Unit = ???
 }
 
 

@@ -28,45 +28,49 @@ import scala.concurrent.duration.Duration
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
+
 
 private[history] object JdbcStateRepository {
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateRepository])
 
-    case class JobRun(
-                         id:Long,
-                         parent_id:Option[Long],
-                         namespace: String,
-                         project:String,
-                         job:String,
-                         args_hash:String,
-                         start_ts:Timestamp,
-                         end_ts:Timestamp,
-                         status:String
-                     ) extends JobToken
+    case class BundleRun(
+        id:Long,
+        namespace: String,
+        project:String,
+        bundle:String,
+        phase:String,
+        args_hash:String,
+        start_ts:Timestamp,
+        end_ts:Timestamp,
+        status:String
+    ) extends BundleToken
 
-    case class JobArgument(
-                              job_id:Long,
-                              name:String,
-                              value:String
-                          )
+    case class BundleArgument(
+        bundle_id:Long,
+        name:String,
+        value:String
+    )
 
     case class TargetRun(
-                            id:Long,
-                            job_id:Option[Long],
-                            namespace: String,
-                            project:String,
-                            target:String,
-                            partitions_hash:String,
-                            start_ts:Timestamp,
-                            end_ts:Timestamp,
-                            status:String
-                        ) extends TargetToken
+        id:Long,
+        bundle_id:Option[Long],
+        namespace: String,
+        project:String,
+        target:String,
+        phase:String,
+        partitions_hash:String,
+        start_ts:Timestamp,
+        end_ts:Timestamp,
+        status:String
+    ) extends TargetToken
 
     case class TargetPartition(
-                                  target_id:Long,
-                                  name:String,
-                                  value:String
-                              )
+        target_id:Long,
+        name:String,
+        value:String
+    )
 }
 
 
@@ -86,54 +90,54 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
 
-    val jobRuns = TableQuery[JobRuns]
-    val jobArgs = TableQuery[JobArguments]
+    val bundleRuns = TableQuery[BundleRuns]
+    val bundleArgs = TableQuery[BundleArguments]
     val targetRuns = TableQuery[TargetRuns]
     val targetPartitions = TableQuery[TargetPartitions]
 
-    class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
+    class BundleRuns(tag:Tag) extends Table[BundleRun](tag, "BUNDLE_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def parent_id = column[Option[Long]]("parent_id")
         def namespace = column[String]("namespace")
         def project = column[String]("project")
-        def job = column[String]("job")
+        def bundle = column[String]("bundle")
+        def phase = column[String]("phase")
         def args_hash = column[String]("args_hash")
         def start_ts = column[Timestamp]("start_ts")
         def end_ts = column[Timestamp]("end_ts")
         def status = column[String]("status")
 
-        def idx = index("JOB_RUN_IDX", (namespace, project, job, args_hash, status), unique = false)
-        def parent_job = foreignKey("JOB_RUN_PARENT_FK", parent_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def idx = index("JOB_RUN_IDX", (namespace, project, bundle, phase, args_hash, status), unique = false)
 
-        def * = (id, parent_id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
+        def * = (id, namespace, project, bundle, phase, args_hash, start_ts, end_ts, status) <> (BundleRun.tupled, BundleRun.unapply)
     }
 
-    class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
-        def job_id = column[Long]("job_id")
+    class BundleArguments(tag: Tag) extends Table[BundleArgument](tag, "BUNDLE_ARGUMENT") {
+        def bundle_id = column[Long]("bundle_id")
         def name = column[String]("name")
         def value = column[String]("value")
 
-        def pk = primaryKey("JOB_ARGUMENT_PK", (job_id, name))
-        def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def pk = primaryKey("JOB_ARGUMENT_PK", (bundle_id, name))
+        def job = foreignKey("JOB_ARGUMENT_JOB_FK", bundle_id, bundleRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
+        def * = (bundle_id, name, value) <> (BundleArgument.tupled, BundleArgument.unapply)
     }
 
     class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def job_id = column[Option[Long]]("job_id")
+        def bundle_id = column[Option[Long]]("bundle_id")
         def namespace = column[String]("namespace")
         def project = column[String]("project")
         def target = column[String]("target")
+        def phase = column[String]("phase")
         def partitions_hash = column[String]("partitions_hash")
         def start_ts = column[Timestamp]("start_ts")
         def end_ts = column[Timestamp]("end_ts")
         def status = column[String]("status")
 
-        def idx = index("TARGET_RUN_IDX", (namespace, project, target, partitions_hash, status), unique = false)
-        def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def idx = index("TARGET_RUN_IDX", (namespace, project, target, phase, partitions_hash, status), unique = false)
+        def bundle = foreignKey("TARGET_RUN_BUNDLE_RUN_FK", bundle_id, bundleRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (id, job_id, namespace, project, target, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
+        def * = (id, bundle_id, namespace, project, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
     }
 
     class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
@@ -164,7 +168,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     def create() : Unit = {
         import scala.concurrent.ExecutionContext.Implicits.global
-        val tables = Seq(jobRuns, jobArgs, targetRuns, targetPartitions)
+        val tables = Seq(bundleRuns, bundleArgs, targetRuns, targetPartitions)
 
         val existing = db.run(profile.defaultTables)
         val query = existing.flatMap( v => {
@@ -177,33 +181,34 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(query, Duration.Inf)
     }
 
-    def getJobState(run:JobRun) : Option[JobState] = {
-        val latestId = jobRuns
+    def getBundleState(run:BundleRun) : Option[BundleState] = {
+        val latestId = bundleRuns
             .filter(r => r.namespace === run.namespace
                 && r.project === run.project
-                && r.job === run.job
+                && r.bundle === run.bundle
+                && r.phase === run.phase
                 && r.args_hash === run.args_hash
                 && r.status =!= Status.SKIPPED.value
             ).map(_.id)
             .max
 
-        val qj = jobRuns.filter(_.id === latestId)
+        val qj = bundleRuns.filter(_.id === latestId)
         val job = Await.result(db.run(qj.result), Duration.Inf)
             .headOption
 
         // Retrieve job arguments
-        val qa = job.map(j => jobArgs.filter(_.job_id === j.id))
+        val qa = job.map(j => bundleArgs.filter(_.bundle_id === j.id))
         val args = qa.toSeq.flatMap(q =>
             Await.result(db.run(q.result), Duration.Inf)
                 .map(a => (a.name, a.value))
         ).toMap
 
-        job.map(state => JobState(
+        job.map(state => BundleState(
             state.id.toString,
-            state.parent_id.map(_.toString),
             state.namespace,
             state.project,
-            state.job,
+            state.bundle,
+            state.phase,
             args,
             Status.ofString(state.status),
             Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
@@ -211,48 +216,49 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         ))
     }
 
-    def setJobStatus(run:JobRun) : Unit = {
-        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
+    def setBundleStatus(run:BundleRun) : Unit = {
+        val q = bundleRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
         Await.result(db.run(q), Duration.Inf)
     }
 
-    def insertJobRun(run:JobRun, args:Map[String,String]) : JobRun = {
-        val runQuery = (jobRuns returning jobRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
+    def insertBundleRun(run:BundleRun, args:Map[String,String]) : BundleRun = {
+        val runQuery = (bundleRuns returning bundleRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
         val runResult = Await.result(db.run(runQuery), Duration.Inf)
 
-        val runArgs = args.map(kv => JobArgument(runResult.id, kv._1, kv._2))
-        val argsQuery = jobArgs ++= runArgs
+        val runArgs = args.map(kv => BundleArgument(runResult.id, kv._1, kv._2))
+        val argsQuery = bundleArgs ++= runArgs
         Await.result(db.run(argsQuery), Duration.Inf)
 
         runResult
     }
 
-    def findJob(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
-        def mapOrderColumn(order:JobOrder) : JobRuns => Rep[_] = {
+    def findBundle(query:BundleQuery, order:Seq[BundleOrder], limit:Int, offset:Int) : Seq[BundleState] = {
+        def mapOrderColumn(order:BundleOrder) : BundleRuns => Rep[_] = {
             order match {
-                case JobOrder.BY_DATETIME => t => t.start_ts
-                case JobOrder.BY_ID => t => t.id
-                case JobOrder.BY_NAME => t => t.job
-                case JobOrder.BY_STATUS => t => t.status
+                case BundleOrder.BY_DATETIME => t => t.start_ts
+                case BundleOrder.BY_ID => t => t.id
+                case BundleOrder.BY_NAME => t => t.bundle
+                case BundleOrder.BY_PHASE => t => t.phase
+                case BundleOrder.BY_STATUS => t => t.status
             }
         }
-        def mapOrderDirection(order:JobOrder) : slick.ast.Ordering = {
+        def mapOrderDirection(order:BundleOrder) : slick.ast.Ordering = {
             if (order.isAscending)
                 slick.ast.Ordering(slick.ast.Ordering.Asc)
             else
                 slick.ast.Ordering(slick.ast.Ordering.Desc)
         }
 
-        val q = query.args.foldLeft(jobRuns.map(identity))((q,kv) => q
-                .join(jobArgs).on(_.id === _.job_id)
+        val q = query.args.foldLeft(bundleRuns.map(identity))((q, kv) => q
+                .join(bundleArgs).on(_.id === _.bundle_id)
                 .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
                 .map(xy => xy._1)
             )
             .optionalFilter(query.namespace)(_.namespace === _)
             .optionalFilter(query.project)(_.project === _)
-            .optionalFilter(query.name)(_.job === _)
+            .optionalFilter(query.name)(_.bundle === _)
             .optionalFilter(query.status)(_.status === _.toString)
-            .optionalFilter2(query.parentId)((row,value) => !row.parent_id.isEmpty && row.parent_id === value.toLong)
+            .optionalFilter(query.phase)(_.phase === _.toString)
             .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
             .drop(offset)
@@ -260,12 +266,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
 
         Await.result(db.run(q.result), Duration.Inf)
-            .map(state => JobState(
+            .map(state => BundleState(
                 state.id.toString,
-                state.parent_id.map(_.toString),
                 state.namespace,
                 state.project,
-                state.job,
+                state.bundle,
+                state.phase,
                 Map(),
                 Status.ofString(state.status),
                 Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
@@ -278,6 +284,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .filter(tr => tr.namespace === target.namespace
                 && tr.project === target.project
                 && tr.target === target.target
+                && tr.phase === target.phase
                 && tr.partitions_hash === target.partitions_hash
                 && tr.status =!= Status.SKIPPED.value
             )
@@ -298,11 +305,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
         tgt.map(state => TargetState(
             state.id.toString,
-            state.job_id.map(_.toString),
+            state.bundle_id.map(_.toString),
             state.namespace,
             state.project,
             state.target,
             parts,
+            Phase.ofString(state.phase),
             Status.ofString(state.status),
             Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
             Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))

@@ -39,7 +39,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
-import com.dimajix.flowman.history.JobInstance
+import com.dimajix.flowman.history.BundleInstance
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
@@ -202,8 +202,8 @@ case class Job (
       * Returns a JobInstance used for state management
       * @return
       */
-    def instance(args:Map[String,String]) : JobInstance = {
-        JobInstance(
+    def instance(args:Map[String,String]) : BundleInstance = {
+        BundleInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
             name,

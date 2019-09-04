@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.JobToken
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 
@@ -29,12 +28,6 @@ class SimpleRunner extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[SimpleRunner])
 
     override protected def jobRunner(job:JobToken) : Runner = this
-
-    /**
-      * Performs some checkJob, if the run is required. Returns false if the job is out of date and should be rerun
-      * @return
-      */
-    override protected def checkJob(job:JobInstance) : Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -56,7 +49,7 @@ class SimpleRunner extends AbstractRunner {
       * @param target
       * @return
       */
-    protected override def checkTarget(target: TargetInstance): Boolean = false
+    protected override def checkTarget(target: TargetInstance, phase:Phase): Boolean = false
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -64,7 +57,7 @@ class SimpleRunner extends AbstractRunner {
       * @param target
       * @return
       */
-    override protected def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
+    override protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken = null
 
     /**
       * Marks a run as a success

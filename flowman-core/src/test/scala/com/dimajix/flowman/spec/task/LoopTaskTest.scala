@@ -24,9 +24,9 @@ import org.scalatest.mockito.MockitoSugar
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.spec.Metadata
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType

@@ -22,11 +22,11 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.task.CleanTargetTask
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 

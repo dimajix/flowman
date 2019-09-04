@@ -28,6 +28,8 @@ import slick.jdbc.H2Profile
 import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
 
+import com.dimajix.flowman.execution.Status
+
 
 
 object JdbcStateStore {

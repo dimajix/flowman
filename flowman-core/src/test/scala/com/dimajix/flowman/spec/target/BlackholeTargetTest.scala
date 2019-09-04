@@ -52,6 +52,6 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
 
         val output = context.getTarget(TargetIdentifier("out"))
         output.build(executor)
-        output.clean(executor)
+        output.truncate(executor)
     }
 }

@@ -80,3 +80,9 @@ case class MappingOutputIdentifier(name:String, output:String, project:Option[St
             project.get + "/" + name + ":" + output
     }
 }
+
+
+case class ResourceIdentifier(category:String, name:String, project:Option[String]) {
+    def isEmpty : Boolean = name.isEmpty
+    def nonEmpty : Boolean = name.nonEmpty
+}

@@ -49,7 +49,7 @@ case class CountTarget(
       * Cleaning a count target is a no-op
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
 
     }
 }

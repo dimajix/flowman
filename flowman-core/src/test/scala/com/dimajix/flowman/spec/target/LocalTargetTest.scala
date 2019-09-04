@@ -64,7 +64,7 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         outputPath.toFile.exists() should be (true)
 
         outputPath.toFile.exists() should be (true)
-        output.clean(executor)
+        output.truncate(executor)
         outputPath.toFile.exists() should be (false)
     }
 

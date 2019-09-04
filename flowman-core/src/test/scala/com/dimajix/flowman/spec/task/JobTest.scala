@@ -27,8 +27,8 @@ import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.spec.JobIdentifier

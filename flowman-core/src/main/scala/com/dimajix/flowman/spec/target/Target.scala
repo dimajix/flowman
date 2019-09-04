@@ -20,19 +20,18 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
-import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
-import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
-import com.dimajix.flowman.history.TargetInstance
 
 
 object Target {
@@ -56,8 +55,10 @@ object Target {
         name:String,
         kind:String,
         labels:Map[String,String],
-        enabled: Boolean
-     ) extends Instance.Properties
+        enabled: Boolean,
+        before: Seq[TargetIdentifier],
+        after: Seq[TargetIdentifier]
+    ) extends Instance.Properties
 }
 
 
@@ -87,6 +88,41 @@ abstract class Target extends AbstractInstance {
     def instance : TargetInstance
 
     /**
+      * Returns an explicit user defined list of targets to be executed after this target. I.e. this
+      * target needs to be executed before all other targets in this list.
+      * @return
+      */
+    def before : Seq[TargetIdentifier]
+
+    /**
+      * Returns an explicit user defined list of targets to be executed before this target I.e. this
+      * * target needs to be executed after all other targets in this list.
+      *
+      * @return
+      */
+    def after : Seq[TargetIdentifier]
+
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    def produces : Seq[ResourceIdentifier]
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    def requires : Seq[ResourceIdentifier]
+
+    /**
+      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
+      * will not provide the data itself, it will only create the container
+      * @param executor
+      */
+    def create(executor:Executor) : Unit
+    def migrate(executor:Executor) : Unit
+
+    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
@@ -95,11 +131,18 @@ abstract class Target extends AbstractInstance {
     def build(executor:Executor) : Unit
 
     /**
-      * Cleans up a specific target
+      * Deletes data of a specific target
       *
       * @param executor
       */
-    def clean(executor:Executor) : Unit
+    def truncate(executor:Executor) : Unit
+
+    /**
+      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
+      * the table definition
+      * @param executor
+      */
+    def destroy(executor:Executor) : Unit
 }
 
 
@@ -127,6 +170,8 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
 )
 abstract class TargetSpec extends NamedSpec[Target] {
     @JsonProperty(value = "enabled", required=false) private var enabled:String = "true"
+    @JsonProperty(value = "before", required=false) private var before:Seq[String] = Seq()
+    @JsonProperty(value = "after", required=false) private var after:Seq[String] = Seq()
 
     override def instantiate(context: Context): Target
 

@@ -32,8 +32,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project

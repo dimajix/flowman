@@ -67,7 +67,7 @@ case class FileTarget(
       *
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
         require(executor != null)
 
         logger.info(s"Deleting directory '$location' of file relation")

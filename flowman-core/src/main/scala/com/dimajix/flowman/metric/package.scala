@@ -20,7 +20,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Metadata
 
 

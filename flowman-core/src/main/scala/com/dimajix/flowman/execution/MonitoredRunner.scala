@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.JobToken
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 
@@ -74,8 +73,8 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def checkTarget(target: TargetInstance): Boolean = {
-        stateStore.checkTarget(target)
+    protected override def checkTarget(target: TargetInstance, phase: Phase): Boolean = {
+        stateStore.checkTarget(target, phase)
     }
 
     /**
@@ -84,8 +83,8 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def startTarget(target: TargetInstance, parent: Option[JobToken]): TargetToken = {
-        stateStore.startTarget(target, parent)
+    protected override def startTarget(target: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken = {
+        stateStore.startTarget(target, phase, parent)
     }
 
     /**

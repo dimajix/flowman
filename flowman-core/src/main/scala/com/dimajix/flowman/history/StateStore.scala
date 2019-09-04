@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
+
 
 abstract class JobToken
 
@@ -57,21 +60,21 @@ abstract class StateStore {
       * @param target
       * @return
       */
-    def getTargetState(target:TargetInstance) : Option[TargetState]
+    def getTargetState(target:TargetInstance, phase:Phase) : Option[TargetState]
 
     /**
       * Performs some checkJob, if the run is required
       * @param target
       * @return
       */
-    def checkTarget(target:TargetInstance) : Boolean
+    def checkTarget(target:TargetInstance, phase:Phase) : Boolean
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param target
       * @return
       */
-    def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken
+    def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Sets the status of a job after it has been started

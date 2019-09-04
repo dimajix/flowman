@@ -16,9 +16,9 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.spec.target.Bundle
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.history.Status
 
 
 /**
@@ -31,26 +31,46 @@ abstract class Runner {
       * execute a specific job, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overriden with the force flag
       * @param executor
-      * @param job
+      * @param exec
+      * @param phase
       * @param args
       * @param force
       * @return
       */
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : Status
+    def execute(executor: Executor, exec:Bundle, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status
+
+    /**
+      * Creates the container for a single target
+      * @param executor
+      * @param target the target to create
+      */
+    def create(executor: Executor, target:Target) : Status
+
+    /**
+      * Migrates a single target (if required)
+      * @param executor
+      * @param target the target to migrate
+      */
+    def migrate(executor: Executor, target:Target) : Status
 
     /**
       * Builds a single target
       * @param executor
       * @param target the target to build
-      * @param logged boolean parameter specifying if the build process should be logged in the state database
       */
-    def build(executor: Executor, target:Target, logged:Boolean=true, force:Boolean=true) : Status
+    def build(executor: Executor, target:Target, force:Boolean=true) : Status
+
+    /**
+      * Truncates the data of a single target
+      * @param executor
+      * @param target the target to truncate
+      */
+    def truncate(executor: Executor, target:Target) : Status
 
     /**
       * Cleans a single target
       * @param executor
-      * @param target the target to clean
-      * @param logged boolean parameter specifying if the clean process should be logged in the state database
+      * @param target the target to destroy
       */
-    def clean(executor: Executor, target:Target, logged:Boolean=true) : Status
+    def destroy(executor: Executor, target:Target) : Status
 }

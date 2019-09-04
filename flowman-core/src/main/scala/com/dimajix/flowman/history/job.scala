@@ -18,74 +18,76 @@ package com.dimajix.flowman.history
 
 import java.time.ZonedDateTime
 
+import com.dimajix.flowman.execution.Status
+
 /**
-  *
+  * A JobInstance serves as an identifier of a specific job in the History
   * @param namespace
   * @param project
-  * @param target
-  * @param partitions
+  * @param job
+  * @param args
   */
-case class TargetInstance(
+case class JobInstance(
     namespace:String,
     project:String,
-    target:String,
-    partitions:Map[String,String] = Map()
+    job:String,
+    args:Map[String,String] = Map()
 ) {
     require(namespace != null)
     require(project != null)
-    require(target != null)
-    require(partitions != null)
+    require(job != null)
+    require(args != null)
 }
 
 
 /**
-  * The TargetQuery encapsulates a query for retrieving all targets matching the given criteria
+  * The JobQuery object is used to retrieve a list of jobs matching the given critera
   * @param namespace
   * @param project
   * @param name
   * @param status
-  * @param jobName
-  * @param jobId
+  * @param parentName
+  * @param parentId
   * @param from
   * @param to
-  * @param partitions
+  * @param args
   */
-case class TargetQuery(
+case class JobQuery(
     namespace:Option[String],
     project:Option[String],
     name:Option[String],
     status:Option[Status],
-    jobName:Option[String],
-    jobId:Option[String],
+    parentName:Option[String],
+    parentId:Option[String],
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
-    partitions:Map[String,String] = Map()
+    args:Map[String,String] = Map()
 )
 
 
-case class TargetState(
+case class JobState(
     id:String,
-    jobId:Option[String],
+    parentId:Option[String],
     namespace:String,
     project:String,
-    target:String,
-    partitions:Map[String,String],
+    job:String,
+    args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,
     endDateTime:Option[ZonedDateTime] = None
 )
 
 
-sealed case class TargetOrder (isAscending:Boolean=true) {
-    def asc() : TargetOrder  = copy(true)
-    def desc() : TargetOrder  = copy(false)
+sealed case class JobOrder(isAscending:Boolean=true) {
+    def asc() : JobOrder = copy(true)
+    def desc() : JobOrder = copy(false)
 }
 
-object TargetOrder {
-    object BY_DATETIME extends TargetOrder
-    object BY_NAME extends TargetOrder
-    object BY_ID extends TargetOrder
-    object BY_STATUS extends TargetOrder
-    object BY_PARENT_NAME extends TargetOrder
-    object BY_PARENT_ID extends TargetOrder
+object JobOrder {
+    object BY_DATETIME extends JobOrder
+    object BY_NAME extends JobOrder
+    object BY_ID extends JobOrder
+    object BY_STATUS extends JobOrder
+    object BY_PARENT_NAME extends JobOrder
+    object BY_PARENT_ID extends JobOrder
 }

@@ -46,4 +46,7 @@ abstract class BaseTarget extends Target {
             name
         )
     }
+
+    override def before : Seq[TargetIdentifier] = instanceProperties.before
+    override def after : Seq[TargetIdentifier] = instanceProperties.after
 }

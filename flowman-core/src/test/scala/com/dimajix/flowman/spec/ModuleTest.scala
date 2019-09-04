@@ -22,7 +22,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.execution.Status
 import com.dimajix.spark.testing.LocalSparkSession
 
 class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {

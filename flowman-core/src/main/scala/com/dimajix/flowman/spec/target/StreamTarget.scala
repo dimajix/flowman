@@ -59,7 +59,7 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
         logger.info(s"Cleaining streaming relation '$relation'")
         val rel = context.getRelation(relation)
         rel.clean(executor)

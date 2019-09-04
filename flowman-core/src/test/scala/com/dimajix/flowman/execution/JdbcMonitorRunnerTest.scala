@@ -27,7 +27,6 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.connection.JdbcConnectionSpec
 import com.dimajix.flowman.spec.history.JdbcHistorySpec
 import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.types.StringType
 
 

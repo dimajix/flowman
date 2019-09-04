@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.JobIdentifier
@@ -39,7 +40,6 @@ import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.history.JobInstance
-import com.dimajix.flowman.history.Status
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.metric.MetricBoardSpec

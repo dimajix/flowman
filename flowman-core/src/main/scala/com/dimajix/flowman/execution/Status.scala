@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.history
+package com.dimajix.flowman.execution
 
 import java.util.Locale
 
 
-sealed abstract class Status { val value:String }
+sealed abstract class Status {
+    val value: String
+
+    override def toString: String = value
+}
+
 object Status {
     case object UNKNOWN extends Status { val value = "unknown" }
     case object RUNNING extends Status { val value = "running" }

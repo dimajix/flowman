@@ -100,7 +100,7 @@ object Project {
             project._relations = module.relations
             project._mappings = module.mappings
             project._targets = module.targets
-            project._jobs = module.jobs
+            // TODO: Metrics
         }
     }
 
@@ -166,14 +166,6 @@ object Project {
             project._targets = project._targets + (name -> target)
             this
         }
-        def setJobs(jobs:Map[String,JobSpec]) : Builder = {
-            project._jobs = jobs
-            this
-        }
-        def addJob(name:String, job:JobSpec) : Builder = {
-            project._jobs = project._jobs + (name -> job)
-            this
-        }
     }
 
     def read = new Reader
@@ -186,7 +178,6 @@ class Project {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
     @JsonProperty(value="version", required = false) private var _version: String = _
-    @JsonProperty(value="main", required = false) private var _main: Seq[String] = Seq("main")
     @JsonProperty(value="modules", required = true) private var _modules: Seq[String] = Seq()
 
     private var _basedir: File = File.empty
@@ -199,7 +190,6 @@ class Project {
     private var _relations: Map[String,RelationSpec] = Map()
     private var _mappings: Map[String,MappingSpec] = Map()
     private var _targets: Map[String,TargetSpec] = Map()
-    private var _jobs: Map[String,JobSpec] = Map()
 
     def name : String = _name
     def description : Option[String] = _description
@@ -207,7 +197,6 @@ class Project {
     def modules : Seq[String] = _modules
     def filename : File = _filename
     def basedir : File = _basedir
-    def main : Seq[String] = _main
 
     def config : Map[String,String] = _config
     def environment : Map[String,String] = _environment
@@ -217,5 +206,4 @@ class Project {
     def connections : Map[String,ConnectionSpec] = _connections
     def mappings : Map[String,MappingSpec] = _mappings
     def targets : Map[String,TargetSpec] = _targets
-    def jobs : Map[String,JobSpec] = _jobs
 }

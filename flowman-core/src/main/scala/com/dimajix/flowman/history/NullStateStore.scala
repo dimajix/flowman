@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution.Status
+
 
 class NullStateStore extends StateStore {
     /**

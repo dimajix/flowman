@@ -110,7 +110,7 @@ case class LocalTarget(
       *
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
         logger.info("Cleaning local file '{}'", filename)
 
         val outputFile = new File(filename)

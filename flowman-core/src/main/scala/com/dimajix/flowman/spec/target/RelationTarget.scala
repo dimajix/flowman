@@ -78,7 +78,7 @@ case class RelationTarget(
       * Cleans the target. This will remove any data in the target for the current partition
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
         val partition = this.partition.mapValues(v => SingleValue(v))
 
         logger.info(s"Cleaning partition $partition of relation '$relation'")

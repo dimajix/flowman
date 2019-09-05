@@ -1,6 +1,23 @@
+/*
+ * Copyright 2019 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -18,8 +35,11 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.spec.task.JobParameter
 import com.dimajix.flowman.spec.task.JobParameterSpec
+import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.FieldType
 
 
@@ -172,7 +192,7 @@ case class Bundle(
 
         targets.foreach( id => {
             val target = projectContext.getTarget(id)
-            phase.execute(projectRunner, projectExecutor, target)
+            projectRunner.execute(projectExecutor, target, phase, force)
         })
 
         // Release any resources
@@ -185,10 +205,46 @@ case class Bundle(
 }
 
 
+object BundleSpec extends TypeRegistry[BundleSpec] {
+    class NameResolver extends StdConverter[Map[String, BundleSpec], Map[String, BundleSpec]] {
+        override def convert(value: Map[String, BundleSpec]): Map[String, BundleSpec] = {
+            value.foreach(kv => kv._2.name = kv._1)
+            value
+        }
+    }
+}
+
 class BundleSpec extends NamedSpec[Bundle] {
     @JsonProperty(value="description") private var description:Option[String] = None
     @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="targets") private var targets: Seq[String] = Seq()
 
+    override def instantiate(context: Context): Bundle = {
+        require(context != null)
+        Bundle(
+            instanceProperties(context),
+            description.map(context.evaluate),
+            parameters.map(_.instantiate(context)),
+            splitSettings(environment).toMap,
+            targets.map(context.evaluate).map(TargetIdentifier.parse),
+        )
+    }
+
+    /**
+      * Returns a set of common properties
+      *
+      * @param context
+      * @return
+      */
+    override protected def instanceProperties(context: Context): Bundle.Properties = {
+        require(context != null)
+        Bundle.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            context.evaluate(labels)
+        )
+    }
 }

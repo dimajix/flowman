@@ -23,9 +23,8 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
 import com.dimajix.flowman.spec.model.RelationSpec
+import com.dimajix.flowman.spec.target.BundleSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobSpec
 
 
 object Project {
@@ -100,6 +99,7 @@ object Project {
             project._relations = module.relations
             project._mappings = module.mappings
             project._targets = module.targets
+            project._bundles = module.bundles
             // TODO: Metrics
         }
     }
@@ -158,12 +158,20 @@ object Project {
             project._mappings = project._mappings + (name -> mapping)
             this
         }
-        def setTargets(outputs:Map[String,TargetSpec]) : Builder = {
-            project._targets = outputs
+        def setTargets(targets:Map[String,TargetSpec]) : Builder = {
+            project._targets = targets
             this
         }
         def addTarget(name:String, target:TargetSpec) : Builder = {
             project._targets = project._targets + (name -> target)
+            this
+        }
+        def setBundles(bundles:Map[String,BundleSpec]) : Builder = {
+            project._bundles = bundles
+            this
+        }
+        def addBundle(name:String, bundle:BundleSpec) : Builder = {
+            project._bundles = project._bundles + (name -> bundle)
             this
         }
     }
@@ -190,6 +198,7 @@ class Project {
     private var _relations: Map[String,RelationSpec] = Map()
     private var _mappings: Map[String,MappingSpec] = Map()
     private var _targets: Map[String,TargetSpec] = Map()
+    private var _bundles: Map[String,BundleSpec] = Map()
 
     def name : String = _name
     def description : Option[String] = _description
@@ -206,4 +215,5 @@ class Project {
     def connections : Map[String,ConnectionSpec] = _connections
     def mappings : Map[String,MappingSpec] = _mappings
     def targets : Map[String,TargetSpec] = _targets
+    def bundles : Map[String,BundleSpec] = _bundles
 }

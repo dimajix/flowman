@@ -27,6 +27,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.model.RelationSpec
+import com.dimajix.flowman.spec.target.BundleSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.task.JobSpec
 
@@ -95,6 +96,8 @@ class Module {
     @JsonProperty(value="mappings") private var _mappings: Map[String,MappingSpec] = Map()
     @JsonDeserialize(converter=classOf[TargetSpec.NameResolver])
     @JsonProperty(value="targets") private var _targets: Map[String,TargetSpec] = Map()
+    @JsonDeserialize(converter=classOf[BundleSpec.NameResolver])
+    @JsonProperty(value="executions") private var _bundles: Map[String,BundleSpec] = Map()
     @JsonProperty(value="metrics") private var _metrics: Option[MetricBoardSpec] = None
 
     def profiles : Map[String,Profile] = _profiles
@@ -102,6 +105,7 @@ class Module {
     def connections : Map[String,ConnectionSpec] = _connections
     def mappings : Map[String,MappingSpec] = _mappings
     def targets : Map[String,TargetSpec] = _targets
+    def bundles : Map[String,BundleSpec] = _bundles
 
     /**
       * Returns all configuration variables as a key-value sequence
@@ -131,6 +135,7 @@ class Module {
         result._relations = _relations ++ other._relations
         result._mappings = _mappings ++ other._mappings
         result._targets = _targets ++ other._targets
+        result._bundles = _bundles ++ other._bundles
         result._profiles = _profiles ++ other._profiles
         //TODO: metrics
         result
@@ -152,6 +157,7 @@ class Module {
                 .setRelations(relations)
                 .setMappings(mappings)
                 .setTargets(targets)
+                .setBundles(bundles)
                 .build()
     }
 }

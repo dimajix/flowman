@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,9 @@ object Target {
                 name,
                 kind,
                 Map(),
-                true
+                true,
+                Seq(),
+                Seq()
             )
         }
     }
@@ -189,7 +191,9 @@ abstract class TargetSpec extends NamedSpec[Target] {
             name,
             kind,
             context.evaluate(labels),
-            context.evaluate(enabled).toBoolean
+            context.evaluate(enabled).toBoolean,
+            before.map(context.evaluate).map(TargetIdentifier.parse),
+            after.map(context.evaluate).map(TargetIdentifier.parse)
         )
     }
 }

@@ -25,7 +25,7 @@ import com.dimajix.flowman.spec.Metadata
 
 
 package object metric {
-    def withWallTime(registry: MetricSystem, metadata : Metadata)(fn: => Status) : Status = {
+    def withWallTime[T](registry: MetricSystem, metadata : Metadata)(fn: => T) : T = {
         // Create and register bundle
         val metricName = metadata.kind + "_runtime"
         val bundleLabels = Map(

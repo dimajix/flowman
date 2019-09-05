@@ -190,7 +190,7 @@ class Runner private(
         val executor = session.executor
         val runner = session.runner
 
-        val job = context.getJob(JobIdentifier(jobName))
+        val job = context.getBundle(JobIdentifier(jobName))
         val result = runner.execute(executor, job, args, true)
 
         result match {

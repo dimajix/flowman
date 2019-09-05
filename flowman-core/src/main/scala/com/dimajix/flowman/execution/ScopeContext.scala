@@ -176,7 +176,7 @@ class ScopeContext(
             parent.getTarget(identifier)
         }
     }
-    override def getJob(identifier: JobIdentifier): Job = {
+    override def getBundle(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty) {
             jobs.get(identifier.name) match {
                 case Some(result) => result
@@ -185,12 +185,12 @@ class ScopeContext(
                         val result = spec.instantiate(this)
                         jobs.put(identifier.name, result)
                         result
-                    case None => parent.getJob(identifier)
+                    case None => parent.getBundle(identifier)
                 }
             }
         }
         else {
-            parent.getJob(identifier)
+            parent.getBundle(identifier)
         }
     }
 }

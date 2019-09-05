@@ -24,7 +24,6 @@ sealed abstract class Phase  {
     val value:String
 
     def execute(executor: Executor, target:Target) : Unit
-    def execute(runner: Runner, executor: Executor, target:Target) : Status
 
     override def toString: String = value
 }
@@ -33,27 +32,22 @@ object Phase {
     case object CREATE extends Phase {
         override val value = "create"
         override def execute(executor: Executor, target: Target): Unit = target.create(executor)
-        override def execute(runner: Runner, executor: Executor, target: Target): Status = runner.create(executor, target)
     }
     case object MIGRATE extends Phase {
         override val value = "migrate"
         override def execute(executor: Executor, target: Target): Unit = target.migrate(executor)
-        override def execute(runner: Runner, executor: Executor, target: Target): Status = runner.migrate(executor, target)
     }
     case object BUILD extends Phase {
         override val value = "build"
         override def execute(executor: Executor, target: Target): Unit = target.build(executor)
-        override def execute(runner: Runner, executor: Executor, target: Target): Status = runner.build(executor, target)
     }
     case object TRUNCATE extends Phase {
         override val value = "truncate"
         override def execute(executor: Executor, target: Target): Unit = target.truncate(executor)
-        override def execute(runner: Runner, executor: Executor, target: Target): Status = runner.truncate(executor, target)
     }
     case object DESTROY extends Phase {
         override val value = "destroy"
         override def execute(executor: Executor, target: Target): Unit = target.destroy(executor)
-        override def execute(runner: Runner, executor: Executor, target: Target): Status = runner.destroy(executor, target)
     }
 
     def ofString(status:String) : Phase = {
@@ -65,5 +59,22 @@ object Phase {
             case DESTROY.value => DESTROY
             case _ => throw new IllegalArgumentException(s"No phase defined for '$status'")
         }
+    }
+}
+
+
+object Lifecycle {
+    val DEFAULT = Seq(
+        Phase.CREATE,
+        Phase.MIGRATE,
+        Phase.BUILD
+    )
+    val CLEAN = Seq(
+        Phase.TRUNCATE,
+        Phase.DESTROY
+    )
+
+    def ofPhase(phase:Phase) : Seq[Phase] = {
+        ???
     }
 }

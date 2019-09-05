@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.NoSuchJobException
+import com.dimajix.flowman.execution.NoSuchBundleException
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
@@ -50,10 +50,10 @@ class RunCommand extends ActionCommand {
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val args = splitSettings(this.args).toMap
         Try {
-            context.getJob(JobIdentifier(job))
+            context.getBundle(JobIdentifier(job))
         }
         match {
-            case Failure(_:NoSuchJobException) =>
+            case Failure(_:NoSuchBundleException) =>
                 logger.error(s"Cannot find job '$job'")
                 false
             case Failure(_) =>

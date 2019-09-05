@@ -128,44 +128,7 @@ abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runn
         result
     }
 
-    /**
-      * Creates the container for a single target
-      */
-    override def create(executor: Executor, target: Target): Status = {
-        perform(executor, target, Phase.CREATE, true)
-    }
-
-    /**
-      * Migrates a single target (if required)
-      */
-    override def migrate(executor: Executor, target: Target): Status = {
-        perform(executor, target, Phase.MIGRATE, true)
-    }
-
-    /**
-      * Builds a single target
-      */
-    override def build(executor: Executor, target: Target, force:Boolean=true): Status = {
-        withWallTime(executor.metrics, target.metadata) {
-            perform(executor, target, Phase.BUILD, force)
-        }
-    }
-
-    /**
-      * Truncates the data of a single target
-      */
-    override def truncate(executor: Executor, target: Target): Status = {
-        perform(executor, target, Phase.TRUNCATE, true)
-    }
-
-    /**
-      * Destroys the produced artifact of a single target
-      */
-    override def destroy(executor: Executor, target: Target): Status = {
-        perform(executor, target, Phase.DESTROY, true)
-    }
-
-    private def perform(executor: Executor, target:Target, phase:Phase, force:Boolean) : Status = {
+    override def execute(executor: Executor, target:Target, phase:Phase, force:Boolean) : Status = {
         // Create job instance for state server
         val instance = target.instance
 
@@ -183,7 +146,10 @@ abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runn
             }
             else {
                 Try {
-                    phase.execute(executor, target)
+                    withWallTime(executor.metrics, target.metadata) {
+                        phase.execute(executor, target)
+                    }
+                    // TODO: Publish metrics
                 }
                 match {
                     case Success(_) =>

@@ -18,7 +18,6 @@ package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.spec.target.Bundle
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
 
 
 /**
@@ -40,37 +39,14 @@ abstract class Runner {
     def execute(executor: Executor, bundle:Bundle, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status
 
     /**
-      * Creates the container for a single target
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
       * @param executor
-      * @param target the target to create
+      * @param target
+      * @param phase
+      * @param force
+      * @return
       */
-    def create(executor: Executor, target:Target) : Status
-
-    /**
-      * Migrates a single target (if required)
-      * @param executor
-      * @param target the target to migrate
-      */
-    def migrate(executor: Executor, target:Target) : Status
-
-    /**
-      * Builds a single target
-      * @param executor
-      * @param target the target to build
-      */
-    def build(executor: Executor, target:Target, force:Boolean=true) : Status
-
-    /**
-      * Truncates the data of a single target
-      * @param executor
-      * @param target the target to truncate
-      */
-    def truncate(executor: Executor, target:Target) : Status
-
-    /**
-      * Cleans a single target
-      * @param executor
-      * @param target the target to destroy
-      */
-    def destroy(executor: Executor, target:Target) : Status
+    def execute(executor: Executor, target:Target, phase:Phase, force:Boolean=false) : Status
 }

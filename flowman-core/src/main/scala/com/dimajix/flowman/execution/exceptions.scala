@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.spec.BundleIdentifier
 import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -46,5 +46,5 @@ class NoSuchTargetException(val target:TargetIdentifier)
     extends ExecutionException(s"Target '$target' not found")
 class NoSuchConnectionException(val connection:ConnectionIdentifier)
     extends ExecutionException(s"Connection '$connection' not found")
-class NoSuchJobException(val job:JobIdentifier)
-    extends ExecutionException(s"Job '$job' not found")
+class NoSuchBundleException(val bundle:BundleIdentifier)
+    extends ExecutionException(s"Bundle '$bundle' not found")

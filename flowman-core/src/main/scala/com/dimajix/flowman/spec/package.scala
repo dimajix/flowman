@@ -19,6 +19,7 @@ package com.dimajix.flowman
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
+import com.dimajix.flowman.spec.target.Bundle
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
@@ -39,10 +40,12 @@ package object spec {
     type RelationIdentifier = Identifier[Relation]
     type TargetIdentifier = Identifier[Target]
     type JobIdentifier = Identifier[Job]
+    type BundleIdentifier = Identifier[Bundle]
 
     object MappingIdentifier extends IdentifierFactory[Mapping]
     object ConnectionIdentifier extends IdentifierFactory[Connection]
     object RelationIdentifier extends IdentifierFactory[Relation]
     object TargetIdentifier extends IdentifierFactory[Target]
     object JobIdentifier extends IdentifierFactory[Job]
+    object BundleIdentifier extends IdentifierFactory[Bundle]
 }

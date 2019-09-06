@@ -20,7 +20,7 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.BundleIdentifier
+import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Bundle
+import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.templating.FileWrapper
@@ -87,7 +87,7 @@ class ProjectContext private[execution](
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
-    private val bundles = mutable.Map[String,Bundle]()
+    private val bundles = mutable.Map[String,Batch]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -216,12 +216,12 @@ class ProjectContext private[execution](
       * @param identifier
       * @return
       */
-    override def getBundle(identifier: BundleIdentifier): Bundle = {
+    override def getBatch(identifier: BatchIdentifier): Batch = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == project.name)) {
             bundles.getOrElseUpdate(identifier.name,
-                project.bundles
+                project.batches
                     .getOrElse(identifier.name,
                         throw new NoSuchBundleException(identifier)
                     )
@@ -229,7 +229,7 @@ class ProjectContext private[execution](
             )
         }
         else {
-            parent.getBundle(identifier)
+            parent.getBatch(identifier)
         }
     }
 }

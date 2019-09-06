@@ -21,25 +21,6 @@ import java.time.ZonedDateTime
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 
-/**
-  * A JobInstance serves as an identifier of a specific job in the History
-  * @param namespace
-  * @param project
-  * @param job
-  * @param args
-  */
-case class BundleInstance(
-    namespace:String,
-    project:String,
-    job:String,
-    args:Map[String,String] = Map()
-) {
-    require(namespace != null)
-    require(project != null)
-    require(job != null)
-    require(args != null)
-}
-
 
 /**
   * The JobQuery object is used to retrieve a list of jobs matching the given critera
@@ -47,13 +28,11 @@ case class BundleInstance(
   * @param project
   * @param name
   * @param status
-  * @param parentName
-  * @param parentId
   * @param from
   * @param to
   * @param args
   */
-case class BundleQuery(
+case class BatchQuery(
     namespace:Option[String],
     project:Option[String],
     name:Option[String],
@@ -65,7 +44,7 @@ case class BundleQuery(
 )
 
 
-case class BundleState(
+case class BatchState(
     id:String,
     namespace:String,
     project:String,
@@ -78,15 +57,15 @@ case class BundleState(
 )
 
 
-sealed case class BundleOrder(isAscending:Boolean=true) {
-    def asc() : BundleOrder = copy(true)
-    def desc() : BundleOrder = copy(false)
+sealed case class BatchOrder(isAscending:Boolean=true) {
+    def asc() : BatchOrder = copy(true)
+    def desc() : BatchOrder = copy(false)
 }
 
-object BundleOrder {
-    object BY_DATETIME extends BundleOrder
-    object BY_NAME extends BundleOrder
-    object BY_ID extends BundleOrder
-    object BY_STATUS extends BundleOrder
-    object BY_PHASE extends BundleOrder
+object BatchOrder {
+    object BY_DATETIME extends BatchOrder
+    object BY_NAME extends BatchOrder
+    object BY_ID extends BatchOrder
+    object BY_STATUS extends BatchOrder
+    object BY_PHASE extends BatchOrder
 }

@@ -103,7 +103,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val targetFilename = new File(tempDir, "copy-relation-output.csv")
         targetFilename.exists() should be (false)
 
-        val job = context.getBundle(JobIdentifier("main"))
+        val job = context.getBatch(JobIdentifier("main"))
         job should not be (null)
         job.execute(executor, Map()) shouldBe (Status.SUCCESS)
         targetFilename.exists() should be (true)

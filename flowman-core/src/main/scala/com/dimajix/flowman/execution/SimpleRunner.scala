@@ -18,8 +18,8 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.history.BundleInstance
-import com.dimajix.flowman.history.BundleToken
+import com.dimajix.flowman.history.BatchInstance
+import com.dimajix.flowman.history.BatchToken
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 
@@ -27,21 +27,21 @@ import com.dimajix.flowman.history.TargetToken
 class SimpleRunner extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[SimpleRunner])
 
-    override protected def jobRunner(job:BundleToken) : Runner = this
+    override protected def jobRunner(job:BatchToken) : Runner = this
 
     /**
       * Starts the run and returns a token, which can be anything
       *
       * @return
       */
-    override protected def startBundle(job:BundleInstance, parent:Option[BundleToken]) : BundleToken = null
+    override protected def startBundle(job:BatchInstance, parent:Option[BatchToken]) : BatchToken = null
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    override protected def finishBundle(token:BundleToken, status:Status) : Unit = {}
+    override protected def finishBundle(token:BatchToken, status:Status) : Unit = {}
 
     /**
       * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt
@@ -57,7 +57,7 @@ class SimpleRunner extends AbstractRunner {
       * @param target
       * @return
       */
-    override protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[BundleToken]) : TargetToken = null
+    override protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken = null
 
     /**
       * Marks a run as a success

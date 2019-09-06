@@ -21,25 +21,6 @@ import java.time.ZonedDateTime
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 
-/**
-  *
-  * @param namespace
-  * @param project
-  * @param target
-  * @param partitions
-  */
-case class TargetInstance(
-    namespace:String,
-    project:String,
-    target:String,
-    partitions:Map[String,String] = Map()
-) {
-    require(namespace != null)
-    require(project != null)
-    require(target != null)
-    require(partitions != null)
-}
-
 
 /**
   * The TargetQuery encapsulates a query for retrieving all targets matching the given criteria

@@ -26,15 +26,15 @@ import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.history.BundleInstance
-import com.dimajix.flowman.history.BundleToken
+import com.dimajix.flowman.history.BatchInstance
+import com.dimajix.flowman.history.BatchToken
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.target.Bundle
+import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.Target
 
 
@@ -61,7 +61,7 @@ object AbstractRunner {
 }
 
 
-abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runner {
+abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runner {
     import com.dimajix.flowman.execution.AbstractRunner.JobExecutor
 
     protected val logger:Logger
@@ -74,7 +74,7 @@ abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runn
       * @param bundle
       * @return
       */
-    override def execute(executor: Executor, bundle:Bundle, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status = {
+    override def execute(executor: Executor, bundle:Batch, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status = {
         require(executor != null)
         require(args != null)
 
@@ -168,7 +168,7 @@ abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runn
         }
     }
 
-    protected def jobRunner(job:BundleToken) : Runner
+    protected def jobRunner(job:BatchToken) : Runner
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -176,14 +176,14 @@ abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runn
       * @param job
       * @return
       */
-    protected def startBundle(job:BundleInstance, parent:Option[BundleToken]) : BundleToken
+    protected def startBundle(job:BatchInstance, parent:Option[BatchToken]) : BatchToken
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    protected def finishBundle(token:BundleToken, status:Status) : Unit
+    protected def finishBundle(token:BatchToken, status:Status) : Unit
 
     /**
       * Performs some checks, if the target is already up to date
@@ -198,7 +198,7 @@ abstract class AbstractRunner(parentJob:Option[BundleToken] = None) extends Runn
       * @param target
       * @return
       */
-    protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[BundleToken]) : TargetToken
+    protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken
 
     /**
       * Marks a run as a success

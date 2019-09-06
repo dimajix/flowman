@@ -82,7 +82,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         val runner = executor.runner
 
-        val job = context.getBundle(JobIdentifier("default"))
+        val job = context.getBatch(JobIdentifier("default"))
         job should not be (null)
         job.name should be ("default")
         job.category should be ("job")

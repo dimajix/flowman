@@ -27,23 +27,69 @@ import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.RootExecutor
 import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.history.BundleInstance
+import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.Instance
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobParameter
-import com.dimajix.flowman.spec.task.JobParameterSpec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.StringType
 
 
-object Bundle {
+/**
+  * A BatchInstance serves as an identifier of a specific batch in the History
+  * @param namespace
+  * @param project
+  * @param batch
+  * @param args
+  */
+case class BatchInstance(
+    namespace:String,
+    project:String,
+    batch:String,
+    args:Map[String,String] = Map()
+) {
+    require(namespace != null)
+    require(project != null)
+    require(batch != null)
+    require(args != null)
+}
+
+object Batch {
+    case class Parameter(
+        name:String,
+        ftype : FieldType,
+        granularity: Option[String]=None,
+        default: Option[Any] = None,
+        description: Option[String]=None
+    ) {
+        /**
+          * Interpolates a given FieldValue returning all values as an Iterable
+          * @param value
+          * @return
+          */
+        def interpolate(value:FieldValue) : Iterable[Any] = {
+            ftype.interpolate(value, granularity)
+        }
+
+        /**
+          * Pasres a string representing a single value for the parameter
+          * @param value
+          * @return
+          */
+        def parse(value:String) : Any = {
+            ftype.parse(value)
+        }
+    }
+
     object Properties {
         def apply(context:Context, name:String="") : Properties = {
             require(context != null)
@@ -63,18 +109,18 @@ object Bundle {
        name: String,
        labels: Map[String, String]
    ) extends Instance.Properties {
-        override val kind : String = "execution"
+        override val kind : String = "batch"
    }
 
     class Builder(context:Context) {
         require(context != null)
         private var name:String = ""
         private var description:Option[String] = None
-        private var parameters:Seq[JobParameter] = Seq()
+        private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
 
-        def build() : Bundle = Bundle(
-            Bundle.Properties(context, name),
+        def build() : Batch = Batch(
+            Batch.Properties(context, name),
             description,
             parameters,
             Map(),
@@ -91,12 +137,12 @@ object Bundle {
             this.description = Some(desc)
             this
         }
-        def setParameters(params:Seq[JobParameter]) : Builder = {
+        def setParameters(params:Seq[Parameter]) : Builder = {
             require(params != null)
             this.parameters = params
             this
         }
-        def addParameter(param:JobParameter) : Builder = {
+        def addParameter(param:Parameter) : Builder = {
             require(param != null)
             this.parameters = this.parameters :+ param
             this
@@ -104,7 +150,7 @@ object Bundle {
         def addParameter(name:String, ftype:FieldType, granularity:Option[String] = None, value:Option[Any] = None) : Builder = {
             require(name != null)
             require(ftype != null)
-            this.parameters = this.parameters :+ JobParameter(name, ftype, granularity, value)
+            this.parameters = this.parameters :+ Parameter(name, ftype, granularity, value)
             this
         }
         def setTargets(targets:Seq[TargetIdentifier]) : Builder = {
@@ -123,30 +169,31 @@ object Bundle {
 }
 
 
-case class Bundle(
-                     instanceProperties:Bundle.Properties,
-                     description:Option[String],
-                     parameters:Seq[JobParameter],
-                     environment:Map[String,String],
-                     targets:Seq[TargetIdentifier]
+case class Batch(
+    instanceProperties:Batch.Properties,
+    description:Option[String],
+    parameters:Seq[Batch.Parameter],
+    environment:Map[String,String],
+    targets:Seq[TargetIdentifier],
+    metrics:Option[MetricBoardSpec] = None
 ) extends AbstractInstance {
-    private val logger = LoggerFactory.getLogger(classOf[Bundle])
+    private val logger = LoggerFactory.getLogger(classOf[Batch])
 
-    override def category: String = "execution"
-    override def kind : String = "execution"
+    override def category: String = "batch"
+    override def kind : String = "batch"
 
     /**
       * Returns an identifier for this job
       * @return
       */
-    def identifier : JobIdentifier = JobIdentifier(name, Option(project).map(_.name))
+    def identifier : BatchIdentifier = BatchIdentifier(name, Option(project).map(_.name))
 
     /**
       * Returns a JobInstance used for state management
       * @return
       */
-    def instance(args:Map[String,String]) : BundleInstance = {
-        BundleInstance(
+    def instance(args:Map[String,String]) : BatchInstance = {
+        BatchInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
             name,
@@ -188,16 +235,51 @@ case class Bundle(
             .build()
         val projectExecutor = new RootExecutor(executor, isolated)
         val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
-        val projectRunner = projectExecutor.runner
 
-        targets.foreach( id => {
-            val target = projectContext.getTarget(id)
-            projectRunner.execute(projectExecutor, target, phase, force)
-        })
+        withMetrics(projectContext, projectExecutor.metrics) {
+            executeTargets(projectContext, projectExecutor, targets, phase, force)
 
-        // Release any resources
-        if (isolated) {
-            projectExecutor.cleanup()
+            // Release any resources
+            if (isolated) {
+                projectExecutor.cleanup()
+            }
+        }
+    }
+
+    private def executeTargets(context: Context, executor: Executor, targets:Seq[TargetIdentifier], phase:Phase, force:Boolean) = {
+        val runner = executor.runner
+        val iter = targets.iterator
+        var error = false
+        while (iter.hasNext) {
+            val id = iter.next()
+            val target = context.getTarget(id)
+            val status = runner.execute(executor, target, phase, force)
+            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+        }
+    }
+
+    private def orderTargets(context: Context) : Seq[Target] = {
+        val targets = this.targets.map(t => context.getTarget(t))
+        val targetsByResources = targets.flatMap(t => t.produces.map(id => (id,t))).toMap
+        Seq()
+    }
+
+    private def withMetrics[T](context:Context, metricSystem:MetricSystem)(fn: => T) : T = {
+        val metrics = this.metrics.map(_.instantiate(context, metricSystem))
+
+        // Publish metrics
+        metrics.foreach { metrics =>
+            metrics.reset()
+            metricSystem.addBoard(metrics)
+        }
+
+        // Run original function
+        val result = fn
+
+        // Unpublish metrics
+        metrics.foreach { metrics =>
+            metricSystem.commitBoard(metrics)
+            metricSystem.removeBoard(metrics)
         }
 
         result
@@ -205,29 +287,31 @@ case class Bundle(
 }
 
 
-object BundleSpec extends TypeRegistry[BundleSpec] {
-    class NameResolver extends StdConverter[Map[String, BundleSpec], Map[String, BundleSpec]] {
-        override def convert(value: Map[String, BundleSpec]): Map[String, BundleSpec] = {
+object BatchSpec extends TypeRegistry[BatchSpec] {
+    class NameResolver extends StdConverter[Map[String, BatchSpec], Map[String, BatchSpec]] {
+        override def convert(value: Map[String, BatchSpec]): Map[String, BatchSpec] = {
             value.foreach(kv => kv._2.name = kv._1)
             value
         }
     }
 }
 
-class BundleSpec extends NamedSpec[Bundle] {
+class BatchSpec extends NamedSpec[Batch] {
     @JsonProperty(value="description") private var description:Option[String] = None
-    @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
+    @JsonProperty(value="parameters") private var parameters:Seq[BatchParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="targets") private var targets: Seq[String] = Seq()
+    @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
 
-    override def instantiate(context: Context): Bundle = {
+    override def instantiate(context: Context): Batch = {
         require(context != null)
-        Bundle(
+        Batch(
             instanceProperties(context),
             description.map(context.evaluate),
             parameters.map(_.instantiate(context)),
             splitSettings(environment).toMap,
             targets.map(context.evaluate).map(TargetIdentifier.parse),
+            metrics
         )
     }
 
@@ -237,14 +321,34 @@ class BundleSpec extends NamedSpec[Bundle] {
       * @param context
       * @return
       */
-    override protected def instanceProperties(context: Context): Bundle.Properties = {
+    override protected def instanceProperties(context: Context): Batch.Properties = {
         require(context != null)
-        Bundle.Properties(
+        Batch.Properties(
             context,
             context.namespace,
             context.project,
             name,
             context.evaluate(labels)
+        )
+    }
+}
+
+class BatchParameterSpec extends Spec[Batch.Parameter] {
+    @JsonProperty(value = "name") private var name: String = ""
+    @JsonProperty(value = "description") private var description: Option[String] = None
+    @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
+    @JsonProperty(value = "granularity", required = false) private var granularity: Option[String] = None
+    @JsonProperty(value = "default", required = false) private var default: Option[String] = None
+
+    override def instantiate(context: Context): Batch.Parameter = {
+        require(context != null)
+
+        Batch.Parameter(
+            context.evaluate(name),
+            ftype,
+            granularity.map(context.evaluate),
+            default.map(context.evaluate).map(d => ftype.parse(d)),
+            description.map(context.evaluate)
         )
     }
 }

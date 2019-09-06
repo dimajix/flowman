@@ -300,7 +300,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val metricSink = mock[MetricSink]
         metricSystem.addSink(metricSink)
 
-        val job = context.getBundle(JobIdentifier("main"))
+        val job = context.getBatch(JobIdentifier("main"))
         job.labels should be (Map("job_label" -> "xyz"))
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)

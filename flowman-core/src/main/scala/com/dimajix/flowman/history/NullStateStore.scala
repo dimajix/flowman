@@ -26,21 +26,21 @@ class NullStateStore extends StateStore {
       * @param job
       * @return
       */
-    def getBundleState(job:BundleInstance, phase:Phase) : Option[BundleState] = None
+    def getBatchState(job:BatchInstance, phase:Phase) : Option[BatchState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param job
       * @return
       */
-    override def startBundle(job:BundleInstance, phase:Phase) : BundleToken = null
+    override def startBatch(job:BatchInstance, phase:Phase) : BatchToken = null
 
     /**
       * Sets the status of a job after it has been started
       * @param token
       * @param status
       */
-    override def finishBundle(token:BundleToken, status:Status) : Unit = {}
+    override def finishBatch(token:BatchToken, status:Status) : Unit = {}
 
     /**
       * Returns the state of a target
@@ -61,7 +61,7 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[BundleToken]) : TargetToken = null
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken = null
 
     /**
       * Sets the status of a target after it has been started
@@ -77,7 +77,7 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findBundles(query:BundleQuery, order:Seq[BundleOrder], limit:Int, offset:Int) : Seq[BundleState] = Seq()
+    override def findBundles(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria

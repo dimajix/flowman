@@ -52,7 +52,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
             driver = "org.apache.derby.jdbc.EmbeddedDriver"
         )
 
-        val job = BundleInstance("default", "p1", "j1")
+        val job = BatchInstance("default", "p1", "j1")
 
         val store1 = new JdbcStateStore(connection)
         store1.checkJob(job) should be(false)
@@ -63,71 +63,71 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
     "The Job-API of JdbcStateStore" should "provide basic state management for jobs" in {
         val store = newStateStore()
 
-        val job = BundleInstance("default", "p1", "j1")
+        val job = BatchInstance("default", "p1", "j1")
 
         store.checkJob(job) should be(false)
-        store.getBundleState(job) should be (None)
-        val token = store.startBundle(job, None)
+        store.getBatchState(job) should be (None)
+        val token = store.startBatch(job, None)
         store.checkJob(job) should be(false)
-        store.getBundleState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishBundle(token, Status.SUCCESS)
+        store.getBatchState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishBatch(token, Status.SUCCESS)
         store.checkJob(job) should be(true)
-        store.getBundleState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getBatchState(job).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "return failed on job failures" in {
         val store = newStateStore()
 
-        val job = BundleInstance("default", "p1", "j1")
+        val job = BatchInstance("default", "p1", "j1")
 
         store.checkJob(job) should be(false)
-        store.getBundleState(job) should be (None)
-        val token = store.startBundle(job, None)
+        store.getBatchState(job) should be (None)
+        val token = store.startBatch(job, None)
         store.checkJob(job) should be(false)
-        store.getBundleState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishBundle(token, Status.SUCCESS)
+        store.getBatchState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishBatch(token, Status.SUCCESS)
         store.checkJob(job) should be(true)
-        store.getBundleState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getBatchState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startBundle(job, None)
+        val token2 = store.startBatch(job, None)
         store.checkJob(job) should be(false)
-        store.getBundleState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishBundle(token2, Status.FAILED)
+        store.getBatchState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishBatch(token2, Status.FAILED)
         store.checkJob(job) should be(false)
-        store.getBundleState(job).map(_.status) should be (Some(Status.FAILED))
+        store.getBatchState(job).map(_.status) should be (Some(Status.FAILED))
     }
 
     it should "return success on skipped jobs" in {
         val store = newStateStore()
 
-        val job = BundleInstance("default", "p1", "j1")
+        val job = BatchInstance("default", "p1", "j1")
 
         store.checkJob(job) should be(false)
-        store.getBundleState(job) should be (None)
-        val token = store.startBundle(job, None)
+        store.getBatchState(job) should be (None)
+        val token = store.startBatch(job, None)
         store.checkJob(job) should be(false)
-        store.getBundleState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishBundle(token, Status.SUCCESS)
+        store.getBatchState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishBatch(token, Status.SUCCESS)
         store.checkJob(job) should be(true)
-        store.getBundleState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getBatchState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startBundle(job, None)
+        val token2 = store.startBatch(job, None)
         store.checkJob(job) should be(false)
-        store.getBundleState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishBundle(token2, Status.SKIPPED)
+        store.getBatchState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishBatch(token2, Status.SKIPPED)
         store.checkJob(job) should be(true)
-        store.getBundleState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getBatchState(job).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support job parameters" in {
         val store = newStateStore()
 
-        val job = BundleInstance("default", "p1", "j1")
+        val job = BatchInstance("default", "p1", "j1")
 
         store.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
-        val token = store.startBundle(job.copy(args = Map("p1" -> "v1")), None)
+        val token = store.startBatch(job.copy(args = Map("p1" -> "v1")), None)
         store.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(false)
-        store.finishBundle(token, Status.SUCCESS)
+        store.finishBatch(token, Status.SUCCESS)
         store.checkJob(job.copy(args = Map("p1" -> "v1"))) should be(true)
         store.checkJob(job.copy(args = Map("p1" -> "v2"))) should be(false)
         store.checkJob(job.copy(args = Map("p2" -> "v1"))) should be(false)

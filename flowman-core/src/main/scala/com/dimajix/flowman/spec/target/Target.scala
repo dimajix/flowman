@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
@@ -32,6 +31,25 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
+
+/**
+  *
+  * @param namespace
+  * @param project
+  * @param target
+  * @param partitions
+  */
+case class TargetInstance(
+    namespace:String,
+    project:String,
+    target:String,
+    partitions:Map[String,String] = Map()
+) {
+    require(namespace != null)
+    require(project != null)
+    require(target != null)
+    require(partitions != null)
+}
 
 
 object Target {

@@ -43,7 +43,7 @@ case class LoopTask(
             args:Map[String,String] => vals.forall(v => fn(args + (param.name -> v)))
         }
 
-        val instance = context.getBundle(job)
+        val instance = context.getBatch(job)
         val run = (args:Map[String,String]) => {
             logger.info(s"Calling sub-job '$job' with args ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
             executor.runner.execute(executor, instance, args, force) match {

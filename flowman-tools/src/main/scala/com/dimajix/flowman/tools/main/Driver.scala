@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Tool
-import com.dimajix.flowman.tools.exec.job.RunCommand
+import com.dimajix.flowman.tools.exec.batch.RunCommand
 
 
 object Driver {
@@ -79,7 +79,7 @@ class Driver(options:Arguments) extends Tool {
         val executor = session.executor
         val context = session.getContext(project)
 
-        val bundle = context.getBundle()
+        val bundle = context.getBatch()
         val bundleDescription = bundle.description.map("(" + _ + ")").getOrElse("")
         val bundleArgs = options.arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${bundle.name}' $bundleDescription with args $bundleArgs")

@@ -39,7 +39,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
-import com.dimajix.flowman.history.BundleInstance
+import com.dimajix.flowman.history.BatchInstance
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
@@ -47,32 +47,6 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StringType
 
-
-case class JobParameter(
-    name:String,
-    ftype : FieldType,
-    granularity: Option[String]=None,
-    default: Option[Any] = None,
-    description: Option[String]=None
-) {
-    /**
-      * Interpolates a given FieldValue returning all values as an Iterable
-      * @param value
-      * @return
-      */
-    def interpolate(value:FieldValue) : Iterable[Any] = {
-        ftype.interpolate(value, granularity)
-    }
-
-    /**
-      * Pasres a string representing a single value for the parameter
-      * @param value
-      * @return
-      */
-    def parse(value:String) : Any = {
-        ftype.parse(value)
-    }
-}
 
 
 object Job {
@@ -202,8 +176,8 @@ case class Job (
       * Returns a JobInstance used for state management
       * @return
       */
-    def instance(args:Map[String,String]) : BundleInstance = {
-        BundleInstance(
+    def instance(args:Map[String,String]) : BatchInstance = {
+        BatchInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
             name,

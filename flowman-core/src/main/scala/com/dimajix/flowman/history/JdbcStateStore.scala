@@ -53,41 +53,41 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
 
     /**
       * Returns the state of a job, or None if no information is available
-      * @param job
+      * @param batch
       * @return
       */
-    override def getBundleState(job: BundleInstance, phase: Phase): Option[BundleState] = {
-        val run =  BundleRun(
+    override def getBatchState(batch: BatchInstance, phase: Phase): Option[BatchState] = {
+        val run =  BatchRun(
             0,
-            Option(job.namespace).getOrElse(""),
-            Option(job.project).getOrElse(""),
-            job.job,
+            Option(batch.namespace).getOrElse(""),
+            Option(batch.project).getOrElse(""),
+            batch.getBatch,
             phase.value,
-            hashArgs(job),
+            hashArgs(batch),
             null,
             null,
             null
         )
         logger.info(s"Checking last state for phase '${phase}' of bundle ${run.namespace}/${run.project}/${run.bundle} in state database")
         withSession { repository =>
-            repository.getBundleState(run)
+            repository.getBatchState(run)
         }
     }
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param job
+      * @param batch
       * @return
       */
-    override def startBundle(job:BundleInstance, phase: Phase) : BundleToken = {
+    override def startBatch(batch:BatchInstance, phase: Phase) : BatchToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        val run =  BundleRun(
+        val run =  BatchRun(
             0,
-            Option(job.namespace).getOrElse(""),
-            Option(job.project).getOrElse(""),
-            job.job,
+            Option(batch.namespace).getOrElse(""),
+            Option(batch.project).getOrElse(""),
+            batch.getBatch,
             phase.value,
-            hashArgs(job),
+            hashArgs(batch),
             now,
             new Timestamp(0),
             Status.RUNNING.value
@@ -95,7 +95,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
 
         logger.info(s"Writing startJob marker for phase '${phase}' of bundle ${run.namespace}/${run.project}/${run.bundle} into state database")
         withSession { repository =>
-            repository.insertBundleRun(run, job.args)
+            repository.insertBatchRun(run, batch.args)
         }
     }
 
@@ -104,14 +104,14 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       *
       * @param token
       */
-    override def finishBundle(token:BundleToken, status: Status) : Unit = {
-        val run = token.asInstanceOf[BundleRun]
+    override def finishBatch(token:BatchToken, status: Status) : Unit = {
+        val run = token.asInstanceOf[BatchRun]
         logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.bundle} as $status in state database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setBundleStatus(run.copy(end_ts = now, status=status.value))
+            repository.setBatchStatus(run.copy(end_ts = now, status=status.value))
         }
     }
 
@@ -158,11 +158,11 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase: Phase, parent:Option[BundleToken]) : TargetToken = {
+    override def startTarget(target:TargetInstance, phase: Phase, parent:Option[BatchToken]) : TargetToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  TargetRun(
             0,
-            parent.map(_.asInstanceOf[BundleRun].id),
+            parent.map(_.asInstanceOf[BatchRun].id),
             Option(target.namespace).getOrElse(""),
             Option(target.project).getOrElse(""),
             target.target,
@@ -202,7 +202,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param offset
       * @return
       */
-    override def findBundles(query:BundleQuery, order:Seq[BundleOrder], limit:Int, offset:Int) : Seq[BundleState] = Seq()
+    override def findBundles(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria
@@ -213,7 +213,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       */
     override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
 
-    private def hashArgs(job:BundleInstance) : String = {
+    private def hashArgs(job:BatchInstance) : String = {
          hashMap(job.args)
     }
 

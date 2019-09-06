@@ -171,7 +171,7 @@ class ProjectService(store:Store) {
                 .disableSpark()
                 .build()
             val context = session.getContext(p)
-            context.getBundle(JobIdentifier(job))
+            context.getBatch(JobIdentifier(job))
         } match {
             case Success(j) =>
                 complete(Converter.ofSpec(j))

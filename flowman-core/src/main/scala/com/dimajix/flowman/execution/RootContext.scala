@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.BundleIdentifier
+import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
@@ -37,7 +37,7 @@ import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Bundle
+import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.task.Job
 
@@ -185,13 +185,13 @@ class RootContext private[execution](
       * @param identifier
       * @return
       */
-    override def getBundle(identifier: BundleIdentifier): Bundle = {
+    override def getBatch(identifier: BatchIdentifier): Batch = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
             throw new NoSuchBundleException(identifier)
         val child = getProjectContext(identifier.project.get)
-        child.getBundle(BundleIdentifier(identifier.name, None))
+        child.getBatch(BundleIdentifier(identifier.name, None))
     }
 
     /**

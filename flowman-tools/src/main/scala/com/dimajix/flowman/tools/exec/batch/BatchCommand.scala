@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.job
+package com.dimajix.flowman.tools.exec.batch
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand
@@ -27,7 +27,7 @@ import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
 
 
-class JobCommand extends NestedCommand {
+class BatchCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="subcommand",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),

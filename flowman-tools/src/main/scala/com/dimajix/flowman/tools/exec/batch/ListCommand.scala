@@ -1,4 +1,4 @@
-package com.dimajix.flowman.tools.exec.job
+package com.dimajix.flowman.tools.exec.batch
 
 import org.slf4j.LoggerFactory
 
@@ -12,7 +12,7 @@ class ListCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ListCommand])
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        project.jobs.keys.foreach(println)
+        project.batches.keys.foreach(println)
         true
     }
 

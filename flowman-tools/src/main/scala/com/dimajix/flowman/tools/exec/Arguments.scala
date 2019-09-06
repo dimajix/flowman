@@ -28,7 +28,7 @@ import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
-import com.dimajix.flowman.tools.exec.job.JobCommand
+import com.dimajix.flowman.tools.exec.batch.BatchCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
@@ -55,7 +55,7 @@ class Arguments(args:Array[String]) {
 
     @Argument(required=false,index=0,metaVar="group",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
-        new SubCommand(name="job",impl=classOf[JobCommand]),
+        new SubCommand(name="batch",impl=classOf[BatchCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),

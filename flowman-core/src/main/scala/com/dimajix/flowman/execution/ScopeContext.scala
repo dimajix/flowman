@@ -185,12 +185,12 @@ class ScopeContext(
                         val result = spec.instantiate(this)
                         jobs.put(identifier.name, result)
                         result
-                    case None => parent.getBundle(identifier)
+                    case None => parent.getBatch(identifier)
                 }
             }
         }
         else {
-            parent.getBundle(identifier)
+            parent.getBatch(identifier)
         }
     }
 }

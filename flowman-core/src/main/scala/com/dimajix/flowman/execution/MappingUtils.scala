@@ -21,7 +21,9 @@ import scala.collection.mutable
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.types.StructType
 
@@ -29,6 +31,13 @@ import com.dimajix.flowman.types.StructType
 object MappingUtils {
     private val logger = LoggerFactory.getLogger(MappingUtils.getClass)
 
+    /**
+      * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
+      * schema analysis beforehand. In such cases, None will be returned.
+      * @param mapping
+      * @param output
+      * @return
+      */
     def describe(mapping:Mapping, output:String) : Option[StructType] = {
         val schemaCache = mutable.Map[MappingOutputIdentifier, Option[StructType]]()
 
@@ -55,8 +64,43 @@ object MappingUtils {
         describe(mapping, output)
     }
 
+    /**
+      * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
+      * schema analysis beforehand. In such cases, None will be returned.
+      * @param context
+      * @param output
+      * @return
+      */
     def describe(context:Context, output:MappingOutputIdentifier) : Option[StructType] = {
         val mapping = context.getMapping(output.mapping)
         describe(mapping, output.output)
+    }
+
+
+    /**
+      * Returns a list of physical resources required for reading this dataset
+      * @return
+      */
+    def requires(mapping: Mapping) : Seq[ResourceIdentifier] = {
+        val resourceCache = mutable.Map[MappingIdentifier,Seq[ResourceIdentifier]]()
+
+        def colllect(instance:Mapping) : Unit = {
+            resourceCache.getOrElseUpdate(instance.identifier, instance.requires)
+            instance.inputs
+                .map(in => instance.context.getMapping(in.mapping))
+                .foreach(colllect)
+        }
+
+        colllect(mapping)
+        resourceCache.values.flatten.toSeq.distinct
+    }
+
+    /**
+      * Returns a list of physical resources required for reading this dataset
+      * @return
+      */
+    def requires(context:Context, mapping: MappingIdentifier) : Seq[ResourceIdentifier] = {
+        val instance = context.getMapping(mapping)
+        requires(instance)
     }
 }

@@ -20,6 +20,7 @@ import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 
 
@@ -52,6 +53,13 @@ abstract class BaseMapping extends Mapping {
       * @return
       */
     override def cache : StorageLevel = instanceProperties.cache
+
+    /**
+      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
+      * which actually read from physical data.
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = Seq()
 
     /**
       * Lists all outputs of this mapping. Every mapping should have one "main" output

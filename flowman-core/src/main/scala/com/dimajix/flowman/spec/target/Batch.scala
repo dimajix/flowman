@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
+import scala.collection.mutable
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
@@ -237,31 +239,99 @@ case class Batch(
         val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
 
         withMetrics(projectContext, projectExecutor.metrics) {
-            executeTargets(projectContext, projectExecutor, targets, phase, force)
+            val result = executeTargets(projectContext, projectExecutor, phase, force)
 
             // Release any resources
             if (isolated) {
                 projectExecutor.cleanup()
             }
+
+            result
         }
     }
 
-    private def executeTargets(context: Context, executor: Executor, targets:Seq[TargetIdentifier], phase:Phase, force:Boolean) = {
+    /**
+      * Execute all targets of this batch in an appropriate order
+      * @param context
+      * @param executor
+      * @param phase
+      * @param force
+      * @return
+      */
+    private def executeTargets(context: Context, executor: Executor, phase:Phase, force:Boolean) : Status = {
+        val order = phase match {
+            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(context).reverse
+            case _ => orderTargets(context)
+        }
+
         val runner = executor.runner
-        val iter = targets.iterator
+        val iter = order.iterator
         var error = false
         while (iter.hasNext) {
-            val id = iter.next()
-            val target = context.getTarget(id)
+            val target = iter.next()
             val status = runner.execute(executor, target, phase, force)
             error |= (status != Status.SUCCESS && status != Status.SKIPPED)
         }
+
+        if (error)
+            Status.FAILED
+        else
+            Status.SUCCESS
     }
 
+    /**
+      * Create ordering of specified targets, such that all dependencies are fullfilled
+      * @param context
+      * @return
+      */
     private def orderTargets(context: Context) : Seq[Target] = {
+        def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
+            deps.map(dep =>
+                if (dep.project.nonEmpty)
+                    dep
+                else
+                    TargetIdentifier(dep.name, Option(target.project).map(_.name))
+            )
+        }
+
         val targets = this.targets.map(t => context.getTarget(t))
-        val targetsByResources = targets.flatMap(t => t.produces.map(id => (id,t))).toMap
-        Seq()
+        val targetIds = targets.map(_.identifier).toSet
+        val targetsByResources = targets.flatMap(t => t.provides.map(id => (id,t.identifier))).toMap
+
+        val nodes = mutable.Map(targets.map(t => t.identifier -> mutable.Set[TargetIdentifier]()):_*)
+
+        // Process all 'after' dependencies
+        targets.foreach(t => {
+            val deps =  normalize(t, t.after).filter(targetIds.contains)
+            deps.foreach(d => nodes(t.identifier).add(d))
+        })
+
+        // Process all 'before' dependencies
+        targets.foreach(t => {
+            val deps = normalize(t, t.before).filter(targetIds.contains)
+            deps.foreach(b => nodes(b).add(t.identifier))
+        })
+
+        // Process all 'requires' dependencies
+        targets.foreach(t => {
+            val deps = t.requires.flatMap(targetsByResources.get)
+            deps.foreach(d => nodes(t.identifier).add(d))
+        })
+
+        val order = mutable.ListBuffer[TargetIdentifier]()
+        while (nodes.nonEmpty) {
+            val candidate = nodes.find(_._2.isEmpty).map(_._1)
+                .getOrElse(throw new RuntimeException("Cannot create target order"))
+
+            // Remove candidate
+            nodes.remove(candidate)
+            // Remove this target from all dependencies
+            nodes.foreach { case (k,v) => v.remove(candidate) }
+            // Append candidate to build sequence
+            order.append(candidate)
+        }
+
+        order.map(context.getTarget)
     }
 
     private def withMetrics[T](context:Context, metricSystem:MetricSystem)(fn: => T) : T = {

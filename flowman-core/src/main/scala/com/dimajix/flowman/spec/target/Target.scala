@@ -126,7 +126,7 @@ abstract class Target extends AbstractInstance {
       * Returns a list of physical resources produced by this target
       * @return
       */
-    def produces : Seq[ResourceIdentifier]
+    def provides : Seq[ResourceIdentifier]
 
     /**
       * Returns a list of physical resources required by this target

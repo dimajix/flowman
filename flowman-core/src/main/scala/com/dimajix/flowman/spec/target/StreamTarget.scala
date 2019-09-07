@@ -20,14 +20,15 @@ import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.OutputMode
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
 case class StreamTarget(
@@ -39,6 +40,21 @@ case class StreamTarget(
     checkpointLocation:Path
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
+
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+        rel.provides(Map())
+    }
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     /**
       * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data

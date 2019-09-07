@@ -22,14 +22,26 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
 case class CountTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[CountTarget])
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     override def create(executor: Executor) : Unit = {}
 

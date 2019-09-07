@@ -41,7 +41,7 @@ class SimpleRunner extends AbstractRunner {
       *
       * @param token
       */
-    override protected def finishBundle(token:BatchToken, status:Status) : Unit = {}
+    override protected def finishBatch(token:BatchToken, status:Status) : Unit = {}
 
     /**
       * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt

@@ -63,7 +63,7 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[BatchToken] = Non
       *
       * @param token
       */
-    protected override def finishBundle(token: BatchToken, status:Status): Unit = {
+    protected override def finishBatch(token: BatchToken, status:Status): Unit = {
         stateStore.finishBatch(token, status)
     }
 

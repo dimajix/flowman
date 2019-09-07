@@ -23,7 +23,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
 case class FileTarget(
@@ -37,6 +39,33 @@ case class FileTarget(
     rebalance: Boolean
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[FileTarget])
+
+    /**
+      * Returns an instance representing this target with the context
+      * @return
+      */
+    override def instance : TargetInstance = {
+        TargetInstance(
+            Option(namespace).map(_.name).getOrElse(""),
+            Option(project).map(_.name).getOrElse(""),
+            name,
+            Map("location" -> location.toString)
+        )
+    }
+
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("file", location.toString)
+    )
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     override def create(executor: Executor) : Unit = ???
 

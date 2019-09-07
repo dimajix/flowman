@@ -27,6 +27,7 @@ import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
@@ -51,6 +52,18 @@ abstract class Dataset extends AbstractInstance {
       * @return
       */
     override def category: String = "dataset"
+
+    /**
+      * Returns a list of physical resources produced by writing to this dataset
+      * @return
+      */
+    def provides : Seq[ResourceIdentifier]
+
+    /**
+      * Returns a list of physical resources required for reading this dataset
+      * @return
+      */
+    def requires : Seq[ResourceIdentifier]
 
     /**
       * Reads data from the relation, possibly from specific partitions

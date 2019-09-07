@@ -22,6 +22,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
@@ -31,6 +32,24 @@ case class RelationDataset(
     relation: RelationIdentifier,
     partition:Map[String,SingleValue]
 ) extends Dataset {
+    /**
+      * Returns a list of physical resources produced by writing to this dataset
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = {
+        val instance = context.getRelation(relation)
+        instance.provides(partition)
+    }
+
+    /**
+      * Returns a list of physical resources required for reading this dataset
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = {
+        val instance = context.getRelation(relation)
+        instance.requires(partition)
+    }
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

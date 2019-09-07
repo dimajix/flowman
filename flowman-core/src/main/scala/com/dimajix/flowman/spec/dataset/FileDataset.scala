@@ -26,6 +26,7 @@ import org.apache.spark.sql.sources.SchemaRelationProvider
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
@@ -38,6 +39,22 @@ case class FileDataset(
     options:Map[String,String],
     columns:Option[StructType]
 ) extends Dataset {
+    /**
+      * Returns a list of physical resources produced by writing to this dataset
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("file", location.toString, Map())
+    )
+
+    /**
+      * Returns a list of physical resources required for reading this dataset
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("file", location.toString, Map())
+    )
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

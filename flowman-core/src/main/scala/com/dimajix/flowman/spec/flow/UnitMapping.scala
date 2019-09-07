@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
@@ -41,6 +42,19 @@ case class UnitMapping(
     private val mappingInstances = mappings.keys.toSeq
         .map(name => (name,unitContext.getMapping(MappingIdentifier(name))))
         .toMap
+
+    /**
+      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
+      * which actually read from physical data.
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = {
+        mappingInstances
+            .values
+            .flatMap(_.requires)
+            .toSeq
+            .distinct
+    }
 
     /**
       * Return all outputs provided by this unit

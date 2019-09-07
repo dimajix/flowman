@@ -35,7 +35,9 @@ import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Batch
+import com.dimajix.flowman.spec.target.BatchInstance
 import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 object AbstractRunner {
@@ -83,9 +85,9 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
             val instance = bundle.instance(args)
 
             // Get Token
-            val token = startBundle(instance, parentJob)
+            val token = startBatch(instance, parentJob)
 
-            val shutdownHook = new Thread() { override def run() : Unit = finishBundle(token, Status.FAILED) }
+            val shutdownHook = new Thread() { override def run() : Unit = finishBatch(token, Status.FAILED) }
             withShutdownHook(shutdownHook) {
                 Try {
                     logger.info(s"Running phase '$phase' of execution '${bundle.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
@@ -95,31 +97,31 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
                 match {
                     case Success(status @ Status.SUCCESS) =>
                         logger.info(s"Successfully finished phase '$phase' of execution of bundle '${bundle.identifier}'")
-                        finishBundle(token, Status.SUCCESS)
+                        finishBatch(token, Status.SUCCESS)
                         status
                     case Success(status @ Status.FAILED) =>
                         logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' failed")
-                        finishBundle(token, Status.FAILED)
+                        finishBatch(token, Status.FAILED)
                         status
                     case Success(status @ Status.ABORTED) =>
                         logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' aborted")
-                        finishBundle(token, Status.ABORTED)
+                        finishBatch(token, Status.ABORTED)
                         status
                     case Success(status @ Status.SKIPPED) =>
                         logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' skipped")
-                        finishBundle(token, Status.SKIPPED)
+                        finishBatch(token, Status.SKIPPED)
                         status
                     case Success(status @ Status.RUNNING) =>
                         logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' already running")
-                        finishBundle(token, Status.SKIPPED)
+                        finishBatch(token, Status.SKIPPED)
                         status
                     case Success(status) =>
                         logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' in unknown state. Assuming failure")
-                        finishBundle(token, Status.FAILED)
+                        finishBatch(token, Status.FAILED)
                         status
                     case Failure(e) =>
                         logger.error(s"Caught exception while executing phase '$phase' of bundle '${bundle.identifier}'", e)
-                        finishBundle(token, Status.FAILED)
+                        finishBatch(token, Status.FAILED)
                         Status.FAILED
                 }
             }
@@ -149,7 +151,6 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
                     withWallTime(executor.metrics, target.metadata) {
                         phase.execute(executor, target)
                     }
-                    // TODO: Publish metrics
                 }
                 match {
                     case Success(_) =>
@@ -157,10 +158,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
                         finishTarget(token, Status.SUCCESS)
                         Status.SUCCESS
                     case Failure(e) =>
-                        logger.error(s"Caught exception while executing phase '$phase' for target '${
-                            target
-                                .identifier
-                        }'", e)
+                        logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
                         finishTarget(token, Status.FAILED)
                         Status.FAILED
                 }
@@ -173,17 +171,17 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
     /**
       * Starts the run and returns a token, which can be anything
       *
-      * @param job
+      * @param batch
       * @return
       */
-    protected def startBundle(job:BatchInstance, parent:Option[BatchToken]) : BatchToken
+    protected def startBatch(batch:BatchInstance, parent:Option[BatchToken]) : BatchToken
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    protected def finishBundle(token:BatchToken, status:Status) : Unit
+    protected def finishBatch(token:BatchToken, status:Status) : Unit
 
     /**
       * Performs some checks, if the target is already up to date

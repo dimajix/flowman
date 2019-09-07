@@ -17,13 +17,12 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
 case class ConsoleTarget(
@@ -33,7 +32,17 @@ case class ConsoleTarget(
     header:Boolean,
     columns:Seq[String]
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[ConsoleTarget])
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     override def create(executor: Executor) : Unit = {}
 

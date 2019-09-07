@@ -22,11 +22,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.history.TargetInstance
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
 
 
@@ -53,6 +55,22 @@ case class RelationTarget(
             partition
         )
     }
+
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = {
+        val partition = this.partition.mapValues(v => SingleValue(v))
+        val rel = context.getRelation(relation)
+        rel.provides(partition)
+    }
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     /**
       * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data

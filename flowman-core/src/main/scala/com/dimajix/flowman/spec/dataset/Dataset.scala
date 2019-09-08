@@ -54,16 +54,10 @@ abstract class Dataset extends AbstractInstance {
     override def category: String = "dataset"
 
     /**
-      * Returns a list of physical resources produced by writing to this dataset
+      * Returns a list of physical resources produced by writing or reading to this dataset
       * @return
       */
-    def provides : Seq[ResourceIdentifier]
-
-    /**
-      * Returns a list of physical resources required for reading this dataset
-      * @return
-      */
-    def requires : Seq[ResourceIdentifier]
+    def resources : Seq[ResourceIdentifier]
 
     /**
       * Reads data from the relation, possibly from specific partitions

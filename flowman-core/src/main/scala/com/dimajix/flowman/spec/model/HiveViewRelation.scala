@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -39,34 +40,59 @@ class HiveViewRelation(
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
 
+    /**
+      * Returns the list of all resources which will be created by this relation. The list will be specifically
+      * * created for a specific partition, or for the full relation (when the partition is empty)
+      *
+      * @param partition
+      * @return
+      */
+    override def resources(partition: Map[String, FieldValue]): Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("hiveTable", database.map(_ + ".").getOrElse("") + table)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = {
+        // TODO: Scan execution plan for other Hive tables or views
+        database.map(db => ResourceIdentifier("hiveDatabase", db)).toSeq
+    }
+
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
 
     override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
 
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        logger.info(s"Creating Hive view relation '$name' with VIEW name $tableIdentifier")
-
-      val select = getSelect(executor)
-      val catalog = executor.catalog
-      if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
-        catalog.createView(tableIdentifier, select, ifNotExists)
-      }
+        val select = getSelect(executor)
+        val catalog = executor.catalog
+        if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Creating Hive view relation '$name' with VIEW name $tableIdentifier")
+            catalog.createView(tableIdentifier, select, ifNotExists)
+        }
     }
 
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
-
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
             catalog.dropView(tableIdentifier)
         }
     }
 
     override def migrate(executor:Executor) : Unit = {
-        logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
-
         val catalog = executor.catalog
         if (catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
             catalog.dropView(tableIdentifier)
             val select = getSelect(executor)
             catalog.createView(tableIdentifier, select, false)

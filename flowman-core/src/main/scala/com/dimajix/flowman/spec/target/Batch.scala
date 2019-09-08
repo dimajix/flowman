@@ -260,8 +260,8 @@ case class Batch(
       */
     private def executeTargets(context: Context, executor: Executor, phase:Phase, force:Boolean) : Status = {
         val order = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(context).reverse
-            case _ => orderTargets(context)
+            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(context, phase).reverse
+            case _ => orderTargets(context, phase)
         }
 
         val runner = executor.runner
@@ -284,7 +284,7 @@ case class Batch(
       * @param context
       * @return
       */
-    private def orderTargets(context: Context) : Seq[Target] = {
+    private def orderTargets(context: Context, phase:Phase) : Seq[Target] = {
         def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
             deps.map(dep =>
                 if (dep.project.nonEmpty)
@@ -296,7 +296,7 @@ case class Batch(
 
         val targets = this.targets.map(t => context.getTarget(t))
         val targetIds = targets.map(_.identifier).toSet
-        val targetsByResources = targets.flatMap(t => t.provides.map(id => (id,t.identifier))).toMap
+        val targetsByResources = targets.flatMap(t => t.provides(phase).map(id => (id,t.identifier))).toMap
 
         val nodes = mutable.Map(targets.map(t => t.identifier -> mutable.Set[TargetIdentifier]()):_*)
 
@@ -314,7 +314,7 @@ case class Batch(
 
         // Process all 'requires' dependencies
         targets.foreach(t => {
-            val deps = t.requires.flatMap(targetsByResources.get)
+            val deps = t.requires(phase).flatMap(targetsByResources.get)
             deps.foreach(d => nodes(t.identifier).add(d))
         })
 

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 
@@ -35,13 +36,18 @@ case class CountTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq()
+    override def provides(phase: Phase) : Seq[ResourceIdentifier] = Seq()
 
     /**
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Seq()
+        }
+    }
 
     override def create(executor: Executor) : Unit = {}
 
@@ -60,6 +66,13 @@ case class CountTarget(
         val count = dfIn.count()
         System.out.println(s"Mapping '$mapping' contains $count records")
     }
+
+    /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    def verify(executor: Executor) : Unit = {}
 
     /**
       * Cleaning a count target is a no-op

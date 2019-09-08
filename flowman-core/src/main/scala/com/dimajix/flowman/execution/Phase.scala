@@ -18,12 +18,9 @@ package com.dimajix.flowman.execution
 
 import java.util.Locale
 
-import com.dimajix.flowman.spec.target.Target
 
 sealed abstract class Phase  {
     val value:String
-
-    def execute(executor: Executor, target:Target) : Unit
 
     override def toString: String = value
 }
@@ -31,23 +28,21 @@ sealed abstract class Phase  {
 object Phase {
     case object CREATE extends Phase {
         override val value = "create"
-        override def execute(executor: Executor, target: Target): Unit = target.create(executor)
     }
     case object MIGRATE extends Phase {
         override val value = "migrate"
-        override def execute(executor: Executor, target: Target): Unit = target.migrate(executor)
     }
     case object BUILD extends Phase {
         override val value = "build"
-        override def execute(executor: Executor, target: Target): Unit = target.build(executor)
+    }
+    case object VERIFY extends Phase {
+        override val value = "verify"
     }
     case object TRUNCATE extends Phase {
         override val value = "truncate"
-        override def execute(executor: Executor, target: Target): Unit = target.truncate(executor)
     }
     case object DESTROY extends Phase {
         override val value = "destroy"
-        override def execute(executor: Executor, target: Target): Unit = target.destroy(executor)
     }
 
     def ofString(status:String) : Phase = {
@@ -55,6 +50,7 @@ object Phase {
             case CREATE.value => CREATE
             case MIGRATE.value => MIGRATE
             case BUILD.value => BUILD
+            case VERIFY.value => VERIFY
             case TRUNCATE.value => TRUNCATE
             case DESTROY.value => DESTROY
             case _ => throw new IllegalArgumentException(s"No phase defined for '$status'")
@@ -63,18 +59,35 @@ object Phase {
 }
 
 
+/**
+  * This object contains predefined lifecycles, where each lifecycle contains a specific sequence of phases to be
+  * executed.
+  */
 object Lifecycle {
     val DEFAULT = Seq(
         Phase.CREATE,
         Phase.MIGRATE,
-        Phase.BUILD
+        Phase.BUILD,
+        Phase.VERIFY
     )
     val CLEAN = Seq(
         Phase.TRUNCATE,
         Phase.DESTROY
     )
 
+    private val all = Seq(DEFAULT, CLEAN)
+
+    /**
+      * Creates an appropriate lifecycle from the beginning up to the specified phase
+      * @param phase
+      * @return
+      */
     def ofPhase(phase:Phase) : Seq[Phase] = {
-        ???
+        all.map { lifecycle =>
+                val idx = lifecycle.indexOf(phase)
+                lifecycle.take(idx + 1)
+            }
+            .filter(_.nonEmpty)
+            .head
     }
 }

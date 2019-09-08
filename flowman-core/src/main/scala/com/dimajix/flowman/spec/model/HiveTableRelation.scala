@@ -35,7 +35,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
@@ -67,6 +69,41 @@ class HiveTableRelation(
     val writer: String
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
+
+    /**
+      * Returns the list of all resources which will be created by this relation. The list will be specifically
+      * created for a specific partition, or for the full relation (when the partition is empty)
+      *
+      * @param partition
+      * @return
+      */
+    override def resources(partition: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+        require(partitions != null)
+
+        requireValidPartitionKeys(partition)
+
+        val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
+        val fqTable = database.map(_ + ".").getOrElse("") + table
+        allPartitions.map(p => ResourceIdentifier("hiveTable", fqTable, p.mapValues(_.toString).toMap)).toSeq
+    }
+
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("hiveTable", database.map(_ + ".").getOrElse("") + table)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = {
+        database.map(db => ResourceIdentifier("hiveDatabase", db)).toSeq
+    }
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -310,10 +347,9 @@ class HiveTableRelation(
     override def destroy(executor: Executor, ifExists:Boolean): Unit = {
         require(executor != null)
 
-        logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
-
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
             catalog.dropTable(tableIdentifier)
         }
     }
@@ -341,17 +377,6 @@ class HiveTableRelation(
 
     private def needsLowerCaseSchema : Boolean = {
         false
-    }
-
-    /**
-      * Creates a SQL PARTITION expression
-      * @param partition
-      * @return
-      */
-    private def partitionSpec(partition: Map[String, SingleValue]) : String = {
-        val schema = PartitionSchema(partitions)
-        val spec = schema.spec(partition)
-        HiveDialect.expr.partition(spec)
     }
 }
 

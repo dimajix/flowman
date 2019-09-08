@@ -29,7 +29,6 @@ import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.target.BatchSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.JobSpec
 
 
 object Module {

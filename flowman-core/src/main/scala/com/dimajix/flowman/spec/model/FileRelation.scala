@@ -25,7 +25,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
@@ -36,6 +35,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
@@ -55,6 +55,44 @@ class FileRelation(
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
     /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("file", location.toString)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation
+      *
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns the list of all resources which will be required by this relation for reading a specific partition.
+      * The list will be specifically  created for a specific partition, or for the full relation (when the partition
+      * is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+        require(partitions != null)
+
+        requireValidPartitionKeys(partitions)
+
+        if (this.partitions.nonEmpty) {
+            val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+            allPartitions.map(p => ResourceIdentifier("file", collector.resolve(p).toString)).toSeq
+        }
+        else {
+            Seq(ResourceIdentifier("file", location.toString))
+        }
+    }
+
+    /**
       * Reads data from the relation, possibly from specific partitions
       *
       * @param executor
@@ -69,7 +107,7 @@ class FileRelation(
         // TODO: If no partitions are specified, recursively read all files
         requireValidPartitionKeys(partitions)
 
-        val data = mapFiles(executor, partitions) { (partition, paths) =>
+        val data = mapFiles(partitions) { (partition, paths) =>
             paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
 
             val pathNames = paths.map(_.toString)
@@ -107,7 +145,7 @@ class FileRelation(
         requireValidPartitionKeys(partition)
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
-        val outputPath = collector(executor).resolve(partitionSpec.toMap)
+        val outputPath = collector.resolve(partitionSpec.toMap)
 
         logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
 
@@ -126,23 +164,23 @@ class FileRelation(
         require(executor != null)
         require(partitions != null)
 
-        if (this.partitions != null && this.partitions.nonEmpty && partitions.nonEmpty)
-            cleanPartitionedFiles(executor, partitions)
+        if (this.partitions.nonEmpty && partitions.nonEmpty)
+            cleanPartitionedFiles(partitions)
         else
-            cleanUnpartitionedFiles(executor)
+            cleanUnpartitionedFiles()
     }
 
-    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) : Unit = {
+    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
         requireValidPartitionKeys(partitions)
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector(executor).delete(resolvedPartitions)
+        collector.delete(resolvedPartitions)
     }
 
-    private def cleanUnpartitionedFiles(executor: Executor) : Unit = {
-        collector(executor).delete()
+    private def cleanUnpartitionedFiles() : Unit = {
+        collector.delete()
     }
 
     /**
@@ -164,7 +202,6 @@ class FileRelation(
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)
 
-        logger.info(s"Creating directory '$location' for file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         if (fs.exists(location)) {
             if (!ifNotExists) {
@@ -172,6 +209,7 @@ class FileRelation(
             }
         }
         else {
+            logger.info(s"Creating directory '$location' for file relation '$identifier'")
             fs.mkdirs(location)
         }
     }
@@ -183,7 +221,6 @@ class FileRelation(
     override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {
         require(executor != null)
 
-        logger.info(s"Deleting directory '$location' of file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         if (!fs.exists(location)) {
             if (!ifExists) {
@@ -191,6 +228,7 @@ class FileRelation(
             }
         }
         else {
+            logger.info(s"Deleting directory '$location' of file relation '$identifier'")
             fs.delete(location, true)
         }
     }
@@ -200,38 +238,34 @@ class FileRelation(
     /**
       * Collects files for a given time period using the pattern inside the specification
       *
-      * @param executor
       * @param partitions
       * @return
       */
-    protected def mapFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
-        require(executor != null)
 
-        if (this.partitions != null && this.partitions.nonEmpty)
-            mapPartitionedFiles(executor, partitions)(fn)
+        if (this.partitions.nonEmpty)
+            mapPartitionedFiles(partitions)(fn)
         else
-            Seq(mapUnpartitionedFiles(executor)(fn))
+            Seq(mapUnpartitionedFiles(fn))
     }
 
-    private def mapPartitionedFiles[T](executor: Executor, partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
-        require(executor != null)
 
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
-        val collector = this.collector(executor)
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
-    private def mapUnpartitionedFiles[T](executor: Executor)(fn:(PartitionSpec,Seq[Path]) => T) : T = {
-        fn(PartitionSpec(), collector(executor).collect())
+    private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
+        fn(PartitionSpec(), collector.collect())
     }
 
-    protected def collector(executor: Executor) : FileCollector = {
-        new FileCollector(executor.spark)
+    protected def collector : FileCollector = {
+        new FileCollector(context.hadoopConf)
             .path(location)
             .pattern(pattern)
     }

@@ -21,13 +21,16 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.dataset.Dataset
+import com.dimajix.flowman.spec.dataset.DatasetSpec
 
 
 case class ConsoleTarget(
     instanceProperties:Target.Properties,
-    mapping:MappingOutputIdentifier,
+    dataset:Dataset,
     limit:Int,
     header:Boolean,
     columns:Seq[String]
@@ -36,13 +39,18 @@ case class ConsoleTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq()
+    override def provides(phase: Phase) : Seq[ResourceIdentifier] = Seq()
 
     /**
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => dataset.requires
+            case _ => Seq()
+        }
+    }
 
     override def create(executor: Executor) : Unit = {}
 
@@ -56,8 +64,7 @@ case class ConsoleTarget(
     override def build(executor:Executor) : Unit = {
         require(executor != null)
 
-        val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        val dfIn = dataset.read(executor, None)
         val dfOut = if (columns.nonEmpty)
             dfIn.select(columns.map(c => dfIn(c)):_*)
         else
@@ -71,6 +78,13 @@ case class ConsoleTarget(
     }
 
     /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    def verify(executor: Executor) : Unit = {}
+
+    /**
       * Clean operation of dump essentially is a no-op
       * @param executor
       */
@@ -82,7 +96,7 @@ case class ConsoleTarget(
 
 
 class ConsoleTargetSpec extends TargetSpec {
-    @JsonProperty(value="input", required=true) private var input:String = _
+    @JsonProperty(value="input", required=true) private var input:DatasetSpec = _
     @JsonProperty(value="limit", required=false) private var limit:String = "100"
     @JsonProperty(value="header", required=false) private var header:String = "true"
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq()
@@ -90,7 +104,7 @@ class ConsoleTargetSpec extends TargetSpec {
     override def instantiate(context: Context): Target = {
         ConsoleTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            input.instantiate(context),
             context.evaluate(limit).toInt,
             context.evaluate(header).toBoolean,
             columns.map(context.evaluate)

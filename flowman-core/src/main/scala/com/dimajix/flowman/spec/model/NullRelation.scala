@@ -22,7 +22,9 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
+import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -33,6 +35,30 @@ class NullRelation(
     override val schema:Schema = null,
     override val partitions: Seq[PartitionField] = Seq()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns the list of all resources which will be required by this relation
+      *
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns the list of all resources which will be required by this relation for reading a specific partition.
+      * The list will be specifically  created for a specific partition, or for the full relation (when the partition
+      * is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = Seq()
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

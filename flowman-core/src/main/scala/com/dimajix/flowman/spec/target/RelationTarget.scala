@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -60,17 +62,25 @@ case class RelationTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase) : Seq[ResourceIdentifier] = {
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
-        rel.provides(partition)
+
+        phase match {
+            case Phase.CREATE|Phase.DESTROY => rel.provides
+            case Phase.BUILD => rel.resources(partition)
+        }
     }
 
     /**
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+        }
+    }
 
     /**
       * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
@@ -114,6 +124,21 @@ case class RelationTarget(
 
         val rel = context.getRelation(relation)
         rel.write(executor, table, partition, mode)
+    }
+
+    /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    def verify(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val rel = context.getRelation(relation)
+        if (!rel.exists(executor)) {
+            logger.error(s"Verification of target '$identifier' failed - relation '$relation' does not exist")
+            throw new VerificationFailedException(identifier)
+        }
     }
 
     /**

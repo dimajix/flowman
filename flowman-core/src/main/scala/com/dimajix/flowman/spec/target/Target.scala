@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
@@ -126,43 +127,20 @@ abstract class Target extends AbstractInstance {
       * Returns a list of physical resources produced by this target
       * @return
       */
-    def provides : Seq[ResourceIdentifier]
+    def provides(phase:Phase) : Seq[ResourceIdentifier]
 
     /**
       * Returns a list of physical resources required by this target
       * @return
       */
-    def requires : Seq[ResourceIdentifier]
+    def requires(phase:Phase) : Seq[ResourceIdentifier]
 
     /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
+      * Executes a specific phase of this target
       * @param executor
+      * @param phase
       */
-    def create(executor:Executor) : Unit
-    def migrate(executor:Executor) : Unit
-
-    /**
-      * Abstract method which will perform the output operation. All required tables need to be
-      * registered as temporary tables in the Spark session before calling the execute method.
-      *
-      * @param executor
-      */
-    def build(executor:Executor) : Unit
-
-    /**
-      * Deletes data of a specific target
-      *
-      * @param executor
-      */
-    def truncate(executor:Executor) : Unit
-
-    /**
-      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
-      * the table definition
-      * @param executor
-      */
-    def destroy(executor:Executor) : Unit
+    def execute(executor: Executor, phase: Phase) : Unit
 }
 
 
@@ -184,8 +162,10 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
     new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTargetSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
+    new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTargetSpec]),
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaTargetSpec]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]))
 )
 abstract class TargetSpec extends NamedSpec[Target] {

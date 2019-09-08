@@ -82,7 +82,7 @@ case class MappingOutputIdentifier(name:String, output:String, project:Option[St
 }
 
 
-case class ResourceIdentifier(category:String, name:String, partition:Map[String,String]) {
+case class ResourceIdentifier(category:String, name:String, partition:Map[String,String] = Map()) {
     def isEmpty : Boolean = name.isEmpty
     def nonEmpty : Boolean = name.nonEmpty
 }

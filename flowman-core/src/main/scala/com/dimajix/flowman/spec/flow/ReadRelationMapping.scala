@@ -70,7 +70,7 @@ case class ReadRelationMapping(
       */
     override def requires : Seq[ResourceIdentifier] = {
         val rel = context.getRelation(relation)
-        rel.requires(partitions)
+        rel.resources(partitions)
     }
 
     /**

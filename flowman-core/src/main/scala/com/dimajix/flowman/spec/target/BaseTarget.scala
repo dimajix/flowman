@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
+import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.spec.TargetIdentifier
 
@@ -47,6 +49,71 @@ abstract class BaseTarget extends Target {
         )
     }
 
+    /**
+      * Returns an explicit user defined list of targets to be executed after this target. I.e. this
+      * target needs to be executed before all other targets in this list.
+      * @return
+      */
     override def before : Seq[TargetIdentifier] = instanceProperties.before
+
+    /**
+      * Returns an explicit user defined list of targets to be executed before this target I.e. this
+      * * target needs to be executed after all other targets in this list.
+      *
+      * @return
+      */
     override def after : Seq[TargetIdentifier] = instanceProperties.after
+
+    /**
+      * Executes a specific phase of this target
+      * @param executor
+      * @param phase
+      */
+    override def execute(executor: Executor, phase: Phase) : Unit = {
+        phase match {
+            case Phase.CREATE => create(executor)
+            case Phase.MIGRATE => migrate(executor)
+            case Phase.BUILD => build(executor)
+            case Phase.VERIFY => verify(executor)
+            case Phase.TRUNCATE => truncate(executor)
+            case Phase.DESTROY => destroy(executor)
+        }
+    }
+
+    /**
+      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
+      * will not provide the data itself, it will only create the container
+      * @param executor
+      */
+    protected def create(executor:Executor) : Unit
+    protected def migrate(executor:Executor) : Unit
+
+    /**
+      * Abstract method which will perform the output operation. All required tables need to be
+      * registered as temporary tables in the Spark session before calling the execute method.
+      *
+      * @param executor
+      */
+    protected def build(executor:Executor) : Unit
+
+    /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    protected def verify(executor: Executor) : Unit
+
+    /**
+      * Deletes data of a specific target
+      *
+      * @param executor
+      */
+    protected def truncate(executor:Executor) : Unit
+
+    /**
+      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
+      * the table definition
+      * @param executor
+      */
+    protected def destroy(executor:Executor) : Unit
 }

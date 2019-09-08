@@ -36,16 +36,10 @@ case class MappingDataset(
     mapping: MappingOutputIdentifier
 ) extends Dataset {
     /**
-      * Returns a list of physical resources produced by writing to this dataset
-      * @return
-      */
-    override def provides : Seq[ResourceIdentifier] = Seq()
-
-    /**
       * Returns a list of physical resources required for reading this dataset
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def resources : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     /**
       * Reads data from the relation, possibly from specific partitions

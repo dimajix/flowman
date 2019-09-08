@@ -26,9 +26,7 @@ import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.history.BatchInstance
 import com.dimajix.flowman.history.BatchToken
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
@@ -149,7 +147,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
             else {
                 Try {
                     withWallTime(executor.metrics, target.metadata) {
-                        phase.execute(executor, target)
+                        target.execute(executor, phase)
                     }
                 }
                 match {

@@ -48,3 +48,6 @@ class NoSuchConnectionException(val connection:ConnectionIdentifier)
     extends ExecutionException(s"Connection '$connection' not found")
 class NoSuchBundleException(val bundle:BatchIdentifier)
     extends ExecutionException(s"Bundle '$bundle' not found")
+
+class VerificationFailedException(val target:TargetIdentifier)
+    extends ExecutionException(s"Verification of target $target failed")

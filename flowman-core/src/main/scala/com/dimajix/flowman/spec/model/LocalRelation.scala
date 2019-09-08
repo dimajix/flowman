@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.sources.local.implicits._
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
@@ -48,6 +49,44 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
 
     /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = Seq(
+        ResourceIdentifier("local", location.toString)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation
+      *
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns the list of all resources which will be required by this relation for reading a specific partition.
+      * The list will be specifically  created for a specific partition, or for the full relation (when the partition
+      * is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+        require(partitions != null)
+
+        requireValidPartitionKeys(partitions)
+
+        if (this.partitions.nonEmpty) {
+            val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+            allPartitions.map(p => ResourceIdentifier("local", collector.resolve(p).toString)).toSeq
+        }
+        else {
+            Seq(ResourceIdentifier("local", location.toString))
+        }
+    }
+
+    /**
       * Reads data from the relation, possibly from specific partitions
       *
       * @param executor
@@ -62,7 +101,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         logger.info(s"Reading from local location '$location' (partitions=$partitions)")
 
-        val inputFiles = collectFiles(executor, partitions)
+        val inputFiles = collectFiles(partitions)
         val reader = executor.spark.readLocal.options(options)
         if (this.schema != null)
             reader.schema(inputSchema)
@@ -86,7 +125,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(df != null)
         require(partition != null)
 
-        val outputPath  = collector(executor).resolve(partition.mapValues(_.value))
+        val outputPath  = collector.resolve(partition.mapValues(_.value))
         val outputFile = new File(outputPath.toUri)
 
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
@@ -105,21 +144,21 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(partitions != null)
 
         if (this.partitions != null && this.partitions.nonEmpty)
-            cleanPartitionedFiles(executor, partitions)
+            cleanPartitionedFiles(partitions)
         else
-            cleanUnpartitionedFiles(executor)
+            cleanUnpartitionedFiles()
     }
 
-    private def cleanPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) = {
+    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) = {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector(executor).delete(resolvedPartitions)
+        collector.delete(resolvedPartitions)
     }
 
-    private def cleanUnpartitionedFiles(executor: Executor) = {
-        collector(executor).delete()
+    private def cleanUnpartitionedFiles() = {
+        collector.delete()
     }
 
     /**
@@ -182,36 +221,35 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
       * Collects files for a given time period using the pattern inside the specification
       *
-      * @param executor
       * @param partitions
       * @return
       */
-    private def collectFiles(executor: Executor, partitions:Map[String,FieldValue]) : Seq[Path] = {
+    private def collectFiles(partitions:Map[String,FieldValue]) : Seq[Path] = {
         val inputFiles =
             if (this.partitions != null && this.partitions.nonEmpty)
-                collectPartitionedFiles(executor, partitions)
+                collectPartitionedFiles(partitions)
             else
-                collectUnpartitionedFiles(executor)
+                collectUnpartitionedFiles()
 
         // Print all files that we found
         inputFiles.foreach(f => logger.info("Reading input file {}", f.toString))
         inputFiles
     }
 
-    private def collectPartitionedFiles(executor: Executor, partitions:Map[String,FieldValue]) : Seq[Path] = {
+    private def collectPartitionedFiles(partitions:Map[String,FieldValue]) : Seq[Path] = {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector(executor).collect(resolvedPartitions)
+        collector.collect(resolvedPartitions)
     }
 
-    private def collectUnpartitionedFiles(executor: Executor) : Seq[Path] = {
-        collector(executor).collect()
+    private def collectUnpartitionedFiles() : Seq[Path] = {
+        collector.collect()
     }
 
-    private def collector(executor: Executor) = {
-        new FileCollector(executor.spark)
+    private def collector = {
+        new FileCollector(context.hadoopConf)
             .path(location)
             .pattern(pattern)
     }

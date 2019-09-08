@@ -18,12 +18,13 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 
@@ -42,9 +43,10 @@ case class FileTarget(
 
     /**
       * Returns an instance representing this target with the context
+      *
       * @return
       */
-    override def instance : TargetInstance = {
+    override def instance: TargetInstance = {
         TargetInstance(
             Option(namespace).map(_.name).getOrElse(""),
             Option(project).map(_.name).getOrElse(""),
@@ -55,9 +57,10 @@ case class FileTarget(
 
     /**
       * Returns a list of physical resources produced by this target
+      *
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq(
+    override def provides(phase: Phase): Seq[ResourceIdentifier] = Seq(
         ResourceIdentifier("file", location.toString)
     )
 
@@ -65,11 +68,24 @@ case class FileTarget(
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Seq()
+        }
+    }
 
-    override def create(executor: Executor) : Unit = ???
+    override def create(executor: Executor) : Unit = {
+        require(executor != null)
 
-    override def migrate(executor: Executor) : Unit = ???
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        if (!fs.isDirectory(location)) {
+            logger.info(s"Creating directory '$location' for file relation '$identifier'")
+            fs.mkdirs(location)
+        }
+    }
+
+    override def migrate(executor: Executor) : Unit = {}
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -96,6 +112,21 @@ case class FileTarget(
     }
 
     /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    def verify(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val file = executor.fs.file(location)
+        if (!file.exists()) {
+            logger.error(s"Verification of target '$identifier' failed - location '$location' does not exist")
+            throw new VerificationFailedException(identifier)
+        }
+    }
+
+    /**
       * Cleans up a specific target
       *
       * @param executor
@@ -103,14 +134,23 @@ case class FileTarget(
     override def truncate(executor: Executor): Unit = {
         require(executor != null)
 
-        logger.info(s"Deleting directory '$location' of file relation")
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        if (fs.exists(location)) {
-            fs.delete(location, true)
+        if (fs.isDirectory(location)) {
+            logger.info(s"Truncating directory '$location' of file relation '$identifier'")
+            val files = fs.listStatus(location)
+            files.foreach(file => fs.delete(file.getPath, true)
         }
     }
 
-    override def destroy(executor: Executor) : Unit = ???
+    override def destroy(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        if (fs.exists(location)) {
+            logger.info(s"Deleting directory '$location' of file relation '$identifier'")
+            fs.delete(location, true)
+        }
+    }
 }
 
 

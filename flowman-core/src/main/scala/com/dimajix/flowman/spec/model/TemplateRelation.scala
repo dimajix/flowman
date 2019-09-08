@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.FieldValue
@@ -41,6 +42,30 @@ class TemplateRelation(
     private val relationInstance = {
         project.relations(relation.name).instantiate(templateContext)
     }
+
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Seq[ResourceIdentifier] = relationInstance.provides
+
+    /**
+      * Returns the list of all resources which will be required by this relation
+      *
+      * @return
+      */
+    override def requires : Seq[ResourceIdentifier] = relationInstance.requires
+
+    /**
+      * Returns the list of all resources which will be required by this relation for reading a specific partition.
+      * The list will be specifically  created for a specific partition, or for the full relation (when the partition
+      * is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = relationInstance.resources(partitions)
 
     /**
       * Returns a description for the relation

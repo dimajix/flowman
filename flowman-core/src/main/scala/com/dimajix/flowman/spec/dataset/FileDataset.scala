@@ -43,15 +43,7 @@ case class FileDataset(
       * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("file", location.toString, Map())
-    )
-
-    /**
-      * Returns a list of physical resources required for reading this dataset
-      * @return
-      */
-    override def requires : Seq[ResourceIdentifier] = Seq(
+    override def resources : Seq[ResourceIdentifier] = Seq(
         ResourceIdentifier("file", location.toString, Map())
     )
 

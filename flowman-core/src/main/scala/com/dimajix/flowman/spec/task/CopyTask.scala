@@ -33,7 +33,7 @@ case class CopyTask(
     parallelism:Int,
     mode:String
 ) extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[CopyRelationTask])
+    private val logger = LoggerFactory.getLogger(classOf[CopyTask])
 
     override def execute(executor:Executor) : Boolean = {
         logger.info(s"Copying dataset ${source.name} to ${target.name}")

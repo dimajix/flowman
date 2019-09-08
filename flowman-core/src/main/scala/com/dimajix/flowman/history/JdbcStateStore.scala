@@ -32,6 +32,8 @@ import slick.jdbc.PostgresProfile
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 
@@ -61,7 +63,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             0,
             Option(batch.namespace).getOrElse(""),
             Option(batch.project).getOrElse(""),
-            batch.getBatch,
+            batch.batch,
             phase.value,
             hashArgs(batch),
             null,
@@ -85,7 +87,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             0,
             Option(batch.namespace).getOrElse(""),
             Option(batch.project).getOrElse(""),
-            batch.getBatch,
+            batch.batch,
             phase.value,
             hashArgs(batch),
             now,

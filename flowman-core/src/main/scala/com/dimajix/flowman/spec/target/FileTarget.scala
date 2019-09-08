@@ -138,7 +138,7 @@ case class FileTarget(
         if (fs.isDirectory(location)) {
             logger.info(s"Truncating directory '$location' of file relation '$identifier'")
             val files = fs.listStatus(location)
-            files.foreach(file => fs.delete(file.getPath, true)
+            files.foreach(file => fs.delete(file.getPath, true))
         }
     }
 

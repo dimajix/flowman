@@ -19,10 +19,10 @@ package com.dimajix.flowman.execution
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.history.StateStore
-import com.dimajix.flowman.history.BatchInstance
 import com.dimajix.flowman.history.BatchToken
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 /**
@@ -39,23 +39,13 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[BatchToken] = Non
     }
 
     /**
-      * Performs some checkJob, if the run is required
-      *
-      * @param job
-      * @return
-      */
-    protected override def checkJob(job: BatchInstance): Boolean = {
-        stateStore.checkJob(job)
-    }
-
-    /**
       * Starts the run and returns a token, which can be anything
       *
-      * @param job
+      * @param batch
       * @return
       */
-    protected override def startBundle(job: BatchInstance, parent: Option[BatchToken]): BatchToken = {
-        stateStore.startBatch(job, parent)
+    protected override def startBatch(batch: BatchInstance, phase: Phase): BatchToken = {
+        stateStore.startBatch(batch, phase)
     }
 
     /**

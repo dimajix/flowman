@@ -126,7 +126,7 @@ case class HBaseRelation(
             .save()
     }
 
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         logger.info(s"Truncating to HBase table '$tableSpace.$table'")
 
         val config = hbaseConf

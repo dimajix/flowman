@@ -18,22 +18,24 @@ package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 class NullStateStore extends StateStore {
     /**
       * Returns the state of a job
-      * @param job
+      * @param batch
       * @return
       */
-    def getBatchState(job:BatchInstance, phase:Phase) : Option[BatchState] = None
+    override def getBatchState(batch:BatchInstance, phase:Phase) : Option[BatchState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param job
+      * @param batch
       * @return
       */
-    override def startBatch(job:BatchInstance, phase:Phase) : BatchToken = null
+    override def startBatch(batch:BatchInstance, phase:Phase) : BatchToken = null
 
     /**
       * Sets the status of a job after it has been started

@@ -22,13 +22,12 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 
-
+/*
 case class LoopTask(
     instanceProperties:Task.Properties,
     job:JobIdentifier,
@@ -82,3 +81,4 @@ class LoopTaskSpec extends TaskSpec {
         )
     }
 }
+*/

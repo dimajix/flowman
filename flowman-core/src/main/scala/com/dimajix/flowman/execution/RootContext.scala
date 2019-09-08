@@ -26,7 +26,6 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Profile
@@ -39,7 +38,6 @@ import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
 
 
 object RootContext {
@@ -191,7 +189,7 @@ class RootContext private[execution](
         if (identifier.project.isEmpty)
             throw new NoSuchBundleException(identifier)
         val child = getProjectContext(identifier.project.get)
-        child.getBatch(BundleIdentifier(identifier.name, None))
+        child.getBatch(BatchIdentifier(identifier.name, None))
     }
 
     /**

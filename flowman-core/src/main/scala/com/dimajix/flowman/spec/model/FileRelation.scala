@@ -160,7 +160,7 @@ class FileRelation(
       * @param executor
       * @param partitions
       */
-    override def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
+    override def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
         require(executor != null)
         require(partitions != null)
 

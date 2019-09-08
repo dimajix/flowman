@@ -128,7 +128,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.write(executor, df, Map(), "overwrite")
         outputPath.resolve("data.csv").toFile.exists() should be (true)
 
-        relation.clean(executor)
+        relation.truncate(executor)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         outputPath.toFile.exists() should be (true)
 
@@ -197,7 +197,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
                 Nil
         ))
 
-        relation.clean(executor)
+        relation.truncate(executor)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         outputPath.toFile.exists() should be (true)
 

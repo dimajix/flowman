@@ -126,7 +126,7 @@ case class KafkaRelation(
             .save()
     }
 
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         throw new UnsupportedOperationException("Cleaning Kafka topics is not supported")
     }
 

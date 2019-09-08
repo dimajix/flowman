@@ -90,7 +90,6 @@ object TaskSpec extends TypeRegistry[TaskSpec] {
     new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTaskSpec]),
     new JsonSubTypes.Type(name = "describe", value = classOf[DescribeTaskSpec]),
     new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTaskSpec]),
-    new JsonSubTypes.Type(name = "loop", value = classOf[LoopTaskSpec]),
     new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTaskSpec]),
     new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTaskSpec]),
     new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTaskSpec]),

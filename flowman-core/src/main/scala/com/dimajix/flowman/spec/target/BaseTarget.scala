@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.spec.TargetIdentifier
 
 

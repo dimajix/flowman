@@ -18,10 +18,10 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.history.BatchInstance
 import com.dimajix.flowman.history.BatchToken
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 class SimpleRunner extends AbstractRunner {
@@ -34,7 +34,7 @@ class SimpleRunner extends AbstractRunner {
       *
       * @return
       */
-    override protected def startBundle(job:BatchInstance, parent:Option[BatchToken]) : BatchToken = null
+    override protected def startBatch(job:BatchInstance, phase:Phase) : BatchToken = null
 
     /**
       * Marks a run as a success

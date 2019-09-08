@@ -18,6 +18,8 @@ package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 abstract class BatchToken

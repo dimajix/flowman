@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -25,11 +24,8 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
 
@@ -69,6 +65,7 @@ case class RelationTarget(
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
             case Phase.BUILD => rel.resources(partition)
+            case _ => Seq()
         }
     }
 
@@ -79,6 +76,7 @@ case class RelationTarget(
     override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Seq()
         }
     }
 
@@ -152,7 +150,7 @@ case class RelationTarget(
 
         logger.info(s"Truncating partition $partition of relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.clean(executor, partition)
+        rel.truncate(executor, partition)
     }
 
     /**

@@ -116,10 +116,10 @@ class TemplateRelation(
       * @param executor
       * @param partitions
       */
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
 
-        relationInstance.clean(executor, partitions)
+        relationInstance.truncate(executor, partitions)
     }
 
     /**

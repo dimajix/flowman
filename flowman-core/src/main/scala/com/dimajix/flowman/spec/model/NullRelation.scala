@@ -94,7 +94,7 @@ class NullRelation(
         require(partition != null)
     }
 
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
     }
 

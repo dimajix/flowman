@@ -577,7 +577,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
           spark.read.table("default.lala_0010").count() should be(2)
 
           // Test clean
-          relation.clean(executor)
+          relation.truncate(executor)
           location.exists() should be(true)
           spark.catalog.getTable("default", "lala_0010") should not be (null)
           spark.read.table("default.lala_0010").count() should be(0)
@@ -640,7 +640,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             spark.read.table("default.lala_0011").count() should be(2)
 
             // Test clean
-            relation.clean(executor)
+            relation.truncate(executor)
             location.exists() should be(true)
             spark.catalog.getTable("default", "lala_0011") should not be (null)
             spark.read.table("default.lala_0011").count() should be(0)
@@ -702,7 +702,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         }
 
         // Test clean
-        relation.clean(executor)
+        relation.truncate(executor)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
         if (hiveSupported) {

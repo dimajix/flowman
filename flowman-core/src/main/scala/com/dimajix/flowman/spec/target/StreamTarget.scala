@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
@@ -45,16 +46,25 @@ case class StreamTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase) : Seq[ResourceIdentifier] = {
         val rel = context.getRelation(relation)
-        rel.provides(Map())
+
+        phase match {
+            case Phase.CREATE|Phase.DESTROY => rel.provides
+            case _ => Seq()
+        }
     }
 
     /**
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Seq()
+        }
+    }
 
     /**
       * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
@@ -109,7 +119,7 @@ case class StreamTarget(
     override def truncate(executor: Executor): Unit = {
         logger.info(s"Cleaining streaming relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.clean(executor)
+        rel.truncate(executor)
     }
 
     /**

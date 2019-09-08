@@ -71,54 +71,54 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
       * logging and monitoring
       *
       * @param executor
-      * @param bundle
+      * @param batch
       * @return
       */
-    override def execute(executor: Executor, bundle:Batch, phase:Phase, args:Map[String,String] = Map(), force:Boolean=false) : Status = {
+    override def execute(executor: Executor, batch:Batch, phase:Phase, args:Map[String,String], force:Boolean) : Status = {
         require(executor != null)
         require(args != null)
 
-        val result = withWallTime(executor.metrics, bundle.metadata) {
+        val result = withWallTime(executor.metrics, batch.metadata) {
             // Create job instance for state server
-            val instance = bundle.instance(args)
+            val instance = batch.instance(args)
 
             // Get Token
-            val token = startBatch(instance, parentJob)
+            val token = startBatch(instance, phase)
 
             val shutdownHook = new Thread() { override def run() : Unit = finishBatch(token, Status.FAILED) }
             withShutdownHook(shutdownHook) {
                 Try {
-                    logger.info(s"Running phase '$phase' of execution '${bundle.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+                    logger.info(s"Running phase '$phase' of execution '${batch.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
                     val jobExecutor = new JobExecutor(executor, jobRunner(token))
-                    bundle.execute(jobExecutor, args, phase, force)
+                    batch.execute(jobExecutor, args, phase, force)
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
-                        logger.info(s"Successfully finished phase '$phase' of execution of bundle '${bundle.identifier}'")
+                        logger.info(s"Successfully finished phase '$phase' of execution of bundle '${batch.identifier}'")
                         finishBatch(token, Status.SUCCESS)
                         status
                     case Success(status @ Status.FAILED) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' failed")
+                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' failed")
                         finishBatch(token, Status.FAILED)
                         status
                     case Success(status @ Status.ABORTED) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' aborted")
+                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' aborted")
                         finishBatch(token, Status.ABORTED)
                         status
                     case Success(status @ Status.SKIPPED) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' skipped")
+                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' skipped")
                         finishBatch(token, Status.SKIPPED)
                         status
                     case Success(status @ Status.RUNNING) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' already running")
+                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' already running")
                         finishBatch(token, Status.SKIPPED)
                         status
                     case Success(status) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${bundle.identifier}' in unknown state. Assuming failure")
+                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' in unknown state. Assuming failure")
                         finishBatch(token, Status.FAILED)
                         status
                     case Failure(e) =>
-                        logger.error(s"Caught exception while executing phase '$phase' of bundle '${bundle.identifier}'", e)
+                        logger.error(s"Caught exception while executing phase '$phase' of bundle '${batch.identifier}'", e)
                         finishBatch(token, Status.FAILED)
                         Status.FAILED
                 }
@@ -172,7 +172,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
       * @param batch
       * @return
       */
-    protected def startBatch(batch:BatchInstance, parent:Option[BatchToken]) : BatchToken
+    protected def startBatch(batch:BatchInstance, phase:Phase) : BatchToken
 
     /**
       * Marks a run as a success

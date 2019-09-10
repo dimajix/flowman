@@ -58,19 +58,19 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param batch
       * @return
       */
-    override def getBatchState(batch: BatchInstance, phase: Phase): Option[BatchState] = {
+    override def getBatchState(batch: BatchInstance): Option[BatchState] = {
         val run =  BatchRun(
             0,
             Option(batch.namespace).getOrElse(""),
             Option(batch.project).getOrElse(""),
             batch.batch,
-            phase.value,
+            null,
             hashArgs(batch),
             null,
             null,
             null
         )
-        logger.info(s"Checking last state for phase '${phase}' of bundle ${run.namespace}/${run.project}/${run.bundle} in state database")
+        logger.info(s"Checking last state  of batch ${run.namespace}/${run.project}/${run.bundle} in state database")
         withSession { repository =>
             repository.getBatchState(run)
         }
@@ -122,36 +122,22 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param target
       * @return
       */
-    override def getTargetState(target:TargetInstance, phase: Phase) : Option[TargetState] = {
+    override def getTargetState(target:TargetInstance) : Option[TargetState] = {
         val run =  TargetRun(
             0,
             None,
             Option(target.namespace).getOrElse(""),
             Option(target.project).getOrElse(""),
             target.target,
-            phase.value,
+            null,
             hashPartitions(target),
             null,
             null,
             null
         )
-        logger.info(s"Checking last state for phase '$phase' of target ${run.namespace}/${run.project}/${run.target} in state database")
+        logger.info(s"Checking last state  of target ${run.namespace}/${run.project}/${run.target} in state database")
         withSession { repository =>
             repository.getTargetState(run, target.partitions)
-        }
-    }
-
-    /**
-      * Performs some checks, if the run is required
-      * @param target
-      * @return
-      */
-    override def checkTarget(target:TargetInstance, phase: Phase) : Boolean = {
-        val state = getTargetState(target, phase).map(_.status)
-        state match {
-            case Some(Status.SUCCESS) => true
-            case Some(_) => false
-            case None => false
         }
     }
 
@@ -204,7 +190,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @param offset
       * @return
       */
-    override def findBundles(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
+    override def findBatches(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria
@@ -238,7 +224,6 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       * @return
       */
     private def withSession[T](query: JdbcStateRepository => T) : T = {
-        @tailrec
         def retry[T](n:Int)(fn: => T) : T = {
             try {
                 fn

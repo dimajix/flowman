@@ -61,7 +61,7 @@ class CleanCommand extends ActionCommand {
             .build()
 
         val runner = executor.runner
-        val result = runner.execute(executor, job, Map(), true)
+        val result = runner.executeBatch(executor, job, Map(), true)
 
         result match {
             case Status.SUCCESS => true

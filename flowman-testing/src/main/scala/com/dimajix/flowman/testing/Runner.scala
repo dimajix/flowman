@@ -191,7 +191,7 @@ class Runner private(
         val runner = session.runner
 
         val job = context.getBatch(JobIdentifier(jobName))
-        val result = runner.execute(executor, job, args, true)
+        val result = runner.executeBatch(executor, job, args, true)
 
         result match {
             case Status.SUCCESS => true

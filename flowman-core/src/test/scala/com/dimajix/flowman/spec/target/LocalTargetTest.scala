@@ -21,6 +21,7 @@ import java.nio.file.Paths
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
@@ -60,11 +61,11 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val output = context.getTarget(TargetIdentifier("out"))
 
         outputPath.toFile.exists() should be (false)
-        output.build(executor)
+        output.execute(executor, Phase.BUILD)
         outputPath.toFile.exists() should be (true)
 
         outputPath.toFile.exists() should be (true)
-        output.truncate(executor)
+        output.execute(executor, Phase.TRUNCATE)
         outputPath.toFile.exists() should be (false)
     }
 

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
@@ -42,16 +43,19 @@ case class SchemaTarget(
       *
       * @return
       */
-    override def provides: Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("schema", location.toString)
-    )
+    override def provides(phase:Phase) : Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.CREATE | Phase.DESTROY => Seq(ResourceIdentifier("schema", location.toString))
+            case _ => Seq()
+        }
+    }
 
     /**
       * Returns a list of physical resources required by this target
       *
       * @return
       */
-    override def requires: Seq[ResourceIdentifier] = Seq()
+    override def requires(phase:Phase) : Seq[ResourceIdentifier] = Seq()
 
     /**
       * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method

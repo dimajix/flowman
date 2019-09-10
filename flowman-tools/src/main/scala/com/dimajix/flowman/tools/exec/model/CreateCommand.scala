@@ -58,7 +58,7 @@ class CreateCommand extends ActionCommand {
             .build()
 
         val runner = executor.runner
-        val result = runner.execute(executor, job)
+        val result = runner.executeBatch(executor, job)
 
         result match {
             case Status.SUCCESS => true

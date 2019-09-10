@@ -64,7 +64,7 @@ class RunCommand extends ActionCommand {
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
         val runner = executor.runner
-        val result = runner.execute(executor, job, args, force)
+        val result = runner.executeBatch(executor, job, args, force)
         result match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true

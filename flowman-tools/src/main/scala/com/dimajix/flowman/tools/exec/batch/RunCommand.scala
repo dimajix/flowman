@@ -72,7 +72,7 @@ class RunCommand extends ActionCommand {
         logger.info(s"Executing phase '$batchPhase' of batch '${batch.name}' $batchDescription with args $batchArgs")
 
         val runner = executor.runner
-        val result = runner.execute(executor, batch, batchPhase, args, force)
+        val result = runner.executeBatch(executor, batch, batchPhase, args, force)
         result match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true

@@ -33,7 +33,7 @@ abstract class StateStore {
       * @param batch
       * @return
       */
-    def getBatchState(batch:BatchInstance, phase:Phase) : Option[BatchState]
+    def getBatchState(batch:BatchInstance) : Option[BatchState]
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -54,14 +54,7 @@ abstract class StateStore {
       * @param target
       * @return
       */
-    def getTargetState(target:TargetInstance, phase:Phase) : Option[TargetState]
-
-    /**
-      * Performs some checkJob, if the run is required
-      * @param target
-      * @return
-      */
-    def checkTarget(target:TargetInstance, phase:Phase) : Boolean
+    def getTargetState(target:TargetInstance) : Option[TargetState]
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -84,7 +77,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findBundles(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState]
+    def findBatches(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState]
 
     /**
       * Returns a list of job matching the query criteria

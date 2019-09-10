@@ -186,7 +186,6 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .filter(r => r.namespace === run.namespace
                 && r.project === run.project
                 && r.batch === run.bundle
-                && r.phase === run.phase
                 && r.args_hash === run.args_hash
                 && r.status =!= Status.SKIPPED.value
             ).map(_.id)
@@ -208,7 +207,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             state.namespace,
             state.project,
             state.bundle,
-            state.phase,
+            Phase.ofString(state.phase),
             args,
             Status.ofString(state.status),
             Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
@@ -271,7 +270,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 state.namespace,
                 state.project,
                 state.bundle,
-                state.phase,
+                Phase.ofString(state.phase),
                 Map(),
                 Status.ofString(state.status),
                 Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
@@ -284,7 +283,6 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .filter(tr => tr.namespace === target.namespace
                 && tr.project === target.project
                 && tr.target === target.target
-                && tr.phase === target.phase
                 && tr.partitions_hash === target.partitions_hash
                 && tr.status =!= Status.SKIPPED.value
             )

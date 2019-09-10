@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.BatchToken
+import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.spec.target.BatchInstance
 import com.dimajix.flowman.spec.target.TargetInstance
@@ -64,7 +65,22 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[BatchToken] = Non
       * @return
       */
     protected override def checkTarget(target: TargetInstance, phase: Phase): Boolean = {
-        stateStore.checkTarget(target, phase)
+        def checkState(state:TargetState) : Boolean = {
+            val lifecycle = Lifecycle.ofPhase(phase)
+            if (!lifecycle.contains(state.phase))
+                // Different lifecycle => target is not valid
+                false
+            else if (lifecycle.indexOf(state.phase) < lifecycle.indexOf(phase))
+                // Same lifecycle, but previous phase => target is not valid
+                false
+            else
+                state.status == Status.SUCCESS || state.status == Status.SKIPPED
+        }
+
+        stateStore.getTargetState(target) match {
+            case Some(state:TargetState) => checkState(state)
+            case _ => false
+        }
     }
 
     /**

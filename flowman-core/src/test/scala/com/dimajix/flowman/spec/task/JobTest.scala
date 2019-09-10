@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
 
 
@@ -71,7 +72,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val job = module.jobs("job")
+        val job = module.batches("job")
         job should not be (null)
     }
 
@@ -95,7 +96,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
@@ -122,7 +123,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
@@ -145,7 +146,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
@@ -165,7 +166,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
@@ -186,7 +187,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
@@ -206,7 +207,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val executor = session.executor
         implicit val context = session.context
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map()))
@@ -230,7 +231,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
         job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> 7))
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
@@ -255,7 +256,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = module.batches("job").instantiate(session.context)
         job should not be (null)
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
@@ -300,7 +301,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val metricSink = mock[MetricSink]
         metricSystem.addSink(metricSink)
 
-        val job = context.getBatch(JobIdentifier("main"))
+        val job = context.getBatch(BatchIdentifier("main"))
         job.labels should be (Map("job_label" -> "xyz"))
 
         job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)

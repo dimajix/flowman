@@ -24,11 +24,11 @@ import com.dimajix.flowman.spec.target.TargetInstance
 
 class NullStateStore extends StateStore {
     /**
-      * Returns the state of a job
+      * Returns the state of a batch
       * @param batch
       * @return
       */
-    override def getBatchState(batch:BatchInstance, phase:Phase) : Option[BatchState] = None
+    override def getBatchState(batch:BatchInstance) : Option[BatchState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -49,21 +49,14 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def getTargetState(target:TargetInstance, phase:Phase) : Option[TargetState] = None
-
-    /**
-      * Performs some checkTarget, if the run is required
-      * @param target
-      * @return
-      */
-    override def checkTarget(target:TargetInstance, phase:Phase) : Boolean = false
+    override def getTargetState(target:TargetInstance) : Option[TargetState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken = null
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]=None) : TargetToken = null
 
     /**
       * Sets the status of a target after it has been started
@@ -79,7 +72,7 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findBundles(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
+    override def findBatches(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria

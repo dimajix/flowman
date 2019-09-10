@@ -74,7 +74,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
       * @param batch
       * @return
       */
-    override def execute(executor: Executor, batch:Batch, phase:Phase, args:Map[String,String], force:Boolean) : Status = {
+    override def executeBatch(executor: Executor, batch:Batch, phase:Phase, args:Map[String,String], force:Boolean) : Status = {
         require(executor != null)
         require(args != null)
 
@@ -128,7 +128,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
         result
     }
 
-    override def execute(executor: Executor, target:Target, phase:Phase, force:Boolean) : Status = {
+    override def executeTarget(executor: Executor, target:Target, phase:Phase, force:Boolean) : Status = {
         // Create job instance for state server
         val instance = target.instance
 

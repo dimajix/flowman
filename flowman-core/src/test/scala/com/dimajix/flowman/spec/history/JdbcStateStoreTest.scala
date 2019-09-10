@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.NoSuchConnectionException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.target.Batch
 
 
 class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
@@ -51,8 +51,8 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         val session = Session.builder()
             .build()
-        val job = Job.builder(session.context)
-            .setName("job")
+        val batch = Batch.builder(session.context)
+            .setName("batch")
             .build()
 
         a[NoSuchConnectionException] shouldBe thrownBy(monitor.instantiate(session.context))

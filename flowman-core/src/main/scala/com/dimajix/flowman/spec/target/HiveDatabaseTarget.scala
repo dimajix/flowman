@@ -37,11 +37,12 @@ case class HiveDatabaseTarget(
       *
       * @return
       */
-    override def provides(phase:Phase) : Seq[ResourceIdentifier] = Seq(
+    override def provides(phase:Phase) : Seq[ResourceIdentifier] = {
         phase match {
-            case Phase.CREATE|Phase.DESTROY => ResourceIdentifier("hiveDatabase", database)
+            case Phase.CREATE | Phase.DESTROY => Seq(ResourceIdentifier("hiveDatabase", database))
+            case _ => Seq()
         }
-    )
+    }
 
     /**
       * Returns a list of physical resources required by this target

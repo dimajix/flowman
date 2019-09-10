@@ -20,6 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -70,7 +71,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |      col1: String
               |      col2: Integer
               |
-              |jobs:
+              |batches:
               |  default:
               |    tasks:
               |      - kind: build
@@ -82,18 +83,18 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         val runner = executor.runner
 
-        val job = context.getBatch(JobIdentifier("default"))
-        job should not be (null)
-        job.name should be ("default")
-        job.category should be ("job")
-        job.kind should be ("job")
-        runner.execute(executor, job) should be (Status.SUCCESS)
+        val batch = context.getBatch(BatchIdentifier("default"))
+        batch should not be (null)
+        batch.name should be ("default")
+        batch.category should be ("batch")
+        batch.kind should be ("batch")
+        runner.executeBatch(executor, batch, Phase.BUILD) should be (Status.SUCCESS)
     }
 
-    it should "set the names of all jobs" in {
+    it should "set the names of all batches" in {
         val spec =
             """
-              |jobs:
+              |batches:
               |  default:
               |    description: "Lala"
             """.stripMargin
@@ -101,13 +102,13 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val context = RootContext.builder().build()
 
         val module = Module.read.string(spec)
-        module.jobs.keys should contain ("default")
-        val mjob = module.jobs("default").instantiate(context)
+        module.batches.keys should contain ("default")
+        val mjob = module.batches("default").instantiate(context)
         mjob.name should be ("default")
 
         val project = module.toProject("default")
-        project.jobs.keys should contain ("default")
-        val pjob = project.jobs("default").instantiate(context)
+        project.batches.keys should contain ("default")
+        val pjob = project.batches("default").instantiate(context)
         pjob.name should be ("default")
     }
 }

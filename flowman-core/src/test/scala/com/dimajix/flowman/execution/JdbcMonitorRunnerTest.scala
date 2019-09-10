@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.connection.JdbcConnectionSpec
 import com.dimajix.flowman.spec.history.JdbcHistorySpec
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.types.StringType
 
 
@@ -50,15 +50,15 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val job = Job.builder(session.context)
-            .setName("job")
+        val batch = Batch.builder(session.context)
+            .setName("batch")
             .build()
 
         val monitor = JdbcHistorySpec("logger")
         val runner = new MonitoredRunner(monitor.instantiate(session.context))
-        runner.execute(session.executor, job) should be (Status.SUCCESS)
-        runner.execute(session.executor, job) should be (Status.SKIPPED)
-        runner.execute(session.executor, job, force=true) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.CREATE, Map(), force=false) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.CREATE, Map(), force=false) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.CREATE, Map(), force=true) should be (Status.SUCCESS)
     }
 
     it should "be used in a Session" in {
@@ -72,14 +72,14 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val job = Job.builder(session.context)
+        val batch = Batch.builder(session.context)
             .setName("job")
             .build()
 
         val runner = session.runner
-        runner.execute(session.executor, job) should be (Status.SUCCESS)
-        runner.execute(session.executor, job) should be (Status.SKIPPED)
-        runner.execute(session.executor, job, force=true) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.CREATE) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.CREATE, force=false) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.CREATE, force=true) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
@@ -90,15 +90,15 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
-        val job = Job.builder(session.context)
+        val batch = Batch.builder(session.context)
             .setName("failingJob")
             .addParameter("p0", StringType)
             .build()
 
         val monitor = JdbcHistorySpec("logger")
         val runner = new MonitoredRunner(monitor.instantiate(session.context))
-        runner.execute(session.executor, job) should be (Status.FAILED)
-        runner.execute(session.executor, job) should be (Status.FAILED)
+        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.FAILED)
+        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.FAILED)
     }
 
     it should "support parameters" in {
@@ -109,16 +109,16 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
-        val job = Job.builder(session.context)
+        val batch = Batch.builder(session.context)
             .setName("job")
             .addParameter("p1", StringType)
             .build()
 
         val monitor = JdbcHistorySpec("logger")
         val runner = new MonitoredRunner(monitor.instantiate(session.context))
-        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (Status.SUCCESS)
-        runner.execute(session.executor, job, Map("p1" -> "v1")) should be (Status.SKIPPED)
-        runner.execute(session.executor, job, Map("p1" -> "v2")) should be (Status.SUCCESS)
-        runner.execute(session.executor, job, Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v1")) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v1")) should be (Status.SKIPPED)
+        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v2")) should be (Status.SUCCESS)
+        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
     }
 }

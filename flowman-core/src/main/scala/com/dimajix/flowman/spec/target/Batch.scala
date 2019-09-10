@@ -269,7 +269,7 @@ case class Batch(
         var error = false
         while (iter.hasNext) {
             val target = iter.next()
-            val status = runner.execute(executor, target, phase, force)
+            val status = runner.executeTarget(executor, target, phase, force)
             error |= (status != Status.SUCCESS && status != Status.SKIPPED)
         }
 

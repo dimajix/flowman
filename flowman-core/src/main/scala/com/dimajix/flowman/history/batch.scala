@@ -49,7 +49,7 @@ case class BatchState(
     namespace:String,
     project:String,
     bundle:String,
-    phase: String,
+    phase: Phase,
     args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,

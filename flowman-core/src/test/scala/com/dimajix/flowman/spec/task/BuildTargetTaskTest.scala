@@ -41,11 +41,11 @@ class BuildTargetTaskTest extends FlatSpec with Matchers with LocalSparkSession 
         val module = Module.read.string(spec)
         val session = Session.builder().build()
 
-        module.jobs.size should be (1)
-        val job = module.jobs("dump").instantiate(session.context)
-        job.tasks.size should be (1)
-        val task = job.tasks(0)
-        task shouldBe a[BuildTargetTaskSpec]
+        module.batches.size should be (1)
+        val batch = module.batches("dump").instantiate(session.context)
+        batch.targets.size should be (1)
+        val target = batch.targets(0)
+        target shouldBe a[BuildTargetTaskSpec]
     }
 
     it should "throw exceptions on missing targets" in {

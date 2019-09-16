@@ -60,7 +60,7 @@ class FileRelation(
       * @return
       */
     override def provides : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("file", location.toString)
+        ResourceIdentifier.ofFile(location)
     )
 
     /**
@@ -85,10 +85,10 @@ class FileRelation(
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier("file", collector.resolve(p).toString)).toSeq
+            allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSeq
         }
         else {
-            Seq(ResourceIdentifier("file", location.toString))
+            Seq(ResourceIdentifier.ofFile(location))
         }
     }
 

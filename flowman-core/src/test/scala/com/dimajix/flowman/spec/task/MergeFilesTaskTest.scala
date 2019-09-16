@@ -22,6 +22,8 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.spec.target
+import com.dimajix.flowman.spec.target.MergeFilesTask
 import com.dimajix.spark.testing.LocalTempDir
 
 
@@ -85,7 +87,7 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(
+        val task = target.MergeFilesTask(
             Task.Properties(context),
             source.path,
             dest.path,

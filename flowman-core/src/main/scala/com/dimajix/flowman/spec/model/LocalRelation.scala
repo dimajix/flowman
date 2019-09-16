@@ -54,7 +54,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @return
       */
     override def provides : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("local", location.toString)
+        ResourceIdentifier.ofLocal(location)
     )
 
     /**
@@ -79,10 +79,10 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier("local", collector.resolve(p).toString)).toSeq
+            allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSeq
         }
         else {
-            Seq(ResourceIdentifier("local", location.toString))
+            Seq(ResourceIdentifier.ofLocal(location))
         }
     }
 

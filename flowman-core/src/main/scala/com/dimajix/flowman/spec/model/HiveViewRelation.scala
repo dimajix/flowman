@@ -55,7 +55,7 @@ class HiveViewRelation(
       * @return
       */
     override def provides : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("hiveTable", database.map(_ + ".").getOrElse("") + table)
+        ResourceIdentifier.ofHiveTable(table, database)
     )
 
     /**
@@ -65,7 +65,7 @@ class HiveViewRelation(
       */
     override def requires : Seq[ResourceIdentifier] = {
         // TODO: Scan execution plan for other Hive tables or views
-        database.map(db => ResourceIdentifier("hiveDatabase", db)).toSeq
+        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSeq
     }
 
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???

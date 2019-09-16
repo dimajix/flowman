@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec
 
+import org.apache.hadoop.fs.Path
+
 class IdentifierFactory[T] {
     val empty = new Identifier[T]("", None)
 
@@ -81,6 +83,15 @@ case class MappingOutputIdentifier(name:String, output:String, project:Option[St
     }
 }
 
+
+object ResourceIdentifier {
+    def ofFile(file:Path) = ResourceIdentifier("file", file.toString)
+    def ofLocal(file:Path) = ResourceIdentifier("local", file.toString)
+    def ofHiveDatabase(database:String) = ResourceIdentifier("hiveDatabase", database)
+    def ofHiveTable(table:String, database:Option[String]) = ResourceIdentifier("hiveTable", database.map(_ + ".").getOrElse("") + table)
+    def ofHivePartition(table:String, database:Option[String], partition:Map[String,Any]) = ResourceIdentifier("hiveTablePartition", database.map(_ + ".").getOrElse("") + table, partition.map { case(k,v) => k -> v.toString })
+
+}
 
 case class ResourceIdentifier(category:String, name:String, partition:Map[String,String] = Map()) {
     def isEmpty : Boolean = name.isEmpty

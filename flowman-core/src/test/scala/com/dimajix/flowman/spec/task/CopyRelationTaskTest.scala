@@ -46,7 +46,7 @@ class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession
         val session = Session.builder().build()
         val context = session.context
 
-        val taskSpec = ObjectMapper.parse[TaskSpec](spec).asInstanceOf[CopyRelationTaskSpec]
+        val taskSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyRelationTaskSpec]
         val task = taskSpec.instantiate(context)
         task.source should be (RelationIdentifier("local_file"))
         task.sourcePartitions should be (Map("spc" -> SingleValue("part_value")))

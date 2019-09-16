@@ -31,7 +31,7 @@ case class AnnotatedTask(instanceProperties:Task.Properties) extends BaseTask {
 }
 
 @TaskType(kind = "annotatedTask")
-class AnnotatedTaskSpec extends TaskSpec {
+class AnnotatedTaskSpec extends TargetSpec {
     override def instantiate(context: Context): Task = AnnotatedTask(instanceProperties(context))
 }
 

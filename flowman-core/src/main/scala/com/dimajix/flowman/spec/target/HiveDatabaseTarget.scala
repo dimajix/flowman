@@ -39,7 +39,7 @@ case class HiveDatabaseTarget(
       */
     override def provides(phase:Phase) : Seq[ResourceIdentifier] = {
         phase match {
-            case Phase.CREATE | Phase.DESTROY => Seq(ResourceIdentifier("hiveDatabase", database))
+            case Phase.CREATE | Phase.DESTROY => Seq(ResourceIdentifier.ofHiveDatabase(database))
             case _ => Seq()
         }
     }

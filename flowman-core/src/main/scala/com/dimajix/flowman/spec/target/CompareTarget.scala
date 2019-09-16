@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Row
@@ -22,24 +22,46 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.task.TargetSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 
 
-case class CompareTask(
-    instanceProperties:Task.Properties,
+case class CompareTarget(
+    instanceProperties:Target.Properties,
     actual:Dataset,
     expected:Dataset
-) extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[CompareTask])
+) extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[CompareTarget])
+
 
     /**
-      * Abstract method which will perform the given task.
+      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
+      * will not provide the data itself, it will only create the container
       *
       * @param executor
       */
-    override def execute(executor: Executor): Boolean = {
+    override protected def create(executor: Executor): Unit = {}
+
+    override protected def migrate(executor: Executor): Unit = {}
+
+    /**
+      * Abstract method which will perform the output operation. All required tables need to be
+      * registered as temporary tables in the Spark session before calling the execute method.
+      *
+      * @param executor
+      */
+    override protected def build(executor: Executor): Unit = {}
+
+    /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    override protected def verify(executor: Executor): Unit = {
         logger.info(s"Comparing actual dataset '${actual.name}' with expected dataset '${expected.name}'")
         val actualDf = actual.read(executor, None)
         val expectedDf = expected.read(executor, None)
@@ -60,6 +82,40 @@ case class CompareTask(
         else {
             logger.info(s"Dataset '${actual.name}' matches the expected dataset '${expected.name}'")
             true
+        }
+    }
+
+    /**
+      * Deletes data of a specific target
+      *
+      * @param executor
+      */
+    override protected def truncate(executor: Executor): Unit = {}
+
+    /**
+      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
+      * the table definition
+      *
+      * @param executor
+      */
+    override protected def destroy(executor: Executor): Unit = {}
+
+    /**
+      * Returns a list of physical resources produced by this target
+      *
+      * @return
+      */
+    override def provides(phase: Phase): Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns a list of physical resources required by this target
+      *
+      * @return
+      */
+    override def requires(phase: Phase): Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => actual.resources ++ expected.resources
+            case _ => Seq()
         }
     }
 
@@ -120,12 +176,12 @@ case class CompareTask(
 }
 
 
-class CompareTaskSpec extends TaskSpec {
+class CompareTargetSpec extends TargetSpec {
     @JsonProperty(value = "actual", required = true) private var actual: DatasetSpec = _
     @JsonProperty(value = "expected", required = true) private var expected: DatasetSpec = _
 
-    override def instantiate(context: Context): CompareTask = {
-        CompareTask(
+    override def instantiate(context: Context): CompareTarget = {
+        CompareTarget(
             instanceProperties(context),
             actual.instantiate(context),
             expected.instantiate(context)

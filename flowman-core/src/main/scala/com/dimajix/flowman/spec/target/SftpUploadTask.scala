@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import java.io.File
 import java.io.IOException
@@ -32,12 +32,14 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IOUtils
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.tryWith
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.connection.SshConnection
-import com.dimajix.common.tryWith
+import com.dimajix.flowman.spec.target
+import com.dimajix.flowman.spec.task.BaseTask
+import com.dimajix.flowman.spec.task.Task
 
 
 object SftpUploadTask {
@@ -251,7 +253,7 @@ case class SftpUploadTask(
 
 
 
-class SftpUploadTaskSpec extends TaskSpec {
+class SftpUploadTaskSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var _source: String = ""
     @JsonProperty(value = "target", required = true) private var _target: String = ""
     @JsonProperty(value = "connection", required = true) private var _connection: String = ""
@@ -260,7 +262,7 @@ class SftpUploadTaskSpec extends TaskSpec {
     @JsonProperty(value = "overwrite", required = false) private var _overwrite: String = "true"
 
     override def instantiate(context: Context): SftpUploadTask = {
-        SftpUploadTask(
+        target.SftpUploadTask(
             instanceProperties(context),
             new Path(context.evaluate(_source)),
             new Path(context.evaluate(_target)),

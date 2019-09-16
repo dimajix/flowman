@@ -42,7 +42,7 @@ case class DeleteFileTask(
 
 
 
-class DeleteFileTaskSpec extends TaskSpec {
+class DeleteFileTaskSpec extends TargetSpec {
     @JsonProperty(value = "path", required = true) private var _path: String = ""
     @JsonProperty(value = "recursive", required = false) private var _recusrive: String = "false"
 

@@ -50,7 +50,7 @@ case class DescribeTask(
     }
 }
 
-class DescribeTaskSpec extends TaskSpec {
+class DescribeTaskSpec extends TargetSpec {
     @JsonProperty(value = "input", required = true) private var dataset: DatasetSpec = _
 
     override def instantiate(context: Context): DescribeTask = {

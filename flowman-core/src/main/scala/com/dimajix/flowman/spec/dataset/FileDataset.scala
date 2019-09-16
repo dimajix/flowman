@@ -44,7 +44,7 @@ case class FileDataset(
       * @return
       */
     override def resources : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("file", location.toString, Map())
+        ResourceIdentifier.ofFile(location)
     )
 
     /**

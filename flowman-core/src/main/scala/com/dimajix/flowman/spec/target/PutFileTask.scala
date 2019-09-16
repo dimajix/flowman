@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.target
+import com.dimajix.flowman.spec.task.BaseTask
+import com.dimajix.flowman.spec.task.Task
 
 
 case class PutFileTask(
@@ -44,13 +47,13 @@ case class PutFileTask(
 
 
 
-class PutFileTaskSpec extends TaskSpec {
+class PutFileTaskSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: String = ""
     @JsonProperty(value = "tarPut", required = true) private var tarPut: String = ""
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
     override def instantiate(context: Context): Task = {
-        PutFileTask(
+        target.PutFileTask(
             instanceProperties(context),
             new Path(context.evaluate(source)),
             new Path(context.evaluate(tarPut)),

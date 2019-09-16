@@ -35,7 +35,7 @@ class CompareFilesTaskTest extends FlatSpec with Matchers with LocalSparkSession
               |expected: test/data/data_1.csv
               |actual: test/data/data_1.csv
               |""".stripMargin
-        val task = ObjectMapper.parse[TaskSpec](spec)
+        val task = ObjectMapper.parse[TargetSpec](spec)
         task shouldBe a[CompareFilesTaskSpec]
     }
 

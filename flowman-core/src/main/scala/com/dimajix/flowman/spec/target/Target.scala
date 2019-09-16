@@ -159,8 +159,11 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTargetSpec]),
-    new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
+    new JsonSubTypes.Type(name = "compare", value = classOf[CompareTargetSpec]),
     new JsonSubTypes.Type(name = "console", value = classOf[ConsoleTargetSpec]),
+    new JsonSubTypes.Type(name = "copy", value = classOf[CopyTargetSpec]),
+    new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTargetSpec]),
+    new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
     new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),

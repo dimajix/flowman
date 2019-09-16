@@ -52,7 +52,7 @@ case class GrabEnvironmentTask(instanceProperties:Task.Properties) extends BaseT
 }
 
 @TaskType(kind = "grabenv")
-class GrabEnvironmentTaskSpec extends TaskSpec {
+class GrabEnvironmentTaskSpec extends TargetSpec {
     override def instantiate(context: Context): GrabEnvironmentTask = GrabEnvironmentTask(instanceProperties(context))
 }
 

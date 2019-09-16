@@ -21,7 +21,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.task.BaseTask
 import com.dimajix.flowman.spec.task.Task
-import com.dimajix.flowman.spec.task.TaskSpec
+import com.dimajix.flowman.spec.task.TargetSpec
 
 
 case class HelloWorldTask(
@@ -41,7 +41,7 @@ case class HelloWorldTask(
 
 
 @TaskType(kind="hello-world")
-class HelloWorldTaskSpec extends TaskSpec {
+class HelloWorldTaskSpec extends TargetSpec {
     override def instantiate(context: Context): Task = {
         HelloWorldTask(
             instanceProperties(context)

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.univocity.parsers.csv.CsvFormat
 import com.univocity.parsers.csv.CsvWriter
 import com.univocity.parsers.csv.CsvWriterSettings
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.StringType
 import org.slf4j.LoggerFactory
 
@@ -71,7 +72,7 @@ case class LocalTarget(
       * @return
       */
     override def provides(phase: Phase) : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("local", filename, Map())
+        ResourceIdentifier.ofLocal(new Path(filename))
     )
 
     /**

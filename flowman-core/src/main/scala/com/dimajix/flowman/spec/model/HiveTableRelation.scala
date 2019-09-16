@@ -81,8 +81,7 @@ class HiveTableRelation(
         requireValidPartitionKeys(partition)
 
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        val fqTable = database.map(_ + ".").getOrElse("") + table
-        allPartitions.map(p => ResourceIdentifier("hiveTable", fqTable, p.mapValues(_.toString).toMap)).toSeq
+        allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, database, p.toMap)).toSeq
     }
 
     /**
@@ -91,7 +90,7 @@ class HiveTableRelation(
       * @return
       */
     override def provides : Seq[ResourceIdentifier] = Seq(
-        ResourceIdentifier("hiveTable", database.map(_ + ".").getOrElse("") + table)
+        ResourceIdentifier.ofHiveTable(table, database)
     )
 
     /**
@@ -100,7 +99,7 @@ class HiveTableRelation(
       * @return
       */
     override def requires : Seq[ResourceIdentifier] = {
-        database.map(db => ResourceIdentifier("hiveDatabase", db)).toSeq
+        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSeq
     }
 
     /**

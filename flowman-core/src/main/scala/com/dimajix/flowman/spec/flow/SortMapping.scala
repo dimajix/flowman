@@ -63,7 +63,7 @@ case class SortMapping(
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
+    override def inputs : Seq[MappingOutputIdentifier] = {
         Seq(input)
     }
 

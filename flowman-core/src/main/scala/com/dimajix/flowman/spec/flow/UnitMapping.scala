@@ -57,12 +57,12 @@ case class UnitMapping(
       *
       * @return
       */
-    override def dependencies: Seq[MappingOutputIdentifier] = {
+    override def inputs: Seq[MappingOutputIdentifier] = {
         // For all mappings, find only external dependencies.
         val ownMappings = mappingInstances.keySet
         mappingInstances.values
             .filter(_.outputs.contains("main"))
-            .flatMap(_.dependencies)
+            .flatMap(_.inputs)
             .filter(dep => dep.project.nonEmpty || !ownMappings.contains(dep.name))
             .toSeq
     }
@@ -109,7 +109,7 @@ case class UnitMapping(
         def describe(mapping:Mapping, output:String) : Option[StructType] = {
             val deps = dependencies(mapping)
             // Only return a schema if all dependencies are present
-            if (mapping.dependencies.forall(d => deps.contains(d))) {
+            if (mapping.inputs.forall(d => deps.contains(d))) {
                 mapping.describe(deps, output)
             }
             else {
@@ -121,7 +121,7 @@ case class UnitMapping(
             describe(mapping, id.output)
         }
         def dependencies(mapping:Mapping) ={
-            mapping.dependencies
+            mapping.inputs
                 .flatMap(dep => input.get(dep).orElse(describe2(mapping.context, dep)).map(s => (dep,s)))
                 .toMap
         }

@@ -44,7 +44,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )
         xfs.input should be (MappingOutputIdentifier("myview"))
         xfs.columns should be (Map("new_f" -> "2*_2"))
-        xfs.dependencies should be (Seq(MappingOutputIdentifier("myview")))
+        xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
 
         val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1").collect()

@@ -103,7 +103,7 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
         logger.info(s"Ensuring dependencies for mapping '${mapping.identifier}'")
 
         val context = mapping.context
-        val dependencies = mapping.dependencies.map { dep =>
+        val dependencies = mapping.inputs.map { dep =>
             require(dep.mapping.nonEmpty)
 
             val mapping = context.getMapping(dep.mapping)

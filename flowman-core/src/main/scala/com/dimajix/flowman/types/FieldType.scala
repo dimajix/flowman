@@ -18,6 +18,8 @@ package com.dimajix.flowman.types
 
 import java.util.Locale
 
+import scala.collection.immutable.NumericRange
+
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.JsonParser
@@ -28,6 +30,8 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.apache.spark.sql.types.DataType
+
+import com.dimajix.flowman.types.DoubleType.parse
 
 
 object FieldType {
@@ -134,6 +138,96 @@ abstract class FieldType {
       */
     def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any]
 }
+
+
+abstract class NumericType[T : scala.math.Numeric] extends FieldType {
+}
+abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
+    import scala.math.Integral.Implicits._
+
+    protected def parseRaw(value:String) : T
+
+    override def parse(value:String, granularity:Option[String]=None) : T =  {
+        if (granularity.nonEmpty)
+            (parseRaw(value) / parseRaw(granularity.get) * parseRaw(granularity.get))
+        else
+            parseRaw(value)
+    }
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[T] = {
+        value match {
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(parse(_, granularity))
+            case RangeValue(start,end,step) => {
+                if (step.nonEmpty) {
+                    val range = NumericRange(parseRaw(start), parseRaw(end), parseRaw(step.get))
+                    if (granularity.nonEmpty) {
+                        val mod = parseRaw(granularity.get)
+                        range.map(_ / mod * mod).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity.nonEmpty) {
+                    val mod = parseRaw(granularity.get)
+                    NumericRange(parseRaw(start) / mod * mod, parseRaw(end) / mod * mod, mod)
+                }
+                else {
+                    val num = implicitly[Integral[T]]
+                    NumericRange(parseRaw(start), parseRaw(end), num.one)
+                }
+            }
+        }
+    }
+}
+
+abstract class FractionalType[T : Fractional] extends NumericType[T] {
+    protected implicit def fractionalNum: Fractional[T]
+    protected implicit def integralNum: Integral[T]
+
+    protected def parseRaw(value:String) : T
+
+    protected def roundToGranularity(value:T, granularity:T) : T
+
+    override def parse(value:String, granularity:Option[String]=None) : T = {
+        if (granularity.nonEmpty) {
+            val step = parseRaw(granularity.get)
+            val v = parseRaw(value)
+            roundToGranularity(v, step)
+        }
+        else {
+            parseRaw(value)
+        }
+    }
+
+    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[T] = {
+        value match {
+            case SingleValue(v) => Seq(parse(v, granularity))
+            case ArrayValue(values) => values.map(v => parse(v,granularity))
+            case RangeValue(start,end,step) => {
+                if (step.nonEmpty) {
+                    val range = NumericRange(parseRaw(start), parseRaw(end), parseRaw(step.get))
+                    if (granularity.nonEmpty) {
+                        val mod = parseRaw(granularity.get)
+                        range.map(x => roundToGranularity(x, mod)).distinct
+                    }
+                    else {
+                        range
+                    }
+                }
+                else if (granularity.nonEmpty) {
+                    val mod = parseRaw(granularity.get)
+                    val range = NumericRange(parseRaw(start), parseRaw(end), mod)
+                    range.map(x => roundToGranularity(x, mod)).distinct
+                }
+                else {
+                    NumericRange(parseRaw(start), parseRaw(end), fractionalNum.one)
+                }
+            }
+        }
+    }
+}
+
 
 @JsonDeserialize
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")

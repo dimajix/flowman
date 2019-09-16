@@ -235,7 +235,8 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
             }
             else {
                 Try {
-                    buildTarget(executor, target)
+                    logger.info(s"Building target '${target.identifier}'")
+                    target.build(executor)
                 }
                 match {
                     case Success(_) =>
@@ -259,7 +260,8 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       */
     private def buildUnlogged(executor: Executor, target:Target) : Status = {
         Try {
-            buildTarget(executor, target)
+            logger.info(s"Building target '${target.identifier}'")
+            target.build(executor)
         }
         match {
             case Success(_) =>
@@ -269,18 +271,6 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
                 logger.error(s"Caught exception while building target '${target.identifier}'", e)
                 Status.FAILED
         }
-    }
-
-    private def buildTarget(executor: Executor, target:Target) : Unit = {
-        logger.info("Resolving dependencies for target '{}'", target.identifier)
-        val context = target.context
-        val dependencies = target.dependencies
-            .map(d => (d,context.getMapping(d.mapping)))
-            .map{ case (id,mapping) => (id,executor.instantiate(mapping, id.output)) }
-            .toMap
-
-        logger.info("Building target '{}'", target.identifier)
-        target.build(executor, dependencies)
     }
 
     /**

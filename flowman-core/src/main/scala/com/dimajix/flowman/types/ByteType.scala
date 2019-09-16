@@ -19,33 +19,8 @@ package com.dimajix.flowman.types
 import org.apache.spark.sql.types.DataType
 
 
-case object ByteType extends FieldType {
-    override def sparkType : DataType = org.apache.spark.sql.types.ByteType
+case object ByteType extends IntegralType[Byte] {
+    protected def parseRaw(value:String) : Byte = value.toByte
 
-    override def parse(value:String, granularity:Option[String]=None) : Byte = {
-        granularity
-            .map(g => (value.toByte / g.toByte * g.toByte).toByte)
-            .getOrElse(value.toByte)
-    }
-    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Byte] = {
-        value match {
-            case SingleValue(v) => Seq(parse(v, granularity))
-            case ArrayValue(values) => values.map(v => parse(v, granularity))
-            case RangeValue(start,end,step) => {
-                if (step.nonEmpty) {
-                    val range = start.toInt.until(end.toInt).by(step.get.toInt)
-                    granularity
-                        .map(_.toInt)
-                        .map(mod =>range.map(_ / mod * mod).distinct.map(_.toByte))
-                        .getOrElse(range.map(_.toByte))
-                }
-                else {
-                    granularity
-                        .map(_.toInt)
-                        .map(mod => (start.toInt / mod * mod).until(end.toInt / mod * mod).by(mod).map(_.toByte))
-                        .getOrElse(start.toInt.until(end.toInt).map(_.toByte))
-                }
-            }
-        }
-    }
+    override def sparkType : DataType = org.apache.spark.sql.types.ByteType
 }

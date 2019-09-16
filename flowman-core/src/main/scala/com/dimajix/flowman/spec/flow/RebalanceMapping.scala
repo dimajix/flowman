@@ -52,7 +52,7 @@ case class RebalanceMapping(
       *
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
+    override def inputs : Seq[MappingOutputIdentifier] = {
         Seq(input)
     }
 

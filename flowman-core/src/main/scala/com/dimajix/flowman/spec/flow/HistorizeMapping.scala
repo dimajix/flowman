@@ -35,7 +35,8 @@ case class HistorizeMapping(
     keyColumns:Seq[String],
     timeColumn:String,
     validFromColumn:String,
-    validToColumn:String
+    validToColumn:String,
+    columnInsertPosition:InsertPosition = InsertPosition.END
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[HistorizeMapping])
 
@@ -57,10 +58,22 @@ case class HistorizeMapping(
         val window = Window.partitionBy(keyColumns.map(col):_*)
             .orderBy(col(timeColumn))
             .rowsBetween(1,1)
-        val result = df.select(
-            col("*"),
-            col(timeColumn) as validFromColumn,
-            lead(col(timeColumn), 1).over(window) as validToColumn)
+        val validFromColumn = col(timeColumn) as this.validFromColumn
+        val validToColumn = lead(col(timeColumn), 1).over(window) as this.validToColumn
+        val result = columnInsertPosition match {
+            case InsertPosition.BEGINNING =>
+                df.select(
+                    validFromColumn,
+                    validToColumn,
+                    col("*")
+                )
+            case InsertPosition.END =>
+                df.select(
+                    col("*"),
+                    validFromColumn,
+                    validToColumn
+                )
+        }
 
         Map("main" -> result)
     }
@@ -70,7 +83,7 @@ case class HistorizeMapping(
       *
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
+    override def inputs : Seq[MappingOutputIdentifier] = {
         Seq(input)
     }
 
@@ -84,11 +97,22 @@ case class HistorizeMapping(
 
         val fields = input(this.input).fields
         val fieldsByName = MapIgnoreCase(fields.map(f => (f.name, f)).toMap)
-        val result = StructType(
-            fields
-            :+ fieldsByName(timeColumn).copy(name=validFromColumn, description = None)
-            :+ fieldsByName(timeColumn).copy(name=validToColumn, description = None, nullable = true)
-        )
+        val validFromColumn = fieldsByName(timeColumn).copy(name=this.validFromColumn, description = None)
+        val validToColumn = fieldsByName(timeColumn).copy(name=this.validToColumn, description = None, nullable = true)
+        val result = columnInsertPosition match {
+            case InsertPosition.BEGINNING =>
+                StructType(
+                    validFromColumn +:
+                    validToColumn +:
+                    fields
+                )
+            case InsertPosition.END =>
+                StructType(
+                    fields :+
+                        validFromColumn :+
+                        validToColumn
+                )
+        }
 
         Map("main" -> result)
     }
@@ -102,6 +126,7 @@ class HistorizeMappingSpec extends MappingSpec {
     @JsonProperty(value = "timeColumn", required = true) private var versionColumn:String = _
     @JsonProperty(value = "validFromColumn", required = false) private var validFromColumn:String = "valid_from"
     @JsonProperty(value = "validToColumn", required = false) private var validToColumn:String = "valid_to"
+    @JsonProperty(value = "columnInsertPosition", required = false) private var columnInsertPosition:String = "end"
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -115,7 +140,8 @@ class HistorizeMappingSpec extends MappingSpec {
             keyColumns.map(context.evaluate),
             context.evaluate(versionColumn),
             context.evaluate(validFromColumn),
-            context.evaluate(validToColumn)
+            context.evaluate(validToColumn),
+            InsertPosition.ofString(context.evaluate(columnInsertPosition))
         )
     }
 }

@@ -102,7 +102,7 @@ abstract class Mapping extends AbstractInstance {
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    def dependencies : Seq[MappingOutputIdentifier]
+    def inputs : Seq[MappingOutputIdentifier]
 
     /**
       * Lists all outputs of this mapping. Every mapping should have one "main" output

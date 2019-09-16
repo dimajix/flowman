@@ -33,6 +33,11 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
 
         val spec =
             s"""
+               |mappings:
+               |  some_table:
+               |    kind: provided
+               |    table: some_table
+               |
                |targets:
                |  out:
                |    kind: blackhole
@@ -43,8 +48,10 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
         val executor = session.executor
         val context = session.getContext(project)
 
+        spark.emptyDataFrame.createOrReplaceTempView("some_table")
+
         val output = context.getTarget(TargetIdentifier("out"))
-        output.build(executor, Map(MappingOutputIdentifier("some_table") -> spark.emptyDataFrame))
+        output.build(executor)
         output.clean(executor)
     }
 }

@@ -54,6 +54,6 @@ class TemplateMappingTest extends FlatSpec with Matchers {
         mapping should not be (null)
         mapping shouldBe a[TemplateMapping]
 
-        mapping.dependencies should be (Seq(MappingOutputIdentifier("lala")))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("lala")))
     }
 }

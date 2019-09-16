@@ -19,38 +19,8 @@ package com.dimajix.flowman.types
 import org.apache.spark.sql.types.DataType
 
 
-case object ShortType extends FieldType {
-    override def sparkType : DataType = org.apache.spark.sql.types.ShortType
+case object ShortType extends IntegralType[Short] {
+    protected def parseRaw(value:String) : Short = value.toShort
 
-    override def parse(value:String, granularity:Option[String]=None) : Short =  {
-        if (granularity.nonEmpty)
-            (value.toShort / granularity.get.toShort * granularity.get.toShort).toShort
-        else
-            value.toShort
-    }
-    override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Short] = {
-        value match {
-            case SingleValue(v) => Seq(parse(v, granularity))
-            case ArrayValue(values) => values.map(parse(_, granularity))
-            case RangeValue(start,end,step) => {
-                if (step.nonEmpty) {
-                    val range = start.toInt.until(end.toInt).by(step.get.toInt)
-                    if (granularity.nonEmpty) {
-                        val mod = granularity.get.toInt
-                        range.map(_ / mod * mod).distinct.map(_.toShort)
-                    }
-                    else {
-                        range.map(_.toShort)
-                    }
-                }
-                else if (granularity.nonEmpty) {
-                    val mod = granularity.get.toInt
-                    (start.toInt / mod * mod).until(end.toInt / mod * mod).by(mod).map(_.toShort)
-                }
-                else {
-                    start.toInt.until(end.toInt).map(_.toShort)
-                }
-            }
-        }
-    }
+    override def sparkType : DataType = org.apache.spark.sql.types.ShortType
 }

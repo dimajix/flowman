@@ -72,7 +72,7 @@ extends BaseMapping {
       *
       * @return
       */
-    override def dependencies : Seq[MappingOutputIdentifier] = {
+    override def inputs : Seq[MappingOutputIdentifier] = {
         val plan = CatalystSqlParser.parsePlan(sql)
         resolveDependencies(plan).map(MappingOutputIdentifier.parse)
     }

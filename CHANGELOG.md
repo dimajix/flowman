@@ -1,3 +1,6 @@
+# Version 0.8.3
+* Add configuration option for column insert position of 'historize' mapping
+
 # Version 0.8.2
 * Add optional filter condition to 'latest' mapping
 

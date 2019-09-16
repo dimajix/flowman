@@ -39,6 +39,7 @@ import com.dimajix.flowman.history.TargetInstance
   */
 case class LocalTarget(
     instanceProperties:Target.Properties,
+    mapping:MappingOutputIdentifier,
     filename:String,
     encoding:String,
     header:Boolean,
@@ -67,14 +68,13 @@ case class LocalTarget(
       * Build the target by writing a file to the local file system of the driver
       *
       * @param executor
-      * @param input
       */
-    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
+    override def build(executor:Executor) : Unit = {
         val outputFilename = this.filename
-        val inputMapping = instanceProperties.input
-        logger.info(s"Writing mapping '$inputMapping' to local file '$outputFilename'")
+        logger.info(s"Writing mapping '${this.mapping}' to local file '$outputFilename'")
 
-        val dfIn = input(inputMapping)
+        val mapping = context.getMapping(this.mapping.mapping)
+        val dfIn = executor.instantiate(mapping, this.mapping.output)
         val cols = if (columns.nonEmpty) columns else dfIn.columns.toSeq
         val dfOut = dfIn.select(cols.map(c => dfIn(c).cast(StringType)):_*)
 
@@ -124,6 +124,7 @@ case class LocalTarget(
 
 
 class LocalTargetSpec extends TargetSpec {
+    @JsonProperty(value="input", required=true) private var input:String = _
     @JsonProperty(value="filename", required=true) private var _filename:String = _
     @JsonProperty(value="encoding", required=true) private var _encoding:String = "UTF-8"
     @JsonProperty(value="header", required=true) private var _header:String = "true"
@@ -136,6 +137,7 @@ class LocalTargetSpec extends TargetSpec {
     override def instantiate(context: Context): LocalTarget = {
         LocalTarget(
             instanceProperties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input)),
             context.evaluate(_filename),
             context.evaluate(_encoding),
             context.evaluate(_header).toBoolean,

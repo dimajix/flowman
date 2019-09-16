@@ -18,12 +18,17 @@ package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
+import org.apache.spark.sql.DataFrame
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.types.StructType
 
 
 object MappingUtils {
+    private val logger = LoggerFactory.getLogger(MappingUtils.getClass)
+
     def describe(mapping:Mapping, output:String) : Option[StructType] = {
         val schemaCache = mutable.Map[MappingOutputIdentifier, Option[StructType]]()
 
@@ -33,12 +38,12 @@ object MappingUtils {
                 if (!mapping.outputs.contains(output))
                     throw new NoSuchMappingOutputException(oid)
                 val context = mapping.context
-                val deps = mapping.dependencies
+                val deps = mapping.inputs
                     .flatMap(id => describe(context.getMapping(id.mapping), id.output).map(s => (id,s)))
                     .toMap
 
                 // Only return a schema if all dependencies are present
-                if (mapping.dependencies.forall(d => deps.contains(d))) {
+                if (mapping.inputs.forall(d => deps.contains(d))) {
                     mapping.describe(deps, output)
                 }
                 else {

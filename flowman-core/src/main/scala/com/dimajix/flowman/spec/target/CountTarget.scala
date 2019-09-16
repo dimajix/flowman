@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.target
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
@@ -25,7 +26,8 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 
 
 case class CountTarget(
-    instanceProperties:Target.Properties
+    instanceProperties:Target.Properties,
+    mapping:MappingOutputIdentifier
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CountTarget])
 
@@ -33,11 +35,14 @@ case class CountTarget(
       * Build the "count" target by printing the number of records onto the console
       *
       * @param executor
-      * @param input
       */
-    override def build(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Unit = {
-        val count = input(instanceProperties.input).count()
-        System.out.println(s"Table $input contains $count records")
+    override def build(executor:Executor) : Unit = {
+        require(executor != null)
+
+        val mapping = context.getMapping(this.mapping.mapping)
+        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        val count = dfIn.count()
+        System.out.println(s"Mapping '$mapping' contains $count records")
     }
 
     /**
@@ -51,9 +56,12 @@ case class CountTarget(
 
 
 class CountTargetSpec extends TargetSpec {
+    @JsonProperty(value = "input", required=true) private var input:String = _
+
     override def instantiate(context: Context): CountTarget = {
         CountTarget(
-            Target.Properties(context)
+            Target.Properties(context),
+            MappingOutputIdentifier.parse(context.evaluate(input))
         )
     }
 }

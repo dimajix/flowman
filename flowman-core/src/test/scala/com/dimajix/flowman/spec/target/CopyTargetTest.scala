@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import java.io.File
 
@@ -30,23 +30,27 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class CopyRelationTaskTest extends FlatSpec with Matchers with LocalSparkSession {
+class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
     "A CopyRelationTask" should "support configuration via YML" in {
         val spec =
             """
-              |kind: copyRelation
-              |source: local_file
-              |sourcePartitions:
-              |  spc: part_value
-              |target: some_hive_table
-              |targetPartition:
-              |  tpc: p2
+              |kind: copy
+              |source:
+              |  kind: relation
+              |  relation: local_file
+              |  partition:
+              |    spc: part_value
+              |target:
+              |  kind: relation
+              |  relation: some_hive_table
+              |  partition:
+              |    tpc: p2
               |mode: append
               |""".stripMargin
         val session = Session.builder().build()
         val context = session.context
 
-        val taskSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyRelationTaskSpec]
+        val taskSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyTargetSpec]
         val task = taskSpec.instantiate(context)
         task.source should be (RelationIdentifier("local_file"))
         task.sourcePartitions should be (Map("spc" -> SingleValue("part_value")))

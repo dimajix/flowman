@@ -92,10 +92,12 @@ class HiveViewRelation(
     override def migrate(executor:Executor) : Unit = {
         val catalog = executor.catalog
         if (catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
-            catalog.dropView(tableIdentifier)
-            val select = getSelect(executor)
-            catalog.createView(tableIdentifier, select, false)
+            val newSelect = getSelect(executor)
+            val curSelect = catalog.getTable(tableIdentifier).viewText.get
+            if (newSelect != curSelect) {
+                logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
+                catalog.alterView(tableIdentifier, newSelect)
+            }
         }
     }
 

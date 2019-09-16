@@ -136,7 +136,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       */
     def tableExists(table:TableIdentifier) : Boolean = {
         require(table != null)
-        // "SHOW TABLES IN training LIKE 'weather_raw'"
+
         catalog.tableExists(table)
     }
 
@@ -147,7 +147,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       */
     def getTable(table:TableIdentifier) : CatalogTable = {
         require(table != null)
-        // "DESCRIBE FORMATTED training.weather_raw"
+
         catalog.getTableMetadata(table)
     }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import java.io.IOException
 
@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.task.Task
 import com.dimajix.spark.testing.LocalSparkSession
 
 

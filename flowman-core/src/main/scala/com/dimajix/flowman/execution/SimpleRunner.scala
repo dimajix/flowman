@@ -27,8 +27,6 @@ import com.dimajix.flowman.spec.target.TargetInstance
 class SimpleRunner extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[SimpleRunner])
 
-    override protected def jobRunner(job:BatchToken) : Runner = this
-
     /**
       * Starts the run and returns a token, which can be anything
       *

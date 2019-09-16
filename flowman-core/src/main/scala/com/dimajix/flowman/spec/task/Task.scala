@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.target.CopyTaskSpec
 import com.dimajix.flowman.spec.target.GetFileTargetSpec
 import com.dimajix.flowman.spec.target.MergeFilesTaskSpec
 import com.dimajix.flowman.spec.target.PutFileTaskSpec
-import com.dimajix.flowman.spec.target.SftpUploadTaskSpec
+import com.dimajix.flowman.spec.target.SftpUploadTargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
 
 
@@ -93,11 +93,7 @@ object TaaskSpec extends TypeRegistry[TaskSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTaskSpec]),
     new JsonSubTypes.Type(name = "describe", value = classOf[DescribeTaskSpec]),
-    new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),
-    new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTaskSpec]),
-    new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTaskSpec]),
-    new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTaskSpec]),
-    new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTaskSpec])
+    new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTaskSpec])
 ))
 abstract class TaskSpec extends Spec[Task] {
     @JsonProperty(value="kind", required=true) protected var kind:String = _

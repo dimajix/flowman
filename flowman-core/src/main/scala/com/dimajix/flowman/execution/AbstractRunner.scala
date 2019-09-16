@@ -20,50 +20,19 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
-import com.dimajix.common.IdentityHashMap
-import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.BatchToken
 import com.dimajix.flowman.history.TargetToken
-import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.BatchInstance
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
-object AbstractRunner {
-    /**
-      * This class is a very thin wrapper around another executor, just to return a different runner
-      * @param _parent
-      * @param _runner
-      */
-    class JobExecutor(_parent:Executor, _runner:Runner) extends Executor {
-        override def session: Session = _parent.session
-        override def namespace : Namespace = _parent.namespace
-        override def root: Executor = _parent.root
-        override def runner: Runner = _runner
-        override def metrics: MetricSystem = _parent.metrics
-        override def fs: FileSystem = _parent.fs
-        override def spark: SparkSession = _parent.spark
-        override def sparkRunning: Boolean = _parent.sparkRunning
-        override def instantiate(mapping: Mapping) : Map[String,DataFrame] = _parent.instantiate(mapping)
-        override def instantiate(mapping: Mapping, output:String) : DataFrame = _parent.instantiate(mapping, output)
-        override def cleanup() : Unit = _parent.cleanup()
-        override protected[execution] def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _parent.cache
-    }
-}
-
 
 abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runner {
-    import com.dimajix.flowman.execution.AbstractRunner.JobExecutor
-
     protected val logger:Logger
 
     /**
@@ -89,8 +58,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
             withShutdownHook(shutdownHook) {
                 Try {
                     logger.info(s"Running phase '$phase' of execution '${batch.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-                    val jobExecutor = new JobExecutor(executor, jobRunner(token))
-                    batch.execute(jobExecutor, args, phase, force)
+                    batch.execute(executor, args, phase, force)
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
@@ -163,8 +131,6 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
             }
         }
     }
-
-    protected def jobRunner(job:BatchToken) : Runner
 
     /**
       * Starts the run and returns a token, which can be anything

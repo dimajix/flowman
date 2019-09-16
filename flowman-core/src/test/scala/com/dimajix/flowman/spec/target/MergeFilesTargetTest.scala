@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import java.nio.charset.Charset
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.target
-import com.dimajix.flowman.spec.target.MergeFilesTask
 import com.dimajix.spark.testing.LocalTempDir
 
 
-class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
+class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
     "A MergeFilesTask" should "work" in {
         val session = Session.builder().build()
         val executor = session.executor
@@ -48,12 +47,12 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = MergeFilesTask(
-            Task.Properties(context),
+        val target = MergeFilesTarget(
+            Target.Properties(context),
             source.path,
             dest.path
         )
-        task.execute(executor)
+        target.execute(executor, Phase.BUILD)
 
         dest.exists() should be (true)
         dest.isFile() should be (true)
@@ -87,13 +86,13 @@ class MergeFilesTaskTest extends FlatSpec with Matchers with LocalTempDir {
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 
-        val task = target.MergeFilesTask(
-            Task.Properties(context),
+        val target = MergeFilesTarget(
+            Target.Properties(context),
             source.path,
             dest.path,
             "\n"
         )
-        task.execute(executor)
+        target.execute(executor, Phase.BUILD)
 
         dest.exists() should be (true)
         dest.isFile() should be (true)

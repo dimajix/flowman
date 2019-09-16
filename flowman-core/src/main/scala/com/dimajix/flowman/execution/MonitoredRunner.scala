@@ -32,12 +32,8 @@ import com.dimajix.flowman.spec.target.TargetInstance
   *
   * @param stateStore
   */
-class MonitoredRunner(stateStore: StateStore, parentJob:Option[BatchToken] = None) extends AbstractRunner {
+class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[MonitoredRunner])
-
-    override protected def jobRunner(job:BatchToken) : Runner = {
-        new MonitoredRunner(stateStore, Some(job))
-    }
 
     /**
       * Starts the run and returns a token, which can be anything

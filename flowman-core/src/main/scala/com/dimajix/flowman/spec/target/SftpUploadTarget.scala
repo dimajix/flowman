@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.target
 
 import java.io.File
 import java.io.IOException
+import java.net.URL
 import java.nio.charset.Charset
 
 import ch.ethz.ssh2.Connection
@@ -35,15 +36,17 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.connection.SshConnection
 import com.dimajix.flowman.spec.target
 import com.dimajix.flowman.spec.task.BaseTask
 import com.dimajix.flowman.spec.task.Task
 
 
-object SftpUploadTask {
-    private val logger = LoggerFactory.getLogger(classOf[SftpUploadTask])
+object SftpUploadTarget {
+    private val logger = LoggerFactory.getLogger(classOf[SftpUploadTarget])
     /**
       * The current implementation of @see KnownHosts does not support
       * known_hosts entries that use a non-default port.
@@ -62,19 +65,56 @@ object SftpUploadTask {
     }
 }
 
-case class SftpUploadTask(
-    instanceProperties:Task.Properties,
+case class SftpUploadTarget(
+    instanceProperties:Target.Properties,
     source:Path,
     target:Path,
     credentials:SshConnection,
     merge:Boolean,
     delimiter:String,
     overwrite:Boolean
-) extends BaseTask {
-    import SftpUploadTask._
-    private val logger = LoggerFactory.getLogger(classOf[SftpUploadTask])
+) extends BaseTarget {
+    import SftpUploadTarget._
+    private val logger = LoggerFactory.getLogger(classOf[SftpUploadTarget])
 
-    override def execute(executor:Executor) : Boolean = {
+    /**
+      * Returns a list of physical resources produced by this target
+      *
+      * @return
+      */
+    override def provides(phase: Phase): Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD =>
+                val host = credentials.host
+                val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
+                Seq(ResourceIdentifier.ofURL(new URL("sftp", host, port, target.toString)))
+            case _ => Seq()
+        }
+    }
+
+    /**
+      * Returns a list of physical resources required by this target
+      *
+      * @return
+      */
+    override def requires(phase: Phase): Seq[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Seq(ResourceIdentifier.ofFile(source))
+            case _ => Seq()
+        }
+    }
+
+    /**
+      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
+      * will not provide the data itself, it will only create the container
+      *
+      * @param executor
+      */
+    override protected def create(executor: Executor): Unit = {}
+
+    override protected def migrate(executor: Executor): Unit = {}
+
+    override protected def build(executor:Executor) : Unit = {
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
         val fs = executor.fs
@@ -114,9 +154,29 @@ case class SftpUploadTask(
         finally {
             connection.close()
         }
-
-        true
     }
+
+    /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    override protected def verify(executor: Executor): Unit = ???
+
+    /**
+      * Deletes data of a specific target
+      *
+      * @param executor
+      */
+    override protected def truncate(executor: Executor): Unit = ???
+
+    /**
+      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
+      * the table definition
+      *
+      * @param executor
+      */
+    override protected def destroy(executor: Executor): Unit = ???
 
     private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path) : Unit = {
         logger.info(s"Uploading file '$src' to sftp remote destination '$dst'")
@@ -253,23 +313,23 @@ case class SftpUploadTask(
 
 
 
-class SftpUploadTaskSpec extends TargetSpec {
-    @JsonProperty(value = "source", required = true) private var _source: String = ""
-    @JsonProperty(value = "target", required = true) private var _target: String = ""
-    @JsonProperty(value = "connection", required = true) private var _connection: String = ""
-    @JsonProperty(value = "merge", required = false) private var _merge: String = "false"
-    @JsonProperty(value = "delimiter", required = true) private var _delimiter: String = _
-    @JsonProperty(value = "overwrite", required = false) private var _overwrite: String = "true"
+class SftpUploadTargetSpec extends TargetSpec {
+    @JsonProperty(value = "source", required = true) private var source: String = ""
+    @JsonProperty(value = "target", required = true) private var target: String = ""
+    @JsonProperty(value = "connection", required = true) private var connection: String = ""
+    @JsonProperty(value = "merge", required = false) private var merge: String = "false"
+    @JsonProperty(value = "delimiter", required = true) private var delimiter: String = _
+    @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
-    override def instantiate(context: Context): SftpUploadTask = {
-        target.SftpUploadTask(
+    override def instantiate(context: Context): SftpUploadTarget = {
+        SftpUploadTarget(
             instanceProperties(context),
-            new Path(context.evaluate(_source)),
-            new Path(context.evaluate(_target)),
-            context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[SshConnection],
-            context.evaluate(_merge).toBoolean,
-            context.evaluate(_delimiter),
-            context.evaluate(_overwrite).toBoolean
+            new Path(context.evaluate(source)),
+            new Path(context.evaluate(target)),
+            context.getConnection(ConnectionIdentifier.parse(context.evaluate(connection))).asInstanceOf[SshConnection],
+            context.evaluate(merge).toBoolean,
+            context.evaluate(delimiter),
+            context.evaluate(overwrite).toBoolean
         )
     }
 }

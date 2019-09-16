@@ -165,10 +165,14 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTargetSpec]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
+    new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),
     new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),
+    new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTargetSpec]),
+    new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTargetSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTargetSpec]),
     new JsonSubTypes.Type(name = "schema", value = classOf[SchemaTargetSpec]),
+    new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTargetSpec]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]))
 )
 abstract class TargetSpec extends NamedSpec[Target] {

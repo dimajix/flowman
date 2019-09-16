@@ -1,10 +1,7 @@
-jobs:
+executions:
   write-all:
-    description: "Writes all outputs"
-    tasks:
-      - kind: build
-        description: Writes all station outputs to files
-        targets:
-          - stations-local
-          - stations-relation-file
-          - stations-relation-local
+    description: Writes all station outputs to files
+    targets:
+      - stations-local
+      - stations-relation-file
+      - stations-relation-local

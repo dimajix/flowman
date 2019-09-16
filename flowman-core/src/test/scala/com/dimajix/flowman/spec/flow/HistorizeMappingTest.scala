@@ -92,6 +92,53 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         rows(4) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123, 123, null))
     }
 
+    it should "support adding new columns at the beginning" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val json_1 = Seq(
+            """{"ts":123,"id":12}"""
+        ).toDS
+        val df = spark.read.json(json_1)
+
+        val mapping = HistorizeMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("df1"),
+            Seq("id"),
+            "ts",
+            "valid_from",
+            "valid_to",
+            InsertPosition.BEGINNING
+        )
+        mapping.input should be (MappingOutputIdentifier("df1"))
+        mapping.outputs should be (Seq("main"))
+        mapping.keyColumns should be (Seq("id" ))
+        mapping.timeColumn should be ("ts")
+        mapping.validFromColumn should be ("valid_from")
+        mapping.validToColumn should be ("valid_to")
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
+
+        val expectedSchema = StructType(Seq(
+            StructField("valid_from", LongType),
+            StructField("valid_to", LongType),
+            StructField("id", LongType),
+            StructField("ts", LongType)
+        ))
+
+        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        resultSchema should be (Some(com.dimajix.flowman.types.StructType.of(expectedSchema)))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
+        result.schema should be (expectedSchema)
+
+        val rows = result.orderBy("id", "ts").collect()
+        rows.size should be (1)
+        rows(0) should be (Row(123, null, 12, 123))
+    }
+
     it should "be convertible to SQL" in (if (hiveSupported) {
         spark.sql(
             """

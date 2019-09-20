@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.job.JobSpec
 import com.dimajix.flowman.spec.model.RelationSpec
-import com.dimajix.flowman.spec.target.BatchSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 
 
@@ -99,7 +99,7 @@ object Project {
             project._relations = module.relations
             project._mappings = module.mappings
             project._targets = module.targets
-            project._batches = module.batches
+            project._jobs = module.jobs
             // TODO: Metrics
         }
     }
@@ -166,12 +166,12 @@ object Project {
             project._targets = project._targets + (name -> target)
             this
         }
-        def setBatches(batches:Map[String,BatchSpec]) : Builder = {
-            project._batches = batches
+        def setJobs(jobs:Map[String,JobSpec]) : Builder = {
+            project._jobs = jobs
             this
         }
-        def addBatch(name:String, batch:BatchSpec) : Builder = {
-            project._batches = project._batches + (name -> batch)
+        def addJob(name:String, job:JobSpec) : Builder = {
+            project._jobs = project._jobs + (name -> job)
             this
         }
     }
@@ -198,7 +198,7 @@ class Project {
     private var _relations: Map[String,RelationSpec] = Map()
     private var _mappings: Map[String,MappingSpec] = Map()
     private var _targets: Map[String,TargetSpec] = Map()
-    private var _batches: Map[String,BatchSpec] = Map()
+    private var _jobs: Map[String,JobSpec] = Map()
 
     def name : String = _name
     def description : Option[String] = _description
@@ -215,5 +215,5 @@ class Project {
     def connections : Map[String,ConnectionSpec] = _connections
     def mappings : Map[String,MappingSpec] = _mappings
     def targets : Map[String,TargetSpec] = _targets
-    def batches : Map[String,BatchSpec] = _batches
+    def jobs : Map[String,JobSpec] = _jobs
 }

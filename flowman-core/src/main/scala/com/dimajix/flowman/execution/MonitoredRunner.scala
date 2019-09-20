@@ -19,10 +19,10 @@ package com.dimajix.flowman.execution
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.history.StateStore
-import com.dimajix.flowman.history.BatchToken
+import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.history.TargetToken
-import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
@@ -41,8 +41,8 @@ class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
       * @param batch
       * @return
       */
-    protected override def startBatch(batch: BatchInstance, phase: Phase): BatchToken = {
-        stateStore.startBatch(batch, phase)
+    protected override def startBatch(batch: JobInstance, phase: Phase): JobToken = {
+        stateStore.startJob(batch, phase)
     }
 
     /**
@@ -50,8 +50,8 @@ class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
       *
       * @param token
       */
-    protected override def finishBatch(token: BatchToken, status:Status): Unit = {
-        stateStore.finishBatch(token, status)
+    protected override def finishBatch(token: JobToken, status:Status): Unit = {
+        stateStore.finishJob(token, status)
     }
 
     /**
@@ -85,7 +85,7 @@ class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
       * @param target
       * @return
       */
-    protected override def startTarget(target: TargetInstance, phase: Phase, parent: Option[BatchToken]): TargetToken = {
+    protected override def startTarget(target: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken = {
         stateStore.startTarget(target, phase, parent)
     }
 

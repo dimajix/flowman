@@ -83,7 +83,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         val runner = executor.runner
 
-        val batch = context.getBatch(BatchIdentifier("default"))
+        val batch = context.getJob(JobIdentifier("default"))
         batch should not be (null)
         batch.name should be ("default")
         batch.category should be ("batch")
@@ -102,13 +102,13 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val context = RootContext.builder().build()
 
         val module = Module.read.string(spec)
-        module.batches.keys should contain ("default")
-        val mjob = module.batches("default").instantiate(context)
+        module.jobs.keys should contain ("default")
+        val mjob = module.jobs("default").instantiate(context)
         mjob.name should be ("default")
 
         val project = module.toProject("default")
-        project.batches.keys should contain ("default")
-        val pjob = project.batches("default").instantiate(context)
+        project.jobs.keys should contain ("default")
+        val pjob = project.jobs("default").instantiate(context)
         pjob.name should be ("default")
     }
 }

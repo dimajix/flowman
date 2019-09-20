@@ -24,13 +24,13 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
 class NullStateStoreTest extends FlatSpec with Matchers {
     "The NullStateStore" should "support batches" in {
-        val batch = BatchInstance(
+        val batch = JobInstance(
             "default",
             "project",
             "job_01",
@@ -38,11 +38,11 @@ class NullStateStoreTest extends FlatSpec with Matchers {
         )
 
         val monitor = new NullStateStore
-        monitor.getBatchState(batch) should be (None)
-        val token = monitor.startBatch(batch, Phase.BUILD)
-        monitor.getBatchState(batch) should be (None)
-        monitor.finishBatch(token, Status.SUCCESS)
-        monitor.getBatchState(batch) should be (None)
+        monitor.getJobState(batch) should be (None)
+        val token = monitor.startJob(batch, Phase.BUILD)
+        monitor.getJobState(batch) should be (None)
+        monitor.finishJob(token, Status.SUCCESS)
+        monitor.getJobState(batch) should be (None)
     }
 
     it should "support targets" in {

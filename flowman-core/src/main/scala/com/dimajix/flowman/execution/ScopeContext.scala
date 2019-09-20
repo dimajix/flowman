@@ -20,8 +20,8 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
@@ -31,10 +31,10 @@ import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.spec.job.JobSpec
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.model.RelationSpec
-import com.dimajix.flowman.spec.target.Batch
-import com.dimajix.flowman.spec.target.BatchSpec
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetSpec
 
@@ -46,7 +46,7 @@ object ScopeContext {
         private var mappings = Map[String, MappingSpec]()
         private var relations = Map[String, RelationSpec]()
         private var targets = Map[String, TargetSpec]()
-        private var batches = Map[String, BatchSpec]()
+        private var batches = Map[String, JobSpec]()
 
         def withMappings(mappings:Map[String,MappingSpec]) : Builder = {
             require(mappings != null)
@@ -63,7 +63,7 @@ object ScopeContext {
             this.targets = this.targets ++ targets
             this
         }
-        def withBatches(batches:Map[String,BatchSpec]) : Builder = {
+        def withBatches(batches:Map[String,JobSpec]) : Builder = {
             require(batches != null)
             this.batches = this.batches ++ batches
             this
@@ -97,13 +97,13 @@ class ScopeContext(
     scopeRelations:Map[String,RelationSpec] = Map(),
     scopeTargets:Map[String,TargetSpec] = Map(),
     scopeConnections:Map[String,ConnectionSpec] = Map(),
-    scopeBatches:Map[String,BatchSpec] = Map()
+    scopeBatches:Map[String,JobSpec] = Map()
 ) extends AbstractContext(parent, fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
-    private val batches = mutable.Map[String,Batch]()
+    private val batches = mutable.Map[String,Job]()
 
     override def namespace: Namespace = parent.namespace
     override def project: Project = parent.project
@@ -176,7 +176,7 @@ class ScopeContext(
             parent.getTarget(identifier)
         }
     }
-    override def getBatch(identifier: BatchIdentifier): Batch = {
+    override def getJob(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty) {
             batches.get(identifier.name) match {
                 case Some(result) => result
@@ -185,12 +185,12 @@ class ScopeContext(
                         val result = spec.instantiate(this)
                         batches.put(identifier.name, result)
                         result
-                    case None => parent.getBatch(identifier)
+                    case None => parent.getJob(identifier)
                 }
             }
         }
         else {
-            parent.getBatch(identifier)
+            parent.getJob(identifier)
         }
     }
 }

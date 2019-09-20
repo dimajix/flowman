@@ -79,7 +79,7 @@ class Driver(options:Arguments) extends Tool {
         val executor = session.executor
         val context = session.getContext(project)
 
-        val bundle = context.getBatch()
+        val bundle = context.getJob()
         val bundleDescription = bundle.description.map("(" + _ + ")").getOrElse("")
         val bundleArgs = options.arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${bundle.name}' $bundleDescription with args $bundleArgs")

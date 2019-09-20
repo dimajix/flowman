@@ -46,8 +46,8 @@ class MetricSpec {
 
 
 class SelectorSpec {
-    @JsonProperty(value = "name", required = true) var name: Option[String] = None
-    @JsonProperty(value = "labels", required = true) var labels: Map[String, String] = Map()
+    @JsonProperty(value = "name", required = false) var name: Option[String] = None
+    @JsonProperty(value = "labels", required = false) var labels: Map[String, String] = Map()
 
     def instantiate(context: Context): Selector = {
         Selector(
@@ -60,8 +60,8 @@ class SelectorSpec {
 
 
 class MetricBoardSpec {
-    @JsonProperty(value = "labels", required = true) private var labels: Map[String, String] = Map()
-    @JsonProperty(value = "metrics", required = true) private var metrics: Seq[MetricSpec] = Seq()
+    @JsonProperty(value = "labels", required = false) private var labels: Map[String, String] = Map()
+    @JsonProperty(value = "metrics", required = false) private var metrics: Seq[MetricSpec] = Seq()
 
     def instantiate(context: Context, metricSystem: MetricSystem): MetricBoard = {
         MetricBoard(

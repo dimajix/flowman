@@ -29,10 +29,10 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchBundleException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.BatchIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -51,7 +51,7 @@ class RunCommand extends ActionCommand {
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val args = splitSettings(this.args).toMap
         Try {
-            context.getBatch(BatchIdentifier(batch))
+            context.getJob(BatchIdentifier(batch))
         }
         match {
             case Failure(_:NoSuchBundleException) =>
@@ -65,7 +65,7 @@ class RunCommand extends ActionCommand {
         }
     }
 
-    private def executeBatch(executor:Executor, batch:Batch, args:Map[String,String]) : Boolean = {
+    private def executeBatch(executor:Executor, batch:Job, args:Map[String,String]) : Boolean = {
         val batchDescription = batch.description.map("(" + _ + ")").getOrElse("")
         val batchArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         val batchPhase = Phase.ofString(phase)

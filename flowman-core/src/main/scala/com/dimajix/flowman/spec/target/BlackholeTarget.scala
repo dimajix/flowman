@@ -31,12 +31,6 @@ case class BlackholeTarget(
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
     /**
-      * Returns a list of physical resources produced by this target
-      * @return
-      */
-    override def provides(phase: Phase) : Seq[ResourceIdentifier] = Seq()
-
-    /**
       * Returns a list of physical resources required by this target
       * @return
       */
@@ -46,10 +40,6 @@ case class BlackholeTarget(
             case _ => Seq()
         }
     }
-
-    override def create(executor: Executor) : Unit = {}
-
-    override def migrate(executor: Executor) : Unit = {}
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -62,21 +52,6 @@ case class BlackholeTarget(
         val df = executor.instantiate(mapping, this.mapping.output)
         df.write.format("null").save()
     }
-
-    /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    def verify(executor: Executor) : Unit = {}
-
-    /**
-      * "Cleaning" a blackhole essentially is a no-op
-      * @param executor
-      */
-    override def truncate(executor: Executor): Unit = {}
-
-    override def destroy(executor: Executor) : Unit = {}
 }
 
 

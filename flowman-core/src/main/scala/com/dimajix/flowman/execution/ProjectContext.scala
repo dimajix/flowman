@@ -20,7 +20,7 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.BatchIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Namespace
@@ -31,8 +31,8 @@ import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.templating.FileWrapper
 
@@ -85,7 +85,7 @@ class ProjectContext private[execution](
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
-    private val bundles = mutable.Map[String,Batch]()
+    private val bundles = mutable.Map[String,Job]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -214,12 +214,12 @@ class ProjectContext private[execution](
       * @param identifier
       * @return
       */
-    override def getBatch(identifier: BatchIdentifier): Batch = {
+    override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == project.name)) {
             bundles.getOrElseUpdate(identifier.name,
-                project.batches
+                project.jobs
                     .getOrElse(identifier.name,
                         throw new NoSuchBundleException(identifier)
                     )
@@ -227,7 +227,7 @@ class ProjectContext private[execution](
             )
         }
         else {
-            parent.getBatch(identifier)
+            parent.getJob(identifier)
         }
     }
 }

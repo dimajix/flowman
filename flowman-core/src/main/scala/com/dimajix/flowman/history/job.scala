@@ -32,7 +32,7 @@ import com.dimajix.flowman.execution.Status
   * @param to
   * @param args
   */
-case class BatchQuery(
+case class JobQuery(
     namespace:Option[String],
     project:Option[String],
     name:Option[String],
@@ -44,7 +44,7 @@ case class BatchQuery(
 )
 
 
-case class BatchState(
+case class JobState(
     id:String,
     namespace:String,
     project:String,
@@ -57,15 +57,15 @@ case class BatchState(
 )
 
 
-sealed case class BatchOrder(isAscending:Boolean=true) {
-    def asc() : BatchOrder = copy(true)
-    def desc() : BatchOrder = copy(false)
+sealed case class JobOrder(isAscending:Boolean=true) {
+    def asc() : JobOrder = copy(true)
+    def desc() : JobOrder = copy(false)
 }
 
-object BatchOrder {
-    object BY_DATETIME extends BatchOrder
-    object BY_NAME extends BatchOrder
-    object BY_ID extends BatchOrder
-    object BY_STATUS extends BatchOrder
-    object BY_PHASE extends BatchOrder
+object JobOrder {
+    object BY_DATETIME extends JobOrder
+    object BY_NAME extends JobOrder
+    object BY_ID extends JobOrder
+    object BY_STATUS extends JobOrder
+    object BY_PHASE extends JobOrder
 }

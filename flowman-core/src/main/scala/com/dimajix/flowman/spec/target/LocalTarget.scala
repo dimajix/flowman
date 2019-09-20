@@ -86,10 +86,6 @@ case class LocalTarget(
         }
     }
 
-    override def create(executor: Executor) : Unit = {}
-
-    override def migrate(executor: Executor) : Unit = {}
-
     /**
       * Build the target by writing a file to the local file system of the driver
       *
@@ -135,7 +131,7 @@ case class LocalTarget(
       *
       * @param executor
       */
-    def verify(executor: Executor) : Unit = {
+    override def verify(executor: Executor) : Unit = {
         require(executor != null)
 
         val file = executor.fs.local(filename)

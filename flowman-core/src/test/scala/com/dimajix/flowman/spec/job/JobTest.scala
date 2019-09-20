@@ -14,46 +14,46 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.job
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.verify
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.when
-import org.mockito.ArgumentMatchers.any
 
 import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSink
-import com.dimajix.flowman.spec.BatchIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.target.BaseTarget
+import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.target.TargetSpec
 
 
-object GrabEnvironmentTask {
+object GrabEnvironmentTarget {
     var environment:Map[String,Any] = Map()
 }
 
-case class GrabEnvironmentTask(instanceProperties:Task.Properties) extends BaseTask {
+case class GrabEnvironmentTarget(instanceProperties:Target.Properties) extends BaseTarget {
     /**
       * Abstract method which will perform the given task.
       *
       * @param executor
       */
-    override def execute(executor: Executor): Boolean = {
-        GrabEnvironmentTask.environment = context.environment
-        true
+    override def build(executor: Executor): Unit = {
+        GrabEnvironmentTarget.environment = context.environment
     }
 }
 
 @TaskType(kind = "grabenv")
-class GrabEnvironmentTaskSpec extends TargetSpec {
-    override def instantiate(context: Context): GrabEnvironmentTask = GrabEnvironmentTask(instanceProperties(context))
+class GrabEnvironmentTargetSpec extends TargetSpec {
+    override def instantiate(context: Context): GrabEnvironmentTarget = GrabEnvironmentTarget(instanceProperties(context))
 }
 
 
@@ -72,7 +72,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val job = module.batches("job")
+        val job = module.jobs("job")
         job should not be (null)
     }
 
@@ -96,14 +96,14 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> true))
 
-        job.execute(executor, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> true))
     }
 
     it should "support overriding global parameters" in {
@@ -123,11 +123,11 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "2", "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "2", "force" -> true))
     }
 
     it should "support typed parameters" in {
@@ -146,11 +146,11 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> 2, "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> 2, "force" -> true))
     }
 
     it should "fail on undefined parameters" in {
@@ -166,10 +166,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map("p2" -> "v1")))
     }
 
     it should "fail on undefined parameters, even if they are in the environment" in {
@@ -187,10 +187,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map("p2" -> "v1")))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map("p2" -> "v1")))
     }
 
     it should "fail on missing parameters" in {
@@ -207,10 +207,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val executor = session.executor
         implicit val context = session.context
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Map()))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map()))
     }
 
     it should "return correct arguments" in {
@@ -231,7 +231,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
         job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> 7))
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
@@ -256,11 +256,11 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val session = Session.builder().build()
         val executor = session.executor
 
-        val job = module.batches("job").instantiate(session.context)
+        val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
 
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTask.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> true))
     }
 
     it should "support metrics" in {
@@ -301,10 +301,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val metricSink = mock[MetricSink]
         metricSystem.addSink(metricSink)
 
-        val job = context.getBatch(BatchIdentifier("main"))
+        val job = context.getJob(JobIdentifier("main"))
         job.labels should be (Map("job_label" -> "xyz"))
 
-        job.execute(executor, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         verify(metricSink).addBoard(any())
         verify(metricSink).commit(any())
         verify(metricSink).removeBoard(any())

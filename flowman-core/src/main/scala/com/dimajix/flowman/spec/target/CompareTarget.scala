@@ -23,10 +23,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.DatasetSpec
-import com.dimajix.flowman.spec.task.TargetSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 
 
@@ -36,25 +36,6 @@ case class CompareTarget(
     expected:Dataset
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CompareTarget])
-
-
-    /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override protected def create(executor: Executor): Unit = {}
-
-    override protected def migrate(executor: Executor): Unit = {}
-
-    /**
-      * Abstract method which will perform the output operation. All required tables need to be
-      * registered as temporary tables in the Spark session before calling the execute method.
-      *
-      * @param executor
-      */
-    override protected def build(executor: Executor): Unit = {}
 
     /**
       * Performs a verification of the build step or possibly other checks.
@@ -77,28 +58,12 @@ case class CompareTarget(
         if (prepareAnswer(expectedRows) != prepareAnswer(actualRows)) {
             logger.error(s"Dataset '${actual.name}' does not equal the expected dataset '${expected.name}'")
             logger.error(s"Difference between datasets: \n${genError(expectedRows, actualRows)}")
-            false
+            throw new VerificationFailedException(identifier)
         }
         else {
             logger.info(s"Dataset '${actual.name}' matches the expected dataset '${expected.name}'")
-            true
         }
     }
-
-    /**
-      * Deletes data of a specific target
-      *
-      * @param executor
-      */
-    override protected def truncate(executor: Executor): Unit = {}
-
-    /**
-      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
-      * the table definition
-      *
-      * @param executor
-      */
-    override protected def destroy(executor: Executor): Unit = {}
 
     /**
       * Returns a list of physical resources produced by this target

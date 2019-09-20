@@ -22,17 +22,17 @@ import scala.util.Try
 
 import org.slf4j.Logger
 
-import com.dimajix.flowman.history.BatchToken
+import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.metric.withWallTime
-import com.dimajix.flowman.spec.target.Batch
-import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
 
-abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runner {
+abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner {
     protected val logger:Logger
 
     /**
@@ -43,7 +43,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
       * @param batch
       * @return
       */
-    override def executeBatch(executor: Executor, batch:Batch, phase:Phase, args:Map[String,String], force:Boolean) : Status = {
+    override def executeBatch(executor: Executor, batch:Job, phase:Phase, args:Map[String,String], force:Boolean) : Status = {
         require(executor != null)
         require(args != null)
 
@@ -58,7 +58,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
             withShutdownHook(shutdownHook) {
                 Try {
                     logger.info(s"Running phase '$phase' of execution '${batch.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-                    batch.execute(executor, args, phase, force)
+                    batch.execute(executor, phase, args, force)
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
@@ -138,14 +138,14 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
       * @param batch
       * @return
       */
-    protected def startBatch(batch:BatchInstance, phase:Phase) : BatchToken
+    protected def startBatch(batch:JobInstance, phase:Phase) : JobToken
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    protected def finishBatch(token:BatchToken, status:Status) : Unit
+    protected def finishBatch(token:JobToken, status:Status) : Unit
 
     /**
       * Performs some checks, if the target is already up to date
@@ -160,7 +160,7 @@ abstract class AbstractRunner(parentJob:Option[BatchToken] = None) extends Runne
       * @param target
       * @return
       */
-    protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken
+    protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Marks a run as a success

@@ -52,10 +52,6 @@ case class ConsoleTarget(
         }
     }
 
-    override def create(executor: Executor) : Unit = {}
-
-    override def migrate(executor: Executor) : Unit = {}
-
     /**
       * Build the "console" target by dumping records to stdout
       *
@@ -76,21 +72,6 @@ case class ConsoleTarget(
         }
         result.foreach(record => println(record.mkString(",")))
     }
-
-    /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    def verify(executor: Executor) : Unit = {}
-
-    /**
-      * Clean operation of dump essentially is a no-op
-      * @param executor
-      */
-    override def truncate(executor: Executor): Unit = {}
-
-    override def destroy(executor: Executor) : Unit = {}
 }
 
 

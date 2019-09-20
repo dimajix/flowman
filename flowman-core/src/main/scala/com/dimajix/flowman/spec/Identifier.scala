@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.spec
 
-import scala.sys.process.processInternal.URL
+import java.net.URL
 
 import org.apache.hadoop.fs.Path
 

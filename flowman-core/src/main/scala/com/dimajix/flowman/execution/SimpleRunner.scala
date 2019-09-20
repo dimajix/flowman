@@ -18,9 +18,9 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.history.BatchToken
+import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.TargetToken
-import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
@@ -32,14 +32,14 @@ class SimpleRunner extends AbstractRunner {
       *
       * @return
       */
-    override protected def startBatch(job:BatchInstance, phase:Phase) : BatchToken = null
+    override protected def startBatch(job:JobInstance, phase:Phase) : JobToken = null
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    override protected def finishBatch(token:BatchToken, status:Status) : Unit = {}
+    override protected def finishBatch(token:JobToken, status:Status) : Unit = {}
 
     /**
       * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt
@@ -55,7 +55,7 @@ class SimpleRunner extends AbstractRunner {
       * @param target
       * @return
       */
-    override protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken = null
+    override protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken = null
 
     /**
       * Marks a run as a success

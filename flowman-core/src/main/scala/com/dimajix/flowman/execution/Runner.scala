@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.execution
 
-import com.dimajix.flowman.spec.target.Batch
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.target.Target
 
 
@@ -36,7 +36,7 @@ abstract class Runner {
       * @param force
       * @return
       */
-    def executeBatch(executor: Executor, batch:Batch, phase:Phase, args:Map[String,String]=Map(), force:Boolean=false) : Status
+    def executeBatch(executor: Executor, batch:Job, phase:Phase, args:Map[String,String]=Map(), force:Boolean=false) : Status
 
     /**
       * Executes a single job using the given executor and a map of parameters. The Runner may decide not to

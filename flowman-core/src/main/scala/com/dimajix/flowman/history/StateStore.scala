@@ -18,11 +18,11 @@ package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
-abstract class BatchToken
+abstract class JobToken
 
 abstract class TargetToken
 
@@ -30,24 +30,24 @@ abstract class TargetToken
 abstract class StateStore {
     /**
       * Returns the state of a job, or None if no information is available
-      * @param batch
+      * @param job
       * @return
       */
-    def getBatchState(batch:BatchInstance) : Option[BatchState]
+    def getJobState(job:JobInstance) : Option[JobState]
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param batch
+      * @param job
       * @return
       */
-    def startBatch(batch:BatchInstance, phase:Phase) : BatchToken
+    def startJob(job:JobInstance, phase:Phase) : JobToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    def finishBatch(token:BatchToken, status:Status) : Unit
+    def finishJob(token:JobToken, status:Status) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -61,7 +61,7 @@ abstract class StateStore {
       * @param target
       * @return
       */
-    def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]) : TargetToken
+    def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Sets the status of a job after it has been started
@@ -77,7 +77,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findBatches(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState]
+    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
 
     /**
       * Returns a list of job matching the query criteria

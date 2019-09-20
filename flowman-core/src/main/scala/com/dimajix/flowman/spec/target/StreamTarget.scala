@@ -105,13 +105,6 @@ case class StreamTarget(
     }
 
     /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    def verify(executor: Executor) : Unit = {}
-
-    /**
       * Clean up streaming target. Actually this method delegates the work to the relation target
       *
       * @param executor

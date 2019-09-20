@@ -18,8 +18,8 @@ package com.dimajix.flowman
 
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Batch
 import com.dimajix.flowman.spec.target.Target
 
 
@@ -38,11 +38,11 @@ package object spec {
     type ConnectionIdentifier = Identifier[Connection]
     type RelationIdentifier = Identifier[Relation]
     type TargetIdentifier = Identifier[Target]
-    type BatchIdentifier = Identifier[Batch]
+    type JobIdentifier = Identifier[Job]
 
     object MappingIdentifier extends IdentifierFactory[Mapping]
     object ConnectionIdentifier extends IdentifierFactory[Connection]
     object RelationIdentifier extends IdentifierFactory[Relation]
     object TargetIdentifier extends IdentifierFactory[Target]
-    object BatchIdentifier extends IdentifierFactory[Batch]
+    object JobIdentifier extends IdentifierFactory[Job]
 }

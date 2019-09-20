@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.target
+package com.dimajix.flowman.spec.job
 
 import scala.collection.mutable
 
@@ -31,7 +31,7 @@ import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.AbstractInstance
-import com.dimajix.flowman.spec.BatchIdentifier
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
@@ -40,6 +40,7 @@ import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
@@ -50,22 +51,22 @@ import com.dimajix.flowman.types.StringType
   * A BatchInstance serves as an identifier of a specific batch in the History
   * @param namespace
   * @param project
-  * @param batch
+  * @param job
   * @param args
   */
-case class BatchInstance(
+case class JobInstance(
     namespace:String,
     project:String,
-    batch:String,
+    job:String,
     args:Map[String,String] = Map()
 ) {
     require(namespace != null)
     require(project != null)
-    require(batch != null)
+    require(job != null)
     require(args != null)
 }
 
-object Batch {
+object Job {
     case class Parameter(
         name:String,
         ftype : FieldType,
@@ -121,8 +122,8 @@ object Batch {
         private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
 
-        def build() : Batch = Batch(
-            Batch.Properties(context, name),
+        def build() : Job = Job(
+            Job.Properties(context, name),
             description,
             parameters,
             Map(),
@@ -171,31 +172,31 @@ object Batch {
 }
 
 
-case class Batch(
-    instanceProperties:Batch.Properties,
+case class Job(
+    instanceProperties:Job.Properties,
     description:Option[String],
-    parameters:Seq[Batch.Parameter],
+    parameters:Seq[Job.Parameter],
     environment:Map[String,String],
     targets:Seq[TargetIdentifier],
     metrics:Option[MetricBoardSpec] = None
 ) extends AbstractInstance {
-    private val logger = LoggerFactory.getLogger(classOf[Batch])
+    private val logger = LoggerFactory.getLogger(classOf[Job])
 
-    override def category: String = "batch"
-    override def kind : String = "batch"
+    override def category: String = "job"
+    override def kind : String = "job"
 
     /**
       * Returns an identifier for this job
       * @return
       */
-    def identifier : BatchIdentifier = BatchIdentifier(name, Option(project).map(_.name))
+    def identifier : JobIdentifier = JobIdentifier(name, Option(project).map(_.name))
 
     /**
       * Returns a JobInstance used for state management
       * @return
       */
-    def instance(args:Map[String,String]) : BatchInstance = {
-        BatchInstance(
+    def instance(args:Map[String,String]) : JobInstance = {
+        JobInstance(
             Option(context.namespace).map(_.name).getOrElse(""),
             Option(context.project).map(_.name).getOrElse(""),
             name,
@@ -215,7 +216,7 @@ case class Batch(
         parameters.map(p => (p.name, p.default.orNull)).toMap ++ processedArgs
     }
 
-    def execute(executor:Executor, args:Map[String,String], phase:Phase, force:Boolean) : Status = {
+    def execute(executor:Executor, phase:Phase, args:Map[String,String], force:Boolean=false) : Status = {
         require(args != null)
 
         val description = this.description.map("(" + _ + ")").getOrElse("")
@@ -357,31 +358,62 @@ case class Batch(
 }
 
 
-object BatchSpec extends TypeRegistry[BatchSpec] {
-    class NameResolver extends StdConverter[Map[String, BatchSpec], Map[String, BatchSpec]] {
-        override def convert(value: Map[String, BatchSpec]): Map[String, BatchSpec] = {
+object JobSpec extends TypeRegistry[JobSpec] {
+    class NameResolver extends StdConverter[Map[String, JobSpec], Map[String, JobSpec]] {
+        override def convert(value: Map[String, JobSpec]): Map[String, JobSpec] = {
             value.foreach(kv => kv._2.name = kv._1)
             value
         }
     }
 }
 
-class BatchSpec extends NamedSpec[Batch] {
+class JobSpec extends NamedSpec[Job] {
+    @JsonProperty(value="extends") private var parents:Seq[String] = Seq()
     @JsonProperty(value="description") private var description:Option[String] = None
-    @JsonProperty(value="parameters") private var parameters:Seq[BatchParameterSpec] = Seq()
+    @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="targets") private var targets: Seq[String] = Seq()
     @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
 
-    override def instantiate(context: Context): Batch = {
+    override def instantiate(context: Context): Job = {
         require(context != null)
-        Batch(
+
+        val parents = this.parents.map(job => context.getJob(JobIdentifier(job)))
+
+        val parentParameters = parents
+            .map(job => job.parameters.map(p => (p.name, p)).toMap)
+            .reduceOption((params, elems) => params ++ elems)
+            .getOrElse(Map())
+        val parentEnvironment = parents
+            .map(job => job.environment)
+            .reduceOption((envs, elems) => envs ++ elems)
+            .getOrElse(Map())
+        val parentTargets = parents
+            .map(job => job.targets.toSet)
+            .reduceOption((targets, elems) => targets ++ elems)
+            .getOrElse(Set())
+        val parentMetrics = parents
+            .flatMap(job => job.metrics)
+            .headOption
+
+        val curEnvironment = splitSettings(environment).toMap
+        val allEnvironment = parentEnvironment ++ curEnvironment
+
+        val curParameters = parameters.map(_.instantiate(context)).map(p => (p.name,p)).toMap
+        val allParameters = parentParameters -- allEnvironment.keySet ++ curParameters
+
+        val curTargets = targets.map(context.evaluate).map(TargetIdentifier.parse)
+        val allTargets = parentTargets ++ curTargets
+
+        val allMetrics = metrics.orElse(parentMetrics)
+
+        Job(
             instanceProperties(context),
             description.map(context.evaluate),
-            parameters.map(_.instantiate(context)),
-            splitSettings(environment).toMap,
-            targets.map(context.evaluate).map(TargetIdentifier.parse),
-            metrics
+            allParameters.values.toSeq,
+            allEnvironment,
+            allTargets.toSeq,
+            allMetrics
         )
     }
 
@@ -391,9 +423,9 @@ class BatchSpec extends NamedSpec[Batch] {
       * @param context
       * @return
       */
-    override protected def instanceProperties(context: Context): Batch.Properties = {
+    override protected def instanceProperties(context: Context): Job.Properties = {
         require(context != null)
-        Batch.Properties(
+        Job.Properties(
             context,
             context.namespace,
             context.project,
@@ -403,17 +435,17 @@ class BatchSpec extends NamedSpec[Batch] {
     }
 }
 
-class BatchParameterSpec extends Spec[Batch.Parameter] {
+class JobParameterSpec extends Spec[Job.Parameter] {
     @JsonProperty(value = "name") private var name: String = ""
     @JsonProperty(value = "description") private var description: Option[String] = None
     @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
     @JsonProperty(value = "granularity", required = false) private var granularity: Option[String] = None
     @JsonProperty(value = "default", required = false) private var default: Option[String] = None
 
-    override def instantiate(context: Context): Batch.Parameter = {
+    override def instantiate(context: Context): Job.Parameter = {
         require(context != null)
 
-        Batch.Parameter(
+        Job.Parameter(
             context.evaluate(name),
             ftype,
             granularity.map(context.evaluate),

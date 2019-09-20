@@ -103,7 +103,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
             Map("p1" -> ArrayValue("v1", "v2"))
         )
 
-        when(context.getBatch(JobIdentifier("job"))).thenReturn(loopJob)
+        when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType)))
         when(loopJob.metadata).thenReturn(Metadata(None, None, "main", None, "job", "job", Map()))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)
@@ -127,7 +127,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
             Map("p1" -> ArrayValue("v1", "v2"), "p2" -> RangeValue("2", "8"))
         )
 
-        when(context.getBatch(JobIdentifier("job"))).thenReturn(loopJob)
+        when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, Some("2"))))
         when(loopJob.metadata).thenReturn(Metadata(None, None, "main", None, "job", "job", Map()))
         when(loopJob.execute(executor, Map("p1" -> "v1", "p2" -> "2"))).thenReturn(Status.SUCCESS)
@@ -159,7 +159,7 @@ class LoopTaskTest extends FlatSpec with Matchers with MockitoSugar {
             Map("p1" -> ArrayValue("v1", "v2"))
         )
 
-        when(context.getBatch(JobIdentifier("job"))).thenReturn(loopJob)
+        when(context.getJob(JobIdentifier("job"))).thenReturn(loopJob)
         when(loopJob.parameters).thenReturn(Seq(JobParameter("p1", StringType), JobParameter("p2", IntegerType, Some("2"), Some("4"))))
         when(loopJob.metadata).thenReturn(Metadata(None, None, "main", None, "job", "job", Map()))
         when(loopJob.execute(executor, Map("p1" -> "v1"))).thenReturn(Status.SUCCESS)

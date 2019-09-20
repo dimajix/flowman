@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
@@ -24,20 +24,21 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.task.BaseTask
+import com.dimajix.flowman.spec.task.Task
 
 
-case class AnnotatedTask(instanceProperties:Task.Properties) extends BaseTask {
-    override def execute(executor: Executor): Boolean = true
+case class AnnotatedTarget(instanceProperties:Target.Properties) extends BaseTarget {
 }
 
 @TaskType(kind = "annotatedTask")
 class AnnotatedTaskSpec extends TargetSpec {
-    override def instantiate(context: Context): Task = AnnotatedTask(instanceProperties(context))
+    override def instantiate(context: Context): Target = AnnotatedTarget(instanceProperties(context))
 }
 
 
 
-class PluginTaskTest extends FlatSpec with Matchers  {
+class PluginTargetTest extends FlatSpec with Matchers  {
     "A plugin" should "be used if present" in {
         val session = Session.builder().build()
         val spec =
@@ -50,7 +51,7 @@ class PluginTaskTest extends FlatSpec with Matchers  {
         val module = Module.read.string(spec)
         module.jobs.keys should contain("custom")
         val job = module.jobs("custom").instantiate(session.context)
-        job.tasks(0) shouldBe an[AnnotatedTaskSpec]
+        job.targets(0) shouldBe an[AnnotatedTaskSpec]
     }
 
 }

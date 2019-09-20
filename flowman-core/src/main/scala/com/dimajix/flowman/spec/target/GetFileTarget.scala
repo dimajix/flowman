@@ -35,16 +35,6 @@ case class GetFileTarget(
     private val logger = LoggerFactory.getLogger(classOf[GetFileTarget])
 
     /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override protected def create(executor: Executor): Unit = {}
-
-    override protected def migrate(executor: Executor): Unit = {}
-
-    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *

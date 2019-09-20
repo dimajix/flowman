@@ -36,8 +36,8 @@ case class FileDataset(
     instanceProperties: Dataset.Properties,
     location:Path,
     format:String,
-    options:Map[String,String],
-    columns:Option[StructType]
+    options:Map[String,String] = Map(),
+    columns:Option[StructType] = None
 ) extends Dataset {
     /**
       * Returns a list of physical resources produced by writing to this dataset

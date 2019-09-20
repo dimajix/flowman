@@ -40,9 +40,6 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.connection.SshConnection
-import com.dimajix.flowman.spec.target
-import com.dimajix.flowman.spec.task.BaseTask
-import com.dimajix.flowman.spec.task.Task
 
 
 object SftpUploadTarget {
@@ -104,16 +101,6 @@ case class SftpUploadTarget(
         }
     }
 
-    /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override protected def create(executor: Executor): Unit = {}
-
-    override protected def migrate(executor: Executor): Unit = {}
-
     override protected def build(executor:Executor) : Unit = {
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
@@ -155,28 +142,6 @@ case class SftpUploadTarget(
             connection.close()
         }
     }
-
-    /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    override protected def verify(executor: Executor): Unit = ???
-
-    /**
-      * Deletes data of a specific target
-      *
-      * @param executor
-      */
-    override protected def truncate(executor: Executor): Unit = ???
-
-    /**
-      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
-      * the table definition
-      *
-      * @param executor
-      */
-    override protected def destroy(executor: Executor): Unit = ???
 
     private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path) : Unit = {
         logger.info(s"Uploading file '$src' to sftp remote destination '$dst'")

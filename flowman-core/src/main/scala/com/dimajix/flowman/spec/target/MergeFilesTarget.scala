@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.target
 
-import java.io.File
 import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -30,8 +29,6 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec
 import com.dimajix.flowman.spec.ResourceIdentifier
-import com.dimajix.flowman.spec.task.BaseTask
-import com.dimajix.flowman.spec.task.Task
 
 
 case class MergeFilesTarget(
@@ -42,16 +39,6 @@ case class MergeFilesTarget(
     overwrite:Boolean = true
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[MergeFilesTarget])
-
-    /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override protected def create(executor: Executor): Unit = {}
-
-    override protected def migrate(executor: Executor): Unit = {}
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be

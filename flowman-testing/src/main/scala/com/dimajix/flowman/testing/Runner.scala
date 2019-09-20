@@ -190,7 +190,7 @@ class Runner private(
         val executor = session.executor
         val runner = session.runner
 
-        val job = context.getBatch(JobIdentifier(jobName))
+        val job = context.getJob(JobIdentifier(jobName))
         val result = runner.executeBatch(executor, job, args, true)
 
         result match {

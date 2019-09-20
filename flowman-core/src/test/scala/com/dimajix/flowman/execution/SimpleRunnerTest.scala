@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.target.Batch
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.types.StringType
 
 
@@ -27,7 +27,7 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
     "The SimpleRunner" should "work" in {
         val session = Session.builder()
             .build()
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("batch")
             .build()
 
@@ -39,7 +39,7 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
     it should "catch exceptions" in {
         val session = Session.builder()
             .build()
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("batch")
             .addParameter("p1", StringType)
             .build()

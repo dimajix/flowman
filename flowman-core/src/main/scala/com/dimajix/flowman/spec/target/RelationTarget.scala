@@ -129,7 +129,7 @@ case class RelationTarget(
       *
       * @param executor
       */
-    def verify(executor: Executor) : Unit = {
+    override def verify(executor: Executor) : Unit = {
         require(executor != null)
 
         val rel = context.getRelation(relation)

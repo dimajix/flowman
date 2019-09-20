@@ -27,13 +27,6 @@ import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
-import com.dimajix.flowman.spec.target.CompareTargetSpec
-import com.dimajix.flowman.spec.target.CopyFileTaskSpec
-import com.dimajix.flowman.spec.target.CopyTaskSpec
-import com.dimajix.flowman.spec.target.GetFileTargetSpec
-import com.dimajix.flowman.spec.target.MergeFilesTaskSpec
-import com.dimajix.flowman.spec.target.PutFileTaskSpec
-import com.dimajix.flowman.spec.target.SftpUploadTargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
 
 

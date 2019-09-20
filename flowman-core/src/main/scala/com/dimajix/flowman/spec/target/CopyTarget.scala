@@ -37,17 +37,6 @@ case class CopyTarget(
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CopyTarget])
 
-
-    /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override protected def create(executor: Executor): Unit = {}
-
-    override protected def migrate(executor: Executor): Unit = {}
-
     /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
@@ -64,28 +53,6 @@ case class CopyTarget(
         }.getOrElse(data)
         target.write(executor, conformed, mode)
     }
-
-    /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    override protected def verify(executor: Executor): Unit = {}
-
-    /**
-      * Deletes data of a specific target
-      *
-      * @param executor
-      */
-    override protected def truncate(executor: Executor): Unit = {}
-
-    /**
-      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
-      * the table definition
-      *
-      * @param executor
-      */
-    override protected def destroy(executor: Executor): Unit = {}
 
     /**
       * Returns a list of physical resources produced by this target

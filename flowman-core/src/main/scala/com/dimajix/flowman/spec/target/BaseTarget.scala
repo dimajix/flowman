@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.target
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.TargetIdentifier
 
 
@@ -63,7 +64,21 @@ abstract class BaseTarget extends Target {
       */
     override def after : Seq[TargetIdentifier] = instanceProperties.after
 
+
     /**
+      * Returns a list of physical resources produced by this target
+      *
+      * @return
+      */
+    override def provides(phase: Phase): Seq[ResourceIdentifier] = Seq()
+
+    /**
+      * Returns a list of physical resources required by this target
+      *
+      * @return
+      */
+    override def requires(phase: Phase): Seq[ResourceIdentifier] = Seq()
+/**
       * Executes a specific phase of this target
       * @param executor
       * @param phase
@@ -84,8 +99,8 @@ abstract class BaseTarget extends Target {
       * will not provide the data itself, it will only create the container
       * @param executor
       */
-    protected def create(executor:Executor) : Unit
-    protected def migrate(executor:Executor) : Unit
+    protected def create(executor:Executor) : Unit = {}
+    protected def migrate(executor:Executor) : Unit = {}
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -93,26 +108,26 @@ abstract class BaseTarget extends Target {
       *
       * @param executor
       */
-    protected def build(executor:Executor) : Unit
+    protected def build(executor:Executor) : Unit = {}
 
     /**
       * Performs a verification of the build step or possibly other checks.
       *
       * @param executor
       */
-    protected def verify(executor: Executor) : Unit
+    protected def verify(executor: Executor) : Unit = {}
 
     /**
       * Deletes data of a specific target
       *
       * @param executor
       */
-    protected def truncate(executor:Executor) : Unit
+    protected def truncate(executor:Executor) : Unit = {}
 
     /**
       * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
       * the table definition
       * @param executor
       */
-    protected def destroy(executor:Executor) : Unit
+    protected def destroy(executor:Executor) : Unit = {}
 }

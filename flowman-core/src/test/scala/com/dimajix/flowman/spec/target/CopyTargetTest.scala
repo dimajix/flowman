@@ -21,8 +21,10 @@ import java.io.File
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -50,13 +52,13 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().build()
         val context = session.context
 
-        val taskSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyTargetSpec]
-        val task = taskSpec.instantiate(context)
-        task.source should be (RelationIdentifier("local_file"))
-        task.sourcePartitions should be (Map("spc" -> SingleValue("part_value")))
-        task.target should be (RelationIdentifier("some_hive_table"))
-        task.targetPartition should be (Map("tpc" -> SingleValue("p2")))
-        task.mode should be ("append")
+        val targetSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyTargetSpec]
+        val target = targetSpec.instantiate(context)
+        target.source should be (RelationIdentifier("local_file"))
+        target.sourcePartitions should be (Map("spc" -> SingleValue("part_value")))
+        target.target should be (RelationIdentifier("some_hive_table"))
+        target.targetPartition should be (Map("tpc" -> SingleValue("p2")))
+        target.mode should be ("append")
     }
 
     it should "work" in {
@@ -106,9 +108,9 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val targetFilename = new File(tempDir, "copy-relation-output.csv")
         targetFilename.exists() should be (false)
 
-        val job = context.getBatch(JobIdentifier("main"))
+        val job = context.getJob(JobIdentifier("main"))
         job should not be (null)
-        job.execute(executor, Map()) shouldBe (Status.SUCCESS)
+        job.execute(executor, Phase.BUILD, Map()) shouldBe (Status.SUCCESS)
         targetFilename.exists() should be (true)
         targetFilename.isFile() should be (true)
     }

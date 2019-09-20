@@ -31,11 +31,10 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
-import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.TargetSpec
 import com.dimajix.flowman.spi.Registration
 
 
@@ -55,9 +54,8 @@ object ObjectMapper {
         val monitorTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val relationTypes = RelationSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mappingTypes = MappingSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val outputTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val targetTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val schemaTypes = SchemaSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val taskTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = new JacksonMapper(new YAMLFactory())
         mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
@@ -68,9 +66,8 @@ object ObjectMapper {
         mapper.registerSubtypes(monitorTypes:_*)
         mapper.registerSubtypes(relationTypes:_*)
         mapper.registerSubtypes(mappingTypes:_*)
-        mapper.registerSubtypes(outputTypes:_*)
+        mapper.registerSubtypes(targetTypes:_*)
         mapper.registerSubtypes(schemaTypes:_*)
-        mapper.registerSubtypes(taskTypes:_*)
         mapper.registerSubtypes(connectionTypes:_*)
         mapper
     }

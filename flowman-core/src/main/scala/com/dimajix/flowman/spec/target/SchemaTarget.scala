@@ -45,26 +45,10 @@ case class SchemaTarget(
       */
     override def provides(phase:Phase) : Seq[ResourceIdentifier] = {
         phase match {
-            case Phase.CREATE | Phase.DESTROY => Seq(ResourceIdentifier("schema", location.toString))
+            case Phase.BUILD => Seq(ResourceIdentifier.ofFile(location))
             case _ => Seq()
         }
     }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase:Phase) : Seq[ResourceIdentifier] = Seq()
-
-    /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override def create(executor: Executor): Unit = {}
-    override def migrate(executor: Executor): Unit = {}
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be

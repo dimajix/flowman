@@ -29,11 +29,24 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.target.Target.Properties
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
 
 object Dataset {
+    object Properties {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                context.namespace,
+                context.project,
+                name,
+                kind,
+                Map()
+            )
+        }
+    }
     case class Properties(
         context:Context,
         namespace:Namespace,

@@ -18,7 +18,7 @@ package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.target.BatchInstance
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
@@ -28,21 +28,21 @@ class NullStateStore extends StateStore {
       * @param batch
       * @return
       */
-    override def getBatchState(batch:BatchInstance) : Option[BatchState] = None
+    override def getJobState(batch:JobInstance) : Option[JobState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param batch
       * @return
       */
-    override def startBatch(batch:BatchInstance, phase:Phase) : BatchToken = null
+    override def startJob(batch:JobInstance, phase:Phase) : JobToken = null
 
     /**
       * Sets the status of a job after it has been started
       * @param token
       * @param status
       */
-    override def finishBatch(token:BatchToken, status:Status) : Unit = {}
+    override def finishJob(token:JobToken, status:Status) : Unit = {}
 
     /**
       * Returns the state of a target
@@ -56,7 +56,7 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[BatchToken]=None) : TargetToken = null
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = null
 
     /**
       * Sets the status of a target after it has been started
@@ -72,7 +72,7 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findBatches(query:BatchQuery, order:Seq[BatchOrder], limit:Int, offset:Int) : Seq[BatchState] = Seq()
+    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria

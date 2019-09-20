@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.target.TargetSpec
 
 
 case class DescribeTask(
@@ -50,7 +51,7 @@ case class DescribeTask(
     }
 }
 
-class DescribeTaskSpec extends TargetSpec {
+class DescribeTaskSpec extends TaskSpec {
     @JsonProperty(value = "input", required = true) private var dataset: DatasetSpec = _
 
     override def instantiate(context: Context): DescribeTask = {

@@ -129,7 +129,7 @@ case class PutFileTarget(
 
 
 
-class PutFileTaskSpec extends TargetSpec {
+class PutFileTargetSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: String = ""
     @JsonProperty(value = "tarPut", required = true) private var tarPut: String = ""
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"

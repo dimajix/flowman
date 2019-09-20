@@ -64,16 +64,6 @@ case class HiveDatabaseTarget(
         executor.catalog.createDatabase(database, true)
     }
 
-    override def migrate(executor: Executor): Unit = {}
-
-    /**
-      * Abstract method which will perform the output operation. All required tables need to be
-      * registered as temporary tables in the Spark session before calling the execute method.
-      *
-      * @param executor
-      */
-    override def build(executor: Executor): Unit = {}
-
     /**
       * Performs a verification of the build step or possibly other checks.
       *

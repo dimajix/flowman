@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.connection.JdbcConnectionSpec
 import com.dimajix.flowman.spec.history.JdbcHistorySpec
-import com.dimajix.flowman.spec.target.Batch
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.types.StringType
 
 
@@ -50,7 +50,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("batch")
             .build()
 
@@ -72,7 +72,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .build()
 
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("job")
             .build()
 
@@ -90,7 +90,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("failingJob")
             .addParameter("p0", StringType)
             .build()
@@ -109,7 +109,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         val session = Session.builder()
             .withNamespace(ns)
             .build()
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("job")
             .addParameter("p1", StringType)
             .build()

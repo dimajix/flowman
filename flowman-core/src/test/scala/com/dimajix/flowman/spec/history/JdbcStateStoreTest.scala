@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.NoSuchConnectionException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.target.Batch
+import com.dimajix.flowman.spec.job.Job
 
 
 class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
@@ -51,7 +51,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         val session = Session.builder()
             .build()
-        val batch = Batch.builder(session.context)
+        val batch = Job.builder(session.context)
             .setName("batch")
             .build()
 

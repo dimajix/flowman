@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.target.TargetSpec
 
 
 case class DeleteFileTask(
@@ -42,7 +43,7 @@ case class DeleteFileTask(
 
 
 
-class DeleteFileTaskSpec extends TargetSpec {
+class DeleteFileTaskSpec extends TaskSpec {
     @JsonProperty(value = "path", required = true) private var _path: String = ""
     @JsonProperty(value = "recursive", required = false) private var _recusrive: String = "false"
 

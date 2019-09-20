@@ -85,8 +85,6 @@ case class FileTarget(
         }
     }
 
-    override def migrate(executor: Executor) : Unit = {}
-
     /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
@@ -116,7 +114,7 @@ case class FileTarget(
       *
       * @param executor
       */
-    def verify(executor: Executor) : Unit = {
+    override def verify(executor: Executor) : Unit = {
         require(executor != null)
 
         val file = executor.fs.file(location)

@@ -33,12 +33,6 @@ case class CountTarget(
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
     /**
-      * Returns a list of physical resources produced by this target
-      * @return
-      */
-    override def provides(phase: Phase) : Seq[ResourceIdentifier] = Seq()
-
-    /**
       * Returns a list of physical resources required by this target
       * @return
       */
@@ -48,10 +42,6 @@ case class CountTarget(
             case _ => Seq()
         }
     }
-
-    override def create(executor: Executor) : Unit = {}
-
-    override def migrate(executor: Executor) : Unit = {}
 
     /**
       * Build the "count" target by printing the number of records onto the console
@@ -66,21 +56,6 @@ case class CountTarget(
         val count = dfIn.count()
         System.out.println(s"Mapping '$mapping' contains $count records")
     }
-
-    /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    def verify(executor: Executor) : Unit = {}
-
-    /**
-      * Cleaning a count target is a no-op
-      * @param executor
-      */
-    override def truncate(executor: Executor): Unit = { }
-
-    override def destroy(executor: Executor) : Unit = {}
 }
 
 

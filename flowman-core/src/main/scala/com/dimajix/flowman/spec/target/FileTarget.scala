@@ -29,6 +29,20 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 
 
+object FileTarget {
+    def apply(context: Context, mapping:MappingOutputIdentifier, location:Path, format:String, options:Map[String,String]) = {
+        new FileTarget(
+            Target.Properties(context),
+            mapping,
+            location,
+            format,
+            options,
+            "overwrite",
+            16,
+            false
+        )
+    }
+}
 case class FileTarget(
     instanceProperties: Target.Properties,
     mapping:MappingOutputIdentifier,

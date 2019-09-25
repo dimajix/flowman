@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.target.Target
 
@@ -26,17 +27,17 @@ import com.dimajix.flowman.spec.target.Target
   */
 abstract class Runner {
     /**
-      * Executes a single batch using the given executor and a map of parameters. The Runner may decide not to
-      * execute a specific batch, because some information may indicate that the batch has already been successfully
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overriden with the force flag
       * @param executor
-      * @param batch
-      * @param phase
+      * @param job
+      * @param phases
       * @param args
       * @param force
       * @return
       */
-    def executeBatch(executor: Executor, batch:Job, phase:Phase, args:Map[String,String]=Map(), force:Boolean=false) : Status
+    def executeJob(executor: Executor, job:Job, phases:Seq[Phase], args:Map[String,String]=Map(), force:Boolean=false) : Status
 
     /**
       * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
@@ -48,5 +49,5 @@ abstract class Runner {
       * @param force
       * @return
       */
-    def executeTarget(executor: Executor, target:Target, phase:Phase, force:Boolean=false) : Status
+    def executeTarget(executor: Executor, target:Target, phase:Phase, job:Option[JobToken]=None, force:Boolean=false) : Status
 }

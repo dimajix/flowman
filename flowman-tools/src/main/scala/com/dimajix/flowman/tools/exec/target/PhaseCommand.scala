@@ -22,21 +22,26 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Lifecycle
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.task.CleanTargetTask
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
-class CleanCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[CleanCommand])
+class PhaseCommand(phase:Phase) extends ActionCommand {
+    private val logger = LoggerFactory.getLogger(classOf[PhaseCommand])
 
-    @Argument(usage = "specifies target(s) to clean", metaVar = "<target>")
+    @Argument(usage = "specifies target(s) to execute", metaVar = "<target>")
     var targets: Array[String] = Array()
     @Option(name = "-a", aliases=Array("--all"), usage = "cleans all outputs, even the disabled ones")
     var all: Boolean = false
+    @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
+    var force: Boolean = false
+    @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
+    var noLifecycle: Boolean = false
 
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
@@ -53,16 +58,20 @@ class CleanCommand extends ActionCommand {
                     .filter(_.enabled)
                     .map(_.name)
 
-        val task = CleanTargetTask(context, toRun.map(TargetIdentifier.parse), s"Cleaning targets ${toRun.mkString(",")}")
         val job = Job.builder(context)
-            .setName("clean-targets")
-            .setDescription("Clean targets")
-            .addTask(task)
+            .setName("execute-targets")
+            .setDescription("Execute targets via CLI")
+            .setTargets(toRun.map(TargetIdentifier.parse))
             .build()
 
-        val runner = executor.runner
-        val result = runner.executeBatch(executor, job, Map(), true)
+        val lifecycle =
+            if (noLifecycle)
+                Seq(phase)
+            else
+                Lifecycle.ofPhase(phase)
 
+        val runner = executor.runner
+        val result = runner.executeJob(executor, job, lifecycle, Map(), force)
         result match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true
@@ -70,3 +79,11 @@ class CleanCommand extends ActionCommand {
         }
     }
 }
+
+
+class CreateCommand extends PhaseCommand(Phase.CREATE)
+class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
+class BuildCommand extends PhaseCommand(Phase.BUILD)
+class VerifyCommand extends PhaseCommand(Phase.VERIFY)
+class TruncateCommand extends PhaseCommand(Phase.TRUNCATE)
+class DestroyCommand extends PhaseCommand(Phase.DESTROY)

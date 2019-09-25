@@ -84,7 +84,6 @@ object TaaskSpec extends TypeRegistry[TaskSpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTaskSpec]),
     new JsonSubTypes.Type(name = "describe", value = classOf[DescribeTaskSpec]),
     new JsonSubTypes.Type(name = "showEnvironment", value = classOf[ShowEnvironmentTaskSpec])
 ))

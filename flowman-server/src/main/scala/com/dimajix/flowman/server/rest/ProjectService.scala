@@ -33,7 +33,7 @@ import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.NoSuchBundleException
+import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.server.model
@@ -178,7 +178,7 @@ class ProjectService(store:Store) {
             case Failure(x:NoSuchProjectException) =>
                 logger.error(s"Project ${x.project} not found")
                 complete(StatusCodes.NotFound)
-            case Failure(x:NoSuchBundleException) =>
+            case Failure(x:NoSuchJobException) =>
                 logger.error(s"Job ${x.getBundle} not found")
                 complete(StatusCodes.NotFound)
             case Failure(ex) =>

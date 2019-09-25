@@ -30,6 +30,19 @@ import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
 
 
+object RelationTarget {
+    def apply(context: Context, relation: RelationIdentifier) = {
+        new RelationTarget(
+            Target.Properties(context),
+            MappingOutputIdentifier(""),
+            relation,
+            "overwrite",
+            Map(),
+            16,
+            false
+        )
+    }
+}
 case class RelationTarget(
     instanceProperties: Target.Properties,
     mapping:MappingOutputIdentifier,
@@ -75,7 +88,7 @@ case class RelationTarget(
       */
     override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case Phase.BUILD if (mapping.nonEmpty) => MappingUtils.requires(context, mapping.mapping)
             case _ => Seq()
         }
     }
@@ -110,18 +123,22 @@ case class RelationTarget(
       * @param executor
       */
     override def build(executor:Executor) : Unit = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
+        require(executor != null)
 
-        logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition")
-        val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
-        val table = if (rebalance)
-            dfIn.repartition(parallelism)
-        else
-            dfIn.coalesce(parallelism)
+        if (mapping.nonEmpty) {
+            val partition = this.partition.mapValues(v => SingleValue(v))
 
-        val rel = context.getRelation(relation)
-        rel.write(executor, table, partition, mode)
+            logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition")
+            val mapping = context.getMapping(this.mapping.mapping)
+            val dfIn = executor.instantiate(mapping, this.mapping.output)
+            val table = if (rebalance)
+                dfIn.repartition(parallelism)
+            else
+                dfIn.coalesce(parallelism)
+
+            val rel = context.getRelation(relation)
+            rel.write(executor, table, partition, mode)
+        }
     }
 
     /**
@@ -170,7 +187,7 @@ case class RelationTarget(
 
 
 class RelationTargetSpec extends TargetSpec {
-    @JsonProperty(value="input", required=true) private var input:String = _
+    @JsonProperty(value="input", required=true) private var input:String = ""
     @JsonProperty(value="relation", required=true) private var relation:String = _
     @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()

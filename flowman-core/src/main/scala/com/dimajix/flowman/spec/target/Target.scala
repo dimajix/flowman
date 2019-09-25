@@ -164,6 +164,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "copy", value = classOf[CopyTargetSpec]),
     new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTargetSpec]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
+    new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTargetSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
     new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),
     new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),

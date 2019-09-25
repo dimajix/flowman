@@ -32,8 +32,8 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
             .build()
 
         val runner = new SimpleRunner
-        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
@@ -45,7 +45,7 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
             .build()
 
         val runner = new SimpleRunner
-        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.FAILED)
-        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.FAILED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.FAILED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.FAILED)
     }
 }

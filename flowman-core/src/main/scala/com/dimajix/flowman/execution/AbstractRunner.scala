@@ -24,6 +24,7 @@ import org.slf4j.Logger
 
 import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.job.JobInstance
@@ -31,63 +32,83 @@ import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetInstance
 
 
-
-abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner {
+abstract class AbstractRunner extends Runner {
     protected val logger:Logger
 
     /**
-      * Executes a given job with the given executor. The runner will take care of
-      * logging and monitoring
-      *
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
       * @param executor
-      * @param batch
+      * @param job
+      * @param phases
+      * @param args
+      * @param force
       * @return
       */
-    override def executeBatch(executor: Executor, batch:Job, phase:Phase, args:Map[String,String], force:Boolean) : Status = {
-        require(executor != null)
+    override def executeJob(executor:Executor, job:Job, phases:Seq[Phase], args:Map[String,String], force:Boolean=false) : Status = {
+        require(args != null)
+        require(phases != null)
         require(args != null)
 
-        val result = withWallTime(executor.metrics, batch.metadata) {
+        val jobExecutor = new JobExecutor(executor, job, args, force)
+
+        val result = Status.forall(phases){phase =>
+            withMetrics(jobExecutor.context, job, phase, executor.metrics) {
+                executeJobPhase(jobExecutor, phase)
+            }
+        }
+
+        jobExecutor.cleanup()
+
+        result
+    }
+
+    private def executeJobPhase(executor:JobExecutor, phase:Phase) : Status = {
+        require(executor != null)
+        require(phase != null)
+
+        val result = withWallTime(executor.executor.metrics, executor.job.metadata, phase) {
             // Create job instance for state server
-            val instance = batch.instance(args)
+            val instance = executor.instance
+            val job = executor.job
 
             // Get Token
-            val token = startBatch(instance, phase)
+            val token = startJob(instance, phase)
 
-            val shutdownHook = new Thread() { override def run() : Unit = finishBatch(token, Status.FAILED) }
+            val shutdownHook = new Thread() { override def run() : Unit = finishJob(token, Status.FAILED) }
             withShutdownHook(shutdownHook) {
                 Try {
-                    logger.info(s"Running phase '$phase' of execution '${batch.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-                    batch.execute(executor, phase, args, force)
+                    executor.execute(phase)
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
-                        logger.info(s"Successfully finished phase '$phase' of execution of bundle '${batch.identifier}'")
-                        finishBatch(token, Status.SUCCESS)
+                        logger.info(s"Successfully finished phase '$phase' of execution of job '${job.identifier}'")
+                        finishJob(token, Status.SUCCESS)
                         status
                     case Success(status @ Status.FAILED) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' failed")
-                        finishBatch(token, Status.FAILED)
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' failed")
+                        finishJob(token, Status.FAILED)
                         status
                     case Success(status @ Status.ABORTED) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' aborted")
-                        finishBatch(token, Status.ABORTED)
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' aborted")
+                        finishJob(token, Status.ABORTED)
                         status
                     case Success(status @ Status.SKIPPED) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' skipped")
-                        finishBatch(token, Status.SKIPPED)
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' skipped")
+                        finishJob(token, Status.SKIPPED)
                         status
                     case Success(status @ Status.RUNNING) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' already running")
-                        finishBatch(token, Status.SKIPPED)
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' already running")
+                        finishJob(token, Status.SKIPPED)
                         status
                     case Success(status) =>
-                        logger.error(s"Execution of phase '$phase' of bundle '${batch.identifier}' in unknown state. Assuming failure")
-                        finishBatch(token, Status.FAILED)
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' in unknown state. Assuming failure")
+                        finishJob(token, Status.FAILED)
                         status
                     case Failure(e) =>
-                        logger.error(s"Caught exception while executing phase '$phase' of bundle '${batch.identifier}'", e)
-                        finishBatch(token, Status.FAILED)
+                        logger.error(s"Caught exception while executing phase '$phase' of job '${job.identifier}'", e)
+                        finishJob(token, Status.FAILED)
                         Status.FAILED
                 }
             }
@@ -96,13 +117,23 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         result
     }
 
-    override def executeTarget(executor: Executor, target:Target, phase:Phase, force:Boolean) : Status = {
+    /**
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
+      * @param executor
+      * @param target
+      * @param phase
+      * @param force
+      * @return
+      */
+    override def executeTarget(executor: Executor, target:Target, phase:Phase, job:Option[JobToken]=None, force:Boolean) : Status = {
         // Create job instance for state server
         val instance = target.instance
 
         // Get Token
         val present = checkTarget(instance, phase)
-        val token = startTarget(instance, phase, parentJob)
+        val token = startTarget(instance, phase, job)
 
         val shutdownHook = new Thread() { override def run() : Unit = finishTarget(token, Status.FAILED) }
         withShutdownHook(shutdownHook) {
@@ -114,7 +145,8 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
             }
             else {
                 Try {
-                    withWallTime(executor.metrics, target.metadata) {
+                    logger.info(s"Running phase '$phase' of target '${target.identifier}'")
+                    withWallTime(executor.metrics, target.metadata, phase) {
                         target.execute(executor, phase)
                     }
                 }
@@ -138,14 +170,14 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param batch
       * @return
       */
-    protected def startBatch(batch:JobInstance, phase:Phase) : JobToken
+    protected def startJob(batch:JobInstance, phase:Phase) : JobToken
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    protected def finishBatch(token:JobToken, status:Status) : Unit
+    protected def finishJob(token:JobToken, status:Status) : Unit
 
     /**
       * Performs some checks, if the target is already up to date
@@ -173,6 +205,35 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         Runtime.getRuntime.addShutdownHook(shutdownHook)
         val result = block
         Runtime.getRuntime.removeShutdownHook(shutdownHook)
+        result
+    }
+
+    private def withMetrics[T](context:Context, job:Job, phase:Phase, metricSystem:MetricSystem)(fn: => T) : T = {
+        // Create new local context which only provides the current phase as an additional environment variable
+        val metricContext = ScopeContext.builder(context)
+            .withEnvironment("phase", phase.toString)
+            .build()
+
+        val metrics = job.metrics.map(_.instantiate(metricContext, metricSystem))
+
+        // Publish metrics
+        metrics.foreach { metrics =>
+            metrics.reset()
+            metricSystem.addBoard(metrics)
+        }
+
+        // Run original function
+        val result = try {
+            fn
+        }
+        finally {
+            // Unpublish metrics
+            metrics.foreach { metrics =>
+                metricSystem.commitBoard(metrics)
+                metricSystem.removeBoard(metrics)
+            }
+        }
+
         result
     }
 }

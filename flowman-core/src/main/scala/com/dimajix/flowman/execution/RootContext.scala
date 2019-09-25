@@ -187,7 +187,7 @@ class RootContext private[execution](
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
-            throw new NoSuchBundleException(identifier)
+            throw new NoSuchJobException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getJob(JobIdentifier(identifier.name, None))
     }

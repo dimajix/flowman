@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -64,13 +66,17 @@ class HiveViewRelation(
       * @return
       */
     override def requires : Seq[ResourceIdentifier] = {
-        // TODO: Scan execution plan for other Hive tables or views
-        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSeq
+        val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSeq
+        val other =  mapping.map(m => MappingUtils.requires(context, m.mapping)).getOrElse(Seq())
+        db ++ other
     }
 
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        throw new UnsupportedOperationException()
+    }
 
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    }
 
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         val select = getSelect(executor)

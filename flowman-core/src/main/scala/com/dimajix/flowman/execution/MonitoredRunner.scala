@@ -41,7 +41,7 @@ class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
       * @param batch
       * @return
       */
-    protected override def startBatch(batch: JobInstance, phase: Phase): JobToken = {
+    protected override def startJob(batch: JobInstance, phase: Phase): JobToken = {
         stateStore.startJob(batch, phase)
     }
 
@@ -50,7 +50,7 @@ class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
       *
       * @param token
       */
-    protected override def finishBatch(token: JobToken, status:Status): Unit = {
+    protected override def finishJob(token: JobToken, status:Status): Unit = {
         stateStore.finishJob(token, status)
     }
 

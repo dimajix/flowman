@@ -1,4 +1,4 @@
-package com.dimajix.flowman.tools.exec.batch
+package com.dimajix.flowman.tools.exec.job
 
 import org.slf4j.LoggerFactory
 

@@ -221,7 +221,7 @@ class ProjectContext private[execution](
             bundles.getOrElseUpdate(identifier.name,
                 project.jobs
                     .getOrElse(identifier.name,
-                        throw new NoSuchBundleException(identifier)
+                        throw new NoSuchJobException(identifier)
                     )
                     .instantiate(this)
             )

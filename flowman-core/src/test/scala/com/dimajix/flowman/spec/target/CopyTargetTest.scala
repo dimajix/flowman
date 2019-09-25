@@ -23,17 +23,18 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.dataset.Dataset
+import com.dimajix.flowman.spec.dataset.RelationDataset
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
-    "A CopyRelationTask" should "support configuration via YML" in {
+    "A CopyTarget" should "support configuration via YML" in {
         val spec =
             """
               |kind: copy
@@ -54,10 +55,8 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val targetSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyTargetSpec]
         val target = targetSpec.instantiate(context)
-        target.source should be (RelationIdentifier("local_file"))
-        target.sourcePartitions should be (Map("spc" -> SingleValue("part_value")))
-        target.target should be (RelationIdentifier("some_hive_table"))
-        target.targetPartition should be (Map("tpc" -> SingleValue("p2")))
+        target.source should be (RelationDataset(Dataset.Properties(context), RelationIdentifier("local_file"), Map("spc" -> SingleValue("part_value"))))
+        target.target should be (RelationDataset(Dataset.Properties(context), RelationIdentifier("some_hive_table"), Map("tpc" -> SingleValue("p2"))))
         target.mode should be ("append")
     }
 
@@ -92,13 +91,16 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
               |        - name: f3
               |          type: string
               |
-              |jobs:
+              |targets:
               |  main:
-              |    tasks:
-              |     - kind: copyRelation
-              |       source: source_relation
-              |       target: target_relation
-              |       mode: overwrite
+              |    kind: copy
+              |    source:
+              |      kind: relation
+              |      relation: source_relation
+              |    target:
+              |      kind: relation
+              |      relation: target_relation
+              |    mode: overwrite
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
         val session = Session.builder().build()
@@ -108,9 +110,9 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val targetFilename = new File(tempDir, "copy-relation-output.csv")
         targetFilename.exists() should be (false)
 
-        val job = context.getJob(JobIdentifier("main"))
-        job should not be (null)
-        job.execute(executor, Phase.BUILD, Map()) shouldBe (Status.SUCCESS)
+        val target = context.getTarget(TargetIdentifier("main"))
+        target should not be (null)
+        target.execute(executor, Phase.BUILD)
         targetFilename.exists() should be (true)
         targetFilename.isFile() should be (true)
     }

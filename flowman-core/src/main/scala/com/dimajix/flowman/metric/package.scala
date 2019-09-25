@@ -20,19 +20,38 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.Metadata
 
 
 package object metric {
-    def withWallTime[T](registry: MetricSystem, metadata : Metadata)(fn: => T) : T = {
+    def withMetrics[T](metricSystem:MetricSystem, metrics:MetricBoard)(fn: => T) : T = {
+        // Publish metrics
+        metrics.reset()
+        metricSystem.addBoard(metrics)
+
+        // Run original function
+        val result = try {
+            fn
+        }
+        finally {
+            // Unpublish metrics
+            metricSystem.commitBoard(metrics)
+            metricSystem.removeBoard(metrics)
+        }
+
+        result
+    }
+
+    def withWallTime[T](registry: MetricSystem, metadata : Metadata, phase:Phase)(fn: => T) : T = {
         // Create and register bundle
         val metricName = metadata.kind + "_runtime"
         val bundleLabels = Map(
             "category" -> metadata.category,
             "kind" -> metadata.kind,
             "namespace" -> metadata.namespace.getOrElse(""),
-            "project" -> metadata.project.getOrElse("")
+            "project" -> metadata.project.getOrElse(""),
+            "phase" -> phase.toString
         )
         val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels), new MultiMetricBundle(metricName, bundleLabels))
 

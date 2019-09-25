@@ -55,7 +55,7 @@ class DestroyCommand extends ActionCommand {
             .build()
 
         val runner = executor.runner
-        val result = runner.executeBatch(executor, job)
+        val result = runner.executeJob(executor, job)
 
         result match {
             case Status.SUCCESS => true

@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Tool
-import com.dimajix.flowman.tools.exec.batch.RunCommand
+import com.dimajix.flowman.tools.exec.job.PhaseCommand
 
 
 object Driver {
@@ -79,15 +79,16 @@ class Driver(options:Arguments) extends Tool {
         val executor = session.executor
         val context = session.getContext(project)
 
-        val bundle = context.getJob()
-        val bundleDescription = bundle.description.map("(" + _ + ")").getOrElse("")
-        val bundleArgs = options.arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")
-        logger.info(s"Executing job '${bundle.name}' $bundleDescription with args $bundleArgs")
+        //val bundle = context.getJob()
+        //val bundleDescription = bundle.description.map("(" + _ + ")").getOrElse("")
+        //val bundleArgs = options.arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")
+        //logger.info(s"Executing job '${bundle.name}' $bundleDescription with args $bundleArgs")
 
-        val result = executeInternal(executor, context, project)
+        // val result = executeInternal(executor, context, project)
 
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured
         executor.cleanup()
+        true
     }
 }

@@ -27,9 +27,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.task.ShowMappingTask
+import com.dimajix.flowman.spec.target.ConsoleTarget
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -46,10 +47,10 @@ class ShowCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val columns = this.columns.split(",").filter(_.nonEmpty)
-        val task = ShowMappingTask(context, Seq(MappingOutputIdentifier(mapping)), columns, limit)
+        val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns)
 
         Try {
-            task.execute(executor)
+            task.execute(executor, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping mapping")

@@ -16,31 +16,26 @@
 
 package com.dimajix.flowman.spec.job
 
-import scala.collection.mutable
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.JobExecutor
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.RootContext
-import com.dimajix.flowman.execution.RootExecutor
-import com.dimajix.flowman.execution.SettingLevel
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.spec.AbstractInstance
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Instance
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.job.Job.Parameter
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
@@ -216,144 +211,35 @@ case class Job(
         parameters.map(p => (p.name, p.default.orNull)).toMap ++ processedArgs
     }
 
-    def execute(executor:Executor, phase:Phase, args:Map[String,String], force:Boolean=false) : Status = {
-        require(args != null)
-
-        val description = this.description.map("(" + _ + ")").getOrElse("")
-        logger.info(s"Running phase '$phase' of execution: '$name' $description")
-
-        // Create a new execution environment.
-        val jobArgs = arguments(args)
-        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for execution '$name'"))
-
-        // Check if the job should run isolated. This is required if arguments are specified, which could
-        // result in different DataFrames with different arguments
-        val isolated = args.nonEmpty || environment.nonEmpty
-
-        // Create a new execution environment.
-        val rootContext = RootContext.builder(context)
-            .withEnvironment("force", force)
-            .withEnvironment(jobArgs, SettingLevel.SCOPE_OVERRIDE)
-            .withEnvironment(environment, SettingLevel.SCOPE_OVERRIDE)
-            .build()
-        val projectExecutor = new RootExecutor(executor, isolated)
-        val projectContext = if (context.project != null) rootContext.getProjectContext(context.project) else rootContext
-
-        withMetrics(projectContext, projectExecutor.metrics) {
-            val result = executeTargets(projectContext, projectExecutor, phase, force)
-
-            // Release any resources
-            if (isolated) {
-                projectExecutor.cleanup()
-            }
-
-            result
+    def interpolate(args:Map[String,FieldValue])(fn:Map[String,String] => Boolean) : Boolean = {
+        def interpolate(fn:Map[String,String] => Boolean, param:Parameter, values:FieldValue) : Map[String,String] => Boolean = {
+            val vals = param.ftype.interpolate(values, param.granularity).map(_.toString)
+            args:Map[String,String] => vals.forall(v => fn(args + (param.name -> v)))
         }
+
+        // Iterate by all parameters and create argument map
+        val paramByName = parameters.map(p => (p.name, p)).toMap
+        val invocations = args.toSeq.foldRight(fn)((p,a) => interpolate(a, paramByName(p._1), p._2))
+
+        invocations(Map())
     }
 
     /**
-      * Execute all targets of this batch in an appropriate order
-      * @param context
+      * This method will execute all targets secified in this job in the correct order. It is a convenient wrapper
+      * around JobExecutor, which actually takes care about all the details
       * @param executor
       * @param phase
+      * @param args
       * @param force
       * @return
       */
-    private def executeTargets(context: Context, executor: Executor, phase:Phase, force:Boolean) : Status = {
-        val order = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(context, phase).reverse
-            case _ => orderTargets(context, phase)
-        }
+    def execute(executor:Executor, phase:Phase, args:Map[String,String], force:Boolean=false) : Status = {
+        require(args != null)
+        require(phase != null)
+        require(args != null)
 
-        val runner = executor.runner
-        val iter = order.iterator
-        var error = false
-        while (iter.hasNext) {
-            val target = iter.next()
-            val status = runner.executeTarget(executor, target, phase, force)
-            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
-        }
-
-        if (error)
-            Status.FAILED
-        else
-            Status.SUCCESS
-    }
-
-    /**
-      * Create ordering of specified targets, such that all dependencies are fullfilled
-      * @param context
-      * @return
-      */
-    private def orderTargets(context: Context, phase:Phase) : Seq[Target] = {
-        def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
-            deps.map(dep =>
-                if (dep.project.nonEmpty)
-                    dep
-                else
-                    TargetIdentifier(dep.name, Option(target.project).map(_.name))
-            )
-        }
-
-        val targets = this.targets.map(t => context.getTarget(t))
-        val targetIds = targets.map(_.identifier).toSet
-        val targetsByResources = targets.flatMap(t => t.provides(phase).map(id => (id,t.identifier))).toMap
-
-        val nodes = mutable.Map(targets.map(t => t.identifier -> mutable.Set[TargetIdentifier]()):_*)
-
-        // Process all 'after' dependencies
-        targets.foreach(t => {
-            val deps =  normalize(t, t.after).filter(targetIds.contains)
-            deps.foreach(d => nodes(t.identifier).add(d))
-        })
-
-        // Process all 'before' dependencies
-        targets.foreach(t => {
-            val deps = normalize(t, t.before).filter(targetIds.contains)
-            deps.foreach(b => nodes(b).add(t.identifier))
-        })
-
-        // Process all 'requires' dependencies
-        targets.foreach(t => {
-            val deps = t.requires(phase).flatMap(targetsByResources.get)
-            deps.foreach(d => nodes(t.identifier).add(d))
-        })
-
-        val order = mutable.ListBuffer[TargetIdentifier]()
-        while (nodes.nonEmpty) {
-            val candidate = nodes.find(_._2.isEmpty).map(_._1)
-                .getOrElse(throw new RuntimeException("Cannot create target order"))
-
-            // Remove candidate
-            nodes.remove(candidate)
-            // Remove this target from all dependencies
-            nodes.foreach { case (k,v) => v.remove(candidate) }
-            // Append candidate to build sequence
-            order.append(candidate)
-        }
-
-        order.map(context.getTarget)
-    }
-
-    private def withMetrics[T](context:Context, metricSystem:MetricSystem)(fn: => T) : T = {
-        val metrics = this.metrics.map(_.instantiate(context, metricSystem))
-
-        // Publish metrics
-        metrics.foreach { metrics =>
-            metrics.reset()
-            metricSystem.addBoard(metrics)
-        }
-
-        // Run original function
-        val result = fn
-
-        // Unpublish metrics
-        metrics.foreach { metrics =>
-            metricSystem.commitBoard(metrics)
-            metricSystem.removeBoard(metrics)
-        }
-
-        result
+        val jobExecutor = new JobExecutor(executor, this, args, force)
+        jobExecutor.execute(phase)
     }
 }
 

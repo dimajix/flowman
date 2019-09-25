@@ -17,8 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -28,6 +26,14 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 
 
+object CountTarget {
+    def apply(context: Context, mapping:MappingOutputIdentifier) : CountTarget = {
+        new CountTarget(
+            Target.Properties(context),
+            mapping
+        )
+    }
+}
 case class CountTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier

@@ -56,9 +56,9 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         val monitor = JdbcHistorySpec("logger")
         val runner = new MonitoredRunner(monitor.instantiate(session.context))
-        runner.executeBatch(session.executor, batch, Phase.CREATE, Map(), force=false) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.CREATE, Map(), force=false) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.CREATE, Map(), force=true) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), Map(), force=false) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), Map(), force=false) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), Map(), force=true) should be (Status.SUCCESS)
     }
 
     it should "be used in a Session" in {
@@ -77,9 +77,9 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .build()
 
         val runner = session.runner
-        runner.executeBatch(session.executor, batch, Phase.CREATE) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.CREATE, force=false) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.CREATE, force=true) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.CREATE)) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), force=false) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
@@ -97,8 +97,8 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         val monitor = JdbcHistorySpec("logger")
         val runner = new MonitoredRunner(monitor.instantiate(session.context))
-        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.FAILED)
-        runner.executeBatch(session.executor, batch, Phase.BUILD) should be (Status.FAILED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.FAILED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.FAILED)
     }
 
     it should "support parameters" in {
@@ -116,9 +116,9 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         val monitor = JdbcHistorySpec("logger")
         val runner = new MonitoredRunner(monitor.instantiate(session.context))
-        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v1")) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v1")) should be (Status.SKIPPED)
-        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v2")) should be (Status.SUCCESS)
-        runner.executeBatch(session.executor, batch, Phase.BUILD, Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SKIPPED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v2")) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
     }
 }

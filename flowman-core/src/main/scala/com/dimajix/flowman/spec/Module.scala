@@ -26,7 +26,6 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
 import com.dimajix.flowman.spec.job.JobSpec
-import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 
@@ -97,7 +96,6 @@ class Module {
     @JsonProperty(value="targets") private var _targets: Map[String,TargetSpec] = Map()
     @JsonDeserialize(converter=classOf[JobSpec.NameResolver])
     @JsonProperty(value="jobs") private var _jobs: Map[String,JobSpec] = Map()
-    @JsonProperty(value="metrics") private var _metrics: Option[MetricBoardSpec] = None
 
     def profiles : Map[String,Profile] = _profiles
     def relations : Map[String,RelationSpec] = _relations

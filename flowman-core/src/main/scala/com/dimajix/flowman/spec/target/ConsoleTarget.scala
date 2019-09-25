@@ -23,11 +23,44 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.dataset.MappingDataset
+import com.dimajix.flowman.spec.dataset.RelationDataset
+import com.dimajix.flowman.types.SingleValue
 
 
+object ConsoleTarget {
+    def apply(context: Context, dataset: Dataset, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+        new ConsoleTarget(
+            Target.Properties(context),
+            dataset,
+            limit,
+            true,
+            columns
+        )
+    }
+    def apply(context: Context, output: MappingOutputIdentifier, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+        new ConsoleTarget(
+            Target.Properties(context),
+            MappingDataset(context, output),
+            limit,
+            true,
+            columns
+        )
+    }
+    def apply(context: Context, relation: RelationIdentifier, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+        new ConsoleTarget(
+            Target.Properties(context),
+            RelationDataset(context, relation, Map[String,SingleValue]()),
+            limit,
+            true,
+            columns
+        )
+    }
+}
 case class ConsoleTarget(
     instanceProperties:Target.Properties,
     dataset:Dataset,

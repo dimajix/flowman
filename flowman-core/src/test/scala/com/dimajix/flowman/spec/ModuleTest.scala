@@ -88,7 +88,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         batch.name should be ("default")
         batch.category should be ("batch")
         batch.kind should be ("batch")
-        runner.executeBatch(executor, batch, Phase.BUILD) should be (Status.SUCCESS)
+        runner.executeJob(executor, batch, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
     it should "set the names of all batches" in {

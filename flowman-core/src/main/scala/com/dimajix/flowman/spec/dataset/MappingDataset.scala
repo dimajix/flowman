@@ -16,21 +16,26 @@
 
 package com.dimajix.flowman.spec.dataset
 
-import scala.collection.mutable
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
 
 
+object MappingDataset {
+    def apply(context: Context, mapping:MappingOutputIdentifier) : MappingDataset = {
+        new MappingDataset(
+            Dataset.Properties(context),
+            mapping
+        )
+    }
+}
 case class MappingDataset(
     instanceProperties: Dataset.Properties,
     mapping: MappingOutputIdentifier

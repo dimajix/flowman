@@ -100,7 +100,6 @@ object Project {
             project._mappings = module.mappings
             project._targets = module.targets
             project._jobs = module.jobs
-            // TODO: Metrics
         }
     }
 

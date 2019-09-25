@@ -32,14 +32,14 @@ class SimpleRunner extends AbstractRunner {
       *
       * @return
       */
-    override protected def startBatch(job:JobInstance, phase:Phase) : JobToken = null
+    override protected def startJob(job:JobInstance, phase:Phase) : JobToken = null
 
     /**
       * Marks a run as a success
       *
       * @param token
       */
-    override protected def finishBatch(token:JobToken, status:Status) : Unit = {}
+    override protected def finishJob(token:JobToken, status:Status) : Unit = {}
 
     /**
       * Performs some checks, if the run is required. Returns faöse if the target is out of date needs to be rebuilt

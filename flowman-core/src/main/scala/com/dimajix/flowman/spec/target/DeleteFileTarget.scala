@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.task
+package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
@@ -22,36 +22,34 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.target.TargetSpec
 
 
-case class DeleteFileTask(
-    instanceProperties:Task.Properties,
+case class DeleteFileTarget(
+    instanceProperties:Target.Properties,
     path: Path,
     recursive: Boolean
-) extends BaseTask {
-    private val logger = LoggerFactory.getLogger(classOf[DeleteFileTask])
+) extends BaseTarget {
+    private val logger = LoggerFactory.getLogger(classOf[DeleteFileTarget])
 
-    override def execute(executor:Executor) : Boolean = {
+    override def build(executor:Executor) : Unit = {
         val fs = executor.fs
         val file = fs.file(path)
         logger.info(s"Deleting remote file '$file' (recursive=$recursive)")
         file.delete(recursive)
-        true
     }
 }
 
 
 
-class DeleteFileTaskSpec extends TaskSpec {
-    @JsonProperty(value = "path", required = true) private var _path: String = ""
-    @JsonProperty(value = "recursive", required = false) private var _recusrive: String = "false"
+class DeleteFileTargetSpec extends TargetSpec {
+    @JsonProperty(value = "path", required = true) private var path: String = ""
+    @JsonProperty(value = "recursive", required = false) private var recursive: String = "true"
 
-    override def instantiate(context: Context): DeleteFileTask = {
-        DeleteFileTask(
+    override def instantiate(context: Context): DeleteFileTarget = {
+        DeleteFileTarget(
             instanceProperties(context),
-            new Path(context.evaluate(_path)),
-            context.evaluate(_recusrive).toBoolean
+            new Path(context.evaluate(path)),
+            context.evaluate(recursive).toBoolean
         )
     }
 }

@@ -44,4 +44,30 @@ object Status {
             case _ => throw new IllegalArgumentException(s"No status defined for '$status'")
         }
     }
+
+    /**
+      * This function determines a common status of multiple actions
+      * @param seq
+      * @param fn
+      * @tparam T
+      * @return
+      */
+    def forall[T](seq: Iterable[T])(fn:T => Status) : Status = {
+        val iter = seq.iterator
+        var error = false
+        var skipped = true
+        while (iter.hasNext && !error) {
+            val item = iter.next()
+            val status = fn(item)
+            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+            skipped &= (status == Status.SKIPPED)
+        }
+
+        if (error)
+            Status.FAILED
+        else if (skipped)
+            Status.SKIPPED
+        else
+            Status.SUCCESS
+    }
 }

@@ -22,11 +22,12 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.task.CreateRelationTask
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.tools.exec.ActionCommand
 import com.dimajix.flowman.tools.exec.target.BuildCommand
 
@@ -50,15 +51,15 @@ class CreateCommand extends ActionCommand {
             else
                 project.relations.keys.toSeq
 
-        val task = CreateRelationTask(context, toRun.map(RelationIdentifier.parse), ignoreIfExists)
+        val targets = toRun.map(rel => RelationTarget(context, RelationIdentifier(rel)))
         val job = Job.builder(context)
             .setName("create-relations")
             .setDescription("Create relations")
-            .addTask(task)
+            .setTargets(targets.map(_.identifier))
             .build()
 
         val runner = executor.runner
-        val result = runner.executeBatch(executor, job)
+        val result = runner.executeJob(executor, job, Seq(Phase.CREATE))
 
         result match {
             case Status.SUCCESS => true

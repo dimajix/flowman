@@ -27,6 +27,15 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
 
+object RelationDataset {
+    def apply(context: Context, relation:RelationIdentifier, partition:Map[String,SingleValue]) : RelationDataset = {
+        new RelationDataset(
+            Dataset.Properties(context),
+            relation,
+            partition
+        )
+    }
+}
 case class RelationDataset(
     instanceProperties: Dataset.Properties,
     relation: RelationIdentifier,

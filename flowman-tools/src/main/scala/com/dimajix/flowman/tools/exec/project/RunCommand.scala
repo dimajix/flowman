@@ -28,8 +28,8 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.spec.task.Job
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -43,19 +43,17 @@ class RunCommand extends ActionCommand {
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val args = splitSettings(this.args).toMap
-        project.main.forall( name => {
-            Try {
-                project.jobs(name)
-            }
-            match {
-                case Failure(e) =>
-                    logger.error(s"Cannot find job $name")
-                    false
-                case Success(spec) =>
-                    val job = spec.instantiate(context)
-                    executeJob(executor, job, args)
-            }
-        })
+        Try {
+            project.jobs("main")
+        }
+        match {
+            case Failure(e) =>
+                logger.error(s"Cannot find job 'main'")
+                false
+            case Success(spec) =>
+                val job = spec.instantiate(context)
+                executeJob(executor, job, args)
+        }
     }
 
     private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
@@ -64,7 +62,7 @@ class RunCommand extends ActionCommand {
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
         val runner = executor.runner
-        val result = runner.executeBatch(executor, job, args, force)
+        val result = runner.executeJob(executor, job, args, force)
         result match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true

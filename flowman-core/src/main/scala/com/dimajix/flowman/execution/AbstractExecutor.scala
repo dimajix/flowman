@@ -40,13 +40,6 @@ abstract class AbstractExecutor(_session:Session) extends Executor {
     override def fs : FileSystem = _session.fs
 
     /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    override def runner: Runner = _session.runner
-
-    /**
       * Returns the MetricRegistry of this executor
       * @return
       */

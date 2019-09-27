@@ -30,12 +30,12 @@ class HelloWorldTargetTest extends FlatSpec with Matchers {
             """
               |targets:
               |  custom:
-              |    - kind: hello-world
+              |    kind: hello-world
             """.stripMargin
         val module = Module.read.string(spec)
         module.targets.keys should contain("custom")
 
         val target = module.targets("custom").instantiate(session.context)
-        target shouldBe an[HelloWorldTargetSpec]
+        target shouldBe an[HelloWorldTarget]
     }
 }

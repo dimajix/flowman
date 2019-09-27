@@ -80,7 +80,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val executor = session.executor
-        val runner = executor.runner
+        val runner = session.runner
 
         val job = context.getJob(JobIdentifier("default"))
         job should not be (null)

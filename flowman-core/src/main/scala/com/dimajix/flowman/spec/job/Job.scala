@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.spec.job
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.util.StdConverter
 import org.slf4j.LoggerFactory
@@ -239,7 +243,18 @@ case class Job(
         require(args != null)
 
         val jobExecutor = new JobExecutor(executor, this, args, force)
-        jobExecutor.execute(phase)
+        jobExecutor.execute(phase) { (executor,target,force) =>
+            Try {
+                target.execute(executor, phase)
+            } match {
+                case Success(_) =>
+                    logger.info(s"Successfully finished phase '$phase' of execution of job '${identifier}'")
+                    Status.SUCCESS
+                case Failure(_) =>
+                    logger.error(s"Execution of phase '$phase' of job '${identifier}' failed")
+                    Status.FAILED
+            }
+        }
     }
 }
 

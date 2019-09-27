@@ -65,59 +65,99 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         store2.getTargetState(target) should be(None)
     }
 
-    "The Job-API of JdbcStateStore" should "provide basic state management for batches" in {
+    "The Job-API of JdbcStateStore" should "provide basic state management for jobs" in {
         val store = newStateStore()
 
-        val batch = JobInstance("default", "p1", "j1")
+        val job = JobInstance("default", "p1", "j1")
 
-        store.getJobState(batch) should be (None)
-        val token = store.startJob(batch, Phase.BUILD)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch).map(_.status) should be (Some(Status.RUNNING))
+        store.getJobState(job) should be (None)
+        val token = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         store.finishJob(token, Status.SUCCESS)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch).map(_.status) should be (Some(Status.SUCCESS))
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
     }
 
-    it should "return failed on batches failures" in {
+    it should "return failed on job failures" in {
         val store = newStateStore()
 
-        val batch = JobInstance("default", "p1", "j1")
+        val job = JobInstance("default", "p1", "j1")
 
-        store.getJobState(batch) should be (None)
-        val token = store.startJob(batch, Phase.BUILD)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch).map(_.status) should be (Some(Status.RUNNING))
+        store.getJobState(job) should be (None)
+        val token = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         store.finishJob(token, Status.SUCCESS)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch).map(_.status) should be (Some(Status.SUCCESS))
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startJob(batch, Phase.BUILD)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch).map(_.status) should be (Some(Status.RUNNING))
+        val token2 = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         store.finishJob(token2, Status.FAILED)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch).map(_.status) should be (Some(Status.FAILED))
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
     }
 
-    it should "support batch parameters" in {
+    it should "return correct state on skipped target" in {
         val store = newStateStore()
 
-        val batch = JobInstance("default", "p1", "j1")
+        val job = JobInstance("default", "p1", "j1")
 
-        store.getJobState(batch.copy(args = Map("p1" -> "v1"))) should be(None)
-        val token = store.startJob(batch.copy(args = Map("p1" -> "v1")), Phase.BUILD)
-        store.getJobState(batch).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(batch.copy(args = Map("p1" -> "v1"))).map(_.phase) should be(Phase.BUILD)
-        store.getJobState(batch.copy(args = Map("p1" -> "v1"))).map(_.status) should be(Status.RUNNING)
+        store.getJobState(job) should be (None)
+        val token = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
         store.finishJob(token, Status.SUCCESS)
-        store.getJobState(batch.copy(args = Map("p1" -> "v1"))).map(_.phase) should be(Phase.BUILD)
-        store.getJobState(batch.copy(args = Map("p1" -> "v1"))).map(_.status) should be(Status.SUCCESS)
-        store.getJobState(batch.copy(args = Map("p1" -> "v1"))) should be(None)
-        store.getJobState(batch.copy(args = Map("p1" -> "v2"))) should be(None)
-        store.getJobState(batch.copy(args = Map("p2" -> "v1"))) should be(None)
-        store.getJobState(batch) should be(None)
-        store.getJobState(batch) should be(None)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+
+        val token2 = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token2, Status.SKIPPED)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+
+        val token3 = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token3, Status.FAILED)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
+
+        val token4 = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token4, Status.SKIPPED)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
+
+        val token5 = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token5, Status.SUCCESS)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+    }
+
+    it should "support job parameters" in {
+        val store = newStateStore()
+
+        val job = JobInstance("default", "p1", "j1", Map("p1" -> "v1"))
+
+        store.getJobState(job) should be(None)
+        val token = store.startJob(job, Phase.BUILD)
+        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(job.copy(args = Map())) should be(None)
+        store.getJobState(job.copy(args = Map("p1" -> "v3")))should be(None)
+        store.getJobState(job).map(_.status) should be(Some(Status.RUNNING))
+        store.finishJob(token, Status.SUCCESS)
+        store.getJobState(job).map(_.phase) should be(Some(Phase.BUILD))
+        store.getJobState(job).map(_.status) should be(Some(Status.SUCCESS))
+        store.getJobState(job.copy(args = Map("p1" -> "v2"))) should be(None)
+        store.getJobState(job.copy(args = Map("p2" -> "v1"))) should be(None)
     }
 
 
@@ -156,7 +196,7 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
     }
 
-    it should "return success on skipped target" in {
+    it should "return correct state on skipped target" in {
         val store = newStateStore()
 
         val target = TargetInstance("default", "p1", "j1")
@@ -174,7 +214,28 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token2, Status.SKIPPED)
         store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.SKIPPED))
+        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+
+        val token3 = store.startTarget(target, Phase.BUILD, None)
+        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token3, Status.FAILED)
+        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
+
+        val token4 = store.startTarget(target, Phase.BUILD, None)
+        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token4, Status.SKIPPED)
+        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
+
+        val token5 = store.startTarget(target, Phase.BUILD, None)
+        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token5, Status.SUCCESS)
+        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support single value target partitions" in {

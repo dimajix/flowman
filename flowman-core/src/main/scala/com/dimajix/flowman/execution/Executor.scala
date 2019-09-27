@@ -33,13 +33,6 @@ abstract class Executor {
     def session: Session
 
     /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    def runner : Runner
-
-    /**
       * Returns the MetricRegistry of this executor
       * @return
       */

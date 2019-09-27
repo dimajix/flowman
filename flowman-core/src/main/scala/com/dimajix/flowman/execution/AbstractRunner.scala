@@ -51,7 +51,7 @@ abstract class AbstractRunner extends Runner {
         require(phases != null)
         require(args != null)
 
-        val jobExecutor = new JobExecutor(this, executor, job, args, force)
+        val jobExecutor = new JobExecutor(executor, job, args, force)
 
         jobExecutor.arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Execution argument $k=$v")}
         jobExecutor.environment.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Execution environment $k=$v")}
@@ -82,7 +82,9 @@ abstract class AbstractRunner extends Runner {
             val shutdownHook = new Thread() { override def run() : Unit = finishJob(token, Status.FAILED) }
             withShutdownHook(shutdownHook) {
                 Try {
-                    executor.execute(phase)
+                    executor.execute(phase) { (executor,target,force) =>
+                        executeTarget(executor, target, phase, Some(token), force)
+                    }
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>

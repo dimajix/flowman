@@ -58,7 +58,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
             .setTargets(toRun.map(t => TargetIdentifier(t)))
             .build()
 
-        val runner = executor.runner
+        val runner = executor.session.runner
         val result = runner.executeJob(executor, job, Seq(phase))
 
         result match {

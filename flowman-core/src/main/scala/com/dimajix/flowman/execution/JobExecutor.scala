@@ -1,14 +1,27 @@
-package com.dimajix.flowman.execution
+/*
+ * Copyright 2019 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import scala.collection.mutable
+package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.history.JobToken
-import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.target.orderTargets
 
 
 /**
@@ -19,14 +32,10 @@ import com.dimajix.flowman.spec.target.Target
   * @param args
   * @param force
   */
-class JobExecutor(val runner:Runner, parentExecutor:Executor, val job:Job, val args:Map[String,String], force:Boolean=false) {
+class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,String], force:Boolean=false) {
     require(parentExecutor != null)
     require(job != null)
     require(args != null)
-
-    def this(executor: Executor, job:Job, args:Map[String,String], force:Boolean) = {
-        this(executor.runner, executor, job, args, force)
-    }
 
     private val logger = LoggerFactory.getLogger(classOf[JobExecutor])
 
@@ -62,10 +71,9 @@ class JobExecutor(val runner:Runner, parentExecutor:Executor, val job:Job, val a
     /**
       * Executes a single phase of the job
       * @param phase
-      * @param jobToken
       * @return
       */
-    def execute(phase:Phase, jobToken:Option[JobToken] = None) : Status = {
+    def execute(phase:Phase)(fn:(Executor,Target,Boolean) => Status) : Status = {
         require(phase != null)
 
         val description = job.description.map("(" + _ + ")").getOrElse("")
@@ -74,14 +82,13 @@ class JobExecutor(val runner:Runner, parentExecutor:Executor, val job:Job, val a
         // Verify job arguments. This is moved from the constructor into this place, such that only this method throws an exception
         jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.name}'"))
 
+        val targets = job.targets.map(t => context.getTarget(t))
         val order = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(context, phase).reverse
-            case _ => orderTargets(context, phase)
+            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(targets, phase).reverse
+            case _ => orderTargets(targets, phase)
         }
 
-        Status.ofAll(order) { target =>
-            runner.executeTarget(executor, target, phase, jobToken, force)
-        }
+        Status.ofAll(order) { target => fn(executor,target,force) }
     }
 
     /**
@@ -92,60 +99,5 @@ class JobExecutor(val runner:Runner, parentExecutor:Executor, val job:Job, val a
         if (isolated) {
             executor.cleanup()
         }
-    }
-
-    /**
-      * Create ordering of specified targets, such that all dependencies are fullfilled
-      * @param context
-      * @return
-      */
-    private def orderTargets(context: Context, phase:Phase) : Seq[Target] = {
-        def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
-            deps.map(dep =>
-                if (dep.project.nonEmpty)
-                    dep
-                else
-                    TargetIdentifier(dep.name, Option(target.project).map(_.name))
-            )
-        }
-
-        val targets = job.targets.map(t => context.getTarget(t))
-        val targetIds = targets.map(_.identifier).toSet
-        val targetsByResources = targets.flatMap(t => t.provides(phase).map(id => (id,t.identifier))).toMap
-
-        val nodes = mutable.Map(targets.map(t => t.identifier -> mutable.Set[TargetIdentifier]()):_*)
-
-        // Process all 'after' dependencies
-        targets.foreach(t => {
-            val deps =  normalize(t, t.after).filter(targetIds.contains)
-            deps.foreach(d => nodes(t.identifier).add(d))
-        })
-
-        // Process all 'before' dependencies
-        targets.foreach(t => {
-            val deps = normalize(t, t.before).filter(targetIds.contains)
-            deps.foreach(b => nodes(b).add(t.identifier))
-        })
-
-        // Process all 'requires' dependencies
-        targets.foreach(t => {
-            val deps = t.requires(phase).flatMap(targetsByResources.get)
-            deps.foreach(d => nodes(t.identifier).add(d))
-        })
-
-        val order = mutable.ListBuffer[TargetIdentifier]()
-        while (nodes.nonEmpty) {
-            val candidate = nodes.find(_._2.isEmpty).map(_._1)
-                .getOrElse(throw new RuntimeException("Cannot create target order"))
-
-            // Remove candidate
-            nodes.remove(candidate)
-            // Remove this target from all dependencies
-            nodes.foreach { case (k,v) => v.remove(candidate) }
-            // Append candidate to build sequence
-            order.append(candidate)
-        }
-
-        order.map(context.getTarget)
     }
 }

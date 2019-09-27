@@ -182,9 +182,9 @@ object Project {
 
 
 class Project {
-    @JsonProperty(value="name", required = true) private var _name: String = _
+    @JsonProperty(value="name", required = true) private var _name: String = ""
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
-    @JsonProperty(value="version", required = false) private var _version: String = _
+    @JsonProperty(value="version", required = false) private var _version: String = ""
     @JsonProperty(value="modules", required = true) private var _modules: Seq[String] = Seq()
 
     private var _basedir: File = File.empty

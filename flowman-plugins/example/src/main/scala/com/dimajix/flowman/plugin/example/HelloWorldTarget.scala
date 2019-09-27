@@ -16,34 +16,33 @@
 
 package com.dimajix.flowman.plugin.example
 
-import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.task.BaseTask
-import com.dimajix.flowman.spec.task.Task
-import com.dimajix.flowman.spec.task.TargetSpec
+import com.dimajix.flowman.spec.target.BaseTarget
+import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.spec.target.TargetSpec
 
 
-case class HelloWorldTask(
-    instanceProperties:Task.Properties
-) extends BaseTask {
+case class HelloWorldTarget(
+    instanceProperties:Target.Properties
+) extends BaseTarget {
     /**
       * Abstract method which will perform the given task.
       *
       * @param executor
       */
-    override def execute(executor: Executor): Boolean = {
+    override def build(executor: Executor): Unit = {
         println("Hello world!")
-        true
     }
 }
 
 
 
-@TaskType(kind="hello-world")
-class HelloWorldTaskSpec extends TargetSpec {
-    override def instantiate(context: Context): Task = {
-        HelloWorldTask(
+@TargetType(kind="hello-world")
+class HelloWorldTargetSpec extends TargetSpec {
+    override def instantiate(context: Context): Target = {
+        HelloWorldTarget(
             instanceProperties(context)
         )
     }

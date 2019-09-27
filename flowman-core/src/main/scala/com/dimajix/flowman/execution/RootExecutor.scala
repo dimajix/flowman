@@ -52,15 +52,6 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
     }
 
     /**
-      * Returns the Namespace of the Executor
-      *
-      * @return
-      */
-    override def namespace : Namespace = _namespace
-
-    override def root: Executor = this
-
-    /**
       * Creates an instance of a mapping, or retrieves it from cache
       *
       * @param mapping

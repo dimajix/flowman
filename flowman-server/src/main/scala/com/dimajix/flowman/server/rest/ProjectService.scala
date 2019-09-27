@@ -179,7 +179,7 @@ class ProjectService(store:Store) {
                 logger.error(s"Project ${x.project} not found")
                 complete(StatusCodes.NotFound)
             case Failure(x:NoSuchJobException) =>
-                logger.error(s"Job ${x.getBundle} not found")
+                logger.error(s"Job ${x.job} not found")
                 complete(StatusCodes.NotFound)
             case Failure(ex) =>
                 complete(StatusCodes.InternalServerError)

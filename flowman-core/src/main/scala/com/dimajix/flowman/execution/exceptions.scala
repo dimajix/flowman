@@ -49,5 +49,5 @@ class NoSuchConnectionException(val connection:ConnectionIdentifier)
 class NoSuchJobException(val job:JobIdentifier)
     extends ExecutionException(s"Job '$job' not found")
 
-class VerificationFailedException(val target:TargetIdentifier)
-    extends ExecutionException(s"Verification of target $target failed")
+class VerificationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Verification of target $target failed", cause)

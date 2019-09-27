@@ -46,7 +46,7 @@ object ScopeContext {
         private var mappings = Map[String, MappingSpec]()
         private var relations = Map[String, RelationSpec]()
         private var targets = Map[String, TargetSpec]()
-        private var batches = Map[String, JobSpec]()
+        private var jobs = Map[String, JobSpec]()
 
         def withMappings(mappings:Map[String,MappingSpec]) : Builder = {
             require(mappings != null)
@@ -63,9 +63,9 @@ object ScopeContext {
             this.targets = this.targets ++ targets
             this
         }
-        def withBatches(batches:Map[String,JobSpec]) : Builder = {
-            require(batches != null)
-            this.batches = this.batches ++ batches
+        def withJobs(jobs:Map[String,JobSpec]) : Builder = {
+            require(jobs != null)
+            this.jobs = this.jobs ++ jobs
             this
         }
 
@@ -80,7 +80,7 @@ object ScopeContext {
                 relations,
                 targets,
                 connections,
-                batches
+                jobs
             )
         }
     }
@@ -97,13 +97,13 @@ class ScopeContext(
     scopeRelations:Map[String,RelationSpec] = Map(),
     scopeTargets:Map[String,TargetSpec] = Map(),
     scopeConnections:Map[String,ConnectionSpec] = Map(),
-    scopeBatches:Map[String,JobSpec] = Map()
+    scopeJobs:Map[String,JobSpec] = Map()
 ) extends AbstractContext(parent, fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
-    private val batches = mutable.Map[String,Job]()
+    private val jobs = mutable.Map[String,Job]()
 
     override def namespace: Namespace = parent.namespace
     override def project: Project = parent.project
@@ -178,12 +178,12 @@ class ScopeContext(
     }
     override def getJob(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty) {
-            batches.get(identifier.name) match {
+            jobs.get(identifier.name) match {
                 case Some(result) => result
-                case None => scopeBatches.get(identifier.name) match {
+                case None => scopeJobs.get(identifier.name) match {
                     case Some(spec) =>
                         val result = spec.instantiate(this)
-                        batches.put(identifier.name, result)
+                        jobs.put(identifier.name, result)
                         result
                     case None => parent.getJob(identifier)
                 }

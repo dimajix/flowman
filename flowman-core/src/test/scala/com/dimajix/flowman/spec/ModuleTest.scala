@@ -71,11 +71,10 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |      col1: String
               |      col2: Integer
               |
-              |batches:
+              |jobs:
               |  default:
-              |    tasks:
-              |      - kind: build
-              |        targets: blackhole
+              |    targets:
+              |     - blackhole
             """.stripMargin
         val project = Module.read.string(spec).toProject("default")
         val session = Session.builder().withSparkSession(spark).build()
@@ -83,18 +82,18 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         val executor = session.executor
         val runner = executor.runner
 
-        val batch = context.getJob(JobIdentifier("default"))
-        batch should not be (null)
-        batch.name should be ("default")
-        batch.category should be ("batch")
-        batch.kind should be ("batch")
-        runner.executeJob(executor, batch, Seq(Phase.BUILD)) should be (Status.SUCCESS)
+        val job = context.getJob(JobIdentifier("default"))
+        job should not be (null)
+        job.name should be ("default")
+        job.category should be ("job")
+        job.kind should be ("job")
+        runner.executeJob(executor, job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
-    it should "set the names of all batches" in {
+    it should "set the names of all jobs" in {
         val spec =
             """
-              |batches:
+              |jobs:
               |  default:
               |    description: "Lala"
             """.stripMargin

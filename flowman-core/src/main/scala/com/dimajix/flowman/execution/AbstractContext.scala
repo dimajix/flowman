@@ -231,6 +231,7 @@ abstract class AbstractContext(
         val finalValue = value match {
             case s:String => RecursiveValue(templateEngine, templateContext, s)
             case v:Any => v
+            case null => null
         }
         templateContext.put(key, finalValue)
     }

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.testing;
 
+import com.dimajix.flowman.execution.Phase;
+import com.dimajix.flowman.execution.Phase$;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +34,7 @@ public class JavaRunnerTest {
             .withProject(Resources.getResource("flows/project.yml"))
             .build();
 
-        boolean result = runner.runJob("main", Collections.emptyMap());
+        boolean result = runner.runJob("main", Collections.singletonList(Phase.ofString("build")), Collections.emptyMap());
         assertThat(result).isTrue();
     }
 }

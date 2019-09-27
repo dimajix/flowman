@@ -19,20 +19,17 @@ package com.dimajix.flowman.spec.target
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.task.BaseTask
-import com.dimajix.flowman.spec.task.Task
 
 
 case class AnnotatedTarget(instanceProperties:Target.Properties) extends BaseTarget {
 }
 
-@TaskType(kind = "annotatedTask")
-class AnnotatedTaskSpec extends TargetSpec {
+@TargetType(kind = "annotatedTask")
+class AnnotatedTargetSpec extends TargetSpec {
     override def instantiate(context: Context): Target = AnnotatedTarget(instanceProperties(context))
 }
 
@@ -43,15 +40,14 @@ class PluginTargetTest extends FlatSpec with Matchers  {
         val session = Session.builder().build()
         val spec =
             """
-              |jobs:
+              |targets:
               |  custom:
-              |    tasks:
-              |      - kind: annotatedTask
+              |    kind: annotatedTask
             """.stripMargin
         val module = Module.read.string(spec)
-        module.jobs.keys should contain("custom")
-        val job = module.jobs("custom").instantiate(session.context)
-        job.targets(0) shouldBe an[AnnotatedTaskSpec]
+        module.targets.keys should contain("custom")
+        val target = module.targets("custom").instantiate(session.context)
+        target shouldBe an[AnnotatedTarget]
     }
 
 }

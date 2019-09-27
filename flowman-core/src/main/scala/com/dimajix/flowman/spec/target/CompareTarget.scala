@@ -44,11 +44,15 @@ case class CompareTarget(
       */
     override protected def verify(executor: Executor): Unit = {
         logger.info(s"Comparing actual dataset '${actual.name}' with expected dataset '${expected.name}'")
-        val actualDf = actual.read(executor, None)
         val expectedDf = expected.read(executor, None)
+        val actualDf = try {
+            actual.read(executor, None)
+        }
+        catch {
+            case ex:Exception => throw new VerificationFailedException(this.identifier, ex)
+        }
 
         // TODO: Compare schemas
-
         val xfs = SchemaEnforcer(expectedDf.schema)
         val conformedDf = xfs.transform(actualDf)
 

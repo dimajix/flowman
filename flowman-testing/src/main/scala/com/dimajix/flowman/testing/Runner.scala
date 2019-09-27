@@ -31,6 +31,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.hadoop.FileSystem
@@ -185,13 +186,13 @@ class Runner private(
       * @param args
       * @return
       */
-    def runJob(jobName:String, args:Map[String,String] = Map()) : Boolean = {
+    def runJob(jobName:String, phases:Seq[Phase], args:Map[String,String] = Map()) : Boolean = {
         val context = session.getContext(project)
         val executor = session.executor
         val runner = session.runner
 
         val job = context.getJob(JobIdentifier(jobName))
-        val result = runner.executeJob(executor, job, args, true)
+        val result = runner.executeJob(executor, job, phases, args, true)
 
         result match {
             case Status.SUCCESS => true
@@ -200,8 +201,8 @@ class Runner private(
         }
     }
 
-    def runJob(jobName:String, args:java.util.Map[String,String]) : Boolean = {
-        runJob(jobName, args.asScala.toMap)
+    def runJob(jobName:String, phases:java.util.List[Phase], args:java.util.Map[String,String]) : Boolean = {
+        runJob(jobName, phases.asScala, args.asScala.toMap)
     }
 
     /**

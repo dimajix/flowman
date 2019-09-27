@@ -38,7 +38,7 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 
 
 sealed class PhaseCommand(phase:Phase) extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[PhaseCommand])
+    private val logger = LoggerFactory.getLogger(getClass)
 
     @Argument(index=0, required=false, usage = "specifies job to run", metaVar = "<job>")
     var job: String = ""

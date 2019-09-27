@@ -23,20 +23,19 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 
 
-class HelloWorldTaskTest extends FlatSpec with Matchers {
+class HelloWorldTargetTest extends FlatSpec with Matchers {
     "A HelloWorldTask" should "be deserializable" in {
         val session = Session.builder().build()
         val spec =
             """
-              |jobs:
+              |targets:
               |  custom:
-              |    tasks:
-              |      - kind: hello-world
+              |    - kind: hello-world
             """.stripMargin
         val module = Module.read.string(spec)
-        module.jobs.keys should contain("custom")
+        module.targets.keys should contain("custom")
 
-        val job = module.jobs("custom").instantiate(session.context)
-        job.tasks(0) shouldBe an[HelloWorldTaskSpec]
+        val target = module.targets("custom").instantiate(session.context)
+        target shouldBe an[HelloWorldTargetSpec]
     }
 }

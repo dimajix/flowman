@@ -211,10 +211,10 @@ case class Job(
         parameters.map(p => (p.name, p.default.orNull)).toMap ++ processedArgs
     }
 
-    def interpolate(args:Map[String,FieldValue])(fn:Map[String,String] => Boolean) : Boolean = {
-        def interpolate(fn:Map[String,String] => Boolean, param:Parameter, values:FieldValue) : Map[String,String] => Boolean = {
-            val vals = param.ftype.interpolate(values, param.granularity).map(_.toString)
-            args:Map[String,String] => vals.forall(v => fn(args + (param.name -> v)))
+    def interpolate(args:Map[String,FieldValue])(fn:Map[String,Any] => Boolean) : Boolean = {
+        def interpolate(fn:Map[String,Any] => Boolean, param:Parameter, values:FieldValue) : Map[String,Any] => Boolean = {
+            val vals = param.ftype.interpolate(values, param.granularity)
+            args:Map[String,Any] => vals.forall(v => fn(args + (param.name -> v)))
         }
 
         // Iterate by all parameters and create argument map

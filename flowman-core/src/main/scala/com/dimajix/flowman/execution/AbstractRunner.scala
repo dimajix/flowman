@@ -51,9 +51,12 @@ abstract class AbstractRunner extends Runner {
         require(phases != null)
         require(args != null)
 
-        val jobExecutor = new JobExecutor(executor, job, args, force)
+        val jobExecutor = new JobExecutor(this, executor, job, args, force)
 
-        val result = Status.forall(phases){phase =>
+        jobExecutor.arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Execution argument $k=$v")}
+        jobExecutor.environment.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Execution environment $k=$v")}
+
+        val result = Status.ofAll(phases){ phase =>
             withMetrics(jobExecutor.context, job, phase, executor.metrics) {
                 executeJobPhase(jobExecutor, phase)
             }
@@ -208,7 +211,7 @@ abstract class AbstractRunner extends Runner {
         result
     }
 
-    private def withMetrics[T](context:Context, job:Job, phase:Phase, metricSystem:MetricSystem)(fn: => T) : T = {
+    private def withMetrics(context:Context, job:Job, phase:Phase, metricSystem:MetricSystem)(fn: => Status) : Status = {
         // Create new local context which only provides the current phase as an additional environment variable
         val metricContext = ScopeContext.builder(context)
             .withEnvironment("phase", phase.toString)
@@ -223,13 +226,17 @@ abstract class AbstractRunner extends Runner {
         }
 
         // Run original function
-        val result = try {
-            fn
+        var result:Status = Status.UNKNOWN
+        try {
+            result = fn
         }
         finally {
             // Unpublish metrics
             metrics.foreach { metrics =>
-                metricSystem.commitBoard(metrics)
+                // Do not publish metrics for skipped jobs
+                if (result != Status.SKIPPED) {
+                    metricSystem.commitBoard(metrics)
+                }
                 metricSystem.removeBoard(metrics)
             }
         }

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.Target
 
 
@@ -18,16 +19,19 @@ import com.dimajix.flowman.spec.target.Target
   * @param args
   * @param force
   */
-class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,String], force:Boolean=false) {
+class JobExecutor(val runner:Runner, parentExecutor:Executor, val job:Job, val args:Map[String,String], force:Boolean=false) {
     require(parentExecutor != null)
     require(job != null)
     require(args != null)
 
+    def this(executor: Executor, job:Job, args:Map[String,String], force:Boolean) = {
+        this(executor.runner, executor, job, args, force)
+    }
+
     private val logger = LoggerFactory.getLogger(classOf[JobExecutor])
 
-    // Create a new execution environment.
+    // Resolve all arguments
     private val jobArgs = job.arguments(args)
-    jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.name}'"))
 
     // Create a new execution environment.
     private val rootContext = RootContext.builder(job.context)
@@ -50,7 +54,10 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
       * Returns the JobInstance representing the bound job with the given arguments
       * @return
       */
-    def instance = job.instance(args)
+    def instance : JobInstance = job.instance(args)
+
+    def environment : Map[String,Any] = context.environment
+    def arguments : Map[String,Any] = jobArgs
 
     /**
       * Executes a single phase of the job
@@ -64,13 +71,15 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
         val description = job.description.map("(" + _ + ")").getOrElse("")
         logger.info(s"Running phase '$phase' of job '${job.name}' $description with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
 
+        // Verify job arguments. This is moved from the constructor into this place, such that only this method throws an exception
+        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.name}'"))
+
         val order = phase match {
             case Phase.DESTROY | Phase.TRUNCATE => orderTargets(context, phase).reverse
             case _ => orderTargets(context, phase)
         }
 
-        val runner = executor.runner
-        Status.forall(order) { target =>
+        Status.ofAll(order) { target =>
             runner.executeTarget(executor, target, phase, jobToken, force)
         }
     }

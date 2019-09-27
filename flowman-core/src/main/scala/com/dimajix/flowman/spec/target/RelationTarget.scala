@@ -185,7 +185,14 @@ case class RelationTarget(
 
 
 
-
+object RelationTargetSpec {
+    def apply(name:String, relation:String) = {
+        val spec = new RelationTargetSpec
+        spec.name = name
+        spec.relation = relation
+        spec
+    }
+}
 class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="input", required=true) private var input:String = ""
     @JsonProperty(value="relation", required=true) private var relation:String = _

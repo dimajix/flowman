@@ -31,7 +31,6 @@ import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TargetType
-import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec

@@ -22,7 +22,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-import com.dimajix.flowman.annotation.TaskType
+import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -47,11 +47,11 @@ case class GrabEnvironmentTarget(instanceProperties:Target.Properties) extends B
       * @param executor
       */
     override def build(executor: Executor): Unit = {
-        GrabEnvironmentTarget.environment = context.environment
+        GrabEnvironmentTarget.environment = context.environment.filter{ case (k,v) => k != "project" }
     }
 }
 
-@TaskType(kind = "grabenv")
+@TargetType(kind = "grabenv")
 class GrabEnvironmentTargetSpec extends TargetSpec {
     override def instantiate(context: Context): GrabEnvironmentTarget = GrabEnvironmentTarget(instanceProperties(context))
 }
@@ -61,11 +61,13 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
     "A Job" should "be deseializable from" in {
         val spec =
             """
+              |targets:
+              |  grabenv:
+              |    kind: grabenv
               |jobs:
               |  job:
-              |    tasks:
-              |      - kind: loop
-              |        job: child
+              |    targets:
+              |      - grabenv
             """.stripMargin
 
         val module = Module.read.string(spec)
@@ -79,6 +81,9 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
     it should "support parameters" in {
         val spec =
             """
+              |targets:
+              |  grabenv:
+              |    kind: grabenv
               |jobs:
               |  job:
               |    parameters:
@@ -88,22 +93,22 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
               |      - name: p3
               |        type: Integer
               |        default: 7
-              |    tasks:
-              |      - kind: grabenv
+              |    targets:
+              |      - grabenv
             """.stripMargin
 
-        val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withProject(project).build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = project.jobs("job").instantiate(session.getContext(project))
         job should not be (null)
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> true))
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> false))
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> true))
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> false))
     }
 
     it should "support overriding global parameters" in {
@@ -111,46 +116,52 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
             """
               |environment:
               |  - p1=xxx
+              |targets:
+              |  grabenv:
+              |    kind: grabenv
               |jobs:
               |  job:
               |    parameters:
               |      - name: p1
-              |    tasks:
-              |      - kind: grabenv
+              |    targets:
+              |      - grabenv
             """.stripMargin
 
-        val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withProject(project).build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = project.jobs("job").instantiate(session.getContext(project))
         job should not be (null)
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "2", "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "2"), false) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "2", "force" -> false))
     }
 
     it should "support typed parameters" in {
         val spec =
             """
+              |targets:
+              |  grabenv:
+              |    kind: grabenv
               |jobs:
               |  job:
               |    parameters:
               |      - name: p1
               |        type: Integer
-              |    tasks:
-              |      - kind: grabenv
+              |    targets:
+              |      - grabenv
             """.stripMargin
 
-        val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withProject(project).build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = project.jobs("job").instantiate(session.getContext(project))
         job should not be (null)
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "2")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> 2, "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "2"), false) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> 2, "force" -> false))
     }
 
     it should "fail on undefined parameters" in {
@@ -241,6 +252,9 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
     it should "support environment" in {
         val spec =
             """
+              |targets:
+              |  grabenv:
+              |    kind: grabenv
               |jobs:
               |  job:
               |    parameters:
@@ -248,19 +262,19 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
               |    environment:
               |      - p2=$p1
               |      - p3=xx${p2}yy
-              |    tasks:
-              |      - kind: grabenv
+              |    targets:
+              |      - grabenv
             """.stripMargin
 
-        val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withProject(project).build()
         val executor = session.executor
 
-        val job = module.jobs("job").instantiate(session.context)
+        val job = project.jobs("job").instantiate(session.getContext(project))
         job should not be (null)
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> true))
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))
     }
 
     it should "support metrics" in {
@@ -288,8 +302,6 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
               |            name: job_runtime
               |            labels:
               |              name: main
-              |    tasks:
-              |      - kind: grabenv
             """.stripMargin
 
         val project  = Module.read.string(spec).toProject("default")
@@ -304,7 +316,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val job = context.getJob(JobIdentifier("main"))
         job.labels should be (Map("job_label" -> "xyz"))
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        session.runner.executeJob(executor, job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         verify(metricSink).addBoard(any())
         verify(metricSink).commit(any())
         verify(metricSink).removeBoard(any())

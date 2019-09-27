@@ -25,9 +25,6 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
-import com.dimajix.flowman.spec.target
-import com.dimajix.flowman.spec.task.BaseTask
-import com.dimajix.flowman.spec.task.Task
 
 
 case class PutFileTarget(

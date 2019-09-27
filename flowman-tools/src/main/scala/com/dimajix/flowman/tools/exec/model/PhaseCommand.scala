@@ -23,27 +23,25 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.target.RelationTarget
+import com.dimajix.flowman.spec.target.RelationTargetSpec
 import com.dimajix.flowman.tools.exec.ActionCommand
-import com.dimajix.flowman.tools.exec.target.BuildCommand
 
 
-class CreateCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[BuildCommand])
+class PhaseCommand(phase:Phase) extends ActionCommand {
+    private val logger = LoggerFactory.getLogger(this.getClass)
 
     @Argument(usage = "specifies relations to create", metaVar = "<relation>")
     var relations: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
-    @Option(name = "-i", aliases=Array("--ignoreIfExists"), usage = "does not do anything if relation already exists")
-    var ignoreIfExists: Boolean = false
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        logger.info("Creating relations {}", if (relations != null) relations.mkString(",") else "all")
+        logger.info(s"Executing phase '$phase' for relations {}", if (relations != null) relations.mkString(",") else "all")
 
         val toRun =
             if (relations.nonEmpty)
@@ -51,15 +49,17 @@ class CreateCommand extends ActionCommand {
             else
                 project.relations.keys.toSeq
 
-        val targets = toRun.map(rel => RelationTarget(context, RelationIdentifier(rel)))
-        val job = Job.builder(context)
-            .setName("create-relations")
-            .setDescription("Create relations")
-            .setTargets(targets.map(_.identifier))
+        val jobContext = ScopeContext.builder(context)
+            .withTargets(toRun.map(rel => (rel,  RelationTargetSpec(rel, rel))).toMap)
+            .build()
+        val job = Job.builder(jobContext)
+            .setName("cli-create-relations")
+            .setDescription("Create relations via CLI")
+            .setTargets(toRun.map(t => TargetIdentifier(t)))
             .build()
 
         val runner = executor.runner
-        val result = runner.executeJob(executor, job, Seq(Phase.CREATE))
+        val result = runner.executeJob(executor, job, Seq(phase))
 
         result match {
             case Status.SUCCESS => true
@@ -68,3 +68,9 @@ class CreateCommand extends ActionCommand {
         }
     }
 }
+
+class CreateCommand extends PhaseCommand(Phase.CREATE)
+class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
+class VerifyCommand extends PhaseCommand(Phase.VERIFY)
+class TruncateCommand extends PhaseCommand(Phase.TRUNCATE)
+class DestroyCommand extends PhaseCommand(Phase.DESTROY)

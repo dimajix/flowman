@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.BinaryType
@@ -51,6 +52,30 @@ case class KafkaRelation(
     endOffset:String="latest"
 ) extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[KafkaRelation])
+
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides: Seq[ResourceIdentifier] = ???
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    override def requires: Seq[ResourceIdentifier] = ???
+
+    /**
+      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
+      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
+      * partition is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = ???
 
     /**
       * Returns the schema of the relation

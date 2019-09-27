@@ -59,7 +59,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
                     .map(_.name)
 
         val job = Job.builder(context)
-            .setName("execute-targets")
+            .setName("cli-execute-targets")
             .setDescription("Execute targets via CLI")
             .setTargets(toRun.map(TargetIdentifier.parse))
             .build()

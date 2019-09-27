@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,43 +26,58 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Lifecycle
+import com.dimajix.flowman.execution.NoSuchJobException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
-class RunCommand extends ActionCommand {
-    private val logger = LoggerFactory.getLogger(classOf[RunCommand])
+sealed class PhaseCommand(phase:Phase) extends ActionCommand {
+    private val logger = LoggerFactory.getLogger(this.getClass)
 
-    @Argument(usage = "specifies job parameters", metaVar = "<param>=<value>")
+    @Argument(index=0, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
     var args: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
+    var noLifecycle: Boolean = false
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         val args = splitSettings(this.args).toMap
+        val job = "main"
         Try {
-            project.jobs("main")
+            context.getJob(JobIdentifier(job))
         }
         match {
-            case Failure(e) =>
-                logger.error(s"Cannot find job 'main'")
+            case Failure(_:NoSuchJobException) =>
+                logger.error(s"Cannot find job '$job'")
                 false
-            case Success(spec) =>
-                val job = spec.instantiate(context)
-                executeJob(executor, job, args)
+            case Failure(_) =>
+                logger.error(s"Error instantiating job '$job'")
+                false
+            case Success(batch) =>
+                executeJob(executor, batch, args)
         }
     }
 
     private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
+        val lifecycle =
+            if (noLifecycle)
+                Seq(phase)
+            else
+                Lifecycle.ofPhase(phase)
+
         val jobDescription = job.description.map("(" + _ + ")").getOrElse("")
         val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
         val runner = executor.runner
-        val result = runner.executeJob(executor, job, args, force)
+        val result = runner.executeJob(executor, job, lifecycle, args, force)
         result match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true
@@ -70,3 +85,15 @@ class RunCommand extends ActionCommand {
         }
     }
 }
+
+class CreateCommand extends PhaseCommand(Phase.CREATE)
+
+class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
+
+class BuildCommand extends PhaseCommand(Phase.BUILD)
+
+class VerifyCommand extends PhaseCommand(Phase.VERIFY)
+
+class TruncateCommand extends PhaseCommand(Phase.TRUNCATE)
+
+class DestroyCommand extends PhaseCommand(Phase.DESTROY)

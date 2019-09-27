@@ -32,12 +32,16 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The CompareFileTask" should "be parseable from YAML" in {
+    "The CompareTarget" should "be parseable from YAML" in {
         val spec =
             """
-              |kind: compareFiles
-              |expected: test/data/data_1.csv
-              |actual: test/data/data_1.csv
+              |kind: compare
+              |expected:
+              |  kind: file
+              |  location: test/data/data_1.csv
+              |actual:
+              |  kind: file
+              |  location: test/data/data_1.csv
               |""".stripMargin
         val target = ObjectMapper.parse[TargetSpec](spec)
         target shouldBe a[CompareTargetSpec]
@@ -51,10 +55,9 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val target = CompareTarget(
             Target.Properties(context),
             FileDataset(Dataset.Properties(context), new Path("test/data/data_1.csv"), "csv"),
-            FileDataset(Dataset.Properties(context), new Path("test/data/data_2.csv"), "csv")
+            FileDataset(Dataset.Properties(context), new Path("test/data/data_1.csv"), "csv")
         )
-        target.expected should be (new Path("test/data/data_1.csv"))
-        target.actual should be (new Path("test/data/data_1.csv"))
+
         noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 
@@ -66,10 +69,9 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val target = CompareTarget(
             Target.Properties(context),
             FileDataset(Dataset.Properties(context), new Path("no_such_file"), "csv"),
-            FileDataset(Dataset.Properties(context), new Path("test/data/data_2.csv"), "csv")
+            FileDataset(Dataset.Properties(context), new Path("test/data/data_1.csv"), "csv")
         )
-        target.expected should be (new Path("test/data/data_1.csv"))
-        target.actual should be (new Path("no_such_file"))
+
         a[VerificationFailedException] shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 
@@ -84,9 +86,7 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             FileDataset(Dataset.Properties(context), new Path("no_such_file"), "csv")
         )
 
-        target.expected should be (new Path("no_such_file"))
-        target.actual should be (new Path("test/data/data_1.csv"))
-        an[IOException] shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        an[Exception] shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 
     it should "work with a directory as expected" in {
@@ -100,8 +100,6 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             FileDataset(Dataset.Properties(context), new Path("test/data"), "csv")
         )
 
-        target.expected should be (new Path("test/data"))
-        target.actual should be (new Path("test/data/data_1.csv"))
         noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 
@@ -116,8 +114,6 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             FileDataset(Dataset.Properties(context), new Path("test/data/data_1.csv"), "csv")
         )
 
-        target.expected should be (new Path("test/data/data_1.csv"))
-        target.actual should be (new Path("test/data"))
         noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 
@@ -132,8 +128,6 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             FileDataset(Dataset.Properties(context), new Path("test/data/expected"), "csv")
         )
 
-        target.expected should be (new Path("test/data/expected"))
-        target.actual should be (new Path("test/data/actual"))
         noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 }

@@ -20,6 +20,8 @@ import com.google.common.io.Resources
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Phase
+
 
 class ResourcesTestSpec extends FlatSpec with Matchers {
     "Projects as resources" should "be testable" in {
@@ -28,7 +30,7 @@ class ResourcesTestSpec extends FlatSpec with Matchers {
             .withProject(Resources.getResource("flows/project.yml"))
             .build()
 
-        val result = runner.runJob("main")
+        val result = runner.runJob("main", Seq(Phase.BUILD))
         result should be(true)
     }
 }

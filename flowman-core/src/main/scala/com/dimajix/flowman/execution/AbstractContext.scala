@@ -337,7 +337,7 @@ abstract class AbstractContext(
     override def flowmanConf : FlowmanConf = root.flowmanConf
 
     /**
-      * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
+      * Returns a SparkConf object, which contains all Spark settings as specified in the configuration. The object
       * is not necessarily the one used by the Spark Session!
       * @return
       */

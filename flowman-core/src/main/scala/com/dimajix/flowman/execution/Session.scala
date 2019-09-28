@@ -230,17 +230,6 @@ class Session private[execution](
 
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
-    private def sparkConfig : Map[String,String] = {
-        if (_project != null) {
-            logger.info("Using project specific Spark configuration settings")
-            getContext(_project).config // ++ _sparkConfig
-        }
-        else {
-            logger.info("Using global Spark configuration settings")
-            context.config // ++ _sparkConfig
-        }
-    }
-
     private def sparkJars : Seq[String] = {
         _jars.toSeq
     }
@@ -251,18 +240,16 @@ class Session private[execution](
       * @return
       */
     private def createOrReuseSession() : SparkSession = {
-        val sparkConf = context.sparkConf
+        val sparkConf = this.sparkConf
             .setMaster(_sparkMaster)
             .setAppName(_sparkName)
-            .setAll(sparkConfig.toSeq)
 
         Option(_sparkSession)
             .flatMap(builder => Option(builder(sparkConf)))
             .map { injectedSession =>
                 logger.info("Creating Spark session using provided builder")
                 // Set all session properties that can be changed in an existing session
-                val config = context.sparkConf.getAll.toMap ++ sparkConfig
-                config.foreach { case (key, value) =>
+                sparkConf.getAll.foreach { case (key, value) =>
                     if (!SQLConf.staticConfKeys.contains(key)) {
                         injectedSession.conf.set(key, value)
                     }
@@ -273,7 +260,7 @@ class Session private[execution](
                 logger.info("Creating new Spark session")
                 val sessionBuilder = SparkSession.builder()
                     .config(sparkConf)
-                if (context.flowmanConf.sparkEnableHive) {
+                if (flowmanConf.sparkEnableHive) {
                     logger.info("Enabling Spark Hive support")
                     sessionBuilder.enableHiveSupport()
                 }
@@ -285,7 +272,7 @@ class Session private[execution](
 
         // Set checkpoint directory if not already specified
         if (spark.sparkContext.getCheckpointDir.isEmpty) {
-            sparkConfig.get("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
+            spark.sparkContext.getConf.getOption("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
         }
 
         // Distribute additional Plugin jar files
@@ -295,7 +282,7 @@ class Session private[execution](
         spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
 
         // Copy all Spark configs over to SparkConf inside the Context
-        context.sparkConf.setAll(spark.conf.getAll)
+        sparkConf.setAll(spark.conf.getAll)
 
         // Register special UDFs
         UdfProvider.providers.foreach(_.register(spark.udf))
@@ -322,6 +309,18 @@ class Session private[execution](
             builder.withConfig(namespace.config.toMap)
         }
         builder.build()
+    }
+
+    private lazy val _configuration = {
+        val config = if (_project != null) {
+            logger.info("Using project specific configuration settings")
+            getContext(_project).config
+        }
+        else {
+            logger.info("Using global configuration settings")
+            context.config
+        }
+        new com.dimajix.flowman.config.Configuration(config)
     }
 
     private lazy val rootExecutor : RootExecutor = {
@@ -430,9 +429,10 @@ class Session private[execution](
       */
     def sparkRunning: Boolean = sparkSession != null
 
-    def flowmanConf : FlowmanConf = rootContext.flowmanConf
-    def sparkConf : SparkConf = rootContext.sparkConf
-    def hadoopConf : Configuration = rootContext.hadoopConf
+    def config : com.dimajix.flowman.config.Configuration = _configuration
+    def flowmanConf : FlowmanConf = _configuration.flowmanConf
+    def sparkConf : SparkConf = _configuration.sparkConf
+    def hadoopConf : Configuration = _configuration.hadoopConf
 
     /**
       * Returns the FileSystem as configured in Hadoop

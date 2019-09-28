@@ -70,7 +70,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             null,
             null
         )
-        logger.info(s"Checking last state  of batch ${run.namespace}/${run.project}/${run.bundle} in state database")
+        logger.info(s"Checking last state of phase '${run.phase}' of job '${run.namespace}/${run.project}/${run.job}' in state database")
         withSession { repository =>
             repository.getJobState(run)
         }
@@ -95,7 +95,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             Status.RUNNING.value
         )
 
-        logger.info(s"Writing startJob marker for phase '${phase}' of bundle ${run.namespace}/${run.project}/${run.bundle} into state database")
+        logger.info(s"Writing startJob marker for phase '${phase}' of job '${run.namespace}/${run.project}/${run.job}' into state database")
         withSession { repository =>
             repository.insertJobRun(run, job.args)
         }
@@ -108,7 +108,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       */
     override def finishJob(token:JobToken, status: Status) : Unit = {
         val run = token.asInstanceOf[JobRun]
-        logger.info(s"Mark last run of job ${run.namespace}/${run.project}/${run.bundle} as $status in state database")
+        logger.info(s"Mark last run of phase '${run.phase}' of job '${run.namespace}/${run.project}/${run.job}' as $status in state database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
@@ -161,7 +161,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             Status.RUNNING.value
         )
 
-        logger.info(s"Writing start marker for phase '$phase' of target ${run.namespace}/${run.project}/${run.target} into state database")
+        logger.info(s"Writing start marker for phase '$phase' of target '${run.namespace}/${run.project}/${run.target}' into state database")
         withSession { repository =>
             repository.insertTargetRun(run, target.partitions)
         }
@@ -174,7 +174,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
       */
     override def finishTarget(token:TargetToken, status: Status) : Unit = {
         val run = token.asInstanceOf[TargetRun]
-        logger.info(s"Mark last run of target ${run.namespace}/${run.project}/${run.target} as $status in state database")
+        logger.info(s"Mark last run of phase '${run.phase}' of target '${run.namespace}/${run.project}/${run.target}' as $status in state database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>

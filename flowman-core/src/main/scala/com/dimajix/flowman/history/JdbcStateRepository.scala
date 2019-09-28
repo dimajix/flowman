@@ -36,15 +36,15 @@ private[history] object JdbcStateRepository {
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateRepository])
 
     case class JobRun(
-        id:Long,
-        namespace: String,
-        project:String,
-        bundle:String,
-        phase:String,
-        args_hash:String,
-        start_ts:Timestamp,
-        end_ts:Timestamp,
-        status:String
+                         id:Long,
+                         namespace: String,
+                         project:String,
+                         job:String,
+                         phase:String,
+                         args_hash:String,
+                         start_ts:Timestamp,
+                         end_ts:Timestamp,
+                         status:String
     ) extends JobToken
 
     case class JobArgument(
@@ -86,7 +86,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val driver = connection.driver
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
-        logger.info(s"Connecting via JDBC to $url with driver $driver")
+        logger.debug(s"Connecting via JDBC to $url with driver $driver")
         Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
 
@@ -185,7 +185,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val latestId = jobRuns
             .filter(r => r.namespace === run.namespace
                 && r.project === run.project
-                && r.job === run.bundle
+                && r.job === run.job
                 && r.args_hash === run.args_hash
                 && r.status =!= Status.SKIPPED.value
             ).map(_.id)
@@ -206,7 +206,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             state.id.toString,
             state.namespace,
             state.project,
-            state.bundle,
+            state.job,
             Phase.ofString(state.phase),
             args,
             Status.ofString(state.status),
@@ -269,7 +269,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 state.id.toString,
                 state.namespace,
                 state.project,
-                state.bundle,
+                state.job,
                 Phase.ofString(state.phase),
                 Map(),
                 Status.ofString(state.status),

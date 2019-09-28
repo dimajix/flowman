@@ -8,15 +8,15 @@ history:
 
 connections:
   flowman_state:
-    driver: $System.getenv('FLOWMAN_LOGDB_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
-    url: $System.getenv('FLOWMAN_LOGDB_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/logdb;create=true'))
-    username: $System.getenv('FLOWMAN_LOGDB_USER', '')
-    password: $System.getenv('FLOWMAN_LOGDB_PASSWORD', '')
+    driver: $System.getenv('FLOWMAN_HISTORY_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
+    url: $System.getenv('FLOWMAN_HISTORY_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/logdb;create=true'))
+    username: $System.getenv('FLOWMAN_HISTORY_USER', '')
+    password: $System.getenv('FLOWMAN_HISTORY_PASSWORD', '')
 
 config:
-  - spark.sql.warehouse.dir=/opt/flowman/hive/warehouse
+  - spark.sql.warehouse.dir=$System.getenv('FLOWMAN_HOME')/hive/warehouse
   - hive.metastore.uris=
-  - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
+  - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=$System.getenv('FLOWMAN_HOME')/hive/db;create=true
   - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
 plugins:
@@ -29,5 +29,4 @@ plugins:
 
 store:
   kind: file
-  location: /home/kaya/Dimajix/flowman-0.7.0-SNAPSHOT/examples
-
+  location: $System.getenv('FLOWMAN_HOME')/examples

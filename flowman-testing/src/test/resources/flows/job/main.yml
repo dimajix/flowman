@@ -1,9 +1,9 @@
 targets:
   null:
-    kind: null
+    kind: "null"
 
 jobs:
   main:
     description: "Simply print 'Hello World'"
     targets:
-     - null
+     - "null"

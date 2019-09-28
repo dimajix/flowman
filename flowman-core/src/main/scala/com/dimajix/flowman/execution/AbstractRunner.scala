@@ -53,8 +53,9 @@ abstract class AbstractRunner extends Runner {
 
         val jobExecutor = new JobExecutor(executor, job, args, force)
 
-        jobExecutor.arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Execution argument $k=$v")}
-        jobExecutor.environment.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Execution environment $k=$v")}
+        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
+        jobExecutor.arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
+        jobExecutor.environment.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job environment $k=$v")}
 
         val result = Status.ofAll(phases){ phase =>
             withMetrics(jobExecutor.context, job, phase, executor.metrics) {
@@ -88,7 +89,7 @@ abstract class AbstractRunner extends Runner {
                 }
                 match {
                     case Success(status @ Status.SUCCESS) =>
-                        logger.info(s"Successfully finished phase '$phase' of execution of job '${job.identifier}'")
+                        logger.info(s"Successfully finished phase '$phase' of job '${job.identifier}'")
                         finishJob(token, Status.SUCCESS)
                         status
                     case Success(status @ Status.FAILED) =>

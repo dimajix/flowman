@@ -1,0 +1,5 @@
+jobs:
+  main:
+    extends:
+      - dump-year
+      - write-all

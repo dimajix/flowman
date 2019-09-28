@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.model
 
 import java.io.File
+import java.nio.file.FileAlreadyExistsException
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
@@ -139,6 +140,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             .save(outputFile)
     }
 
+    /**
+     * Removes one or more partitions.
+     * @param executor
+     * @param partitions
+     */
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
         require(partitions != null)
@@ -149,7 +155,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             cleanUnpartitionedFiles()
     }
 
-    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) = {
+    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 
@@ -157,7 +163,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         collector.delete(resolvedPartitions)
     }
 
-    private def cleanUnpartitionedFiles() = {
+    private def cleanUnpartitionedFiles() : Unit = {
         collector.delete()
     }
 
@@ -181,10 +187,24 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit =  {
         require(executor != null)
 
-        val dir = localDirectory
-        logger.info(s"Creating local directory '$dir' for local file relation")
-        val path = new File(dir)
-        path.mkdirs()
+        val path = new File(localDirectory)
+        if (path.exists()) {
+            if (!ifNotExists) {
+                throw new FileAlreadyExistsException(location.toString)
+            }
+        }
+        else {
+            logger.info(s"Creating local directory '$localDirectory' for local file relation")
+            path.mkdirs()
+        }
+    }
+
+    /**
+     * This will update any existing relation to the specified metadata.
+     *
+     * @param executor
+     */
+    override def migrate(executor: Executor): Unit = {
     }
 
     /**
@@ -210,13 +230,6 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         delete(root)
     }
-
-    /**
-      * This will update any existing relation to the specified metadata.
-      *
-      * @param executor
-      */
-    override def migrate(executor: Executor): Unit = ???
 
     /**
       * Collects files for a given time period using the pattern inside the specification

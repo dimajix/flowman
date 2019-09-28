@@ -215,6 +215,14 @@ class FileRelation(
     }
 
     /**
+     * This will update any existing relation to the specified metadata.
+     *
+     * @param executor
+     */
+    override def migrate(executor:Executor) : Unit = {
+    }
+
+    /**
       * This method will remove the given directory as specified in "location"
       * @param executor
       */
@@ -232,8 +240,6 @@ class FileRelation(
             fs.delete(location, true)
         }
     }
-
-    override def migrate(executor:Executor) : Unit = ???
 
     /**
       * Collects files for a given time period using the pattern inside the specification

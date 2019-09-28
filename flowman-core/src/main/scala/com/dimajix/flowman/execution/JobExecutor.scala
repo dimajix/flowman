@@ -77,10 +77,11 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
         require(phase != null)
 
         val description = job.description.map("(" + _ + ")").getOrElse("")
-        logger.info(s"Running phase '$phase' of job '${job.name}' $description with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
+        val arguments = if (args.nonEmpty) s"with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
+        logger.info(s"Running phase '$phase' of job '${job.identifier}' $description $arguments")
 
         // Verify job arguments. This is moved from the constructor into this place, such that only this method throws an exception
-        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.name}'"))
+        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.identifier}'"))
 
         val targets = job.targets.map(t => context.getTarget(t))
         val order = phase match {

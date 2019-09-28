@@ -200,7 +200,8 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     }
 
     /**
-     * This will update any existing relation to the specified metadata.
+     * This will update any existing relation to the specified metadata. Actually for this file based target, the
+     * command will precisely do nothing.
      *
      * @param executor
      */

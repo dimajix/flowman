@@ -186,7 +186,7 @@ case class RelationTarget(
 
 
 object RelationTargetSpec {
-    def apply(name:String, relation:String) = {
+    def apply(name:String, relation:String) : RelationTargetSpec = {
         val spec = new RelationTargetSpec
         spec.name = name
         spec.relation = relation
@@ -201,7 +201,7 @@ class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
     @JsonProperty(value="rebalance", required=false) private var rebalance:String = "false"
 
-    override def instantiate(context: Context): Target = {
+    override def instantiate(context: Context): RelationTarget = {
         RelationTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(input)),

@@ -64,7 +64,7 @@ object Phase {
   * executed.
   */
 object Lifecycle {
-    val DEFAULT:Seq[Phase] = Seq(
+    val BUILD:Seq[Phase] = Seq(
         Phase.CREATE,
         Phase.MIGRATE,
         Phase.BUILD,
@@ -74,6 +74,9 @@ object Lifecycle {
         Phase.TRUNCATE,
         Phase.DESTROY
     )
+
+    val ALL:Seq[Phase] = BUILD ++ CLEAN
+    val DEFAULT:Seq[Phase] = BUILD
 
     private val all = Seq(DEFAULT, CLEAN)
 

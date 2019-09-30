@@ -226,7 +226,6 @@ class Runner private(
             .config(conf)
             .enableHiveSupport()
             .getOrCreate()
-        spark.sparkContext.setLogLevel("WARN")
         val sc = spark.sparkContext
         sc.setCheckpointDir(checkpointPath)
 

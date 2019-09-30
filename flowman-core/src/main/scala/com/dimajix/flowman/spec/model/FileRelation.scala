@@ -59,7 +59,7 @@ class FileRelation(
       *
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq(
+    override def provides : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofFile(location)
     )
 
@@ -68,7 +68,7 @@ class FileRelation(
       *
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = Seq()
+    override def requires : Set[ResourceIdentifier] = Set()
 
     /**
       * Returns the list of all resources which will be required by this relation for reading a specific partition.
@@ -78,17 +78,17 @@ class FileRelation(
       * @param partitions
       * @return
       */
-    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
-        requireValidPartitionKeys(partitions)
+        requireAllPartitionKeys(partitions)
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSeq
+            allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
         }
         else {
-            Seq(ResourceIdentifier.ofFile(location))
+            Set(ResourceIdentifier.ofFile(location))
         }
     }
 
@@ -105,7 +105,7 @@ class FileRelation(
         require(partitions != null)
 
         // TODO: If no partitions are specified, recursively read all files
-        requireValidPartitionKeys(partitions)
+        requireAllPartitionKeys(partitions)
 
         val data = mapFiles(partitions) { (partition, paths) =>
             paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
@@ -142,7 +142,7 @@ class FileRelation(
         require(executor != null)
         require(partition != null)
 
-        requireValidPartitionKeys(partition)
+        requireAllPartitionKeys(partition)
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
@@ -171,7 +171,10 @@ class FileRelation(
     }
 
     private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
-        requireValidPartitionKeys(partitions)
+        require(partitions != null)
+
+        requireAllPartitionKeys(partitions)
+
         if (pattern == null || pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
 

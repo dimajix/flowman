@@ -70,14 +70,14 @@ abstract class BaseTarget extends Target {
       *
       * @return
       */
-    override def provides(phase: Phase): Seq[ResourceIdentifier] = Seq()
+    override def provides(phase: Phase): Set[ResourceIdentifier] = Set()
 
     /**
       * Returns a list of physical resources required by this target
       *
       * @return
       */
-    override def requires(phase: Phase): Seq[ResourceIdentifier] = Seq()
+    override def requires(phase: Phase): Set[ResourceIdentifier] = Set()
 /**
       * Executes a specific phase of this target
       * @param executor

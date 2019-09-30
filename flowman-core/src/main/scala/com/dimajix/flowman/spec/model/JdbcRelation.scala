@@ -69,7 +69,7 @@ class JdbcRelation(
       *
       * @return
       */
-    override def provides: Seq[ResourceIdentifier] = Seq(
+    override def provides: Set[ResourceIdentifier] = Set(
         ResourceIdentifier("jdbcTable", database.map(_ + ".").getOrElse("") + table)
     )
 
@@ -78,8 +78,8 @@ class JdbcRelation(
       *
       * @return
       */
-    override def requires: Seq[ResourceIdentifier] = {
-        database.map(db => ResourceIdentifier("jdbcDatabase", db)).toSeq
+    override def requires: Set[ResourceIdentifier] = {
+        database.map(db => ResourceIdentifier("jdbcDatabase", db)).toSet
     }
 
     /**
@@ -90,14 +90,14 @@ class JdbcRelation(
       * @param partitions
       * @return
       */
-    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
 
         val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         val fqTable = database.map(_ + ".").getOrElse("") + table
-        allPartitions.map(p => ResourceIdentifier("jdbcTable", fqTable, p.mapValues(_.toString).toMap)).toSeq
+        allPartitions.map(p => ResourceIdentifier("jdbcTable", fqTable, p.mapValues(_.toString).toMap)).toSet
     }
 
     /**

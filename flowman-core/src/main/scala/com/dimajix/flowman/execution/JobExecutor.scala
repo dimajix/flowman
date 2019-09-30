@@ -89,6 +89,8 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
             case _ => orderTargets(targets, phase)
         }
 
+        logger.info(s"Executing phase '$phase' with sequence: ${order.map(_.identifier).mkString(", ")}")
+
         Status.ofAll(order) { target => fn(executor,target,force) }
     }
 

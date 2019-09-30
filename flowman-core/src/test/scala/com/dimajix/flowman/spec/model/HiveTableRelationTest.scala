@@ -35,7 +35,9 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
@@ -67,6 +69,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
+        relation.provides should be (Seq(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
+        relation.requires should be (Seq(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.resources() should be (Seq(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
 
         relation.create(executor)
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (true)
@@ -177,6 +182,10 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
+        relation.provides should be (Seq(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.requires should be (Seq(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.resources() should be (Seq(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
+        relation.resources(Map("spart" -> SingleValue("x"))) should be (Seq(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))))
 
         relation.create(executor)
         val table = session.catalog.getTable(TableIdentifier("lala_0003", Some("default")))

@@ -1,7 +1,6 @@
 targets:
   measurements-dump:
     kind: console
-    enabled: false
     input:
       kind: mapping
       mapping: measurements

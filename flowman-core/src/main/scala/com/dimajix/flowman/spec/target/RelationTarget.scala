@@ -71,14 +71,14 @@ case class RelationTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides(phase: Phase) : Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase) : Set[ResourceIdentifier] = {
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
             case Phase.BUILD => rel.resources(partition)
-            case _ => Seq()
+            case _ => Set()
         }
     }
 
@@ -86,10 +86,13 @@ case class RelationTarget(
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+
         phase match {
+            case Phase.CREATE => rel.requires
             case Phase.BUILD if (mapping.nonEmpty) => MappingUtils.requires(context, mapping.mapping)
-            case _ => Seq()
+            case _ => Set()
         }
     }
 

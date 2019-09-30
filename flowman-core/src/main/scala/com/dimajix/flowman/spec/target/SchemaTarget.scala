@@ -43,10 +43,10 @@ case class SchemaTarget(
       *
       * @return
       */
-    override def provides(phase:Phase) : Seq[ResourceIdentifier] = {
+    override def provides(phase:Phase) : Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Seq(ResourceIdentifier.ofFile(location))
-            case _ => Seq()
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(location))
+            case _ => Set()
         }
     }
 

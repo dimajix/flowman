@@ -49,14 +49,14 @@ class HiveViewRelation(
       * @param partition
       * @return
       */
-    override def resources(partition: Map[String, FieldValue]): Seq[ResourceIdentifier] = Seq()
+    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = Set()
 
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq(
+    override def provides : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofHiveTable(table, database)
     )
 
@@ -65,9 +65,9 @@ class HiveViewRelation(
       *
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = {
-        val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSeq
-        val other =  mapping.map(m => MappingUtils.requires(context, m.mapping)).getOrElse(Seq())
+    override def requires : Set[ResourceIdentifier] = {
+        val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+        val other =  mapping.map(m => MappingUtils.requires(context, m.mapping)).getOrElse(Set())
         db ++ other
     }
 

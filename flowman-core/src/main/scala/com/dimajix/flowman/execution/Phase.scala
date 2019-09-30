@@ -64,13 +64,13 @@ object Phase {
   * executed.
   */
 object Lifecycle {
-    val DEFAULT = Seq(
+    val DEFAULT:Seq[Phase] = Seq(
         Phase.CREATE,
         Phase.MIGRATE,
         Phase.BUILD,
         Phase.VERIFY
     )
-    val CLEAN = Seq(
+    val CLEAN:Seq[Phase] = Seq(
         Phase.TRUNCATE,
         Phase.DESTROY
     )

@@ -104,7 +104,7 @@ abstract class Mapping extends AbstractInstance {
       * which actually read from physical data.
       * @return
       */
-    def requires : Seq[ResourceIdentifier]
+    def requires : Set[ResourceIdentifier]
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)

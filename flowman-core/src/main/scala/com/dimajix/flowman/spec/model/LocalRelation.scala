@@ -54,7 +54,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       *
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq(
+    override def provides : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofLocal(location)
     )
 
@@ -63,7 +63,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       *
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = Seq()
+    override def requires : Set[ResourceIdentifier] = Set()
 
     /**
       * Returns the list of all resources which will be required by this relation for reading a specific partition.
@@ -73,17 +73,17 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @param partitions
       * @return
       */
-    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
-        requireValidPartitionKeys(partitions)
+        requireAllPartitionKeys(partitions)
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSeq
+            allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
         }
         else {
-            Seq(ResourceIdentifier.ofLocal(location))
+            Set(ResourceIdentifier.ofLocal(location))
         }
     }
 

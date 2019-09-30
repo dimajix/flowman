@@ -104,10 +104,10 @@ case class PutFileTarget(
       *
       * @return
       */
-    override def provides(phase: Phase): Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Seq(ResourceIdentifier.ofFile(target))
-            case _ => Seq()
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(target))
+            case _ => Set()
         }
     }
 
@@ -116,10 +116,10 @@ case class PutFileTarget(
       *
       * @return
       */
-    override def requires(phase: Phase): Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Seq(ResourceIdentifier.ofLocal(source))
-            case _ => Seq()
+            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(source))
+            case _ => Set()
         }
     }
 }

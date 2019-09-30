@@ -127,13 +127,13 @@ abstract class Target extends AbstractInstance {
       * Returns a list of physical resources produced by this target
       * @return
       */
-    def provides(phase:Phase) : Seq[ResourceIdentifier]
+    def provides(phase:Phase) : Set[ResourceIdentifier]
 
     /**
       * Returns a list of physical resources required by this target
       * @return
       */
-    def requires(phase:Phase) : Seq[ResourceIdentifier]
+    def requires(phase:Phase) : Set[ResourceIdentifier]
 
     /**
       * Executes a specific phase of this target

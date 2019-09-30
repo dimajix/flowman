@@ -45,7 +45,7 @@ case class RelationDataset(
       * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    override def resources : Seq[ResourceIdentifier] = {
+    override def resources : Set[ResourceIdentifier] = {
         val instance = context.getRelation(relation)
         instance.resources(partition)
     }

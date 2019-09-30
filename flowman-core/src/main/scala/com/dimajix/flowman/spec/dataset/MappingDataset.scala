@@ -44,7 +44,7 @@ case class MappingDataset(
       * Returns a list of physical resources required for reading this dataset
       * @return
       */
-    override def resources : Seq[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def resources : Set[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     /**
       * Reads data from the relation, possibly from specific partitions

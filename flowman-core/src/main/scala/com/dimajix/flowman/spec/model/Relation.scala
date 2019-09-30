@@ -99,14 +99,14 @@ abstract class Relation extends AbstractInstance {
       *
       * @return
       */
-    def provides : Seq[ResourceIdentifier]
+    def provides : Set[ResourceIdentifier]
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    def requires : Seq[ResourceIdentifier]
+    def requires : Set[ResourceIdentifier]
 
     /**
       * Returns the list of all resources which will are managed by this relation for reading or writing a specific
@@ -115,7 +115,7 @@ abstract class Relation extends AbstractInstance {
       * @param partitions
       * @return
       */
-    def resources(partitions:Map[String,FieldValue] = Map()) : Seq[ResourceIdentifier]
+    def resources(partitions:Map[String,FieldValue] = Map()) : Set[ResourceIdentifier]
 
     /**
       * Returns the Schema object which describes all fields of the relation

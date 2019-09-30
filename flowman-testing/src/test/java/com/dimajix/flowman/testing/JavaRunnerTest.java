@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.testing;
 
+import com.dimajix.flowman.execution.Lifecycle;
+import com.dimajix.flowman.execution.Lifecycle$;
 import com.dimajix.flowman.execution.Phase;
 import com.dimajix.flowman.execution.Phase$;
 import com.google.common.io.Resources;
@@ -35,6 +37,8 @@ public class JavaRunnerTest {
             .build();
 
         boolean result = runner.runJob("main", Collections.singletonList(Phase.ofString("build")), Collections.emptyMap());
+        assertThat(result).isTrue();
+        result = runner.runJob("main", Lifecycle.DEFAULT(), Collections.emptyMap());
         assertThat(result).isTrue();
     }
 }

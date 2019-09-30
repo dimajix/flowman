@@ -39,14 +39,14 @@ class ProvidedRelation(
       *
       * @return
       */
-    override def provides: Seq[ResourceIdentifier] = Seq()
+    override def provides: Set[ResourceIdentifier] = Set()
 
     /**
       * Returns the list of all resources which will be required by this relation
       *
       * @return
       */
-    override def requires: Seq[ResourceIdentifier] = Seq()
+    override def requires: Set[ResourceIdentifier] = Set()
 
 
     /**
@@ -57,7 +57,7 @@ class ProvidedRelation(
       * @param partitions
       * @return
       */
-    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = Seq(
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set(
         ResourceIdentifier("provided", table)
     )
 

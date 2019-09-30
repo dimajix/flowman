@@ -67,11 +67,17 @@ trait PartitionedRelation { this:Relation =>
         partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
     }
 
-    protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
+    protected def requireAllPartitionKeys(map: Map[String,_]) : Unit = {
         val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
         val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
         require(valueKeys.forall(key => partitionKeys.contains(key)))
         require(partitionKeys.forall(key => valueKeys.contains(key)))
+    }
+
+    protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
+        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
+        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        require(valueKeys.forall(key => partitionKeys.contains(key)))
     }
 }
 

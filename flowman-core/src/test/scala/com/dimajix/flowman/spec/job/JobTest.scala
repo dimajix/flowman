@@ -31,9 +31,11 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.target.BaseTarget
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetSpec
+import com.dimajix.flowman.types.StringType
 
 
 object GrabEnvironmentTarget {
@@ -272,6 +274,48 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val job = project.jobs("job").instantiate(session.getContext(project))
         job should not be (null)
+
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
+        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))
+    }
+
+    it should "support extending other jobs" in {
+        val spec =
+            """
+              |targets:
+              |  grabenv:
+              |    kind: grabenv
+              |  dummy:
+              |    kind: "null"
+              |
+              |jobs:
+              |  parent:
+              |    parameters:
+              |      - name: p2
+              |    environment:
+              |      - p3=abc
+              |    targets:
+              |      - dummy
+              |  job:
+              |    extends: parent
+              |    parameters:
+              |      - name: p1
+              |    environment:
+              |      - p2=$p1
+              |      - p3=xx${p2}yy
+              |    targets:
+              |      - grabenv
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withProject(project).build()
+        val executor = session.executor
+
+        val job = project.jobs("job").instantiate(session.getContext(project))
+        job should not be (null)
+        job.targets.toSet should be (Set(TargetIdentifier("grabenv"), TargetIdentifier("dummy")))
+        job.parameters should be (Seq(Job.Parameter("p1", StringType)))
+        job.environment should be (Map("p2" -> "$p1", "p3" -> "xx${p2}yy"))
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
         GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))

@@ -201,6 +201,10 @@ class Runner private(
         }
     }
 
+    def runJob(jobName:String, phases:Seq[Phase], args:java.util.Map[String,String]) : Boolean = {
+        runJob(jobName, phases, args.asScala.toMap)
+    }
+
     def runJob(jobName:String, phases:java.util.List[Phase], args:java.util.Map[String,String]) : Boolean = {
         runJob(jobName, phases.asScala, args.asScala.toMap)
     }

@@ -59,7 +59,7 @@ abstract class BaseMapping extends Mapping {
       * which actually read from physical data.
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = Seq()
+    override def requires : Set[ResourceIdentifier] = Set()
 
     /**
       * Lists all outputs of this mapping. Every mapping should have one "main" output

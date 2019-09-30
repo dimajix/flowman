@@ -59,10 +59,10 @@ case class CopyTarget(
       *
       * @return
       */
-    override def provides(phase: Phase): Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD => target.resources
-            case _ => Seq()
+            case _ => Set()
         }
     }
 
@@ -71,10 +71,10 @@ case class CopyTarget(
       *
       * @return
       */
-    override def requires(phase: Phase): Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD => source.resources
-            case _ => Seq()
+            case _ => Set()
         }
     }
 }

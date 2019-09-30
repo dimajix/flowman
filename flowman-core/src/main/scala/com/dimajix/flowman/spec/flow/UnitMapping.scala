@@ -48,12 +48,11 @@ case class UnitMapping(
       * which actually read from physical data.
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = {
+    override def requires : Set[ResourceIdentifier] = {
         mappingInstances
             .values
             .flatMap(_.requires)
-            .toSeq
-            .distinct
+            .toSet
     }
 
     /**

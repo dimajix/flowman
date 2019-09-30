@@ -71,7 +71,7 @@ case class LocalTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides(phase: Phase) : Seq[ResourceIdentifier] = Seq(
+    override def provides(phase: Phase) : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofLocal(new Path(filename))
     )
 
@@ -79,10 +79,10 @@ case class LocalTarget(
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
-            case _ => Seq()
+            case _ => Set()
         }
     }
 

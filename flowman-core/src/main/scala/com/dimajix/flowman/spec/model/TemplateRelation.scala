@@ -48,14 +48,14 @@ class TemplateRelation(
       *
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = relationInstance.provides
+    override def provides : Set[ResourceIdentifier] = relationInstance.provides
 
     /**
       * Returns the list of all resources which will be required by this relation
       *
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = relationInstance.requires
+    override def requires : Set[ResourceIdentifier] = relationInstance.requires
 
     /**
       * Returns the list of all resources which will be required by this relation for reading a specific partition.
@@ -65,7 +65,7 @@ class TemplateRelation(
       * @param partitions
       * @return
       */
-    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = relationInstance.resources(partitions)
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = relationInstance.resources(partitions)
 
     /**
       * Returns a description for the relation

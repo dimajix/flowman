@@ -43,7 +43,7 @@ case class FileDataset(
       * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    override def resources : Seq[ResourceIdentifier] = Seq(
+    override def resources : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofFile(location)
     )
 

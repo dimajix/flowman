@@ -81,8 +81,8 @@ object MappingUtils {
       * Returns a list of physical resources required for reading this dataset
       * @return
       */
-    def requires(mapping: Mapping) : Seq[ResourceIdentifier] = {
-        val resourceCache = mutable.Map[MappingIdentifier,Seq[ResourceIdentifier]]()
+    def requires(mapping: Mapping) : Set[ResourceIdentifier] = {
+        val resourceCache = mutable.Map[MappingIdentifier,Set[ResourceIdentifier]]()
 
         def colllect(instance:Mapping) : Unit = {
             resourceCache.getOrElseUpdate(instance.identifier, instance.requires)
@@ -92,14 +92,14 @@ object MappingUtils {
         }
 
         colllect(mapping)
-        resourceCache.values.flatten.toSeq.distinct
+        resourceCache.values.flatten.toSet
     }
 
     /**
       * Returns a list of physical resources required for reading this dataset
       * @return
       */
-    def requires(context:Context, mapping: MappingIdentifier) : Seq[ResourceIdentifier] = {
+    def requires(context:Context, mapping: MappingIdentifier) : Set[ResourceIdentifier] = {
         val instance = context.getMapping(mapping)
         requires(instance)
     }

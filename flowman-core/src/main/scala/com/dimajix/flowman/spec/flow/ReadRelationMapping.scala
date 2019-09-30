@@ -68,9 +68,9 @@ case class ReadRelationMapping(
       * which actually read from physical data.
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = {
+    override def requires : Set[ResourceIdentifier] = {
         val rel = context.getRelation(relation)
-        rel.resources(partitions)
+        rel.resources(partitions) ++ rel.requires ++ rel.provides
     }
 
     /**

@@ -81,14 +81,14 @@ case class HBaseRelation(
       *
       * @return
       */
-    override def provides: Seq[ResourceIdentifier] = ???
+    override def provides: Set[ResourceIdentifier] = ???
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires: Seq[ResourceIdentifier] = ???
+    override def requires: Set[ResourceIdentifier] = ???
 
     /**
       * Returns the list of all resources which will are managed by this relation for reading or writing a specific
@@ -98,7 +98,7 @@ case class HBaseRelation(
       * @param partitions
       * @return
       */
-    override def resources(partitions: Map[String, FieldValue]): Seq[ResourceIdentifier] = ???
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = ???
 
     /**
       * Returns the schema of the relation

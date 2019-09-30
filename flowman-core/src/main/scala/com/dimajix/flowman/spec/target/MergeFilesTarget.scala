@@ -126,10 +126,10 @@ case class MergeFilesTarget(
       *
       * @return
       */
-    override def provides(phase: Phase): Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Seq(ResourceIdentifier.ofLocal(target))
-            case _ => Seq()
+            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(target))
+            case _ => Set()
         }
     }
 
@@ -138,10 +138,10 @@ case class MergeFilesTarget(
       *
       * @return
       */
-    override def requires(phase: Phase): Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Seq(ResourceIdentifier.ofFile(source))
-            case _ => Seq()
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
+            case _ => Set()
         }
     }
 }

@@ -75,13 +75,13 @@ class HiveTableRelation(
       * @param partition
       * @return
       */
-    override def resources(partition: Map[String, FieldValue]): Seq[ResourceIdentifier] = {
+    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
         requireValidPartitionKeys(partition)
 
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, database, p.toMap)).toSeq
+        allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, database, p.toMap)).toSet
     }
 
     /**
@@ -89,7 +89,7 @@ class HiveTableRelation(
       *
       * @return
       */
-    override def provides : Seq[ResourceIdentifier] = Seq(
+    override def provides : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofHiveTable(table, database)
     )
 
@@ -98,8 +98,8 @@ class HiveTableRelation(
       *
       * @return
       */
-    override def requires : Seq[ResourceIdentifier] = {
-        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSeq
+    override def requires : Set[ResourceIdentifier] = {
+        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
     }
 
     /**

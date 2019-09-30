@@ -70,7 +70,7 @@ abstract class Dataset extends AbstractInstance {
       * Returns a list of physical resources produced by writing or reading to this dataset
       * @return
       */
-    def resources : Seq[ResourceIdentifier]
+    def resources : Set[ResourceIdentifier]
 
     /**
       * Reads data from the relation, possibly from specific partitions

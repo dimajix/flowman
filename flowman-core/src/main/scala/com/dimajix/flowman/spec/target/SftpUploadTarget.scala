@@ -79,13 +79,13 @@ case class SftpUploadTarget(
       *
       * @return
       */
-    override def provides(phase: Phase): Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD =>
                 val host = credentials.host
                 val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
-                Seq(ResourceIdentifier.ofURL(new URL("sftp", host, port, target.toString)))
-            case _ => Seq()
+                Set(ResourceIdentifier.ofURL(new URL("sftp", host, port, target.toString)))
+            case _ => Set()
         }
     }
 
@@ -94,10 +94,10 @@ case class SftpUploadTarget(
       *
       * @return
       */
-    override def requires(phase: Phase): Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Seq(ResourceIdentifier.ofFile(source))
-            case _ => Seq()
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
+            case _ => Set()
         }
     }
 

@@ -46,12 +46,12 @@ case class StreamTarget(
       * Returns a list of physical resources produced by this target
       * @return
       */
-    override def provides(phase: Phase) : Seq[ResourceIdentifier] = {
+    override def provides(phase: Phase) : Set[ResourceIdentifier] = {
         val rel = context.getRelation(relation)
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case _ => Seq()
+            case _ => Set()
         }
     }
 
@@ -59,10 +59,10 @@ case class StreamTarget(
       * Returns a list of physical resources required by this target
       * @return
       */
-    override def requires(phase: Phase) : Seq[ResourceIdentifier] = {
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
-            case _ => Seq()
+            case _ => Set()
         }
     }
 

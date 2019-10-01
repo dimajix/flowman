@@ -29,6 +29,7 @@ import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.SqlParser
 import com.dimajix.spark.sql.catalyst.SQLBuilder
 
 
@@ -67,7 +68,9 @@ class HiveViewRelation(
       */
     override def requires : Set[ResourceIdentifier] = {
         val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
-        val other =  mapping.map(m => MappingUtils.requires(context, m.mapping)).getOrElse(Set())
+        val other = mapping.map(m => MappingUtils.requires(context, m.mapping))
+            .orElse(sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)).toSet))
+            .getOrElse(Set())
         db ++ other
     }
 

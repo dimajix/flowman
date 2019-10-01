@@ -36,8 +36,6 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
 
     @Argument(usage = "specifies target(s) to execute", metaVar = "<target>")
     var targets: Array[String] = Array()
-    @Option(name = "-a", aliases=Array("--all"), usage = "cleans all outputs, even the disabled ones")
-    var all: Boolean = false
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
@@ -48,15 +46,10 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
         logger.info("Cleaning outputs {}", if (targets != null) targets.mkString(",") else "all")
 
         val toRun =
-            if (all)
-                project.targets.keys.toSeq
-            else if (targets.nonEmpty)
+            if (targets.nonEmpty)
                 targets.toSeq
             else
                 project.targets.keys.toSeq
-                    .map(t => context.getTarget(TargetIdentifier(t)))
-                    .filter(_.enabled)
-                    .map(_.name)
 
         val job = Job.builder(context)
             .setName("cli-execute-targets")

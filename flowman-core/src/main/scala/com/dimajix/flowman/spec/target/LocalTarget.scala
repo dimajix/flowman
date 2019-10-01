@@ -68,6 +68,12 @@ case class LocalTarget(
     }
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
       * Returns a list of physical resources produced by this target
       * @return
       */
@@ -157,13 +163,7 @@ case class LocalTarget(
     }
 
     override def destroy(executor: Executor) : Unit = {
-        require(executor != null)
-
-        val outputFile = new File(filename)
-        if (outputFile.exists()) {
-            logger.info(s"Removing local file '$filename'")
-            outputFile.delete()
-        }
+        truncate(executor)
     }
 }
 

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
 
 
@@ -33,6 +34,36 @@ case class GetFileTarget(
     overwrite:Boolean
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[GetFileTarget])
+
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
+     * Returns a list of physical resources produced by this target
+     *
+     * @return
+     */
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(target))
+            case _ => Set()
+        }
+    }
+
+    /**
+     * Returns a list of physical resources required by this target
+     *
+     * @return
+     */
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
+            case _ => Set()
+        }
+    }
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -53,7 +84,15 @@ case class GetFileTarget(
       *
       * @param executor
       */
-    override protected def verify(executor: Executor): Unit = {}
+    override protected def verify(executor: Executor): Unit = {
+        require(executor != null)
+
+        val file = executor.fs.local(target)
+        if (!file.exists()) {
+            logger.error(s"Verification of target '$identifier' failed - local file '$target' does not exist")
+            throw new VerificationFailedException(identifier)
+        }
+    }
 
     /**
       * Deletes data of a specific target
@@ -75,30 +114,8 @@ case class GetFileTarget(
       *
       * @param executor
       */
-    override protected def destroy(executor: Executor): Unit = {}
-
-    /**
-      * Returns a list of physical resources produced by this target
-      *
-      * @return
-      */
-    override def provides(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(target))
-            case _ => Set()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
-            case _ => Set()
-        }
+    override protected def destroy(executor: Executor): Unit = {
+        truncate(executor)
     }
 }
 

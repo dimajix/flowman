@@ -44,7 +44,7 @@ class HiveViewRelation(
 
     /**
       * Returns the list of all resources which will be created by this relation. The list will be specifically
-      * * created for a specific partition, or for the full relation (when the partition is empty)
+      * created for a specific partition, or for the full relation (when the partition is empty)
       *
       * @param partition
       * @return

@@ -75,6 +75,12 @@ case class SftpUploadTarget(
     private val logger = LoggerFactory.getLogger(classOf[SftpUploadTarget])
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
       * Returns a list of physical resources produced by this target
       *
       * @return

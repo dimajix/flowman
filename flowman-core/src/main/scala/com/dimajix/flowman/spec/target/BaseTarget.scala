@@ -32,12 +32,6 @@ abstract class BaseTarget extends Target {
     override def identifier : TargetIdentifier = TargetIdentifier(name, Option(project).map(_.name))
 
     /**
-      * Returns true if the output should be executed per default
-      * @return
-      */
-    override def enabled : Boolean = instanceProperties.enabled
-
-    /**
       * Returns an instance representing this target with the context
       * @return
       */
@@ -64,6 +58,11 @@ abstract class BaseTarget extends Target {
       */
     override def after : Seq[TargetIdentifier] = instanceProperties.after
 
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.MIGRATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
 
     /**
       * Returns a list of physical resources produced by this target

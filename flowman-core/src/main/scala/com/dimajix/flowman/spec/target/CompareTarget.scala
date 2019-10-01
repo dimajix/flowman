@@ -38,6 +38,24 @@ case class CompareTarget(
     private val logger = LoggerFactory.getLogger(classOf[CompareTarget])
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.VERIFY)
+
+    /**
+     * Returns a list of physical resources required by this target
+     *
+     * @return
+     */
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => actual.resources ++ expected.resources
+            case _ => Set()
+        }
+    }
+
+    /**
       * Performs a verification of the build step or possibly other checks.
       *
       * @param executor
@@ -66,18 +84,6 @@ case class CompareTarget(
         }
         else {
             logger.info(s"Dataset '${actual.name}' matches the expected dataset '${expected.name}'")
-        }
-    }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => actual.resources ++ expected.resources
-            case _ => Set()
         }
     }
 

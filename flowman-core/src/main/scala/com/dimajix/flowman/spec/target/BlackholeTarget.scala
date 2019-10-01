@@ -31,6 +31,12 @@ case class BlackholeTarget(
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
       * Returns a list of physical resources required by this target
       * @return
       */

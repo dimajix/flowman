@@ -33,6 +33,12 @@ case class HiveDatabaseTarget(
     private val logger = LoggerFactory.getLogger(classOf[HiveDatabaseTarget])
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.VERIFY, Phase.DESTROY)
+
+    /**
       * Returns a list of physical resources produced by this target
       *
       * @return
@@ -69,15 +75,6 @@ case class HiveDatabaseTarget(
             logger.error(s"Database '$database' provided by target '$identifier' does not exist")
             throw new VerificationFailedException(identifier)
         }
-    }
-
-    /**
-      * Deletes data of a specific target
-      *
-      * @param executor
-      */
-    override def truncate(executor: Executor): Unit = {
-
     }
 
     /**

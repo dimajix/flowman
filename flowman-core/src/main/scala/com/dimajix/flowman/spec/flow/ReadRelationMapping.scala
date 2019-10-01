@@ -45,6 +45,16 @@ case class ReadRelationMapping(
     private val logger = LoggerFactory.getLogger(classOf[ReadRelationMapping])
 
     /**
+     * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
+     * which actually read from physical data.
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+        rel.resources(partitions) ++ rel.requires ++ rel.provides
+    }
+
+    /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
@@ -61,16 +71,6 @@ case class ReadRelationMapping(
         val result = rel.read(executor, schema, partitions)
 
         Map("main" -> result)
-    }
-
-    /**
-      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
-      * which actually read from physical data.
-      * @return
-      */
-    override def requires : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
-        rel.resources(partitions) ++ rel.requires ++ rel.provides
     }
 
     /**

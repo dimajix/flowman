@@ -39,6 +39,12 @@ case class SchemaTarget(
     private val logger = LoggerFactory.getLogger(classOf[SchemaTarget])
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
       * Returns a list of physical resources produced by this target
       *
       * @return
@@ -101,13 +107,7 @@ case class SchemaTarget(
       * @param executor
       */
     override def destroy(executor: Executor): Unit = {
-        require(executor != null)
-
-        val outputFile = executor.fs.file(location)
-        if (outputFile.exists()) {
-            logger.info(s"Removing schema file '$location'")
-            outputFile.delete()
-        }
+        truncate(executor)
     }
 }
 

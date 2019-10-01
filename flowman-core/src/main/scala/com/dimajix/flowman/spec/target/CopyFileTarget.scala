@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
 
 
@@ -33,6 +34,36 @@ case class CopyFileTarget(
     overwrite:Boolean
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CopyFileTarget])
+
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
+     * Returns a list of physical resources produced by this target
+     *
+     * @return
+     */
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(target))
+            case _ => Set()
+        }
+    }
+
+    /**
+     * Returns a list of physical resources required by this target
+     *
+     * @return
+     */
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
+            case _ => Set()
+        }
+    }
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -49,11 +80,19 @@ case class CopyFileTarget(
     }
 
     /**
-      * Performs a verification of the build step or possibly other checks.
-      *
-      * @param executor
-      */
-    override protected def verify(executor: Executor): Unit = {}
+     * Performs a verification of the build step or possibly other checks.
+     *
+     * @param executor
+     */
+    override def verify(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val file = executor.fs.file(target)
+        if (!file.exists()) {
+            logger.error(s"Verification of target '$identifier' failed - location '$target' does not exist")
+            throw new VerificationFailedException(identifier)
+        }
+    }
 
     /**
       * Deletes data of a specific target
@@ -70,35 +109,13 @@ case class CopyFileTarget(
     }
 
     /**
-      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
-      * the table definition
-      *
-      * @param executor
-      */
-    override protected def destroy(executor: Executor): Unit = {}
-
-    /**
-      * Returns a list of physical resources produced by this target
-      *
-      * @return
-      */
-    override def provides(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofFile(target))
-            case _ => Set()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
-            case _ => Set()
-        }
+     * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
+     * the table definition
+     *
+     * @param executor
+     */
+    override protected def destroy(executor: Executor): Unit = {
+        truncate(executor)
     }
 }
 

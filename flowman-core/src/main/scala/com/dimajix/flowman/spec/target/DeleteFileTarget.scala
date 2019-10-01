@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Phase
 
 
 case class DeleteFileTarget(
@@ -31,6 +32,17 @@ case class DeleteFileTarget(
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[DeleteFileTarget])
 
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
+     * Build the "count" target by printing the number of records onto the console
+     *
+     * @param executor
+     */
     override def build(executor:Executor) : Unit = {
         val fs = executor.fs
         val file = fs.file(path)

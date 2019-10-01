@@ -38,6 +38,36 @@ case class CopyTarget(
     private val logger = LoggerFactory.getLogger(classOf[CopyTarget])
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
+     * Returns a list of physical resources produced by this target
+     *
+     * @return
+     */
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => target.resources
+            case _ => Set()
+        }
+    }
+
+    /**
+     * Returns a list of physical resources required by this target
+     *
+     * @return
+     */
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => source.resources
+            case _ => Set()
+        }
+    }
+
+    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
@@ -52,30 +82,6 @@ case class CopyTarget(
             xfs.transform(data)
         }.getOrElse(data)
         target.write(executor, conformed, mode)
-    }
-
-    /**
-      * Returns a list of physical resources produced by this target
-      *
-      * @return
-      */
-    override def provides(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => target.resources
-            case _ => Set()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => source.resources
-            case _ => Set()
-        }
     }
 }
 

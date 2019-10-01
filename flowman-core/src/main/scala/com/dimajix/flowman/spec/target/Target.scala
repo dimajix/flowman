@@ -63,7 +63,6 @@ object Target {
                 name,
                 kind,
                 Map(),
-                true,
                 Seq(),
                 Seq()
             )
@@ -76,7 +75,6 @@ object Target {
         name:String,
         kind:String,
         labels:Map[String,String],
-        enabled: Boolean,
         before: Seq[TargetIdentifier],
         after: Seq[TargetIdentifier]
     ) extends Instance.Properties
@@ -95,12 +93,6 @@ abstract class Target extends AbstractInstance {
       * @return
       */
     def identifier : TargetIdentifier
-
-    /**
-      * Returns true if the output should be executed per default
-      * @return
-      */
-    def enabled : Boolean
 
     /**
       * Returns an instance representing this target with the context
@@ -122,6 +114,12 @@ abstract class Target extends AbstractInstance {
       * @return
       */
     def after : Seq[TargetIdentifier]
+
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    def phases : Set[Phase]
 
     /**
       * Returns a list of physical resources produced by this target
@@ -175,10 +173,10 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTargetSpec]),
     new JsonSubTypes.Type(name = "schema", value = classOf[SchemaTargetSpec]),
     new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTargetSpec]),
-    new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]))
+    new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]),
+    new JsonSubTypes.Type(name = "template", value = classOf[TemplateTargetSpec]))
 )
 abstract class TargetSpec extends NamedSpec[Target] {
-    @JsonProperty(value = "enabled", required=false) private var enabled:String = "true"
     @JsonProperty(value = "before", required=false) private var before:Seq[String] = Seq()
     @JsonProperty(value = "after", required=false) private var after:Seq[String] = Seq()
 
@@ -198,7 +196,6 @@ abstract class TargetSpec extends NamedSpec[Target] {
             name,
             kind,
             context.evaluate(labels),
-            context.evaluate(enabled).toBoolean,
             before.map(context.evaluate).map(TargetIdentifier.parse),
             after.map(context.evaluate).map(TargetIdentifier.parse)
         )

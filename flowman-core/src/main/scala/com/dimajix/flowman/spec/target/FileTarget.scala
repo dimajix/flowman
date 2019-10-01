@@ -70,6 +70,12 @@ case class FileTarget(
     }
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
       * Returns a list of physical resources produced by this target
       *
       * @return

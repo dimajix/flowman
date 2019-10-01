@@ -41,6 +41,36 @@ case class MergeFilesTarget(
     private val logger = LoggerFactory.getLogger(classOf[MergeFilesTarget])
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
+     * Returns a list of physical resources produced by this target
+     *
+     * @return
+     */
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(target))
+            case _ => Set()
+        }
+    }
+
+    /**
+     * Returns a list of physical resources required by this target
+     *
+     * @return
+     */
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
+            case _ => Set()
+        }
+    }
+
+    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
@@ -112,37 +142,7 @@ case class MergeFilesTarget(
       * @param executor
       */
     override protected def destroy(executor: Executor): Unit = {
-        require(executor != null)
-
-        val outputFile = executor.fs.local(target)
-        if (outputFile.exists()) {
-            logger.info(s"Removing local file '$target'")
-            outputFile.delete()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources produced by this target
-      *
-      * @return
-      */
-    override def provides(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(target))
-            case _ => Set()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
-            case _ => Set()
-        }
+        truncate(executor)
     }
 }
 

@@ -36,14 +36,34 @@ case class PutFileTarget(
     private val logger = LoggerFactory.getLogger(classOf[PutFileTarget])
 
     /**
-      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-      * will not provide the data itself, it will only create the container
-      *
-      * @param executor
-      */
-    override protected def create(executor: Executor): Unit = {}
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
 
-    override protected def migrate(executor: Executor): Unit = {}
+    /**
+     * Returns a list of physical resources produced by this target
+     *
+     * @return
+     */
+    override def provides(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(target))
+            case _ => Set()
+        }
+    }
+
+    /**
+     * Returns a list of physical resources required by this target
+     *
+     * @return
+     */
+    override def requires(phase: Phase): Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(source))
+            case _ => Set()
+        }
+    }
 
     override protected def build(executor:Executor) : Unit = {
         val fs = executor.fs
@@ -61,7 +81,7 @@ case class PutFileTarget(
     override protected def verify(executor: Executor): Unit = {
         require(executor != null)
 
-        val file = executor.fs.local(target)
+        val file = executor.fs.file(target)
         if (!file.exists()) {
             logger.error(s"Verification of target '$identifier' failed - file '$target' does not exist")
             throw new VerificationFailedException(identifier)
@@ -90,37 +110,7 @@ case class PutFileTarget(
       * @param executor
       */
     override protected def destroy(executor: Executor): Unit = {
-        require(executor != null)
-
-        val outputFile = executor.fs.file(target)
-        if (outputFile.exists()) {
-            logger.info(s"Removing file '$target'")
-            outputFile.delete()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources produced by this target
-      *
-      * @return
-      */
-    override def provides(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofFile(target))
-            case _ => Set()
-        }
-    }
-
-    /**
-      * Returns a list of physical resources required by this target
-      *
-      * @return
-      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofLocal(source))
-            case _ => Set()
-        }
+        truncate(executor)
     }
 }
 

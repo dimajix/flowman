@@ -68,6 +68,17 @@ case class RelationTarget(
     }
 
     /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = {
+        if (mapping.nonEmpty)
+            Set(Phase.CREATE, Phase.MIGRATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+        else
+            Set(Phase.CREATE, Phase.MIGRATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+    }
+
+    /**
       * Returns a list of physical resources produced by this target
       * @return
       */
@@ -77,7 +88,7 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD => rel.resources(partition)
+            case Phase.BUILD if (mapping.nonEmpty) => rel.resources(partition)
             case _ => Set()
         }
     }
@@ -90,7 +101,7 @@ case class RelationTarget(
         val rel = context.getRelation(relation)
 
         phase match {
-            case Phase.CREATE => rel.requires
+            case Phase.CREATE|Phase.DESTROY => rel.requires
             case Phase.BUILD if (mapping.nonEmpty) => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
         }

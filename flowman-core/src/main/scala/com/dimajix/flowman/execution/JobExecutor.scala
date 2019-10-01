@@ -83,7 +83,7 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
         // Verify job arguments. This is moved from the constructor into this place, such that only this method throws an exception
         jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.identifier}'"))
 
-        val targets = job.targets.map(t => context.getTarget(t))
+        val targets = job.targets.map(t => context.getTarget(t)).filter(_.phases.contains(phase))
         val order = phase match {
             case Phase.DESTROY | Phase.TRUNCATE => orderTargets(targets, phase).reverse
             case _ => orderTargets(targets, phase)

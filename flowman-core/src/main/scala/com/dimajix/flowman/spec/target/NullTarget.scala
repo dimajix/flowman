@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 
+
 case class NullTarget(
     instanceProperties: Target.Properties,
     partition: Map[String,String]
@@ -38,12 +39,6 @@ case class NullTarget(
             partition
         )
     }
-
-    /**
-     * Returns all phases which are implemented by this target in the execute method
-     * @return
-     */
-    override def phases : Set[Phase] = Set()
 }
 
 

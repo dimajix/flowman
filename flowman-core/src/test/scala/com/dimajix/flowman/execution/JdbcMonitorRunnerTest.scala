@@ -44,7 +44,7 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
         tempDir.toFile.delete()
     }
 
-    "The JdbcStateStoreSpec" should "work with empty jobs" in {
+    "The JdbcStateStore" should "work with empty jobs" in {
         val db = tempDir.resolve("mydb")
         val ns = Namespace.builder()
             .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
@@ -100,15 +100,15 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withProject(project)
             .build()
 
-        val batch = Job.builder(session.getContext(project))
+        val job = Job.builder(session.getContext(project))
             .setName("job")
             .addTarget(TargetIdentifier("t0"))
             .build()
 
         val runner = session.runner
-        runner.executeJob(session.executor, batch, Seq(Phase.CREATE)) should be (Status.SUCCESS)
-        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), force=false) should be (Status.SKIPPED)
-        runner.executeJob(session.executor, batch, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, job, Seq(Phase.CREATE)) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, job, Seq(Phase.CREATE), force=false) should be (Status.SKIPPED)
+        runner.executeJob(session.executor, job, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
@@ -145,16 +145,16 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
             .withNamespace(ns)
             .withProject(project)
             .build()
-        val batch = Job.builder(session.getContext(project))
+        val job = Job.builder(session.getContext(project))
             .setName("job")
             .addParameter("p1", StringType)
             .addTarget(TargetIdentifier("t0"))
             .build()
 
         val runner = session.runner
-        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SUCCESS)
-        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SKIPPED)
-        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v2")) should be (Status.SUCCESS)
-        runner.executeJob(session.executor, batch, Seq(Phase.BUILD), Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, job, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, job, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SKIPPED)
+        runner.executeJob(session.executor, job, Seq(Phase.BUILD), Map("p1" -> "v2")) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, job, Seq(Phase.BUILD), Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
     }
 }

@@ -51,9 +51,6 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
 
         val session = Session.builder()
             .build()
-        val batch = Job.builder(session.context)
-            .setName("batch")
-            .build()
 
         a[NoSuchConnectionException] shouldBe thrownBy(monitor.instantiate(session.context))
     }

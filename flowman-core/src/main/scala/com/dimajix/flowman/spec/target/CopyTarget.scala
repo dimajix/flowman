@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.DatasetSpec
@@ -41,7 +42,7 @@ case class CopyTarget(
      * Returns all phases which are implemented by this target in the execute method
      * @return
      */
-    override def phases : Set[Phase] = Set(Phase.BUILD)
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE)
 
     /**
      * Returns a list of physical resources produced by this target
@@ -67,6 +68,18 @@ case class CopyTarget(
         }
     }
 
+
+    /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    override protected def verify(executor: Executor): Unit = {
+        if (!target.exists(executor)) {
+            throw new VerificationFailedException(identifier)
+        }
+    }
+
     /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
@@ -82,6 +95,15 @@ case class CopyTarget(
             xfs.transform(data)
         }.getOrElse(data)
         target.write(executor, conformed, mode)
+    }
+
+    /**
+      * Deletes data of a specific target
+      *
+      * @param executor
+      */
+    override protected def truncate(executor: Executor): Unit = {
+        target.clean(executor)
     }
 }
 

@@ -73,6 +73,19 @@ abstract class Dataset extends AbstractInstance {
     def resources : Set[ResourceIdentifier]
 
     /**
+      * Returns true if the data represented by this Dataset actually exists
+      * @param executor
+      * @return
+      */
+    def exists(executor: Executor) : Boolean
+
+    /**
+      * Removes the data represented by this dataset, but leaves the underlying relation present
+      * @param executor
+      */
+    def clean(executor: Executor) : Unit
+
+    /**
       * Reads data from the relation, possibly from specific partitions
       *
       * @param executor

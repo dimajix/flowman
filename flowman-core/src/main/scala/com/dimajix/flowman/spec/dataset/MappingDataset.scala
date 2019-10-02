@@ -46,6 +46,24 @@ case class MappingDataset(
       */
     override def resources : Set[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
+
+    /**
+      * Returns true if the data represented by this Dataset actually exists
+      *
+      * @param executor
+      * @return
+      */
+    override def exists(executor: Executor): Boolean = true
+
+    /**
+      * Removes the data represented by this dataset, but leaves the underlying relation present
+      *
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+        throw new UnsupportedOperationException
+    }
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

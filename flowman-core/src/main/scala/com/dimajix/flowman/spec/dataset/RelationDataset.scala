@@ -50,6 +50,28 @@ case class RelationDataset(
         instance.resources(partition)
     }
 
+
+    /**
+      * Returns true if the data represented by this Dataset actually exists
+      *
+      * @param executor
+      * @return
+      */
+    override def exists(executor: Executor): Boolean = {
+        val instance = context.getRelation(relation)
+        instance.exists(executor)
+    }
+
+    /**
+      * Removes the data represented by this dataset, but leaves the underlying relation present
+      *
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+        val instance = context.getRelation(relation)
+        instance.truncate(executor, partition)
+    }
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

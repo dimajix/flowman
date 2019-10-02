@@ -156,37 +156,6 @@ class FileRelation(
     }
 
     /**
-      * Removes one or more partitions.
-      * @param executor
-      * @param partitions
-      */
-    override def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
-        require(executor != null)
-        require(partitions != null)
-
-        if (this.partitions.nonEmpty && partitions.nonEmpty)
-            cleanPartitionedFiles(partitions)
-        else
-            cleanUnpartitionedFiles()
-    }
-
-    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
-        require(partitions != null)
-
-        requireAllPartitionKeys(partitions)
-
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
-
-        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector.delete(resolvedPartitions)
-    }
-
-    private def cleanUnpartitionedFiles() : Unit = {
-        collector.delete()
-    }
-
-    /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
       * @param executor
       * @return
@@ -218,12 +187,43 @@ class FileRelation(
     }
 
     /**
-     * This will update any existing relation to the specified metadata. Actually for this file based target, the
-     * command will precisely do nothing.
-     *
-     * @param executor
-     */
+      * This will update any existing relation to the specified metadata. Actually for this file based target, the
+      * command will precisely do nothing.
+      *
+      * @param executor
+      */
     override def migrate(executor:Executor) : Unit = {
+    }
+
+    /**
+      * Removes one or more partitions.
+      * @param executor
+      * @param partitions
+      */
+    override def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
+        require(executor != null)
+        require(partitions != null)
+
+        if (this.partitions.nonEmpty && partitions.nonEmpty)
+            cleanPartitionedFiles(partitions)
+        else
+            cleanUnpartitionedFiles()
+    }
+
+    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
+        require(partitions != null)
+
+        requireAllPartitionKeys(partitions)
+
+        if (pattern == null || pattern.isEmpty)
+            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+
+        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        collector.delete(resolvedPartitions)
+    }
+
+    private def cleanUnpartitionedFiles() : Unit = {
+        collector.delete()
     }
 
     /**

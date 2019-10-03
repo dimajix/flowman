@@ -26,18 +26,23 @@ import com.dimajix.flowman.spec.target.orderTargets
 
 /**
   * This helper class is used for executing jobs. It will set up an appropriate execution environment that can be
-  * reused during multiple phases
+  * reused during multiple phases. The specified arguments need to contain all required parameters (i.e. those without
+  * any default value) and must not contain any values for non-existing parameters.
+  *
   * @param parentExecutor
   * @param job
-  * @param arguments
+  * @param args
   * @param force
   */
-class JobExecutor(parentExecutor:Executor, val job:Job, val arguments:Map[String,Any], force:Boolean=false) {
+class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], force:Boolean=false) {
     require(parentExecutor != null)
     require(job != null)
-    require(arguments != null)
+    require(args != null)
 
     private val logger = LoggerFactory.getLogger(classOf[JobExecutor])
+
+    /** Evaluate final arguments including default values */
+    val arguments : Map[String,Any] = job.parameters.flatMap(p => p.default.map(d => p.name -> d)).toMap ++ args
 
     // Create a new execution environment.
     private val rootContext = RootContext.builder(job.context)
@@ -46,10 +51,10 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val arguments:Map[String
         .withEnvironment(job.environment, SettingLevel.SCOPE_OVERRIDE)
         .build()
 
-    /** The executor that should be used for running targets */
-    val executor = new RootExecutor(parentExecutor, isolated)
     /** The contetx that shoukd be used for resolving variables and instantiating objects */
-    val context = if (job.context.project != null) rootContext.getProjectContext(job.context.project) else rootContext
+    val context : Context = if (job.context.project != null) rootContext.getProjectContext(job.context.project) else rootContext
+    /** The executor that should be used for running targets */
+    val executor : Executor = new RootExecutor(parentExecutor, isolated)
 
 
     // Check if the job should run isolated. This is required if arguments are specified, which could
@@ -65,7 +70,9 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val arguments:Map[String
     def environment : Map[String,Any] = context.environment
 
     /**
-      * Executes a single phase of the job
+      * Executes a single phase of the job. This method will also check if the arguments passed to the constructor
+      * are correct and sufficient, otherwise an IllegalArgumentException will be thrown.
+      * 
       * @param phase
       * @return
       */
@@ -77,7 +84,10 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val arguments:Map[String
         logger.info(s"Running phase '$phase' of job '${job.identifier}' $desc $args")
 
         // Verify job arguments. This is moved from the constructor into this place, such that only this method throws an exception
-        arguments.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.identifier}'"))
+        val argNames = arguments.keySet
+        val paramNames = job.parameters.map(_.name).toSet
+        argNames.diff(paramNames).foreach(p => throw new IllegalArgumentException(s"Unexpected argument '$p' not defined in job '${job.identifier}'"))
+        paramNames.diff(argNames).foreach(p => throw new IllegalArgumentException(s"Required parameter '$p' not specified for job '${job.identifier}'"))
 
         val targets = job.targets.map(t => context.getTarget(t)).filter(_.phases.contains(phase))
         val order = phase match {

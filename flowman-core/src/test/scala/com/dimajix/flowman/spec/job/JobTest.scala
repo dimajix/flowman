@@ -222,7 +222,6 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val module = Module.read.string(spec)
         val session = Session.builder().build()
         val executor = session.executor
-        implicit val context = session.context
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
@@ -246,13 +245,12 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val module = Module.read.string(spec)
         val session = Session.builder().build()
-        val executor = session.executor
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
-        job.arguments(Map()) should be (Map("p1" -> null, "p2" -> "v2", "p3" -> 7))
+        job.arguments(Map()) should be (Map("p2" -> "v2", "p3" -> 7))
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
-        job.arguments(Map("p2" -> "lala")) should be (Map("p1" -> null, "p2" -> "lala", "p3" -> 7))
+        job.arguments(Map("p2" -> "lala")) should be (Map("p2" -> "lala", "p3" -> 7))
     }
 
     it should "support environment" in {
@@ -453,13 +451,21 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
             .addParameter("p2", StringType)
             .build()
 
-        val args = job.interpolate(Map(
+        job.interpolate(Map(
             "p1"-> RangeValue("1", "7")
+        )).toSet  should be (Set(
+            Map("p1" -> 0),
+            Map("p1" -> 2),
+            Map("p1" -> 4)
         ))
 
-        args.toSet should be (Set(
-            Map("p1" -> 2),
-            Map("p1" -> 4),
+        job.interpolate(Map(
+            "p1"-> RangeValue("7", "7")
+        )).toSet  should be (Set())
+
+        job.interpolate(Map(
+            "p1"-> RangeValue("7", "8")
+        )).toSet  should be (Set(
             Map("p1" -> 6)
         ))
     }

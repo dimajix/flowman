@@ -206,7 +206,8 @@ case class Job(
     }
 
     /**
-      * Determine final arguments of this job, by performing granularity adjustments etc
+      * Determine final arguments of this job, by performing granularity adjustments etc. Missing arguments will
+      * be replaced by default values if they are defined.
       * @param args
       * @return
       */
@@ -214,9 +215,15 @@ case class Job(
         val paramsByName = parameters.map(p => (p.name, p)).toMap
         val processedArgs = args.map(kv =>
             (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter '${kv._1}' not defined for job '$name'")).parse(kv._2)))
-        parameters.map(p => (p.name, p.default.orNull)).toMap ++ processedArgs
+        parameters.flatMap(p => p.default.map(v => p.name -> v)).toMap ++ processedArgs
     }
 
+    /**
+      * Performs interpolation of given arguments as FieldValues. This will return an Iterable of argument maps each
+      * of them to be used by a job executor.
+      * @param args
+      * @return
+      */
     def interpolate(args:Map[String,FieldValue]) : Iterable[Map[String,Any]] = {
         def interpolate(args:Iterable[Map[String,Any]], param:Parameter, values:FieldValue) : Iterable[Map[String,Any]] = {
             val vals = param.ftype.interpolate(values, param.granularity)

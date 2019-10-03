@@ -23,8 +23,6 @@ case object DoubleType extends FractionalType[Double] {
     override protected def fractionalNum = scala.math.Numeric.DoubleIsFractional
     override protected def integralNum = scala.math.Numeric.DoubleAsIfIntegral
 
-    override protected def roundToGranularity(value:Double, granularity:Double) : Double = (value - (value % granularity))
-
     override protected def parseRaw(value:String) : Double = value.toDouble
 
     override def sparkType : DataType = org.apache.spark.sql.types.DoubleType

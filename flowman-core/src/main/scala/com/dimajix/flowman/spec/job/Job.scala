@@ -43,6 +43,8 @@ import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.RangeValue
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 
 
@@ -215,17 +217,58 @@ case class Job(
         parameters.map(p => (p.name, p.default.orNull)).toMap ++ processedArgs
     }
 
-    def interpolate(args:Map[String,FieldValue])(fn:Map[String,Any] => Boolean) : Boolean = {
-        def interpolate(fn:Map[String,Any] => Boolean, param:Parameter, values:FieldValue) : Map[String,Any] => Boolean = {
+    def interpolate(args:Map[String,FieldValue]) : Iterable[Map[String,Any]] = {
+        def interpolate(args:Iterable[Map[String,Any]], param:Parameter, values:FieldValue) : Iterable[Map[String,Any]] = {
             val vals = param.ftype.interpolate(values, param.granularity)
-            args:Map[String,Any] => vals.forall(v => fn(args + (param.name -> v)))
+            args.flatMap(map => vals.map(v => map + (param.name -> v)))
         }
 
         // Iterate by all parameters and create argument map
         val paramByName = parameters.map(p => (p.name, p)).toMap
-        val invocations = args.toSeq.foldRight(fn)((p,a) => interpolate(a, paramByName(p._1), p._2))
+        args.toSeq.foldRight(Iterable[Map[String,Any]](Map()))((p,i) => interpolate(i, paramByName(p._1), p._2))
+    }
 
-        invocations(Map())
+    /**
+      * Parse command line parameters
+      * @param rawArgs
+      * @return
+      */
+    def parseArguments(rawArgs:Map[String,String]) : Map[String,FieldValue] = {
+        val paramNames = parameters.map(_.name).toSet
+        rawArgs.foldLeft(Map[String,FieldValue]()){(map,arg) =>
+            val rawName = arg._1
+            val rawValue = arg._2
+            val entry =
+                if (rawName.endsWith(":start")) {
+                    val name = rawName.dropRight(6)
+                    map.get(name) match {
+                        case Some(RangeValue(_,end,step)) => name -> RangeValue(rawValue, end, step)
+                        case _ => name -> RangeValue(rawValue, rawValue)
+                    }
+                }
+                else if (rawName.endsWith(":end")) {
+                    val name = rawName.dropRight(4)
+                    map.get(name) match {
+                        case Some(RangeValue(start,_,step)) => name -> RangeValue(start, rawValue, step)
+                        case _ => name -> RangeValue(rawValue, rawValue)
+                    }
+                }
+                else if (rawName.endsWith(":step")) {
+                    val name = rawName.dropRight(5)
+                    map.get(name) match {
+                        case Some(RangeValue(start,end,_)) => name -> RangeValue(start, end, Some(rawValue))
+                        case _ => name -> RangeValue("", "", Some(rawValue))
+                    }
+                }
+                else {
+                    rawName -> SingleValue(rawValue)
+                }
+
+            if (!paramNames.contains(entry._1))
+                throw new IllegalArgumentException(s"Parameter '${entry._1}' not defined for job '${identifier}'")
+
+            map + entry
+        }
     }
 
     /**
@@ -242,7 +285,8 @@ case class Job(
         require(phase != null)
         require(args != null)
 
-        val jobExecutor = new JobExecutor(executor, this, args, force)
+        val jobArgs = arguments(args)
+        val jobExecutor = new JobExecutor(executor, this, jobArgs, force)
         jobExecutor.execute(phase) { (executor,target,force) =>
             Try {
                 target.execute(executor, phase)

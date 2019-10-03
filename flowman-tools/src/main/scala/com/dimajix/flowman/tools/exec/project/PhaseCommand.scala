@@ -35,6 +35,7 @@ import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.types.FieldValue
 
 
 sealed class PhaseCommand(phase:Phase) extends ActionCommand {
@@ -60,12 +61,12 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
             case Failure(_) =>
                 logger.error(s"Error instantiating job '$job'")
                 false
-            case Success(batch) =>
-                executeJob(executor, batch, args)
+            case Success(job) =>
+                executeJob(executor, job, job.parseArguments(args))
         }
     }
 
-    private def executeJob(executor:Executor, job:Job, args:Map[String,String]) : Boolean = {
+    private def executeJob(executor:Executor, job:Job, args:Map[String,FieldValue]) : Boolean = {
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)
@@ -77,11 +78,13 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
         val runner = executor.session.runner
-        val result = runner.executeJob(executor, job, lifecycle, args, force)
-        result match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ => false
+        job.interpolate(args).forall { args =>
+            val result = runner.executeJob(executor, job, lifecycle, args, force)
+            result match {
+                case Status.SUCCESS => true
+                case Status.SKIPPED => true
+                case _ => false
+            }
         }
     }
 }

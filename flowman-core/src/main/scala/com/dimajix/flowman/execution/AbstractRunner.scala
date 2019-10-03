@@ -46,7 +46,7 @@ abstract class AbstractRunner extends Runner {
       * @param force
       * @return
       */
-    override def executeJob(executor:Executor, job:Job, phases:Seq[Phase], args:Map[String,String], force:Boolean=false) : Status = {
+    override def executeJob(executor:Executor, job:Job, phases:Seq[Phase], args:Map[String,Any], force:Boolean=false) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)

@@ -29,23 +29,20 @@ import com.dimajix.flowman.spec.target.orderTargets
   * reused during multiple phases
   * @param parentExecutor
   * @param job
-  * @param args
+  * @param arguments
   * @param force
   */
-class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,String], force:Boolean=false) {
+class JobExecutor(parentExecutor:Executor, val job:Job, val arguments:Map[String,Any], force:Boolean=false) {
     require(parentExecutor != null)
     require(job != null)
-    require(args != null)
+    require(arguments != null)
 
     private val logger = LoggerFactory.getLogger(classOf[JobExecutor])
-
-    // Resolve all arguments
-    private val jobArgs = job.arguments(args)
 
     // Create a new execution environment.
     private val rootContext = RootContext.builder(job.context)
         .withEnvironment("force", force)
-        .withEnvironment(jobArgs, SettingLevel.SCOPE_OVERRIDE)
+        .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
         .withEnvironment(job.environment, SettingLevel.SCOPE_OVERRIDE)
         .build()
 
@@ -57,16 +54,15 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
 
     // Check if the job should run isolated. This is required if arguments are specified, which could
     // result in different DataFrames with different arguments
-    private def isolated = args.nonEmpty || job.environment.nonEmpty
+    private def isolated = arguments.nonEmpty || job.environment.nonEmpty
 
     /**
       * Returns the JobInstance representing the bound job with the given arguments
       * @return
       */
-    def instance : JobInstance = job.instance(args)
+    def instance : JobInstance = job.instance(arguments.map{ case(k,v) => k -> v.toString })
 
     def environment : Map[String,Any] = context.environment
-    def arguments : Map[String,Any] = jobArgs
 
     /**
       * Executes a single phase of the job
@@ -76,12 +72,12 @@ class JobExecutor(parentExecutor:Executor, val job:Job, val args:Map[String,Stri
     def execute(phase:Phase)(fn:(Executor,Target,Boolean) => Status) : Status = {
         require(phase != null)
 
-        val description = job.description.map("(" + _ + ")").getOrElse("")
-        val arguments = if (args.nonEmpty) s"with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
-        logger.info(s"Running phase '$phase' of job '${job.identifier}' $description $arguments")
+        val desc = job.description.map("(" + _ + ")").getOrElse("")
+        val args = if (arguments.nonEmpty) s"with arguments ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
+        logger.info(s"Running phase '$phase' of job '${job.identifier}' $desc $args")
 
         // Verify job arguments. This is moved from the constructor into this place, such that only this method throws an exception
-        jobArgs.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.identifier}'"))
+        arguments.filter(_._2 == null).foreach(p => throw new IllegalArgumentException(s"Parameter '${p._1}' not defined for job '${job.identifier}'"))
 
         val targets = job.targets.map(t => context.getTarget(t)).filter(_.phases.contains(phase))
         val order = phase match {

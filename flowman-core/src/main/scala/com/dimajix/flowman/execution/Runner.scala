@@ -37,7 +37,7 @@ abstract class Runner {
       * @param force
       * @return
       */
-    def executeJob(executor: Executor, job:Job, phases:Seq[Phase], args:Map[String,String]=Map(), force:Boolean=false) : Status
+    def executeJob(executor: Executor, job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), force:Boolean=false) : Status
 
     /**
       * Executes a single job using the given executor and a map of parameters. The Runner may decide not to

@@ -35,6 +35,10 @@ import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.spec.target.BaseTarget
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetSpec
+import com.dimajix.flowman.types.ArrayValue
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.RangeValue
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 
 
@@ -364,5 +368,99 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         verify(metricSink).addBoard(any())
         verify(metricSink).commit(any())
         verify(metricSink).removeBoard(any())
+    }
+
+    "Job.parseArguments" should "parse arguments" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        val arguments = job.parseArguments(Map(
+            "p1:start" -> "17",
+            "p1:end" -> "27",
+            "p2" -> "lala"
+        ))
+
+        arguments("p1") should be (RangeValue("17", "27"))
+        arguments("p2") should be (SingleValue("lala"))
+    }
+
+    it should "throw an exception for unknown parameters" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        an[IllegalArgumentException] should be thrownBy (job.parseArguments(Map(
+            "p3" -> "lala"
+        )))
+    }
+
+    "Job.interpolate" should "interpolate arguments" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        val args = job.interpolate(Map(
+            "p1"-> RangeValue("2", "8"),
+            "p2" -> ArrayValue("x", "y", "z")
+        ))
+
+        args.toSet should be (Set(
+            Map("p1" -> 2, "p2" -> "x"),
+            Map("p1" -> 4, "p2" -> "x"),
+            Map("p1" -> 6, "p2" -> "x"),
+            Map("p1" -> 2, "p2" -> "y"),
+            Map("p1" -> 4, "p2" -> "y"),
+            Map("p1" -> 6, "p2" -> "y"),
+            Map("p1" -> 2, "p2" -> "z"),
+            Map("p1" -> 4, "p2" -> "z"),
+            Map("p1" -> 6, "p2" -> "z")
+        ))
+    }
+
+    it should "work with simple arguments" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        val args = job.interpolate(Map(
+            "p1"-> SingleValue("2"),
+            "p2" -> SingleValue("x")
+        ))
+
+        args.toSet should be (Set(
+            Map("p1" -> 2, "p2" -> "x")
+        ))
+    }
+
+    it should "support granularity" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        val args = job.interpolate(Map(
+            "p1"-> RangeValue("1", "7")
+        ))
+
+        args.toSet should be (Set(
+            Map("p1" -> 2),
+            Map("p1" -> 4),
+            Map("p1" -> 6)
+        ))
     }
 }

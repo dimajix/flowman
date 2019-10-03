@@ -39,7 +39,7 @@ case object TimestampType extends FieldType {
         if (granularity.nonEmpty) {
             val msecs = UtcTimestamp.toEpochSeconds(value) * 1000l
             val step = Duration.parse(granularity.get).getSeconds * 1000l
-            new UtcTimestamp(msecs / step * step)
+            new UtcTimestamp(roundDown(msecs, step))
         }
         else {
             UtcTimestamp.parse(value)
@@ -64,7 +64,7 @@ case object TimestampType extends FieldType {
                     val range = startDate.until(endDate).by(Duration.parse(step.get).getSeconds)
                     if (granularity.nonEmpty) {
                         val mod = Duration.parse(granularity.get).getSeconds
-                        range.map(_ / mod * mod).distinct
+                        range.map(x => roundDown(x, mod)).distinct
                     }
                     else {
                         range
@@ -72,7 +72,7 @@ case object TimestampType extends FieldType {
                 }
                 else if (granularity.nonEmpty) {
                     val mod = Duration.parse(granularity.get).getSeconds
-                    (startDate / mod * mod).until(endDate / mod * mod).by(mod)
+                    roundDown(startDate, mod).until(roundDown(endDate, mod)).by(mod)
                 }
                 else {
                     startDate.until(endDate)
@@ -80,5 +80,9 @@ case object TimestampType extends FieldType {
                 result.map(x => new UtcTimestamp(x * 1000l))
             }
         }
+    }
+
+    private def roundDown(secs:Long, granularity:Long) : Long = {
+        secs / granularity * granularity
     }
 }

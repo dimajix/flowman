@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
@@ -41,11 +42,22 @@ package object target {
             )
         }
 
+        // Create all super-partitions using the powerset of all specified partitions
+        def explodePartitions(id:ResourceIdentifier) : Seq[ResourceIdentifier] = {
+            @tailrec
+            def pwr(t: Set[String], ps: Set[Set[String]]): Set[Set[String]] =
+                if (t.isEmpty) ps
+                else pwr(t.tail, ps ++ (ps map (_ + t.head)))
+
+            val ps = pwr(id.partition.keySet, Set(Set.empty[String])) //Powerset of ∅ is {∅}
+            ps.toSeq.map(keys => id.copy(partition = id.partition.filterKeys(keys.contains)))
+        }
+
         val targetIds = targets.map(_.identifier).toSet
         val targetsById = targets.map(t => (t.identifier, t)).toMap
         val targetsByResources = targets.flatMap(t =>
             try {
-               t.provides(phase).map(id => (id,t.identifier))
+               t.provides(phase).flatMap(explodePartitions).map(id => (id,t.identifier))
             }
             catch {
                 case ex:Exception => throw new RuntimeException(s"Caught exception while resolving provided resources of target '${t.identifier}'", ex)

@@ -72,7 +72,7 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
     /**
       * Executes a single phase of the job. This method will also check if the arguments passed to the constructor
       * are correct and sufficient, otherwise an IllegalArgumentException will be thrown.
-      * 
+      *
       * @param phase
       * @return
       */

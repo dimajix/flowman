@@ -149,7 +149,15 @@ object SwaggerSchemaUtils {
     }
 
     private def fromSwaggerProperty(name:String, property:Property, prefix:String, nullable:Boolean) : Field = {
-        Field(name, fromSwaggerType(property, prefix + name, nullable), nullable || !property.getRequired, Option(property.getDescription))
+        Field(
+            name,
+            fromSwaggerType(property, prefix + name, nullable),
+            nullable || !property.getRequired,
+            Option(property.getDescription),
+            None, // default value
+            None, // size
+            Option(property.getFormat)
+        )
     }
 
     private def fromSwaggerType(property:Property, fqName:String, nullable:Boolean) : FieldType = {

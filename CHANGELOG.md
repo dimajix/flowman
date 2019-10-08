@@ -1,3 +1,7 @@
+# Version 0.9.0
+* Complete overhaul of job execution. No tasks any more
+* Improve Swagger schema support
+
 # Version 0.8.2
 * Add optional filter condition to 'latest' mapping
 

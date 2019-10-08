@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -67,6 +68,14 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
       None,
       Some(MappingOutputIdentifier("t0"))
     )
+
+    relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+    relation.requires should be (Set(
+        ResourceIdentifier.ofHiveDatabase("default"),
+        ResourceIdentifier.ofHiveTable("t0", Some("default")),
+        ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
+    ))
+    relation.resources() should be (Set())
 
     relation.create(executor)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
@@ -139,7 +148,17 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
       Some(MappingOutputIdentifier("union"))
     )
 
-    relation.create(executor)
+      relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+      relation.requires should be (Set(
+          ResourceIdentifier.ofHiveDatabase("default"),
+          ResourceIdentifier.ofHiveTable("t0", Some("default")),
+          ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
+          ResourceIdentifier.ofHiveTable("t1", Some("default")),
+          ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
+      ))
+      relation.resources() should be (Set())
+
+      relation.create(executor)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
     //session.catalog.getTable(TableIdentifier("v0", Some("default"))).viewText.foreach(println)

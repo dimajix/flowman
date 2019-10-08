@@ -20,9 +20,10 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.execution.Status
 import com.dimajix.spark.testing.LocalSparkSession
 
 class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
@@ -72,22 +73,21 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |
               |jobs:
               |  default:
-              |    tasks:
-              |      - kind: build
-              |        targets: blackhole
+              |    targets:
+              |     - blackhole
             """.stripMargin
         val project = Module.read.string(spec).toProject("default")
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val executor = session.executor
-        val runner = executor.runner
+        val runner = session.runner
 
         val job = context.getJob(JobIdentifier("default"))
         job should not be (null)
         job.name should be ("default")
         job.category should be ("job")
         job.kind should be ("job")
-        runner.execute(executor, job) should be (Status.SUCCESS)
+        runner.executeJob(executor, job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
     it should "set the names of all jobs" in {

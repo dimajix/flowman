@@ -21,6 +21,8 @@ import java.io.File
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Phase
+
 
 class ExamplePluginTestSpec extends FlatSpec with Matchers {
     "The example project" should "be testable" in {
@@ -29,7 +31,7 @@ class ExamplePluginTestSpec extends FlatSpec with Matchers {
             .withProject(new File("../examples/plugin-example"))
             .build()
 
-        val result = runner.runJob("main")
+        val result = runner.runJob("main", Seq(Phase.BUILD))
         result should be(true)
     }
 }

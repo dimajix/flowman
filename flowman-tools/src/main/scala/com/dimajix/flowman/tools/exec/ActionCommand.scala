@@ -37,5 +37,5 @@ abstract class ActionCommand extends Command {
         result
     }
 
-    def executeInternal(executor:Executor, context:Context, project: Project) : Boolean
+    protected def executeInternal(executor:Executor, context:Context, project: Project) : Boolean
 }

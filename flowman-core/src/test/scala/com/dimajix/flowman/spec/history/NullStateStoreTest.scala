@@ -19,10 +19,7 @@ package com.dimajix.flowman.spec.history
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.task.Job
 
 
 class NullStateStoreTest extends FlatSpec with Matchers {

@@ -19,15 +19,18 @@ package com.dimajix.flowman.history
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.job.JobInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 class NullStateStoreTest extends FlatSpec with Matchers {
-    "The NullStateStore" should "support jobs" in {
-        val job = JobInstance(
+    "The NullStateStore" should "support batches" in {
+        val batch = JobInstance(
             "default",
             "project",
             "job_01",
@@ -35,14 +38,11 @@ class NullStateStoreTest extends FlatSpec with Matchers {
         )
 
         val monitor = new NullStateStore
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
-        val token = monitor.startJob(job, None)
-        monitor.getJobState(job) should be (None)
-        monitor.checkJob(job) should be(false)
+        monitor.getJobState(batch) should be (None)
+        val token = monitor.startJob(batch, Phase.BUILD)
+        monitor.getJobState(batch) should be (None)
         monitor.finishJob(token, Status.SUCCESS)
-        monitor.checkJob(job) should be(false)
-        monitor.getJobState(job) should be (None)
+        monitor.getJobState(batch) should be (None)
     }
 
     it should "support targets" in {
@@ -54,13 +54,10 @@ class NullStateStoreTest extends FlatSpec with Matchers {
         )
 
         val monitor = new NullStateStore
-        monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target, None)
+        val token = monitor.startTarget(target, Phase.BUILD)
         monitor.getTargetState(target) should be (None)
-        monitor.checkTarget(target) should be(false)
         monitor.finishTarget(token, Status.SUCCESS)
-        monitor.checkTarget(target) should be(false)
         monitor.getTargetState(target) should be (None)
     }
 }

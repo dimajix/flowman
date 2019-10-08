@@ -23,16 +23,13 @@ import java.nio.charset.Charset
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.plans.logical.With
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.spark.sql.SqlParser
 
 
 case class SqlMapping(
@@ -73,26 +70,7 @@ extends BaseMapping {
       * @return
       */
     override def inputs : Seq[MappingOutputIdentifier] = {
-        val plan = CatalystSqlParser.parsePlan(sql)
-        resolveDependencies(plan).map(MappingOutputIdentifier.parse)
-    }
-
-    private def resolveDependencies(plan:LogicalPlan) : Seq[String] = {
-        val cteNames = plan
-            .collect { case p:With => p.cteRelations.map(kv => kv._1)}
-            .flatten
-            .toSet
-        val cteDependencies = plan
-            .collect { case p: With =>
-                p.cteRelations
-                    .map(kv => kv._2.child)
-                    .flatMap(resolveDependencies)
-                    .filter(!cteNames.contains(_))
-            }
-            .flatten
-            .toSet
-        val tables = plan.collect { case p:UnresolvedRelation if !cteNames.contains(p.tableName) => p.tableName }.toArray
-        tables ++ cteDependencies
+        SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
     }
 
     private def statement : String = {

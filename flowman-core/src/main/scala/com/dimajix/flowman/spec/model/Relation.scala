@@ -34,6 +34,7 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
@@ -94,6 +95,29 @@ abstract class Relation extends AbstractInstance {
     def description : Option[String]
 
     /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    def provides : Set[ResourceIdentifier]
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    def requires : Set[ResourceIdentifier]
+
+    /**
+      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
+      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
+      * partition is empty)
+      * @param partitions
+      * @return
+      */
+    def resources(partitions:Map[String,FieldValue] = Map()) : Set[ResourceIdentifier]
+
+    /**
       * Returns the Schema object which describes all fields of the relation
       * @return
       */
@@ -128,7 +152,7 @@ abstract class Relation extends AbstractInstance {
       * @param executor
       * @param partitions
       */
-    def clean(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit
+    def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit
 
     /**
       * Reads data from a streaming source

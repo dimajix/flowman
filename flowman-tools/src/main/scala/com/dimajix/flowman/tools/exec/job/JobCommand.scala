@@ -31,7 +31,12 @@ class JobCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="subcommand",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),
-        new SubCommand(name="run",impl=classOf[RunCommand])
+        new SubCommand(name="create",impl=classOf[CreateCommand]),
+        new SubCommand(name="migrate",impl=classOf[MigrateCommand]),
+        new SubCommand(name="build",impl=classOf[BuildCommand]),
+        new SubCommand(name="verify",impl=classOf[VerifyCommand]),
+        new SubCommand(name="truncate",impl=classOf[TruncateCommand]),
+        new SubCommand(name="destroy",impl=classOf[DestroyCommand])
     ))
     override var command:Command = _
 

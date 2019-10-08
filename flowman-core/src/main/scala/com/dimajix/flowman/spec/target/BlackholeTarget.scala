@@ -20,13 +20,33 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
 case class BlackholeTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Set()
+        }
+    }
+
     /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
@@ -37,14 +57,6 @@ case class BlackholeTarget(
         val mapping = context.getMapping(this.mapping.mapping)
         val df = executor.instantiate(mapping, this.mapping.output)
         df.write.format("null").save()
-    }
-
-    /**
-      * "Cleaning" a blackhole essentially is a no-op
-      * @param executor
-      */
-    override def clean(executor: Executor): Unit = {
-
     }
 }
 

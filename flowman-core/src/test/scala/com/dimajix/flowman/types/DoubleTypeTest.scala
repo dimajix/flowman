@@ -35,6 +35,41 @@ class DoubleTypeTest  extends FlatSpec with Matchers {
         result(1) should be (2.0)
     }
 
+    it should "support interpolation of Ranges" in {
+        val result = DoubleType.interpolate(RangeValue("12","16"), None)
+        result.toSeq should be (Seq(12.0,13.0,14.0,15.0))
+    }
+
+    it should "support interpolation of Ranges with granularity" in {
+        val result = DoubleType.interpolate(RangeValue("12","16"), Some("2"))
+        result.toSeq should be (Seq(12.0,14.0))
+
+        val result2 = DoubleType.interpolate(RangeValue("13","17"), Some("2"))
+        result2.toSeq should be (Seq(12.0,14.0))
+
+        val result3 = DoubleType.interpolate(RangeValue("17","18"), Some("2"))
+        result3.toSeq should be (Seq(16.0))
+    }
+
+    it should "support interpolation of Ranges with steps" in {
+        val result = DoubleType.interpolate(RangeValue("12","16", Some("2")))
+        result.toSeq should be (Seq(12.0,14.0))
+
+        val result2 = DoubleType.interpolate(RangeValue("13","17", Some("2")))
+        result2.toSeq should be (Seq(13.0,15.0))
+    }
+
+    it should "support interpolation of Ranges with steps and granularity" in {
+        val result = DoubleType.interpolate(RangeValue("12","16", Some("2")), Some("2"))
+        result.toSeq should be (Seq(12.0,14.0))
+
+        val result1 = DoubleType.interpolate(RangeValue("13","17", Some("2")), Some("2"))
+        result1.toSeq should be (Seq(12.0,14.0))
+
+        val result2 = DoubleType.interpolate(RangeValue("13","17", Some("3")), Some("2"))
+        result2.toSeq should be (Seq(12.0,16.0))
+    }
+
     it should "provide the correct SQL type" in {
         val ftype = DoubleType
         ftype.sqlType should be ("double")

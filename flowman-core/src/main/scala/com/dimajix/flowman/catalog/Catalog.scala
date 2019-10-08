@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.DatabaseAlreadyExistsException
+import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
 import org.apache.spark.sql.catalyst.analysis.NoSuchPartitionException
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
@@ -34,6 +35,7 @@ import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
+import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.execution.command.PersistedView
 import org.slf4j.LoggerFactory
@@ -78,6 +80,24 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     }
 
     /**
+      * Creates a new database
+      */
+    def dropDatabase(database:String, ignoreIfNotExists:Boolean) : Unit = {
+        require(database != null && database.nonEmpty)
+
+        val exists = databaseExists(database)
+        if (ignoreIfNotExists && !exists) {
+            throw new NoSuchDatabaseException(database)
+        }
+
+        if (exists) {
+            logger.info(s"Dropping Hive database $database")
+            val cmd = DropDatabaseCommand(database, ignoreIfNotExists, true)
+            cmd.run(spark)
+        }
+    }
+
+    /**
       * Creates a new table from a detailed definition
       * @param table
       * @param ignoreIfExists
@@ -116,7 +136,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       */
     def tableExists(table:TableIdentifier) : Boolean = {
         require(table != null)
-        // "SHOW TABLES IN training LIKE 'weather_raw'"
+
         catalog.tableExists(table)
     }
 
@@ -127,7 +147,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       */
     def getTable(table:TableIdentifier) : CatalogTable = {
         require(table != null)
-        // "DESCRIBE FORMATTED training.weather_raw"
+
         catalog.getTableMetadata(table)
     }
 

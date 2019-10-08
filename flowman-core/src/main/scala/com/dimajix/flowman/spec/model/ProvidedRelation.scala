@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -33,6 +34,33 @@ class ProvidedRelation(
     override val schema:Schema,
     val table:String
 ) extends BaseRelation with SchemaRelation {
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides: Set[ResourceIdentifier] = Set()
+
+    /**
+      * Returns the list of all resources which will be required by this relation
+      *
+      * @return
+      */
+    override def requires: Set[ResourceIdentifier] = Set()
+
+
+    /**
+      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
+      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
+      * partition is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set(
+        ResourceIdentifier("provided", table)
+    )
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *
@@ -58,11 +86,11 @@ class ProvidedRelation(
       * @param partition
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
-        throw new UnsupportedOperationException("Writing into provided tables not supported")
+        throw new UnsupportedOperationException(s"Writing into provided table '$table' not supported in relation '$identifier'")
     }
 
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        throw new UnsupportedOperationException("Cleaning provided tables not supported")
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+        throw new UnsupportedOperationException(s"Truncating provided table '$table' not supported in relation '$identifier'")
     }
 
     /**
@@ -77,15 +105,13 @@ class ProvidedRelation(
     }
 
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
-        throw new UnsupportedOperationException("Creating provided tables not supported")
-    }
-    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
-        throw new UnsupportedOperationException("Destroying provided tables not supported")
-    }
-    override def migrate(executor: Executor): Unit = {
-        throw new UnsupportedOperationException("Migrating provided tables not supported")
+        if (!ifNotExists)
+            throw new UnsupportedOperationException(s"Cannot create provided table '$table' in relation '$identifier'")
     }
 
+    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {}
+
+    override def migrate(executor: Executor): Unit = {}
 }
 
 

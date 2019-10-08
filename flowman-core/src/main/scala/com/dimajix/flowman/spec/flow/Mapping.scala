@@ -32,6 +32,7 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
@@ -97,6 +98,13 @@ abstract class Mapping extends AbstractInstance {
       * @return
       */
     def cache : StorageLevel
+
+    /**
+      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
+      * which actually read from physical data.
+      * @return
+      */
+    def requires : Set[ResourceIdentifier]
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)

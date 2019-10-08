@@ -26,10 +26,11 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.task.DescribeMappingTask
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -42,10 +43,21 @@ class DescribeCommand extends ActionCommand {
     var mapping: String = ""
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = DescribeMappingTask(context, MappingOutputIdentifier(mapping), useSpark)
-
         Try {
-            task.execute(executor)
+            val identifier = MappingOutputIdentifier(this.mapping)
+
+            if (useSpark) {
+                val mapping = context.getMapping(identifier.mapping)
+                val df = executor.instantiate(mapping, identifier.output)
+                df.printSchema()
+            }
+            else {
+                val schema = MappingUtils.describe(context, identifier)
+                schema match {
+                    case Some(s) => s.printTree()
+                    case None => logger.error(s"Cannot infer schema of mapping output '${identifier}'")
+                }
+            }
         } match {
             case Success(_) =>
                 logger.info("Successfully finished describing mapping")

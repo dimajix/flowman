@@ -20,210 +20,126 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
 import org.slf4j.Logger
 
-import com.dimajix.common.IdentityHashMap
-import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.JobToken
-import com.dimajix.flowman.history.Status
-import com.dimajix.flowman.history.TargetInstance
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
-object AbstractRunner {
-    /**
-      * This class is a very thin wrapper around another executor, just to return a different runner
-      * @param _parent
-      * @param _runner
-      */
-    class JobExecutor(_parent:Executor, _runner:Runner) extends Executor {
-        override def session: Session = _parent.session
-        override def namespace : Namespace = _parent.namespace
-        override def root: Executor = _parent.root
-        override def runner: Runner = _runner
-        override def metrics: MetricSystem = _parent.metrics
-        override def fs: FileSystem = _parent.fs
-        override def spark: SparkSession = _parent.spark
-        override def sparkRunning: Boolean = _parent.sparkRunning
-        override def instantiate(mapping: Mapping) : Map[String,DataFrame] = _parent.instantiate(mapping)
-        override def instantiate(mapping: Mapping, output:String) : DataFrame = _parent.instantiate(mapping, output)
-        override def cleanup() : Unit = _parent.cleanup()
-        override protected[execution] def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _parent.cache
-    }
-}
-
-
-abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner {
-    import com.dimajix.flowman.execution.AbstractRunner.JobExecutor
-
+abstract class AbstractRunner extends Runner {
     protected val logger:Logger
 
     /**
-      * Executes a given job with the given executor. The runner will take care of
-      * logging and monitoring
-      *
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
       * @param executor
       * @param job
+      * @param phases
+      * @param args
+      * @param force
       * @return
       */
-    override def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : Status = {
-        require(executor != null)
+    override def executeJob(executor:Executor, job:Job, phases:Seq[Phase], args:Map[String,Any], force:Boolean=false) : Status = {
+        require(args != null)
+        require(phases != null)
         require(args != null)
 
-        val result = withWallTime(executor.metrics, job.metadata) {
-            val result = if (job.logged) {
-                runLogged(executor, job, args, force)
-            }
-            else {
-                runUnlogged(executor, job, args, force)
-            }
+        val jobExecutor = new JobExecutor(executor, job, args, force)
 
-            result
+        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
+        jobExecutor.arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
+        jobExecutor.environment.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job environment $k=$v")}
+
+        val result = Status.ofAll(phases){ phase =>
+            withMetrics(jobExecutor.context, job, phase, executor.metrics) {
+                executeJobPhase(jobExecutor, phase)
+            }
+        }
+
+        jobExecutor.cleanup()
+
+        result
+    }
+
+    private def executeJobPhase(executor:JobExecutor, phase:Phase) : Status = {
+        require(executor != null)
+        require(phase != null)
+
+        val result = withWallTime(executor.executor.metrics, executor.job.metadata, phase) {
+            // Create job instance for state server
+            val instance = executor.instance
+            val job = executor.job
+
+            // Get Token
+            val token = startJob(instance, phase)
+
+            val shutdownHook = new Thread() { override def run() : Unit = finishJob(token, Status.FAILED) }
+            withShutdownHook(shutdownHook) {
+                Try {
+                    executor.execute(phase) { (executor,target,force) =>
+                        executeTarget(executor, target, phase, Some(token), force)
+                    }
+                }
+                match {
+                    case Success(status @ Status.SUCCESS) =>
+                        logger.info(s"Successfully finished phase '$phase' of job '${job.identifier}'")
+                        finishJob(token, Status.SUCCESS)
+                        status
+                    case Success(status @ Status.FAILED) =>
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' failed")
+                        finishJob(token, Status.FAILED)
+                        status
+                    case Success(status @ Status.ABORTED) =>
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' aborted")
+                        finishJob(token, Status.ABORTED)
+                        status
+                    case Success(status @ Status.SKIPPED) =>
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' skipped")
+                        finishJob(token, Status.SKIPPED)
+                        status
+                    case Success(status @ Status.RUNNING) =>
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' already running")
+                        finishJob(token, Status.SKIPPED)
+                        status
+                    case Success(status) =>
+                        logger.error(s"Execution of phase '$phase' of job '${job.identifier}' in unknown state. Assuming failure")
+                        finishJob(token, Status.FAILED)
+                        status
+                    case Failure(e) =>
+                        logger.error(s"Caught exception while executing phase '$phase' of job '${job.identifier}'", e)
+                        finishJob(token, Status.FAILED)
+                        Status.FAILED
+                }
+            }
         }
 
         result
     }
 
     /**
-      * Runs the given job in a logged way. This means that appropriate methods will be called on job startJob, finish
-      * and failures
-      * @param executor
-      * @param job
-      * @param args
-      * @param force
-      * @return
-      */
-    private def runLogged(executor: Executor, job:Job, args:Map[String,String], force:Boolean) : Status = {
-        // Create job instance for state server
-        val instance = job.instance(args)
-
-        // Get Token
-        val present = checkJob(instance)
-        val token = startJob(instance, parentJob)
-
-        val shutdownHook = new Thread() { override def run() : Unit = finishJob(token, Status.FAILED) }
-        withShutdownHook(shutdownHook) {
-            // First checkJob if execution is really required
-            if (present && !force) {
-                logger.info(s"Job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")} is up to date - will be skipped")
-                finishJob(token, Status.SKIPPED)
-                Status.SKIPPED
-            }
-            else {
-                Try {
-                    logger.info(s"Running job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-                    val jobExecutor = new JobExecutor(executor, jobRunner(token))
-                    job.execute(jobExecutor, args, force)
-                }
-                match {
-                    case Success(status @ Status.SUCCESS) =>
-                        logger.info(s"Successfully finished execution of job '${job.identifier}'")
-                        finishJob(token, Status.SUCCESS)
-                        status
-                    case Success(status @ Status.FAILED) =>
-                        logger.error(s"Execution of job '${job.identifier}' failed")
-                        finishJob(token, Status.FAILED)
-                        status
-                    case Success(status @ Status.ABORTED) =>
-                        logger.error(s"Execution of job '${job.identifier}' aborted")
-                        finishJob(token, Status.ABORTED)
-                        status
-                    case Success(status @ Status.SKIPPED) =>
-                        logger.error(s"Execution of job '${job.identifier}' skipped")
-                        finishJob(token, Status.SKIPPED)
-                        status
-                    case Success(status @ Status.RUNNING) =>
-                        logger.error(s"Execution of job '${job.identifier}' already running")
-                        finishJob(token, Status.SKIPPED)
-                        status
-                    case Success(status) =>
-                        logger.error(s"Execution of job '${job.identifier}' in unknown state. Assuming failure")
-                        finishJob(token, Status.FAILED)
-                        status
-                    case Failure(e) =>
-                        logger.error(s"Caught exception while executing job '${job.identifier}'", e)
-                        finishJob(token, Status.FAILED)
-                        Status.FAILED
-                }
-            }
-        }
-    }
-
-    /**
-      * Runs a job without logging.
-      * @param executor
-      * @param job
-      * @param args
-      * @return
-      */
-    private def runUnlogged(executor: Executor, job:Job, args:Map[String,String], force:Boolean) : Status = {
-        Try {
-            logger.info(s"Running job '${job.identifier}' with arguments ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}")
-            job.execute(executor, args, force)
-        }
-        match {
-            case Success(status @ Status.SUCCESS) =>
-                logger.info(s"Successfully finished execution of job '${job.identifier}'")
-                status
-            case Success(status @ Status.FAILED) =>
-                logger.error(s"Execution of job '${job.identifier}' failed")
-                status
-            case Success(status @ Status.ABORTED) =>
-                logger.error(s"Execution of job '${job.identifier}' aborted")
-                status
-            case Success(status @ Status.SKIPPED) =>
-                logger.error(s"Execution of job '${job.identifier}' skipped")
-                status
-            case Success(status @ Status.RUNNING) =>
-                logger.error(s"Execution of job '${job.identifier}'already running")
-                status
-            case Success(status) =>
-                logger.error(s"Execution of job '${job.identifier}' in unknown state. Assuming failure")
-                status
-            case Failure(e) =>
-                logger.error(s"Caught exception while executing job '${job.identifier}'", e)
-                Status.FAILED
-        }
-    }
-
-    /**
-      * Builds a single target
-      */
-    override def build(executor: Executor, target: Target, logged:Boolean=true, force:Boolean=true): Status = {
-        withWallTime(executor.metrics, target.metadata) {
-            if (logged) {
-                buildLogged(executor, target, force)
-            }
-            else {
-                buildUnlogged(executor, target)
-            }
-        }
-    }
-
-    /**
-      * Runs the given job in a logged way. This means that appropriate methods will be called on job startJob, finish
-      * and failures
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
       * @param executor
       * @param target
+      * @param phase
       * @param force
       * @return
       */
-    private def buildLogged(executor: Executor, target:Target, force:Boolean) : Status = {
+    override def executeTarget(executor: Executor, target:Target, phase:Phase, job:Option[JobToken]=None, force:Boolean) : Status = {
         // Create job instance for state server
         val instance = target.instance
 
         // Get Token
-        val present = checkTarget(instance)
-        val token = startTarget(instance, parentJob)
+        val present = checkTarget(instance, phase)
+        val token = startTarget(instance, phase, job)
 
         val shutdownHook = new Thread() { override def run() : Unit = finishTarget(token, Status.FAILED) }
         withShutdownHook(shutdownHook) {
@@ -235,16 +151,18 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
             }
             else {
                 Try {
-                    logger.info(s"Building target '${target.identifier}'")
-                    target.build(executor)
+                    logger.info(s"Running phase '$phase' of target '${target.identifier}'")
+                    withWallTime(executor.metrics, target.metadata, phase) {
+                        target.execute(executor, phase)
+                    }
                 }
                 match {
                     case Success(_) =>
-                        logger.info(s"Successfully finished building target '${target.identifier}'")
+                        logger.info(s"Successfully finished phase '$phase' for target '${target.identifier}'")
                         finishTarget(token, Status.SUCCESS)
                         Status.SUCCESS
                     case Failure(e) =>
-                        logger.error(s"Caught exception while building target '${target.identifier}'", e)
+                        logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
                         finishTarget(token, Status.FAILED)
                         Status.FAILED
                 }
@@ -253,107 +171,12 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
     }
 
     /**
-      * Runs a job without logging.
-      * @param executor
-      * @param target
-      * @return
-      */
-    private def buildUnlogged(executor: Executor, target:Target) : Status = {
-        Try {
-            logger.info(s"Building target '${target.identifier}'")
-            target.build(executor)
-        }
-        match {
-            case Success(_) =>
-                logger.info(s"Successfully built target '${target.identifier}'")
-                Status.SUCCESS
-            case Failure(e) =>
-                logger.error(s"Caught exception while building target '${target.identifier}'", e)
-                Status.FAILED
-        }
-    }
-
-    /**
-      * Builds a single target
-      */
-    override def clean(executor: Executor, target: Target, logged:Boolean=true): Status = {
-        // Now run the job
-        if (logged) {
-            cleanLogged(executor, target)
-        }
-        else {
-            cleanUnlogged(executor, target)
-        }
-    }
-
-    /**
-      * Runs the given job in a logged way. This means that appropriate methods will be called on job startJob, finish
-      * and failures
-      * @param executor
-      * @param target
-      * @return
-      */
-    private def cleanLogged(executor: Executor, target:Target) : Status = {
-        // Create job instance for state server
-        val instance = target.instance
-
-        // Get Token
-        val token = startTarget(instance, parentJob)
-
-        val shutdownHook = new Thread() { override def run() : Unit = finishTarget(token, Status.FAILED) }
-        withShutdownHook(shutdownHook) {
-            Try {
-                target.clean(executor)
-            }
-            match {
-                case Success(_) =>
-                    logger.info(s"Successfully finished cleaning target '${target.identifier}'")
-                    finishTarget(token, Status.CLEANED)
-                    Status.CLEANED
-                case Failure(e) =>
-                    logger.error(s"Caught exception while cleaning target '${target.identifier}'", e)
-                    finishTarget(token, Status.FAILED)
-                    Status.FAILED
-            }
-        }
-    }
-
-    /**
-      * Runs a job without logging.
-      * @param executor
-      * @param target
-      * @return
-      */
-    private def cleanUnlogged(executor: Executor, target:Target) : Status = {
-        Try {
-            target.clean(executor)
-        }
-        match {
-            case Success(_) =>
-                logger.info(s"Successfully finished cleaning target '${target.identifier}'")
-                Status.SUCCESS
-            case Failure(e) =>
-                logger.error(s"Caught exception while cleaning target target '${target.identifier}'.", e)
-                Status.FAILED
-        }
-    }
-
-    protected def jobRunner(job:JobToken) : Runner
-
-        /**
-      * Performs some checks, if the run is required. If the method returns true, the Job should be run
-      * @param job
-      * @return
-      */
-    protected def checkJob(job:JobInstance) : Boolean
-
-    /**
       * Starts the run and returns a token, which can be anything
       *
-      * @param job
+      * @param batch
       * @return
       */
-    protected def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken
+    protected def startJob(batch:JobInstance, phase:Phase) : JobToken
 
     /**
       * Marks a run as a success
@@ -367,7 +190,7 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param target
       * @return
       */
-    protected def checkTarget(target:TargetInstance) : Boolean
+    protected def checkTarget(target:TargetInstance, phase:Phase) : Boolean
 
     /**
       * Starts the run and returns a token, which can be anything
@@ -375,7 +198,7 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
       * @param target
       * @return
       */
-    protected def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken
+    protected def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Marks a run as a success
@@ -391,4 +214,36 @@ abstract class AbstractRunner(parentJob:Option[JobToken] = None) extends Runner 
         result
     }
 
+    private def withMetrics(context:Context, job:Job, phase:Phase, metricSystem:MetricSystem)(fn: => Status) : Status = {
+        // Create new local context which only provides the current phase as an additional environment variable
+        val metricContext = ScopeContext.builder(context)
+            .withEnvironment("phase", phase.toString)
+            .build()
+
+        val metrics = job.metrics.map(_.instantiate(metricContext, metricSystem))
+
+        // Publish metrics
+        metrics.foreach { metrics =>
+            metrics.reset()
+            metricSystem.addBoard(metrics)
+        }
+
+        // Run original function
+        var result:Status = Status.UNKNOWN
+        try {
+            result = fn
+        }
+        finally {
+            // Unpublish metrics
+            metrics.foreach { metrics =>
+                // Do not publish metrics for skipped jobs
+                if (result != Status.SKIPPED) {
+                    metricSystem.commitBoard(metrics)
+                }
+                metricSystem.removeBoard(metrics)
+            }
+        }
+
+        result
+    }
 }

@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
@@ -67,6 +67,40 @@ class HiveTableRelation(
     val writer: String
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
+
+    /**
+      * Returns the list of all resources which will be created by this relation. The list will be specifically
+      * created for a specific partition, or for the full relation (when the partition is empty)
+      *
+      * @param partition
+      * @return
+      */
+    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
+        require(partitions != null)
+
+        requireValidPartitionKeys(partition)
+
+        val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
+        allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, database, p.toMap)).toSet
+    }
+
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Set[ResourceIdentifier] = Set(
+        ResourceIdentifier.ofHiveTable(table, database)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    override def requires : Set[ResourceIdentifier] = {
+        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+    }
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -123,21 +157,6 @@ class HiveTableRelation(
                 ifPartitionNotExists = false)
             val qe = spark.sessionState.executePlan(cmd)
             SQLExecution.withNewExecutionId(spark, qe)(qe.toRdd)
-
-            /*
-            // Create temp view
-            val tempViewName = "flowman_tmp_" + System.currentTimeMillis()
-            outputDf.createOrReplaceTempView(tempViewName)
-
-            // Insert data via SQL
-            val writeMode = if (mode.toLowerCase(Locale.ROOT) == "overwrite") "OVERWRITE" else "INTO"
-            val sql = s"INSERT $writeMode TABLE $tableIdentifier ${partitionSpec(partition)} FROM $tempViewName"
-            logger.info("Inserting records via SQL: " + sql)
-            spark.sql(sql).collect()
-
-            // Remove temp view again
-            spark.sessionState.catalog.dropTempView(tempViewName)
-            */
 
             // Finally add Hive partition
             val catalog = executor.catalog
@@ -199,7 +218,7 @@ class HiveTableRelation(
       * @param executor
       * @param partitions
       */
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
         require(partitions != null)
 
@@ -284,22 +303,6 @@ class HiveTableRelation(
         // Create table
         val catalog = executor.catalog
         catalog.createTable(catalogTable, ifNotExists)
-/*
-        val external = if (this.external) "EXTERNAL" else ""
-        val create = s"CREATE $external TABLE $tableIdentifier"
-        val columns = "(\n" + fields.map(field => "    " + field.name + " " + field.ftype.sqlType).mkString(",\n") + "\n)"
-        val comment = Option(this.description).map(d => s"\nCOMMENT '$d')").getOrElse("")
-        val partitionBy = Option(partitions).filter(_.nonEmpty).map(p => s"\nPARTITIONED BY (${p.map(p => p.name + " " + p.ftype.sqlType).mkString(", ")})").getOrElse("")
-        val rowFormat = Option(this.rowFormat).map(f => s"\nROW FORMAT SERDE '$f'").getOrElse("")
-        val storedAs = Option(format).map(f => s"\nSTORED AS $f").getOrElse(
-            Option(inputFormat).map(f => s"\nSTORED AS INPUTFORMAT '$f'" + Option(outputFormat).map(f => s"\nOUTPUTFORMAT '$f'").getOrElse("")).getOrElse("")
-        )
-        val location = Option(this.location).map(l => s"\nLOCATION '$l'").getOrElse("")
-        val props = if (_properties.nonEmpty) "\nTBLPROPERTIES(" + properties.map(kv => "\n    \"" + kv._1 + "\"=\"" + kv._2 + "\"").mkString(",") + "\n)" else ""
-        val stmt = create + columns + comment + partitionBy + rowFormat + storedAs + location + props
-        logger.info(s"Executing SQL statement:\n$stmt")
-        executor.spark.sql(stmt)
-*/
     }
 
     /**
@@ -310,15 +313,14 @@ class HiveTableRelation(
     override def destroy(executor: Executor, ifExists:Boolean): Unit = {
         require(executor != null)
 
-        logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
-
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
             catalog.dropTable(tableIdentifier)
         }
     }
 
-    override def migrate(executor: Executor): Unit = ???
+    override def migrate(executor: Executor): Unit = {}
 
     /**
       * Applies the specified schema and converts all field names to lowercase. This is required when directly
@@ -341,17 +343,6 @@ class HiveTableRelation(
 
     private def needsLowerCaseSchema : Boolean = {
         false
-    }
-
-    /**
-      * Creates a SQL PARTITION expression
-      * @param partition
-      * @return
-      */
-    private def partitionSpec(partition: Map[String, SingleValue]) : String = {
-        val schema = PartitionSchema(partitions)
-        val spec = schema.spec(partition)
-        HiveDialect.expr.partition(spec)
     }
 }
 

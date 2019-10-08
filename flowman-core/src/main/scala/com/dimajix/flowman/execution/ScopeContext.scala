@@ -31,12 +31,12 @@ import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.Mapping
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.spec.job.JobSpec
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.target.Target
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobSpec
 
 
 object ScopeContext {

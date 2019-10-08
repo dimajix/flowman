@@ -19,11 +19,11 @@ package com.dimajix.flowman.execution
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.history.StateStore
-import com.dimajix.flowman.history.JobInstance
 import com.dimajix.flowman.history.JobToken
-import com.dimajix.flowman.history.Status
-import com.dimajix.flowman.history.TargetInstance
+import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.spec.job.JobInstance
+import com.dimajix.flowman.spec.target.TargetInstance
 
 
 /**
@@ -32,31 +32,17 @@ import com.dimajix.flowman.history.TargetToken
   *
   * @param stateStore
   */
-class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None) extends AbstractRunner {
+class MonitoredRunner(stateStore: StateStore) extends AbstractRunner {
     override protected val logger = LoggerFactory.getLogger(classOf[MonitoredRunner])
-
-    override protected def jobRunner(job:JobToken) : Runner = {
-        new MonitoredRunner(stateStore, Some(job))
-    }
-
-    /**
-      * Performs some checkJob, if the run is required
-      *
-      * @param job
-      * @return
-      */
-    protected override def checkJob(job: JobInstance): Boolean = {
-        stateStore.checkJob(job)
-    }
 
     /**
       * Starts the run and returns a token, which can be anything
       *
-      * @param job
+      * @param batch
       * @return
       */
-    protected override def startJob(job: JobInstance, parent: Option[JobToken]): JobToken = {
-        stateStore.startJob(job, parent)
+    protected override def startJob(batch: JobInstance, phase: Phase): JobToken = {
+        stateStore.startJob(batch, phase)
     }
 
     /**
@@ -74,8 +60,23 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def checkTarget(target: TargetInstance): Boolean = {
-        stateStore.checkTarget(target)
+    protected override def checkTarget(target: TargetInstance, phase: Phase): Boolean = {
+        def checkState(state:TargetState) : Boolean = {
+            val lifecycle = Lifecycle.ofPhase(phase)
+            if (!lifecycle.contains(state.phase))
+                // Different lifecycle => target is not valid
+                false
+            else if (lifecycle.indexOf(state.phase) < lifecycle.indexOf(phase))
+                // Same lifecycle, but previous phase => target is not valid
+                false
+            else
+                state.status == Status.SUCCESS || state.status == Status.SKIPPED
+        }
+
+        stateStore.getTargetState(target) match {
+            case Some(state:TargetState) => checkState(state)
+            case _ => false
+        }
     }
 
     /**
@@ -84,8 +85,8 @@ class MonitoredRunner(stateStore: StateStore, parentJob:Option[JobToken] = None)
       * @param target
       * @return
       */
-    protected override def startTarget(target: TargetInstance, parent: Option[JobToken]): TargetToken = {
-        stateStore.startTarget(target, parent)
+    protected override def startTarget(target: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken = {
+        stateStore.startTarget(target, phase, parent)
     }
 
     /**

@@ -77,7 +77,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         relation.write(executor, df, Map(), "overwrite")
         outputPath.resolve("data.csv").toFile.exists() should be (true)
 
-        relation.clean(executor)
+        relation.truncate(executor)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         outputPath.toFile.exists() should be (true)
 

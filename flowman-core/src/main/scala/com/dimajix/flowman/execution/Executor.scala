@@ -32,17 +32,6 @@ import com.dimajix.flowman.spec.flow.Mapping
 abstract class Executor {
     def session: Session
 
-    def namespace : Namespace
-
-    def root: Executor
-
-    /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    def runner : Runner
-
     /**
       * Returns the MetricRegistry of this executor
       * @return

@@ -17,19 +17,43 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
+object CountTarget {
+    def apply(context: Context, mapping:MappingOutputIdentifier) : CountTarget = {
+        new CountTarget(
+            Target.Properties(context),
+            mapping
+        )
+    }
+}
 case class CountTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[CountTarget])
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Set()
+        }
+    }
 
     /**
       * Build the "count" target by printing the number of records onto the console
@@ -43,14 +67,6 @@ case class CountTarget(
         val dfIn = executor.instantiate(mapping, this.mapping.output)
         val count = dfIn.count()
         System.out.println(s"Mapping '$mapping' contains $count records")
-    }
-
-    /**
-      * Cleaning a count target is a no-op
-      * @param executor
-      */
-    override def clean(executor: Executor): Unit = {
-
     }
 }
 

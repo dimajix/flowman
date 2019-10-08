@@ -64,7 +64,7 @@ object AbstractContext {
                     rawConfig.update(key, (value, settingLevel.level))
                 }
                 else {
-                    logger.info(s"Ignoring changing final config variable $key=${currentValue._1} to '$value'")
+                    logger.info(s"Ignoring changing final config variable '$key=${currentValue._1}' to '$value'")
                 }
             }
 
@@ -74,7 +74,7 @@ object AbstractContext {
                     rawEnvironment.update(key, (value, settingLevel.level))
                 }
                 else {
-                    logger.info(s"Ignoring changing final environment variable $key=${currentValue._1} to '$value'")
+                    logger.info(s"Ignoring changing final environment variable '$key=${currentValue._1}' to '$value'")
                 }
             }
 
@@ -231,6 +231,7 @@ abstract class AbstractContext(
         val finalValue = value match {
             case s:String => RecursiveValue(templateEngine, templateContext, s)
             case v:Any => v
+            case null => null
         }
         templateContext.put(key, finalValue)
     }
@@ -336,7 +337,7 @@ abstract class AbstractContext(
     override def flowmanConf : FlowmanConf = root.flowmanConf
 
     /**
-      * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
+      * Returns a SparkConf object, which contains all Spark settings as specified in the configuration. The object
       * is not necessarily the one used by the Spark Session!
       * @return
       */

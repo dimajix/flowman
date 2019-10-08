@@ -1,6 +1,7 @@
 targets:
   measurements-dump:
     kind: console
-    enabled: false
-    input: measurements
+    input:
+      kind: mapping
+      mapping: measurements
     limit: 100

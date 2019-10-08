@@ -34,7 +34,7 @@ case object DurationType extends FieldType {
         if (granularity.nonEmpty) {
             val secs = Duration.parse(value).getSeconds
             val step = Duration.parse(granularity.get).getSeconds
-            Duration.ofSeconds(secs / step * step)
+            Duration.ofSeconds(roundDown(secs, step))
         }
         else {
             Duration.parse(value)
@@ -60,7 +60,7 @@ case object DurationType extends FieldType {
                     val range = startDuration.until(endDuration).by(Duration.parse(step.get).getSeconds)
                     if (granularity.nonEmpty) {
                         val mod = Duration.parse(granularity.get).getSeconds
-                        range.map(_ / mod * mod).distinct
+                        range.map(x => roundDown(x, mod)).distinct
                     }
                     else {
                         range
@@ -68,7 +68,7 @@ case object DurationType extends FieldType {
                 }
                 else if (granularity.nonEmpty) {
                     val mod = Duration.parse(granularity.get).getSeconds
-                    (startDuration / mod * mod).until(endDuration / mod * mod).by(mod)
+                    roundDown(startDuration, mod).until(roundDown(endDuration, mod)).by(mod)
                 }
                 else {
                     startDuration.until(endDuration)
@@ -76,5 +76,9 @@ case object DurationType extends FieldType {
                 result.map(x => Duration.ofSeconds(x))
             }
         }
+    }
+
+    private def roundDown(secs:Long, granularity:Long) : Long = {
+        secs / granularity * granularity
     }
 }

@@ -22,15 +22,56 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
 
+object RelationDataset {
+    def apply(context: Context, relation:RelationIdentifier, partition:Map[String,SingleValue]) : RelationDataset = {
+        new RelationDataset(
+            Dataset.Properties(context),
+            relation,
+            partition
+        )
+    }
+}
 case class RelationDataset(
     instanceProperties: Dataset.Properties,
     relation: RelationIdentifier,
     partition:Map[String,SingleValue]
 ) extends Dataset {
+    /**
+      * Returns a list of physical resources produced by writing to this dataset
+      * @return
+      */
+    override def resources : Set[ResourceIdentifier] = {
+        val instance = context.getRelation(relation)
+        instance.resources(partition)
+    }
+
+
+    /**
+      * Returns true if the data represented by this Dataset actually exists
+      *
+      * @param executor
+      * @return
+      */
+    override def exists(executor: Executor): Boolean = {
+        val instance = context.getRelation(relation)
+        instance.exists(executor)
+    }
+
+    /**
+      * Removes the data represented by this dataset, but leaves the underlying relation present
+      *
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+        val instance = context.getRelation(relation)
+        instance.truncate(executor, partition)
+    }
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

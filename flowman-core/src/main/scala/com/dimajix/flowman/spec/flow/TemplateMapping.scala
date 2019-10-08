@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
@@ -40,8 +41,20 @@ case class TemplateMapping(
         project.mappings(mapping.name).instantiate(templateContext)
     }
 
+
+    /**
+      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
+      * which actually read from physical data.
+      *
+      * @return
+      */
+    override def requires: Set[ResourceIdentifier] = {
+        mappingInstance.requires
+    }
+
     /**
       * Lists all outputs of this mapping. Every mapping should have one "main" output
+ *
       * @return
       */
     override def outputs : Seq[String] = {

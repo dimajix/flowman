@@ -1,8 +1,0 @@
-jobs:
-  dump-all:
-    description: "Dumps all outputs"
-    tasks:
-      - kind: build
-        description: Perform target operation on dumps
-        targets:
-          - measurements-dump

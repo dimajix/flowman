@@ -141,15 +141,14 @@ abstract class FieldType {
 
 
 abstract class NumericType[T : scala.math.Numeric] extends FieldType {
+    protected def parseRaw(value:String) : T
 }
 abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
     import scala.math.Integral.Implicits._
 
-    protected def parseRaw(value:String) : T
-
     override def parse(value:String, granularity:Option[String]=None) : T =  {
         if (granularity.nonEmpty)
-            (parseRaw(value) / parseRaw(granularity.get) * parseRaw(granularity.get))
+            roundDown(parseRaw(value), parseRaw(granularity.get))
         else
             parseRaw(value)
     }
@@ -162,7 +161,7 @@ abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
                     val range = NumericRange(parseRaw(start), parseRaw(end), parseRaw(step.get))
                     if (granularity.nonEmpty) {
                         val mod = parseRaw(granularity.get)
-                        range.map(_ / mod * mod).distinct
+                        range.map(x => roundDown(x, mod)).distinct
                     }
                     else {
                         range
@@ -170,7 +169,7 @@ abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
                 }
                 else if (granularity.nonEmpty) {
                     val mod = parseRaw(granularity.get)
-                    NumericRange(parseRaw(start) / mod * mod, parseRaw(end) / mod * mod, mod)
+                    NumericRange(roundDown(parseRaw(start), mod), roundDown(parseRaw(end), mod), mod)
                 }
                 else {
                     val num = implicitly[Integral[T]]
@@ -179,21 +178,25 @@ abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {
             }
         }
     }
+
+    private def roundDown(value:T, granularity:T) : T = {
+        value / granularity * granularity
+    }
+    private def roundUp(value:T, granularity:T) : T = {
+        val one = implicitly[Numeric[T]].one
+        (value + granularity - one) / granularity * granularity
+    }
 }
 
 abstract class FractionalType[T : Fractional] extends NumericType[T] {
     protected implicit def fractionalNum: Fractional[T]
     protected implicit def integralNum: Integral[T]
 
-    protected def parseRaw(value:String) : T
-
-    protected def roundToGranularity(value:T, granularity:T) : T
-
     override def parse(value:String, granularity:Option[String]=None) : T = {
         if (granularity.nonEmpty) {
             val step = parseRaw(granularity.get)
             val v = parseRaw(value)
-            roundToGranularity(v, step)
+            roundDown(v, step)
         }
         else {
             parseRaw(value)
@@ -209,7 +212,7 @@ abstract class FractionalType[T : Fractional] extends NumericType[T] {
                     val range = NumericRange(parseRaw(start), parseRaw(end), parseRaw(step.get))
                     if (granularity.nonEmpty) {
                         val mod = parseRaw(granularity.get)
-                        range.map(x => roundToGranularity(x, mod)).distinct
+                        range.map(x => roundDown(x, mod)).distinct
                     }
                     else {
                         range
@@ -218,13 +221,24 @@ abstract class FractionalType[T : Fractional] extends NumericType[T] {
                 else if (granularity.nonEmpty) {
                     val mod = parseRaw(granularity.get)
                     val range = NumericRange(parseRaw(start), parseRaw(end), mod)
-                    range.map(x => roundToGranularity(x, mod)).distinct
+                    range.map(x => roundDown(x, mod)).distinct
                 }
                 else {
                     NumericRange(parseRaw(start), parseRaw(end), fractionalNum.one)
                 }
             }
         }
+    }
+
+    private def roundDown(value:T, granularity:T) : T = {
+        val ops = integralNum
+
+        ops.times(ops.quot(value, granularity), granularity)
+    }
+    private def roundUp(value:T, granularity:T) : T = {
+        val one = fractionalNum.one
+        val ops = integralNum
+        ops.times(ops.quot(ops.minus(ops.plus(value, granularity), one), granularity), granularity)
     }
 }
 

@@ -27,12 +27,26 @@ import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.target.Target.Properties
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.StructType
 
 
 object Dataset {
+    object Properties {
+        def apply(context:Context, name:String="", kind:String="") : Properties = {
+            Properties(
+                context,
+                context.namespace,
+                context.project,
+                name,
+                kind,
+                Map()
+            )
+        }
+    }
     case class Properties(
         context:Context,
         namespace:Namespace,
@@ -51,6 +65,25 @@ abstract class Dataset extends AbstractInstance {
       * @return
       */
     override def category: String = "dataset"
+
+    /**
+      * Returns a list of physical resources produced by writing or reading to this dataset
+      * @return
+      */
+    def resources : Set[ResourceIdentifier]
+
+    /**
+      * Returns true if the data represented by this Dataset actually exists
+      * @param executor
+      * @return
+      */
+    def exists(executor: Executor) : Boolean
+
+    /**
+      * Removes the data represented by this dataset, but leaves the underlying relation present
+      * @param executor
+      */
+    def clean(executor: Executor) : Unit
 
     /**
       * Reads data from the relation, possibly from specific partitions

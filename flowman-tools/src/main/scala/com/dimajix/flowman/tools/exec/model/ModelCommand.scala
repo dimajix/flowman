@@ -35,7 +35,10 @@ class ModelCommand extends NestedCommand {
         new SubCommand(name="destroy",impl=classOf[DestroyCommand]),
         new SubCommand(name="export-schema",impl=classOf[ExportSchemaCommand]),
         new SubCommand(name="list",impl=classOf[ListCommand]),
-        new SubCommand(name="show",impl=classOf[ShowCommand])
+        new SubCommand(name="migrate",impl=classOf[MigrateCommand]),
+        new SubCommand(name="show",impl=classOf[ShowCommand]),
+        new SubCommand(name="truncate",impl=classOf[TruncateCommand]),
+        new SubCommand(name="verify",impl=classOf[VerifyCommand])
     ))
     override var command:Command = _
 

@@ -23,8 +23,6 @@ case object FloatType extends FractionalType[Float] {
     override protected def fractionalNum = scala.math.Numeric.FloatIsFractional
     override protected def integralNum = scala.math.Numeric.FloatAsIfIntegral
 
-    override protected def roundToGranularity(value:Float, granularity:Float) : Float = value - (value % granularity)
-
     protected def parseRaw(value:String) : Float = value.toFloat
 
     override def sparkType : DataType = org.apache.spark.sql.types.FloatType

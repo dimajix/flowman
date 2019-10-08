@@ -22,10 +22,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.job.JobSpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobSpec
 
 
 object Project {
@@ -158,8 +157,8 @@ object Project {
             project._mappings = project._mappings + (name -> mapping)
             this
         }
-        def setTargets(outputs:Map[String,TargetSpec]) : Builder = {
-            project._targets = outputs
+        def setTargets(targets:Map[String,TargetSpec]) : Builder = {
+            project._targets = targets
             this
         }
         def addTarget(name:String, target:TargetSpec) : Builder = {
@@ -183,10 +182,9 @@ object Project {
 
 
 class Project {
-    @JsonProperty(value="name", required = true) private var _name: String = _
+    @JsonProperty(value="name", required = true) private var _name: String = ""
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
-    @JsonProperty(value="version", required = false) private var _version: String = _
-    @JsonProperty(value="main", required = false) private var _main: Seq[String] = Seq("main")
+    @JsonProperty(value="version", required = false) private var _version: String = ""
     @JsonProperty(value="modules", required = true) private var _modules: Seq[String] = Seq()
 
     private var _basedir: File = File.empty
@@ -207,7 +205,6 @@ class Project {
     def modules : Seq[String] = _modules
     def filename : File = _filename
     def basedir : File = _basedir
-    def main : Seq[String] = _main
 
     def config : Map[String,String] = _config
     def environment : Map[String,String] = _environment

@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.NoSuchConnectionException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.task.Job
+import com.dimajix.flowman.spec.job.Job
 
 
 class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
@@ -50,9 +50,6 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
         val monitor = ObjectMapper.parse[HistorySpec](spec)
 
         val session = Session.builder()
-            .build()
-        val job = Job.builder(session.context)
-            .setName("job")
             .build()
 
         a[NoSuchConnectionException] shouldBe thrownBy(monitor.instantiate(session.context))

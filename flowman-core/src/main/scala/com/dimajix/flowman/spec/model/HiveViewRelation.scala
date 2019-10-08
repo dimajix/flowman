@@ -22,10 +22,14 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.SqlParser
 import com.dimajix.spark.sql.catalyst.SQLBuilder
 
 
@@ -39,37 +43,70 @@ class HiveViewRelation(
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
 
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = ???
+    /**
+      * Returns the list of all resources which will be created by this relation. The list will be specifically
+      * created for a specific partition, or for the full relation (when the partition is empty)
+      *
+      * @param partition
+      * @return
+      */
+    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = Set()
 
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = ???
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides : Set[ResourceIdentifier] = Set(
+        ResourceIdentifier.ofHiveTable(table, database)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    override def requires : Set[ResourceIdentifier] = {
+        val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+        val other = mapping.map(m => MappingUtils.requires(context, m.mapping))
+            .orElse(sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)).toSet))
+            .getOrElse(Set())
+        db ++ other
+    }
+
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+        throw new UnsupportedOperationException()
+    }
+
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    }
 
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        logger.info(s"Creating Hive view relation '$name' with VIEW name $tableIdentifier")
-
-      val select = getSelect(executor)
-      val catalog = executor.catalog
-      if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
-        catalog.createView(tableIdentifier, select, ifNotExists)
-      }
+        val select = getSelect(executor)
+        val catalog = executor.catalog
+        if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Creating Hive view relation '$name' with VIEW name $tableIdentifier")
+            catalog.createView(tableIdentifier, select, ifNotExists)
+        }
     }
 
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
-
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
             catalog.dropView(tableIdentifier)
         }
     }
 
     override def migrate(executor:Executor) : Unit = {
-        logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
-
         val catalog = executor.catalog
         if (catalog.tableExists(tableIdentifier)) {
-            catalog.dropView(tableIdentifier)
-            val select = getSelect(executor)
-            catalog.createView(tableIdentifier, select, false)
+            val newSelect = getSelect(executor)
+            val curSelect = catalog.getTable(tableIdentifier).viewText.get
+            if (newSelect != curSelect) {
+                logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
+                catalog.alterView(tableIdentifier, newSelect)
+            }
         }
     }
 

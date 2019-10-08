@@ -1,5 +1,7 @@
 package com.dimajix.flowman.config
 
+import java.io.File
+
 
 private object ConfigHelpers {
 
@@ -73,8 +75,8 @@ class TypedConfigBuilder[T](
 
     /** Creates a [[ConfigEntry]] that does not have a default value. */
     def createOptional: OptionalConfigEntry[T] = {
-        val entry = new OptionalConfigEntry[T](parent.key, converter,
-            stringConverter, parent._doc)
+        val entry = new OptionalConfigEntry[T](parent.key,
+            converter, stringConverter, parent._doc)
         parent._onCreate.foreach(_(entry))
         entry
     }
@@ -120,5 +122,9 @@ case class ConfigBuilder(key: String) {
 
     def stringConf: TypedConfigBuilder[String] = {
         new TypedConfigBuilder(this, v => v)
+    }
+
+    def fileConf: TypedConfigBuilder[File] = {
+        new TypedConfigBuilder(this, v => new File(v))
     }
 }

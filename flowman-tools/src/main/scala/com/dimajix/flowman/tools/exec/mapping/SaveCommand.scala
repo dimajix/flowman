@@ -28,10 +28,11 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.spec.task.SaveMappingTask
+import com.dimajix.flowman.spec.target.FileTarget
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -48,10 +49,10 @@ class SaveCommand extends ActionCommand {
     var location: String = ""
 
     override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
-        val task = SaveMappingTask(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
+        val task = FileTarget(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
         Try {
-            task.execute(executor)
+            task.execute(executor, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info(s"Successfully saved mapping '$mapping' to '$location'")

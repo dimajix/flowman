@@ -67,11 +67,17 @@ trait PartitionedRelation { this:Relation =>
         partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
     }
 
+    protected def requireAllPartitionKeys(map: Map[String,_]) : Unit = {
+        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
+        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
+        partitionKeys.foreach(key => if (!valueKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
+    }
+
     protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
         val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
         val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
-        require(valueKeys.forall(key => partitionKeys.contains(key)))
-        require(partitionKeys.forall(key => valueKeys.contains(key)))
+        valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
     }
 }
 

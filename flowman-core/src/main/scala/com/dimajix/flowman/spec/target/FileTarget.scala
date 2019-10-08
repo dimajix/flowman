@@ -18,14 +18,31 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
+object FileTarget {
+    def apply(context: Context, mapping:MappingOutputIdentifier, location:Path, format:String, options:Map[String,String]) = {
+        new FileTarget(
+            Target.Properties(context),
+            mapping,
+            location,
+            format,
+            options,
+            "overwrite",
+            16,
+            false
+        )
+    }
+}
 case class FileTarget(
     instanceProperties: Target.Properties,
     mapping:MappingOutputIdentifier,
@@ -37,6 +54,56 @@ case class FileTarget(
     rebalance: Boolean
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[FileTarget])
+
+    /**
+      * Returns an instance representing this target with the context
+      *
+      * @return
+      */
+    override def instance: TargetInstance = {
+        TargetInstance(
+            Option(namespace).map(_.name).getOrElse(""),
+            Option(project).map(_.name).getOrElse(""),
+            name,
+            Map("location" -> location.toString)
+        )
+    }
+
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+
+    /**
+      * Returns a list of physical resources produced by this target
+      *
+      * @return
+      */
+    override def provides(phase: Phase): Set[ResourceIdentifier] = Set(
+        ResourceIdentifier.ofFile(location)
+    )
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Set()
+        }
+    }
+
+    override def create(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        if (!fs.isDirectory(location)) {
+            logger.info(s"Creating directory '$location' for file relation '$identifier'")
+            fs.mkdirs(location)
+        }
+    }
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -63,16 +130,42 @@ case class FileTarget(
     }
 
     /**
+      * Performs a verification of the build step or possibly other checks.
+      *
+      * @param executor
+      */
+    override def verify(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val file = executor.fs.file(location)
+        if (!file.exists()) {
+            logger.error(s"Verification of target '$identifier' failed - location '$location' does not exist")
+            throw new VerificationFailedException(identifier)
+        }
+    }
+
+    /**
       * Cleans up a specific target
       *
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
         require(executor != null)
 
-        logger.info(s"Deleting directory '$location' of file relation")
+        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        if (fs.isDirectory(location)) {
+            logger.info(s"Truncating directory '$location' of file relation '$identifier'")
+            val files = fs.listStatus(location)
+            files.foreach(file => fs.delete(file.getPath, true))
+        }
+    }
+
+    override def destroy(executor: Executor) : Unit = {
+        require(executor != null)
+
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
         if (fs.exists(location)) {
+            logger.info(s"Deleting directory '$location' of file relation '$identifier'")
             fs.delete(location, true)
         }
     }

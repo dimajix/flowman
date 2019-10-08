@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.model.PartitionedRelation
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.types.ArrayValue
@@ -42,6 +43,16 @@ case class ReadRelationMapping(
     partitions:Map[String,FieldValue]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadRelationMapping])
+
+    /**
+     * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
+     * which actually read from physical data.
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+        rel.resources(partitions) ++ rel.requires ++ rel.provides
+    }
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame

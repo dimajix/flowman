@@ -20,6 +20,7 @@ import java.sql.Connection
 import java.sql.Statement
 import java.util.Locale
 import java.util.Properties
+
 import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -38,6 +39,7 @@ import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.spec.ConnectionIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
@@ -60,6 +62,43 @@ class JdbcRelation(
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
     def tableIdentifier : TableIdentifier = TableIdentifier(table.getOrElse(""), database)
+
+
+    /**
+      * Returns the list of all resources which will be created by this relation.
+      *
+      * @return
+      */
+    override def provides: Set[ResourceIdentifier] = Set(
+        ResourceIdentifier("jdbcTable", database.map(_ + ".").getOrElse("") + table)
+    )
+
+    /**
+      * Returns the list of all resources which will be required by this relation for creation.
+      *
+      * @return
+      */
+    override def requires: Set[ResourceIdentifier] = {
+        database.map(db => ResourceIdentifier("jdbcDatabase", db)).toSet
+    }
+
+    /**
+      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
+      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
+      * partition is empty)
+      *
+      * @param partitions
+      * @return
+      */
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
+        require(partitions != null)
+
+        requireValidPartitionKeys(partitions)
+
+        val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        val fqTable = database.map(_ + ".").getOrElse("") + table
+        allPartitions.map(p => ResourceIdentifier("jdbcTable", fqTable, p.mapValues(_.toString).toMap)).toSet
+    }
 
     /**
       * Reads the configured table from the source
@@ -166,7 +205,7 @@ class JdbcRelation(
       * @param executor
       * @param partitions
       */
-    override def clean(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
         require(partitions != null)
 

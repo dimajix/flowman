@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.log4j.PropertyConfigurator
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.plugin.PluginManager
@@ -94,12 +95,19 @@ class Tool {
         profiles:Seq[String] = Seq(),
         disableSpark:Boolean = false
     ) : Session = {
+        // Enrich Flowman configuration by directories
+        val allConfigs =
+            ToolConfig.homeDirectory.map(FlowmanConf.HOME_DIRECTORY.key -> _.toString).toMap ++
+                ToolConfig.confDirectory.map(FlowmanConf.CONF_DIRECTORY.key -> _.toString).toMap ++
+                ToolConfig.pluginDirectory.map(FlowmanConf.PLUGIN_DIRECTORY.key -> _.toString).toMap ++
+                additionalConfigs
+
         // Create Flowman Session, which also includes a Spark Session
         val builder = Session.builder()
             .withNamespace(namespace)
             .withProject(project.orNull)
             .withSparkName(name)
-            .withConfig(additionalConfigs)
+            .withConfig(allConfigs)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
             .withJars(plugins.jars.map(_.toString))

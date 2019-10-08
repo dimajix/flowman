@@ -16,9 +16,9 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.history.JobToken
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.history.Status
 
 
 /**
@@ -32,25 +32,22 @@ abstract class Runner {
       * run in the past. This behaviour can be overriden with the force flag
       * @param executor
       * @param job
+      * @param phases
       * @param args
       * @param force
       * @return
       */
-    def execute(executor: Executor, job:Job, args:Map[String,String] = Map(), force:Boolean=false) : Status
+    def executeJob(executor: Executor, job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), force:Boolean=false) : Status
 
     /**
-      * Builds a single target
+      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific job, because some information may indicate that the job has already been successfully
+      * run in the past. This behaviour can be overriden with the force flag
       * @param executor
-      * @param target the target to build
-      * @param logged boolean parameter specifying if the build process should be logged in the state database
+      * @param target
+      * @param phase
+      * @param force
+      * @return
       */
-    def build(executor: Executor, target:Target, logged:Boolean=true, force:Boolean=true) : Status
-
-    /**
-      * Cleans a single target
-      * @param executor
-      * @param target the target to clean
-      * @param logged boolean parameter specifying if the clean process should be logged in the state database
-      */
-    def clean(executor: Executor, target:Target, logged:Boolean=true) : Status
+    def executeTarget(executor: Executor, target:Target, phase:Phase, job:Option[JobToken]=None, force:Boolean=false) : Status
 }

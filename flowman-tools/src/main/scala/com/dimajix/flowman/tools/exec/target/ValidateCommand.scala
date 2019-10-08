@@ -36,26 +36,20 @@ class ValidateCommand extends ActionCommand {
 
     @Argument(usage = "specifies target to validate", metaVar = "<output>")
     var outputs: Array[String] = Array()
-    @Option(name = "-a", aliases=Array("--all"), usage = "validates all targets, even the disabled ones")
-    var all: Boolean = false
 
     def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
         logger.info("Validating targets {}", if (outputs != null) outputs.mkString(",") else "all")
 
         Try {
             val targets =
-                if (all)
-                    project.targets.keys.toSeq
-                        .map(t => context.getTarget(TargetIdentifier(t)))
-                else if (outputs.nonEmpty)
+                if (outputs.nonEmpty)
                     outputs.toSeq
                         .map(t => context.getTarget(TargetIdentifier(t)))
                 else
                     project.targets.keys.toSeq
                         .map(t => context.getTarget(TargetIdentifier(t)))
-                        .filter(_.enabled)
 
-            //val tables = targets.flatMap(_.dependencies).map(mid => context.getMapping(mid.mapping))
+            //val tables = targets.flatMap(_).map(mid => context.getMapping(mid.mapping))
             //tables.forall(table => executor.instantiate(table) != null)
             true
         } match {

@@ -1,0 +1,12 @@
+jobs:
+  dump-year:
+    description: "Dumps some records of a single year"
+    parameters:
+      - name: year
+        type: Integer
+        default: 2013
+    environment:
+      - start_year=${year}
+      - end_year=#set($r=$year+1)$r
+    targets:
+      - measurements-dump

@@ -30,10 +30,14 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 class TargetCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="subcommand",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
-        new SubCommand(name="clean",impl=classOf[CleanCommand]),
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="validate",impl=classOf[ValidateCommand]),
-        new SubCommand(name="build",impl=classOf[BuildCommand])
+        new SubCommand(name="create",impl=classOf[CreateCommand]),
+        new SubCommand(name="migrate",impl=classOf[MigrateCommand]),
+        new SubCommand(name="build",impl=classOf[BuildCommand]),
+        new SubCommand(name="verify",impl=classOf[VerifyCommand]),
+        new SubCommand(name="truncate",impl=classOf[TruncateCommand]),
+        new SubCommand(name="destroy",impl=classOf[DestroyCommand])
     ))
     override var command:Command = _
 

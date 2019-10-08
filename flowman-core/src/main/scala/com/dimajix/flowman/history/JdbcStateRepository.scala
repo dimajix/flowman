@@ -28,45 +28,49 @@ import scala.concurrent.duration.Duration
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
+
 
 private[history] object JdbcStateRepository {
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateRepository])
 
     case class JobRun(
                          id:Long,
-                         parent_id:Option[Long],
                          namespace: String,
                          project:String,
                          job:String,
+                         phase:String,
                          args_hash:String,
                          start_ts:Timestamp,
                          end_ts:Timestamp,
                          status:String
-                     ) extends JobToken
+    ) extends JobToken
 
     case class JobArgument(
-                              job_id:Long,
-                              name:String,
-                              value:String
-                          )
+        job_id:Long,
+        name:String,
+        value:String
+    )
 
     case class TargetRun(
-                            id:Long,
-                            job_id:Option[Long],
-                            namespace: String,
-                            project:String,
-                            target:String,
-                            partitions_hash:String,
-                            start_ts:Timestamp,
-                            end_ts:Timestamp,
-                            status:String
-                        ) extends TargetToken
+        id:Long,
+        job_id:Option[Long],
+        namespace: String,
+        project:String,
+        target:String,
+        phase:String,
+        partitions_hash:String,
+        start_ts:Timestamp,
+        end_ts:Timestamp,
+        status:String
+    ) extends TargetToken
 
     case class TargetPartition(
-                                  target_id:Long,
-                                  name:String,
-                                  value:String
-                              )
+        target_id:Long,
+        name:String,
+        value:String
+    )
 }
 
 
@@ -82,7 +86,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val driver = connection.driver
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
-        logger.info(s"Connecting via JDBC to $url with driver $driver")
+        logger.debug(s"Connecting via JDBC to $url with driver $driver")
         Database.forURL(url, user=user, password=password, prop=props, driver=driver)
     }
 
@@ -93,19 +97,18 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def parent_id = column[Option[Long]]("parent_id")
         def namespace = column[String]("namespace")
         def project = column[String]("project")
         def job = column[String]("job")
+        def phase = column[String]("phase")
         def args_hash = column[String]("args_hash")
         def start_ts = column[Timestamp]("start_ts")
         def end_ts = column[Timestamp]("end_ts")
         def status = column[String]("status")
 
-        def idx = index("JOB_RUN_IDX", (namespace, project, job, args_hash, status), unique = false)
-        def parent_job = foreignKey("JOB_RUN_PARENT_FK", parent_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def idx = index("JOB_RUN_IDX", (namespace, project, job, phase, args_hash, status), unique = false)
 
-        def * = (id, parent_id, namespace, project, job, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
+        def * = (id, namespace, project, job, phase, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
     }
 
     class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
@@ -114,26 +117,27 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def value = column[String]("value")
 
         def pk = primaryKey("JOB_ARGUMENT_PK", (job_id, name))
-        def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def batch = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
         def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
     }
 
     class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def job_id = column[Option[Long]]("job_id")
+        def batch_id = column[Option[Long]]("batch_id")
         def namespace = column[String]("namespace")
         def project = column[String]("project")
         def target = column[String]("target")
+        def phase = column[String]("phase")
         def partitions_hash = column[String]("partitions_hash")
         def start_ts = column[Timestamp]("start_ts")
         def end_ts = column[Timestamp]("end_ts")
         def status = column[String]("status")
 
-        def idx = index("TARGET_RUN_IDX", (namespace, project, target, partitions_hash, status), unique = false)
-        def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def idx = index("TARGET_RUN_IDX", (namespace, project, target, phase, partitions_hash, status), unique = false)
+        def batch = foreignKey("TARGET_RUN_BATCH_RUN_FK", batch_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (id, job_id, namespace, project, target, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
+        def * = (id, batch_id, namespace, project, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
     }
 
     class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
@@ -200,10 +204,10 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
         job.map(state => JobState(
             state.id.toString,
-            state.parent_id.map(_.toString),
             state.namespace,
             state.project,
             state.job,
+            Phase.ofString(state.phase),
             args,
             Status.ofString(state.status),
             Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
@@ -233,6 +237,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 case JobOrder.BY_DATETIME => t => t.start_ts
                 case JobOrder.BY_ID => t => t.id
                 case JobOrder.BY_NAME => t => t.job
+                case JobOrder.BY_PHASE => t => t.phase
                 case JobOrder.BY_STATUS => t => t.status
             }
         }
@@ -243,7 +248,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 slick.ast.Ordering(slick.ast.Ordering.Desc)
         }
 
-        val q = query.args.foldLeft(jobRuns.map(identity))((q,kv) => q
+        val q = query.args.foldLeft(jobRuns.map(identity))((q, kv) => q
                 .join(jobArgs).on(_.id === _.job_id)
                 .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
                 .map(xy => xy._1)
@@ -252,7 +257,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter(query.project)(_.project === _)
             .optionalFilter(query.name)(_.job === _)
             .optionalFilter(query.status)(_.status === _.toString)
-            .optionalFilter2(query.parentId)((row,value) => !row.parent_id.isEmpty && row.parent_id === value.toLong)
+            .optionalFilter(query.phase)(_.phase === _.toString)
             .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
             .drop(offset)
@@ -262,10 +267,10 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(q.result), Duration.Inf)
             .map(state => JobState(
                 state.id.toString,
-                state.parent_id.map(_.toString),
                 state.namespace,
                 state.project,
                 state.job,
+                Phase.ofString(state.phase),
                 Map(),
                 Status.ofString(state.status),
                 Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
@@ -303,6 +308,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             state.project,
             state.target,
             parts,
+            Phase.ofString(state.phase),
             Status.ofString(state.status),
             Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
             Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))

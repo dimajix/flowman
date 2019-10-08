@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.execution
 
-import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.JobIdentifier
+import com.dimajix.flowman.spec.ConnectionIdentifier
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -48,3 +48,6 @@ class NoSuchConnectionException(val connection:ConnectionIdentifier)
     extends ExecutionException(s"Connection '$connection' not found")
 class NoSuchJobException(val job:JobIdentifier)
     extends ExecutionException(s"Job '$job' not found")
+
+class VerificationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Verification of target $target failed", cause)

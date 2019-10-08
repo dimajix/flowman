@@ -69,6 +69,9 @@ class IntegerTypeTest extends FlatSpec with Matchers {
 
         val result2 = IntegerType.interpolate(RangeValue("13","17"), Some("2"))
         result2.toSeq should be (Seq(12,14))
+
+        val result3 = IntegerType.interpolate(RangeValue("17","18"), Some("2"))
+        result3.toSeq should be (Seq(16))
     }
 
     it should "support interpolation of Ranges with steps" in {
@@ -77,6 +80,9 @@ class IntegerTypeTest extends FlatSpec with Matchers {
 
         val result2 = IntegerType.interpolate(RangeValue("13","17", Some("2")))
         result2.toSeq should be (Seq(13,15))
+
+        val result3 = IntegerType.interpolate(RangeValue("17","19", Some("2")))
+        result3.toSeq should be (Seq(17))
     }
 
     it should "support interpolation of Ranges with steps and granularity" in {
@@ -88,6 +94,9 @@ class IntegerTypeTest extends FlatSpec with Matchers {
 
         val result2 = IntegerType.interpolate(RangeValue("13","17", Some("3")), Some("2"))
         result2.toSeq should be (Seq(12,16))
+
+        val result3 = IntegerType.interpolate(RangeValue("17","21", Some("3")), Some("2"))
+        result3.toSeq should be (Seq(16,20))
     }
 
     "A int type" should "be deserializable" in {

@@ -17,23 +17,73 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.dataset.Dataset
+import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.dataset.MappingDataset
+import com.dimajix.flowman.spec.dataset.RelationDataset
+import com.dimajix.flowman.types.SingleValue
 
 
+object ConsoleTarget {
+    def apply(context: Context, dataset: Dataset, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+        new ConsoleTarget(
+            Target.Properties(context),
+            dataset,
+            limit,
+            true,
+            columns
+        )
+    }
+    def apply(context: Context, output: MappingOutputIdentifier, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+        new ConsoleTarget(
+            Target.Properties(context),
+            MappingDataset(context, output),
+            limit,
+            true,
+            columns
+        )
+    }
+    def apply(context: Context, relation: RelationIdentifier, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+        new ConsoleTarget(
+            Target.Properties(context),
+            RelationDataset(context, relation, Map[String,SingleValue]()),
+            limit,
+            true,
+            columns
+        )
+    }
+}
 case class ConsoleTarget(
     instanceProperties:Target.Properties,
-    mapping:MappingOutputIdentifier,
+    dataset:Dataset,
     limit:Int,
     header:Boolean,
     columns:Seq[String]
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[ConsoleTarget])
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => dataset.resources
+            case _ => Set()
+        }
+    }
 
     /**
       * Build the "console" target by dumping records to stdout
@@ -43,8 +93,7 @@ case class ConsoleTarget(
     override def build(executor:Executor) : Unit = {
         require(executor != null)
 
-        val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        val dfIn = dataset.read(executor, None)
         val dfOut = if (columns.nonEmpty)
             dfIn.select(columns.map(c => dfIn(c)):_*)
         else
@@ -56,20 +105,12 @@ case class ConsoleTarget(
         }
         result.foreach(record => println(record.mkString(",")))
     }
-
-    /**
-      * Clean operation of dump essentially is a no-op
-      * @param executor
-      */
-    override def clean(executor: Executor): Unit = {
-
-    }
 }
 
 
 
 class ConsoleTargetSpec extends TargetSpec {
-    @JsonProperty(value="input", required=true) private var input:String = _
+    @JsonProperty(value="input", required=true) private var input:DatasetSpec = _
     @JsonProperty(value="limit", required=false) private var limit:String = "100"
     @JsonProperty(value="header", required=false) private var header:String = "true"
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq()
@@ -77,7 +118,7 @@ class ConsoleTargetSpec extends TargetSpec {
     override def instantiate(context: Context): Target = {
         ConsoleTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            input.instantiate(context),
             context.evaluate(limit).toInt,
             context.evaluate(header).toBoolean,
             columns.map(context.evaluate)

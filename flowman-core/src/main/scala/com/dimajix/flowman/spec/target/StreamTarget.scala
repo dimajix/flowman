@@ -20,14 +20,16 @@ import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.OutputMode
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.ResourceIdentifier
 
 
 case class StreamTarget(
@@ -39,6 +41,54 @@ case class StreamTarget(
     checkpointLocation:Path
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
+
+    /**
+      * Returns a list of physical resources produced by this target
+      * @return
+      */
+    override def provides(phase: Phase) : Set[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+
+        phase match {
+            case Phase.CREATE|Phase.DESTROY => rel.provides
+            case _ => Set()
+        }
+    }
+
+    /**
+      * Returns a list of physical resources required by this target
+      * @return
+      */
+    override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        phase match {
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case _ => Set()
+        }
+    }
+
+    /**
+      * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
+      * @param executor
+      */
+    override def create(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Creating relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.create(executor, true)
+    }
+
+    /**
+      * Tries to migrate the given target to the newest schema
+      * @param executor
+      */
+    override def migrate(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Migrating relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.migrate(executor)
+    }
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be
@@ -59,10 +109,22 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def truncate(executor: Executor): Unit = {
         logger.info(s"Cleaining streaming relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.clean(executor)
+        rel.truncate(executor)
+    }
+
+    /**
+      * Destroys both the logical relation and the physical data
+      * @param executor
+      */
+    override def destroy(executor: Executor) : Unit = {
+        require(executor != null)
+
+        logger.info(s"Destroying relation '$relation'")
+        val rel = context.getRelation(relation)
+        rel.destroy(executor, true)
     }
 }
 

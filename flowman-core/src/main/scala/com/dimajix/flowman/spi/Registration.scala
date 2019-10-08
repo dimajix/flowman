@@ -31,7 +31,6 @@ import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.annotation.StoreType
 import com.dimajix.flowman.annotation.TargetType
-import com.dimajix.flowman.annotation.TaskType
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
@@ -43,7 +42,6 @@ import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.storage.StorageSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.TaskSpec
 import com.dimajix.flowman.templating.Velocity
 
 
@@ -86,7 +84,6 @@ object Registration {
         (classOf[RelationType], (clazz:Class[_]) => RelationSpec.register(clazz.getAnnotation(classOf[RelationType]).kind(), clazz.asInstanceOf[Class[_ <: RelationSpec]])),
         (classOf[TargetType], (clazz:Class[_]) => TargetSpec.register(clazz.getAnnotation(classOf[TargetType]).kind(), clazz.asInstanceOf[Class[_ <: TargetSpec]])),
         (classOf[SchemaType], (clazz:Class[_]) => SchemaSpec.register(clazz.getAnnotation(classOf[SchemaType]).kind(), clazz.asInstanceOf[Class[_ <: SchemaSpec]])),
-        (classOf[TaskType], (clazz:Class[_]) => TaskSpec.register(clazz.getAnnotation(classOf[TaskType]).kind(), clazz.asInstanceOf[Class[_ <: TaskSpec]])),
         (classOf[HistoryType], (clazz:Class[_]) => HistorySpec.register(clazz.getAnnotation(classOf[HistoryType]).kind(), clazz.asInstanceOf[Class[_ <: HistorySpec]])),
         (classOf[CatalogType], (clazz:Class[_]) => CatalogSpec.register(clazz.getAnnotation(classOf[CatalogType]).kind(), clazz.asInstanceOf[Class[_ <: CatalogSpec]])),
         (classOf[StoreType], (clazz:Class[_]) => StorageSpec.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: StorageSpec]])),

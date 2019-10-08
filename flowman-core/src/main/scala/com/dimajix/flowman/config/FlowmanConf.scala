@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.config
 
+import java.io.File
+import java.nio.file.FileSystem
 import java.util.NoSuchElementException
 
 
@@ -35,7 +37,18 @@ object FlowmanConf {
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
         .createWithDefault(true)
-
+    val HOME_DIRECTORY = buildConf("flowman.home")
+        .doc("Home directory of Flowman")
+        .fileConf
+        .createOptional
+    val CONF_DIRECTORY = buildConf("flowman.conf.directory")
+        .doc("Directory containing Flowman configuration")
+        .fileConf
+        .createOptional
+    val PLUGIN_DIRECTORY = buildConf("flowman.plugin.directory")
+        .doc("Directory containing Flowman plugins")
+        .fileConf
+        .createOptional
 }
 
 
@@ -55,6 +68,10 @@ class FlowmanConf(settings:Map[String,String]) {
     }
 
     def sparkEnableHive: Boolean = getConf(SPARK_ENABLE_HIVE)
+    def homeDirectory: Option[File] = getConf(HOME_DIRECTORY)
+    def confDirectory: Option[File] = getConf(CONF_DIRECTORY)
+    def pluginDirectory: Option[File] = getConf(PLUGIN_DIRECTORY)
+
 
     /** Return the value of Spark SQL configuration property for the given key. */
     @throws[NoSuchElementException]("if key is not set")

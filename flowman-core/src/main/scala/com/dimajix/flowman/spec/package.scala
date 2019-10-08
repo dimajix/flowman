@@ -18,9 +18,9 @@ package com.dimajix.flowman
 
 import com.dimajix.flowman.spec.connection.Connection
 import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.model.Relation
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.task.Job
 
 
 package object spec {

@@ -23,9 +23,11 @@ import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
@@ -35,9 +37,46 @@ case class FileDataset(
     instanceProperties: Dataset.Properties,
     location:Path,
     format:String,
-    options:Map[String,String],
-    columns:Option[StructType]
+    options:Map[String,String] = Map(),
+    columns:Option[StructType] = None
 ) extends Dataset {
+    private val logger = LoggerFactory.getLogger(classOf[FileDataset])
+
+    /**
+      * Returns a list of physical resources produced by writing to this dataset
+      * @return
+      */
+    override def resources : Set[ResourceIdentifier] = Set(
+        ResourceIdentifier.ofFile(location)
+    )
+
+
+    /**
+      * Returns true if the data represented by this Dataset actually exists
+      *
+      * @param executor
+      * @return
+      */
+    override def exists(executor: Executor): Boolean = {
+        val file = executor.fs.file(location)
+        file.exists()
+    }
+
+    /**
+      * Removes the data represented by this dataset, but leaves the underlying relation present
+      *
+      * @param executor
+      */
+    override def clean(executor: Executor): Unit = {
+        require(executor != null)
+
+        val file = executor.fs.file(location)
+        if (file.exists()) {
+            logger.info(s"Deleting directory '$location' of dataset '$name")
+            file.delete( true)
+        }
+    }
+
     /**
       * Reads data from the relation, possibly from specific partitions
       *

@@ -44,7 +44,7 @@ object Converter {
         )
     }
 
-    def ofSpec(job:spec.task.Job) : Job = {
+    def ofSpec(job:spec.job.Job) : Job = {
         Job(
             job.name,
             job.description,

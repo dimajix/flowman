@@ -40,17 +40,10 @@ abstract class AbstractExecutor(_session:Session) extends Executor {
     override def fs : FileSystem = _session.fs
 
     /**
-      * Returns the appropriate runner
-      *
-      * @return
-      */
-    override def runner: Runner = _session.runner
-
-    /**
       * Returns the MetricRegistry of this executor
       * @return
       */
-    def metrics : MetricSystem = _session.metrics
+    override def metrics : MetricSystem = _session.metrics
 
     /**
       * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global

@@ -19,8 +19,7 @@ package com.dimajix.flowman.execution
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.history.Status
+import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.types.StringType
 
 
@@ -28,25 +27,25 @@ class SimpleRunnerTest extends FlatSpec with Matchers {
     "The SimpleRunner" should "work" in {
         val session = Session.builder()
             .build()
-        val job = Job.builder(session.context)
-            .setName("job")
+        val batch = Job.builder(session.context)
+            .setName("batch")
             .build()
 
         val runner = new SimpleRunner
-        runner.execute(session.executor, job) should be (Status.SUCCESS)
-        runner.execute(session.executor, job) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.SUCCESS)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
     it should "catch exceptions" in {
         val session = Session.builder()
             .build()
-        val job = Job.builder(session.context)
-            .setName("job")
+        val batch = Job.builder(session.context)
+            .setName("batch")
             .addParameter("p1", StringType)
             .build()
 
         val runner = new SimpleRunner
-        runner.execute(session.executor, job) should be (Status.FAILED)
-        runner.execute(session.executor, job) should be (Status.FAILED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.FAILED)
+        runner.executeJob(session.executor, batch, Seq(Phase.BUILD)) should be (Status.FAILED)
     }
 }

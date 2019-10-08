@@ -25,10 +25,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.flow.MappingSpec
+import com.dimajix.flowman.spec.job.JobSpec
 import com.dimajix.flowman.spec.model.RelationSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.task.Job
-import com.dimajix.flowman.spec.task.JobSpec
 
 
 object Module {
@@ -133,8 +132,8 @@ class Module {
         result._relations = _relations ++ other._relations
         result._mappings = _mappings ++ other._mappings
         result._targets = _targets ++ other._targets
-        result._profiles = _profiles ++ other._profiles
         result._jobs = _jobs ++ other._jobs
+        result._profiles = _profiles ++ other._profiles
         result
     }
 

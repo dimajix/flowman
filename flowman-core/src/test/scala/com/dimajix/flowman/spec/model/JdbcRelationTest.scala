@@ -129,7 +129,7 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.write(executor, df, mode="ignore")
         relation.read(executor, None).count() should be (4)
 
-        relation.clean(executor)
+        relation.truncate(executor)
         relation.read(executor, None).count() should be (0)
 
         relation.write(executor, df, mode="ignore")
@@ -251,7 +251,7 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.read(executor, None).count() should be (8)
 
         // Clean table
-        relation.clean(executor, Map("p_col" -> SingleValue("2")))
+        relation.truncate(executor, Map("p_col" -> SingleValue("2")))
         relation.read(executor, None).count() should be (6)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
@@ -259,7 +259,7 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Clean table
-        relation.clean(executor)
+        relation.truncate(executor)
         relation.read(executor, None).count() should be (0)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (0)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (0)

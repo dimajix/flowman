@@ -1,10 +1,14 @@
+targets:
+  upload:
+    kind: sftpUpload
+    description: Upload file via SFTP
+    connection: sftp
+    source: "${project.basedir}/data/example.csv"
+    target: "${sftp_target}/example.csv"
+    overwrite: true
+
+
 jobs:
   main:
     description: "Upload File via SFTP"
-    tasks:
-      - kind: sftpUpload
-        description: Upload file via SFTP
-        connection: sftp
-        source: "${project.basedir}/data/example.csv"
-        target: "${sftp_target}/example.csv"
-        overwrite: true
+    targets: upload

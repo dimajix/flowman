@@ -16,28 +16,26 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.spec.job.JobInstance
+import com.dimajix.flowman.spec.target.TargetInstance
+
 
 class NullStateStore extends StateStore {
     /**
-      * Returns the state of a job
-      * @param job
+      * Returns the state of a batch
+      * @param batch
       * @return
       */
-    def getJobState(job:JobInstance) : Option[JobState] = None
-
-    /**
-      * Performs some checkJob, if the run is required
-      * @param job
-      * @return
-      */
-    override def checkJob(job:JobInstance) : Boolean = false
+    override def getJobState(batch:JobInstance) : Option[JobState] = None
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param job
+      * @param batch
       * @return
       */
-    override def startJob(job:JobInstance, parent:Option[JobToken]) : JobToken = null
+    override def startJob(batch:JobInstance, phase:Phase) : JobToken = null
 
     /**
       * Sets the status of a job after it has been started
@@ -54,18 +52,11 @@ class NullStateStore extends StateStore {
     override def getTargetState(target:TargetInstance) : Option[TargetState] = None
 
     /**
-      * Performs some checkTarget, if the run is required
-      * @param target
-      * @return
-      */
-    override def checkTarget(target:TargetInstance) : Boolean = false
-
-    /**
       * Starts the run and returns a token, which can be anything
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, parent:Option[JobToken]) : TargetToken = null
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = null
 
     /**
       * Sets the status of a target after it has been started

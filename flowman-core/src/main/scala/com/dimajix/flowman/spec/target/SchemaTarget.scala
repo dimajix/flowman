@@ -33,8 +33,8 @@ import com.dimajix.flowman.types.SchemaWriter
 case class SchemaTarget(
     instanceProperties: Target.Properties,
     schema: Schema,
-    location:Path,
-    format:String
+    file: Path,
+    format: String
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[SchemaTarget])
 
@@ -51,7 +51,7 @@ case class SchemaTarget(
       */
     override def provides(phase:Phase) : Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => Set(ResourceIdentifier.ofFile(location))
+            case Phase.BUILD => Set(ResourceIdentifier.ofFile(file))
             case _ => Set()
         }
     }
@@ -65,9 +65,9 @@ case class SchemaTarget(
     override def build(executor: Executor): Unit = {
         require(executor != null)
 
-        logger.info(s"Writing schema to file '$location'")
-        val file = context.fs.file(location)
-        new SchemaWriter(schema.fields).format(format).save(file)
+        logger.info(s"Writing schema to file '$file'")
+        val outputFile = context.fs.file(file)
+        new SchemaWriter(schema.fields).format(format).save(outputFile)
     }
 
     /**
@@ -78,9 +78,9 @@ case class SchemaTarget(
     override def verify(executor: Executor): Unit = {
         require(executor != null)
 
-        val file = executor.fs.file(location)
-        if (!file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - local file '$location' does not exist")
+        val outputFile = executor.fs.file(file)
+        if (!outputFile.exists()) {
+            logger.error(s"Verification of target '$identifier' failed - schema file '$file' does not exist")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -93,9 +93,9 @@ case class SchemaTarget(
     override def truncate(executor: Executor): Unit = {
         require(executor != null)
 
-        val outputFile = executor.fs.file(location)
+        val outputFile = executor.fs.file(file)
         if (outputFile.exists()) {
-            logger.info(s"Removing schema file '$location'")
+            logger.info(s"Removing schema file '$file'")
             outputFile.delete()
         }
     }
@@ -115,14 +115,14 @@ case class SchemaTarget(
 
 class SchemaTargetSpec extends TargetSpec {
     @JsonProperty(value="schema", required=true) private var schema:SchemaSpec = _
-    @JsonProperty(value="location", required=true) private var location:String = _
+    @JsonProperty(value="file", required=true) private var file:String = _
     @JsonProperty(value="format", required=false) private var format:String = "avro"
 
     override def instantiate(context: Context): SchemaTarget = {
         SchemaTarget(
             instanceProperties(context),
             schema.instantiate(context),
-            new Path(context.evaluate(location)),
+            new Path(context.evaluate(file)),
             context.evaluate(format)
         )
     }

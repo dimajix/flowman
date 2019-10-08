@@ -317,12 +317,32 @@ object JobSpec extends TypeRegistry[JobSpec] {
             value
         }
     }
+
+    class Parameter extends Spec[Job.Parameter] {
+        @JsonProperty(value = "name") private var name: String = ""
+        @JsonProperty(value = "description") private var description: Option[String] = None
+        @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
+        @JsonProperty(value = "granularity", required = false) private var granularity: Option[String] = None
+        @JsonProperty(value = "default", required = false) private var default: Option[String] = None
+
+        override def instantiate(context: Context): Job.Parameter = {
+            require(context != null)
+
+            Job.Parameter(
+                context.evaluate(name),
+                ftype,
+                granularity.map(context.evaluate),
+                default.map(context.evaluate).map(d => ftype.parse(d)),
+                description.map(context.evaluate)
+            )
+        }
+    }
 }
 
 class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="extends") private var parents:Seq[String] = Seq()
     @JsonProperty(value="description") private var description:Option[String] = None
-    @JsonProperty(value="parameters") private var parameters:Seq[JobParameterSpec] = Seq()
+    @JsonProperty(value="parameters") private var parameters:Seq[JobSpec.Parameter] = Seq()
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="targets") private var targets: Seq[String] = Seq()
     @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
@@ -383,26 +403,6 @@ class JobSpec extends NamedSpec[Job] {
             context.project,
             name,
             context.evaluate(labels)
-        )
-    }
-}
-
-class JobParameterSpec extends Spec[Job.Parameter] {
-    @JsonProperty(value = "name") private var name: String = ""
-    @JsonProperty(value = "description") private var description: Option[String] = None
-    @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
-    @JsonProperty(value = "granularity", required = false) private var granularity: Option[String] = None
-    @JsonProperty(value = "default", required = false) private var default: Option[String] = None
-
-    override def instantiate(context: Context): Job.Parameter = {
-        require(context != null)
-
-        Job.Parameter(
-            context.evaluate(name),
-            ftype,
-            granularity.map(context.evaluate),
-            default.map(context.evaluate).map(d => ftype.parse(d)),
-            description.map(context.evaluate)
         )
     }
 }

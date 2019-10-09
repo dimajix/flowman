@@ -30,23 +30,29 @@ import com.dimajix.flowman.tools.Tool
 object Driver {
     def main(args: Array[String]) : Unit = {
         Try {
-            val options = new Arguments(args)
-
-            // Check if only help is requested
-            if (options.help) {
-                options.printHelp(System.out)
-                true
-            }
-
-            else {
-                val driver = new Driver(options)
-                driver.run()
-            }
+            run(args:_*)
         }
         match {
-            case Success (true) => System.exit(0)
-            case Success (false) => System.exit(1)
-            case Failure(exception) => System.err.println(exception.getMessage)
+            case Success (true) =>
+                System.exit(0)
+            case Success (false) =>
+                System.exit(1)
+            case Failure(exception) =>
+                System.err.println(exception.getMessage)
+                System.exit(1)
+        }
+    }
+
+    def run(args: String*) : Boolean = {
+        val options = new Arguments(args.toArray)
+        // Check if only help is requested
+        if (options.help) {
+            options.printHelp(System.out)
+            true
+        }
+        else {
+            val driver = new Driver(options)
+            driver.run()
         }
     }
 }

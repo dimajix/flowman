@@ -108,4 +108,27 @@ class SessionTest extends FlatSpec with Matchers {
         session.spark.conf.get("spark.lala") should be ("lolo")
         newSession.spark.conf.get("spark.lala") should be ("lolo")
     }
+
+    it should "use the Spark application name from the session builder" in {
+        val session = Session.builder()
+            .withSparkName("My Spark App")
+            .build()
+
+        val newSession = session.newSession(null)
+
+        session.spark.conf.get("spark.app.name") should be ("My Spark App")
+        newSession.spark.conf.get("spark.app.name") should be ("My Spark App")
+    }
+
+    it should "use the Spark application name from the configuration" in {
+        val session = Session.builder()
+            .withConfig(Map("spark.app.name" -> "My Spark App"))
+            .withSparkName("To be overriden")
+            .build()
+
+        val newSession = session.newSession(null)
+
+        session.spark.conf.get("spark.app.name") should be ("My Spark App")
+        newSession.spark.conf.get("spark.app.name") should be ("My Spark App")
+    }
 }

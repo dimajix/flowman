@@ -1,3 +1,6 @@
+# Version 0.9.1
+* Fix wrong Spark application name if configured via Spark config
+
 # Version 0.9.0
 * Complete overhaul of job execution. No tasks any more
 * Improve Swagger schema support

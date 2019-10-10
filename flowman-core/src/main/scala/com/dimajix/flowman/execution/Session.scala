@@ -38,8 +38,8 @@ import com.dimajix.flowman.storage.Store
 
 class SessionBuilder {
     private var _sparkSession: SparkConf => SparkSession = (_ => null)
-    private var _sparkMaster = Option(System.getProperty("spark.master")).filter(_.nonEmpty).getOrElse("local[*]")
-    private var _sparkName = "Flowman"
+    private var _sparkMaster:Option[String] = None
+    private var _sparkName:Option[String] = None
     private var _config = Map[String,String]()
     private var _environment = Map[String,String]()
     private var _profiles = Set[String]()
@@ -64,12 +64,12 @@ class SessionBuilder {
     }
     def withSparkName(name:String) : SessionBuilder = {
         require(name != null)
-        _sparkName = name
+        _sparkName = Some(name)
         this
     }
     def withSparkMaster(master:String) : SessionBuilder = {
         require(master != null)
-        _sparkMaster = master
+        _sparkMaster = Some(master)
         this
     }
 
@@ -213,8 +213,8 @@ class Session private[execution](
     _namespace:Namespace,
     _project:Project,
     _sparkSession:SparkConf => SparkSession,
-    _sparkMaster:String,
-    _sparkName:String,
+    _sparkMaster:Option[String],
+    _sparkName:Option[String],
     _config:Map[String,String],
     _environment: Map[String,String],
     _profiles:Set[String],
@@ -233,6 +233,23 @@ class Session private[execution](
     private def sparkJars : Seq[String] = {
         _jars.toSeq
     }
+    private def sparkMaster : String = {
+        _sparkMaster
+            .filter(_.nonEmpty)
+            .orElse(Option(System.getProperty("spark.master")))
+            .filter(_.nonEmpty)
+            .getOrElse("local[*]")
+    }
+    private def sparkName : String = {
+        if (sparkConf.contains("spark.app.name")) {
+            sparkConf.get("spark.app.name")
+        }
+        else {
+            _sparkName
+                .filter(_.nonEmpty)
+                .getOrElse("Flowman")
+        }
+    }
 
     /**
       * Creates a new Spark Session for this DataFlow session
@@ -241,8 +258,8 @@ class Session private[execution](
       */
     private def createOrReuseSession() : SparkSession = {
         val sparkConf = this.sparkConf
-            .setMaster(_sparkMaster)
-            .setAppName(_sparkName)
+            .setMaster(sparkMaster)
+            .setAppName(sparkName)
 
         Option(_sparkSession)
             .flatMap(builder => Option(builder(sparkConf)))
@@ -481,9 +498,9 @@ class Session private[execution](
             _ => spark.newSession(),
             _sparkMaster,
             _sparkName,
-            _config:Map[String,String],
-            _environment: Map[String,String],
-            _profiles:Set[String],
+            _config,
+            _environment,
+            _profiles,
             Set()
         )
     }

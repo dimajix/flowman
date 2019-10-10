@@ -20,7 +20,7 @@ import org.apache.spark.sql.SparkSession
 import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 
 trait MockedSparkSession extends BeforeAndAfterAll with MockitoSugar { this:Suite =>

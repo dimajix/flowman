@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.tools.exec
+
+import org.kohsuke.args4j.CmdLineException
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
 
 
-class CustomTaskProvider {
+class DriverTest extends FlatSpec with Matchers {
+    "The Driver" should "fail with an exception on wrong arguments" in {
+        Driver.run() should be (true)
 
+        a[CmdLineException] shouldBe thrownBy(Driver.run("no_such_command"))
+        a[CmdLineException] shouldBe thrownBy(Driver.run("project", "run"))
+    }
 }

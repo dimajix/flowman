@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -197,8 +197,8 @@
         </dependency>
 
         <dependency>
-            <groupId>io.github.lukehutch</groupId>
-            <artifactId>fast-classpath-scanner</artifactId>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
         </dependency>
 
         <dependency>
@@ -219,11 +219,6 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.damnhandy</groupId>
-            <artifactId>handy-uri-templates</artifactId>
         </dependency>
 
         <dependency>

@@ -17,9 +17,10 @@
 package com.dimajix.flowman.spi
 
 import scala.collection.mutable
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
-import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMatchProcessor
+import io.github.classgraph.ClassGraph
 
 import com.dimajix.flowman.annotation.CatalogType
 import com.dimajix.flowman.annotation.ConnectionType
@@ -108,19 +109,18 @@ object Registration {
     def load(cl:ClassLoader): Unit = {
         synchronized {
             if (!_loaders.contains(cl)) {
-                val scanner = new FastClasspathScanner(IGNORED_PACKAGES.map("-" + _):_*)
+                val scanResult = new ClassGraph()
+                    .blacklistPackages(IGNORED_PACKAGES.map("-" + _):_*)
+                    .enableAnnotationInfo()
+                    .enableClassInfo()
                     .overrideClassLoaders(cl)
-
-                _types.foldLeft(scanner)((scanner, typ) =>
-                        scanner.matchClassesWithAnnotation(typ._1,
-                            new ClassAnnotationMatchProcessor {
-                                override def processMatch(aClass: Class[_]): Unit = {
-                                    typ._2(aClass)
-                                }
-                            }
-                        )
-                    )
                     .scan()
+
+                _types.foreach(typ =>
+                    scanResult.getClassesWithAnnotation(typ._1.getName)
+                        .toSeq
+                        .foreach(ci => typ._2(ci.loadClass()))
+                )
 
                 _loaders.add(cl)
             }

@@ -38,7 +38,7 @@ class Application extends Tool {
         setupLogging(None)
 
         val session = createSession(
-            name = "flowman-server",
+            sparkName = "flowman-server",
             disableSpark = true
         )
 

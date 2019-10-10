@@ -88,12 +88,12 @@ class Tool {
     }
 
     def createSession(
-        name:String,
-        project:Option[Project]=None,
-        additionalEnvironment:Map[String,String] = Map(),
-        additionalConfigs:Map[String,String] = Map(),
-        profiles:Seq[String] = Seq(),
-        disableSpark:Boolean = false
+         sparkName:String,
+         project:Option[Project]=None,
+         additionalEnvironment:Map[String,String] = Map(),
+         additionalConfigs:Map[String,String] = Map(),
+         profiles:Seq[String] = Seq(),
+         disableSpark:Boolean = false
     ) : Session = {
         // Enrich Flowman configuration by directories
         val allConfigs =
@@ -106,7 +106,7 @@ class Tool {
         val builder = Session.builder()
             .withNamespace(namespace)
             .withProject(project.orNull)
-            .withSparkName(name)
+            .withSparkName(sparkName)
             .withConfig(allConfigs)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)

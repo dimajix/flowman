@@ -61,6 +61,10 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
               |          type: string
               |        - name: int_col
               |          type: integer
+              |        - name: char_col
+              |          type: char(10)
+              |        - name: varchar_col
+              |          type: varchar(10)
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
@@ -72,6 +76,12 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
         relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
         relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
+        relation.fields should be(
+            Field("str_col", ftypes.StringType) ::
+            Field("int_col", ftypes.IntegerType) ::
+            Field("char_col", ftypes.CharType(10)) ::
+            Field("varchar_col", ftypes.VarcharType(10)) ::
+            Nil)
 
         relation.create(executor)
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (true)
@@ -84,6 +94,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
             StructField("int_col", IntegerType) ::
+            StructField("char_col", StringType) ::
+            StructField("varchar_col", StringType) ::
             Nil
         ))
         table.partitionColumnNames should be (Seq())

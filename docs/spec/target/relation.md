@@ -1,11 +1,11 @@
 ---
 layout: page
-title: Flowman Relation Output
-permalink: /spec/output/relation.html
+title: Flowman Relation Target
+permalink: /spec/target/relation.html
 ---
-# Relation Output
+# Relation Target
 
-The relation output operation probably is the most important and common output operation. It 
+The relation target operation probably is the most important and common output operation. It 
 writes the result of a mapping to a relation. The relation then is responsible for specifying
 the physical location or connection, the format and so on.
 

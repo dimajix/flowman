@@ -31,7 +31,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 class ProvidedRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     val table:String
 ) extends BaseRelation with SchemaRelation {
     /**
@@ -123,7 +123,7 @@ class ProvidedRelationSpec extends RelationSpec with SchemaRelationSpec {
     override def instantiate(context: Context): Relation = {
         new ProvidedRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             context.evaluate(table)
         )
     }

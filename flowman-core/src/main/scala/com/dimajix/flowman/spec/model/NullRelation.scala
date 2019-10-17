@@ -32,7 +32,7 @@ import com.dimajix.flowman.types.SingleValue
 
 class NullRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema = null,
+    override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
@@ -76,7 +76,7 @@ class NullRelation(
             throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
 
         // Add partitions values as columns
-        val fullSchema = Option(inputSchema).map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
+        val fullSchema = inputSchema.map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
         val readSchema = schema.orElse(fullSchema).get
         val rdd = executor.spark.sparkContext.emptyRDD[Row]
         executor.spark.createDataFrame(rdd, readSchema)
@@ -127,7 +127,7 @@ class NullRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
     override def instantiate(context: Context): NullRelation = {
         new NullRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context))
         )
     }

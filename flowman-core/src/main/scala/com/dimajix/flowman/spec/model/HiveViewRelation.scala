@@ -78,6 +78,11 @@ class HiveViewRelation(
         throw new UnsupportedOperationException()
     }
 
+    /**
+      * Truncating a view actually is non-op
+      * @param executor
+      * @param partitions
+      */
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
     }
 

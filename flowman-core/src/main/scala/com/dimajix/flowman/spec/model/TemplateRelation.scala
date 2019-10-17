@@ -77,7 +77,7 @@ class TemplateRelation(
       * Returns the schema of the relation
       * @return
       */
-    override def schema : Schema = relationInstance.schema
+    override def schema : Option[Schema] = relationInstance.schema
 
     /**
       * Reads data from the relation, possibly from specific partitions

@@ -19,7 +19,7 @@ package com.dimajix.flowman.util
 import java.util.Locale
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
@@ -36,6 +36,8 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
+
+import com.dimajix.flowman.types.FieldType
 
 
 object SchemaUtils {
@@ -64,14 +66,28 @@ object SchemaUtils {
     }
 
     /**
-      * Helper method for applying an optional schema, as specified by the SourceTable
+      * Helper method for applying an optional schema to a given DataFrame. This will apply the types and order
+      * of the target schema. Missing fields will be imputed by NULL values.
       *
       * @param df
       * @param schema
       * @return
       */
     def applySchema(df:DataFrame, schema:Option[StructType]) : DataFrame = {
-        schema.map(schema => df.select(schema.map(field => col(field.name).cast(field.dataType)):_*)).getOrElse(df)
+        require(df != null)
+        require(schema != null)
+
+        val dfFieldsByName = df.schema.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
+        schema
+            .map { schema =>
+                val columns = schema.map { field =>
+                    dfFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
+                        .map(_ => df(field.name).cast(field.dataType).as(field.name, field.metadata))
+                        .getOrElse(lit(null).cast(field.dataType).as(field.name, field.metadata))
+                }
+                df.select(columns: _*)
+            }
+            .getOrElse(df)
     }
 
     /**
@@ -103,15 +119,31 @@ object SchemaUtils {
         findStruct(struct, segments.head, segments.tail)
     }
 
+    /**
+      * Merges two fields into a common field
+      * @param newField
+      * @param existingField
+      * @return
+      */
+    def merge(newField:StructField, existingField:StructField) : StructField = {
+        val nullable = existingField.nullable || existingField.dataType == NullType ||
+            newField.nullable || newField.dataType == NullType
+        val dataType = coerce(existingField.dataType, newField.dataType)
+        val result = existingField.copy(dataType=dataType, nullable=nullable)
+
+        val comment = existingField.getComment().orElse(newField.getComment())
+        comment.map(result.withComment).getOrElse(result)
+    }
+
+    /**
+      * Create a UNION of several schemas
+      * @param schemas
+      * @return
+      */
     def union(schemas:Seq[StructType]) : StructType = {
         def commonField(newField:StructField, fields:Map[String,StructField]) = {
             val existingField = fields.getOrElse(newField.name.toLowerCase(Locale.ROOT), newField)
-            val nullable = existingField.nullable || newField.nullable
-            val dataType = if (existingField.dataType == NullType) newField.dataType else existingField.dataType
-            val result = existingField.copy(dataType=dataType, nullable=nullable)
-
-            val comment = existingField.getComment().orElse(newField.getComment())
-            comment.map(result.withComment).getOrElse(result)
+            merge(newField, existingField)
         }
         val allColumns = schemas.foldLeft(Map[String,StructField]())((columns, schema) => {
             val tableColumns = schema
@@ -122,6 +154,55 @@ object SchemaUtils {
 
         // Create a common schema from collected columns
         StructType(allColumns.values.toSeq.sortBy(_.name.toLowerCase(Locale.ROOT)))
+    }
+
+    /**
+      * Performs type coercion, i.e. find the tightest common data type that can be used to contain values of two
+      * other incoming types
+      * @param left
+      * @param right
+      * @return
+      */
+    def coerce(left:DataType, right:DataType) : DataType = {
+        com.dimajix.flowman.types.SchemaUtils.coerce(FieldType.of(left), FieldType.of(right)).catalogType
+    }
+
+    /**
+      * Verify is a given source field is compatible with a given target field, i.e. if a safe conversion is
+      * possible from a source field to a target field
+      * @param sourceField
+      * @param targetField
+      * @return
+      */
+    def isCompatible(sourceField:StructField, targetField:StructField) : Boolean = {
+        if (sourceField.name.toLowerCase(Locale.ROOT) != targetField.name.toLowerCase(Locale.ROOT)) {
+            false
+        }
+        else {
+            val sourceNullable = sourceField.nullable || sourceField.dataType == NullType
+            val targetNullable = targetField.nullable || targetField.dataType == NullType
+            if (!sourceNullable && targetNullable) {
+                false
+            }
+            else {
+                val coercedType = coerce(sourceField.dataType, targetField.dataType)
+                coercedType == sourceField.dataType
+            }
+        }
+    }
+
+    /**
+      * Verify if a given source schema can be safely cast to a target schema.
+      * @param sourceSchema
+      * @param targetSchema
+      * @return
+      */
+    def isCompatible(sourceSchema:StructType, targetSchema:StructType) : Boolean = {
+        val targetFieldsByName = targetSchema.fields.map(field => (field.name.toLowerCase(Locale.ROOT), field)).toMap
+        sourceSchema.forall(field =>
+            targetFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
+                .exists(actual => isCompatible(actual, field))
+        )
     }
 
     /**

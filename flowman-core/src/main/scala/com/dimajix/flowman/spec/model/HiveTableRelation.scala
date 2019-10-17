@@ -52,7 +52,7 @@ object HiveTableRelation {
 
 class HiveTableRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     override val database: Option[String],
     override val table: String,
@@ -140,7 +140,7 @@ class HiveTableRelation(
         require(mode != null)
 
         val partitionNames = partitions.map(_.name)
-        logger.info(s"Writing to Hive table $tableIdentifier with partitions ${partitionNames.mkString(",")} using Hive insert")
+        logger.info(s"Writing to Hive table '$tableIdentifier' with partitions ${partitionNames.mkString(",")} using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(df)
@@ -186,7 +186,7 @@ class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing to Hive table $tableIdentifier with partition values $partitionSpec using direct mode")
+        logger.info(s"Writing to Hive table '$tableIdentifier' with partition values $partitionSpec using direct mode")
 
         if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -222,9 +222,10 @@ class HiveTableRelation(
         require(executor != null)
         require(partitions != null)
 
-        logger.info(s"Cleaning Hive relation '$name' with table $tableIdentifier")
+        logger.info(s"Cleaning Hive table '$tableIdentifier' for relatio '$identifier'")
 
         val catalog = executor.catalog
+        // When no partitions are specified, this implies that the whole table is to be truncated
         if (partitions.nonEmpty) {
             val partitionSchema = PartitionSchema(this.partitions)
             partitionSchema.interpolate(partitions).foreach(spec =>
@@ -244,65 +245,73 @@ class HiveTableRelation(
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)
 
-        val spark = executor.spark
-        logger.info(s"Creating Hive relation '$name' with table $tableIdentifier")
+        if (!ifNotExists || !exists(executor)) {
+            logger.info(s"Creating Hive table '$tableIdentifier' for relation '$identifier'")
 
-        // Create and save Avro schema
-        import HiveTableRelation._
-        if (properties.contains(AVRO_SCHEMA_URL)) {
-            val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
-            logger.info(s"Storing Avro schema at location $avroSchemaUrl")
-            new SchemaWriter(fields)
-                .format("avro")
-                .save(executor.fs.file(avroSchemaUrl))
-        }
-
-        val defaultStorage = HiveSerDe.getDefaultStorage(spark.sessionState.conf)
-        val fileStorage : CatalogStorageFormat = if (format != null && format.nonEmpty) {
-            HiveSerDe.sourceToSerDe(format) match {
-                case Some(s) =>
-                    CatalogStorageFormat.empty.copy(
-                        inputFormat = s.inputFormat,
-                        outputFormat = s.outputFormat,
-                        serde = s.serde)
-                case None =>
-                    throw new IllegalArgumentException(s"File format '$format' not supported")
+            // Create and save Avro schema
+            import HiveTableRelation._
+            if (properties.contains(AVRO_SCHEMA_URL)) {
+                val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
+                logger.info(s"Storing Avro schema at location $avroSchemaUrl")
+                new SchemaWriter(fields)
+                    .format("avro")
+                    .save(executor.fs.file(avroSchemaUrl))
             }
+
+            val defaultStorage = HiveSerDe.getDefaultStorage(executor.spark.sessionState.conf)
+            val fileStorage: CatalogStorageFormat = if (format != null && format.nonEmpty) {
+                HiveSerDe.sourceToSerDe(format) match {
+                    case Some(s) =>
+                        CatalogStorageFormat.empty.copy(
+                            inputFormat = s.inputFormat,
+                            outputFormat = s.outputFormat,
+                            serde = s.serde)
+                    case None =>
+                        throw new IllegalArgumentException(s"File format '$format' not supported")
+                }
+            }
+            else {
+                CatalogStorageFormat.empty
+            }
+
+            // Selection rule:
+            //  1. use explicitly specified format
+            //  2. use format from file storage
+            //  3. use default format
+            val inputFormat = this.inputFormat
+                .filter(_.nonEmpty)
+                .orElse(fileStorage.inputFormat)
+                .orElse(defaultStorage.inputFormat)
+            val outputFormat = this.outputFormat
+                .filter(_.nonEmpty)
+                .orElse(fileStorage.outputFormat)
+                .orElse(defaultStorage.outputFormat)
+            val rowFormat = this.rowFormat.filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
+
+            // Configure catalog table by assembling all options
+            val catalogTable = CatalogTable(
+                identifier = tableIdentifier,
+                tableType = if (external) CatalogTableType.EXTERNAL
+                else CatalogTableType.MANAGED,
+                storage = CatalogStorageFormat(
+                    locationUri = location.map(_.toUri),
+                    inputFormat = inputFormat,
+                    outputFormat = outputFormat,
+                    serde = rowFormat,
+                    compressed = false,
+                    properties = fileStorage.properties ++ serdeProperties
+                ),
+                provider = Some("hive"),
+                schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
+                partitionColumnNames = partitions.map(_.name),
+                properties = properties,
+                comment = description
+            )
+
+            // Create table
+            val catalog = executor.catalog
+            catalog.createTable(catalogTable, false)
         }
-        else {
-            CatalogStorageFormat.empty
-        }
-
-        // Selection rule:
-        //  1. use explicitly specified format
-        //  2. use format from file storage
-        //  3. use default format
-        val inputFormat = this.inputFormat.filter(_.nonEmpty).orElse(fileStorage.inputFormat).orElse(defaultStorage.inputFormat)
-        val outputFormat = this.outputFormat.filter(_.nonEmpty).orElse(fileStorage.outputFormat).orElse(defaultStorage.outputFormat)
-        val rowFormat = this.rowFormat.filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
-
-        // Configure catalog table by assembling all options
-        val catalogTable = CatalogTable(
-            identifier = tableIdentifier,
-            tableType = if (external) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
-            storage = CatalogStorageFormat(
-                locationUri = location.map(_.toUri),
-                inputFormat = inputFormat,
-                outputFormat = outputFormat,
-                serde = rowFormat,
-                compressed = false,
-                properties = fileStorage.properties ++ serdeProperties
-            ),
-            provider = Some("hive"),
-            schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
-            partitionColumnNames = partitions.map(_.name),
-            properties = properties,
-            comment = description
-        )
-
-        // Create table
-        val catalog = executor.catalog
-        catalog.createTable(catalogTable, ifNotExists)
     }
 
     /**
@@ -315,7 +324,7 @@ class HiveTableRelation(
 
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Destroying Hive relation '$name' with table $tableIdentifier")
+            logger.info(s"Destroying Hive table '$tableIdentifier' of relation '$identifier'")
             catalog.dropTable(tableIdentifier)
         }
     }
@@ -330,8 +339,7 @@ class HiveTableRelation(
       * @return
       */
     override protected def applyOutputSchema(df: DataFrame) : DataFrame = {
-        val outputColumns = schema.fields.map(field => df(field.name))
-        val mixedCaseDf = df.select(outputColumns: _*)
+        val mixedCaseDf = super.applyOutputSchema(df)
         if (needsLowerCaseSchema) {
             val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
             df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
@@ -371,7 +379,7 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
     override def instantiate(context: Context): Relation = {
         new HiveTableRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             context.evaluate(database),
             context.evaluate(table),

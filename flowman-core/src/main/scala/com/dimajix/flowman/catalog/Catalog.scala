@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.execution.command.AlterTableAddColumnsCommand
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
@@ -38,6 +39,7 @@ import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.execution.command.PersistedView
+import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -49,6 +51,16 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
+
+    def currentDatabase : String = catalog.getCurrentDatabase
+
+    /**
+      * Lists all (external) databaes
+      * @return
+      */
+    def listDatabases() : Seq[String] = {
+        catalog.externalCatalog.listDatabases()
+    }
 
     /**
       * Creates a new database
@@ -95,6 +107,26 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             val cmd = DropDatabaseCommand(database, ignoreIfNotExists, true)
             cmd.run(spark)
         }
+    }
+
+    /**
+      * Lists all tables in an external database
+      * @return
+      */
+    def listTables(database:String) : Seq[TableIdentifier] = {
+        catalog.externalCatalog
+            .listTables(database)
+            .map(name =>TableIdentifier(name, Some(database)))
+    }
+
+    /**
+      * Lists all tables matching a specific name pattern in an external database
+      * @return
+      */
+    def listTables(database:String, pattern:String) : Seq[TableIdentifier] = {
+        catalog.externalCatalog
+            .listTables(database, pattern)
+            .map(name =>TableIdentifier(name, Some(database)))
     }
 
     /**
@@ -219,6 +251,22 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
 
         if (externalCatalog != null) {
             externalCatalog.truncateTable(catalogTable)
+        }
+    }
+
+    def addTableColumns(table:TableIdentifier, colsToAdd: Seq[StructField]) : Unit = {
+        require(table != null)
+        require(colsToAdd != null)
+        logger.info(s"Adding new columns ${colsToAdd.map(_.name).mkString(",")} to existing Hive table '$table'")
+
+        val catalogTable = catalog.getTableMetadata(table)
+        require(catalogTable.tableType != CatalogTableType.VIEW)
+
+        val cmd = AlterTableAddColumnsCommand(table, colsToAdd)
+        cmd.run(spark)
+
+        if (externalCatalog != null) {
+            externalCatalog.alterTable(catalogTable)
         }
     }
 

@@ -53,6 +53,7 @@ object FieldType {
       */
     def of(dataType:org.apache.spark.sql.types.DataType) : FieldType = {
         dataType match {
+            case org.apache.spark.sql.types.NullType => NullType
             case org.apache.spark.sql.types.ShortType => ShortType
             case org.apache.spark.sql.types.IntegerType => IntegerType
             case org.apache.spark.sql.types.LongType => LongType
@@ -103,6 +104,11 @@ abstract class FieldType {
       */
     def sparkType : DataType
 
+    /**
+      * The type to use in catalogs like Hive etc
+      */
+    def catalogType : DataType = sparkType
+
     /** Name of the type used in JSON serialization. */
     def typeName: String = {
         this.getClass.getSimpleName
@@ -140,7 +146,7 @@ abstract class FieldType {
 }
 
 
-abstract class NumericType[T : scala.math.Numeric] extends FieldType {
+abstract class NumericType[T] extends FieldType {
     protected def parseRaw(value:String) : T
 }
 abstract class IntegralType[T : scala.math.Integral] extends NumericType[T] {

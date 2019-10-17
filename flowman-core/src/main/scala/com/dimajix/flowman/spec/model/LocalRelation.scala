@@ -40,7 +40,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 class LocalRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     val location:Path,
     val pattern:String,
@@ -104,8 +104,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         val inputFiles = collectFiles(partitions)
         val reader = executor.spark.readLocal.options(options)
-        if (this.schema != null)
-            reader.schema(inputSchema)
+        inputSchema.foreach(s => reader.schema(s))
 
         val rawData = reader
             .format(format)
@@ -293,7 +292,7 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
     override def instantiate(context: Context): LocalRelation = {
         new LocalRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             makePath(context.evaluate(location)),
             pattern,

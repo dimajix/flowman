@@ -66,7 +66,7 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read
-            .schema(StructType(relation.schema.fields.map(_.sparkField)))
+            .schema(StructType(relation.schema.get.fields.map(_.sparkField)))
             .json(spark.createDataset(jsons))
 
         df.printSchema()
@@ -112,7 +112,7 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val jsons = Seq("""{ "parent" : { "pair" : { "str_col":"lala", "int_col":7 } } }""")
         val df = spark.read
-            .schema(StructType(relation.schema.fields.map(_.sparkField)))
+            .schema(StructType(relation.schema.get.fields.map(_.sparkField)))
             .json(spark.createDataset(jsons))
 
         df.printSchema()

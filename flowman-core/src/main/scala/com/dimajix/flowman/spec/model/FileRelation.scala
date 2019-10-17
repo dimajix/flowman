@@ -46,7 +46,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 class FileRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     val location:Path,
     val pattern:String,
@@ -296,7 +296,7 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
     override def instantiate(context: Context): FileRelation = {
         new FileRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),
             pattern,

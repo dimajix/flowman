@@ -25,7 +25,9 @@ object DecimalType {
     val SYSTEM_DEFAULT: DecimalType = DecimalType(MAX_PRECISION, 18)
     val USER_DEFAULT: DecimalType = DecimalType(10, 0)
 }
-case class DecimalType(precision: Int, scale: Int) extends FieldType {
+case class DecimalType(precision: Int, scale: Int) extends NumericType[java.math.BigDecimal] {
+    protected override def parseRaw(value:String) : java.math.BigDecimal = new java.math.BigDecimal(value)
+
     override def typeName : String = s"decimal($precision,$scale)"
     override def sparkType : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
     override def sqlType : String = s"decimal($precision,$scale)"

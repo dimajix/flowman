@@ -35,7 +35,7 @@ case class RelationSchema(
     override def description: Option[String] = {
         val rel = context.getRelation(relation)
 
-        rel.schema.description
+        rel.schema.flatMap(_.description)
     }
 
     /**
@@ -46,7 +46,7 @@ case class RelationSchema(
     override def fields: Seq[Field] = {
         val rel = context.getRelation(relation)
 
-        rel.schema.fields
+        rel.schema.toSeq.flatMap(_.fields)
     }
 
     /**
@@ -56,7 +56,7 @@ case class RelationSchema(
     override def primaryKey : Seq[String] = {
         val rel = context.getRelation(relation)
 
-        rel.schema.primaryKey
+        rel.schema.toSeq.flatMap(_.primaryKey)
     }
 }
 

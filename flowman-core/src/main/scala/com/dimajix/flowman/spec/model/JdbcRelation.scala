@@ -51,7 +51,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 class JdbcRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     val connection: JdbcConnection,
     val properties: Map[String,String],
@@ -250,11 +250,14 @@ class JdbcRelation(
         require(executor != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot create JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Creating jdbc relation $name, this will create jdbc table $tableIdentifier")
+        logger.info(s"Creating jdbc relation '$identifier', this will create jdbc table '$tableIdentifier'")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
+                if (this.schema.isEmpty)
+                    throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' without a schema")
+                val schema = this.schema.get
                 val table = TableDefinition(
                     tableIdentifier,
                     schema.fields ++ partitions.map(_.field),
@@ -290,26 +293,16 @@ class JdbcRelation(
       * Creates a Spark schema from the list of fields.
       * @return
       */
-    override protected def inputSchema : StructType = {
-        if (schema != null) {
-            StructType(schema.fields.map(_.sparkField) ++ partitions.map(_.sparkField))
-        }
-        else {
-            null
-        }
+    override protected def inputSchema : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
     }
 
     /**
       * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
       * @return
       */
-    override protected def outputSchema : StructType = {
-        if (schema != null) {
-            StructType(schema.fields.map(_.sparkField) ++ partitions.map(_.sparkField))
-        }
-        else {
-            null
-        }
+    override protected def outputSchema : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
     }
 
     private def createProperties() = {
@@ -392,7 +385,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
     override def instantiate(context: Context): JdbcRelation = {
         new JdbcRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection))).asInstanceOf[JdbcConnection],
             context.evaluate(properties),

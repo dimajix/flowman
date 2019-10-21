@@ -99,7 +99,7 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        val outputDf = applyOutputSchema(df)
+        val outputDf = applyOutputSchema(executor, df)
         outputDf.write.options(options)
     }
 
@@ -111,7 +111,7 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def streamWriter(executor: Executor, df:DataFrame, outputMode:OutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        val outputDf = applyOutputSchema(df)
+        val outputDf = applyOutputSchema(executor, df)
         outputDf.writeStream
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
@@ -139,7 +139,7 @@ abstract class BaseRelation extends Relation {
       * @param df
       * @return
       */
-    protected def applyOutputSchema(df:DataFrame) : DataFrame = {
+    protected def applyOutputSchema(executor:Executor, df:DataFrame) : DataFrame = {
         SchemaUtils.applySchema(df, outputSchema)
     }
 }

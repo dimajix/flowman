@@ -81,7 +81,7 @@ case class KafkaRelation(
       * Returns the schema of the relation
       * @return
       */
-    override def schema : Schema = {
+    override def schema : Option[Schema] = {
         val fields =
             Field("key", BinaryType, nullable = true) ::
             Field("value", BinaryType, nullable = false) ::
@@ -91,12 +91,12 @@ case class KafkaRelation(
             Field("timestamp", TimestampType, nullable = false) ::
             Field("timestampType", IntegerType, nullable = false) ::
             Nil
-        EmbeddedSchema(
+        Some(EmbeddedSchema(
             Schema.Properties(context),
             description,
             fields,
             Nil
-        )
+        ))
     }
 
     /**
@@ -236,8 +236,8 @@ case class KafkaRelation(
       *
       * @return
       */
-    override protected def inputSchema : StructType = {
-        StructType(Seq(
+    override protected def inputSchema : Option[StructType] = {
+        Some(StructType(Seq(
             StructField("key", org.apache.spark.sql.types.BinaryType),
             StructField("value", org.apache.spark.sql.types.BinaryType),
             StructField("topic", org.apache.spark.sql.types.StringType),
@@ -245,7 +245,7 @@ case class KafkaRelation(
             StructField("offset", org.apache.spark.sql.types.LongType),
             StructField("timestamp", org.apache.spark.sql.types.TimestampType),
             StructField("timestampType", org.apache.spark.sql.types.IntegerType)
-        ))
+        )))
     }
 
     /**
@@ -253,7 +253,7 @@ case class KafkaRelation(
       *
       * @return
       */
-    override protected def outputSchema : StructType = null
+    override protected def outputSchema : Option[StructType] = None
 }
 
 

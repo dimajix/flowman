@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.IncompatibleSchemaException
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
@@ -143,7 +144,7 @@ class HiveTableRelation(
         logger.info(s"Writing to Hive table '$tableIdentifier' with partitions ${partitionNames.mkString(",")} using Hive insert")
 
         // Apply output schema before writing to Hive
-        val outputDf = applyOutputSchema(df)
+        val outputDf = applyOutputSchema(executor, df)
 
         if (partitionSpec.nonEmpty) {
             val spark = executor.spark
@@ -329,7 +330,35 @@ class HiveTableRelation(
         }
     }
 
-    override def migrate(executor: Executor): Unit = {}
+    /**
+      * Performs migration of a Hive table by adding new columns
+      * @param executor
+      */
+    override def migrate(executor: Executor): Unit = {
+        require(executor != null)
+
+        val catalog = executor.catalog
+        val sourceSchema = schema.get.sparkSchema
+
+        val table = catalog.getTable(tableIdentifier)
+        val targetSchema = table.dataSchema
+        val targetFields = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+
+        // Ensure that current real Hive schema is compatible with specified schema
+        val isCompatible = sourceSchema.forall { field =>
+            targetFields.get(field.name.toLowerCase(Locale.ROOT))
+                .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+        }
+        if (!isCompatible) {
+            throw new IncompatibleSchemaException(identifier)
+        }
+
+        val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
+        if (missingFields.nonEmpty) {
+            logger.info(s"Migrating HiveTable relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table '$tableIdentifier'")
+            catalog.addTableColumns(tableIdentifier, missingFields)
+        }
+    }
 
     /**
       * Applies the specified schema and converts all field names to lowercase. This is required when directly
@@ -338,8 +367,9 @@ class HiveTableRelation(
       * @param df
       * @return
       */
-    override protected def applyOutputSchema(df: DataFrame) : DataFrame = {
-        val mixedCaseDf = super.applyOutputSchema(df)
+    override protected def applyOutputSchema(executor:Executor, df: DataFrame) : DataFrame = {
+        val outputSchema = Some(executor.catalog.getTable(tableIdentifier).dataSchema)
+        val mixedCaseDf = SchemaUtils.applySchema(df, outputSchema)
         if (needsLowerCaseSchema) {
             val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
             df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)

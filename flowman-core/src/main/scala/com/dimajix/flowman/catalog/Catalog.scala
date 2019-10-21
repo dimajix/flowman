@@ -416,7 +416,8 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         val sparkPartitions = dropPartitions.map(_.mapValues(_.toString).toMap)
 
         logger.info(s"Dropping partitions ${dropPartitions.map(_.spec).mkString(",")} from Hive table $table")
-        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge, false)
+        // Note that "purge" is not supported with Hive < 1.2
+        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge=false, retainData=false)
         cmd.run(spark)
 
         //partitions.foreach(partition => {

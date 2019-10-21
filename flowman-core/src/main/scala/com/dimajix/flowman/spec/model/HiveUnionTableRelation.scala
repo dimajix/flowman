@@ -31,6 +31,7 @@ import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -114,7 +115,9 @@ class HiveUnionTableRelation(
         val spark = executor.spark
         val df = tables.map(t => spark.read.table(t.unquotedString))
         val union = UnionTransformer().transformDataFrames(df)
-        val sql = new SQLBuilder(union).toSQL
+        val finalSchema = schema.get.sparkSchema.fields ++ partitions.map(_.sparkField)
+        val conformed = SchemaEnforcer(StructType(finalSchema)).transform(union)
+        val sql = new SQLBuilder(conformed).toSQL
         viewRelationFromSql(sql)
     }
 
@@ -202,7 +205,7 @@ class HiveUnionTableRelation(
 
         // 3. Drop  partition from all other tables
         allTables.filter(_ != table).foreach { table =>
-            catalog.dropPartition(table, partitionSchema.spec(partition))
+            catalog.dropPartition(table, partitionSchema.spec(partition), ignoreIfNotExists=true, purge=true)
         }
 
         // 4. Write to that table
@@ -305,7 +308,7 @@ class HiveUnionTableRelation(
         val target = allTables
             .find { id =>
                 val table = catalog.getTable(id)
-                val targetSchema = table.schema
+                val targetSchema = table.dataSchema
                 val targetFieldsByName = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
 
                 sourceSchema.forall { field =>
@@ -318,11 +321,12 @@ class HiveUnionTableRelation(
                 // 3. If found:
                 //  3.1 Migrate table (add new columns)
                 val table = catalog.getTable(id)
-                val targetSchema = table.schema
+                val targetSchema = table.dataSchema
                 val targetFields = targetSchema.map(f => f.name.toLowerCase(Locale.ROOT)).toSet
 
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
+                    logger.info(s"Migrating HiveUntionTable relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table '$id'")
                     catalog.addTableColumns(id, missingFields)
                     true
                 }
@@ -335,6 +339,7 @@ class HiveUnionTableRelation(
                 //  3.2 Create new table
                 val tableSet = allTables.toSet
                 val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
+                logger.info(s"Migrating HiveUntionTable relation '$identifier' by creating new Hive table '${tableIdentifier(version)}'")
                 val hiveTableRelation = tableRelation(version)
                 hiveTableRelation.create(executor, false)
                 true

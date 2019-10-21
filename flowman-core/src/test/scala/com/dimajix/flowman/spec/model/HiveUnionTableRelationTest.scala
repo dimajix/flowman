@@ -35,6 +35,7 @@ import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
@@ -124,6 +125,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
 
         // == Migrate ===================================================================
         relation.migrate(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
 
         // == Write ===================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
@@ -227,15 +231,492 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         relation.destroy(executor)
     }
 
-    it should "support migration by adding new columns" in {
+    it should "support partitions" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: hiveUnionTable
+              |    description: "This is a test table"
+              |    tableDatabase: default
+              |    tablePrefix: lala
+              |    view: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
 
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
+        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation.fields should be(
+            Field("str_col", ftypes.StringType) ::
+                Field("int_col", ftypes.IntegerType) ::
+                Nil)
+
+        // == Create ===================================================================
+        relation.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+
+        // Inspect Hive view
+        val view = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        view.provider should be (None)
+        view.comment should be (None)
+        view.identifier should be (TableIdentifier("lala", Some("default")))
+        view.tableType should be (CatalogTableType.VIEW)
+        view.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType) ::
+                Nil
+        ))
+        view.partitionColumnNames should be (Seq())
+        view.partitionSchema should be (StructType(Nil))
+
+        // Inspect Hive table
+        val table = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
+        table.provider should be (Some("hive"))
+        table.comment should be(Some("This is a test table"))
+        table.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table.tableType should be (CatalogTableType.MANAGED)
+        table.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        ))
+        table.partitionColumnNames should be (Seq("partition_col"))
+        table.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table.location.toString should not be ("")
+
+        // == Migrate ===================================================================
+        relation.migrate(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+
+        // == Write ===================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", 21)
+        ))
+        val df = spark.createDataFrame(rdd, table.dataSchema)
+        relation.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
+
+        // == Read ===================================================================
+        val rows = Seq(
+            Row("v1", 21, "part_1")
+        )
+        checkAnswer(relation.read(executor, None, Map()), rows)
+        checkAnswer(relation.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows)
+        checkAnswer(relation.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), Seq())
+
+        // == Destroy ===================================================================
+        relation.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+    }
+
+    it should "support migration by adding new columns" in {
+        val spec =
+            """
+              |relations:
+              |  t1:
+              |    kind: hiveUnionTable
+              |    tableDatabase: default
+              |    tablePrefix: lala
+              |    view: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+              |
+              |  t2:
+              |    kind: hiveUnionTable
+              |    tableDatabase: default
+              |    tablePrefix: lala
+              |    view: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: char_col
+              |          type: char(10)
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        relation_1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation_1.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation_1.fields should be(
+            Field("str_col", ftypes.StringType) ::
+                Field("int_col", ftypes.IntegerType) ::
+                Nil)
+
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+        relation_1.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+
+        // Inspect Hive view
+        val view_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        view_1.provider should be (None)
+        view_1.comment should be (None)
+        view_1.identifier should be (TableIdentifier("lala", Some("default")))
+        view_1.tableType should be (CatalogTableType.VIEW)
+        view_1.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType) ::
+                Nil
+        ))
+        view_1.partitionColumnNames should be (Seq())
+        view_1.partitionSchema should be (StructType(Nil))
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
+        table_1.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table_1.tableType should be (CatalogTableType.MANAGED)
+        table_1.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table_1.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        ))
+        table_1.partitionColumnNames should be (Seq("partition_col"))
+        table_1.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ===================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", 21)
+        ))
+        val df = spark.createDataFrame(rdd, table_1.dataSchema)
+        relation_1.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
+
+        // == Migrate ===================================================================
+        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        relation_2.migrate(executor)
+
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+
+        // Inspect Hive view
+        val view_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        view_2.provider should be (None)
+        view_2.comment should be (None)
+        view_2.identifier should be (TableIdentifier("lala", Some("default")))
+        view_2.tableType should be (CatalogTableType.VIEW)
+        view_2.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("char_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType) ::
+                Nil
+        ))
+        view_2.partitionColumnNames should be (Seq())
+        view_2.partitionSchema should be (StructType(Nil))
+
+        // Inspect Hive table
+        val table_2 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
+        table_2.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table_2.tableType should be (CatalogTableType.MANAGED)
+        table_2.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("char_col", StringType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table_2.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("char_col", StringType) ::
+                Nil
+        ))
+        table_2.partitionColumnNames should be (Seq("partition_col"))
+        table_2.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ===================================================================
+        val rdd_2 = spark.sparkContext.parallelize(Seq(
+            Row("v2", 22, "lala")
+        ))
+        val df2 = spark.createDataFrame(rdd_2, table_2.dataSchema)
+        relation_2.write(executor, df2, Map("partition_col" -> SingleValue("part_2")))
+
+        // == Read ===================================================================
+        val rows_1 = Seq(
+            Row("v1", null, 21, "part_1")
+        )
+        val rows_2 = Seq(
+            Row("v2", "lala", 22, "part_2")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+
+        // == Overwrite ===================================================================
+        val rdd_2a = spark.sparkContext.parallelize(Seq(
+            Row("v3", 23, "lala")
+        ))
+        val df2a = spark.createDataFrame(rdd_2a, table_2.dataSchema)
+        relation_2.write(executor, df2a, Map("partition_col" -> SingleValue("part_2")))
+
+        // == Read ===================================================================
+        val rows_2a = Seq(
+            Row("v3", "lala", 23, "part_2")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2a)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+
+        // == Destroy ===================================================================
+        relation_2.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
     }
 
     it should "support migration by creating new tables" in {
+        val spec =
+            """
+              |relations:
+              |  t1:
+              |    kind: hiveUnionTable
+              |    tableDatabase: default
+              |    tablePrefix: lala
+              |    view: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+              |
+              |  t2:
+              |    kind: hiveUnionTable
+              |    tableDatabase: default
+              |    tablePrefix: lala
+              |    view: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: boolean
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
 
-    }
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
 
-    it should "support partitions" in {
+        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        relation_1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation_1.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation_1.fields should be(
+            Field("str_col", ftypes.StringType) ::
+                Field("int_col", ftypes.IntegerType) ::
+                Nil)
 
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+        relation_1.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+
+        // Inspect Hive view
+        val view_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        view_1.provider should be (None)
+        view_1.comment should be (None)
+        view_1.identifier should be (TableIdentifier("lala", Some("default")))
+        view_1.tableType should be (CatalogTableType.VIEW)
+        view_1.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType) ::
+                Nil
+        ))
+        view_1.partitionColumnNames should be (Seq())
+        view_1.partitionSchema should be (StructType(Nil))
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
+        table_1.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table_1.tableType should be (CatalogTableType.MANAGED)
+        table_1.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table_1.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        ))
+        table_1.partitionColumnNames should be (Seq("partition_col"))
+        table_1.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ===================================================================
+        val rdd_1 = spark.sparkContext.parallelize(Seq(
+            Row("v1", 21)
+        ))
+        val df_1 = spark.createDataFrame(rdd_1, table_1.dataSchema)
+        relation_1.write(executor, df_1, Map("partition_col" -> SingleValue("part_1")))
+
+        // == Migrate ===================================================================
+        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        relation_2.migrate(executor)
+
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (true)
+
+        // Inspect Hive view
+        val view_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        view_2.provider should be (None)
+        view_2.comment should be (None)
+        view_2.identifier should be (TableIdentifier("lala", Some("default")))
+        view_2.tableType should be (CatalogTableType.VIEW)
+        view_2.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", BooleanType) ::
+                StructField("partition_col", StringType) ::
+                Nil
+        ))
+        view_2.partitionColumnNames should be (Seq())
+        view_2.partitionSchema should be (StructType(Nil))
+
+        // Inspect Hive table
+        val table_2 = session.catalog.getTable(TableIdentifier("lala_2", Some("default")))
+        table_2.identifier should be (TableIdentifier("lala_2", Some("default")))
+        table_2.tableType should be (CatalogTableType.MANAGED)
+        table_2.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", BooleanType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table_2.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", BooleanType) ::
+                Nil
+        ))
+        table_2.partitionColumnNames should be (Seq("partition_col"))
+        table_2.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ===================================================================
+        val rdd_2 = spark.sparkContext.parallelize(Seq(
+            Row("v2", true)
+        ))
+        val df_2 = spark.createDataFrame(rdd_2, table_2.dataSchema)
+        relation_2.write(executor, df_2, Map("partition_col" -> SingleValue("part_2")))
+
+        // == Read ===================================================================
+        val rows_1 = Seq(
+            Row("v1", null, "part_1")
+        )
+        val rows_2 = Seq(
+            Row("v2", true, "part_2")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+
+        // == Overwrite ===================================================================
+        val rdd_1a = spark.sparkContext.parallelize(Seq(
+            Row("v3", false)
+        ))
+        val df_1a = spark.createDataFrame(rdd_1a, table_2.dataSchema)
+        relation_2.write(executor, df_1a, Map("partition_col" -> SingleValue("part_1")))
+
+        // == Read ===================================================================
+        val rows_1a = Seq(
+            Row("v3", false, "part_1")
+        )
+        val rows_2a = Seq(
+            Row("v2", true, "part_2")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1a ++ rows_2a)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1a)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+
+        // == Destroy ===================================================================
+        relation_2.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
     }
 }

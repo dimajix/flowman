@@ -131,7 +131,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
         // Create correct schema for output
-        val outputDf = applyOutputSchema(df)
+        val outputDf = applyOutputSchema(executor, df)
         val writer = outputDf.writeLocal.options(options)
 
         writer.format(format)

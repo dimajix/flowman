@@ -17,17 +17,11 @@
 package com.dimajix.flowman.types
 
 import java.util.Locale
+import scala.language.existentials
 
 
 object SchemaUtils {
-    /**
-      * Performs type coercion, i.e. find the tightest common data type that can be used to contain values of two
-      * other incoming types
-      * @param left
-      * @param right
-      * @return
-      */
-    def coerce(left: FieldType, right:FieldType) : FieldType = {
+    private def coerceNumericTypes(left:NumericType[_], right:NumericType[_]) : NumericType[_] = {
         class TypeInfo
         case class FractionalType(dt:NumericType[_], precision:Int, scale:Int) extends TypeInfo
         case class IntegralType(dt:NumericType[_], size:Int) extends TypeInfo { def precision:Int = math.round(math.ceil(size*8*math.log(2)/math.log(10))).toInt }
@@ -43,55 +37,62 @@ object SchemaUtils {
             }
         }
 
-        def coerceNumericTypes(left:NumericType[_], right:NumericType[_]) : NumericType[_] = {
-            val leftInfo = info(left)
-            val rightInfo = info(right)
+        val leftInfo = info(left)
+        val rightInfo = info(right)
 
-            (leftInfo, rightInfo) match {
-                // DECIMALs are promoted to bigger type
-                case (FractionalType(DecimalType(lp,ls), _, _), FractionalType(DecimalType(rp,rs), _, _)) =>
-                    val lIntegerPrecision = lp - ls
-                    val lFractionalPrecision = ls
-                    val rIntegerPrecision = rp - rs
-                    val rFractionalPrecision = rs
-                    val totalIntegerPrecision = scala.math.max(lIntegerPrecision, rIntegerPrecision)
-                    val totalFractionalPrecision = scala.math.max(lFractionalPrecision, rFractionalPrecision)
-                    DecimalType(totalIntegerPrecision + totalFractionalPrecision, totalFractionalPrecision)
+        (leftInfo, rightInfo) match {
+            // DECIMALs are promoted to bigger type
+            case (FractionalType(DecimalType(lp,ls), _, _), FractionalType(DecimalType(rp,rs), _, _)) =>
+                val lIntegerPrecision = lp - ls
+                val lFractionalPrecision = ls
+                val rIntegerPrecision = rp - rs
+                val rFractionalPrecision = rs
+                val totalIntegerPrecision = scala.math.max(lIntegerPrecision, rIntegerPrecision)
+                val totalFractionalPrecision = scala.math.max(lFractionalPrecision, rFractionalPrecision)
+                DecimalType(totalIntegerPrecision + totalFractionalPrecision, totalFractionalPrecision)
 
-                // Integrals are promoted to bigger type
-                case (IntegralType(_, lp), IntegralType(_, rp)) =>
-                    if (lp > rp)
-                        left
-                    else
-                        right
+            // Integrals are promoted to bigger type
+            case (IntegralType(_, lp), IntegralType(_, rp)) =>
+                if (lp > rp)
+                    left
+                else
+                    right
 
-                // Integral and DECIMAL are promoted to decimal
-                case (lt:IntegralType, FractionalType(rt:DecimalType, _, _)) =>
-                    coerceNumericTypes(DecimalType(lt.precision, 0), rt)
-                case (FractionalType(lt:DecimalType, _, _),  rt:IntegralType) =>
-                    coerceNumericTypes(lt, DecimalType(rt.precision, 0))
+            // Integral and DECIMAL are promoted to decimal
+            case (lt:IntegralType, FractionalType(rt:DecimalType, _, _)) =>
+                coerceNumericTypes(DecimalType(lt.precision, 0), rt)
+            case (FractionalType(lt:DecimalType, _, _),  rt:IntegralType) =>
+                coerceNumericTypes(lt, DecimalType(rt.precision, 0))
 
-                // Integral and DECIMAL are promoted to decimal
-                case (IntegralType(_, lp), FractionalType(_, _, _)) =>
-                    DoubleType
-                case (FractionalType(_, _, _),  IntegralType( _, rp)) =>
-                    DoubleType
+            // Integral and DECIMAL are promoted to decimal
+            case (IntegralType(_, lp), FractionalType(_, _, _)) =>
+                DoubleType
+            case (FractionalType(_, _, _),  IntegralType( _, rp)) =>
+                DoubleType
 
-                // DECIMAL and fractional are promoted to DOUBLE
-                case (FractionalType(_, _, _), FractionalType(_:DecimalType, _, _)) =>
-                    DoubleType
-                case (FractionalType(_:DecimalType, _, _),  FractionalType( _, _, _)) =>
-                    DoubleType
+            // DECIMAL and fractional are promoted to DOUBLE
+            case (FractionalType(_, _, _), FractionalType(_:DecimalType, _, _)) =>
+                DoubleType
+            case (FractionalType(_:DecimalType, _, _),  FractionalType( _, _, _)) =>
+                DoubleType
 
-                // Non-decimal fractionals are promoted to bigger type
-                case (FractionalType(_, lp, _), FractionalType(_, rp, _)) =>
-                    if (lp > rp)
-                        left
-                    else
-                        right
-            }
+            // Non-decimal fractionals are promoted to bigger type
+            case (FractionalType(_, lp, _), FractionalType(_, rp, _)) =>
+                if (lp > rp)
+                    left
+                else
+                    right
         }
+    }
 
+    /**
+      * Performs type coercion, i.e. find the tightest common data type that can be used to contain values of two
+      * other incoming types
+      * @param left
+      * @param right
+      * @return
+      */
+    def coerce(left: FieldType, right:FieldType) : FieldType = {
         (left,right) match {
             case (l,r) if l == r => l
             case (NullType, r) => r
@@ -179,7 +180,7 @@ object SchemaUtils {
                 if (fields.contains(field))
                     union
                 else
-                    union.withField(field, union.fieldsByName(field).copy(nullable = true))
+                    union.withNullable(field)
             )
         })
 
@@ -202,21 +203,23 @@ object SchemaUtils {
     ) {
         def fields:Seq[Field] = fieldNames.map(name => fieldsByName(name))
 
-        def withField(name:String, newField:Field) : UnionSchema = {
+        def withNullable(name:String) : UnionSchema = {
             val lowerName = name.toLowerCase(Locale.ROOT)
-            val newFieldByName = fieldsByName.updated(lowerName, newField)
-            val newFieldNames =
-                if (fieldsByName.contains(lowerName)) {
-                    fieldNames
-                }
-                else {
-                    fieldNames :+ lowerName
-                }
+            val field = fieldsByName(lowerName)
 
-            UnionSchema(
-                newFieldByName,
-                newFieldNames
-            )
+            if (!field.nullable) {
+                val newField = field.copy(nullable = true)
+                val newFieldByName = fieldsByName.updated(lowerName, newField)
+                val newFieldNames = fieldNames
+
+                UnionSchema(
+                    newFieldByName,
+                    newFieldNames
+                )
+            }
+            else {
+                this
+            }
         }
         def withField(name:String, prev:Seq[String], next:Seq[String], field:Field) : UnionSchema = {
             val lowerName = name.toLowerCase(Locale.ROOT)

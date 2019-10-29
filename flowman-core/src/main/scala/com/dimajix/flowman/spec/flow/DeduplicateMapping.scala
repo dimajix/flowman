@@ -47,8 +47,16 @@ case class DeduplicateMapping(
         logger.info(s"Deduplicating mapping '$input' on columns ${columns.mkString(",")}")
 
         val df = tables(input)
-        val cols = if (columns.nonEmpty) columns else df.columns.toSeq
-        val result = df.dropDuplicates(cols)
+        val result = if (columns.nonEmpty) {
+            // Since Spark does not support deduplication on nested columns, lift all deduplication columns up
+            val replacementColumns = columns.map(col => s"__flowman_dedup_${col.replace(".","_")}" -> df(col))
+            replacementColumns.foldLeft(df)((df, col) => df.withColumn(col._1, col._2))
+                .dropDuplicates(replacementColumns.map(_._1))
+                .drop(replacementColumns.map(_._1):_*)
+        }
+        else {
+            df.distinct()
+        }
 
         Map("main" -> result)
     }

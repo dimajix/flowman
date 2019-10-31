@@ -92,6 +92,8 @@ object SchemaUtils {
       * @param right
       * @return
       */
+    @throws[TypeCoerceException]
+    @throws[FieldMergeException]
     def coerce(left: FieldType, right:FieldType) : FieldType = {
         (left,right) match {
             case (l,r) if l == r => l
@@ -119,18 +121,18 @@ object SchemaUtils {
 
             case (ArrayType(ltype,lnull), ArrayType(rtype,rnull)) =>
                 ArrayType(coerce(ltype,rtype), lnull || rnull)
-            case (_:ArrayType, _) => ???
-            case (_, _:ArrayType) => ???
+            case (_:ArrayType, _) => throw new TypeCoerceException(left, right)
+            case (_, _:ArrayType) => throw new TypeCoerceException(left, right)
 
             case (MapType(lkey, lval, lnull), MapType(rkey, rval, rnull)) =>
                 MapType(coerce(lkey, rkey), coerce(lval, rval), lnull || rnull)
-            case (_:MapType, _) => ???
-            case (_, _:MapType) => ???
+            case (_:MapType, _) => throw new TypeCoerceException(left, right)
+            case (_, _:MapType) => throw new TypeCoerceException(left, right)
 
             case (lt:StructType, rt:StructType) =>
                 union(Seq(lt, rt))
-            case (_:StructType, _) => ???
-            case (_, _:StructType) => ???
+            case (_:StructType, _) => throw new TypeCoerceException(left, right)
+            case (_, _:StructType) => throw new TypeCoerceException(left, right)
 
             case _ => StringType
         }
@@ -142,10 +144,16 @@ object SchemaUtils {
       * @param existingField
       * @return
       */
+    @throws[FieldMergeException]
     def merge(newField:Field, existingField:Field) : Field = {
         val nullable = existingField.nullable || existingField.ftype == NullType ||
             newField.ftype == NullType || newField.nullable
-        val dataType = coerce(existingField.ftype, newField.ftype)
+        val dataType = try {
+            coerce(existingField.ftype, newField.ftype)
+        }
+        catch {
+            case _:TypeCoerceException => throw new FieldMergeException(existingField, newField)
+        }
         val description = existingField.description.orElse(newField.description)
         val default = existingField.default.orElse(newField.default)
         val size = existingField.size.orElse(newField.size)

@@ -19,9 +19,6 @@ package com.dimajix.flowman.types
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.ObjectMapper
-
 
 class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
     "A Swagger Schema" should "be deserializable" in {
@@ -73,6 +70,46 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
         fields(2).name should be ("id")
         fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
+    }
+
+    it should "support null value for required" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |info:
+              |  version: 1.0.0
+              |  title: Swagger Petstore
+              |  description: A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification
+              |  termsOfService: http://swagger.io/terms/
+              |  contact:
+              |    name: Swagger API Team
+              |    email: apiteam@swagger.io
+              |    url: http://swagger.io
+              |  license:
+              |    name: Apache 2.0
+              |url: https://www.apache.org/licenses/LICENSE-2.0.html
+              |definitions:
+              |  Pet:
+              |    required: null
+              |    properties:
+              |      name:
+              |        type: string
+              |        description: The Pets name
+              |      tag:
+              |        type: object
+              |        required: null
+              |        properties:
+              |          some_int:
+              |            type: integer
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Pet"), false)
+        fields should be (Seq(
+            Field("name", StringType, description = Some("The Pets name")),
+            Field("tag", StructType(Seq(
+                Field("some_int", IntegerType)
+            )))
+        ))
     }
 
     it should "support allOf" in {

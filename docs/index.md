@@ -22,7 +22,7 @@ and schema information) in a single place managed by a single program.
 * Declarative syntax in YAML files
 * Data model management (Create and Destroy Hive tables or file based storage)
 * Flexible expression language
-* Jobs for managing additional tasks (like copying files or uploading data via sftp)
+* Jobs for managing build targets (like copying files or uploading data via sftp)
 * Powerful yet simple command line tool
 * Extendable via Plugins
 
@@ -49,7 +49,6 @@ More detail on all these items is described in the following sections:
 * [Specification Overview](spec/index.html): An introduction for writing new flows
 * [Mappings](spec/mapping/index.html): Documentation of available data transformations
 * [Relations](spec/relation/index.html): Documentation of available data sources and sinks
-* [Outputs](spec/output/index.html): Documentation of available output operations
+* [Targets](spec/target/index.html): Documentation of available build targets
 * [Schema](spec/schema/index.html): Documentation of available schema descriptions
-* [Jobs & Tasks](spec/job/index.html): Documentation of creating jobs and executing tasks
-
+* [Jobs](spec/job/index.html): Documentation of creating jobs and building targets

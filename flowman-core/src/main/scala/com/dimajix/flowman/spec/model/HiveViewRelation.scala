@@ -86,6 +86,10 @@ class HiveViewRelation(
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
     }
 
+    /**
+     * This method will physically create the corresponding Hive view
+     * @param executor
+     */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         val select = getSelect(executor)
         val catalog = executor.catalog
@@ -95,14 +99,11 @@ class HiveViewRelation(
         }
     }
 
-    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        val catalog = executor.catalog
-        if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
-            catalog.dropView(tableIdentifier)
-        }
-    }
-
+    /**
+     * This will update any existing Hive view to the current definition. The update will only be performed, if the
+     * definition actually changed.
+     * @param executor
+     */
     override def migrate(executor:Executor) : Unit = {
         val catalog = executor.catalog
         if (catalog.tableExists(tableIdentifier)) {
@@ -112,6 +113,18 @@ class HiveViewRelation(
                 logger.info(s"Migrating Hive VIEW relation $name with VIEW $tableIdentifier")
                 catalog.alterView(tableIdentifier, newSelect)
             }
+        }
+    }
+
+    /**
+     * This will drop the corresponding Hive view
+     * @param executor
+     */
+    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
+        val catalog = executor.catalog
+        if (!ifExists || catalog.tableExists(tableIdentifier)) {
+            logger.info(s"Destroying Hive VIEW relation '$name' with VIEW $tableIdentifier")
+            catalog.dropView(tableIdentifier)
         }
     }
 

@@ -74,6 +74,19 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         files should be (Seq(new Path(workingDirectory, "data/2016/02/01")))
     }
 
+    it should "glob intermediate directories" in {
+        val collector = new FileCollector(hadoopConf).path(workingDirectory).path(new Path(workingDirectory, "data/2016/0*/0*"))
+        val files = collector.collect()
+        files.size should be (5)
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/03"),
+            new Path(workingDirectory, "data/2016/01/04"),
+            new Path(workingDirectory, "data/2016/01/05"),
+            new Path(workingDirectory, "data/2016/02/01"),
+            new Path(workingDirectory, "data/2016/02/02")
+        ))
+    }
+    
     it should "collect all directories in given daily range (1)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.FEBRUARY, 2, 0, 0)

@@ -81,7 +81,7 @@ class FileRelation(
     override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
-        requireAllPartitionKeys(partitions)
+        requireValidPartitionKeys(partitions)
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
@@ -104,8 +104,7 @@ class FileRelation(
         require(executor != null)
         require(partitions != null)
 
-        // TODO: If no partitions are specified, recursively read all files
-        requireAllPartitionKeys(partitions)
+        requireValidPartitionKeys(partitions)
 
         val data = mapFiles(partitions) { (partition, paths) =>
             paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
@@ -213,10 +212,7 @@ class FileRelation(
     private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
         require(partitions != null)
 
-        requireAllPartitionKeys(partitions)
-
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+        requireValidPartitionKeys(partitions)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector.delete(resolvedPartitions)
@@ -263,9 +259,6 @@ class FileRelation(
     private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
-
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
@@ -278,6 +271,7 @@ class FileRelation(
         new FileCollector(context.hadoopConf)
             .path(location)
             .pattern(pattern)
+            .defaults(partitions.map(p => (p.name, "*")).toMap)
     }
 }
 

@@ -86,7 +86,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             new Path(workingDirectory, "data/2016/02/02")
         ))
     }
-    
+
     it should "collect all directories in given daily range (1)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.FEBRUARY, 2, 0, 0)

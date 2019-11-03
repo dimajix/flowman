@@ -46,6 +46,7 @@ class FileCollector(hadoopConf:Configuration) {
 
     private var _pattern:String = ""
     private var _path:Path = _
+    private var _defaults:Map[String,Any] = Map()
 
     private lazy val templateEngine = Velocity.newEngine()
     private lazy val templateContext = Velocity.newContext()
@@ -72,6 +73,16 @@ class FileCollector(hadoopConf:Configuration) {
     }
 
     /**
+     * Set default values for partitions not specified in `resolve`
+     * @param defaults
+     * @return
+     */
+    def defaults(defaults:Map[String,Any]) : FileCollector = {
+        this._defaults = defaults
+        this
+    }
+
+    /**
       * Sets the base directory which is used for retrieving the file system. The base location must not contain
       * any pattern variable
       *
@@ -92,7 +103,8 @@ class FileCollector(hadoopConf:Configuration) {
     def resolve(partition:Seq[(String,Any)]) : Path = {
         if (_pattern != null && _pattern.nonEmpty) {
             val context = templateContext
-            partition.foreach(kv => context.put(kv._1, kv._2))
+            val partitionValues = _defaults ++ partition.toMap
+            partitionValues.foreach(kv => context.put(kv._1, kv._2))
             val output = new StringWriter()
             templateEngine.evaluate(context, output, "FileCollector", _pattern)
             new Path(_path, output.getBuffer.toString)
@@ -157,10 +169,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @return
       */
     def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Seq[T] = {
-        if (_path == null || _path.toString.isEmpty)
-            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
-        if (_pattern == null)
-            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+        requirePathAndPattern()
 
         val fs = _path.getFileSystem(hadoopConf)
         partitions.flatMap(p => fn(fs, resolve(p))).toSeq
@@ -174,28 +183,21 @@ class FileCollector(hadoopConf:Configuration) {
       * @return
       */
     def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Seq[T] = {
-        if (_path == null || _path.toString.isEmpty)
-            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
-        if (_pattern == null)
-            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+        requirePathAndPattern()
 
         val fs = _path.getFileSystem(hadoopConf)
         partitions.map(p => fn(fs, resolve(p))).toSeq
     }
 
     def map[T](partition:PartitionSpec)(fn:(HadoopFileSystem,Path) => T) : T = {
-        if (_path == null || _path.toString.isEmpty)
-            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
-        if (_pattern == null)
-            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+        requirePathAndPattern()
 
         val fs = _path.getFileSystem(hadoopConf)
         fn(fs, resolve(partition))
     }
 
     def map[T](fn:(HadoopFileSystem,Path) => T) : T = {
-        if (_path == null || _path.toString.isEmpty)
-            throw new IllegalArgumentException("path needs to be defined for collecting files")
+        requirePath()
 
         val fs = _path.getFileSystem(hadoopConf)
         val curPath:Path = if (_pattern != null && _pattern.nonEmpty) new Path(_path, _pattern) else _path
@@ -214,11 +216,11 @@ class FileCollector(hadoopConf:Configuration) {
         val isDirectory = try fs.getFileStatus(path).isDirectory catch { case _:FileNotFoundException => false }
 
         if (isDirectory) {
-          logger.info(s"Deleting directory $path")
+          logger.info(s"Deleting directory '$path'")
           fs.delete(path, true)
         }
         else {
-          logger.info(s"Deleting file(s) $path")
+          logger.info(s"Deleting file(s) '$path'")
           val files = fs.globStatus(path)
           if (files != null)
             files.foreach(f => fs.delete(f.getPath, true))
@@ -243,5 +245,17 @@ class FileCollector(hadoopConf:Configuration) {
           else
             Seq()
         }
+    }
+
+    private def requirePathAndPattern() : Unit = {
+        if (_path == null || _path.toString.isEmpty)
+            throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
+        if (_pattern == null)
+            throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
+    }
+
+    private def requirePath() : Unit = {
+        if (_path == null || _path.toString.isEmpty)
+            throw new IllegalArgumentException("path needs to be defined for collecting files")
     }
 }

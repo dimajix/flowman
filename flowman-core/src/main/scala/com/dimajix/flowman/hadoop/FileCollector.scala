@@ -26,10 +26,78 @@ import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
+import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.templating.Velocity
+
+
+object FileCollector {
+    class Builder(hadoopConf:Configuration) {
+        private var _pattern:String = ""
+        private var _path:Path = _
+        private var _defaults:Map[String,Any] = Map()
+        private var _context:VelocityContext = _
+
+        def this(spark:SparkSession) = {
+            this(spark.sparkContext.hadoopConfiguration)
+        }
+
+        /**
+         * Sets the pattern which will be used for generating directory and/or file names from partition information
+         *
+         * @param pattern
+         * @return
+         */
+        def pattern(pattern:String) : Builder = {
+            this._pattern = pattern
+            this
+        }
+
+        /**
+         * Set default values for partitions not specified in `resolve`
+         * @param defaults
+         * @return
+         */
+        def defaults(defaults:Map[String,Any]) : Builder = {
+            this._defaults = defaults
+            this
+        }
+
+        def context(context:VelocityContext) : Builder = {
+            this._context = context
+            this
+        }
+
+        /**
+         * Sets the base directory which is used for retrieving the file system. The base location must not contain
+         * any pattern variable
+         *
+         * @param path
+         * @return
+         */
+        def path(path:Path) : Builder = {
+            this._path = path
+            this
+        }
+
+        /**
+         * Creates a FileCollector with the specified configuration
+         * @return
+         */
+        def build() : FileCollector = {
+            new FileCollector(
+                hadoopConf,
+                _path,
+                _pattern,
+                _defaults
+            )
+        }
+    }
+
+    def builder(hadoopConf:Configuration) : Builder = new Builder(hadoopConf)
+}
 
 
 /**
@@ -37,62 +105,20 @@ import com.dimajix.flowman.templating.Velocity
   *
   * @param hadoopConf
   */
-class FileCollector(hadoopConf:Configuration) {
+case class FileCollector(
+    hadoopConf:Configuration,
+    path:Path,
+    pattern:String,
+    defaults:Map[String,Any]
+) {
     private val logger = LoggerFactory.getLogger(classOf[FileCollector])
 
     private implicit val fileStatusOrder = new Ordering[FileStatus] {
         def compare(x: FileStatus, y: FileStatus): Int = x.getPath compareTo y.getPath
     }
 
-    private var _pattern:String = ""
-    private var _path:Path = _
-    private var _defaults:Map[String,Any] = Map()
-
     private lazy val templateEngine = Velocity.newEngine()
     private lazy val templateContext = Velocity.newContext()
-
-    /**
-      * Constructs a new FileCollector instance using the Hadoop configuration from the specified SparkSession
-      *
-      * @param spark
-      * @return
-      */
-    def this(spark:SparkSession) = {
-        this(spark.sparkContext.hadoopConfiguration)
-    }
-
-    /**
-      * Sets the pattern which will be used for generating directory and/or file names from partition information
-      *
-      * @param pattern
-      * @return
-      */
-    def pattern(pattern:String) : FileCollector = {
-        this._pattern = pattern
-        this
-    }
-
-    /**
-     * Set default values for partitions not specified in `resolve`
-     * @param defaults
-     * @return
-     */
-    def defaults(defaults:Map[String,Any]) : FileCollector = {
-        this._defaults = defaults
-        this
-    }
-
-    /**
-      * Sets the base directory which is used for retrieving the file system. The base location must not contain
-      * any pattern variable
-      *
-      * @param path
-      * @return
-      */
-    def path(path:Path) : FileCollector = {
-        this._path = path
-        this
-    }
 
     def resolve(partition:PartitionSpec) : Path = {
         resolve(partition.toSeq)
@@ -101,16 +127,16 @@ class FileCollector(hadoopConf:Configuration) {
         resolve(partition.toSeq)
     }
     def resolve(partition:Seq[(String,Any)]) : Path = {
-        if (_pattern != null && _pattern.nonEmpty) {
-            val context = templateContext
-            val partitionValues = _defaults ++ partition.toMap
+        if (pattern != null && pattern.nonEmpty) {
+            val context = new VelocityContext(templateContext)
+            val partitionValues = defaults ++ partition.toMap
             partitionValues.foreach(kv => context.put(kv._1, kv._2))
             val output = new StringWriter()
-            templateEngine.evaluate(context, output, "FileCollector", _pattern)
-            new Path(_path, output.getBuffer.toString)
+            templateEngine.evaluate(context, output, "FileCollector", pattern)
+            new Path(path, output.getBuffer.toString)
         }
         else {
-            _path
+            path
         }
     }
 
@@ -121,12 +147,12 @@ class FileCollector(hadoopConf:Configuration) {
       * @return
       */
     def collect(partitions:Iterable[PartitionSpec]) : Seq[Path] = {
-        logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        logger.info(s"Collecting files in location ${path} with pattern '${pattern}'")
         flatMap(partitions)(collectPath)
     }
 
     def collect(partition:PartitionSpec) : Seq[Path] = {
-        logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        logger.info(s"Collecting files in location ${path} with pattern '${pattern}'")
         map(partition)(collectPath)
     }
 
@@ -136,7 +162,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @return
       */
     def collect() : Seq[Path] = {
-        logger.info(s"Collecting files in location ${_path} with pattern '${_pattern}'")
+        logger.info(s"Collecting files in location ${path} with pattern '${pattern}'")
         map(collectPath)
     }
 
@@ -147,7 +173,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @return
       */
     def delete(partitions:Iterable[PartitionSpec]) : Unit = {
-        logger.info(s"Deleting files in location ${_path} with pattern '${_pattern}'")
+        logger.info(s"Deleting files in location ${path} with pattern '${pattern}'")
         foreach(partitions)(deletePath)
     }
 
@@ -157,7 +183,7 @@ class FileCollector(hadoopConf:Configuration) {
       * @return
       */
     def delete() : Unit = {
-        logger.info(s"Deleting files in location ${_path} with pattern '${_pattern}'")
+        logger.info(s"Deleting files in location ${path} with pattern '${pattern}'")
         foreach(deletePath _)
     }
 
@@ -171,7 +197,7 @@ class FileCollector(hadoopConf:Configuration) {
     def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Seq[T] = {
         requirePathAndPattern()
 
-        val fs = _path.getFileSystem(hadoopConf)
+        val fs = path.getFileSystem(hadoopConf)
         partitions.flatMap(p => fn(fs, resolve(p))).toSeq
     }
 
@@ -185,22 +211,22 @@ class FileCollector(hadoopConf:Configuration) {
     def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Seq[T] = {
         requirePathAndPattern()
 
-        val fs = _path.getFileSystem(hadoopConf)
+        val fs = path.getFileSystem(hadoopConf)
         partitions.map(p => fn(fs, resolve(p))).toSeq
     }
 
     def map[T](partition:PartitionSpec)(fn:(HadoopFileSystem,Path) => T) : T = {
         requirePathAndPattern()
 
-        val fs = _path.getFileSystem(hadoopConf)
+        val fs = path.getFileSystem(hadoopConf)
         fn(fs, resolve(partition))
     }
 
     def map[T](fn:(HadoopFileSystem,Path) => T) : T = {
         requirePath()
 
-        val fs = _path.getFileSystem(hadoopConf)
-        val curPath:Path = if (_pattern != null && _pattern.nonEmpty) new Path(_path, _pattern) else _path
+        val fs = path.getFileSystem(hadoopConf)
+        val curPath:Path = if (pattern != null && pattern.nonEmpty) new Path(path, pattern) else path
         fn(fs,curPath)
     }
 
@@ -248,14 +274,14 @@ class FileCollector(hadoopConf:Configuration) {
     }
 
     private def requirePathAndPattern() : Unit = {
-        if (_path == null || _path.toString.isEmpty)
+        if (path == null || path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
-        if (_pattern == null)
+        if (pattern == null)
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
     }
 
     private def requirePath() : Unit = {
-        if (_path == null || _path.toString.isEmpty)
+        if (path == null || path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting files")
     }
 }

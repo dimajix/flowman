@@ -22,12 +22,15 @@ import java.nio.file.FileAlreadyExistsException
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.sources.local.implicits._
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -48,6 +51,14 @@ class LocalRelation(
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
+
+    private lazy val collector : FileCollector = {
+        FileCollector.builder(context.hadoopConf)
+            .path(location)
+            .pattern(pattern)
+            .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment)
+            .build()
+    }
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -76,7 +87,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
-        requireAllPartitionKeys(partitions)
+        requireValidPartitionKeys(partitions)
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
@@ -100,17 +111,24 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(schema != null)
         require(partitions != null)
 
-        logger.info(s"Reading from local location '$location' (partitions=$partitions)")
+        requireValidPartitionKeys(partitions)
 
-        val inputFiles = collectFiles(partitions)
-        val reader = executor.spark.readLocal.options(options)
-        inputSchema.foreach(s => reader.schema(s))
+        val data = mapFiles(partitions) { (partition, paths) =>
+            paths.foreach(p => logger.info(s"Reading local relation '$identifier' partition ${HiveDialect.expr.partition(partition)} file '$p'"))
 
-        val rawData = reader
-            .format(format)
-            .load(inputFiles.map(p => new File(p.toUri)):_*)
+            val reader = executor.spark.readLocal.options(options)
+            inputSchema.foreach(s => reader.schema(s))
 
-        SchemaUtils.applySchema(rawData, schema)
+            val df = reader
+                .format(format)
+                .load(paths.map(p => new File(p.toUri)):_*)
+
+            // Add partitions values as columns
+            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, lit(p._2)))
+        }
+
+        val allData = data.reduce(_ union _)
+        SchemaUtils.applySchema(allData, schema)
     }
 
     /**
@@ -148,15 +166,16 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(executor != null)
         require(partitions != null)
 
-        if (this.partitions != null && this.partitions.nonEmpty)
+        if (this.partitions != null && partitions.nonEmpty)
             cleanPartitionedFiles(partitions)
         else
             cleanUnpartitionedFiles()
     }
 
     private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+        require(partitions != null)
+
+        requireValidPartitionKeys(partitions)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector.delete(resolvedPartitions)
@@ -232,39 +251,29 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     }
 
     /**
-      * Collects files for a given time period using the pattern inside the specification
-      *
-      * @param partitions
-      * @return
-      */
-    private def collectFiles(partitions:Map[String,FieldValue]) : Seq[Path] = {
-        val inputFiles =
-            if (this.partitions != null && this.partitions.nonEmpty)
-                collectPartitionedFiles(partitions)
-            else
-                collectUnpartitionedFiles()
+     * Collects files for a given time period using the pattern inside the specification
+     *
+     * @param partitions
+     * @return
+     */
+    private def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+        require(partitions != null)
 
-        // Print all files that we found
-        inputFiles.foreach(f => logger.info("Reading input file {}", f.toString))
-        inputFiles
+        if (this.partitions.nonEmpty)
+            mapPartitionedFiles(partitions)(fn)
+        else
+            Seq(mapUnpartitionedFiles(fn))
     }
 
-    private def collectPartitionedFiles(partitions:Map[String,FieldValue]) : Seq[Path] = {
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+    private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+        require(partitions != null)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector.collect(resolvedPartitions)
+        resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
-    private def collectUnpartitionedFiles() : Seq[Path] = {
-        collector.collect()
-    }
-
-    private def collector = {
-        new FileCollector(context.hadoopConf)
-            .path(location)
-            .pattern(pattern)
+    private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
+        fn(PartitionSpec(), collector.collect())
     }
 
     private def localDirectory = {

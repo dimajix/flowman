@@ -176,9 +176,9 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         outputPath.toFile.exists() should be (true)
 
         val df = spark.createDataFrame(Seq(
-            ("lala", 1),
-            ("lolo", 2)
-        ))
+                ("lala", 1),
+                ("lolo", 2)
+            ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         relation.write(executor, df, Map("p_col" -> SingleValue("2")), "overwrite")
@@ -212,7 +212,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         val spark = this.spark
         import spark.implicits._
 
-        val outputPath = Paths.get(tempDir.toString, "partitions_test")
+        val outputPath = Paths.get(tempDir.toString, "wildcard_partitions_test")
         def mkPartitionFile(p1:String, p2:String, f:String) : Unit = {
             val child = s"p1=$p1/p2=$p2/$f"
             val file = new File(outputPath.toFile, child)
@@ -316,6 +316,84 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             ("p1=1/p2=2/122.txt"),
             ("p1=2/p2=2/221.txt"),
             ("p1=2/p2=2/222.txt")
+        ))
+
+        relation.destroy(executor)
+    }
+
+    it should "support using environment variables in pattern" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val outputPath = Paths.get(tempDir.toString, "environment_partitions_test")
+        def mkPartitionFile(year:String, month:String, f:String) : Unit = {
+            val child = s"year=$year/month=$month/$f"
+            val file = new File(outputPath.toFile, child)
+            file.getParentFile.mkdirs()
+            file.createNewFile()
+            val out = new PrintWriter(file)
+            out.println(child)
+            out.close()
+        }
+
+        mkPartitionFile("2015","1","111.txt")
+        mkPartitionFile("2015","1","112.txt")
+        mkPartitionFile("2016","1","111.txt")
+        mkPartitionFile("2016","1","112.txt")
+        mkPartitionFile("2016","2","121.txt")
+        mkPartitionFile("2016","2","122.txt")
+        mkPartitionFile("2017","1","211.txt")
+        mkPartitionFile("2017","1","212.txt")
+
+        val spec =
+            s"""
+               |environment:
+               |  - year=2016
+               |relations:
+               |  local:
+               |    kind: file
+               |    location: ${outputPath.toUri}
+               |    pattern: year=$$year/month=$$month
+               |    format: text
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: value
+               |          type: string
+               |    partitions:
+               |        - name: month
+               |          type: integer
+               |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("local"))
+        relation.resources(Map("month" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=1"))
+        ))
+        relation.resources(Map()) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=*"))
+        ))
+
+        relation.create(executor, true)
+        relation.migrate(executor)
+
+        val df1 = relation.read(executor, None, Map("month" -> SingleValue("1")))
+        df1.as[(String,Int)].collect().sorted should be (Seq(
+            ("year=2016/month=1/111.txt",1),
+            ("year=2016/month=1/112.txt",1)
+        ))
+
+        val df2 = relation.read(executor, None, Map())
+        df2.as[String].collect().sorted should be (Seq(
+            ("year=2016/month=1/111.txt"),
+            ("year=2016/month=1/112.txt"),
+            ("year=2016/month=2/121.txt"),
+            ("year=2016/month=2/122.txt")
         ))
 
         relation.destroy(executor)

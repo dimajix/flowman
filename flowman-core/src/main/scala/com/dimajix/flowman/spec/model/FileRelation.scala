@@ -54,6 +54,14 @@ class FileRelation(
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
+    private lazy val collector : FileCollector = {
+        FileCollector.builder(context.hadoopConf)
+            .path(location)
+            .pattern(pattern)
+            .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment)
+            .build()
+    }
+
     /**
       * Returns the list of all resources which will be created by this relation.
       *
@@ -107,7 +115,7 @@ class FileRelation(
         requireValidPartitionKeys(partitions)
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
+            paths.foreach(p => logger.info(s"Reading file relation '$identifier' partition ${HiveDialect.expr.partition(partition)} file '$p'"))
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)
@@ -247,7 +255,7 @@ class FileRelation(
       * @param partitions
       * @return
       */
-    protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    private def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
         if (this.partitions.nonEmpty)
@@ -265,13 +273,6 @@ class FileRelation(
 
     private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
         fn(PartitionSpec(), collector.collect())
-    }
-
-    protected def collector : FileCollector = {
-        new FileCollector(context.hadoopConf)
-            .path(location)
-            .pattern(pattern)
-            .defaults(partitions.map(p => (p.name, "*")).toMap)
     }
 }
 

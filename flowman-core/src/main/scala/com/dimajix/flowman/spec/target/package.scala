@@ -42,27 +42,16 @@ package object target {
             )
         }
 
-        // Create all super-partitions using the powerset of all specified partitions
-        def explodePartitions(id:ResourceIdentifier) : Seq[ResourceIdentifier] = {
-            @tailrec
-            def pwr(t: Set[String], ps: Set[Set[String]]): Set[Set[String]] =
-                if (t.isEmpty) ps
-                else pwr(t.tail, ps ++ (ps map (_ + t.head)))
-
-            val ps = pwr(id.partition.keySet, Set(Set.empty[String])) //Powerset of ∅ is {∅}
-            ps.toSeq.map(keys => id.copy(partition = id.partition.filterKeys(keys.contains)))
-        }
-
         val targetIds = targets.map(_.identifier).toSet
         val targetsById = targets.map(t => (t.identifier, t)).toMap
-        val targetsByResources = targets.flatMap(t =>
+        val providedResources = targets.flatMap(t =>
             try {
-               t.provides(phase).flatMap(explodePartitions).map(id => (id,t.identifier))
+               t.provides(phase).map(id => (id,t.identifier))
             }
             catch {
                 case ex:Exception => throw new RuntimeException(s"Caught exception while resolving provided resources of target '${t.identifier}'", ex)
             }
-            ).toMap
+            )
 
         val nodes = mutable.Map(targets.map(t => t.identifier -> mutable.Set[TargetIdentifier]()):_*)
 
@@ -81,7 +70,7 @@ package object target {
         // Process all 'requires' dependencies
         targets.foreach(t => {
             val deps = try {
-                t.requires(phase).flatMap(targetsByResources.get)
+                t.requires(phase).flatMap(req => providedResources.filter(res => req.contains(res._1)).map(_._2))
             }
             catch {
                 case ex:Exception => throw new RuntimeException(s"Caught exception while resolving required resources of target '${t.identifier}'", ex)

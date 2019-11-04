@@ -81,4 +81,15 @@ class ResourceIdentifierTest extends FlatSpec with Matchers {
         val id = ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.*.dev/processing_date=2019-03-20"))
         id.contains(ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.test.dev/processing_date=2019-03-20"))) should be (true)
     }
+
+    it should "support character sets" in {
+        val id = ResourceIdentifier.ofHiveTable("table_[0-9]+")
+        id.contains(ResourceIdentifier.ofHiveTable("table_[0-9]+")) should be (true)
+        id.contains(ResourceIdentifier.ofHiveTable("table_+")) should be (false)
+        id.contains(ResourceIdentifier.ofHiveTable("table_")) should be (false)
+        id.contains(ResourceIdentifier.ofHiveTable("table_0")) should be (true)
+        id.contains(ResourceIdentifier.ofHiveTable("table_01")) should be (true)
+        id.contains(ResourceIdentifier.ofHiveTable("table_0x")) should be (false)
+        id.contains(ResourceIdentifier.ofHiveTable("table_0+")) should be (false)
+    }
 }

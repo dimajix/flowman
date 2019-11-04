@@ -57,6 +57,9 @@ case class GlobPattern(val globPattern: String) {
                 case BACKSLASH =>
                     regex.append(BACKSLASH)
                     isBackslash = true
+                case '*'|'+' if regex.lastOption == Option(']') =>
+                    // Handle "+" after regex pattern
+                    regex.append(c)
                 case '.'| '$' | '(' | ')' | '|' | '+' =>
                     // escape regex special chars that are not glob special chars
                     regex.append(BACKSLASH)
@@ -94,7 +97,7 @@ case class GlobPattern(val globPattern: String) {
                     // Many set errors like [][] could not be easily detected here,
                     // as []], []-] and [-] are all valid POSIX glob and java regex.
                     // We'll just let the regex compiler do the real work.
-                    setOpen = 0
+                    setOpen -= 1
                     regex.append(c)
                 case _ => regex.append(c)
             }

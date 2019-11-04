@@ -59,7 +59,6 @@ class HiveUnionTableRelation(
     private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
 
     def viewIdentifier: TableIdentifier = TableIdentifier(view, viewDatabase)
-    def tableIdentifier: TableIdentifier = TableIdentifier(tablePrefix + "_*", tableDatabase)
     def tableIdentifier(version:Int) : TableIdentifier = {
         TableIdentifier(tablePrefix + "_" + version.toString, tableDatabase)
     }
@@ -127,7 +126,7 @@ class HiveUnionTableRelation(
       * @return
       */
     override def provides: Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(tablePrefix + "_*", tableDatabase),
+        ResourceIdentifier.ofHiveTable(tablePrefix + "_[0-9]+", tableDatabase),
         ResourceIdentifier.ofHiveTable(view, viewDatabase.orElse(tableDatabase))
     )
 
@@ -155,7 +154,7 @@ class HiveUnionTableRelation(
         requireValidPartitionKeys(partition)
 
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p => ResourceIdentifier.ofHivePartition(tablePrefix + "_*", tableDatabase, p.toMap)).toSet
+        allPartitions.map(p => ResourceIdentifier.ofHivePartition(tablePrefix + "_[0-9]+", tableDatabase, p.toMap)).toSet
     }
 
 

@@ -16,10 +16,12 @@
 
 package com.dimajix.flowman.spec
 
+import java.io.File
 import java.net.URL
 
 import scala.annotation.tailrec
 
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.hadoop.GlobPattern
@@ -28,6 +30,7 @@ import com.dimajix.flowman.hadoop.GlobPattern
 object ResourceIdentifier {
     def ofFile(file:Path) = ResourceIdentifier("file", file.toString)
     def ofLocal(file:Path) = ResourceIdentifier("local", file.toString)
+    def ofLocal(file:File) = ResourceIdentifier("local", file.toURI.toString)
     def ofHiveDatabase(database:String) = ResourceIdentifier("hiveDatabase", database)
     def ofHiveTable(table:String) = ResourceIdentifier("hiveTable", table)
     def ofHiveTable(table:String, database:Option[String]) = ResourceIdentifier("hiveTable", database.map(_ + ".").getOrElse("") + table)

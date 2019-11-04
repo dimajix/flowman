@@ -190,4 +190,24 @@ class TargetOrderTest extends FlatSpec with Matchers {
 
         orderTargets(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
     }
+
+    it should "work with Windows paths" in {
+        val session = Session.builder().build()
+        val context = session.context
+
+        val t1 = DummyTarget(context, "t1",
+            Set(ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.test.dev/processing_date=2019-03-20"))),
+            Set()
+        )
+        val t2 = DummyTarget(context, "t2",
+            Set(),
+            Set(
+                ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.*.dev/processing_date=2019-03-20")),
+                ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.*.dev"))
+            )
+        )
+
+        orderTargets(Seq(t1,t2), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
+        orderTargets(Seq(t2,t1), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
+    }
 }

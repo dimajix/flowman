@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec
 
-import scala.annotation.tailrec
 import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
@@ -33,6 +32,12 @@ package object target {
     def orderTargets(targets: Seq[Target], phase:Phase) : Seq[Target] = {
         val logger = LoggerFactory.getLogger(classOf[Target])
 
+        targets.foreach { t =>
+            logger.info(s"Analyzing build phase '$phase' of target '${t.identifier}'")
+            t.requires(phase).foreach(r => logger.info(s"  requires $r"))
+            t.provides(phase).foreach(r => logger.info(s"  provides $r"))
+        }
+
         def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
             deps.map(dep =>
                 if (dep.project.nonEmpty)
@@ -44,21 +49,22 @@ package object target {
 
         val targetIds = targets.map(_.identifier).toSet
         val targetsById = targets.map(t => (t.identifier, t)).toMap
-        val providedResources = targets.flatMap(t =>
+        val producedResources = targets.flatMap(t =>
             try {
-               t.provides(phase).map(id => (id,t.identifier))
+                t.provides(phase).map(id => (id,t.identifier))
             }
             catch {
                 case ex:Exception => throw new RuntimeException(s"Caught exception while resolving provided resources of target '${t.identifier}'", ex)
             }
-            )
+        )
 
         val nodes = mutable.Map(targets.map(t => t.identifier -> mutable.Set[TargetIdentifier]()):_*)
 
         // Process all 'after' dependencies
         targets.foreach(t => {
             val deps =  normalize(t, t.after).filter(targetIds.contains)
-            deps.foreach(d => nodes(t.identifier).add(d))
+            val node = nodes(t.identifier)
+            deps.foreach(d => node.add(d))
         })
 
         // Process all 'before' dependencies
@@ -69,14 +75,25 @@ package object target {
 
         // Process all 'requires' dependencies
         targets.foreach(t => {
-            val deps = try {
-                t.requires(phase).flatMap(req => providedResources.filter(res => req.contains(res._1)).map(_._2))
+            val node = nodes(t.identifier)
+            try {
+                // For each target requirement...
+                t.requires(phase)
+                    .foreach(req =>
+                        // ... identify all targets which produce the resource
+                        producedResources
+                            .filter(res => req.contains(res._1))
+                            .foreach(res => node.add(res._2))
+                    )
             }
             catch {
                 case ex:Exception => throw new RuntimeException(s"Caught exception while resolving required resources of target '${t.identifier}'", ex)
             }
-            deps.foreach(d => nodes(t.identifier).add(d))
         })
+
+        nodes.foreach { case(n,deps) =>
+            logger.info(s"Dependencies of phase '$phase' of target '$n': ${deps.map(_.toString).mkString(",")}")
+        }
 
         val order = mutable.ListBuffer[TargetIdentifier]()
         while (nodes.nonEmpty) {

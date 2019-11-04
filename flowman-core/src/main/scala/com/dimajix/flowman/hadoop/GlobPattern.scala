@@ -57,12 +57,7 @@ case class GlobPattern(val globPattern: String) {
                 case BACKSLASH =>
                     regex.append(BACKSLASH)
                     isBackslash = true
-                case '.' =>
-                case '$' =>
-                case '(' =>
-                case ')' =>
-                case '|' =>
-                case '+' =>
+                case '.'| '$' | '(' | ')' | '|' | '+' =>
                     // escape regex special chars that are not glob special chars
                     regex.append(BACKSLASH)
                     regex.append(c)

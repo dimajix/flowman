@@ -42,6 +42,29 @@ class ResourceIdentifierTest extends FlatSpec with Matchers {
         //id.contains(ResourceIdentifier.ofFile(new Path("/path//xyz/with/wildcard"))) should be (false)
         id.contains(ResourceIdentifier.ofFile(new Path("/path/123/xyz/with/wildcard"))) should be (false)
         id.contains(ResourceIdentifier.ofFile(new Path("/path/*/*/wildcard"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/*/with"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/?/with"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/1/with"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/*/with/wildcard_x"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/?/with/wildcard_x"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/1/with/wildcard_x"))) should be (false)
+    }
+
+    it should "support 'contain' with wildcards is partial directories" in {
+        val id = ResourceIdentifier.ofFile(new Path("/path/topic.*.dev/with/wildcard"))
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.*.dev/with/wildcard"))) should be (true)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.?.dev/with/wildcard"))) should be (true)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.1.dev/with/wildcard"))) should be (true)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic..dev/with/wildcard"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.1dev/with/wildcard"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic1.dev/with/wildcard"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.1.dev/withx/wildcard"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.*.dev/with"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.?.dev/with"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.1.dev/with"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.*.dev/with/wildcard_x"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.?.dev/with/wildcard_x"))) should be (false)
+        id.contains(ResourceIdentifier.ofFile(new Path("/path/topic.1.dev/with/wildcard_x"))) should be (false)
     }
 
     it should "support 'contains' with single char wildcards" in {
@@ -52,5 +75,10 @@ class ResourceIdentifierTest extends FlatSpec with Matchers {
         id.contains(ResourceIdentifier.ofFile(new Path("/path//with/wildcard"))) should be (false)
         id.contains(ResourceIdentifier.ofFile(new Path("/path/xy/with/wildcard"))) should be (false)
         id.contains(ResourceIdentifier.ofFile(new Path("/path/x/y/with/wildcard"))) should be (false)
+    }
+
+    it should "support windows paths" in {
+        val id = ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.*.dev/processing_date=2019-03-20"))
+        id.contains(ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.test.dev/processing_date=2019-03-20"))) should be (true)
     }
 }

@@ -71,9 +71,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))))
         relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation.fields should be(
             Field("str_col", ftypes.StringType) ::
                 Field("int_col", ftypes.IntegerType) ::
@@ -259,9 +259,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))))
         relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation.fields should be(
             Field("str_col", ftypes.StringType) ::
                 Field("int_col", ftypes.IntegerType) ::
@@ -384,9 +384,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
-        relation_1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation_1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))))
         relation_1.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
                 Field("int_col", ftypes.IntegerType) ::
@@ -573,9 +573,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
-        relation_1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_*", Some("default"))))
+        relation_1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("default")), ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))))
         relation_1.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_*", Some("default"), Map())))
+        relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
                 Field("int_col", ftypes.IntegerType) ::

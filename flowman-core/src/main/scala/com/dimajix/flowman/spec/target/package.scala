@@ -33,9 +33,9 @@ package object target {
         val logger = LoggerFactory.getLogger(classOf[Target])
 
         targets.foreach { t =>
-            logger.info(s"Analyzing build phase '$phase' of target '${t.identifier}'")
-            t.requires(phase).foreach(r => logger.info(s"  requires $r"))
-            t.provides(phase).foreach(r => logger.info(s"  provides $r"))
+            logger.debug(s"Analyzing build phase '$phase' of target '${t.identifier}'")
+            t.requires(phase).foreach(r => logger.debug(s"  requires $r"))
+            t.provides(phase).foreach(r => logger.debug(s"  provides $r"))
         }
 
         def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
@@ -64,13 +64,13 @@ package object target {
         targets.foreach(t => {
             val deps =  normalize(t, t.after).filter(targetIds.contains)
             val node = nodes(t.identifier)
-            deps.foreach(d => node.add(d))
+            deps.foreach(d => node += d)
         })
 
         // Process all 'before' dependencies
         targets.foreach(t => {
             val deps = normalize(t, t.before).filter(targetIds.contains)
-            deps.foreach(b => nodes(b).add(t.identifier))
+            deps.foreach(b => nodes(b) += t.identifier)
         })
 
         // Process all 'requires' dependencies
@@ -83,7 +83,7 @@ package object target {
                         // ... identify all targets which produce the resource
                         producedResources
                             .filter(res => req.contains(res._1))
-                            .foreach(res => node.add(res._2))
+                            .foreach(res => node += res._2)
                     )
             }
             catch {

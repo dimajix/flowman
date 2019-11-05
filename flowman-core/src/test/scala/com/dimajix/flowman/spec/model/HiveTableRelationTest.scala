@@ -20,6 +20,7 @@ import java.io.File
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
@@ -41,15 +42,16 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
+import com.dimajix.spark.testing.QueryTest
 
 
-class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSession {
+class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSession with QueryTest {
     "The HiveTableRelation" should "support create" in {
         val spec =
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    description: "This is a test table"
               |    database: default
               |    table: lala_0001
@@ -61,6 +63,10 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
               |          type: string
               |        - name: int_col
               |          type: integer
+              |        - name: char_col
+              |          type: char(10)
+              |        - name: varchar_col
+              |          type: varchar(10)
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
@@ -72,6 +78,12 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
         relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
         relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
+        relation.fields should be(
+            Field("str_col", ftypes.StringType) ::
+            Field("int_col", ftypes.IntegerType) ::
+            Field("char_col", ftypes.CharType(10)) ::
+            Field("varchar_col", ftypes.VarcharType(10)) ::
+            Nil)
 
         relation.create(executor)
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (true)
@@ -84,6 +96,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
             StructField("int_col", IntegerType) ::
+            StructField("char_col", StringType) ::
+            StructField("varchar_col", StringType) ::
             Nil
         ))
         table.partitionColumnNames should be (Seq())
@@ -94,7 +108,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
         relation.create(executor, true)
 
-        // Drop table
+        // == Destroy ===================================================================
         relation.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (false)
 
@@ -108,7 +122,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0002
                |    external: true
@@ -149,6 +163,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.partitionSchema should be (StructType(Nil))
         table.location should be (location)
 
+        // == Destroy ===================================================================
         relation.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (false)
     }
@@ -159,7 +174,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0003
                |    external: false
@@ -205,6 +220,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
                 Nil
         ))
         table.location should be (location)
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -214,7 +231,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             s"""
                |relations:
                |  t0:
-               |    kind: table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0004
                |    location: $location
@@ -259,6 +276,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
                 Nil
         ))
         table.location should be (location)
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -267,7 +286,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    database: default
               |    table: lala_0005
               |    properties:
@@ -305,6 +324,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.location.toString should not be ("")
         table.properties("lala") should be ("lolo")
         table.properties("hive.property") should be ("TRUE")
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -313,7 +334,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    database: default
               |    table: lala_0006
               |    format: parquet
@@ -350,6 +371,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"))
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -358,7 +381,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    database: default
               |    table: lala_0007
               |    format: avro
@@ -395,6 +418,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -403,7 +428,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    database: default
               |    table: lala_0007
               |    format: textfile
@@ -444,6 +469,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"))
         table.storage.properties should be (Map("separatorChar" -> "\t", "serialization.format" -> "1"))
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     })
 
@@ -452,7 +479,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    database: default
               |    table: lala_0008
               |    rowFormat: org.apache.hadoop.hive.serde2.avro.AvroSerDe
@@ -489,6 +516,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.TextInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -497,7 +526,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             """
               |relations:
               |  t0:
-              |    kind: table
+              |    kind: hiveTable
               |    database: default
               |    table: lala_0009
               |    rowFormat: org.apache.hadoop.hive.serde2.avro.AvroSerDe
@@ -536,6 +565,8 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         table.storage.inputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
+
+        // == Destroy ===================================================================
         relation.destroy(executor)
     }
 
@@ -592,7 +623,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
           spark.read.table("default.lala_0010").count() should be(0)
         }
 
-        // Test destroy
+        // == Destroy ===================================================================
         relation.destroy(executor)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
@@ -655,7 +686,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             spark.read.table("default.lala_0011").count() should be(0)
         }
 
-        // Test destroy
+        // == Destroy ===================================================================
         relation.destroy(executor)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
@@ -702,7 +733,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
 
-        // Test create
+        // == Create ===================================================================
         relation.create(executor)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
@@ -710,7 +741,30 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             spark.read.table("default.lala_0012").count() should be(0)
         }
 
-        // Test clean
+        val table = session.catalog.getTable(TableIdentifier("lala_0012", Some("default")))
+        table.comment should be(None)
+        table.identifier should be (TableIdentifier("lala_0012", Some("default")))
+        table.tableType should be (CatalogTableType.MANAGED)
+        table.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("spart", StringType, nullable = false) ::
+                StructField("ipart", IntegerType, nullable = false) ::
+                Nil
+        ))
+        table.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        ))
+        table.partitionColumnNames should be (Seq("spart","ipart"))
+        table.partitionSchema should be (StructType(
+            StructField("spart", StringType, nullable = false) ::
+                StructField("ipart", IntegerType, nullable = false) ::
+                Nil
+        ))
+
+        // == Truncate ===================================================================
         relation.truncate(executor)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
@@ -718,7 +772,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
             spark.read.table("default.lala_0012").count() should be(0)
         }
 
-        // Test destroy
+        // == Destroy ===================================================================
         relation.destroy(executor)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
@@ -730,12 +784,251 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
     }
 
+    it should "support different column orders" in {
+        val spec =
+            """
+              |relations:
+              |  t1:
+              |    kind: hiveTable
+              |    database: default
+              |    table: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |        - name: char_col
+              |          type: char(10)
+              |
+              |  t2:
+              |    kind: hiveTable
+              |    database: default
+              |    table: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: char_col
+              |          type: char(10)
+              |        - name: int_col
+              |          type: integer
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        relation_1.fields should be(
+            Field("str_col", ftypes.StringType) ::
+                Field("int_col", ftypes.IntegerType) ::
+                Field("char_col", ftypes.CharType(10)) ::
+                Nil)
+
+        // == Create ===================================================================
+        relation_1.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+
+        // Inspect Hive table
+        val table = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        table.identifier should be (TableIdentifier("lala", Some("default")))
+        table.tableType should be (CatalogTableType.MANAGED)
+        table.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("char_col", StringType) ::
+                Nil
+        ))
+        table.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("char_col", StringType) ::
+                Nil
+        ))
+        table.partitionColumnNames should be (Seq())
+        table.partitionSchema should be (StructType(Nil))
+
+        // == Write ===================================================================
+        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        val schema = StructType(
+            StructField("str_col", StringType) ::
+                StructField("char_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        )
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", "str", 21)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation_2.write(executor, df, Map())
+
+        // == Read ===================================================================
+        val rows_1 = Seq(
+            Row("v1", 21, "str")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1)
+
+        // == Destroy ===================================================================
+        relation_2.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+    }
+
+    it should "support migration by adding new columns" in {
+        val spec =
+            """
+              |relations:
+              |  t1:
+              |    kind: hiveTable
+              |    database: default
+              |    table: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+              |
+              |  t2:
+              |    kind: hiveTable
+              |    database: default
+              |    table: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: char_col
+              |          type: char(10)
+              |        - name: int_col
+              |          type: integer
+              |    partitions:
+              |      - name: partition_col
+              |        type: string
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        relation_1.fields should be(
+            Field("str_col", ftypes.StringType) ::
+                Field("int_col", ftypes.IntegerType) ::
+                Nil)
+
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        relation_1.create(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        table_1.identifier should be (TableIdentifier("lala", Some("default")))
+        table_1.tableType should be (CatalogTableType.MANAGED)
+        table_1.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table_1.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        ))
+        table_1.partitionColumnNames should be (Seq("partition_col"))
+        table_1.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ===================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", 21)
+        ))
+        val df = spark.createDataFrame(rdd, table_1.dataSchema)
+        relation_1.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
+
+        // == Migrate ===================================================================
+        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        relation_2.migrate(executor)
+
+        // Inspect Hive table
+        val table_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
+        table_2.identifier should be (TableIdentifier("lala", Some("default")))
+        table_2.tableType should be (CatalogTableType.MANAGED)
+        table_2.schema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("char_col", StringType) ::
+                StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+        table_2.dataSchema should be (StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("char_col", StringType) ::
+                Nil
+        ))
+        table_2.partitionColumnNames should be (Seq("partition_col"))
+        table_2.partitionSchema should be (StructType(
+            StructField("partition_col", StringType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ===================================================================
+        val rdd_2 = spark.sparkContext.parallelize(Seq(
+            Row("v2", 22, "lala")
+        ))
+        val df2 = spark.createDataFrame(rdd_2, table_2.dataSchema)
+        relation_2.write(executor, df2, Map("partition_col" -> SingleValue("part_2")))
+
+        // == Read ===================================================================
+        val rows_1 = Seq(
+            Row("v1", 21, null, "part_1")
+        )
+        val rows_2 = Seq(
+            Row("v2", 22, "lala", "part_2")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+
+        // == Overwrite ===================================================================
+        val rdd_2a = spark.sparkContext.parallelize(Seq(
+            Row("v3", 23, "lala")
+        ))
+        val df2a = spark.createDataFrame(rdd_2a, table_2.dataSchema)
+        relation_2.write(executor, df2a, Map("partition_col" -> SingleValue("part_2")))
+
+        // == Read ===================================================================
+        val rows_2a = Seq(
+            Row("v3", 23, "lala", "part_2")
+        )
+        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2a)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+
+        // == Destroy ===================================================================
+        relation_2.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+    }
+
     it should "support mapping schemas" in {
         val spec =
             s"""
                |relations:
                |  t0:
-               |    kind: table
+               |    kind: hiveTable
                |    database: default
                |    table: lala_0004
                |    schema:

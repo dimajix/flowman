@@ -71,14 +71,16 @@ object Lifecycle {
         Phase.VERIFY
     )
     val CLEAN:Seq[Phase] = Seq(
-        Phase.TRUNCATE,
+        Phase.TRUNCATE
+    )
+    val DESTROY:Seq[Phase] = Seq(
         Phase.DESTROY
     )
 
-    val ALL:Seq[Phase] = BUILD ++ CLEAN
+    val ALL:Seq[Phase] = BUILD ++ CLEAN ++ DESTROY
     val DEFAULT:Seq[Phase] = BUILD
 
-    private val all = Seq(DEFAULT, CLEAN)
+    private val all = Seq(DEFAULT, CLEAN, DESTROY)
 
     /**
       * Creates an appropriate lifecycle from the beginning up to the specified phase

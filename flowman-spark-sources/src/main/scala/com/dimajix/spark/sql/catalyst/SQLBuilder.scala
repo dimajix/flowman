@@ -217,6 +217,11 @@ class SQLBuilder private(
       val qualifiedName = s"${quoteIdentifier(m.database)}.${quoteIdentifier(m.identifier.table)}"
       qualifiedName
 
+    case view: View =>
+        val m = view.desc
+        val qualifiedName = s"${quoteIdentifier(m.database)}.${quoteIdentifier(m.identifier.table)}"
+        qualifiedName
+
     case Sort(orders, _, RepartitionByExpression(partitionExprs, child, _))
         if orders.map(_.child) == partitionExprs =>
       build(toSQL(child), "CLUSTER BY", partitionExprs.map(_.sql).mkString(", "))
@@ -502,6 +507,8 @@ class SQLBuilder private(
       override def apply(plan: LogicalPlan): LogicalPlan = plan.transform {
         // Do not replace column names in HiveTableRelation, otherwise an assertion will fail
         case relation:HiveTableRelation => relation
+        // Also do not replace column names in Views, otherwise an assertion will fail
+        case view:View => view
         // Also do not replace column names in other relations
         case relation:LogicalRelation => relation
         case p => normalizeAttributes(p)
@@ -731,6 +738,10 @@ class SQLBuilder private(
           catalogTable.identifier.database.get,
           catalogTable.identifier.table,
           l.output.map(_.withQualifier(None))))
+
+      case view: View =>
+        val  m = view.desc
+        Some(SQLTable(m.database, m.identifier.table, view.output.map(_.withQualifier(None))))
 
       case relation: HiveTableRelation =>
         val m = relation.tableMeta

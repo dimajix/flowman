@@ -51,7 +51,7 @@ class DescribeCommand extends ActionCommand {
                 df.printSchema()
             }
             else {
-                relation.schema.printTree()
+                relation.schema.foreach(_.printTree())
             }
         } match {
             case Success(_) =>

@@ -72,15 +72,15 @@ case class ReadStreamMapping (
     override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        val result = if (columns.nonEmpty) {
-            StructType.of(SchemaUtils.createSchema(columns.toSeq))
+        if (columns.nonEmpty) {
+            val result = StructType.of(SchemaUtils.createSchema(columns.toSeq))
+            Map("main" -> result)
         }
         else {
             val rel = context.getRelation(relation)
-            StructType(rel.schema.fields)
+            rel.schema.map(s => "main" -> StructType(s.fields)).toMap
         }
 
-        Map("main" -> result)
     }
 }
 

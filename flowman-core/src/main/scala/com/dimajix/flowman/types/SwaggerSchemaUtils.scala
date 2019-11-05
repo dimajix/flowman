@@ -112,8 +112,10 @@ object SwaggerSchemaUtils {
         }
 
         // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"
-        val possiblyUnparsableNodes = rootNode.path("definitions").elements().flatMap(_.elements())
-        possiblyUnparsableNodes.foreach(replaceAllOf)
+        val definitions = rootNode.path("definitions")
+        val entities = definitions.elements().flatMap(_.elements()).toList
+        entities.foreach(replaceAllOf)
+        entities.foreach(fixRequired)
 
         val result = new SwaggerDeserializer().deserialize(rootNode)
         val convertValue = result.getSwagger
@@ -142,6 +144,17 @@ object SwaggerSchemaUtils {
             case _:JsonNode =>
         }
         jsonNode.elements().foreach(replaceAllOf)
+    }
+
+    private def fixRequired(jsonNode: JsonNode) : Unit = {
+        jsonNode match {
+            case obj:ObjectNode =>
+                if (obj.has("required") && obj.get("required").isNull()) {
+                    obj.without("required")
+                }
+            case _:JsonNode =>
+        }
+        jsonNode.elements().foreach(fixRequired)
     }
 
     private def fromSwaggerObject(properties:Seq[(String,Property)], prefix:String, nullable:Boolean) : StructType = {

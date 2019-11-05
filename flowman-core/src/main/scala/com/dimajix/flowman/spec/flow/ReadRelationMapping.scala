@@ -90,17 +90,23 @@ case class ReadRelationMapping(
     override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
         require(input != null)
 
-        val result = if (columns.nonEmpty) {
-            StructType.of(SchemaUtils.createSchema(columns.toSeq))
+        if (columns.nonEmpty) {
+            val result = StructType.of(SchemaUtils.createSchema(columns.toSeq))
+
+            Map("main" -> result)
         }
         else {
             context.getRelation(relation) match {
-                case pt:PartitionedRelation => StructType(pt.schema.fields ++ pt.partitions.map(_.field))
-                case relation:Relation => StructType(relation.schema.fields)
+                case pt:PartitionedRelation =>
+                    pt.schema
+                        .map(s => "main" -> StructType(s.fields ++ pt.partitions.map(_.field)))
+                        .toMap
+                case relation:Relation =>
+                    relation.schema
+                        .map(s => "main" -> StructType(relation.schema.get.fields))
+                        .toMap
             }
         }
-
-        Map("main" -> result)
     }
 }
 

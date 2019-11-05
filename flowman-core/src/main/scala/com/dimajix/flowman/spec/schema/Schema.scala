@@ -127,7 +127,8 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationSchemaSpec]),
     new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchemaSpec]),
-    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchemaSpec])
+    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchemaSpec]),
+    new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {
     override def instantiate(context:Context) : Schema

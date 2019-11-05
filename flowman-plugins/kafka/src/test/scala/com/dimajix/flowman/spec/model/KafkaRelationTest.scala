@@ -66,7 +66,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         val session = Session.builder().withSparkSession(spark).build()
         val relation = relationSpec.instantiate(session.context)
 
-        val fields = relation.schema.fields
+        val fields = relation.schema.get.fields
         fields(0).name should be ("key")
         fields(1).name should be ("value")
         fields(2).name should be ("topic")

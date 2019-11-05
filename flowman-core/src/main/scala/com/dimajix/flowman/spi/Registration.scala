@@ -110,7 +110,7 @@ object Registration {
         synchronized {
             if (!_loaders.contains(cl)) {
                 val scanResult = new ClassGraph()
-                    .blacklistPackages(IGNORED_PACKAGES.map("-" + _):_*)
+                    .blacklistPackages(IGNORED_PACKAGES:_*)
                     .enableAnnotationInfo()
                     .enableClassInfo()
                     .overrideClassLoaders(cl)

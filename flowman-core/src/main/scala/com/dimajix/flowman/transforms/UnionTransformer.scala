@@ -20,7 +20,6 @@ import java.util.Locale
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.types.StructField
 
 import com.dimajix.flowman.{types => ftypes}
 
@@ -32,16 +31,8 @@ case class UnionTransformer() {
       * @return
       */
     def transformDataFrames(input:Seq[DataFrame]) : DataFrame = {
-        val schemas = input.map(_.schema)
-        val allColumns = schemas.foldLeft(UnionSchema[StructField]())((union, fields) => {
-            val fieldNames = fields.map(_.name)
-            fields.zipWithIndex
-                .foldLeft(union) { case (union,(field, idx)) =>
-                    val prev = fieldNames.take(idx)
-                    val next = fieldNames.drop(idx + 1)
-                    union.withField(field.name, prev, next, field, mergeFields)
-                }
-        }).fields
+        val schemas = input.map(df => ftypes.StructType(ftypes.Field.of(df.schema)))
+        val allColumns = transformSchemas(schemas).fields.map(_.sparkField)
 
         val projectedDf = input.map { df =>
             // Get set of available field names
@@ -65,96 +56,6 @@ case class UnionTransformer() {
       * @return
       */
     def transformSchemas(input:Seq[ftypes.StructType]) : ftypes.StructType = {
-        val schemas = input.map(_.fields)
-        val allColumns = schemas.foldLeft(UnionSchema[ftypes.Field]())((union, fields) => {
-            val fieldNames = fields.map(_.name)
-            fields.zipWithIndex
-                .foldLeft(union) { case (union,(field,idx)) =>
-                    val prev = fieldNames.take(idx)
-                    val next = fieldNames.drop(idx + 1)
-                    union.withField(field.name, prev, next, field, mergeFields)
-                }
-        })
-
-        // Fix "nullable" property of columns not present in all input schemas
-        val allColumnNames = allColumns.fieldsByName.keySet
-        val nullableColumns = input.foldLeft(allColumns)((union, schema) => {
-            val fields = schema.fields.map(_.name.toLowerCase(Locale.ROOT)).toSet
-            allColumnNames.foldLeft(union)((union,field) =>
-                if (fields.contains(field))
-                    union
-                else
-                    union.withField(field, union.fieldsByName(field).copy(nullable = true))
-            )
-        })
-
-        ftypes.StructType(nullableColumns.fields)
-    }
-
-    private case class UnionSchema[T](
-        fieldsByName:Map[String,T] = Map[String,T](),
-        fieldNames:Seq[String] = Seq()
-    ) {
-        def fields:Seq[T] = fieldNames.map(name => fieldsByName(name))
-
-        def withField(name:String, newField:T) : UnionSchema[T] = {
-            val lowerName = name.toLowerCase(Locale.ROOT)
-            val newFieldByName = fieldsByName.updated(lowerName, newField)
-            val newFieldNames =
-                if (fieldsByName.contains(lowerName)) {
-                    fieldNames
-                }
-                else {
-                    fieldNames :+ lowerName
-                }
-
-            UnionSchema(
-                newFieldByName,
-                newFieldNames
-            )
-        }
-        def withField(name:String, prev:Seq[String], next:Seq[String], field:T, merge:(T,T) => T) : UnionSchema[T] = {
-            val lowerName = name.toLowerCase(Locale.ROOT)
-            val newField = fieldsByName.get(lowerName).map(merge(_, field)).getOrElse(field)
-            val newFieldByName = fieldsByName.updated(lowerName, newField)
-            val newFieldNames =
-                if (fieldsByName.contains(lowerName)) {
-                        fieldNames
-                }
-                else {
-                    val fieldIndexByName = fieldNames.zipWithIndex.toMap
-                    val insertAfter = prev.flatMap(fieldIndexByName.get).reverse.headOption
-                    val insertBefore = next.flatMap(fieldIndexByName.get).headOption
-                    (insertAfter, insertBefore) match {
-                        case (Some(idx), _) => (fieldNames.take(idx + 1) :+ lowerName) ++ fieldNames.drop(idx + 1)
-                        case (_ ,Some(idx)) => (fieldNames.take(idx) :+ lowerName) ++ fieldNames.drop(idx)
-                        case (None,None) => fieldNames :+ lowerName
-                    }
-                }
-
-            UnionSchema(
-                newFieldByName,
-                newFieldNames
-            )
-        }
-    }
-
-    private def mergeFields(newField:StructField, existingField:StructField) : StructField = {
-        val nullable = existingField.nullable || newField.nullable
-        val dataType = if (existingField.dataType == org.apache.spark.sql.types.NullType) newField.dataType else existingField.dataType
-        val result = existingField.copy(dataType=dataType, nullable=nullable)
-
-        val comment = existingField.getComment().orElse(newField.getComment())
-        comment.map(result.withComment).getOrElse(result)
-    }
-    private def mergeFields(newField:ftypes.Field, existingField:ftypes.Field) : ftypes.Field = {
-        val nullable = existingField.nullable || newField.nullable
-        val dataType = if (existingField.ftype == ftypes.NullType) newField.ftype else existingField.ftype
-        val description = existingField.description.orElse(newField.description)
-        val default = existingField.default.orElse(newField.default)
-        val size = existingField.size.orElse(newField.size)
-        val format = existingField.format.orElse(newField.format)
-
-        ftypes.Field(existingField.name, dataType, nullable, description, default, size, format)
+        ftypes.SchemaUtils.union(input)
     }
 }

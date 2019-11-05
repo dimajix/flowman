@@ -47,7 +47,7 @@ class ExportSchemaCommand extends ActionCommand {
 
         Try {
             val relation = context.getRelation(RelationIdentifier.parse(this.relation))
-            val schema = relation.schema
+            val schema = relation.schema.get
             val file = context.fs.local(filename)
             new SchemaWriter(schema.fields).format(format).save(file)
         } match {

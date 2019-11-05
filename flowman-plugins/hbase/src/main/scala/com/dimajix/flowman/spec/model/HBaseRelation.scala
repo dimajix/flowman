@@ -104,13 +104,13 @@ case class HBaseRelation(
       * Returns the schema of the relation
       * @return
       */
-    override def schema : Schema = {
+    override def schema : Option[Schema] = {
         val fields = Field(rowKey, StringType, nullable = false) +: columns.map(c => Field(c.alias, c.dtype, description=c.description))
-        EmbeddedSchema(
+        Some(EmbeddedSchema(
             Schema.Properties(context),
             None,
             fields,
-            Nil)
+            Nil))
     }
 
     /**
@@ -194,16 +194,16 @@ case class HBaseRelation(
      * Return null, because SHC does not support explicit schemas on read
      * @return
      */
-    override protected def inputSchema : StructType = null
+    override protected def inputSchema : Option[StructType] = None
 
     /**
      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
      * @return
      */
-    override protected def outputSchema : StructType = {
+    override protected def outputSchema : Option[StructType] = {
         val fields = StructField(rowKey, org.apache.spark.sql.types.StringType, nullable = false) +:
             columns.map(c => StructField(c.alias, c.dtype.sparkType))
-        StructType(fields)
+        Some(StructType(fields))
     }
 
     private def hbaseOptions = {

@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.schema.Schema
+import com.dimajix.flowman.util.SchemaUtils
 
 
 /**
@@ -53,7 +54,7 @@ abstract class BaseRelation extends Relation {
       * Returns the schema of the relation
       * @return
       */
-    override def schema : Schema = null
+    override def schema : Option[Schema] = None
 
     /**
       * Returns a map of all options. There is no specific usage for options, that depends on the
@@ -71,9 +72,7 @@ abstract class BaseRelation extends Relation {
     protected def reader(executor:Executor) : DataFrameReader = {
         val reader = executor.spark.read.options(options)
 
-        val schema = this.inputSchema
-        if (schema != null)
-            reader.schema(schema)
+        inputSchema.foreach(s => reader.schema(s))
 
         reader
     }
@@ -87,9 +86,7 @@ abstract class BaseRelation extends Relation {
     protected def streamReader(executor: Executor) : DataStreamReader = {
         val reader = executor.spark.readStream.options(options)
 
-        val schema = this.inputSchema
-        if (schema != null)
-            reader.schema(schema)
+        inputSchema.foreach(s => reader.schema(s))
 
         reader
     }
@@ -102,7 +99,7 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        val outputDf = applyOutputSchema(df)
+        val outputDf = applyOutputSchema(executor, df)
         outputDf.write.options(options)
     }
 
@@ -114,7 +111,7 @@ abstract class BaseRelation extends Relation {
       * @return
       */
     protected def streamWriter(executor: Executor, df:DataFrame, outputMode:OutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        val outputDf = applyOutputSchema(df)
+        val outputDf = applyOutputSchema(executor, df)
         outputDf.writeStream
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
@@ -125,26 +122,16 @@ abstract class BaseRelation extends Relation {
       * Creates a Spark schema from the list of fields.
       * @return
       */
-    protected def inputSchema : StructType = {
-        if (schema != null) {
-            StructType(schema.fields.map(_.sparkField))
-        }
-        else {
-            null
-        }
+    protected def inputSchema : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField)))
     }
 
     /**
       * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
       * @return
       */
-    protected def outputSchema : StructType = {
-        if (schema != null) {
-            StructType(schema.fields.map(_.sparkField))
-        }
-        else {
-            null
-        }
+    protected def outputSchema : Option[StructType] = {
+        schema.map(s => s.sparkSchema)
     }
 
     /**
@@ -152,15 +139,7 @@ abstract class BaseRelation extends Relation {
       * @param df
       * @return
       */
-    protected def applyOutputSchema(df:DataFrame) : DataFrame = {
-        val schema = this.outputSchema
-        if (schema != null) {
-            val outputColumns = schema.fields
-                .map(field => df(field.name).cast(field.dataType).as(field.name, field.metadata))
-            df.select(outputColumns: _*)
-        }
-        else {
-            df
-        }
+    protected def applyOutputSchema(executor:Executor, df:DataFrame) : DataFrame = {
+        SchemaUtils.applySchema(df, outputSchema)
     }
 }

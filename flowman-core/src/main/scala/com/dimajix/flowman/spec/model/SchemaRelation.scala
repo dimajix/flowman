@@ -31,10 +31,10 @@ trait SchemaRelation { this: Relation =>
       *
       * @return
       */
-    override def schema : Schema
+    override def schema : Option[Schema]
 }
 
 
 trait SchemaRelationSpec { this: RelationSpec =>
-    @JsonProperty(value = "schema", required = false) protected var schema: SchemaSpec = _
+    @JsonProperty(value = "schema", required = false) protected var schema: Option[SchemaSpec] = None
 }

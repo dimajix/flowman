@@ -312,16 +312,16 @@ abstract class AbstractContext(
       * Returns all configuration options as a key-value map
       * @return
       */
-    override def config : Map[String,String] = rawConfig.mapValues(v => evaluate(v._1))
+    override def config : Map[String,String] = rawConfig.map { case(k,v) => k -> evaluate(v._1) }
 
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    override def environment : Map[String,Any] = rawEnvironment.mapValues {
-        case (s:String,_) => evaluate(s)
-        case (any,_) => any
+    override def environment : Map[String,Any] = rawEnvironment.map {
+        case (k, (s: String, _)) => k -> evaluate(s)
+        case (k, (any, _)) => k -> any
     }
 
     /**

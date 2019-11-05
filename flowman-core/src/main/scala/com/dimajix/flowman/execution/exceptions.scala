@@ -51,3 +51,6 @@ class NoSuchJobException(val job:JobIdentifier)
 
 class VerificationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Verification of target $target failed", cause)
+
+class IncompatibleSchemaException(val relation:RelationIdentifier)
+    extends ExecutionException(s"Incompatible schema in relation '$relation")

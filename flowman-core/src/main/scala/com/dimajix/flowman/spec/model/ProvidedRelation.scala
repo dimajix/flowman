@@ -23,6 +23,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.SimpleResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -31,7 +32,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 class ProvidedRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     val table:String
 ) extends BaseRelation with SchemaRelation {
     /**
@@ -58,7 +59,7 @@ class ProvidedRelation(
       * @return
       */
     override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set(
-        ResourceIdentifier("provided", table)
+        SimpleResourceIdentifier("provided", table)
     )
 
     /**
@@ -123,7 +124,7 @@ class ProvidedRelationSpec extends RelationSpec with SchemaRelationSpec {
     override def instantiate(context: Context): Relation = {
         new ProvidedRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             context.evaluate(table)
         )
     }

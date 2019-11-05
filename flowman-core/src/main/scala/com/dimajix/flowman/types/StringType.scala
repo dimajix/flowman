@@ -23,7 +23,7 @@ case object StringType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
 
     override def parse(value:String, granularity:Option[String]=None) : String = {
-        if (granularity != null && granularity.nonEmpty)
+        if (granularity.nonEmpty)
             throw new UnsupportedOperationException("String types cannot have a granularity")
         value
     }

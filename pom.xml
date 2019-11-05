@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.9.2-SNAPSHOT</version>
+    <version>0.10.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -52,7 +52,7 @@
     <properties>
         <hadoop.version>2.8.5</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.3</spark.version>
+        <spark.version>2.4.4</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
         <aws.version>1.10.6</aws.version>
@@ -169,7 +169,7 @@
             <id>spark-2.4</id>
             <properties>
                 <scala.version>2.11.12</scala.version>
-                <spark.version>2.4.3</spark.version>
+                <spark.version>2.4.4</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>

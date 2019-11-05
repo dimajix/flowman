@@ -104,7 +104,7 @@ class MappingSchemaTest extends FlatSpec with Matchers {
         val context = session.getContext(project)
 
         val sink = context.getRelation(RelationIdentifier("sink"))
-        val schema = sink.schema
+        val schema = sink.schema.get
 
         schema.fields should be (Seq(
             Field("str_col", StringType),

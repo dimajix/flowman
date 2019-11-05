@@ -121,13 +121,13 @@ abstract class Relation extends AbstractInstance {
       * Returns the Schema object which describes all fields of the relation
       * @return
       */
-    def schema : Schema
+    def schema : Option[Schema]
 
     /**
       * Returns a list of fields
       * @return
       */
-    def fields : Seq[Field] = schema.fields
+    def fields : Seq[Field] = schema.toSeq.flatMap(_.fields)
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -219,6 +219,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
+    new JsonSubTypes.Type(name = "hiveUnionTable", value = classOf[HiveUnionTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),

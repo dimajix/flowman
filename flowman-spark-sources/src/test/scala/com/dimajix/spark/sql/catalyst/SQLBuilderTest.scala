@@ -36,6 +36,12 @@ class SQLBuilderTest extends FlatSpec with Matchers with LocalSparkSession {
                     ts TIMESTAMP
                   )
                 """)
+            spark.sql(
+                """
+                  |CREATE VIEW sql_builder_1 AS
+                  |SELECT * FROM sql_builder_0
+                  |""".stripMargin
+            )
         }
     }
 
@@ -69,6 +75,13 @@ class SQLBuilderTest extends FlatSpec with Matchers with LocalSparkSession {
         val sql4 = new SQLBuilder(df4.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql4))
         sql4 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_0` = 67)")
+    })
+
+    it should "support VIEWs" in (if (hiveSupported) {
+        val df1 = spark.sql("SELECT * FROM sql_builder_1")
+        val sql1 = new SQLBuilder(df1.queryExecution.analyzed).toSQL
+        noException shouldBe thrownBy(spark.sql(sql1))
+        sql1 should be ("SELECT `col_0`, `col_1`, `ts` FROM `default`.`sql_builder_1`")
     })
 
     it should "support JOINs" in (if (hiveSupported) {

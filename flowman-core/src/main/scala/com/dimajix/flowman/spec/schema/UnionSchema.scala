@@ -19,61 +19,52 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.SchemaUtils
+import com.dimajix.flowman.types.StructType
 
 
-case class RelationSchema(
+case class UnionSchema(
     instanceProperties:Schema.Properties,
-    relation: RelationIdentifier
+    schemas:Seq[Schema]
 ) extends Schema {
+    private val unionSchema = SchemaUtils.union(schemas.map(s => StructType(s.fields)))
+    private val unionDescription = schemas.flatMap(_.description).find(_.nonEmpty)
+
     /**
       * Returns the description of the schema
-      *
       * @return
       */
-    override def description: Option[String] = {
-        val rel = context.getRelation(relation)
-
-        rel.schema.flatMap(_.description)
-    }
+    override def description : Option[String] = unionDescription
 
     /**
       * Returns the list of all fields of the schema
-      *
       * @return
       */
-    override def fields: Seq[Field] = {
-        val rel = context.getRelation(relation)
-
-        rel.schema.toSeq.flatMap(_.fields)
+    override def fields : Seq[Field] = {
+        unionSchema.fields
     }
 
     /**
       * Returns the list of primary keys. Can be empty of no PK is available
       * @return
       */
-    override def primaryKey : Seq[String] = {
-        val rel = context.getRelation(relation)
-
-        rel.schema.toSeq.flatMap(_.primaryKey)
-    }
+    override def primaryKey : Seq[String] = Seq()
 }
 
 
-
-class RelationSchemaSpec extends SchemaSpec {
-    @JsonProperty(value = "relation", required = true) private var relation: String = ""
+class UnionSchemaSpec extends SchemaSpec {
+    @JsonProperty(value = "schemas", required = true) private var schema: Seq[SchemaSpec] = Seq()
 
     /**
       * Creates the instance of the specified Schema with all variable interpolation being performed
       * @param context
       * @return
       */
-    override def instantiate(context: Context): RelationSchema = {
-        RelationSchema(
+    override def instantiate(context: Context): UnionSchema = {
+        UnionSchema(
             Schema.Properties(context),
-            RelationIdentifier(context.evaluate(relation))
+            schema.map(_.instantiate(context))
         )
     }
 }

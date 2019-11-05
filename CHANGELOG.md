@@ -1,3 +1,10 @@
+# Version 0.10.0
+* Add new 'hiveUnionTable' relation
+* Add new 'union' schema
+* Support nested columns in deduplication
+* Support nested Hive VIEWs
+* Support Spark 2.4.4
+
 # Version 0.9.1
 * Fix wrong Spark application name if configured via Spark config
 

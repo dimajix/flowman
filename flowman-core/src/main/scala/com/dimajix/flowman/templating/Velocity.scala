@@ -61,6 +61,14 @@ object Velocity {
     }
 
     /**
+     * Creates a new VelocityContext with the given context set as parent
+     * @return
+     */
+    def newContext(parent: VelocityContext) : VelocityContext = {
+        new VelocityContext(parent)
+    }
+
+    /**
       * Creates a new VelocityEngine
       * @return
       */

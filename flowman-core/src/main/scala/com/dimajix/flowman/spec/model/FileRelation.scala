@@ -46,13 +46,21 @@ import com.dimajix.flowman.util.SchemaUtils
 
 class FileRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Schema,
+    override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     val location:Path,
     val pattern:String,
     val format:String
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
+
+    private lazy val collector : FileCollector = {
+        FileCollector.builder(context.hadoopConf)
+            .path(location)
+            .pattern(pattern)
+            .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment)
+            .build()
+    }
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -81,7 +89,7 @@ class FileRelation(
     override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
         require(partitions != null)
 
-        requireAllPartitionKeys(partitions)
+        requireValidPartitionKeys(partitions)
 
         if (this.partitions.nonEmpty) {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
@@ -104,11 +112,10 @@ class FileRelation(
         require(executor != null)
         require(partitions != null)
 
-        // TODO: If no partitions are specified, recursively read all files
-        requireAllPartitionKeys(partitions)
+        requireValidPartitionKeys(partitions)
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading ${HiveDialect.expr.partition(partition)} file $p"))
+            paths.foreach(p => logger.info(s"Reading file relation '$identifier' partition ${HiveDialect.expr.partition(partition)} file '$p'"))
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)
@@ -213,10 +220,7 @@ class FileRelation(
     private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
         require(partitions != null)
 
-        requireAllPartitionKeys(partitions)
-
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
+        requireValidPartitionKeys(partitions)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         collector.delete(resolvedPartitions)
@@ -251,7 +255,7 @@ class FileRelation(
       * @param partitions
       * @return
       */
-    protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    private def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
         if (this.partitions.nonEmpty)
@@ -263,21 +267,12 @@ class FileRelation(
     private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
-        if (pattern == null || pattern.isEmpty)
-            throw new IllegalArgumentException("pattern needs to be defined for reading partitioned files")
-
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
     private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
         fn(PartitionSpec(), collector.collect())
-    }
-
-    protected def collector : FileCollector = {
-        new FileCollector(context.hadoopConf)
-            .path(location)
-            .pattern(pattern)
     }
 }
 
@@ -296,7 +291,7 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
     override def instantiate(context: Context): FileRelation = {
         new FileRelation(
             instanceProperties(context),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),
             pattern,

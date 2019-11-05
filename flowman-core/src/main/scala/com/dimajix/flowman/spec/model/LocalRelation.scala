@@ -143,6 +143,8 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(df != null)
         require(partition != null)
 
+        requireAllPartitionKeys(partition)
+
         val outputPath  = collector.resolve(partition.mapValues(_.value))
         val outputFile = new File(outputPath.toUri)
 

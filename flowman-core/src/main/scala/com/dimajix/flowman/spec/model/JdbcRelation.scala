@@ -69,9 +69,9 @@ class JdbcRelation(
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = Set(
-        ResourceIdentifier("jdbcTable", database.map(_ + ".").getOrElse("") + table)
-    )
+    override def provides: Set[ResourceIdentifier] = {
+        table.map(t => ResourceIdentifier.ofJdbcTable(t, database)).toSet
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
@@ -79,7 +79,7 @@ class JdbcRelation(
       * @return
       */
     override def requires: Set[ResourceIdentifier] = {
-        database.map(db => ResourceIdentifier("jdbcDatabase", db)).toSet
+        database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
     }
 
     /**
@@ -96,8 +96,7 @@ class JdbcRelation(
         requireValidPartitionKeys(partitions)
 
         val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        val fqTable = database.map(_ + ".").getOrElse("") + table
-        allPartitions.map(p => ResourceIdentifier("jdbcTable", fqTable, p.mapValues(_.toString).toMap)).toSet
+        allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(table.getOrElse(""), database, p.toMap)).toSet
     }
 
     /**

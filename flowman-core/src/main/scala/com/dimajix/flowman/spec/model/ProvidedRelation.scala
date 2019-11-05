@@ -23,6 +23,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.SimpleResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -58,7 +59,7 @@ class ProvidedRelation(
       * @return
       */
     override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set(
-        ResourceIdentifier("provided", table)
+        SimpleResourceIdentifier("provided", table)
     )
 
     /**

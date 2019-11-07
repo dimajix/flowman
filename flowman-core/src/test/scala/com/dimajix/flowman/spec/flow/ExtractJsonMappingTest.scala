@@ -30,9 +30,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.SchemaSpec
-import com.dimajix.flowman.spec.schema.SwaggerSchemaSpec
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -106,24 +104,36 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"i":12,"s":"lala"}""", 12),
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
-        val inputSchema = com.dimajix.flowman.types.StructType.of(input.schema)
+        val inputSchema = ftypes.StructType.of(input.schema)
 
         val expectedSchema = StructType(
             StructField("s", StringType, true) ::
                 StructField("i", IntegerType, true) ::
                 StructField("st", StructType(
                     StructField("lolo", StringType, true) ::
-                        StructField("i", IntegerType, true) ::
-                        Nil
+                    StructField("i", IntegerType, true) ::
+                    Nil
                 )) ::
                 StructField("a", ArrayType(DoubleType), true) ::
                 Nil
         )
+        val errorSchema = StructType(
+            StructField("record", StringType, false) :: Nil
+        )
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
+        mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema)) should be (Map(
+            "main" -> ftypes.StructType.of(expectedSchema),
+            "error" -> ftypes.StructType.of(errorSchema)
+        ))
+
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (expectedSchema)
+
+        val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
+        errors.count() should be (0)
+        errors.schema should be (errorSchema)
 
         val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
         resultSchema.get.sparkType should be (expectedSchema)
@@ -156,15 +166,22 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
                 StructField("s", StringType, true) ::
                 StructField("st", StructType(
                     StructField("lolo", StringType, true) ::
-                        Nil
+                    Nil
                 )) ::
                 Nil
+        )
+        val errorSchema = StructType(
+            StructField("record", StringType, false) :: Nil
         )
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
         result.schema should be (expectedSchema)
+
+        val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
+        errors.count() should be (0)
+        errors.schema should be (errorSchema)
 
         val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
         resultSchema should be (None)
@@ -190,18 +207,26 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
-        result.count() should be (2)
-        result.schema should be (StructType(
-            StructField("_corrupt_record", StringType, true) ::
+        val mainSchema = StructType(
             StructField("a", ArrayType(DoubleType, true), true) ::
                 StructField("st", StructType(
                     StructField("lolo", StringType, true) ::
                         Nil
                 )) ::
                 Nil
-        ))
+        )
+        val errorSchema = StructType(
+            StructField("record", StringType, false) :: Nil
+        )
+
+        val mapping = context.getMapping(MappingIdentifier("m0"))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
+        result.count() should be (1)
+        result.schema should be (mainSchema)
+
+        val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
+        errors.count() should be (1)
+        errors.schema should be (errorSchema)
     }
 
     it should "work with invalid data with explicit schema" in {
@@ -230,14 +255,23 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
-        result.count() should be (2)
-        result.schema should be (StructType(
+        val mainSchema = StructType(
             StructField("s", StringType, true) ::
             StructField("i", IntegerType, true) ::
             Nil
-        ))
+        )
+        val errorSchema = StructType(
+            StructField("record", StringType, false) :: Nil
+        )
+
+        val mapping = context.getMapping(MappingIdentifier("m0"))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
+        result.count() should be (1)
+        result.schema should be (mainSchema)
+
+        val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
+        errors.count() should be (1)
+        errors.schema should be (errorSchema)
     }
 
     it should "ignore records with invalid data" in {
@@ -261,17 +295,26 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
+        val mainSchema = StructType(
+            StructField("a", ArrayType(DoubleType, true), true) ::
+                StructField("st", StructType(
+                    StructField("lolo", StringType, true) ::
+                        Nil
+                )) ::
+                Nil
+        )
+        val errorSchema = StructType(
+            StructField("record", StringType, false) :: Nil
+        )
+
         val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (1)
-        result.schema should be (StructType(
-            StructField("a", ArrayType(DoubleType, true), true) ::
-            StructField("st", StructType(
-                StructField("lolo", StringType, true) ::
-                    Nil
-            )) ::
-            Nil
-        ))
+        result.schema should be (mainSchema)
+
+        val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
+        errors.count() should be (0)
+        errors.schema should be (errorSchema)
     }
 
     it should "ignore records with invalid data and explicit schema" in {
@@ -301,14 +344,23 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             ("""{"st":{"lolo":"x"},"a":[0.1,0.7]}""", 23)
         ))
 
-        val mapping = context.getMapping(MappingIdentifier("m0"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
-        result.count() should be (1)
-        result.schema should be (StructType(
+        val mainSchema = StructType(
             StructField("s", StringType, true) ::
             StructField("i", IntegerType, true) ::
             Nil
-        ))
+        )
+        val errorSchema = StructType(
+            StructField("record", StringType, false) :: Nil
+        )
+
+        val mapping = context.getMapping(MappingIdentifier("m0"))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
+        result.count() should be (1)
+        result.schema should be (mainSchema)
+
+        val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
+        errors.count() should be (0)
+        errors.schema should be (errorSchema)
     }
 
     it should "fail on invalid data" in {

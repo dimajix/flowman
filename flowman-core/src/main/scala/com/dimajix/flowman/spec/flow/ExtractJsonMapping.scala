@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.functions.coalesce
+import org.apache.spark.sql.functions.lit
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -27,6 +29,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.{types => ftypes}
 
 
@@ -36,7 +39,6 @@ case class ExtractJsonMapping(
     column: String,
     schema: Schema,
     parseMode: String,
-    corruptedColumn: String,
     allowComments: Boolean,
     allowUnquotedFieldNames: Boolean,
     allowSingleQuotes: Boolean,
@@ -70,7 +72,8 @@ case class ExtractJsonMapping(
         logger.info(s"Extracting JSON from input mapping '$input' in column '$column'")
 
         val spark = executor.spark
-        val sparkSchema = Option(schema).map(schema => schema.sparkSchema).orNull
+        val corruptedColumn = "_flowman_corrupted_column"
+        val sparkSchema = Option(schema).map(schema => schema.sparkSchema.add(corruptedColumn, StringType)).orNull
         val table = deps(this.input)
         val result = spark.read
             .schema(sparkSchema)
@@ -85,7 +88,25 @@ case class ExtractJsonMapping(
             .option("allowUnquotedControlChars", allowUnquotedControlChars)
             .json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
 
-        Map("main" -> result)
+        // If no schema is specified, Spark will only add the error column if an error actually occurred
+        val (mainResult, errorResult) =
+            if (result.columns.contains(corruptedColumn)) {
+                (result
+                    .filter(result(corruptedColumn).isNull)
+                    .drop(corruptedColumn),
+                result
+                    .filter(result(corruptedColumn).isNotNull)
+                    .select(coalesce(result(corruptedColumn), lit("")).alias("record"))
+                )
+            }
+            else {
+                (result, spark.emptyDataFrame.withColumn("record", lit("")))
+            }
+
+        Map(
+            "main" -> mainResult,
+            "error" -> errorResult
+        )
     }
 
     /**
@@ -97,8 +118,12 @@ case class ExtractJsonMapping(
         require(input != null)
 
         if (schema != null) {
-            val result = ftypes.StructType(schema.fields)
-            Map("main" -> result)
+            val mainSchema = ftypes.StructType(schema.fields)
+            val errorSchema = ftypes.StructType(Seq(Field("record", ftypes.StringType, false)))
+            Map(
+                "main" -> mainSchema,
+                "error" -> errorSchema
+            )
         }
         else {
             Map()
@@ -113,7 +138,6 @@ class ExtractJsonMappingSpec extends MappingSpec {
     @JsonProperty(value = "column", required = true) private var column: String = _
     @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
     @JsonProperty(value = "parseMode", required = false) private var parseMode: String = "PERMISSIVE"
-    @JsonProperty(value = "corruptedColumn", required = false) private var corruptedColumn: String = "_corrupt_record"
     @JsonProperty(value = "allowComments", required = false) private var allowComments: String = "false"
     @JsonProperty(value = "allowUnquotedFieldNames", required = false) private var allowUnquotedFieldNames: String = "false"
     @JsonProperty(value = "allowSingleQuotes", required = false) private var allowSingleQuotes: String = "true"
@@ -134,7 +158,6 @@ class ExtractJsonMappingSpec extends MappingSpec {
             context.evaluate(column),
             if (schema != null) schema.instantiate(context) else null,
             context.evaluate(parseMode),
-            context.evaluate(corruptedColumn),
             context.evaluate(allowComments).toBoolean,
             context.evaluate(allowUnquotedFieldNames).toBoolean,
             context.evaluate(allowSingleQuotes).toBoolean,

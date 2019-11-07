@@ -26,6 +26,7 @@
                             <executable>npm</executable>
                             <arguments>
                                 <argument>install</argument>
+                                <argument>--no-save</argument>
                             </arguments>
                         </configuration>
                         <goals>

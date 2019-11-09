@@ -255,7 +255,7 @@ class FileRelation(
       * @param partitions
       * @return
       */
-    private def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
         if (this.partitions.nonEmpty)

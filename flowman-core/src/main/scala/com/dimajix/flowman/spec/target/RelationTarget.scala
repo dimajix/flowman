@@ -87,7 +87,7 @@ case class RelationTarget(
         val rel = context.getRelation(relation)
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.provides
+            case Phase.CREATE|Phase.MIGRATE|Phase.DESTROY => rel.provides
             case Phase.BUILD if (mapping.nonEmpty) => rel.resources(partition)
             case _ => Set()
         }
@@ -101,7 +101,7 @@ case class RelationTarget(
         val rel = context.getRelation(relation)
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.requires
+            case Phase.CREATE|Phase.MIGRATE|Phase.DESTROY => rel.requires
             case Phase.BUILD if (mapping.nonEmpty) => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
         }

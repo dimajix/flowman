@@ -1,3 +1,6 @@
+# Version 0.10.1
+* Add 'error' output to 'extractJson' mapping
+
 # Version 0.10.0
 * Add new 'hiveUnionTable' relation
 * Add new 'union' schema

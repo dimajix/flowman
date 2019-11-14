@@ -58,6 +58,14 @@ case class ExtractJsonMapping(
         Seq(input)
     }
 
+
+    /**
+      * Lists all outputs of this mapping. Every mapping should have one "main" output
+      *
+      * @return
+      */
+    override def outputs: Seq[String] = Seq("main", "error")
+
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *

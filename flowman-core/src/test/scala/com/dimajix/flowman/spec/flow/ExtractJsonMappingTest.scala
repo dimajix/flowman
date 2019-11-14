@@ -122,6 +122,7 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         )
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
+        mapping.outputs should be (Seq("main", "error"))
         mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema)) should be (Map(
             "main" -> ftypes.StructType.of(expectedSchema),
             "error" -> ftypes.StructType.of(errorSchema)

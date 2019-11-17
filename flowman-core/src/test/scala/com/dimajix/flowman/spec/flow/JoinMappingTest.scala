@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.spec.flow
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.IntegerType
@@ -27,7 +27,6 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -36,23 +35,27 @@ import com.dimajix.spark.testing.LocalSparkSession
 class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
     "The JoinMapping" should "support joining on columns" in {
         val df1 = spark.createDataFrame(Seq(
-            Row("col1", 12),
-            Row("col2", 23),
-            Row("col3", 34)
-        ), StructType(
-            StructField("key", StringType) ::
-            StructField("lval", IntegerType) ::
-            Nil
-        ))
+                Row("col1", 12),
+                Row("col2", 23),
+                Row("col3", 34)
+            ).asJava,
+            StructType(
+                StructField("key", StringType) ::
+                StructField("lval", IntegerType) ::
+                Nil
+            )
+        )
         val df2 = spark.createDataFrame(Seq(
-            Row("col1", 32),
-            Row("col2", 43),
-            Row("col4", 43)
-        ), StructType(
-            StructField("key", StringType) ::
-            StructField("rval", IntegerType) ::
-            Nil
-        ))
+                Row("col1", 32),
+                Row("col2", 43),
+                Row("col4", 43)
+            ).asJava,
+            StructType(
+                StructField("key", StringType) ::
+                StructField("rval", IntegerType) ::
+                Nil
+            )
+        )
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
@@ -77,23 +80,27 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
 
     it should "support joining with an condition" in {
         val df1 = spark.createDataFrame(Seq(
-            Row("col1", 12),
-            Row("col2", 23),
-            Row("col3", 34)
-        ), StructType(
-            StructField("key", StringType) ::
-                StructField("lval", IntegerType) ::
-                Nil
-        ))
+                Row("col1", 12),
+                Row("col2", 23),
+                Row("col3", 34)
+            ).asJava,
+            StructType(
+                StructField("key", StringType) ::
+                    StructField("lval", IntegerType) ::
+                    Nil
+            )
+        )
         val df2 = spark.createDataFrame(Seq(
-            Row("col1", 32),
-            Row("col2", 43),
-            Row("col4", 43)
-        ), StructType(
-            StructField("key", StringType) ::
-                StructField("rval", IntegerType) ::
-                Nil
-        ))
+                Row("col1", 32),
+                Row("col2", 43),
+                Row("col4", 43)
+            ).asJava,
+            StructType(
+                StructField("key", StringType) ::
+                    StructField("rval", IntegerType) ::
+                    Nil
+            )
+        )
 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor

@@ -16,6 +16,25 @@
 
 package com.dimajix.spark.expressions
 
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
+import org.apache.spark.sql.catalyst.analysis.TypeCheckResult
+import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.CreateNamedStruct
+import org.apache.spark.sql.catalyst.expressions.EmptyRow
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.ExpressionDescription
+import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
+import org.apache.spark.sql.catalyst.expressions.Literal
+import org.apache.spark.sql.catalyst.expressions.NamePlaceholder
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.codegen.CodegenContext
+import org.apache.spark.sql.catalyst.expressions.codegen.ExprCode
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
+
 
 /**
   * Returns a Row containing the evaluation of all children expressions.
@@ -45,9 +64,53 @@ object CreateNullableStruct extends FunctionBuilder {
        {"a":1,"b":2,"c":3}
   """)
 // scalastyle:on line.size.limit
-case class CreateNullableNamedStruct(children: Seq[Expression]) extends CreateNamedStructLike {
+case class CreateNullableNamedStruct(override val children: Seq[Expression]) extends Expression {
+    lazy val (nameExprs, valExprs) = children.grouped(2).map {
+        case Seq(name, value) => (name, value)
+    }.toList.unzip
+
+    lazy val names = nameExprs.map(_.eval(EmptyRow))
 
     override def nullable: Boolean = true
+
+    override def foldable: Boolean = valExprs.forall(_.foldable)
+
+    override lazy val dataType: StructType = {
+        val fields = names.zip(valExprs).map {
+            case (name, expr) =>
+                val metadata = expr match {
+                    case ne: NamedExpression => ne.metadata
+                    case _ => Metadata.empty
+                }
+                StructField(name.toString, expr.dataType, expr.nullable, metadata)
+        }
+        StructType(fields)
+    }
+
+    override def checkInputDataTypes(): TypeCheckResult = {
+        if (children.size % 2 != 0) {
+            TypeCheckResult.TypeCheckFailure(s"$prettyName expects an even number of arguments.")
+        } else {
+            val invalidNames = nameExprs.filterNot(e => e.foldable && e.dataType == StringType)
+            if (invalidNames.nonEmpty) {
+                TypeCheckResult.TypeCheckFailure(
+                    s"Only foldable ${StringType.catalogString} expressions are allowed to appear at odd" +
+                        s" position, got: ${invalidNames.mkString(",")}")
+            } else if (!names.contains(null)) {
+                TypeCheckResult.TypeCheckSuccess
+            } else {
+                TypeCheckResult.TypeCheckFailure("Field name should not be null")
+            }
+        }
+    }
+
+    /**
+     * Returns Aliased [[Expression]]s that could be used to construct a flattened version of this
+     * StructType.
+     */
+    def flatten: Seq[NamedExpression] = valExprs.zip(names).map {
+        case (v, n) => Alias(v, n.toString)()
+    }
 
     override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
         val rowClass = classOf[GenericInternalRow].getName
@@ -84,8 +147,9 @@ case class CreateNullableNamedStruct(children: Seq[Expression]) extends CreateNa
             }.mkString
         )
 
+        import org.apache.spark.sql.catalyst.expressions.codegen.Block.BlockHelper
         val code =
-            s"""
+            code"""
                |Object[] $values = new Object[${valExprs.size}];
                |boolean $nonnull = false;
                |do {

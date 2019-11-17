@@ -665,7 +665,7 @@ class SQLBuilder private(
         // It is a good idea to bring projections as near as possible to the inputs, since this
         // prevents additional subqueries
         PushProjectionThroughUnion,
-        // Predicates should be pushed dpwn to the sources as well
+        // Predicates should be pushed down to the sources as well
         PushDownPredicate,
         // Remove subqueries
         RemoveSubqueries

@@ -22,12 +22,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.catalyst.plans.logical.InsertIntoTable
 import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
@@ -148,19 +147,23 @@ class HiveTableRelation(
 
         if (partitionSpec.nonEmpty) {
             val spark = executor.spark
+            val catalog = executor.catalog
+            val hiveTable = catalog.getTable(TableIdentifier(table, database))
+            val query = outputDf.queryExecution.logical
 
             val overwrite = mode.toLowerCase(Locale.ROOT) == "overwrite"
-            val cmd = InsertIntoTable(
-                table = UnresolvedRelation(TableIdentifier(table, database)),
+            val cmd = InsertIntoHiveTable(
+                table = hiveTable,
                 partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
-                query = outputDf.queryExecution.logical,
+                query = query,
                 overwrite = overwrite,
-                ifPartitionNotExists = false)
+                ifPartitionNotExists = false,
+                query.output.map(_.name)
+            )
             val qe = spark.sessionState.executePlan(cmd)
             SQLExecution.withNewExecutionId(spark, qe)(qe.toRdd)
 
             // Finally add Hive partition
-            val catalog = executor.catalog
             val location = catalog.getPartitionLocation(tableIdentifier, partitionSpec)
             catalog.addOrReplacePartition(tableIdentifier, partitionSpec, location)
         }

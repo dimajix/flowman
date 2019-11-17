@@ -21,7 +21,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.io.Source
 
 import org.apache.spark.sql.DataFrame
@@ -40,7 +40,7 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
 
     override def read(): DataFrame = {
         val rows = files.flatMap(readFile)
-        sqlContext.createDataFrame(rows.toList, schema)
+        sqlContext.createDataFrame(rows.asJava, schema)
     }
 
     override def write(df: DataFrame, mode: SaveMode): Unit = {

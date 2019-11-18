@@ -57,10 +57,10 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def alterTable(table: CatalogTable): Unit = {
-        logger.info(s"INVALIDATE Impala metadata for modified table ${table.identifier}")
+        logger.info(s"REFRESH Impala metadata for modified table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
-            stmt.execute(s"REFRESH METADATA $identifier")
+            stmt.execute(s"REFRESH $identifier")
         }
     }
 
@@ -76,7 +76,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         logger.info(s"REFRESH Impala metadata for truncated table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
-            stmt.execute(s"REFRESH METADATA $identifier")
+            stmt.execute(s"REFRESH $identifier")
         }
     }
 
@@ -85,7 +85,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
-            stmt.execute(s"REFRESH METADATA $identifier $spec")
+            stmt.execute(s"REFRESH $identifier $spec")
         }
     }
 
@@ -94,7 +94,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
-            stmt.execute(s"REFRESH METADATA $identifier $spec")
+            stmt.execute(s"REFRESH $identifier $spec")
         }
     }
 
@@ -111,7 +111,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
-            stmt.execute(s"REFRESH METADATA $identifier $spec")
+            stmt.execute(s"REFRESH $identifier $spec")
         }
     }
 
@@ -127,7 +127,7 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         logger.info(s"INVALIDATE Impala metadata for modified view ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
-            stmt.execute(s"REFRESH METADATA $identifier")
+            stmt.execute(s"INVALIDATE METADATA $identifier")
         }
     }
 

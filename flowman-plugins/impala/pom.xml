@@ -78,6 +78,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-service</artifactId>
+            <version>${hive.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.cloudera</groupId>
             <artifactId>ImpalaJDBC41</artifactId>
             <version>${impala.jdbc.version}</version>

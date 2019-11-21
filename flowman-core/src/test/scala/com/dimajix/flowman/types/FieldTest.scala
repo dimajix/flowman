@@ -155,6 +155,54 @@ class FieldTest extends FlatSpec with Matchers {
         val result = mapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
+        if (result.default == Some("")) {
+            result.default should be(Some(""))
+            result.sparkField should be(org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().putString("default", "").build()))
+            result.sparkType should be(org.apache.spark.sql.types.StringType)
+            result.ftype should be(StringType)
+        }
+        else {
+            result.default should be(None)
+            result.sparkField should be(org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().build()))
+            result.sparkType should be(org.apache.spark.sql.types.StringType)
+            result.ftype should be(StringType)
+        }
+    }
+
+    it should "support null default values" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |default: null
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
+        result.default should be (None)
+        result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().build()))
+        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        result.ftype should be (StringType)
+    }
+
+    it should "support empty string default values" in {
+        val spec =
+            """
+              |name: lala
+              |type: String
+              |default: ""
+            """.stripMargin
+
+        val session = Session.builder().build()
+        implicit val context = session.context
+
+        val result = mapper.parse[Field](spec)
+        result.nullable should be (true)
+        result.name should be ("lala")
         result.default should be (Some(""))
         result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true, new MetadataBuilder().putString("default", "").build()))
         result.sparkType should be (org.apache.spark.sql.types.StringType)

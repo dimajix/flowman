@@ -18,7 +18,7 @@ package com.dimajix.flowman.spec.schema
 
 import java.net.URL
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
@@ -79,8 +79,8 @@ case class JsonSchema(
     }
 
     private def fromJsonObject(obj:ObjectSchema) : StructType = {
-        val requiredProperties = obj.getRequiredProperties.toSet
-        val fields = obj.getPropertySchemas.toSeq.sortBy(_._1)
+        val requiredProperties = obj.getRequiredProperties.asScala.toSet
+        val fields = obj.getPropertySchemas.asScala.toSeq.sortBy(_._1)
         StructType(fields.map(nt => fromJsonField(nt._1, nt._2, requiredProperties.contains(nt._1))))
     }
 

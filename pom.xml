@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.10.3-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -90,7 +90,9 @@
         <commons-cli.version>1.2</commons-cli.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <commons-math3.version>3.4.1</commons-math3.version>
-        <commons-lang3.version>3.4</commons-lang3.version>
+        <commons-lang3.version>3.5</commons-lang3.version>
+        <commons-net.version>3.1</commons-net.version>
+        <commons-text.version>1.6</commons-text.version>
         <httpclient.version>4.5.2</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
         <swagger-parser.version>1.0.45</swagger-parser.version>
@@ -139,7 +141,9 @@
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <commons-lang.version>2.6</commons-lang.version>
+                <commons-math3.version>3.4.1</commons-math3.version>
                 <slf4j.version>1.7.5</slf4j.version>
+                <scala.api_version>2.11</scala.api_version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -157,6 +161,7 @@
             <id>spark-2.3</id>
             <properties>
                 <scala.version>2.11.8</scala.version>
+                <scala.api_version>2.11</scala.api_version>
                 <spark.version>2.3.3</spark.version>
                 <spark-api.version>2.3</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
@@ -172,6 +177,7 @@
             <id>spark-2.4</id>
             <properties>
                 <scala.version>2.11.12</scala.version>
+                <scala.api_version>2.11</scala.api_version>
                 <spark.version>2.4.4</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
@@ -181,6 +187,8 @@
                 <json4s.version>3.5.3</json4s.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
+                <commons-lang3.version>3.5</commons-lang3.version>
+                <commons-math3.version>3.4.1</commons-math3.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -191,6 +199,23 @@
                     </dependency>
                 </dependencies>
             </dependencyManagement>
+        </profile>
+        <profile>
+            <id>spark-3.0</id>
+            <properties>
+                <scala.version>2.12.10</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <spark.version>3.0.0-preview</spark.version>
+                <spark-api.version>3.0</spark-api.version>
+                <jackson.version>2.10.0</jackson.version>
+                <jackson.databind.version>2.10.0</jackson.databind.version>
+                <avro.version>1.8.2</avro.version>
+                <json4s.version>3.6.6</json4s.version>
+                <guava.version>14.0.1</guava.version>
+                <kafka.version>2.3.1</kafka.version>
+                <commons-lang3.version>3.8.1</commons-lang3.version>
+                <commons-math3.version>3.4.1</commons-math3.version>
+            </properties>
         </profile>
 
         <profile>
@@ -251,7 +276,7 @@
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
-        <module>flowman-plugins/hbase</module>
+        <!--<module>flowman-plugins/hbase</module>-->
         <module>flowman-plugins/impala</module>
         <module>flowman-plugins/mariadb</module>
         <module>flowman-testing</module>
@@ -671,11 +696,13 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <!--
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-hbase</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            -->
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>

@@ -19,7 +19,7 @@ package com.dimajix.flowman.config
 import scala.collection.JavaConverters._
 
 import org.apache.spark.SparkConf
-import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.sql.SparkShim
 
 
 class Configuration(userSettings:Map[String,String]) {
@@ -45,7 +45,7 @@ class Configuration(userSettings:Map[String,String]) {
     /**
      * Hadoop configuration constructed from the SparkConf
      */
-    val hadoopConf:org.apache.hadoop.conf.Configuration = SparkHadoopUtil.get.newConfiguration(sparkConf)
+    val hadoopConf:org.apache.hadoop.conf.Configuration = SparkShim.getHadoopConf(sparkConf)
 
     /**
      * Returns the value of runtime configuration property for the given key.

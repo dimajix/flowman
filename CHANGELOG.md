@@ -1,4 +1,6 @@
-# Version 0.10.3
+# Version 0.11
+* Add support for Spark 3.0 preview
+* Remove HBase plugin
 * Add optional 'filter' to 'readRelation' mapping
 
 # Version 0.10.2

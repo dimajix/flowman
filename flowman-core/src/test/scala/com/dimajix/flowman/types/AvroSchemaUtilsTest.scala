@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.types
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.apache.avro.Schema.Type._
 import org.scalatest.FlatSpec
@@ -42,7 +42,7 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
 
         val result = AvroSchemaUtils.toAvro(schema)
         result.getType should be (RECORD)
-        val fields = result.getFields()
+        val fields = result.getFields().asScala
         fields(0).schema().getType should be (STRING)
         fields(0).name() should be ("str_field")
         fields(1).schema().getType should be (INT)
@@ -76,7 +76,7 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
 
         val result = AvroSchemaUtils.toAvro(schema)
         result.getType should be (RECORD)
-        val fields = result.getFields()
+        val fields = result.getFields().asScala
         fields(0).schema().getType should be (UNION)
         fields(0).name() should be ("str_field")
         fields(0).schema().getTypes().get(0).getType should be (STRING)
@@ -90,7 +90,7 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
 
         val result = AvroSchemaUtils.toAvro(schema)
         result.getType should be (RECORD)
-        val fields = result.getFields()
+        val fields = result.getFields().asScala
         fields(0).schema().getType should be (ARRAY)
         fields(0).name() should be ("array_field")
         fields(0).schema().getElementType.getType should be (STRING)
@@ -103,7 +103,7 @@ class AvroSchemaUtilsTest extends FlatSpec with Matchers {
 
         val result = AvroSchemaUtils.toAvro(schema)
         result.getType should be (RECORD)
-        val fields = result.getFields()
+        val fields = result.getFields().asScala
         fields(0).schema().getType should be (ARRAY)
         fields(0).name() should be ("array_field")
         fields(0).schema().getElementType.getType should be (UNION)

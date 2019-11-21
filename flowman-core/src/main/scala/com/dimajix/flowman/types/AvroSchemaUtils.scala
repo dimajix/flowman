@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.types
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.apache.avro.Schema.Type.ARRAY
 import org.apache.avro.Schema.Type.BOOLEAN
@@ -52,7 +52,7 @@ object AvroSchemaUtils {
       */
     def toAvro(schema:Seq[Field]) : ASchema = {
         val record = ASchema.createRecord("topLevelRecord", null, "", false)
-        record.setFields(schema.map(toAvro))
+        record.setFields(schema.map(toAvro).asJava)
         record
     }
     def toAvro(field:Field) : AField = {
@@ -86,7 +86,7 @@ object AvroSchemaUtils {
             case StructType(fields) => {
                 val nestedNs = ns + "." + name
                 val record = ASchema.createRecord(name, null, nestedNs, false)
-                record.setFields(fields.map(f => toAvro(f, nestedNs)))
+                record.setFields(fields.map(f => toAvro(f, nestedNs)).asJava)
                 record
             }
 
@@ -98,7 +98,7 @@ object AvroSchemaUtils {
         }
 
         if (nullable)
-            ASchema.createUnion(Seq(atype, ASchema.create(NULL)))
+            ASchema.createUnion(Seq(atype, ASchema.create(NULL)).asJava)
         else
             atype
     }
@@ -133,7 +133,7 @@ object AvroSchemaUtils {
         if (schema.getType != RECORD)
             throw new UnsupportedOperationException("Unexpected Avro top level type")
 
-        schema.getFields.map(AvroSchemaUtils.fromAvro)
+        schema.getFields.asScala.map(AvroSchemaUtils.fromAvro)
     }
 
     def fromAvro(field: AField) : Field = {
@@ -153,7 +153,7 @@ object AvroSchemaUtils {
             case ENUM => (StringType, false)
 
             case RECORD =>
-                val fields = schema.getFields.map { f =>
+                val fields = schema.getFields.asScala.map { f =>
                     val (schemaType,nullable) = fromAvroType(f.schema())
                     Field(f.name, schemaType, nullable, Option(f.doc()))
                 }
@@ -168,15 +168,15 @@ object AvroSchemaUtils {
                 (MapType(StringType, schemaType, nullable), false)
 
             case UNION =>
-                if (schema.getTypes.exists(_.getType == NULL)) {
+                if (schema.getTypes.asScala.exists(_.getType == NULL)) {
                     // In case of a union with null, eliminate it and make a recursive call
-                    val remainingUnionTypes = schema.getTypes.filterNot(_.getType == NULL)
+                    val remainingUnionTypes = schema.getTypes.asScala.filterNot(_.getType == NULL)
                     if (remainingUnionTypes.size == 1) {
-                        (fromAvroType(remainingUnionTypes.get(0))._1, true)
+                        (fromAvroType(remainingUnionTypes.head)._1, true)
                     } else {
-                        (fromAvroType(ASchema.createUnion(remainingUnionTypes))._1, true)
+                        (fromAvroType(ASchema.createUnion(remainingUnionTypes.asJava))._1, true)
                     }
-                } else schema.getTypes.map(_.getType) match {
+                } else schema.getTypes.asScala.map(_.getType) match {
                     case Seq(t1) =>
                         fromAvroType(schema.getTypes.get(0))
                     case Seq(t1, t2) if Set(t1, t2) == Set(INT, LONG) =>

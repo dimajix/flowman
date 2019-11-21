@@ -1,3 +1,6 @@
+# Version 0.10.3
+* Add optional 'filter' to 'readRelation' mapping
+
 # Version 0.10.2
 * Improve Impala catalog support
 

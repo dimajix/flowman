@@ -1,3 +1,7 @@
+# Version 0.11
+* Add support for Spark 3.0 preview
+* Remove HBase plugin
+
 # Version 0.10.1
 * Add 'error' output to 'extractJson' mapping
 

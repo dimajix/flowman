@@ -84,6 +84,7 @@
                                     <classifier>bin</classifier>
                                     <outputDirectory>target</outputDirectory>
                                 </artifactItem>
+                                <!--
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-hbase</artifactId>
@@ -92,6 +93,7 @@
                                     <classifier>bin</classifier>
                                     <outputDirectory>target</outputDirectory>
                                 </artifactItem>
+                                -->
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-impala</artifactId>

@@ -24,11 +24,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.execution.datasources.DataSource
-import org.apache.spark.sql.execution.datasources.FileFormat
-import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.sources.RelationProvider
-import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 

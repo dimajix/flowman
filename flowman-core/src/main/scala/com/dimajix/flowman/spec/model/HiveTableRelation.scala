@@ -25,6 +25,7 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
@@ -145,6 +146,9 @@ class HiveTableRelation(
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(executor, df)
 
+        // Helper method for Spark < 2.4
+        implicit def toAttributeNames(atts:Seq[Attribute]) : Seq[String] = atts.map(_.name)
+
         if (partitionSpec.nonEmpty) {
             val spark = executor.spark
             val catalog = executor.catalog
@@ -158,7 +162,7 @@ class HiveTableRelation(
                 query = query,
                 overwrite = overwrite,
                 ifPartitionNotExists = false,
-                query.output.map(_.name)
+                query.output
             )
             val qe = spark.sessionState.executePlan(cmd)
             SQLExecution.withNewExecutionId(spark, qe)(qe.toRdd)

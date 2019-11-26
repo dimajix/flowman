@@ -230,7 +230,7 @@ class HiveTableRelation(
         require(executor != null)
         require(partitions != null)
 
-        logger.info(s"Cleaning Hive table '$tableIdentifier' for relatio '$identifier'")
+        logger.info(s"Cleaning Hive table '$tableIdentifier' for relation '$identifier'")
 
         val catalog = executor.catalog
         // When no partitions are specified, this implies that the whole table is to be truncated
@@ -254,7 +254,7 @@ class HiveTableRelation(
         require(executor != null)
 
         if (!ifNotExists || !exists(executor)) {
-            logger.info(s"Creating Hive table '$tableIdentifier' for relation '$identifier'")
+            logger.info(s"Creating Hive table $tableIdentifier for relation '$identifier'")
 
             // Create and save Avro schema
             import HiveTableRelation._
@@ -332,7 +332,7 @@ class HiveTableRelation(
 
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Destroying Hive table '$tableIdentifier' of relation '$identifier'")
+            logger.info(s"Destroying Hive table $tableIdentifier of relation '$identifier'")
             catalog.dropTable(tableIdentifier)
         }
     }
@@ -362,7 +362,7 @@ class HiveTableRelation(
 
         val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
         if (missingFields.nonEmpty) {
-            logger.info(s"Migrating HiveTable relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table '$tableIdentifier'")
+            logger.info(s"Migrating HiveTable relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $tableIdentifier")
             catalog.addTableColumns(tableIdentifier, missingFields)
         }
     }

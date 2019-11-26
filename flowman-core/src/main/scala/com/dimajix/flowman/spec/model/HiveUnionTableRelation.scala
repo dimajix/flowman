@@ -171,7 +171,7 @@ class HiveUnionTableRelation(
         require(schema != null)
         require(partitions != null)
 
-        logger.info(s"Reading from Hive union view '$viewIdentifier' using partition values $partitions")
+        logger.info(s"Reading from Hive UNION VIEW $viewIdentifier using partition values $partitions")
 
         val tableDf = executor.spark.read.table(viewIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
@@ -277,14 +277,13 @@ class HiveUnionTableRelation(
             val catalog = executor.catalog
 
             // Destroy view
-            val view = viewIdentifier
-            logger.info(s"Dropping union view '$view' from Hive Union Table '$identifier'")
-            catalog.dropView(view, false)
+            logger.info(s"Dropping UNION VIEW $viewIdentifier from Hive Union Table relation '$identifier'")
+            catalog.dropView(viewIdentifier, false)
 
             // Destroy tables
             listTables(executor)
                 .foreach { table =>
-                    logger.info(s"Dropping backend table '$table' from Hive Union Table '$identifier'")
+                    logger.info(s"Dropping backend Hive table '$table' from Hive Union Table relation '$identifier'")
                     catalog.dropTable(table, false, true)
                 }
         }
@@ -325,7 +324,7 @@ class HiveUnionTableRelation(
 
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
-                    logger.info(s"Migrating HiveUntionTable relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table '$id'")
+                    logger.info(s"Migrating Hive Untion Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id")
                     catalog.addTableColumns(id, missingFields)
                     true
                 }
@@ -338,7 +337,7 @@ class HiveUnionTableRelation(
                 //  3.2 Create new table
                 val tableSet = allTables.toSet
                 val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
-                logger.info(s"Migrating HiveUntionTable relation '$identifier' by creating new Hive table '${tableIdentifier(version)}'")
+                logger.info(s"Migrating Hive Untion Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
                 val hiveTableRelation = tableRelation(version)
                 hiveTableRelation.create(executor, false)
                 true

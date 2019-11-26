@@ -31,7 +31,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
-import com.dimajix.spark.sql.catalyst.SQLBuilder
+import com.dimajix.spark.sql.catalyst.SqlBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -178,8 +178,8 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         val mapping = context.getMapping(MappingIdentifier("history"))
         val  df = executor.instantiate(mapping, "main")
 
-        val sql = new SQLBuilder(df).toSQL
-        sql should be ("SELECT `col_0`, `col_1`, `ts`, `ts` AS `validFrom`, lead(`ts`, 1, NULL) OVER (PARTITION BY `col_0` ORDER BY `ts` ASC NULLS FIRST) AS `validTo` FROM `default`.`some_table`")
+        val sql = new SqlBuilder(df).toSQL
+        sql should be ("SELECT `col_0`, `col_1`, `ts`, `ts` AS `validFrom`, lead(`ts`, 1, NULL) OVER (PARTITION BY `col_0` ORDER BY `ts` ASC) AS `validTo` FROM `default`.`some_table`")
         noException shouldBe thrownBy(spark.sql(sql))
 
         spark.sql("DROP TABLE some_table")

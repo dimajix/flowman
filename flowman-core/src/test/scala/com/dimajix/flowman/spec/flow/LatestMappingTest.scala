@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
-import com.dimajix.spark.sql.catalyst.SQLBuilder
+import com.dimajix.spark.sql.catalyst.SqlBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 object LatestMappingTest {
@@ -196,8 +196,8 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = context.getMapping(MappingIdentifier("latest"))
         val  df = executor.instantiate(mapping, "main")
 
-        val sql = new SQLBuilder(df).toSQL
-        sql should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1`, `gen_attr_2` AS `ts` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, `ts` AS `gen_attr_2`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` DESC NULLS LAST) AS `gen_attr_3` FROM `default`.`some_table`) AS gen_subquery_2 WHERE (`gen_attr_3` = 1)")
+        val sql = new SqlBuilder(df).toSQL
+        sql should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1`, `gen_attr_2` AS `ts` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, `ts` AS `gen_attr_2`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` DESC) AS `gen_attr_3` FROM `default`.`some_table`) AS gen_subquery_2 WHERE (`gen_attr_3` = 1)")
         noException shouldBe thrownBy(spark.sql(sql))
 
         spark.sql("DROP TABLE some_table")

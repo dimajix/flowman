@@ -36,7 +36,7 @@ import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
-import com.dimajix.spark.sql.catalyst.SQLBuilder
+import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 
 class HiveUnionTableRelation(
@@ -116,7 +116,7 @@ class HiveUnionTableRelation(
         val union = UnionTransformer().transformDataFrames(df)
         val finalSchema = schema.get.sparkSchema.fields ++ partitions.map(_.sparkField)
         val conformed = SchemaEnforcer(StructType(finalSchema)).transform(union)
-        val sql = new SQLBuilder(conformed).toSQL
+        val sql = new SqlBuilder(conformed).toSQL
         viewRelationFromSql(sql)
     }
 
@@ -258,7 +258,7 @@ class HiveUnionTableRelation(
             // Create initial view
             val spark = executor.spark
             val df = spark.read.table(hiveTableRelation.tableIdentifier.unquotedString)
-            val sql = new SQLBuilder(df).toSQL
+            val sql = new SqlBuilder(df).toSQL
             val hiveViewRelation = viewRelationFromSql(sql)
             hiveViewRelation.create(executor, false)
         }

@@ -30,7 +30,7 @@ import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.SqlParser
-import com.dimajix.spark.sql.catalyst.SQLBuilder
+import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 
 class HiveViewRelation(
@@ -140,7 +140,7 @@ class HiveViewRelation(
     private def buildMappingSql(executor: Executor, output:MappingOutputIdentifier) : String = {
         val mapping = context.getMapping(output.mapping)
         val df = executor.instantiate(mapping, output.output)
-        new SQLBuilder(df).toSQL
+        new SqlBuilder(df).toSQL
     }
 }
 

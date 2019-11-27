@@ -2,6 +2,7 @@
 * Add support for Spark 3.0 preview
 * Remove HBase plugin
 * Add optional 'filter' to 'readRelation' mapping
+* Improve Hive compatibility of SQL generator
 
 # Version 0.10.2
 * Improve Impala catalog support

@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spi
 
 import scala.collection.mutable
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 import io.github.classgraph.ClassGraph
@@ -118,7 +117,7 @@ object Registration {
 
                 _types.foreach(typ =>
                     scanResult.getClassesWithAnnotation(typ._1.getName)
-                        .toSeq
+                        .asScala
                         .foreach(ci => typ._2(ci.loadClass()))
                 )
 

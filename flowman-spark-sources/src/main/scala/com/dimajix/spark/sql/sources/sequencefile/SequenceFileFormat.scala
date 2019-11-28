@@ -38,6 +38,7 @@ import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.util.TaskCompletionListener
 
 
 class SequenceFileFormat extends DataSourceRegister with FileFormat {
@@ -73,7 +74,11 @@ class SequenceFileFormat extends DataSourceRegister with FileFormat {
                 SequenceFile.Reader.length(file.length),
                 SequenceFile.Reader.start(file.start)
             )
-            Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => seqFile.close()))
+            Option(TaskContext.get()).foreach(t => t.addTaskCompletionListener(
+                new TaskCompletionListener {
+                    override def onTaskCompletion(context: TaskContext): Unit = seqFile.close()
+                }
+            ))
             new SequenceFileIterator(seqFile, options)
         }
     }

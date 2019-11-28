@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.types
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
@@ -70,7 +70,7 @@ object SwaggerSchemaUtils {
       * @return
       */
     def fromSwagger(swagger:Swagger, entity:Option[String], nullable:Boolean) : Seq[Field] = {
-        val model = entity.filter(_.nonEmpty).map(e => swagger.getDefinitions()(e)).getOrElse(swagger.getDefinitions().values().head)
+        val model = entity.filter(_.nonEmpty).map(e => swagger.getDefinitions().get(e)).getOrElse(swagger.getDefinitions().values().asScala.head)
         fromSwagger(model, nullable)
     }
 
@@ -84,9 +84,9 @@ object SwaggerSchemaUtils {
     def fromSwagger(model:Model, nullable:Boolean) : Seq[Field] = {
         def fromSwaggerRec(model:Model, nullable:Boolean=true) : Seq[Field] = {
             model match {
-                case composed: ComposedModel => composed.getAllOf.flatMap(m => fromSwaggerRec(m, nullable))
+                case composed: ComposedModel => composed.getAllOf.asScala.flatMap(m => fromSwaggerRec(m, nullable))
                 //case array:ArrayModel => Seq(fromSwaggerProperty(array.getItems))
-                case _ => fromSwaggerObject(model.getProperties.toSeq, "", nullable).fields
+                case _ => fromSwaggerObject(model.getProperties.asScala.toSeq, "", nullable).fields
             }
         }
 
@@ -113,7 +113,7 @@ object SwaggerSchemaUtils {
 
         // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"
         val definitions = rootNode.path("definitions")
-        val entities = definitions.elements().flatMap(_.elements()).toList
+        val entities = definitions.elements().asScala.flatMap(_.elements().asScala).toSeq
         entities.foreach(replaceAllOf)
         entities.foreach(fixRequired)
 
@@ -131,19 +131,19 @@ object SwaggerSchemaUtils {
         jsonNode match {
             case obj:ObjectNode =>
                 if (obj.get("allOf") != null) {
-                    val children = obj.get("allOf").elements().toSeq
-                    val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements()))
-                    val properties = children.flatMap(c => Option(c.get("properties")).toSeq.flatMap(_.fields()))
+                    val children = obj.get("allOf").elements().asScala.toSeq
+                    val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements().asScala))
+                    val properties = children.flatMap(c => Option(c.get("properties")).toSeq.flatMap(_.fields().asScala))
                     val desc = children.flatMap(c => Option(c.get("description"))).headOption
                     obj.without("allOf")
                     obj.set("type", TextNode.valueOf("object"))
-                    obj.withArray("required").addAll(required)
-                    properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue))
+                    obj.withArray("required").addAll(required.asJava)
+                    properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue):AnyRef)
                     desc.foreach(d => obj.set("description", d))
                 }
             case _:JsonNode =>
         }
-        jsonNode.elements().foreach(replaceAllOf)
+        jsonNode.elements().asScala.foreach(replaceAllOf)
     }
 
     private def fixRequired(jsonNode: JsonNode) : Unit = {
@@ -154,7 +154,7 @@ object SwaggerSchemaUtils {
                 }
             case _:JsonNode =>
         }
-        jsonNode.elements().foreach(fixRequired)
+        jsonNode.elements().asScala.foreach(fixRequired)
     }
 
     private def fromSwaggerObject(properties:Seq[(String,Property)], prefix:String, nullable:Boolean) : StructType = {
@@ -185,13 +185,13 @@ object SwaggerSchemaUtils {
             case _:DoubleProperty => DoubleType
             case d:DecimalProperty =>
                 val scale = if (d.getMultipleOf != null) d.getMultipleOf.scale() else DecimalType.USER_DEFAULT.scale
-                val precision = if (d.getMaximum != null) d.getMaximum.precision() else DecimalType.USER_DEFAULT.precision - scale
+                val precision = if (d.getMaximum != null) d.getMaximum.precision() else DecimalType.MAX_PRECISION - scale
                 DecimalType(precision + scale, scale)
             case _:IntegerProperty => IntegerType
             case _:LongProperty => LongType
             case _:BaseIntegerProperty => IntegerType
             case _:MapProperty => MapType(StringType, StringType)
-            case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.toSeq, fqName + ".", nullable)
+            case obj:ObjectProperty => fromSwaggerObject(obj.getProperties.asScala.toSeq, fqName + ".", nullable)
             case s:StringProperty =>
                 val minLength = Option(s.getMinLength).map(_.intValue())
                 val maxLength = Option(s.getMaxLength).map(_.intValue())

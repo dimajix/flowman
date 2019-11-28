@@ -18,6 +18,8 @@ package com.dimajix.flowman.catalog
 
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.SQLRecoverableException
+import java.sql.SQLTransientException
 import java.sql.Statement
 import java.util.Properties
 
@@ -39,7 +41,9 @@ object ImpalaExternalCatalog {
          driver:String = IMPALA_DEFAULT_DRIVER,
          user:String = "",
          password:String = "",
-         properties: Map[String,String] = Map()
+         properties: Map[String,String] = Map(),
+         timeout: Int = 3000,
+         retries: Int = 3
      )
 }
 
@@ -140,12 +144,26 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     private def withConnection[T](fn:Connection => T) : T = {
-        val conn = connect()
-        try {
-            fn(conn)
+        def retry[T](n:Int)(fn: => T) : T = {
+            try {
+                fn
+            } catch {
+                case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 => {
+                    logger.error("Retrying after error while executing SQL: {}", e.getMessage)
+                    Thread.sleep(connection.timeout)
+                    retry(n - 1)(fn)
+                }
+            }
         }
-        finally {
-            conn.close()
+
+        retry(connection.retries) {
+            val conn = connect()
+            try {
+                fn(conn)
+            }
+            finally {
+                conn.close()
+            }
         }
     }
 

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.types
 
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.unsafe.types.CalendarInterval
 
@@ -24,12 +25,12 @@ case object CalendarIntervalType extends FieldType {
     override def sparkType : DataType = org.apache.spark.sql.types.CalendarIntervalType
 
     override def parse(value:String, granularity:Option[String]=None) : CalendarInterval = {
-        CalendarInterval.fromString(value)
+        SparkShim.parseCalendarInterval(value)
     }
     override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[CalendarInterval] = {
         value match {
-            case SingleValue(v) => Seq(CalendarInterval.fromString(v))
-            case ArrayValue(values) => values.map(CalendarInterval.fromString)
+            case SingleValue(v) => Seq(SparkShim.parseCalendarInterval(v))
+            case ArrayValue(values) => values.map(SparkShim.parseCalendarInterval)
             case RangeValue(start,end,step) => ???
         }
     }

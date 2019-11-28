@@ -22,11 +22,9 @@ import java.nio.file.FileAlreadyExistsException
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.execution.datasources.DataSource
-import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.sources.RelationProvider
-import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -125,11 +123,11 @@ class FileRelation(
             // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
             // underlying format implementation
             val providingClass = DataSource.lookupDataSource(format, executor.spark.sessionState.conf)
-            val df = providingClass.newInstance() match {
-                case _: RelationProvider => reader.load(pathNames.mkString(","))
-                case _: SchemaRelationProvider => reader.load(pathNames.mkString(","))
-                case _: FileFormat => reader.load(pathNames: _*)
-                case _ => reader.load(pathNames.mkString(","))
+            val df = if (SparkShim.relationSupportsMultiplePaths(providingClass)) {
+                reader.load(pathNames: _*)
+            }
+            else {
+                reader.load(pathNames.mkString(","))
             }
 
             // Add partitions values as columns

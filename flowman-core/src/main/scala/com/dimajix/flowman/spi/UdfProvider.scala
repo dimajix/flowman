@@ -18,7 +18,7 @@ package com.dimajix.flowman.spi
 
 import java.util.ServiceLoader
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.UDFRegistration
 
@@ -26,7 +26,7 @@ import org.apache.spark.sql.UDFRegistration
 object UdfProvider {
     def providers : Seq[UdfProvider] = {
         val loader = ServiceLoader.load(classOf[UdfProvider])
-        loader.iterator().toSeq
+        loader.iterator().asScala.toSeq
     }
 }
 

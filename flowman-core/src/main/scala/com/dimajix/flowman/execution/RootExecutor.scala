@@ -42,7 +42,6 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
             IdentityHashMap[Mapping,Map[String,DataFrame]]()
         }
     }
-    private val _namespace = session.namespace
 
     def this(session: Session) = {
         this(session, null, true)
@@ -91,7 +90,7 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
       */
     private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         // Ensure all dependencies are instantiated
-        logger.info(s"Ensuring dependencies for mapping '${mapping.identifier}'")
+        logger.debug(s"Ensuring dependencies for mapping '${mapping.identifier}'")
 
         val context = mapping.context
         val dependencies = mapping.inputs.map { dep =>

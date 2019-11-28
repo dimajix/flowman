@@ -181,12 +181,12 @@ object SchemaUtils {
         else {
             val sourceNullable = sourceField.nullable || sourceField.dataType == NullType
             val targetNullable = targetField.nullable || targetField.dataType == NullType
-            if (!sourceNullable && targetNullable) {
+            if (sourceNullable && !targetNullable) {
                 false
             }
             else {
                 val coercedType = coerce(sourceField.dataType, targetField.dataType)
-                coercedType == sourceField.dataType
+                coercedType == targetField.dataType
             }
         }
     }
@@ -201,7 +201,7 @@ object SchemaUtils {
         val targetFieldsByName = targetSchema.fields.map(field => (field.name.toLowerCase(Locale.ROOT), field)).toMap
         sourceSchema.forall(field =>
             targetFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
-                .exists(actual => isCompatible(actual, field))
+                .exists(actual => isCompatible(field, actual))
         )
     }
 

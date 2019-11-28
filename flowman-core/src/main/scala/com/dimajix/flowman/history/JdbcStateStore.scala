@@ -18,6 +18,7 @@ package com.dimajix.flowman.history
 
 import java.security.MessageDigest
 import java.sql.SQLRecoverableException
+import java.sql.SQLTransientException
 import java.sql.Timestamp
 import java.time.Clock
 
@@ -228,7 +229,7 @@ class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeou
             try {
                 fn
             } catch {
-                case e: SQLRecoverableException if n > 1 => {
+                case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 => {
                     logger.error("Retrying after error while executing SQL: {}", e.getMessage)
                     Thread.sleep(timeout)
                     retry(n - 1)(fn)

@@ -43,7 +43,6 @@ import scala.util.control.NonFatal
 import com.univocity.parsers.csv.CsvParser
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.util.BadRecordException
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.DataType
@@ -59,6 +58,8 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
 import org.apache.spark.unsafe.types.UTF8String
+
+import com.dimajix.flowman.util.DateTimeUtils
 
 
 class UnivocityReader(schema: StructType, val options:CsvOptions) {

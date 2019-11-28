@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.10.2</version>
+        <version>0.11.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -84,6 +84,7 @@
                                     <classifier>bin</classifier>
                                     <outputDirectory>target</outputDirectory>
                                 </artifactItem>
+                                <!--
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-hbase</artifactId>
@@ -92,6 +93,7 @@
                                     <classifier>bin</classifier>
                                     <outputDirectory>target</outputDirectory>
                                 </artifactItem>
+                                -->
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-impala</artifactId>

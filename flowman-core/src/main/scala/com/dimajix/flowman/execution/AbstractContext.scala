@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import java.io.StringWriter
 
 import scala.collection.mutable
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
@@ -239,7 +239,7 @@ abstract class AbstractContext(
     private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) = {
         val output = new StringWriter()
         val context = if (additionalValues.nonEmpty)
-            new VelocityContext(additionalValues, templateContext)
+            new VelocityContext(additionalValues.asJava, templateContext)
         else
             templateContext
         templateEngine.evaluate(context, output, "context", string)

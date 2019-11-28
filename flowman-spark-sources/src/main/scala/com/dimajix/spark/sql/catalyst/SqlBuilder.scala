@@ -46,7 +46,7 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.NullType
 
 
-object SQLBuilder {
+object SqlBuilder {
     // Helper method for creating API compatibility for Spark 2.3 and Spark 2.4
     private implicit def optionToSeq[T](o:Option[T]) : Seq[T] = o.toList
 }
@@ -57,7 +57,7 @@ object SQLBuilder {
  * representations (e.g. logical plans that operate on local Scala collections), or are simply not
  * supported by this builder (yet).
  */
-class SQLBuilder private(
+class SqlBuilder private(
     logicalPlan: LogicalPlan,
     nextSubqueryId: AtomicLong,
     nextGenAttrId: AtomicLong,
@@ -65,7 +65,7 @@ class SQLBuilder private(
   require(logicalPlan.resolved,
     "SQLBuilder only supports resolved logical query plans. Current plan:\n" + logicalPlan)
 
-  import SQLBuilder.optionToSeq
+  import SqlBuilder.optionToSeq
 
   def this(logicalPlan: LogicalPlan) =
     this(logicalPlan, new AtomicLong(0), new AtomicLong(0), Map.empty[Long, Long])
@@ -101,7 +101,7 @@ class SQLBuilder private(
     try {
       val replaced = finalPlan.transformAllExpressions {
         case s: SubqueryExpression =>
-          val query = new SQLBuilder(s.plan, nextSubqueryId, nextGenAttrId, exprIdMap).toSQL
+          val query = new SqlBuilder(s.plan, nextSubqueryId, nextGenAttrId, exprIdMap).toSQL
           val sql = s match {
             case _: ListQuery => query
             case _: Exists => s"EXISTS($query)"
@@ -230,7 +230,7 @@ class SQLBuilder private(
       build(
         toSQL(p.child),
         if (p.global) "ORDER BY" else "SORT BY",
-        p.order.map(_.sql).mkString(", ")
+        p.order.map(SqlExpressionBuilder.sortOrderToSsql).mkString(", ")
       )
 
     case p: RepartitionByExpression =>
@@ -268,40 +268,10 @@ class SQLBuilder private(
     build(
       "SELECT",
       if (isDistinct) "DISTINCT" else "",
-      plan.projectList.map(expr => expressionToSQL(expr)).mkString(", "),
+      plan.projectList.map(SqlExpressionBuilder.toSql).mkString(", "),
       plan.child match { case _:OneRowRelation => ""; case _ => "FROM" },
       toSQL(plan.child)
     )
-  }
-
-  private def expressionToSQL(expr:NamedExpression) : String = {
-      expr match {
-          case alias @ Alias(expr @ WindowExpression(RowNumber(), _), name) =>
-              unboundedWindowExpressionToSql(alias, expr)
-          case alias @ Alias(expr @ WindowExpression(Lead(_,_,_), _), name) =>
-              unboundedWindowExpressionToSql(alias, expr)
-          case alias @ Alias(expr @ WindowExpression(Lag(_,_,_), _), name) =>
-              unboundedWindowExpressionToSql(alias, expr)
-          case _ => expr.sql
-      }
-  }
-
-  private def unboundedWindowExpressionToSql(alias:Alias, expr:WindowExpression) : String = {
-      val wf = expr.windowFunction
-      val ws = expr.windowSpec
-      val qualifierPrefix = alias.qualifier.map(_ + ".").headOption.getOrElse("")
-      s"${wf.sql + " OVER " + unboundedWindowSpecToSQL(ws)} AS $qualifierPrefix${quoteIdentifier(alias.name)}"
-  }
-
-  private def unboundedWindowSpecToSQL(spec:WindowSpecDefinition) : String = {
-      def toSql(exprs: Seq[Expression], prefix: String): Seq[String] = {
-          Seq(exprs).filter(_.nonEmpty).map(_.map(_.sql).mkString(prefix, ", ", ""))
-      }
-
-      val elements =
-          toSql(spec.partitionSpec, "PARTITION BY ") ++
-              toSql(spec.orderSpec, "ORDER BY ")
-      elements.mkString("(", " ", ")")
   }
 
   private def scriptTransformationToSQL(plan: ScriptTransformation): String = {
@@ -567,6 +537,8 @@ class SQLBuilder private(
 
         case w @ Window(_, _, _, f @ Filter(_, _: Aggregate)) => w.copy(child = addSubquery(f))
 
+        case s: Sort => s.copy(child = addSubquery(s.child))
+
         case p: Project => p.copy(child = addSubqueryIfNeeded(p.child))
 
         // We will generate "SELECT ... FROM ..." for Window operator, so its child operator should
@@ -665,8 +637,10 @@ class SQLBuilder private(
         // It is a good idea to bring projections as near as possible to the inputs, since this
         // prevents additional subqueries
         PushProjectionThroughUnion,
-        // Predicates should be pushed dpwn to the sources as well
+        // Predicates should be pushed down to the sources as well
         PushDownPredicate,
+        // Simplify Sort
+        //PullUpSort,
         // Remove subqueries
         RemoveSubqueries
       ),
@@ -698,6 +672,14 @@ class SQLBuilder private(
 
             case Window(expressions, _, _, child) =>
                 Project(child.output ++ expressions, child)
+        }
+    }
+
+    object PullUpSort extends Rule[LogicalPlan] {
+        override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
+            // Simplify Project - Sort - Project
+            // TODO: This is not working
+            case p1 @ Project(_, s @ Sort(_, _, p2: Project)) => s.copy(child = p1.copy(child = p2))
         }
     }
 

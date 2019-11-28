@@ -40,7 +40,8 @@ case class ReadRelationMapping(
     instanceProperties:Mapping.Properties,
     relation:RelationIdentifier,
     columns:Map[String,String],
-    partitions:Map[String,FieldValue]
+    partitions:Map[String,FieldValue],
+    filter:Option[String]
 ) extends BaseMapping {
     private val logger = LoggerFactory.getLogger(classOf[ReadRelationMapping])
 
@@ -66,9 +67,14 @@ case class ReadRelationMapping(
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
-        logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}")
+        logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")} and filter '${filter.getOrElse("")}'")
+
+        // Read relation
         val rel = context.getRelation(relation)
-        val result = rel.read(executor, schema, partitions)
+        val df = rel.read(executor, schema, partitions)
+
+        // Apply optional filter
+        val result = filter.map(df.filter).getOrElse(df)
 
         Map("main" -> result)
     }
@@ -116,6 +122,7 @@ class ReadRelationMappingSpec extends MappingSpec {
     @JsonProperty(value = "relation", required = true) private var relation:String = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -132,7 +139,8 @@ class ReadRelationMappingSpec extends MappingSpec {
             instanceProperties(context),
             RelationIdentifier(context.evaluate(relation)),
             context.evaluate(columns),
-            partitions
+            partitions,
+            filter
         )
     }
 }

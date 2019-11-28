@@ -301,7 +301,7 @@ class SwaggerSchemaTest extends FlatSpec with Matchers  {
 
         fields(4).nullable should be (true)
         fields(4).name should be ("number")
-        fields(4).ftype should be (DecimalType(10,0))
+        fields(4).ftype should be (DecimalType(38,0))
 
         fields(5).nullable should be (true)
         fields(5).name should be ("decimal")

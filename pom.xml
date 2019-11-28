@@ -490,6 +490,7 @@
                             <arg>-feature</arg>
                             <arg>-explaintypes</arg>
                             <arg>-Yno-adapted-args</arg>
+                            <arg>-language:implicitConversions</arg>
                         </args>
                         <javacArgs>
                             <javacArg>-source</javacArg>

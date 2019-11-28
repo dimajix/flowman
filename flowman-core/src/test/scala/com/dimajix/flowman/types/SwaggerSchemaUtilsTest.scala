@@ -261,6 +261,9 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
               |        format: double
               |      number:
               |        type: number
+              |      preciseNumber:
+              |        type: number
+              |        multipleOf: 0.01
               |      decimal:
               |        type: number
               |        multipleOf: 0.01
@@ -278,7 +281,7 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
               |""".stripMargin
 
         val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Types"), false)
-        fields.size should be (9)
+        fields.size should be (10)
 
         fields(0).nullable should be (true)
         fields(0).name should be ("int32")
@@ -298,22 +301,26 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
 
         fields(4).nullable should be (true)
         fields(4).name should be ("number")
-        fields(4).ftype should be (DecimalType(10,0))
+        fields(4).ftype should be (DecimalType(38,0))
 
         fields(5).nullable should be (true)
-        fields(5).name should be ("decimal")
-        fields(5).ftype should be (DecimalType(10,2))
+        fields(5).name should be ("preciseNumber")
+        fields(5).ftype should be (DecimalType(38,2))
 
         fields(6).nullable should be (true)
-        fields(6).name should be ("string")
-        fields(6).ftype should be (StringType)
+        fields(6).name should be ("decimal")
+        fields(6).ftype should be (DecimalType(10,2))
 
         fields(7).nullable should be (true)
-        fields(7).name should be ("char_n")
-        fields(7).ftype should be (CharType(10))
+        fields(7).name should be ("string")
+        fields(7).ftype should be (StringType)
 
         fields(8).nullable should be (true)
-        fields(8).name should be ("varchar_n")
-        fields(8).ftype should be (VarcharType(20))
+        fields(8).name should be ("char_n")
+        fields(8).ftype should be (CharType(10))
+
+        fields(9).nullable should be (true)
+        fields(9).name should be ("varchar_n")
+        fields(9).ftype should be (VarcharType(20))
     }
 }

@@ -185,7 +185,7 @@ object SwaggerSchemaUtils {
             case _:DoubleProperty => DoubleType
             case d:DecimalProperty =>
                 val scale = if (d.getMultipleOf != null) d.getMultipleOf.scale() else DecimalType.USER_DEFAULT.scale
-                val precision = if (d.getMaximum != null) d.getMaximum.precision() else DecimalType.USER_DEFAULT.precision - scale
+                val precision = if (d.getMaximum != null) d.getMaximum.precision() else DecimalType.MAX_PRECISION - scale
                 DecimalType(precision + scale, scale)
             case _:IntegerProperty => IntegerType
             case _:LongProperty => LongType

@@ -327,4 +327,20 @@ class SchemaUtilsTest extends FlatSpec with Matchers with LocalSparkSession with
         SchemaUtils.coerce(VarcharType(20), VarcharType(10)) should be (VarcharType(20))
         SchemaUtils.coerce(VarcharType(10), VarcharType(20)) should be (VarcharType(20))
     }
+
+    "SchemaUtils.isCompatible" should "support decimal types" in {
+        SchemaUtils.isCompatible(StructField("f", DecimalType(4,2)), StructField("f", DecimalType(4,0))) should be (false)
+        SchemaUtils.isCompatible(StructField("f", DecimalType(4,2)), StructField("f", DecimalType(3,2))) should be (false)
+        SchemaUtils.isCompatible(StructField("f", DecimalType(4,2)), StructField("f", DecimalType(4,2))) should be (true)
+        SchemaUtils.isCompatible(StructField("f", DecimalType(4,2)), StructField("f", DecimalType(8,2))) should be (true)
+        SchemaUtils.isCompatible(StructField("f", DecimalType(4,2)), StructField("f", DecimalType(8,4))) should be (true)
+        SchemaUtils.isCompatible(StructField("f", DecimalType(4,2)), StructField("f", DecimalType(5,4))) should be (false)
+    }
+
+    it should "support nullability" in {
+        SchemaUtils.isCompatible(StructField("f", StringType, true), StructField("f", StringType, true)) should be (true)
+        SchemaUtils.isCompatible(StructField("f", StringType, false), StructField("f", StringType, true)) should be (true)
+        SchemaUtils.isCompatible(StructField("f", StringType, true), StructField("f", StringType, false)) should be (false)
+        SchemaUtils.isCompatible(StructField("f", StringType, false), StructField("f", StringType, false)) should be (true)
+    }
 }

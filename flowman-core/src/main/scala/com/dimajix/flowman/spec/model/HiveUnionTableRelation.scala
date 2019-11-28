@@ -200,7 +200,10 @@ class HiveUnionTableRelation(
                 val table = catalog.getTable(id)
                 SchemaUtils.isCompatible(df.schema, table.schema)
             }
-            .getOrElse(throw new ExecutionException(s"Cannot find appropriate target table for Hive Union Table '$identifier'"))
+            .getOrElse {
+                logger.error(s"Cannot find appropriate target table for Hive Union Table '$identifier'. Required schema is\n${df.schema.treeString}")
+                throw new ExecutionException(s"Cannot find appropriate target table for Hive Union Table '$identifier'")
+            }
 
         // 3. Drop  partition from all other tables
         allTables.filter(_ != table).foreach { table =>

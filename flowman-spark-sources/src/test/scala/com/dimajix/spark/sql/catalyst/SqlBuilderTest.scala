@@ -113,7 +113,55 @@ class SqlBuilderTest extends FlatSpec with Matchers with LocalSparkSession {
               |WHERE x.col_1 = '67'""".stripMargin)
         val sql6 = new SqlBuilder(df6.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql6))
-        sql6 should be ("(SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0`) UNION ALL (SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67'))")
+        sql6 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67')")
+    })
+
+    it should "support sophisticated UNIONs" in (if (hiveSupported) {
+        val df1 = spark.sql(
+            """
+              |SELECT
+              |    `gen_attr_1` AS `first`,
+              |    `gen_attr_3` AS `second`
+              |FROM (
+              |        SELECT
+              |            `col_0` AS `gen_attr_1`,
+              |            `col_1` AS `gen_attr_3`
+              |        FROM sql_builder_0
+              |        UNION ALL
+              |        SELECT
+              |            `col_0` AS `gen_attr_11`,
+              |            `col_1` AS `gen_attr_31`
+              |        FROM sql_builder_0
+              |) AS gen_subquery_2
+              |WHERE gen_attr_1 != 7
+              |""".stripMargin
+        )
+        val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
+        noException shouldBe thrownBy(spark.sql(sql1))
+        sql1 should be ("SELECT `gen_attr_1` AS `first`, `gen_attr_3` AS `second` FROM (SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0` UNION ALL SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS gen_subquery_2 WHERE (NOT (`gen_attr_1` = 7))")
+
+        val df2 = spark.sql(
+            """
+              |SELECT
+              |    `gen_attr_1` AS `first`,
+              |    `col_1` AS `second`
+              |FROM (
+              |        SELECT
+              |            `col_0` AS `gen_attr_1`,
+              |            `col_1`
+              |        FROM sql_builder_0
+              |        UNION ALL
+              |        SELECT
+              |            upper(`col_0`),
+              |            `col_1` AS `gen_attr_31`
+              |        FROM sql_builder_0
+              |) AS gen_subquery_2
+              |WHERE gen_attr_1 != 7
+              |""".stripMargin
+        )
+        val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
+        noException shouldBe thrownBy(spark.sql(sql2))
+        sql2 should be ("SELECT `gen_attr_1` AS `first`, `gen_attr_3` AS `second` FROM (SELECT CAST(`col_0` AS STRING) AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS gen_subquery_2 WHERE (NOT (CAST(`gen_attr_1` AS INT) = 7))")
     })
 
     it should "support WINDOW functions" in (if (hiveSupported) {

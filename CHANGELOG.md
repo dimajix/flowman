@@ -1,8 +1,11 @@
+# Version 0.11.1
+* Improve Hive compatibility of SQL generator for UNION statements
+
 # Version 0.11.0
 * Add support for Spark 3.0 preview
 * Remove HBase plugin
 * Add optional 'filter' to 'readRelation' mapping
-* Improve Hive compatibility of SQL generator
+* Improve Hive compatibility of SQL generator for ORDER BY statements
 * Fix target table search in Hive Union Table
 
 # Version 0.10.2

@@ -182,11 +182,11 @@ class SqlBuilder private(
       build(toSQL(child), whereOrHaving, condition.sql)
 
     case p @ Distinct(u: Union) if u.children.length > 1 =>
-      val childrenSql = u.children.map(c => s"(${toSQL(c)})")
+      val childrenSql = u.children.map(c => s"${toSQL(c)}")
       childrenSql.mkString(" UNION DISTINCT ")
 
     case p: Union if p.children.length > 1 =>
-      val childrenSql = p.children.map(c => s"(${toSQL(c)})")
+      val childrenSql = p.children.map(c => s"${toSQL(c)}")
       childrenSql.mkString(" UNION ALL ")
 
     case p: Intersect =>
@@ -469,7 +469,9 @@ class SqlBuilder private(
         // Insert sub queries on top of operators that need to appear after FROM clause.
         AddSubquery,
         // Reconstruct subquery expressions.
-        ConstructSubqueryExpressions
+        ConstructSubqueryExpressions,
+        // Normalize union attributes
+        NormalizeUnionAttributes
       )
     )
 
@@ -490,6 +492,24 @@ class SqlBuilder private(
         case a: Alias =>
           Alias(a.child, normalizedName(a))(exprId = a.exprId, qualifier = None)
       }
+    }
+
+    object NormalizeUnionAttributes extends Rule[LogicalPlan] {
+        override def apply(plan: LogicalPlan): LogicalPlan = plan.transform {
+            case union:Union =>
+                union.copy(children = normalizeAttributes(union.children))
+        }
+
+        private def normalizeAttributes(children:Seq[LogicalPlan]) : Seq[LogicalPlan] = {
+            val headNames = children.head.output.map(_.name)
+
+            val tailPlans = children.tail.map { plan =>
+                val aliases = plan.output.zip(headNames).map { case(att,name) => Alias(att, name)() }
+                Project(aliases, plan)
+            }
+
+            children.head +: tailPlans
+        }
     }
 
     object RemoveSubqueriesAboveSQLTable extends Rule[LogicalPlan] {

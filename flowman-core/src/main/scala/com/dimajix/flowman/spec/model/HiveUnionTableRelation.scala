@@ -15,6 +15,7 @@
  */
 
 package com.dimajix.flowman.spec.model
+
 import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -38,6 +39,20 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
+
+object HiveUnionTableRelation {
+    /**
+     * Method for generating the UNION SQL. It is moved into the object to be able to unittest it easily
+     * @param tables
+     * @param schema
+     * @return
+     */
+    private[model] def unionSql(tables:Seq[DataFrame], schema:StructType) : String = {
+        val union = UnionTransformer().transformDataFrames(tables)
+        val conformed = SchemaEnforcer(schema).transform(union)
+        new SqlBuilder(conformed).toSQL
+    }
+}
 
 class HiveUnionTableRelation(
     override val instanceProperties:Relation.Properties,
@@ -113,10 +128,8 @@ class HiveUnionTableRelation(
         val tables = listTables(executor)
         val spark = executor.spark
         val df = tables.map(t => spark.read.table(t.unquotedString))
-        val union = UnionTransformer().transformDataFrames(df)
         val finalSchema = schema.get.sparkSchema.fields ++ partitions.map(_.sparkField)
-        val conformed = SchemaEnforcer(StructType(finalSchema)).transform(union)
-        val sql = new SqlBuilder(conformed).toSQL
+        val sql = HiveUnionTableRelation.unionSql(df, StructType(finalSchema))
         viewRelationFromSql(sql)
     }
 

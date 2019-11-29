@@ -126,11 +126,13 @@ class SqlBuilder private(
       logDebug(
         s"""Built SQL query string successfully from given logical plan:
            |
-           |# Original logical plan:
+           |== Original logical plan ==
            |${logicalPlan.treeString}
-           |# Canonicalized logical plan:
+           |== Canonicalized logical plan ==
+           |${canonicalizedPlan.treeString}
+           |== Final plan ==
            |${replaced.treeString}
-           |# Generated SQL:
+           |== Generated SQL ==
            |$generatedSQL
          """.stripMargin)
       generatedSQL
@@ -647,6 +649,7 @@ class SqlBuilder private(
       case _: SQLTable => plan
       case _: Generate => plan
       case _: OneRowRelation => plan
+      // case _: Union => plan // Simplifying "SELECT ... FROM (... UNION ...)" will be performed via "RemoveSubquery"
       case _ => addSubquery(plan)
     }
   }
@@ -710,6 +713,9 @@ class SqlBuilder private(
         case SubqueryAlias(_, t @ SQLTable(_,_,_,_)) => t
 
         case SubqueryAlias(_, a2 @ SubqueryAlias(_,_)) => a2
+
+        // Remove subqueries between project and UNION
+        case p1 @ Project(_, a @ SubqueryAlias(_, u @ Union(_))) => p1.copy(child = u)
 
         // Move projections together, they will be merged by CollapseProject
         case p1 @ Project(_, a @ SubqueryAlias(_, p2 @ Project(_, c))) => p1.copy(child = p2.copy(child = a.copy(child = c)))

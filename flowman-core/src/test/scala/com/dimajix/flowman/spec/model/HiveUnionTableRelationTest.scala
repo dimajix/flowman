@@ -22,11 +22,13 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.types.BooleanType
+import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.TimestampType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -718,5 +720,35 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+    }
+
+    "The generated VIEWs" should "not be too complex" in {
+        spark.sql(
+            """
+              |CREATE TABLE hive_union_0(
+              |     col_0 INT,
+              |     col_1 STRING,
+              |     ts TIMESTAMP
+              |)
+              |""".stripMargin)
+        spark.sql(
+            """
+              |CREATE TABLE hive_union_1(
+              |     col_0 DOUBLE,
+              |     col_2 BOOLEAN,
+              |     ts TIMESTAMP
+              |)
+              |""".stripMargin)
+
+        val df1 = spark.read.table("hive_union_0")
+        val df2 = spark.read.table("hive_union_1")
+        val schema = StructType(Seq(
+            StructField("col_0", DoubleType),
+            StructField("col_1", StringType),
+            StructField("col_2", BooleanType),
+            StructField("ts", TimestampType)
+        ))
+        val sql = HiveUnionTableRelation.unionSql(Seq(df1,df2), schema)
+        sql should be ("SELECT CAST(`col_0` AS DOUBLE) AS `col_0`, `col_1`, CAST(NULL AS BOOLEAN) AS `col_2`, `ts` FROM `default`.`hive_union_0` UNION ALL SELECT `col_0`, CAST(NULL AS STRING) AS `col_1`, `col_2`, `ts` FROM `default`.`hive_union_1`")
     }
 }

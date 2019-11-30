@@ -1,69 +1,108 @@
-# Version 0.11.0
+# Version 0.11.1
+
+* Improve Hive compatibility of SQL generator for UNION statements
+
+
+# Version 0.11.0 - 2019-11-28
+
 * Add support for Spark 3.0 preview
 * Remove HBase plugin
 * Add optional 'filter' to 'readRelation' mapping
-* Improve Hive compatibility of SQL generator
+* Improve Hive compatibility of SQL generator for ORDER BY statements
 * Fix target table search in Hive Union Table
 
-# Version 0.10.2
+
+# Version 0.10.2 - 2019-11-18
+
 * Improve Impala catalog support
 
-# Version 0.10.1
+
+# Version 0.10.1 - 2019-11-14
+
 * Add 'error' output to 'extractJson' mapping
 
-# Version 0.10.0
+
+# Version 0.10.0 - 2019-11-05
+
 * Add new 'hiveUnionTable' relation
 * Add new 'union' schema
 * Support nested columns in deduplication
 * Support nested Hive VIEWs
 * Support Spark 2.4.4
 
-# Version 0.9.1
+
+# Version 0.9.1 - 2019-10-10
+
 * Fix wrong Spark application name if configured via Spark config
 
-# Version 0.9.0
+
+# Version 0.9.0 - 2019-10-08
+
 * Complete overhaul of job execution. No tasks any more
 * Improve Swagger schema support
 
-# Version 0.8.3
+
+# Version 0.8.3 - 2019-09-16
+
 * Add configuration option for column insert position of 'historize' mapping
 
-# Version 0.8.2
+
+# Version 0.8.2 - 2019-08-29
+
 * Add optional filter condition to 'latest' mapping
 
-# Version 0.8.1
+
+# Version 0.8.1 - 2019-08-29
+
 * Improve generation of SQL code containing window functions
 
-# Version 0.8.0
+
+# Version 0.8.0 - 2019-08-28
+
 * Add new metric system
 * Add Hive view generation from mappings
 * Support for Hadoop 3.1 and 3.2 (without Hive)
 * Add 'historize' mapping
 
-# Version 0.7.1
+
+# Version 0.7.1 - 2019-07-22
+
 * Fix build with CDH-5.15 profile
 
-# Version 0.7.0
+
+# Version 0.7.0 - 2019-07-22
+
 * Implement initial REST server
 * Implement initial prototype of UI
 * Implement new datasets for new tasks (copy/compare/...)
 
-# Version 0.6.5
+
+# Version 0.6.5 - 
+
 * Add support for checkpoint directory
 
-# Verison 0.6.4
+
+# Verison 0.6.4 - 2019-06-20
+
 * Implement column renaming in projections
 
-# Verison 0.6.3
+
+# Verison 0.6.3 - 2019-06-17
+
 * CopyRelationTask also performs projection
 
-# Version 0.6.2
+
+# Version 0.6.2 - 2019-06-12
+
 * "explode" mapping supports simple data types
 
-# Version 0.6.1
+
+# Version 0.6.1 - 2019-06-11
+
 * Fix NPE in ShowRelationTask
 
-# Version 0.6.0
+
+# Version 0.6.0 - 2019-06-11
 
 * Add multiple relations to `showRelation` task
 * github-33: Add new `unit` mapping

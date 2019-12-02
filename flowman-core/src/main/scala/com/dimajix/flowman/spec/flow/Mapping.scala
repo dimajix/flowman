@@ -166,6 +166,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMappingSpec]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMappingSpec]),
     new JsonSubTypes.Type(name = "drop", value = classOf[DropMappingSpec]),
+    new JsonSubTypes.Type(name = "earliest", value = classOf[EarliestMappingSpec]),
     new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeMappingSpec]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMappingSpec]),
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),

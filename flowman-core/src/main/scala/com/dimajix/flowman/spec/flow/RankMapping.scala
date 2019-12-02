@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.flow
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.expressions.Window
@@ -26,17 +28,34 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.spec.flow.RankMapping.Earliest
+import com.dimajix.flowman.spec.flow.RankMapping.Latest
 import com.dimajix.flowman.types.StructType
 
 
-case class LatestMapping(
+object RankMapping {
+    sealed abstract class Mode {}
+    case object Earliest extends Mode
+    case object Latest extends Mode
+
+    def mode(m:String) : Mode = {
+        m.toLowerCase(Locale.ROOT) match {
+            case "earliest" => Earliest
+            case "latest" => Latest
+            case _ => throw new IllegalArgumentException(s"Ranking mode '$m' not supported, must bei either 'earliest' or 'latest'")
+        }
+    }
+}
+
+case class RankMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     keyColumns:Seq[String],
     versionColumn:String,
+    mode:RankMapping.Mode,
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[LatestMapping])
+    private val logger = LoggerFactory.getLogger(classOf[RankMapping])
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -53,7 +72,11 @@ case class LatestMapping(
 
         val df = tables(input)
 
-        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(col(versionColumn).desc)
+        val order = mode match {
+            case Earliest => col(versionColumn).asc
+            case Latest => col(versionColumn).desc
+        }
+        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(order)
         val latest = df.select(col("*"), row_number().over(window) as "flowman_gen_rank")
             .filter(col("flowman_gen_rank") === 1)
             .drop(col("flowman_gen_rank"))
@@ -87,24 +110,35 @@ case class LatestMapping(
 }
 
 
-class LatestMappingSpec extends MappingSpec {
+abstract class RankMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input:String = _
     @JsonProperty(value = "versionColumn", required = true) private var versionColumn:String = _
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
+    protected def mode : RankMapping.Mode
+
     /**
-      * Creates the instance of the specified Mapping with all variable interpolation being performed
-      * @param context
-      * @return
-      */
-    override def instantiate(context: Context): LatestMapping = {
-        LatestMapping(
+     * Creates the instance of the specified Mapping with all variable interpolation being performed
+     * @param context
+     * @return
+     */
+    override def instantiate(context: Context): RankMapping = {
+        RankMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
             context.evaluate(versionColumn),
+            mode,
             filter.map(context.evaluate).map(_.trim).filter(_.nonEmpty)
         )
     }
+}
+
+class LatestMappingSpec extends RankMappingSpec {
+    override protected def mode: RankMapping.Mode = RankMapping.Latest
+}
+
+class EarliestMappingSpec extends RankMappingSpec {
+    override protected def mode: RankMapping.Mode = RankMapping.Earliest
 }

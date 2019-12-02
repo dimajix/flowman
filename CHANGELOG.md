@@ -1,4 +1,9 @@
-# Version 0.11.1
+# Version 0.11.2 - 2019-12-02
+
+* Add new 'earliest' mapping
+
+
+# Version 0.11.1 - 2019-11-29
 
 * Improve Hive compatibility of SQL generator for UNION statements
 

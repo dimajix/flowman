@@ -27,16 +27,16 @@ import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.flow.LatestMappingTest.Record
+import com.dimajix.flowman.spec.flow.RankMappingTest.Record
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
-object LatestMappingTest {
+object RankMappingTest {
     case class Record(ts:(String,Long), id:(String,Int), data:String)
 }
 
-class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The LatestMapping" should "extract the latest version" in {
+class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+    "The RankMapping" should "extract the latest version" in {
         val spark = this.spark
         import spark.implicits._
 
@@ -55,11 +55,12 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ).toDS
         val df = spark.read.json(json_1)
 
-        val mapping = LatestMapping(
+        val mapping = RankMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id"),
-            "ts"
+            "ts",
+            RankMapping.Latest
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
@@ -75,6 +76,46 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
         rows(2) should be (Row(mutable.WrappedArray.make(Array(14,3)), 14, "UPDATE", 124))
         rows(3) should be (Row(mutable.WrappedArray.make(Array(15,2)), 15, "CREATE", 127))
+    }
+
+    it should "extract the earliest version" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val json_1 = Seq(
+            """{"ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
+            """{"ts":125,"id":12, "a":[12,2], "op":"UPDATE"}""",
+            """{"ts":133,"id":12, "a":[12,3], "op":"UPDATE"}""",
+            """{"ts":134,"id":12, "a":[12,4], "op":"DELETE"}""",
+            """{"ts":123,"id":13, "a":[13,2], "op":"CREATE"}""",
+            """{"ts":123,"id":14, "a":[14,2], "op":"CREATE"}""",
+            """{"ts":124,"id":14, "a":[14,3], "op":"UPDATE"}"""
+        ).toDS
+        val df = spark.read.json(json_1)
+
+        val mapping = RankMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("df1"),
+            Seq("id"),
+            "ts",
+            RankMapping.Earliest
+        )
+        mapping.input should be (MappingOutputIdentifier("df1"))
+        mapping.keyColumns should be (Seq("id" ))
+        mapping.versionColumn should be ("ts")
+        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
+        result.schema should be (df.schema)
+
+        val rows = result.orderBy("id").collect()
+        rows.size should be (3)
+        rows(0) should be (Row(mutable.WrappedArray.make(Array(12,2)), 12, "CREATE", 123))
+        rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
+        rows(2) should be (Row(mutable.WrappedArray.make(Array(14,2)), 14, "CREATE", 123))
     }
 
     it should "support the same version number multiple times" in {
@@ -93,11 +134,12 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ).toDS
         val df = spark.read.json(json_1)
 
-        val mapping = LatestMapping(
+        val mapping = RankMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id"),
-            "ts"
+            "ts",
+            RankMapping.Latest
         )
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
@@ -119,11 +161,12 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Record(("ts_0", 123), ("id_0", 7), "lala")
         ).toDF
 
-        val mapping = LatestMapping(
+        val mapping = RankMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id._1"),
-            "ts._2"
+            "ts._2",
+            RankMapping.Latest
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id._1" ))
@@ -139,7 +182,7 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
     }
 
-    it should "be parseable" in {
+    it should "be parseable as 'latest' mapping" in {
         val spec =
             """
               |kind: latest
@@ -153,7 +196,27 @@ class LatestMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().build()
         val mapping = mappingSpec.instantiate(session.context)
-        val latest = mapping.asInstanceOf[LatestMapping]
+        val latest = mapping.asInstanceOf[RankMapping]
+        latest.input should be (MappingOutputIdentifier("df1"))
+        latest.keyColumns should be (Seq("id"))
+        latest.versionColumn should be ("v")
+    }
+
+    it should "be parseable as 'earliest' mapping" in {
+        val spec =
+            """
+              |kind: earliest
+              |input: df1
+              |keyColumns:
+              | - id
+              |versionColumn: v
+            """.stripMargin
+        val mappingSpec = ObjectMapper.parse[MappingSpec](spec)
+        mappingSpec shouldBe a[EarliestMappingSpec]
+
+        val session = Session.builder().build()
+        val mapping = mappingSpec.instantiate(session.context)
+        val latest = mapping.asInstanceOf[RankMapping]
         latest.input should be (MappingOutputIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))
         latest.versionColumn should be ("v")

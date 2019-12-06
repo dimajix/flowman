@@ -1,3 +1,9 @@
+# Version 0.11.3 - 2019-12-06
+
+* Improve migrations of HiveUnionTable
+* Improve schema support in 'copy' target 
+ 
+
 # Version 0.11.2 - 2019-12-02
 
 * Add new 'earliest' mapping

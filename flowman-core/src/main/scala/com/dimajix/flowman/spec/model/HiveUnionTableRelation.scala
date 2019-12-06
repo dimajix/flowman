@@ -269,14 +269,14 @@ class HiveUnionTableRelation(
         if (!ifNotExists || !exists(executor)) {
             // Create first table using current schema
             val hiveTableRelation = tableRelation(1)
-            hiveTableRelation.create(executor, true)
+            hiveTableRelation.create(executor, ifNotExists)
 
             // Create initial view
             val spark = executor.spark
             val df = spark.read.table(hiveTableRelation.tableIdentifier.unquotedString)
             val sql = new SqlBuilder(df).toSQL
             val hiveViewRelation = viewRelationFromSql(sql)
-            hiveViewRelation.create(executor, true)
+            hiveViewRelation.create(executor, ifNotExists)
         }
     }
 
@@ -294,7 +294,7 @@ class HiveUnionTableRelation(
 
             // Destroy view
             logger.info(s"Dropping UNION VIEW $viewIdentifier from Hive Union Table relation '$identifier'")
-            catalog.dropView(viewIdentifier, true)
+            catalog.dropView(viewIdentifier, ifExists)
 
             // Destroy tables
             listTables(executor)

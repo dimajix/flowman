@@ -425,7 +425,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         }
 
         // Note that "purge" is not supported with Hive < 1.2
-        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge=true, retainData=false)
+        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge=false, retainData=false)
         cmd.run(spark)
 
         if (externalCatalog != null) {

@@ -349,7 +349,7 @@ class HiveTableRelation(
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
                 logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
-                catalog.dropTable(tableIdentifier, false, true)
+                catalog.dropTable(tableIdentifier, false)
                 create(executor, false)
             }
             else {

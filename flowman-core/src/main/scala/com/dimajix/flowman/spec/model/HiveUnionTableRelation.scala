@@ -220,7 +220,7 @@ class HiveUnionTableRelation(
 
         // 3. Drop  partition from all other tables
         allTables.filter(_ != table).foreach { table =>
-            catalog.dropPartition(table, partitionSchema.spec(partition), ignoreIfNotExists=true, purge=true)
+            catalog.dropPartition(table, partitionSchema.spec(partition), ignoreIfNotExists=true)
         }
 
         // 4. Write to that table
@@ -300,7 +300,7 @@ class HiveUnionTableRelation(
             listTables(executor)
                 .foreach { table =>
                     logger.info(s"Dropping backend Hive table '$table' from Hive Union Table relation '$identifier'")
-                    catalog.dropTable(table, false, true)
+                    catalog.dropTable(table, false)
                 }
         }
     }

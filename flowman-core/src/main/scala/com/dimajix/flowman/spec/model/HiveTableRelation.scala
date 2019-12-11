@@ -345,25 +345,36 @@ class HiveTableRelation(
         require(executor != null)
 
         val catalog = executor.catalog
-        val sourceSchema = schema.get.sparkSchema
+        if (catalog.tableExists(tableIdentifier)) {
+            val table = catalog.getTable(tableIdentifier)
+            if (table.tableType == CatalogTableType.VIEW) {
+                logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
+                catalog.dropTable(tableIdentifier, false, true)
+                create(executor, false)
+            }
+            else {
+                val sourceSchema = schema.get.sparkSchema
+                val targetSchema = table.dataSchema
+                val targetFields = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
 
-        val table = catalog.getTable(tableIdentifier)
-        val targetSchema = table.dataSchema
-        val targetFields = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                // Ensure that current real Hive schema is compatible with specified schema
+                val isCompatible = sourceSchema.forall { field =>
+                    targetFields.get(field.name.toLowerCase(Locale.ROOT))
+                        .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                }
+                if (!isCompatible) {
+                    throw new IncompatibleSchemaException(identifier)
+                }
 
-        // Ensure that current real Hive schema is compatible with specified schema
-        val isCompatible = sourceSchema.forall { field =>
-            targetFields.get(field.name.toLowerCase(Locale.ROOT))
-                .forall(tgt => SchemaUtils.isCompatible(field, tgt))
-        }
-        if (!isCompatible) {
-            throw new IncompatibleSchemaException(identifier)
-        }
-
-        val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
-        if (missingFields.nonEmpty) {
-            logger.info(s"Migrating HiveTable relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $tableIdentifier")
-            catalog.addTableColumns(tableIdentifier, missingFields)
+                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
+                if (missingFields.nonEmpty) {
+                    logger.info(s"Migrating HiveTable relation '$identifier' by adding new columns ${
+                        missingFields.map(_
+                            .name).mkString(",")
+                    } to Hive table $tableIdentifier")
+                    catalog.addTableColumns(tableIdentifier, missingFields)
+                }
+            }
         }
     }
 

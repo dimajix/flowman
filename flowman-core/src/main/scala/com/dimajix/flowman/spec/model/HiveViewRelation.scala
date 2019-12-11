@@ -18,12 +18,12 @@ package com.dimajix.flowman.spec.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
-import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -108,10 +108,18 @@ class HiveViewRelation(
         val catalog = executor.catalog
         if (catalog.tableExists(tableIdentifier)) {
             val newSelect = getSelect(executor)
-            val curSelect = catalog.getTable(tableIdentifier).viewText.get
-            if (newSelect != curSelect) {
-                logger.info(s"Migrating Hive VIEW $tableIdentifier for relation '$identifier'")
-                catalog.alterView(tableIdentifier, newSelect)
+            val curTable = catalog.getTable(tableIdentifier)
+            // Check if current table is a VIEW or a table
+            if (curTable.tableType == CatalogTableType.VIEW) {
+                if (curTable.viewText.get != newSelect) {
+                    logger.info(s"Migrating Hive VIEW $tableIdentifier for relation '$identifier'")
+                    catalog.alterView(tableIdentifier, newSelect)
+                }
+            }
+            else {
+                logger.warn(s"VIEW target is currently a table, dropping...")
+                catalog.dropTable(tableIdentifier, false, true)
+                create(executor, false)
             }
         }
     }

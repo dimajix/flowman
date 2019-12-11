@@ -29,6 +29,7 @@ import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.SchemaWriter
+import com.dimajix.flowman.types.StructType
 
 
 object CopyTarget {
@@ -97,7 +98,7 @@ case class CopyTarget(
 
         schema.foreach { spec =>
             logger.info(s"Writing schema to file '${spec.file}'")
-            val schema = source.schema.getOrElse(throw new IllegalArgumentException("Schema not available"))
+            val schema = source.schema.getOrElse(StructType.of(source.read(executor, None).schema))
             val file = context.fs.file(spec.file)
             new SchemaWriter(schema.fields).format(spec.format).save(file)
         }

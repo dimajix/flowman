@@ -199,7 +199,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * Drops a whole table including all partitions and all files
       * @param table
       */
-    def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false, purge:Boolean=false) : Unit = {
+    def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
 
         val exists = tableExists(table)
@@ -221,7 +221,7 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             deleteLocation(location)
 
             // Delete table itself
-            val cmd = DropTableCommand(table, ignoreIfNotExists, false, purge)
+            val cmd = DropTableCommand(table, ignoreIfNotExists, false, true)
             cmd.run(spark)
 
             // Remove table from external catalog
@@ -392,13 +392,13 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
       * @param table
       * @param partition
       */
-    def dropPartition(table:TableIdentifier, partition:PartitionSpec, ignoreIfNotExists:Boolean=false, purge:Boolean = false) : Unit = {
+    def dropPartition(table:TableIdentifier, partition:PartitionSpec, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
-        dropPartitions(table, Seq(partition), ignoreIfNotExists, purge)
+        dropPartitions(table, Seq(partition), ignoreIfNotExists)
     }
 
-    def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec], ignoreIfNotExists:Boolean=false, purge:Boolean = false) : Unit = {
+    def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec], ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
         require(partitions != null)
 
@@ -416,17 +416,17 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         val sparkPartitions = dropPartitions.map(_.mapValues(_.toString).toMap)
 
         logger.info(s"Dropping partitions ${dropPartitions.map(_.spec).mkString(",")} from Hive table $table")
+        sparkPartitions.foreach { partition =>
+            val p = catalog.getPartition(table, partition)
+            if (p != null) {
+                val location = new Path(p.location)
+                deleteLocation(location)
+            }
+        }
+
         // Note that "purge" is not supported with Hive < 1.2
         val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge=false, retainData=false)
         cmd.run(spark)
-
-        //partitions.foreach(partition => {
-        //    val p = catalog.getPartition(table, partition.mapValues(_.toString))
-        //    if (p != null) {
-        //        val location = new Path(p.location)
-        //        deleteLocation(location)
-        //    }
-        //}
 
         if (externalCatalog != null) {
             val catalogTable = catalog.getTableMetadata(table)

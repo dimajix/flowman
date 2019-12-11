@@ -118,7 +118,7 @@ class HiveViewRelation(
             }
             else {
                 logger.warn(s"VIEW target is currently a table, dropping...")
-                catalog.dropTable(tableIdentifier, false, true)
+                catalog.dropTable(tableIdentifier, false)
                 create(executor, false)
             }
         }

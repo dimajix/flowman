@@ -1,3 +1,8 @@
+# Version 0.11.4 - 2019-12-11
+
+* Remove HDFS directories when dropping Hive table partitions
+
+
 # Version 0.11.3 - 2019-12-06
 
 * Improve migrations of HiveUnionTable

@@ -94,7 +94,7 @@ class HiveViewRelation(
         val select = getSelect(executor)
         val catalog = executor.catalog
         if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Creating Hive VIEW $tableIdentifier for relation '$identifier'")
+            logger.info(s"Creating Hive view relation '$identifier' with VIEW $tableIdentifier")
             catalog.createView(tableIdentifier, select, ifNotExists)
         }
     }
@@ -112,7 +112,7 @@ class HiveViewRelation(
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
                 if (curTable.viewText.get != newSelect) {
-                    logger.info(s"Migrating Hive VIEW $tableIdentifier for relation '$identifier'")
+                    logger.info(s"Migrating Hive view relation '$identifier' with VIEW $tableIdentifier")
                     catalog.alterView(tableIdentifier, newSelect)
                 }
             }
@@ -131,7 +131,7 @@ class HiveViewRelation(
     override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Destroying Hive VIEW $tableIdentifier for relation '$identifier'")
+            logger.info(s"Destroying Hive view relation '$identifier' with VIEW $tableIdentifier")
             catalog.dropView(tableIdentifier)
         }
     }

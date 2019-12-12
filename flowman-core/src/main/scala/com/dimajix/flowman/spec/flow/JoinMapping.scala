@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.expr
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -33,8 +32,6 @@ case class JoinMapping(
     condition:String = "",
     mode:String = "left"
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[JoinMapping])
-
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
@@ -56,9 +53,7 @@ case class JoinMapping(
         require(tables != null)
 
         val result = if (condition.nonEmpty) {
-            logger.info(s"Joining mappings ${inputs.mkString(",")} on '$condition' with type $mode")
             if (inputs.size != 2) {
-                logger.error("Joining using an condition only supports exactly two inputs")
                 throw new IllegalArgumentException("Joining using an condition only supports exactly two inputs")
             }
             val left = inputs(0)
@@ -68,7 +63,6 @@ case class JoinMapping(
             leftDf.join(rightDf, expr(condition), mode)
         }
         else {
-            logger.info(s"Joining mappings ${inputs.mkString(",")} on columns ${columns.mkString("[",",","]")} with type $mode")
             inputs.map(tables.apply).reduceLeft((l, r) => l.join(r, columns, mode))
         }
 

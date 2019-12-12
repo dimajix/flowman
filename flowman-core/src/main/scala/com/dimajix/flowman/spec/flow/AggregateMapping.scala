@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -34,8 +33,6 @@ case class AggregateMapping(
     aggregations : Map[String,String],
     partitions : Int = 0
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[AggregateMapping])
-
     /**
       * Creates an instance of the aggregated table.
       *
@@ -44,8 +41,6 @@ case class AggregateMapping(
       * @return
       */
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
-        logger.info(s"Aggregating mapping '$input' on dimensions ${dimensions.mkString(",")}")
-
         val df = tables(input)
         val dims = dimensions.map(col)
         val aggs = aggregations.map(kv => expr(kv._2).as(kv._1))

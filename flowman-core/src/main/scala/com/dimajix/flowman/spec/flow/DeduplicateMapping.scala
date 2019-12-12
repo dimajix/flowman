@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -31,8 +30,6 @@ case class DeduplicateMapping(
     input:MappingOutputIdentifier,
     columns:Seq[String]
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[DeduplicateMapping])
-
     /**
       * Creates an instance of the deduplication table.
       *
@@ -43,8 +40,6 @@ case class DeduplicateMapping(
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(input != null)
-
-        logger.info(s"Deduplicating mapping '$input' on columns ${columns.mkString(",")}")
 
         val df = tables(input)
         val result = if (columns.nonEmpty) {

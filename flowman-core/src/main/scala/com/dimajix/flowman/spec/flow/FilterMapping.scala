@@ -18,11 +18,9 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
@@ -32,8 +30,6 @@ case class FilterMapping(
     input:MappingOutputIdentifier,
     condition:String
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[FilterMapping])
-
     /**
       * Returns the dependencies of this mapping, which is exactly one input table
       *
@@ -53,8 +49,6 @@ case class FilterMapping(
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(tables != null)
-
-        logger.info(s"Filtering mapping '$input' with condition '$condition'")
 
         val df = tables(input)
         val result = df.filter(condition)

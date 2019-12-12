@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.types.StringType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -49,8 +48,6 @@ case class UnpackJsonMapping(
     allowBackslashEscapingAnyCharacter: Boolean,
     allowUnquotedControlChars: Boolean
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[UnpackJsonMapping])
-
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
@@ -70,8 +67,6 @@ case class UnpackJsonMapping(
     override def execute(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(tables != null)
-
-        logger.info(s"Unpacking JSON columns $columns from mapping '$input'")
 
         val table = tables(input)
         val options = Map(

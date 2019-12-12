@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -32,8 +31,6 @@ case class DropMapping(
     input:MappingOutputIdentifier,
     columns:Seq[String]
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[DropMapping])
-
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
@@ -53,8 +50,6 @@ case class DropMapping(
     override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(deps != null)
-
-        logger.info(s"Dropping columns ${columns.mkString(",")} from input mapping '$input'")
 
         val df = deps(input)
         val asm = assembler

@@ -107,7 +107,7 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
         cache.getOrElseUpdate(mapping, createTables(mapping, dependencies))
     }
 
-    private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) = {
+    private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
         // Process table and register result as temp table
         val doBroadcast = mapping.broadcast
         val doCheckpoint = mapping.checkpoint
@@ -131,6 +131,10 @@ class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boole
         // Optionally cache the DataFrame
         if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
             df2.values.foreach(_.persist(cacheLevel))
+
+        df2.foreach { case (name,df) =>
+            logger.debug(s"Instantiated mapping '${mapping.identifier}' output '$name' with schema\n ${df.schema.treeString}")
+        }
 
         df2
     }

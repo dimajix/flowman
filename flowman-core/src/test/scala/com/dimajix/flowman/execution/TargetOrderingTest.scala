@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.target
+package com.dimajix.flowman.execution
 
 import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Lifecycle
-import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.target.BaseTarget
+import com.dimajix.flowman.spec.target.Target
 
 
 case class DummyTarget(
@@ -101,7 +99,7 @@ class TargetOrderTest extends FlatSpec with Matchers {
             )
         )
 
-        orderTargets(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
+        TargetOrdering.sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
     }
 
     it should "work with partitions" in {
@@ -142,7 +140,7 @@ class TargetOrderTest extends FlatSpec with Matchers {
             )
         )
 
-        orderTargets(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
+        TargetOrdering.sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
     }
 
     it should "work with wildcards" in {
@@ -188,7 +186,7 @@ class TargetOrderTest extends FlatSpec with Matchers {
             )
         )
 
-        orderTargets(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
+        TargetOrdering.sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
     }
 
     it should "work with Windows paths" in {
@@ -207,7 +205,7 @@ class TargetOrderTest extends FlatSpec with Matchers {
             )
         )
 
-        orderTargets(Seq(t1,t2), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
-        orderTargets(Seq(t2,t1), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
+        TargetOrdering.sort(Seq(t1,t2), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
+        TargetOrdering.sort(Seq(t2,t1), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
     }
 }

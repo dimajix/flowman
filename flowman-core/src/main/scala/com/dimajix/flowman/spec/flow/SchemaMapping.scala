@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -36,8 +35,6 @@ case class SchemaMapping(
     schema:Schema = null
 )
 extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[SchemaMapping])
-
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -50,11 +47,9 @@ extends BaseMapping {
         require(tables != null)
 
         val xfs = if (schema != null) {
-            logger.info(s"Projecting mapping '$input' onto specified schema")
             SchemaEnforcer(schema.sparkSchema)
         }
         else if (columns != null && columns.nonEmpty) {
-            logger.info(s"Projecting mapping '$input' onto columns ${columns.map(_._2).mkString(",")}")
             SchemaEnforcer(columns)
         }
         else {

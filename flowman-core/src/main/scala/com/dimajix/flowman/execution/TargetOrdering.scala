@@ -1,50 +1,34 @@
-/*
- * Copyright 2019 Kaya Kupferschmidt
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.dimajix.flowman.spec
+package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.spec.target.Target
 
+object TargetOrdering {
+    private def normalizeDependencies(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
+        deps.map(dep =>
+            if (dep.project.nonEmpty)
+                dep
+            else
+                TargetIdentifier(dep.name, Option(target.project).map(_.name))
+        )
+    }
 
-package object target {
     /**
       * Create ordering of specified targets, such that all dependencies are fullfilled
       * @param targets
       * @return
       */
-    def orderTargets(targets: Seq[Target], phase:Phase) : Seq[Target] = {
+    def sort(targets: Seq[Target], phase:Phase) : Seq[Target] = {
         val logger = LoggerFactory.getLogger(classOf[Target])
 
         targets.foreach { t =>
             logger.debug(s"Analyzing build phase '$phase' of target '${t.identifier}'")
             t.requires(phase).foreach(r => logger.debug(s"  requires $r"))
             t.provides(phase).foreach(r => logger.debug(s"  provides $r"))
-        }
-
-        def normalize(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
-            deps.map(dep =>
-                if (dep.project.nonEmpty)
-                    dep
-                else
-                    TargetIdentifier(dep.name, Option(target.project).map(_.name))
-            )
         }
 
         val targetIds = targets.map(_.identifier).toSet
@@ -62,14 +46,14 @@ package object target {
 
         // Process all 'after' dependencies
         targets.foreach(t => {
-            val deps =  normalize(t, t.after).filter(targetIds.contains)
+            val deps =  normalizeDependencies(t, t.after).filter(targetIds.contains)
             val node = nodes(t.identifier)
             deps.foreach(d => node += d)
         })
 
         // Process all 'before' dependencies
         targets.foreach(t => {
-            val deps = normalize(t, t.before).filter(targetIds.contains)
+            val deps = normalizeDependencies(t, t.before).filter(targetIds.contains)
             deps.foreach(b => nodes(b) += t.identifier)
         })
 

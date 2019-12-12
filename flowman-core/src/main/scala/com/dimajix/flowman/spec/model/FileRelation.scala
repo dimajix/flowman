@@ -113,7 +113,7 @@ class FileRelation(
         requireValidPartitionKeys(partitions)
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading file relation '$identifier' partition ${HiveDialect.expr.partition(partition)} file '$p'"))
+            paths.foreach(p => logger.info(s"Reading file relation '$identifier' partition ${HiveDialect.expr.partition(partition)} from location '$p' as '$format'"))
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)
@@ -152,7 +152,7 @@ class FileRelation(
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
 
-        logger.info(s"Writing to output location '$outputPath' (partition=$partition) as '$format'")
+        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format'")
 
         this.writer(executor, df)
             .format(format)
@@ -186,7 +186,7 @@ class FileRelation(
             }
         }
         else {
-            logger.info(s"Creating directory '$location' for file relation '$identifier'")
+            logger.info(s"Creating file relation '$identifier' at location '$location'")
             fs.mkdirs(location)
         }
     }
@@ -242,7 +242,7 @@ class FileRelation(
             }
         }
         else {
-            logger.info(s"Deleting directory '$location' of file relation '$identifier'")
+            logger.info(s"Destroying file relation '$identifier' by deleting directory '$location'")
             fs.delete(location, true)
         }
     }

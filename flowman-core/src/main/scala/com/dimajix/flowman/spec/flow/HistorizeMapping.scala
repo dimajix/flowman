@@ -21,7 +21,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lead
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Context
@@ -38,8 +37,6 @@ case class HistorizeMapping(
     validToColumn:String,
     columnInsertPosition:InsertPosition = InsertPosition.END
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[HistorizeMapping])
-
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -50,8 +47,6 @@ case class HistorizeMapping(
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(tables != null)
-
-        logger.info(s"Creating history for '$input' using key columns ${keyColumns.mkString(",")} and time column $timeColumn")
 
         val df = tables(input)
 

@@ -36,6 +36,7 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.IncompatibleSchemaException
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
@@ -140,8 +141,7 @@ class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        val partitionNames = partitions.map(_.name)
-        logger.info(s"Writing to Hive table '$tableIdentifier' with partitions ${partitionNames.mkString(",")} using Hive insert")
+        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(executor, df)
@@ -194,7 +194,7 @@ class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing to Hive table '$tableIdentifier' with partition values $partitionSpec using direct mode")
+        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} using direct write")
 
         if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -230,17 +230,17 @@ class HiveTableRelation(
         require(executor != null)
         require(partitions != null)
 
-        logger.info(s"Cleaning Hive table '$tableIdentifier' for relation '$identifier'")
-
         val catalog = executor.catalog
         // When no partitions are specified, this implies that the whole table is to be truncated
         if (partitions.nonEmpty) {
             val partitionSchema = PartitionSchema(this.partitions)
-            partitionSchema.interpolate(partitions).foreach(spec =>
+            partitionSchema.interpolate(partitions).foreach { spec =>
+                logger.info(s"Cleaning Hive relation '$identifier' by truncating table '$tableIdentifier' partition ${HiveDialect.expr.partition(spec)}")
                 catalog.dropPartition(tableIdentifier, spec)
-            )
+            }
         }
         else {
+            logger.info(s"Cleaning Hive relation '$identifier' by truncating table '$tableIdentifier'")
             catalog.truncateTable(tableIdentifier)
         }
     }
@@ -254,7 +254,8 @@ class HiveTableRelation(
         require(executor != null)
 
         if (!ifNotExists || !exists(executor)) {
-            logger.info(s"Creating Hive table $tableIdentifier for relation '$identifier'")
+            val sparkSchema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField))
+            logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 
             // Create and save Avro schema
             import HiveTableRelation._
@@ -310,7 +311,7 @@ class HiveTableRelation(
                     properties = fileStorage.properties ++ serdeProperties
                 ),
                 provider = Some("hive"),
-                schema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField)),
+                schema = sparkSchema,
                 partitionColumnNames = partitions.map(_.name),
                 properties = properties,
                 comment = description
@@ -332,7 +333,7 @@ class HiveTableRelation(
 
         val catalog = executor.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Destroying Hive table $tableIdentifier of relation '$identifier'")
+            logger.info(s"Destroying Hive table relation '$identifier' by dropping table $tableIdentifier")
             catalog.dropTable(tableIdentifier)
         }
     }
@@ -363,15 +364,14 @@ class HiveTableRelation(
                         .forall(tgt => SchemaUtils.isCompatible(field, tgt))
                 }
                 if (!isCompatible) {
+                    logger.error(s"Cannot migrate existing schema\n ${targetSchema.treeString}\n to new schema\n ${sourceSchema.treeString}")
                     throw new IncompatibleSchemaException(identifier)
                 }
 
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
-                    logger.info(s"Migrating HiveTable relation '$identifier' by adding new columns ${
-                        missingFields.map(_
-                            .name).mkString(",")
-                    } to Hive table $tableIdentifier")
+                    val newSchema = StructType(targetSchema.fields ++ missingFields)
+                    logger.info(s"Migrating HiveTable relation '$identifier' with table $tableIdentifier by adding new columns ${missingFields.map(_.name).mkString(",")}. Final schema is\n ${newSchema.treeString}")
                     catalog.addTableColumns(tableIdentifier, missingFields)
                 }
             }

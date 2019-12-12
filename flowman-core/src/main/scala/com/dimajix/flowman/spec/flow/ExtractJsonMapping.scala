@@ -19,10 +19,9 @@ package com.dimajix.flowman.spec.flow
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Encoders
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.lit
-import org.slf4j.LoggerFactory
+import org.apache.spark.sql.types.StringType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -47,8 +46,6 @@ case class ExtractJsonMapping(
     allowBackslashEscapingAnyCharacter: Boolean,
     allowUnquotedControlChars: Boolean
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ExtractJsonMapping])
-
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
@@ -76,8 +73,6 @@ case class ExtractJsonMapping(
     override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(deps != null)
-
-        logger.info(s"Extracting JSON from input mapping '$input' in column '$column'")
 
         val spark = executor.spark
         val corruptedColumn = "_flowman_corrupted_column"

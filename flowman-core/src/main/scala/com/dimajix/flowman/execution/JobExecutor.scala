@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spec.job.Job
 import com.dimajix.flowman.spec.job.JobInstance
 import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.target.orderTargets
 
 
 /**
@@ -91,8 +90,8 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
 
         val targets = job.targets.map(t => context.getTarget(t)).filter(_.phases.contains(phase))
         val order = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => orderTargets(targets, phase).reverse
-            case _ => orderTargets(targets, phase)
+            case Phase.DESTROY | Phase.TRUNCATE => TargetOrdering.sort(targets, phase).reverse
+            case _ => TargetOrdering.sort(targets, phase)
         }
 
         logger.info(s"Executing phase '$phase' with sequence: ${order.map(_.identifier).mkString(", ")}")

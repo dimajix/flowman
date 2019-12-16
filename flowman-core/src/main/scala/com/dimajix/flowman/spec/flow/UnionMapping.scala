@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.flow
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -28,7 +27,6 @@ import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
 
 
 case class UnionMapping(
@@ -37,8 +35,6 @@ case class UnionMapping(
     schema:Option[Schema],
     distinct:Boolean
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[UnionMapping])
-
     /**
       * Creates the list of required dependencies
       *
@@ -60,9 +56,6 @@ case class UnionMapping(
         require(tables != null)
 
         val dfs = inputs.map(tables(_))
-
-        // Create a common schema from collected columns
-        logger.info(s"Creating union from mappings ${inputs.mkString(",")}")
 
         // Now create a union of all tables
         val union =

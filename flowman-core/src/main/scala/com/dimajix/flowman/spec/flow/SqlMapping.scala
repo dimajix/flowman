@@ -23,7 +23,6 @@ import java.nio.charset.Charset
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -39,8 +38,6 @@ case class SqlMapping(
     url:URL
 )
 extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[SqlMapping])
-
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -51,8 +48,6 @@ extends BaseMapping {
     override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(input != null)
-
-        logger.info(s"Executing SQL statement $statement")
 
         // Register all input DataFrames as temp views
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))

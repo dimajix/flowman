@@ -23,7 +23,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.row_number
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -55,8 +54,6 @@ case class RankMapping(
     mode:RankMapping.Mode,
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[RankMapping])
-
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -67,8 +64,6 @@ case class RankMapping(
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(tables != null)
-
-        logger.info(s"Selecting latest version in '$input' using key columns ${keyColumns.mkString(",")} and version column $versionColumn")
 
         val df = tables(input)
 

@@ -34,8 +34,6 @@ case class UpdateMapping(
     keyColumns:Seq[String],
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[UpdateMapping])
-
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -47,7 +45,6 @@ case class UpdateMapping(
         require(executor != null)
         require(tables != null)
 
-        logger.info(s"Updating table '$input' with records from '$updates' using key columns ${keyColumns.mkString(",")}")
         require(input != null && input.nonEmpty, "Missing input table")
         require(updates != null && updates.nonEmpty, "Missing updates table")
         require(keyColumns.nonEmpty, "Missing key columns")

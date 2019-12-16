@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -43,8 +42,6 @@ case class ProjectMapping(
     columns:Seq[ProjectTransformer.Column]
 )
 extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
-
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -55,8 +52,6 @@ extends BaseMapping {
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(executor != null)
         require(tables != null)
-
-        logger.info(s"Projecting mapping '$input' onto columns ${columns.mkString(",")}")
 
         val df = tables(input)
         val result = xfs.transform(df)

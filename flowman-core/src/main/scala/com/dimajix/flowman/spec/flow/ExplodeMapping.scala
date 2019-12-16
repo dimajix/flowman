@@ -21,7 +21,6 @@ import java.util.Locale
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.{types => st}
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -51,8 +50,6 @@ case class ExplodeMapping(
     flatten: Boolean,
     naming: String
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ExplodeMapping])
-
     override def outputs: Seq[String] = Seq("main", "explode")
 
     /**
@@ -74,8 +71,6 @@ case class ExplodeMapping(
     override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
         require(executor != null)
         require(deps != null)
-
-        logger.info(s"Reassembling input mapping '$input'")
 
         def isSimpleArray(df:DataFrame) : Boolean = {
             val field = df.schema.fields.find(_.name.toLowerCase(Locale.ROOT) == array.last.toString.toLowerCase(Locale.ROOT)).get

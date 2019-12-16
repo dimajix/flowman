@@ -46,7 +46,7 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
         require(schema != null)
         require(partitions != null)
 
-        logger.info(s"Reading from Hive table $tableIdentifier using partition values $partitions")
+        logger.info(s"Reading Hive relation '$identifier' from table $tableIdentifier using partition values $partitions")
 
         val reader = executor.spark.read.options(options)
         val tableDf = reader.table(tableIdentifier.unquotedString)

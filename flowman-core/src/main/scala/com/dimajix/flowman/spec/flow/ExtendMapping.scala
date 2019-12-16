@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.functions.expr
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -32,8 +31,6 @@ case class ExtendMapping(
     input:MappingOutputIdentifier,
     columns:Map[String,String]
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ExtendMapping])
-
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
@@ -47,8 +44,6 @@ case class ExtendMapping(
 
         val allColumns = this.columns
         val columnNames = allColumns.keys.toSet
-
-        logger.info(s"Extending mapping '$input' with columns ${columnNames.mkString("[",",","]")}")
 
         // First we need to create an ordering of all fields, such that dependencies are resolved correctly
         val parser = CatalystSqlParser

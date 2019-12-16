@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -117,8 +116,6 @@ case class AssembleMapping(
     input : MappingOutputIdentifier,
     columns: Seq[AssembleMapping.Entry]
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[AssembleMapping])
-
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
@@ -138,8 +135,6 @@ case class AssembleMapping(
     override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
         require(executor != null)
         require(deps != null)
-
-        logger.info(s"Reassembling input mapping '$input'")
 
         val df = deps(input)
         val asm = assembler

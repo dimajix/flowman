@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
@@ -184,7 +185,7 @@ class HiveUnionTableRelation(
         require(schema != null)
         require(partitions != null)
 
-        logger.info(s"Reading from Hive UNION VIEW $viewIdentifier using partition values $partitions")
+        logger.info(s"Reading from Hive union relation '$identifier' from UNION VIEW $viewIdentifier using partition values $partitions")
 
         val tableDf = executor.spark.read.table(viewIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
@@ -204,6 +205,8 @@ class HiveUnionTableRelation(
 
         val catalog = executor.catalog
         val partitionSchema = PartitionSchema(this.partitions)
+        val partitionSpec = partitionSchema.spec(partition)
+        logger.info(s"Writing to Hive union relation '$identifier' using partition values ${HiveDialect.expr.partition(partitionSpec)}")
 
         // 1. Find all tables
         val allTables = listTables(executor)
@@ -214,7 +217,7 @@ class HiveUnionTableRelation(
                 SchemaUtils.isCompatible(df.schema, table.schema)
             }
             .getOrElse {
-                logger.error(s"Cannot find appropriate target table for Hive Union Table '$identifier'. Required schema is\n${df.schema.treeString}")
+                logger.error(s"Cannot find appropriate target table for Hive Union Table '$identifier'. Required schema is\n ${df.schema.treeString}")
                 throw new ExecutionException(s"Cannot find appropriate target table for Hive Union Table '$identifier'")
             }
 
@@ -236,6 +239,8 @@ class HiveUnionTableRelation(
       */
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
+
+        logger.info(s"Truncating Hive union relation '$identifier' partition $partitions")
 
         listTables(executor)
             .foreach { table =>
@@ -267,6 +272,7 @@ class HiveUnionTableRelation(
         require(executor != null)
 
         if (!ifNotExists || !exists(executor)) {
+            logger.info(s"Creating Hive union relation '$identifier'")
             // Create first table using current schema
             val hiveTableRelation = tableRelation(1)
             hiveTableRelation.create(executor, ifNotExists)
@@ -293,13 +299,13 @@ class HiveUnionTableRelation(
             val catalog = executor.catalog
 
             // Destroy view
-            logger.info(s"Dropping UNION VIEW $viewIdentifier from Hive Union Table relation '$identifier'")
+            logger.info(s"Dropping Hive union relation '$identifier' UNION VIEW $viewIdentifier")
             catalog.dropView(viewIdentifier, ifExists)
 
             // Destroy tables
             listTables(executor)
                 .foreach { table =>
-                    logger.info(s"Dropping backend Hive table '$table' from Hive Union Table relation '$identifier'")
+                    logger.info(s"Dropping Hive union relation '$identifier' backend table '$table'")
                     catalog.dropTable(table, false)
                 }
         }
@@ -341,7 +347,8 @@ class HiveUnionTableRelation(
 
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
-                    logger.info(s"Migrating Hive Untion Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id")
+                    val newSchema = StructType(targetSchema.fields ++ missingFields)
+                    logger.info(s"Migrating Hive Untion Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
                     catalog.addTableColumns(id, missingFields)
                 }
 

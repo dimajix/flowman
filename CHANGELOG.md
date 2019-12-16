@@ -1,3 +1,10 @@
+# Version 0.11.5 - 2019-12-16
+
+* Update to newest Swagger V2 parser
+* Workaround for bug in Swagger parser for enums
+* Tidy up logging
+
+
 # Version 0.11.4 - 2019-12-11
 
 * Remove HDFS directories when dropping Hive table partitions

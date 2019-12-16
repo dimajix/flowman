@@ -240,6 +240,58 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
         struct.fields(2).ftype should be (IntegerType)
     }
 
+    it should "support untyped enums" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |definitions:
+              |  Address:
+              |    description: "Service Provider's address"
+              |    additionalProperties: false
+              |    type: object
+              |    properties:
+              |      type:
+              |        enum:
+              |         - A
+              |         - B
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
+        fields.size should be (1)
+
+        fields(0).nullable should be (true)
+        fields(0).name should be ("type")
+        fields(0).ftype should be (StringType)
+    }
+
+    it should "support untyped enums in sub objects" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |definitions:
+              |  Address:
+              |    description: "Service Provider's address"
+              |    type: object
+              |    properties:
+              |      data:
+              |        type: object
+              |        properties:
+              |          some_enum:
+              |            enum:
+              |             - A
+              |             - B
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
+        fields.size should be (1)
+
+        fields should be (Seq(
+            Field("data", StructType(Seq(
+                Field("some_enum", StringType)
+            )))
+        ))
+    }
+
     it should "support integers, floats, doubles and decimals" in {
         val spec =
             """

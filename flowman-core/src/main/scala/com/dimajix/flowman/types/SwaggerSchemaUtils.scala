@@ -42,6 +42,7 @@ import io.swagger.models.properties.ObjectProperty
 import io.swagger.models.properties.Property
 import io.swagger.models.properties.StringProperty
 import io.swagger.models.properties.UUIDProperty
+import io.swagger.models.properties.UntypedProperty
 import io.swagger.parser.util.DeserializationUtils
 import io.swagger.parser.util.SwaggerDeserializer
 import io.swagger.util.Json
@@ -201,6 +202,7 @@ object SwaggerSchemaUtils {
                     case (_,_) => StringType
                 }
             case _:UUIDProperty => StringType
+            case _:UntypedProperty => StringType
             case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")
         }
     }

@@ -50,7 +50,7 @@ case class CompareTarget(
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => actual.resources ++ expected.resources
+            case Phase.VERIFY => actual.requires ++ expected.requires
             case _ => Set()
         }
     }

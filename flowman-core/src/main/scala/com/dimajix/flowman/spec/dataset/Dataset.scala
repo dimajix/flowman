@@ -67,10 +67,16 @@ abstract class Dataset extends AbstractInstance {
     override def category: String = "dataset"
 
     /**
-      * Returns a list of physical resources produced by writing or reading to this dataset
+      * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    def resources : Set[ResourceIdentifier]
+    def provides : Set[ResourceIdentifier]
+
+    /**
+     * Returns a list of physical resources required for reading from this dataset
+     * @return
+     */
+    def requires : Set[ResourceIdentifier]
 
     /**
       * Returns true if the data represented by this Dataset actually exists

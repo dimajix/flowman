@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.target
 
-import java.io.IOException
-
 import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
@@ -26,6 +24,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.dataset.Dataset
 import com.dimajix.flowman.spec.dataset.FileDataset
 import com.dimajix.spark.testing.LocalSparkSession
@@ -58,6 +57,15 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             FileDataset(Dataset.Properties(context), new Path("test/data/data_1.csv"), "csv")
         )
 
+        target.requires(Phase.CREATE) should be (Set())
+        target.requires(Phase.MIGRATE) should be (Set())
+        target.requires(Phase.BUILD) should be (Set())
+        target.requires(Phase.VERIFY) should be (Set(
+            ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))
+        ))
+        target.requires(Phase.TRUNCATE) should be (Set())
+        target.requires(Phase.DESTROY) should be (Set())
+
         noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }
 
@@ -71,6 +79,16 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             FileDataset(Dataset.Properties(context), new Path("no_such_file"), "csv"),
             FileDataset(Dataset.Properties(context), new Path("test/data/data_1.csv"), "csv")
         )
+
+        target.requires(Phase.CREATE) should be (Set())
+        target.requires(Phase.MIGRATE) should be (Set())
+        target.requires(Phase.BUILD) should be (Set())
+        target.requires(Phase.VERIFY) should be (Set(
+            ResourceIdentifier.ofFile(new Path("no_such_file")),
+            ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))
+        ))
+        target.requires(Phase.TRUNCATE) should be (Set())
+        target.requires(Phase.DESTROY) should be (Set())
 
         a[VerificationFailedException] shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
     }

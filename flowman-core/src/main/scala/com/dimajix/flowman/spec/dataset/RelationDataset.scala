@@ -21,6 +21,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
@@ -45,11 +46,19 @@ case class RelationDataset(
       * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    override def resources : Set[ResourceIdentifier] = {
+    override def provides : Set[ResourceIdentifier] = {
         val instance = context.getRelation(relation)
-        instance.resources(partition)
+        instance.provides ++ instance.resources(partition)
     }
 
+    /**
+     * Returns a list of physical resources required for reading from this dataset
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = {
+        val instance = context.getRelation(relation)
+        instance.provides ++ instance.requires ++ instance.resources(partition)
+    }
 
     /**
       * Returns true if the data represented by this Dataset actually exists

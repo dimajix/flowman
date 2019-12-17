@@ -1,3 +1,8 @@
+# Version 0.11.6 - 2019-12-17
+
+* Improve build dependency management with DataSets
+
+
 # Version 0.11.5 - 2019-12-16
 
 * Update to newest Swagger V2 parser

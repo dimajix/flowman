@@ -61,7 +61,7 @@ case class CopyTarget(
      */
     override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => target.resources ++ schema.map(s => ResourceIdentifier.ofFile(s.file)).toSet
+            case Phase.BUILD => target.provides ++ schema.map(s => ResourceIdentifier.ofFile(s.file)).toSet
             case _ => Set()
         }
     }
@@ -73,7 +73,7 @@ case class CopyTarget(
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => source.resources
+            case Phase.BUILD => source.requires
             case _ => Set()
         }
     }

@@ -41,11 +41,16 @@ case class MappingDataset(
     mapping: MappingOutputIdentifier
 ) extends Dataset {
     /**
-      * Returns a list of physical resources required for reading this dataset
+      * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    override def resources : Set[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
+    override def provides : Set[ResourceIdentifier] = Set()
 
+    /**
+     * Returns a list of physical resources required for reading from this dataset
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = MappingUtils.requires(context, mapping.mapping)
 
     /**
       * Returns true if the data represented by this Dataset actually exists

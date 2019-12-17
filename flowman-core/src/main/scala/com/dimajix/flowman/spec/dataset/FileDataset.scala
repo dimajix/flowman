@@ -46,10 +46,17 @@ case class FileDataset(
       * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
-    override def resources : Set[ResourceIdentifier] = Set(
+    override def provides : Set[ResourceIdentifier] = Set(
         ResourceIdentifier.ofFile(location)
     )
 
+    /**
+     * Returns a list of physical resources required for reading from this dataset
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = Set(
+        ResourceIdentifier.ofFile(location)
+    )
 
     /**
       * Returns true if the data represented by this Dataset actually exists

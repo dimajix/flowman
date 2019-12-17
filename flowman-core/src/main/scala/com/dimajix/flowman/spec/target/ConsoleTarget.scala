@@ -80,7 +80,7 @@ case class ConsoleTarget(
       */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD => dataset.resources
+            case Phase.BUILD => dataset.requires
             case _ => Set()
         }
     }

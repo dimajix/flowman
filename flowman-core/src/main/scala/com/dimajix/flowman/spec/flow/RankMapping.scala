@@ -125,7 +125,7 @@ abstract class RankMappingSpec extends MappingSpec {
             keyColumns.map(context.evaluate),
             context.evaluate(versionColumn),
             mode,
-            filter.map(context.evaluate).map(_.trim).filter(_.nonEmpty)
+            context.evaluate(filter)
         )
     }
 }

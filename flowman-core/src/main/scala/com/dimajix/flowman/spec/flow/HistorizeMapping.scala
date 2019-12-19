@@ -35,6 +35,7 @@ case class HistorizeMapping(
     timeColumn:String,
     validFromColumn:String,
     validToColumn:String,
+    filter:Option[String] = None,
     columnInsertPosition:InsertPosition = InsertPosition.END
 ) extends BaseMapping {
     /**
@@ -55,7 +56,7 @@ case class HistorizeMapping(
             .rowsBetween(1,1)
         val validFromColumn = col(timeColumn) as this.validFromColumn
         val validToColumn = lead(col(timeColumn), 1).over(window) as this.validToColumn
-        val result = columnInsertPosition match {
+        val history = columnInsertPosition match {
             case InsertPosition.BEGINNING =>
                 df.select(
                     validFromColumn,
@@ -69,6 +70,9 @@ case class HistorizeMapping(
                     validToColumn
                 )
         }
+
+        // Apply optional filter to updates (for example for removing DELETEs)
+        val result = filter.map(f => history.where(f)).getOrElse(history)
 
         Map("main" -> result)
     }
@@ -121,6 +125,7 @@ class HistorizeMappingSpec extends MappingSpec {
     @JsonProperty(value = "timeColumn", required = true) private var versionColumn:String = _
     @JsonProperty(value = "validFromColumn", required = false) private var validFromColumn:String = "valid_from"
     @JsonProperty(value = "validToColumn", required = false) private var validToColumn:String = "valid_to"
+    @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
     @JsonProperty(value = "columnInsertPosition", required = false) private var columnInsertPosition:String = "end"
 
     /**
@@ -136,6 +141,7 @@ class HistorizeMappingSpec extends MappingSpec {
             context.evaluate(versionColumn),
             context.evaluate(validFromColumn),
             context.evaluate(validToColumn),
+            context.evaluate(filter),
             InsertPosition.ofString(context.evaluate(columnInsertPosition))
         )
     }

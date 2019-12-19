@@ -31,6 +31,7 @@ case class AggregateMapping(
     input : MappingOutputIdentifier,
     dimensions : Seq[String],
     aggregations : Map[String,String],
+    filter:Option[String] = None,
     partitions : Int = 0
 ) extends BaseMapping {
     /**
@@ -43,12 +44,16 @@ case class AggregateMapping(
     override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         val df = tables(input)
         val dims = dimensions.map(col)
-        val aggs = aggregations.map(kv => expr(kv._2).as(kv._1))
+        val expressions = aggregations.map(kv => expr(kv._2).as(kv._1))
+
         val parts = partitions
-        val result = if (parts > 0)
-            df.repartition(parts, dims:_*).groupBy(dims:_*).agg(aggs.head, aggs.tail.toSeq:_*)
+        val aggs = if (parts > 0)
+            df.repartition(parts, dims:_*).groupBy(dims:_*).agg(expressions.head, expressions.tail.toSeq:_*)
         else
-            df.groupBy(dims:_*).agg(aggs.head, aggs.tail.toSeq:_*)
+            df.groupBy(dims:_*).agg(expressions.head, expressions.tail.toSeq:_*)
+
+        // Apply optional 'HAVING' filter
+        val result = filter.map(f => aggs.where(f)).getOrElse(aggs)
 
         Map("main" -> result)
     }
@@ -68,6 +73,7 @@ class AggregateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private[spec] var input: String = _
     @JsonProperty(value = "dimensions", required = true) private[spec] var dimensions: Array[String] = _
     @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: Map[String, String] = _
+    @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
 
     /**
@@ -81,6 +87,7 @@ class AggregateMappingSpec extends MappingSpec {
             MappingOutputIdentifier.parse(context.evaluate(input)),
             dimensions.map(context.evaluate),
             context.evaluate(aggregations),
+            context.evaluate(filter),
             if (partitions == null || partitions.isEmpty) 0 else context.evaluate(partitions).toInt
         )
     }

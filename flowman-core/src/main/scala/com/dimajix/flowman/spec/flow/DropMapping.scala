@@ -63,7 +63,8 @@ case class DropMapping(
       * @param deps
       * @return
       */
-    override def describe(deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(deps != null)
 
         val schema = deps(this.input)

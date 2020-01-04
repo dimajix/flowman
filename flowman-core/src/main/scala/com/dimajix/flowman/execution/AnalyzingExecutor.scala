@@ -17,6 +17,8 @@
 package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SparkSession.getActiveSession
+import org.apache.spark.sql.SparkSession.getDefaultSession
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
@@ -24,20 +26,24 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class RootExecutor(session:Session) extends CachingExecutor(null, true) {
-    override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
+class AnalyzingExecutor(context: Context) extends CachingExecutor(null, true) {
+    override protected val logger = LoggerFactory.getLogger(classOf[AnalyzingExecutor])
+
+    private lazy val _metricSystem = new MetricSystem
 
     /**
      * Returns the MetricRegistry of this executor
+     *
      * @return
      */
-    override def metrics : MetricSystem = session.metrics
+    override def metrics: MetricSystem = _metricSystem
 
     /**
      * Returns the FileSystem as configured in Hadoop
+     *
      * @return
      */
-    override def fs : FileSystem = session.fs
+    override def fs: FileSystem = context.fs
 
     /**
      * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
@@ -45,30 +51,20 @@ class RootExecutor(session:Session) extends CachingExecutor(null, true) {
      *
      * @return
      */
-    override def spark: SparkSession = session.spark
+    override def spark: SparkSession = getActiveSession.getOrElse(getDefaultSession.getOrElse(
+        throw new IllegalStateException("No active or default Spark session found")))
 
-     /**
+    /**
      * Returns true if a SparkSession is already available
+     *
      * @return
      */
-     override def sparkRunning: Boolean = session.sparkRunning
+    override def sparkRunning: Boolean = true
 
     /**
      * Returns the table catalog used for managing table instances
+     *
      * @return
      */
-    override def catalog: Catalog = session.catalog
-
-    /**
-     * Releases any temporary tables
-     */
-    override def cleanup() : Unit = {
-        if (sparkRunning) {
-            logger.info("Cleaning up cached Spark tables")
-            val catalog = spark.catalog
-            catalog.clearCache()
-        }
-
-        super.cleanup()
-    }
+    override def catalog: Catalog = ???
 }

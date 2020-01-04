@@ -23,12 +23,15 @@ import java.nio.charset.Charset
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.analysis.SimpleAnalyzer
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.MappingOutputIdentifier
+import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SqlParser
+import com.dimajix.spark.sql.catalyst.PlanUtils
 
 
 case class SqlMapping(

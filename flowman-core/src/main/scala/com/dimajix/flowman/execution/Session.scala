@@ -20,7 +20,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
-import org.apache.spark.sql.internal.SQLConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
@@ -342,8 +341,7 @@ class Session private[execution](
     }
 
     private lazy val rootExecutor : RootExecutor = {
-        val executor = new RootExecutor(this)
-        executor
+        new RootExecutor(this)
     }
 
     private lazy val _externalCatalog : ExternalCatalog = {

@@ -36,6 +36,15 @@ case class ReadStreamMapping (
     private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
 
     /**
+     * Returns the dependencies of this mapping, which are empty for an InputMapping
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq()
+    }
+
+    /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
@@ -56,20 +65,12 @@ case class ReadStreamMapping (
     }
 
     /**
-      * Returns the dependencies of this mapping, which are empty for an InputMapping
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq()
-    }
-
-    /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         if (columns.nonEmpty) {

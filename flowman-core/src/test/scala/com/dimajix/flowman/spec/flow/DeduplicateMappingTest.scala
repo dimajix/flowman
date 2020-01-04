@@ -77,7 +77,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
             Field("c1", StringType),
             Field("c2", IntegerType, nullable = true)
         ))
-        mapping.describe(Map(MappingOutputIdentifier("dummy") -> inputSchema)) should be (Map("main" -> inputSchema))
+        mapping.describe(executor, Map(MappingOutputIdentifier("dummy") -> inputSchema)) should be (Map("main" -> inputSchema))
     }
 
     it should "work with an explicit column list" in {

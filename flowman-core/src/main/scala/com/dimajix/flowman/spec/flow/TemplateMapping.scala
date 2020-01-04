@@ -89,10 +89,11 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
-        mappingInstance.describe(input)
+        mappingInstance.describe(executor, input)
     }
 
     /**
@@ -101,11 +102,12 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def describe(input: Map[MappingOutputIdentifier, StructType], output: String): Option[StructType] = {
+    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
+        require(executor != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        mappingInstance.describe(input, output)
+        mappingInstance.describe(executor, input, output)
     }
 }
 

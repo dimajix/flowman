@@ -97,8 +97,9 @@ case class MappingDataset(
       *
       * @return
       */
-    override def schema: Option[StructType] = {
-        MappingUtils.describe(context, mapping)
+    override def describe(executor:Executor) : Option[StructType] = {
+        val instance = context.getMapping(mapping.mapping)
+        Some(executor.describe(instance, mapping.output))
     }
 }
 

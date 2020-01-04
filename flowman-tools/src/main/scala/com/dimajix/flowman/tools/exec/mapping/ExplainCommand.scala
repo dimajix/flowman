@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -41,12 +42,13 @@ class ExplainCommand extends ActionCommand {
     var mapping: String = ""
 
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info(s"Explaining mapping '$mapping'")
 
         Try {
             val id = MappingOutputIdentifier(mapping)
             val instance = context.getMapping(id.mapping)
+            val executor = session.executor
             val table = executor.instantiate(instance, id.output)
             table.explain(extended)
         } match {

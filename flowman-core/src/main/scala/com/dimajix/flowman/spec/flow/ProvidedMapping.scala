@@ -30,6 +30,15 @@ case class ProvidedMapping(
 )
 extends BaseMapping {
     /**
+     * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq()
+    }
+
+    /**
       * Instantiates the specified table, which must be available in the Spark session
       *
       * @param executor
@@ -43,15 +52,6 @@ extends BaseMapping {
         val result = executor.spark.table(table)
 
         Map("main" -> result)
-    }
-
-    /**
-      * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq()
     }
 }
 

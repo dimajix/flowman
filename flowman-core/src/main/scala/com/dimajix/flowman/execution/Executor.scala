@@ -21,17 +21,15 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
 
-import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.types.StructType
 
 
 abstract class Executor {
-    def session: Session
-
     /**
       * Returns the MetricRegistry of this executor
       * @return
@@ -73,8 +71,7 @@ abstract class Executor {
       * Returns the table catalog used for managing table instances
       * @return
       */
-    def catalog: Catalog = session.catalog
-
+    def catalog: Catalog
 
     /**
       * Creates an instance of a mapping, or retrieves it from cache
@@ -88,16 +85,39 @@ abstract class Executor {
       *
       * @param mapping
       */
-    def instantiate(mapping:Mapping, output:String) : DataFrame
+    def instantiate(mapping:Mapping, output:String) : DataFrame = {
+        if (!mapping.outputs.contains(output))
+            throw new NoSuchMappingOutputException(MappingOutputIdentifier(mapping.identifier.name, output, mapping.identifier.project))
+
+        val instances = instantiate(mapping)
+        instances(output)
+    }
+
+    /**
+     * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
+     * schema analysis beforehand. In such cases, None will be returned.
+     * @param mapping
+     * @param output
+     * @return
+     */
+    def describe(mapping:Mapping, output:String) : StructType
+    /**
+     * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
+     * schema analysis beforehand. In such cases, None will be returned.
+     * @param mapping
+     * @return
+     */
+    def describe(mapping:Mapping) : Map[String, StructType] = {
+        val context = mapping.context
+        val deps = mapping.inputs
+            .map(id => id -> describe(context.getMapping(id.mapping), id.output))
+            .toMap
+
+        mapping.describe(this, deps)
+    }
 
     /**
       * Releases any temporary tables
       */
     def cleanup() : Unit
-
-    /**
-      * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
-      * @return
-      */
-    protected[execution] def cache : IdentityHashMap[Mapping,Map[String,DataFrame]]
 }

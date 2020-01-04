@@ -81,7 +81,8 @@ case class UnionMapping(
         Map("main" -> result)
     }
 
-    override def describe(input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+        require(executor != null)
         require(input != null)
 
         val result =

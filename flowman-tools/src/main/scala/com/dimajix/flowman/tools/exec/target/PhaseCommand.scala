@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
@@ -42,7 +43,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
     var noLifecycle: Boolean = false
 
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info("Cleaning outputs {}", if (targets != null) targets.mkString(",") else "all")
 
         val toRun =
@@ -63,7 +64,8 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
             else
                 Lifecycle.ofPhase(phase)
 
-        val runner = executor.session.runner
+        val runner = session.runner
+        val executor = session.executor
         val result = runner.executeJob(executor, job, lifecycle, Map(), force)
         result match {
             case Status.SUCCESS => true

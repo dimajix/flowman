@@ -32,6 +32,15 @@ case class SelectMapping(
 )
 extends BaseMapping {
     /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
+    /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
@@ -47,15 +56,6 @@ extends BaseMapping {
         val result = df.select(cols:_*)
 
         Map("main" -> result)
-    }
-
-    /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
     }
 }
 

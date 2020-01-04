@@ -24,9 +24,9 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.target.CountTarget
@@ -39,11 +39,11 @@ class CountCommand extends ActionCommand {
     @Argument(usage = "specifies the mapping to count", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         val task = CountTarget(context, MappingOutputIdentifier(mapping))
 
         Try {
-            task.execute(executor, Phase.BUILD)
+            task.execute(session.executor, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info("Successfully counted  mapping")

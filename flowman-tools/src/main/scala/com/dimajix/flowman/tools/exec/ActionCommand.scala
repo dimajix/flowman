@@ -27,9 +27,9 @@ abstract class ActionCommand extends Command {
         super.execute(project, session)
 
         // Create project specific executor
-        val executor = session.executor
         val context = session.getContext(project)
-        val result = executeInternal(executor, context, project)
+        val executor = session.executor
+        val result = executeInternal(session, context, project)
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured
         executor.cleanup()
@@ -37,5 +37,5 @@ abstract class ActionCommand extends Command {
         result
     }
 
-    protected def executeInternal(executor:Executor, context:Context, project: Project) : Boolean
+    protected def executeInternal(session: Session, context:Context, project: Project) : Boolean
 }

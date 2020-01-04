@@ -32,6 +32,15 @@ case class ExtendMapping(
     columns:Map[String,String]
 ) extends BaseMapping {
     /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
+    /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
@@ -80,15 +89,6 @@ case class ExtendMapping(
         val result = orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
 
         Map("main" -> result)
-    }
-
-    /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
     }
 }
 

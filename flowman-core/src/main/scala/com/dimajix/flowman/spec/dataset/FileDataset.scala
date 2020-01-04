@@ -135,7 +135,7 @@ case class FileDataset(
       *
       * @return
       */
-    override def schema: Option[StructType] = {
+    override def describe(executor:Executor) : Option[StructType] = {
         columns
     }
 }

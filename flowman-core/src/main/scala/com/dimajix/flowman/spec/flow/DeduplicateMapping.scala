@@ -31,6 +31,15 @@ case class DeduplicateMapping(
     columns:Seq[String]
 ) extends BaseMapping {
     /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
+    /**
       * Creates an instance of the deduplication table.
       *
       * @param executor
@@ -57,23 +66,15 @@ case class DeduplicateMapping(
     }
 
     /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
-    }
-
-    /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
-        val result = input(this.input)
 
+        val result = input(this.input)
         Map("main" -> result)
     }
 }

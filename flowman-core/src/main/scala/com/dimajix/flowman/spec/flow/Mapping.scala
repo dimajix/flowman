@@ -132,14 +132,14 @@ abstract class Mapping extends AbstractInstance {
       * @param input
       * @return
       */
-    def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
+    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : Option[StructType]
+    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
 }
 
 
@@ -187,6 +187,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMappingSpec]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateMappingSpec]),
+    new JsonSubTypes.Type(name = "transitiveChildren", value = classOf[TransitiveChildrenMappingSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
     new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),

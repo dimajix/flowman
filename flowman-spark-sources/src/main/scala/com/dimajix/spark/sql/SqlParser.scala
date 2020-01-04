@@ -22,9 +22,24 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.With
 
 
+
 object SqlParser {
+    /**
+     * A thin wrapper for parsing a SQL statement into a Spark Catalyst logical plan
+     * @param sql
+     * @return
+     */
+    def parsePlan(sql:String) : LogicalPlan = {
+        CatalystSqlParser.parsePlan(sql)
+    }
+
+    /**
+     * Analyzes the SQL statement and returns all required dependencies (i.e. table names)
+     * @param sql
+     * @return
+     */
     def resolveDependencies(sql:String) : Seq[String] = {
-        val plan = CatalystSqlParser.parsePlan(sql)
+        val plan = parsePlan(sql)
         resolveDependencies(plan)
     }
 

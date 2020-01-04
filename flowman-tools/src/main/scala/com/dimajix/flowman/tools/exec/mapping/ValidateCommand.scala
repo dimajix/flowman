@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -37,7 +38,7 @@ class ValidateCommand extends ActionCommand {
     @Argument(usage = "specifies mappings to validate", metaVar = "<mapping>")
     var mappings: Array[String] = Array()
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info("Validating mappings {}", if (mappings != null) mappings.mkString(",") else "all")
 
         // Then execute output operations
@@ -49,7 +50,7 @@ class ValidateCommand extends ActionCommand {
                     project.mappings.keys.toSeq
 
             val tables = mappingNames.map(name => context.getMapping(MappingIdentifier(name)))
-            tables.forall(table => executor.instantiate(table) != null)
+            tables.forall(table => session.executor.instantiate(table) != null)
         } match {
             case Success(true) =>
                 logger.info("Successfully validated mappings")

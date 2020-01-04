@@ -109,7 +109,7 @@ case class RelationDataset(
       *
       * @return
       */
-    override def schema: Option[StructType] = {
+    override def describe(executor:Executor) : Option[StructType] = {
         val instance = context.getRelation(relation)
         instance.schema.map(s => StructType(s.fields))
     }

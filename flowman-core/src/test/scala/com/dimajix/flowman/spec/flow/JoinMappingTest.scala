@@ -70,12 +70,20 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         mapping.columns should be (Seq("key" ))
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
-            .orderBy("key").collect()
+        val resultDf = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
+            .orderBy("key")
+        val result = resultDf.collect()
         result.size should be (3)
         result(0) should be (Row("col1", 12, 32))
         result(1) should be (Row("col2", 23, 43))
         result(2) should be (Row("col3", 34, null))
+
+        mapping.describe(executor, Map(
+            MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df1.schema),
+            MappingOutputIdentifier("df2") -> com.dimajix.flowman.types.StructType.of(df2.schema)
+        )).map {case(k,v) => k -> v.sparkType } should be (Map(
+            "main" -> resultDf.schema
+        ))
     }
 
     it should "support joining with an condition" in {
@@ -86,8 +94,8 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
             ).asJava,
             StructType(
                 StructField("key", StringType) ::
-                    StructField("lval", IntegerType) ::
-                    Nil
+                StructField("lval", IntegerType) ::
+                Nil
             )
         )
         val df2 = spark.createDataFrame(Seq(
@@ -97,8 +105,8 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
             ).asJava,
             StructType(
                 StructField("key", StringType) ::
-                    StructField("rval", IntegerType) ::
-                    Nil
+                StructField("rval", IntegerType) ::
+                Nil
             )
         )
 
@@ -115,12 +123,20 @@ class JoinMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         mapping.condition should be ("df1.key = df2.key")
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
 
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
-            .orderBy("df1.key").collect()
+        val resultDf = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
+            .orderBy("df1.key")
+        val result = resultDf.collect()
         result.size should be (3)
         result(0) should be (Row("col1", 12, "col1", 32))
         result(1) should be (Row("col2", 23, "col2", 43))
         result(2) should be (Row("col3", 34, null, null))
+
+        mapping.describe(executor, Map(
+            MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df1.schema),
+            MappingOutputIdentifier("df2") -> com.dimajix.flowman.types.StructType.of(df2.schema)
+        )).map {case(k,v) => k -> v.sparkType } should be (Map(
+            "main" -> resultDf.schema
+        ))
     }
 
     it should "be parseable" in {

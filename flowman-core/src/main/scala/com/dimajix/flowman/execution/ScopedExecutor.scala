@@ -24,20 +24,20 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class RootExecutor(session:Session) extends CachingExecutor(null, true) {
-    override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
+class ScopedExecutor(parent:Executor) extends CachingExecutor(parent, true) {
+    override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecutor])
 
     /**
      * Returns the MetricRegistry of this executor
      * @return
      */
-    override def metrics : MetricSystem = session.metrics
+    override def metrics : MetricSystem = parent.metrics
 
     /**
      * Returns the FileSystem as configured in Hadoop
      * @return
      */
-    override def fs : FileSystem = session.fs
+    override def fs : FileSystem = parent.fs
 
     /**
      * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
@@ -45,30 +45,17 @@ class RootExecutor(session:Session) extends CachingExecutor(null, true) {
      *
      * @return
      */
-    override def spark: SparkSession = session.spark
+    override def spark: SparkSession = parent.spark
 
-     /**
+    /**
      * Returns true if a SparkSession is already available
      * @return
      */
-     override def sparkRunning: Boolean = session.sparkRunning
+    override def sparkRunning: Boolean = parent.sparkRunning
 
     /**
      * Returns the table catalog used for managing table instances
      * @return
      */
-    override def catalog: Catalog = session.catalog
-
-    /**
-     * Releases any temporary tables
-     */
-    override def cleanup() : Unit = {
-        if (sparkRunning) {
-            logger.info("Cleaning up cached Spark tables")
-            val catalog = spark.catalog
-            catalog.clearCache()
-        }
-
-        super.cleanup()
-    }
+    override def catalog: Catalog = parent.catalog
 }

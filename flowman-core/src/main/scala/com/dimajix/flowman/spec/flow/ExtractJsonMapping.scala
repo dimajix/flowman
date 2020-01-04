@@ -117,20 +117,16 @@ case class ExtractJsonMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
+        require(executor != null)
         require(input != null)
 
-        if (schema != null) {
-            val mainSchema = ftypes.StructType(schema.fields)
-            val errorSchema = ftypes.StructType(Seq(Field("record", ftypes.StringType, false)))
-            Map(
-                "main" -> mainSchema,
-                "error" -> errorSchema
-            )
-        }
-        else {
-            Map()
-        }
+        val mainSchema = ftypes.StructType(if (schema != null) schema.fields else Seq())
+        val errorSchema = ftypes.StructType(Seq(Field("record", ftypes.StringType, false)))
+        Map(
+            "main" -> mainSchema,
+            "error" -> errorSchema
+        )
     }
 }
 

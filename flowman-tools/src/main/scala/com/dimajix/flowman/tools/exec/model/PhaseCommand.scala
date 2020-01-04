@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
@@ -40,7 +41,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info(s"Executing phase '$phase' for relations {}", if (relations != null) relations.mkString(",") else "all")
 
         val toRun =
@@ -58,7 +59,8 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
             .setTargets(toRun.map(t => TargetIdentifier(t)))
             .build()
 
-        val runner = executor.session.runner
+        val runner = session.runner
+        val executor = session.executor
         val result = runner.executeJob(executor, job, Seq(phase))
 
         result match {

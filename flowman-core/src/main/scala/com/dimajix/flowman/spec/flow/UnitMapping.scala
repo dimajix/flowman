@@ -99,13 +99,14 @@ case class UnitMapping(
       * @param input
       * @return
       */
-    override def describe(input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+        require(executor != null)
         require(input != null)
 
         mappingInstances
             .filter(_._2.outputs.contains("main"))
             .keys
-            .flatMap(name => describe(input, name).map(s => (name,s)))
+            .map(name => name -> describe(executor, input, name))
             .toMap
     }
 
@@ -115,35 +116,30 @@ case class UnitMapping(
       * @param input
       * @return
       */
-    override def describe(input: Map[MappingOutputIdentifier, StructType], output:String): Option[StructType] = {
+    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType], output:String): StructType = {
+        require(executor != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        def describe(mapping:Mapping, output:String) : Option[StructType] = {
+        def describe(mapping:Mapping, output:String) : StructType = {
             val deps = dependencies(mapping)
-            // Only return a schema if all dependencies are present
-            if (mapping.inputs.forall(d => deps.contains(d))) {
-                mapping.describe(deps, output)
-            }
-            else {
-                None
-            }
+            mapping.describe(executor, deps, output)
         }
-        def describe2(context:Context, id:MappingOutputIdentifier) : Option[StructType] = {
+        def describe2(context:Context, id:MappingOutputIdentifier) : StructType = {
             val mapping = context.getMapping(id.mapping)
             describe(mapping, id.output)
         }
         def dependencies(mapping:Mapping) ={
             mapping.inputs
-                .flatMap(dep => input.get(dep).orElse(describe2(mapping.context, dep)).map(s => (dep,s)))
+                .map(dep => dep -> input.getOrElse(dep, describe2(mapping.context, dep)))
                 .toMap
         }
 
         mappingInstances
             .filter(_._2.outputs.contains("main"))
             .get(output)
-            .orElse(throw new NoSuchElementException(s"Cannot find output '$output' in unit mapping '$identifier'"))
-            .flatMap(mapping => describe(mapping, "main"))
+            .map(mapping => describe(mapping, "main"))
+            .getOrElse(throw new NoSuchElementException(s"Cannot find output '$output' in unit mapping '$identifier'"))
     }
 }
 

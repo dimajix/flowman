@@ -32,6 +32,15 @@ case class FlattenMapping(
      naming:String
 ) extends BaseMapping {
     /**
+     * Returns the dependencies (i.e. names of tables in the Dataflow model)
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
+    /**
       * Executes the mapping operation and returns a corresponding DataFrame
       *
       * @param executor
@@ -51,20 +60,12 @@ case class FlattenMapping(
     }
 
     /**
-      * Returns the dependencies (i.e. names of tables in the Dataflow model)
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
-    }
-
-    /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val mappingId = this.input

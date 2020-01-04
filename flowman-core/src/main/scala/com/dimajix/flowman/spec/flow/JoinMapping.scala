@@ -53,9 +53,8 @@ case class JoinMapping(
         require(tables != null)
 
         val result = if (condition.nonEmpty) {
-            if (inputs.size != 2) {
-                throw new IllegalArgumentException("Joining using an condition only supports exactly two inputs")
-            }
+            require(inputs.size == 2, "Joining using an condition only supports exactly two inputs")
+
             val left = inputs(0)
             val right = inputs(1)
             val leftDf = tables(left).as(left.name)

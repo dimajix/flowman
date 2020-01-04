@@ -111,7 +111,7 @@ abstract class Dataset extends AbstractInstance {
       * Returns the schema as produced by this dataset, relative to the given input schema
       * @return
       */
-    def schema : Option[StructType]
+    def describe(executor:Executor) : Option[StructType]
 }
 
 

@@ -123,10 +123,6 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
         mapping.outputs should be (Seq("main", "error"))
-        mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema)) should be (Map(
-            "main" -> ftypes.StructType.of(expectedSchema),
-            "error" -> ftypes.StructType.of(errorSchema)
-        ))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         result.count() should be (2)
@@ -136,8 +132,11 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         errors.count() should be (0)
         errors.schema should be (errorSchema)
 
-        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
-        resultSchema.get.sparkType should be (expectedSchema)
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("p0") -> inputSchema))
+        resultSchema should be (Map(
+            "main" -> ftypes.StructType.of(expectedSchema),
+            "error" -> ftypes.StructType.of(errorSchema)
+        ))
     }
 
     it should "work without an explicit schema" in {
@@ -184,8 +183,11 @@ class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         errors.count() should be (0)
         errors.schema should be (errorSchema)
 
-        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("p0") -> inputSchema), "main")
-        resultSchema should be (None)
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("p0") -> inputSchema))
+        resultSchema should be (Map(
+            "error" -> com.dimajix.flowman.types.StructType.of(errorSchema),
+            "main" -> com.dimajix.flowman.types.StructType(Seq())
+        ))
     }
 
     it should "work with invalid data" in {

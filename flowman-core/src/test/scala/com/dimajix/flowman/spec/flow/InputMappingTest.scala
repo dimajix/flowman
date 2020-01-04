@@ -59,7 +59,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val schema = mapping.describe(Map())("main")
+        val schema = mapping.describe(executor, Map(), "main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -98,7 +98,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val schema = mapping.describe(Map())("main")
+        val schema = mapping.describe(executor, Map(), "main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -143,7 +143,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val schema = mapping.describe(Map())("main")
+        val schema = mapping.describe(executor, Map(), "main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -186,7 +186,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         df.columns should contain("int_col")
         df.columns should contain("spart")
 
-        val schema = mapping.describe(Map())("main")
+        val schema = mapping.describe(executor, Map(), "main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType),

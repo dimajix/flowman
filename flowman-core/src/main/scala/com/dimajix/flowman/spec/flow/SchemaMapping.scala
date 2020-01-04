@@ -36,6 +36,15 @@ case class SchemaMapping(
 )
 extends BaseMapping {
     /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
+    /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param executor
@@ -63,24 +72,15 @@ extends BaseMapping {
     }
 
     /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
-    }
-
-    /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor: Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val result = StructType(schema.fields)
-
         Map("main" -> result)
     }
 }

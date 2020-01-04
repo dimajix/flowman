@@ -25,7 +25,7 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -42,7 +42,7 @@ class ExportSchemaCommand extends ActionCommand {
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true)
     var filename: String = ""
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info(s"Exporting the schema of model '$relation' to '$filename'")
 
         Try {

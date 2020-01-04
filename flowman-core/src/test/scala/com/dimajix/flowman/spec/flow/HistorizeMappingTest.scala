@@ -77,8 +77,8 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
             StructField("valid_to", LongType)
         ))
 
-        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
-        resultSchema should be (Some(com.dimajix.flowman.types.StructType.of(expectedSchema)))
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        resultSchema should be (com.dimajix.flowman.types.StructType.of(expectedSchema))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (expectedSchema)
@@ -111,6 +111,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
             "ts",
             "valid_from",
             "valid_to",
+            None,
             InsertPosition.BEGINNING
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
@@ -128,8 +129,8 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
             StructField("ts", LongType)
         ))
 
-        val resultSchema = mapping.describe(Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
-        resultSchema should be (Some(com.dimajix.flowman.types.StructType.of(expectedSchema)))
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        resultSchema should be (com.dimajix.flowman.types.StructType.of(expectedSchema))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (expectedSchema)

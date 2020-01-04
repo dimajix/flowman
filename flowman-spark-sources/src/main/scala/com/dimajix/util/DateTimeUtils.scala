@@ -30,7 +30,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.util
+package com.dimajix.util
 
 import java.sql.Date
 import java.sql.Timestamp

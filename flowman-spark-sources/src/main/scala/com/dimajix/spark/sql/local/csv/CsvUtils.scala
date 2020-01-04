@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.local.csv
-
+package com.dimajix.spark.sql.local.csv
 
 object CsvUtils {
     /**

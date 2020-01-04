@@ -26,12 +26,12 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.spark.sql.local.implicits._
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
-import com.dimajix.flowman.sources.local.implicits._
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema

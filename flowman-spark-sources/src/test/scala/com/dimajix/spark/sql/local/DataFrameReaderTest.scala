@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.local
+package com.dimajix.spark.sql.local
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+
+import com.dimajix.spark.sql.local.implicits._
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-object implicits {
-    implicit class DataFrameHolder(df:DataFrame) {
-        def writeLocal : DataFrameWriter = new DataFrameWriter(df)
-    }
-    implicit class SparkSessionHolder(spark:SparkSession) {
-        def readLocal : DataFrameReader = new DataFrameReader(spark)
+class DataFrameReaderTest extends FlatSpec with Matchers with LocalSparkSession {
+    "The DataFrameReader" should "be instantiated by a readLocal call" in {
+        spark.readLocal should not be (null)
     }
 }

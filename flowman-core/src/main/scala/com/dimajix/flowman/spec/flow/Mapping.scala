@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
     new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMappingSpec]),
+    new JsonSubTypes.Type(name = "recursiveSql", value = classOf[RecursiveSqlMappingSpec]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMappingSpec]),
     new JsonSubTypes.Type(name = "schema", value = classOf[SchemaMappingSpec]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMappingSpec]),

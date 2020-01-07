@@ -72,13 +72,13 @@ case class TransitiveChildrenMapping(
                 .localCheckpoint()
         }
 
+        val allColumns = parentColumns.map(col) ++ childColumns.map(col)
+
         // Project onto relevant columns
         val df = input(this.input)
-            .select(parentColumns.map(col) ++ childColumns.map(col):_*)
+            .select(allColumns:_*)
         // Filter our all NULL values in child and parent IDs
-        val cleanedDf = df
-            .filter(parentColumns.map(c => col(c).isNotNull).reduce(_ && _))
-            .filter(childColumns.map(c => col(c).isNotNull).reduce(_ && _))
+        val cleanedDf = df.filter(allColumns.map(_.isNotNull).reduce(_ && _))
 
         // Iteratively add more parent-child relations until number of records doesn't change any more
         var nextDf = cleanedDf.localCheckpoint()

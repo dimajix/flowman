@@ -1,3 +1,9 @@
+# Version 0.12.0 - 2020-01-07
+
+* Add new RecursiveSqlMapping
+* Refactor 'describe' method of mappings
+
+
 # Version 0.11.6 - 2019-12-17
 
 * Improve build dependency management with DataSets

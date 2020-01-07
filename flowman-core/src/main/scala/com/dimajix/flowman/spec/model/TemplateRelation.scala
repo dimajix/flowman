@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,10 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
@@ -78,6 +80,19 @@ class TemplateRelation(
       * @return
       */
     override def schema : Option[Schema] = relationInstance.schema
+
+    /**
+      * Returns the list of partition columns
+      * @return
+      */
+    override def partitions: Seq[PartitionField] = relationInstance.partitions
+
+    /**
+      * Returns a list of fields including the partition columns
+      *
+      * @return
+      */
+    override def fields: Seq[Field] = relationInstance.fields
 
     /**
       * Reads data from the relation, possibly from specific partitions

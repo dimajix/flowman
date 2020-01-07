@@ -922,8 +922,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
-                Field("int_col", ftypes.IntegerType) ::
-                Nil)
+            Field("int_col", ftypes.IntegerType) ::
+            Field("partition_col", ftypes.StringType, false) ::
+            Nil)
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)

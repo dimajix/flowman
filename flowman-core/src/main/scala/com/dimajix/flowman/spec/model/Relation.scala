@@ -35,6 +35,7 @@ import com.dimajix.flowman.spec.Namespace
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
@@ -118,16 +119,22 @@ abstract class Relation extends AbstractInstance {
     def resources(partitions:Map[String,FieldValue] = Map()) : Set[ResourceIdentifier]
 
     /**
-      * Returns the Schema object which describes all fields of the relation
+      * Returns the schema of the relation, excluding partition columns
       * @return
       */
     def schema : Option[Schema]
 
     /**
-      * Returns a list of fields
+      * Returns the list of partition columns
       * @return
       */
-    def fields : Seq[Field] = schema.toSeq.flatMap(_.fields)
+    def partitions : Seq[PartitionField]
+
+    /**
+      * Returns a list of fields including the partition columns
+      * @return
+      */
+    def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
 
     /**
       * Reads data from the relation, possibly from specific partitions

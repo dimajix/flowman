@@ -97,23 +97,15 @@ case class ReadRelationMapping(
         require(executor != null)
         require(input != null)
 
-        if (columns.nonEmpty) {
-            val result = StructType.of(SchemaUtils.createSchema(columns.toSeq))
-
-            Map("main" -> result)
+        val schema = if (columns.nonEmpty) {
+            StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
-            context.getRelation(relation) match {
-                case pt:PartitionedRelation =>
-                    pt.schema
-                        .map(s => "main" -> StructType(s.fields ++ pt.partitions.map(_.field)))
-                        .toMap
-                case relation:Relation =>
-                    relation.schema
-                        .map(s => "main" -> StructType(relation.schema.get.fields))
-                        .toMap
-            }
+            val relation = context.getRelation(this.relation)
+            StructType(relation.fields)
         }
+
+        Map("main" -> schema)
     }
 }
 

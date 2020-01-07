@@ -2,7 +2,7 @@
 
 * Add new RecursiveSqlMapping
 * Refactor 'describe' method of mappings
-
+* Fix TemplateRelation to return correct partitions and fields
 
 # Version 0.11.6 - 2019-12-17
 

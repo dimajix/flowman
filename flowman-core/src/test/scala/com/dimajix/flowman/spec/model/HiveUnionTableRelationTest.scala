@@ -266,8 +266,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation.fields should be(
             Field("str_col", ftypes.StringType) ::
-                Field("int_col", ftypes.IntegerType) ::
-                Nil)
+            Field("int_col", ftypes.IntegerType) ::
+            Field("partition_col", ftypes.StringType, false) ::
+            Nil)
 
         // == Create ===================================================================
         relation.create(executor)
@@ -391,8 +392,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
-                Field("int_col", ftypes.IntegerType) ::
-                Nil)
+            Field("int_col", ftypes.IntegerType) ::
+            Field("partition_col", ftypes.StringType, false) ::
+            Nil)
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
@@ -580,8 +582,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         relation_1.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_[0-9]+", Some("default"), Map())))
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
-                Field("int_col", ftypes.IntegerType) ::
-                Nil)
+            Field("int_col", ftypes.IntegerType) ::
+            Field("partition_col", ftypes.StringType, false) ::
+            Nil)
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)

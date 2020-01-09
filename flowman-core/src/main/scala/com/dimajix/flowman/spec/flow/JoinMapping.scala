@@ -30,7 +30,8 @@ case class JoinMapping(
     input:Seq[MappingOutputIdentifier],
     columns:Seq[String] = Seq(),
     condition:String = "",
-    mode:String = "left"
+    mode:String = "left",
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -65,7 +66,10 @@ case class JoinMapping(
             inputs.map(tables.apply).reduceLeft((l, r) => l.join(r, columns, mode))
         }
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 }
 
@@ -75,6 +79,7 @@ class JoinMappingSpec extends MappingSpec {
     @JsonProperty(value = "columns", required = false) private var columns:Seq[String] = Seq()
     @JsonProperty(value = "condition", required = false) private var expression:String = ""
     @JsonProperty(value = "mode", required = true) private var mode:String = "left"
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -87,7 +92,8 @@ class JoinMappingSpec extends MappingSpec {
             inputs.map(id => MappingOutputIdentifier(context.evaluate(id))),
             columns.map(context.evaluate),
             context.evaluate(expression),
-            context.evaluate(mode)
+            context.evaluate(mode),
+            context.evaluate(filter)
         )
     }
 }

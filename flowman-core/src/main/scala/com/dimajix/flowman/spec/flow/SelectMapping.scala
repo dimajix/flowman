@@ -28,7 +28,8 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 case class SelectMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[(String,String)]
+    columns:Seq[(String,String)],
+    filter:Option[String] = None
 )
 extends BaseMapping {
     /**
@@ -55,7 +56,10 @@ extends BaseMapping {
         val cols = columns.map { case (name,value) => functions.expr(value).as(name) }
         val result = df.select(cols:_*)
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 }
 
@@ -64,6 +68,7 @@ extends BaseMapping {
 class SelectMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -74,7 +79,8 @@ class SelectMappingSpec extends MappingSpec {
         SelectMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            context.evaluate(columns).toSeq
+            context.evaluate(columns).toSeq,
+            context.evaluate(filter)
         )
     }
 }

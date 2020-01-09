@@ -133,7 +133,7 @@ class ReadRelationMappingSpec extends MappingSpec {
             RelationIdentifier(context.evaluate(relation)),
             context.evaluate(columns),
             partitions,
-            filter
+            context.evaluate(filter)
         )
     }
 }

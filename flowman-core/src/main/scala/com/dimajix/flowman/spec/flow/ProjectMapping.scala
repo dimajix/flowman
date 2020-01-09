@@ -39,7 +39,8 @@ import com.dimajix.flowman.types.StructType
 case class ProjectMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[ProjectTransformer.Column]
+    columns:Seq[ProjectTransformer.Column],
+    filter:Option[String] = None
 )
 extends BaseMapping {
     /**
@@ -65,7 +66,10 @@ extends BaseMapping {
         val df = tables(input)
         val result = xfs.transform(df)
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -137,6 +141,7 @@ class ProjectMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonDeserialize(contentUsing=classOf[ColumnDeserializer])
     @JsonProperty(value = "columns", required = true) private var columns: Seq[Column] = Seq()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -147,7 +152,8 @@ class ProjectMappingSpec extends MappingSpec {
         ProjectMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.map(_.instantiate(context))
+            columns.map(_.instantiate(context)),
+            context.evaluate(filter)
         )
     }
 }

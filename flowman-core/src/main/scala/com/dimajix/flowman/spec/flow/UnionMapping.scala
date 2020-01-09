@@ -33,7 +33,8 @@ case class UnionMapping(
     instanceProperties:Mapping.Properties,
     input:Seq[MappingOutputIdentifier],
     schema:Option[Schema],
-    distinct:Boolean
+    distinct:Boolean,
+    filter:Option[String]
 ) extends BaseMapping {
     /**
       * Creates the list of required dependencies
@@ -78,7 +79,10 @@ case class UnionMapping(
             else
                 union
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 
     override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
@@ -105,6 +109,7 @@ class UnionMappingSpec extends MappingSpec {
     @JsonProperty(value="inputs", required=true) var inputs:Seq[String] = Seq()
     @JsonProperty(value="schema", required=false) var schema:SchemaSpec = _
     @JsonProperty(value="distinct", required=false) var distinct:String = "false"
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -116,7 +121,8 @@ class UnionMappingSpec extends MappingSpec {
             instanceProperties(context),
             inputs.map(i => MappingOutputIdentifier.parse(context.evaluate(i))),
             Option(schema).map(_.instantiate(context)),
-            context.evaluate(distinct).toBoolean
+            context.evaluate(distinct).toBoolean,
+            context.evaluate(filter)
         )
     }
 }

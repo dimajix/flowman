@@ -32,7 +32,8 @@ import com.dimajix.flowman.types.StructType
 case class TemplateMapping(
     instanceProperties:Mapping.Properties,
     mapping:MappingIdentifier,
-    environment:Map[String,String]
+    environment:Map[String,String],
+    filter:Option[String] = None
 ) extends BaseMapping {
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
@@ -81,7 +82,10 @@ case class TemplateMapping(
         require(executor != null)
         require(input != null)
 
-        mappingInstance.execute(executor, input)
+        val result = mappingInstance.execute(executor, input)
+
+        // Apply optional filter
+        result.map { case(name,df) => name -> filter.map(df.filter).getOrElse(df) }
     }
 
     /**
@@ -116,6 +120,7 @@ case class TemplateMapping(
 class TemplateMappingSpec extends MappingSpec {
     @JsonProperty(value = "mapping", required = true) private var mapping:String = _
     @JsonProperty(value = "environment", required = true) private var environment:Seq[String] = Seq()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates an instance of this specification and performs the interpolation of all variables
@@ -127,7 +132,8 @@ class TemplateMappingSpec extends MappingSpec {
         TemplateMapping(
             instanceProperties(context),
             MappingIdentifier(context.evaluate(mapping)),
-            splitSettings(environment).toMap
+            splitSettings(environment).toMap,
+            context.evaluate(filter)
         )
     }
 }

@@ -32,7 +32,8 @@ case class SchemaMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Seq[(String,String)] = Seq(),
-    schema:Schema = null
+    schema:Schema = null,
+    filter:Option[String] = None
 )
 extends BaseMapping {
     /**
@@ -68,7 +69,10 @@ extends BaseMapping {
         val df = tables(input)
         val result = xfs.transform(df)
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -91,6 +95,7 @@ class SchemaMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -102,7 +107,8 @@ class SchemaMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(this.input)),
             context.evaluate(columns).toSeq,
-            if (schema != null) schema.instantiate(context) else null
+            if (schema != null) schema.instantiate(context) else null,
+            context.evaluate(filter)
         )
     }
 }

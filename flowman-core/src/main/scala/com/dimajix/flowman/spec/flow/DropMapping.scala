@@ -29,7 +29,8 @@ import com.dimajix.flowman.types.StructType
 case class DropMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[String]
+    columns:Seq[String],
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -55,7 +56,10 @@ case class DropMapping(
         val asm = assembler
         val result = asm.reassemble(df)
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -85,6 +89,7 @@ case class DropMapping(
 class DropMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -95,7 +100,8 @@ class DropMappingSpec extends MappingSpec {
         DropMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.map(context.evaluate)
+            columns.map(context.evaluate),
+            context.evaluate(filter)
         )
     }
 }

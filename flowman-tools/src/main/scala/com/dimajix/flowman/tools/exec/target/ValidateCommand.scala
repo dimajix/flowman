@@ -21,11 +21,10 @@ import scala.util.Success
 import scala.util.Try
 
 import org.kohsuke.args4j.Argument
-import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.TargetIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -37,7 +36,7 @@ class ValidateCommand extends ActionCommand {
     @Argument(usage = "specifies target to validate", metaVar = "<output>")
     var outputs: Array[String] = Array()
 
-    def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info("Validating targets {}", if (outputs != null) outputs.mkString(",") else "all")
 
         Try {

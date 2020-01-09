@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.local
+package com.dimajix.spark.sql.local
 
 import java.io.File
 

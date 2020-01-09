@@ -28,8 +28,18 @@ import com.dimajix.flowman.types.StructType
 case class DeduplicateMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[String]
+    columns:Seq[String],
+    filter:Option[String] = None
 ) extends BaseMapping {
+    /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
     /**
       * Creates an instance of the deduplication table.
       *
@@ -53,16 +63,10 @@ case class DeduplicateMapping(
             df.distinct()
         }
 
-        Map("main" -> result)
-    }
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
 
-    /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -70,10 +74,11 @@ case class DeduplicateMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
-        val result = input(this.input)
 
+        val result = input(this.input)
         Map("main" -> result)
     }
 }
@@ -82,6 +87,7 @@ case class DeduplicateMapping(
 class DeduplicateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Seq[String] = Seq()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -92,7 +98,8 @@ class DeduplicateMappingSpec extends MappingSpec {
         DeduplicateMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.map(context.evaluate)
+            columns.map(context.evaluate),
+            context.evaluate(filter)
         )
     }
 }

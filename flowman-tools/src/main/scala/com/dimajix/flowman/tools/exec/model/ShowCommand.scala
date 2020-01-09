@@ -25,8 +25,8 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.target.ConsoleTarget
@@ -44,12 +44,12 @@ class ShowCommand extends ActionCommand {
     var columns: String = ""
 
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         val columns = this.columns.split(",").filter(_.nonEmpty)
         val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns)
 
         Try {
-            task.execute(executor, Phase.BUILD)
+            task.execute(session.executor, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping relation")

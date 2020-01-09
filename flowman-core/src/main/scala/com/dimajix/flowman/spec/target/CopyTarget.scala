@@ -90,7 +90,7 @@ case class CopyTarget(
         logger.info(s"Copying dataset ${source.name} to ${target.name}")
 
         val data = source.read(executor, None).coalesce(parallelism)
-        val conformed = target.schema.map { schema =>
+        val conformed = target.describe(executor).map { schema =>
             val xfs = SchemaEnforcer(schema.sparkType)
             xfs.transform(data)
         }.getOrElse(data)
@@ -98,7 +98,7 @@ case class CopyTarget(
 
         schema.foreach { spec =>
             logger.info(s"Writing schema to file '${spec.file}'")
-            val schema = source.schema.getOrElse(StructType.of(source.read(executor, None).schema))
+            val schema = source.describe(executor).getOrElse(StructType.of(data.schema))
             val file = context.fs.file(spec.file)
             new SchemaWriter(schema.fields).format(spec.format).save(file)
         }

@@ -114,7 +114,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -160,7 +160,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -190,7 +190,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
 
-        val outputSchema = mapping.describe(Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 }

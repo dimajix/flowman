@@ -254,7 +254,7 @@ class HiveTableRelation(
         require(executor != null)
 
         if (!ifNotExists || !exists(executor)) {
-            val sparkSchema = StructType(fields.map(_.sparkField) ++ partitions.map(_.sparkField))
+            val sparkSchema = StructType(fields.map(_.sparkField))
             logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 
             // Create and save Avro schema
@@ -262,7 +262,7 @@ class HiveTableRelation(
             if (properties.contains(AVRO_SCHEMA_URL)) {
                 val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
                 logger.info(s"Storing Avro schema at location $avroSchemaUrl")
-                new SchemaWriter(fields)
+                new SchemaWriter(schema.toSeq.flatMap(_.fields))
                     .format("avro")
                     .save(executor.fs.file(avroSchemaUrl))
             }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.local.csv
+package com.dimajix.spark.sql.local.csv
 
 import java.io.File
 
@@ -28,8 +28,8 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.sources.local.implicits._
 import com.dimajix.spark.testing.LocalSparkSession
+import com.dimajix.spark.sql.local.implicits._
 
 
 class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {

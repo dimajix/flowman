@@ -35,8 +35,18 @@ case class HistorizeMapping(
     timeColumn:String,
     validFromColumn:String,
     validToColumn:String,
+    filter:Option[String] = None,
     columnInsertPosition:InsertPosition = InsertPosition.END
 ) extends BaseMapping {
+    /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
@@ -55,7 +65,7 @@ case class HistorizeMapping(
             .rowsBetween(1,1)
         val validFromColumn = col(timeColumn) as this.validFromColumn
         val validToColumn = lead(col(timeColumn), 1).over(window) as this.validToColumn
-        val result = columnInsertPosition match {
+        val history = columnInsertPosition match {
             case InsertPosition.BEGINNING =>
                 df.select(
                     validFromColumn,
@@ -70,16 +80,10 @@ case class HistorizeMapping(
                 )
         }
 
-        Map("main" -> result)
-    }
+        // Apply optional filter to updates (for example for removing DELETEs)
+        val result = filter.map(f => history.where(f)).getOrElse(history)
 
-    /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+        Map("main" -> result)
     }
 
     /**
@@ -87,7 +91,8 @@ case class HistorizeMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val fields = input(this.input).fields
@@ -121,6 +126,7 @@ class HistorizeMappingSpec extends MappingSpec {
     @JsonProperty(value = "timeColumn", required = true) private var versionColumn:String = _
     @JsonProperty(value = "validFromColumn", required = false) private var validFromColumn:String = "valid_from"
     @JsonProperty(value = "validToColumn", required = false) private var validToColumn:String = "valid_to"
+    @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
     @JsonProperty(value = "columnInsertPosition", required = false) private var columnInsertPosition:String = "end"
 
     /**
@@ -136,6 +142,7 @@ class HistorizeMappingSpec extends MappingSpec {
             context.evaluate(versionColumn),
             context.evaluate(validFromColumn),
             context.evaluate(validToColumn),
+            context.evaluate(filter),
             InsertPosition.ofString(context.evaluate(columnInsertPosition))
         )
     }

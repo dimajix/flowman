@@ -173,6 +173,12 @@ class SqlMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             .orderBy("_1", "_2")
         result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
         result.collect().size should be (2)
+
+        mapping.describe(executor, Map(
+            MappingOutputIdentifier("t0") -> com.dimajix.flowman.types.StructType.of(df.schema)
+        )).map {case(k,v) => k -> v.sparkType } should be (Map(
+            "main" -> result.schema
+        ))
     }
 
 }

@@ -59,7 +59,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         result(0) should be (Row(12))
         result(1) should be (Row(23))
 
-        val schema = mapping.describe(Map(MappingOutputIdentifier("myview") -> StructType.of(df.schema)))
+        val schema = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> StructType.of(df.schema)))
         schema("main") should be (
             StructType(Seq(
                 Field("_2", IntegerType, false)
@@ -101,7 +101,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
         result.schema should be (expectedSchema.sparkType)
 
-        val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
+        val schema = mapping.describe(executor, Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
         schema("main") should be (expectedSchema)
     }
 
@@ -138,7 +138,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
         result.schema should be (expectedSchema.sparkType)
 
-        val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
+        val schema = mapping.describe(executor, Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
         schema("main") should be (expectedSchema)
     }
 
@@ -177,7 +177,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
         result.schema should be (expectedSchema.sparkType)
 
-        val schema = mapping.describe(Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
+        val schema = mapping.describe(executor, Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
         schema("main") should be (expectedSchema)
     }
 }

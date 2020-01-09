@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.util.SchemaUtils
 
@@ -51,10 +52,16 @@ abstract class BaseRelation extends Relation {
     override def description : Option[String] = instanceProperties.description
 
     /**
-      * Returns the schema of the relation
+      * Returns the schema of the relation, excluding partition columns
       * @return
       */
     override def schema : Option[Schema] = None
+
+    /**
+      * Returns the list of partition columns
+      * @return
+      */
+    override def partitions : Seq[PartitionField] = Seq()
 
     /**
       * Returns a map of all options. There is no specific usage for options, that depends on the

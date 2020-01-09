@@ -27,7 +27,8 @@ import com.dimajix.flowman.types.StructType
 
 case class DistinctMapping(
    instanceProperties:Mapping.Properties,
-   input:MappingOutputIdentifier
+   input:MappingOutputIdentifier,
+   filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -52,7 +53,10 @@ case class DistinctMapping(
         val df = tables(input)
         val result = df.distinct()
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -60,7 +64,8 @@ case class DistinctMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val result = input(this.input)
@@ -71,11 +76,13 @@ case class DistinctMapping(
 
 class DistinctMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context): DistinctMapping = {
         DistinctMapping(
             instanceProperties(context),
-            MappingOutputIdentifier(context.evaluate(input))
+            MappingOutputIdentifier(context.evaluate(input)),
+            context.evaluate(filter)
         )
     }
 }

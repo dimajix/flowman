@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,126 +16,59 @@
 
 package com.dimajix.flowman.execution
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.broadcast
-import org.apache.spark.storage.StorageLevel
+import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-import com.dimajix.common.IdentityHashMap
-import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricSystem
 
 
-class RootExecutor private(session:Session, sharedCache:Executor, isolated:Boolean)
-    extends AbstractExecutor(session) {
+class RootExecutor(session:Session) extends CachingExecutor(null, true) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
 
-    private val _cache = {
-        if (sharedCache != null) {
-            if (isolated)
-                IdentityHashMap[Mapping,Map[String,DataFrame]]()
-            else
-                sharedCache.cache
-        }
-        else {
-            IdentityHashMap[Mapping,Map[String,DataFrame]]()
-        }
-    }
-
-    def this(session: Session) = {
-        this(session, null, true)
-    }
-    def this(parent:Executor, isolated:Boolean) = {
-        this(parent.session, parent, isolated)
-    }
+    /**
+     * Returns the MetricRegistry of this executor
+     * @return
+     */
+    override def metrics : MetricSystem = session.metrics
 
     /**
-      * Creates an instance of a mapping, or retrieves it from cache
-      *
-      * @param mapping
-      */
-    override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
-        require(mapping != null)
-
-        cache.getOrElseUpdate(mapping, createTables(mapping))
-    }
+     * Returns the FileSystem as configured in Hadoop
+     * @return
+     */
+    override def fs : FileSystem = session.fs
 
     /**
-      * Perform Spark related cleanup operations (like deregistering temp tables, clearing caches, ...)
-      */
-    override def cleanup(): Unit = {
-        logger.info("Cleaning up cached Spark tables")
+     * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
+     * SparkSession, but a new derived session with a separate namespace will be created.
+     *
+     * @return
+     */
+    override def spark: SparkSession = session.spark
+
+     /**
+     * Returns true if a SparkSession is already available
+     * @return
+     */
+     override def sparkRunning: Boolean = session.sparkRunning
+
+    /**
+     * Returns the table catalog used for managing table instances
+     * @return
+     */
+    override def catalog: Catalog = session.catalog
+
+    /**
+     * Releases any temporary tables
+     */
+    override def cleanup() : Unit = {
         if (sparkRunning) {
+            logger.info("Cleaning up cached Spark tables")
             val catalog = spark.catalog
             catalog.clearCache()
         }
 
-        logger.info("Cleaning up cached Spark data frames in executor")
-        cache.values.foreach(_.values.foreach(_.unpersist(true)))
-        cache.clear()
-    }
-
-    /**
-      * Returns the DataFrame cache of Mappings used in this Executor hierarchy.
-      * @return
-      */
-    protected[execution] override def cache : IdentityHashMap[Mapping,Map[String,DataFrame]] = _cache
-
-    /**
-      * Instantiates a table and recursively all its dependencies
-      *
-      * @param mapping
-      * @return
-      */
-    private def createTables(mapping:Mapping): Map[String,DataFrame] = {
-        // Ensure all dependencies are instantiated
-        logger.debug(s"Ensuring dependencies for mapping '${mapping.identifier}'")
-
-        val context = mapping.context
-        val dependencies = mapping.inputs.map { dep =>
-            require(dep.mapping.nonEmpty)
-
-            val mapping = context.getMapping(dep.mapping)
-            if (!mapping.outputs.contains(dep.output))
-                throw new NoSuchMappingOutputException(mapping.identifier, dep.output)
-            val instances = instantiate(mapping)
-            (dep, instances(dep.output))
-        }.toMap
-
-        // Retry cache (maybe it was inserted via dependencies)
-        cache.getOrElseUpdate(mapping, createTables(mapping, dependencies))
-    }
-
-    private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
-        // Process table and register result as temp table
-        val doBroadcast = mapping.broadcast
-        val doCheckpoint = mapping.checkpoint
-        val cacheLevel = mapping.cache
-        val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
-        logger.info(s"Instantiating mapping '${mapping.identifier}' with outputs ${mapping.outputs.map("'" + _ + "'").mkString(",")} (broadcast=$doBroadcast, cache='$cacheDesc')")
-        val instances = mapping.execute(this, dependencies)
-
-        // Optionally checkpoint DataFrame
-        val df1 = if (doCheckpoint)
-            instances.map { case (name,df) => (name, df.checkpoint(false)) }
-        else
-            instances
-
-        // Optionally mark DataFrame to be broadcasted
-        val df2 = if (doBroadcast)
-            df1.map { case (name,df) => (name, broadcast(df)) }
-        else
-            df1
-
-        // Optionally cache the DataFrame
-        if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
-            df2.values.foreach(_.persist(cacheLevel))
-
-        df2.foreach { case (name,df) =>
-            logger.debug(s"Instantiated mapping '${mapping.identifier}' output '$name' with schema\n ${df.schema.treeString}")
-        }
-
-        df2
+        super.cleanup()
     }
 }

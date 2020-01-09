@@ -29,8 +29,18 @@ import com.dimajix.flowman.spec.MappingOutputIdentifier
 case class ExtendMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Map[String,String]
+    columns:Map[String,String],
+    filter:Option[String] = None
 ) extends BaseMapping {
+    /**
+     * Returns the dependencies of this mapping, which is exactly one input table
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
@@ -79,16 +89,10 @@ case class ExtendMapping(
         val table = deps(input)
         val result = orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
 
-        Map("main" -> result)
-    }
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
 
-    /**
-      * Returns the dependencies of this mapping, which is exactly one input table
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+        Map("main" -> filteredResult)
     }
 }
 
@@ -97,6 +101,7 @@ case class ExtendMapping(
 class ExtendMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns: Map[String,String] = Map()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -107,7 +112,8 @@ class ExtendMappingSpec extends MappingSpec {
         ExtendMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            context.evaluate(columns)
+            context.evaluate(columns),
+            context.evaluate(filter)
         )
     }
 }

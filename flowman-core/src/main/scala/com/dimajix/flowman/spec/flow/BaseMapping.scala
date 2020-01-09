@@ -18,10 +18,12 @@ package com.dimajix.flowman.spec.flow
 
 import org.apache.spark.storage.StorageLevel
 
+import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.catalyst.PlanUtils
 
 
 /**
@@ -73,10 +75,20 @@ abstract class BaseMapping extends Mapping {
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
-        Map()
+        // Create dummy data frames
+        val replacements = input.map { case (name,schema) =>
+            name -> PlanUtils.singleRow(executor.spark, schema.sparkType)
+        }
+
+        // Execute mapping
+        val results = execute(executor, replacements)
+
+        // Extract schemas
+        results.map { case (name,df) => name -> StructType.of(df.schema)}
     }
 
     /**
@@ -85,10 +97,11 @@ abstract class BaseMapping extends Mapping {
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : Option[StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
+        require(executor != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        describe(input).get(output)
+        describe(executor, input)(output)
     }
 }

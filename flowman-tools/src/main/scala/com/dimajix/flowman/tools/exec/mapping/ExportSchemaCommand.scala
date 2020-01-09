@@ -25,9 +25,8 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -47,20 +46,20 @@ class ExportSchemaCommand extends ActionCommand {
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true, index = 1)
     var filename: String = ""
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info(s"Exporting the schema of mapping '$mapping' to '$filename'")
 
         Try {
             val id = MappingOutputIdentifier(mapping)
             val instance = context.getMapping(id.mapping)
+            val executor = session.executor
             val schema =
                 if (useSpark) {
                     val table = executor.instantiate(instance, id.output)
                     Field.of(table.schema)
                 }
                 else {
-                    MappingUtils.describe(instance, id.output).map(_.fields)
-                        .getOrElse(throw new UnsupportedOperationException(s"Cannot infer schema for mapping '$mapping"))
+                    executor.describe(instance, id.output).fields
                 }
 
             val file = context.fs.local(filename)

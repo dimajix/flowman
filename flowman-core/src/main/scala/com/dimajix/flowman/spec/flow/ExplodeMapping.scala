@@ -97,7 +97,8 @@ case class ExplodeMapping(
       * @param deps
       * @return
       */
-    override def describe(deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(deps != null)
 
         def isSimpleArray(dt:StructType) : Boolean = {

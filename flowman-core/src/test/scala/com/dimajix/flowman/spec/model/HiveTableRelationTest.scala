@@ -922,8 +922,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
-                Field("int_col", ftypes.IntegerType) ::
-                Nil)
+            Field("int_col", ftypes.IntegerType) ::
+            Field("partition_col", ftypes.StringType, false) ::
+            Nil)
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
@@ -1051,11 +1052,12 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))
 
-        val schema = mapping.describe(Map())("main")
+        val schema = mapping.describe(executor, Map(), "main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

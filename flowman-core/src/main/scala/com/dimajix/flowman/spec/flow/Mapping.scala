@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,14 +132,14 @@ abstract class Mapping extends AbstractInstance {
       * @param input
       * @return
       */
-    def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
+    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(input:Map[MappingOutputIdentifier,StructType], output:String) : Option[StructType]
+    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
 }
 
 
@@ -181,12 +181,14 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
     new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMappingSpec]),
+    new JsonSubTypes.Type(name = "recursiveSql", value = classOf[RecursiveSqlMappingSpec]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMappingSpec]),
     new JsonSubTypes.Type(name = "schema", value = classOf[SchemaMappingSpec]),
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMappingSpec]),
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMappingSpec]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateMappingSpec]),
+    new JsonSubTypes.Type(name = "transitiveChildren", value = classOf[TransitiveChildrenMappingSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
     new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),

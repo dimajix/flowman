@@ -50,11 +50,10 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
         .withEnvironment(job.environment, SettingLevel.SCOPE_OVERRIDE)
         .build()
 
-    /** The contetx that shoukd be used for resolving variables and instantiating objects */
+    /** The context that should be used for resolving variables and instantiating objects */
     val context : Context = if (job.context.project != null) rootContext.getProjectContext(job.context.project) else rootContext
     /** The executor that should be used for running targets */
-    val executor : Executor = new RootExecutor(parentExecutor, isolated)
-
+    val executor : Executor = if (isolated) new ScopedExecutor(parentExecutor) else parentExecutor
 
     // Check if the job should run isolated. This is required if arguments are specified, which could
     // result in different DataFrames with different arguments

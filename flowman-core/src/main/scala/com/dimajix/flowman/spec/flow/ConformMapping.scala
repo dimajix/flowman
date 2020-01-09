@@ -38,10 +38,18 @@ case class ConformMapping(
     input : MappingOutputIdentifier,
     types : Map[String,FieldType] = Map(),
     naming : String = null,
-    flatten : Boolean = false
+    flatten : Boolean = false,
+    filter:Option[String] = None
 )
 extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ProjectMapping])
+    /**
+      * Returns the dependencies (i.e. names of tables in the Dataflow model)
+      *
+      * @return
+      */
+    override def inputs: Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -60,16 +68,10 @@ extends BaseMapping {
         // Apply all transformations in order
         val result = transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
 
-        Map("main" -> result)
-    }
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
 
-    /**
-      * Returns the dependencies (i.e. names of tables in the Dataflow model)
-      *
-      * @return
-      */
-    override def inputs: Seq[MappingOutputIdentifier] = {
-        Seq(input)
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -77,7 +79,8 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val schema = input(this.input)
@@ -113,6 +116,7 @@ class ConformMappingSpec extends MappingSpec {
     @JsonProperty(value = "types", required = false) private[spec] var types: Map[String, String] = Map()
     @JsonProperty(value = "naming", required = false) private[spec] var naming: String = _
     @JsonProperty(value = "flatten", required = false) private[spec] var flatten: String = "false"
+    @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -128,7 +132,8 @@ class ConformMappingSpec extends MappingSpec {
             MappingOutputIdentifier.parse(context.evaluate(input)),
             types,
             context.evaluate(naming),
-            context.evaluate(flatten).toBoolean
+            context.evaluate(flatten).toBoolean,
+            context.evaluate(filter)
         )
     }
 }

@@ -114,7 +114,8 @@ object AssembleMapping {
 case class AssembleMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
-    columns: Seq[AssembleMapping.Entry]
+    columns: Seq[AssembleMapping.Entry],
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -140,7 +141,10 @@ case class AssembleMapping(
         val asm = assembler
         val result = asm.reassemble(df)
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -148,7 +152,8 @@ case class AssembleMapping(
       * @param deps
       * @return
       */
-    override def describe(deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(deps != null)
 
         val schema = deps(this.input)
@@ -284,6 +289,7 @@ object AssembleMappingSpec {
 class AssembleMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns: Seq[AssembleMappingSpec.Entry] = Seq()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -294,7 +300,8 @@ class AssembleMappingSpec extends MappingSpec {
         AssembleMapping(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(this.input)),
-            columns.map(_.instantiate(context))
+            columns.map(_.instantiate(context)),
+            context.evaluate(filter)
         )
     }
 }

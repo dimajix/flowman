@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.AnalyzingExecutor
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.types.Field
 
@@ -35,6 +35,12 @@ case class MappingSchema (
     instanceProperties:Schema.Properties,
     mapping: MappingOutputIdentifier
 ) extends Schema {
+    private lazy val cachedFields = {
+        val executor = new AnalyzingExecutor(context)
+        val instance = context.getMapping(mapping.mapping)
+        executor.describe(instance, mapping.output).fields
+    }
+
     /**
       * Returns the description of the schema
       * @return
@@ -46,8 +52,7 @@ case class MappingSchema (
       * @return
       */
     override def fields : Seq[Field] = {
-        MappingUtils.describe(context, mapping).map(_.fields)
-            .getOrElse(throw new UnsupportedOperationException(s"Cannot infer schema from mapping '$mapping'"))
+        cachedFields
     }
 
     /**

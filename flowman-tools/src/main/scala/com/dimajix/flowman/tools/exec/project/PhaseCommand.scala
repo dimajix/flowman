@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.spec.Project
@@ -48,7 +49,7 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         val args = splitSettings(this.args).toMap
         val job = "main"
         Try {
@@ -62,11 +63,11 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
                 logger.error(s"Error instantiating job '$job'")
                 false
             case Success(job) =>
-                executeJob(executor, job, job.parseArguments(args))
+                executeJob(session, job, job.parseArguments(args))
         }
     }
 
-    private def executeJob(executor:Executor, job:Job, args:Map[String,FieldValue]) : Boolean = {
+    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Boolean = {
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)
@@ -77,7 +78,8 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
         val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
-        val runner = executor.session.runner
+        val runner = session.runner
+        val executor = session.executor
         job.interpolate(args).forall { args =>
             val result = runner.executeJob(executor, job, lifecycle, args, force)
             result match {

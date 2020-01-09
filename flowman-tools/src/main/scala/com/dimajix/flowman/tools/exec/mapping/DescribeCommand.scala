@@ -25,10 +25,8 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.NoSuchMappingException
-import com.dimajix.flowman.spec.MappingIdentifier
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
@@ -42,21 +40,19 @@ class DescribeCommand extends ActionCommand {
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def executeInternal(executor:Executor, context:Context, project: Project) : Boolean = {
+    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         Try {
             val identifier = MappingOutputIdentifier(this.mapping)
+            val mapping = context.getMapping(identifier.mapping)
+            val executor = session.executor
 
             if (useSpark) {
-                val mapping = context.getMapping(identifier.mapping)
                 val df = executor.instantiate(mapping, identifier.output)
                 df.printSchema()
             }
             else {
-                val schema = MappingUtils.describe(context, identifier)
-                schema match {
-                    case Some(s) => s.printTree()
-                    case None => logger.error(s"Cannot infer schema of mapping output '${identifier}'")
-                }
+                val schema = executor.describe(mapping, identifier.output)
+                schema.printTree()
             }
         } match {
             case Success(_) =>

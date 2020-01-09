@@ -29,8 +29,18 @@ import com.dimajix.flowman.types.StructType
 case class FlattenMapping(
      instanceProperties:Mapping.Properties,
      input:MappingOutputIdentifier,
-     naming:String
+     naming:String,
+     filter:Option[String] = None
 ) extends BaseMapping {
+    /**
+     * Returns the dependencies (i.e. names of tables in the Dataflow model)
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq(input)
+    }
+
     /**
       * Executes the mapping operation and returns a corresponding DataFrame
       *
@@ -47,16 +57,10 @@ case class FlattenMapping(
 
         val result = xfs.transform(df)
 
-        Map("main" -> result)
-    }
+        // Apply optional filter
+        val filteredResult = filter.map(result.filter).getOrElse(result)
 
-    /**
-      * Returns the dependencies (i.e. names of tables in the Dataflow model)
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -64,7 +68,8 @@ case class FlattenMapping(
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val mappingId = this.input
@@ -82,6 +87,7 @@ case class FlattenMapping(
 class FlattenMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "naming", required = true) private var naming:String = "snakeCase"
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -92,7 +98,8 @@ class FlattenMappingSpec extends MappingSpec {
         FlattenMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            context.evaluate(naming)
+            context.evaluate(naming),
+            context.evaluate(filter)
         )
     }
 }

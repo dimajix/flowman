@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.sources.local.csv
+package com.dimajix.spark.sql.local.csv
 
 import java.io.File
 import java.io.FileOutputStream
@@ -30,7 +30,7 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.flowman.sources.local.BaseRelation
+import com.dimajix.spark.sql.local.BaseRelation
 
 
 class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, mschema:StructType) extends BaseRelation {

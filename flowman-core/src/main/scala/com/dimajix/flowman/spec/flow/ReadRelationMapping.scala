@@ -56,6 +56,15 @@ case class ReadRelationMapping(
     }
 
     /**
+     * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
+     *
+     * @return
+     */
+    override def inputs : Seq[MappingOutputIdentifier] = {
+        Seq()
+    }
+
+    /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
       * @param executor
@@ -80,39 +89,23 @@ case class ReadRelationMapping(
     }
 
     /**
-      * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
-      *
-      * @return
-      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq()
-    }
-
-    /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    override def describe(input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
-        if (columns.nonEmpty) {
-            val result = StructType.of(SchemaUtils.createSchema(columns.toSeq))
-
-            Map("main" -> result)
+        val schema = if (columns.nonEmpty) {
+            StructType.of(SchemaUtils.createSchema(columns.toSeq))
         }
         else {
-            context.getRelation(relation) match {
-                case pt:PartitionedRelation =>
-                    pt.schema
-                        .map(s => "main" -> StructType(s.fields ++ pt.partitions.map(_.field)))
-                        .toMap
-                case relation:Relation =>
-                    relation.schema
-                        .map(s => "main" -> StructType(relation.schema.get.fields))
-                        .toMap
-            }
+            val relation = context.getRelation(this.relation)
+            StructType(relation.fields)
         }
+
+        Map("main" -> schema)
     }
 }
 
@@ -140,7 +133,7 @@ class ReadRelationMappingSpec extends MappingSpec {
             RelationIdentifier(context.evaluate(relation)),
             context.evaluate(columns),
             partitions,
-            filter
+            context.evaluate(filter)
         )
     }
 }

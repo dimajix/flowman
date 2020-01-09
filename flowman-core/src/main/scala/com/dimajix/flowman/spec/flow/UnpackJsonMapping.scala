@@ -95,7 +95,8 @@ case class UnpackJsonMapping(
       * @param input
       * @return
       */
-    override def describe(input: Map[MappingOutputIdentifier, StructType]): Map[String,StructType] = {
+    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String,StructType] = {
+        require(executor != null)
         require(input != null)
 
         val schema = input(this.input)

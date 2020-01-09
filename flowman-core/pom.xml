@@ -81,6 +81,10 @@
                                     <pattern>org.json</pattern>
                                     <shadedPattern>com.dimajix.shade.json</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>org.everit.json</pattern>
+                                    <shadedPattern>com.dimajix.shade.everit</shadedPattern>
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>

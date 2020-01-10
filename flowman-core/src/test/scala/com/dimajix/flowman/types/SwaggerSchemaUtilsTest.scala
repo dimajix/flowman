@@ -240,6 +240,51 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
         struct.fields(2).ftype should be (IntegerType)
     }
 
+    it should "support nested nested ollOfs" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |definitions:
+              |  Address:
+              |    additionalProperties: false
+              |    type: object
+              |    properties:
+              |      price:
+              |        type: object
+              |        properties:
+              |          oneTimeAndRecurring:
+              |            type: object
+              |            allOf:
+              |              - type: object
+              |                allOf:
+              |                  - type: object
+              |                    properties:
+              |                      id:
+              |                        type: string
+              |                      identifier:
+              |                        type: string
+              |                    required:
+              |                      - id
+              |                      - identifier
+              |                  - type: object
+              |                    properties:
+              |                      validFrom:
+              |                        type: string
+              |                        format: date-time
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
+        fields should be (Seq(
+            Field("price", StructType(Seq(
+                Field("oneTimeAndRecurring", StructType(Seq(
+                    Field("id", StringType, false),
+                    Field("identifier", StringType, false),
+                    Field("validFrom", TimestampType, format=Some("date-time"))
+                )))
+            )))
+        ))
+    }
+
     it should "support untyped enums" in {
         val spec =
             """

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.types
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -114,7 +115,7 @@ object SwaggerSchemaUtils {
 
         // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"
         val definitions = rootNode.path("definitions")
-        val entities = definitions.elements().asScala.flatMap(_.elements().asScala).toSeq
+        val entities = definitions.elements().asScala.toSeq
         entities.foreach(replaceAllOf)
         entities.foreach(fixRequired)
 
@@ -130,21 +131,28 @@ object SwaggerSchemaUtils {
       */
     private def replaceAllOf(jsonNode: JsonNode) : Unit = {
         jsonNode match {
-            case obj:ObjectNode =>
-                if (obj.get("allOf") != null) {
-                    val children = obj.get("allOf").elements().asScala.toSeq
-                    val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements().asScala))
-                    val properties = children.flatMap(c => Option(c.get("properties")).toSeq.flatMap(_.fields().asScala))
-                    val desc = children.flatMap(c => Option(c.get("description"))).headOption
-                    obj.without("allOf")
-                    obj.set("type", TextNode.valueOf("object"))
-                    obj.withArray("required").addAll(required.asJava)
-                    properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue):AnyRef)
-                    desc.foreach(d => obj.set("description", d))
-                }
-            case _:JsonNode =>
+            case obj: ObjectNode if obj.get("allOf") != null =>
+                val children = obj.get("allOf").elements().asScala.toSeq
+                children.foreach(replaceAllOf)
+
+                val properties = children.flatMap(c => Option(c.get("properties")).toSeq
+                    .flatMap(_.fields().asScala))
+                val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements().asScala))
+                val desc = children.flatMap(c => Option(c.get("description"))).headOption
+                obj.without("allOf")
+                obj.set("type", TextNode.valueOf("object"))
+                obj.withArray("required").addAll(required.asJava)
+                properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue): AnyRef)
+                desc.foreach(d => obj.set("description", d))
+
+            case obj: ObjectNode if obj.get("items") != null =>
+                replaceAllOf(obj.get("items"))
+
+            case obj: ObjectNode if obj.get("properties") != null =>
+                obj.get("properties").elements().asScala.foreach(replaceAllOf)
+
+            case _: JsonNode =>
         }
-        jsonNode.elements().asScala.foreach(replaceAllOf)
     }
 
     private def fixRequired(jsonNode: JsonNode) : Unit = {

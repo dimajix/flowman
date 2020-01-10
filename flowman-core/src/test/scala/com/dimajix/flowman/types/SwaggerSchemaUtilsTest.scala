@@ -112,7 +112,69 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
         ))
     }
 
-    it should "support allOf" in {
+    it should "support simple arrays" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |definitions:
+              |  Address:
+              |    type: object
+              |    properties:
+              |      AddressLine:
+              |        type: "array"
+              |        items:
+              |          type: string
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
+        fields should be (Seq(
+            Field("AddressLine", ArrayType(StringType))
+        ))
+    }
+
+    it should "support struct arrays" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |definitions:
+              |  Address:
+              |    description: "Service Provider's address"
+              |    additionalProperties: false
+              |    type: object
+              |    properties:
+              |      num:
+              |        type: "integer"
+              |        maximum: 255
+              |        minimum: 0
+              |      AddressLine:
+              |        type: "array"
+              |        items:
+              |          description: "One of multiple address lines"
+              |          type: "object"
+              |          required:
+              |            - "Latin"
+              |          properties:
+              |            Latin:
+              |              type: "string"
+              |              example: "John Doe/MR"
+              |            LocalSpelling:
+              |              type: "string"
+              |              example: "李四/ MR"
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
+        fields should be (Seq(
+            Field("num", IntegerType),
+            Field("AddressLine", ArrayType(
+                StructType(Seq(
+                    Field("Latin", StringType, false),
+                    Field("LocalSpelling", StringType)
+                ))
+            ))
+        ))
+    }
+
+    it should "support allOf for properties" in {
         val spec =
             """
               |swagger: "2.0"
@@ -153,24 +215,66 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
               |""".stripMargin
 
         val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Pet"), false)
-        fields.size should be (3)
-
-        fields(0).nullable should be (false)
-        fields(0).name should be ("name")
-        fields(0).description should be (Some("The Pets name"))
-        fields(0).ftype should be (StringType)
-
-        fields(1).nullable should be (true)
-        fields(1).name should be ("tag")
-        fields(1).ftype should be (StringType)
-
-        fields(2).nullable should be (false)
-        fields(2).name should be ("id")
-        fields(2).description should be (Some("The Pets ID"))
-        fields(2).ftype should be (LongType)
+        fields should be (Seq(
+            Field("name", StringType, false, description = Some("The Pets name")),
+            Field("tag", StringType),
+            Field("id", LongType, false, description = Some("The Pets ID"), format=Some("int64"))
+        ))
     }
 
-    it should "support nested allOf" in {
+    it should "support allOf for nested properties" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |info:
+              |  version: 1.0.0
+              |  title: Swagger Petstore
+              |  description: A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification
+              |  termsOfService: http://swagger.io/terms/
+              |  contact:
+              |    name: Swagger API Team
+              |    email: apiteam@swagger.io
+              |    url: http://swagger.io
+              |  license:
+              |    name: Apache 2.0
+              |url: https://www.apache.org/licenses/LICENSE-2.0.html
+              |definitions:
+              |  Pet:
+              |    properties:
+              |      info:
+              |        allOf:
+              |          -
+              |            type: object
+              |            required:
+              |              - name
+              |            properties:
+              |              name:
+              |                type: string
+              |                description: The Pets name
+              |              tag:
+              |                type: string
+              |          -
+              |            type: object
+              |            required:
+              |              - id
+              |            properties:
+              |              id:
+              |                type: integer
+              |                format: int64
+              |                description: The Pets ID
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Pet"), false)
+        fields should be (Seq(
+            Field("info", StructType(Seq(
+                Field("name", StringType, false, description = Some("The Pets name")),
+                Field("tag", StringType),
+                Field("id", LongType, false, description = Some("The Pets ID"), format=Some("int64"))
+            )))
+        ))
+    }
+
+    it should "support allOf in arrays" in {
         val spec =
             """
               |swagger: "2.0"
@@ -212,76 +316,15 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
               |""".stripMargin
 
         val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
-        fields.size should be (2)
-
-        fields(0).nullable should be (true)
-        fields(0).name should be ("num")
-        fields(0).ftype should be (IntegerType)
-
-        fields(1).nullable should be (true)
-        fields(1).name should be ("AddressLine")
-        fields(1).ftype shouldBe an[ArrayType]
-
-        val array = fields(1).ftype.asInstanceOf[ArrayType]
-        array.containsNull should be (true)
-        array.elementType shouldBe a[StructType]
-        val struct = array.elementType.asInstanceOf[StructType]
-        struct.fields.size should be (3)
-        struct.fields(0).nullable should be (false)
-        struct.fields(0).name should be ("Latin")
-        struct.fields(0).ftype should be (StringType)
-
-        struct.fields(1).nullable should be (true)
-        struct.fields(1).name should be ("LocalSpelling")
-        struct.fields(1).ftype should be (StringType)
-
-        struct.fields(2).nullable should be (false)
-        struct.fields(2).name should be ("num")
-        struct.fields(2).ftype should be (IntegerType)
-    }
-
-    it should "support nested nested ollOfs" in {
-        val spec =
-            """
-              |swagger: "2.0"
-              |definitions:
-              |  Address:
-              |    additionalProperties: false
-              |    type: object
-              |    properties:
-              |      price:
-              |        type: object
-              |        properties:
-              |          oneTimeAndRecurring:
-              |            type: object
-              |            allOf:
-              |              - type: object
-              |                allOf:
-              |                  - type: object
-              |                    properties:
-              |                      id:
-              |                        type: string
-              |                      identifier:
-              |                        type: string
-              |                    required:
-              |                      - id
-              |                      - identifier
-              |                  - type: object
-              |                    properties:
-              |                      validFrom:
-              |                        type: string
-              |                        format: date-time
-              |""".stripMargin
-
-        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("Address"), false)
         fields should be (Seq(
-            Field("price", StructType(Seq(
-                Field("oneTimeAndRecurring", StructType(Seq(
-                    Field("id", StringType, false),
-                    Field("identifier", StringType, false),
-                    Field("validFrom", TimestampType, format=Some("date-time"))
-                )))
-            )))
+            Field("num", IntegerType),
+            Field("AddressLine", ArrayType(
+                StructType(Seq(
+                    Field("Latin", StringType, false),
+                    Field("LocalSpelling", StringType),
+                    Field("num", IntegerType, false)
+                ))
+            ))
         ))
     }
 

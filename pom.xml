@@ -67,10 +67,10 @@
         <jackson.databind.version>2.6.7.1</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <json4s.version>3.5.3</json4s.version>
-        <json.version>20180130</json.version>
+        <json.version>20190722</json.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>12.0</guava.version>
-        <snakeyaml.version>1.21</snakeyaml.version>
+        <snakeyaml.version>1.25</snakeyaml.version>
         <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <velocity.version>2.1</velocity.version>
@@ -95,7 +95,7 @@
         <commons-text.version>1.6</commons-text.version>
         <httpclient.version>4.5.2</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
-        <swagger-parser.version>1.0.48</swagger-parser.version>
+        <swagger-parser.version>1.0.49</swagger-parser.version>
         <!-- Language versions -->
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>

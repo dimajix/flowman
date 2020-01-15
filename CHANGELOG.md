@@ -1,6 +1,7 @@
 # Version 0.12.1 - 
 
 * Improve support for Swagger Schema
+* Fix infinite loop in recursiveSql
 
 
 # Version 0.12.0 - 2020-01-09

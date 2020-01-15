@@ -1,8 +1,16 @@
-# Version 0.12.0 - 2020-01-07
+# Version 0.12.1 - 
+
+* Improve support for Swagger Schema
+* Fix infinite loop in recursiveSql
+
+
+# Version 0.12.0 - 2020-01-09
 
 * Add new RecursiveSqlMapping
 * Refactor 'describe' method of mappings
 * Fix TemplateRelation to return correct partitions and fields
+* Add 'filter' attribute to many mappings
+
 
 # Version 0.11.6 - 2019-12-17
 

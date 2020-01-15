@@ -75,10 +75,11 @@ extends BaseMapping {
         val statement = this.statement
 
         @tailrec
-        def fix(in:DataFrame) : DataFrame = {
+        def fix(in:DataFrame, inCount:Long) : DataFrame = {
             val result = nextDf(statement, in)
-            if (result.count() != in.count())
-                fix(result)
+            val resultCount = result.count()
+            if (resultCount != inCount)
+                fix(result, resultCount)
             else
                 result
         }
@@ -87,7 +88,7 @@ extends BaseMapping {
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
         // Execute query
         val first = firstDf(executor.spark, statement)
-        val result = fix(first)
+        val result = fix(first, first.count())
         // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
         input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
 
@@ -99,7 +100,7 @@ extends BaseMapping {
         def findUnion(plan:LogicalPlan) : LogicalPlan = {
             plan match {
                 case union:Union => union
-                case node:UnaryNode =>findUnion(node)
+                case node:UnaryNode =>findUnion(node.child)
             }
         }
 
@@ -112,7 +113,7 @@ extends BaseMapping {
     private def nextDf(statement:String, prev:DataFrame) : DataFrame = {
         val spark = prev.sparkSession
         prev.createOrReplaceTempView("__this__")
-        val result = spark.sql(statement).localCheckpoint()
+        val result = spark.sql(statement).localCheckpoint(false)
         spark.sessionState.catalog.dropTempView("__this__")
         result
     }

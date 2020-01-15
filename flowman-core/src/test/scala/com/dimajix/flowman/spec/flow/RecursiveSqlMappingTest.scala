@@ -99,4 +99,52 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
             ))
         ))
     }
+
+    it should "support UNION DISTINCT" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val executor = session.executor
+
+        val mapping = RecursiveSqlMapping(
+            Mapping.Properties(context),
+            """
+              |SELECT
+              |     0 AS n,
+              |     1 AS fact
+              |
+              |UNION DISTINCT
+              |
+              |SELECT
+              |     n+1 AS n,
+              |     (n+1)*fact AS fact
+              |FROM __this__
+              |WHERE n < 6
+              |""".stripMargin,
+            null,
+            null
+        )
+
+        val resultDf = mapping.execute(executor, Map())("main")
+        val resultRecords = resultDf.orderBy("n").as[(Int,Int)].collect()
+        resultRecords should be (Array(
+            (0,1),
+            (1,1),
+            (2,2),
+            (3,6),
+            (4,24),
+            (5,120),
+            (6,720)
+        ))
+
+        val resultSchema = mapping.describe(executor, Map())
+        resultSchema should be (Map(
+            "main" -> StructType(Seq(
+                Field("n", IntegerType, false),
+                Field("fact", IntegerType, false)
+            ))
+        ))
+    }
 }

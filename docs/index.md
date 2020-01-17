@@ -6,8 +6,8 @@ instead of writing Spark jobs in Scala or Python. The main advantage of this app
 many technical details of a correct and robust implementation are encapsulated and the user
 can concentrate on the data transformations themselves.
 
-In addition to writing and executing data transformations, Flowman can also be used for 
-managing physical data models, i.e. Hive tables. Flowman can create such tables from a 
+In addition to writing and executing data transformations, Flowman can also be used for
+managing physical data models, i.e. Hive tables. Flowman can create such tables from a
 specification with the correct schema. This helps to keep all aspects (like transformations
 and schema information) in a single place managed by a single program.
 
@@ -36,7 +36,7 @@ following sections:
 
 ## Specification Documentation
 
-So called specifications describe the logical data flow, data sources and more. A full 
+So called specifications describe the logical data flow, data sources and more. A full
 specification contains multiple entities like mappings, data models and jobs to be executed.
 More detail on all these items is described in the following sections:
 

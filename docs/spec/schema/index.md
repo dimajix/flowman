@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Schemas
-permalink: /spec/schema/index.html
----
+
 # Flowman Schema Specification
 
 Flowman uses schema definitions at various places, most commonly where relations (data sources and sinks)
@@ -12,17 +8,17 @@ various external schema definitions like Avro, Swagger and JSON Schema.
 
 ## Schema Types
 
-* [`avro`](avro.html): 
-Use an [Avro Schema](avro.html) in an external file.
+* [`avro`](avro.md): 
+Use an [Avro Schema](avro.md) in an external file.
 
-* [`embedded`](embedded.html): 
-Use an [ambedded schema](ambedded.html) directly defined inline a Flowman specification file.
+* [`embedded`](embedded.md): 
+Use an [ambedded schema](ambedded.md) directly defined inline a Flowman specification file.
 
-* [`json`](json.html): 
-Use an [JSON Schema](json.html) in an external file.
+* [`json`](json.md): 
+Use an [JSON Schema](json.md) in an external file.
 
-* [`mapping`](mapping.html): 
-Infer the schema of a [Flowman mapping](mapping.html).
+* [`mapping`](mapping.md): 
+Infer the schema of a [Flowman mapping](mapping.md).
 
-* [`swagger`](swagger.html): 
-Use an [Swagger Schema](swagger.html) in an external file.
+* [`swagger`](swagger.md): 
+Use an [Swagger Schema](swagger.md) in an external file.

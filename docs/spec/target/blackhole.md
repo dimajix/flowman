@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Backhole Target
-permalink: /spec/target/blackhole.html
----
+
 # Blackhole Target
 
 ## Example

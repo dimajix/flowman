@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Relation Target
-permalink: /spec/target/relation.html
----
+
 # Relation Target
 
 The relation target operation probably is the most important and common output operation. It 

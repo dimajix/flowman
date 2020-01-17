@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Extend Mapping
-permalink: /spec/mapping/extend.html
----
+
 # Extend Mapping
 
 The `extend` mapping will add new columns derived from the existing ones (or with constant

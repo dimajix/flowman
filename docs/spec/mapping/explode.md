@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Explode Mapping
-permalink: /spec/mapping/explode.html
----
+
 # Explode Mapping
 
 The `explode` mapping is used for creating multiple records from an array field. The mapping has

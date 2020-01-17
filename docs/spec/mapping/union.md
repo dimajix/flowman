@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Union Mapping
-permalink: /spec/mapping/sql.html
----
+
 # Union Mapping
 
 ## Example

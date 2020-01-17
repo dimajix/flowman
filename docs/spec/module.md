@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Module Definition
-permalink: /spec/module.html
----
+
 # Flowman Modules
 
 Flowman YAML specifications can be split up into an arbitrary number of files. From a project

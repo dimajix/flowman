@@ -1,34 +1,30 @@
----
-layout: page
-title: Flowman Output Specifications
-permalink: /spec/target/index.html
----
+
 # Flowman Output Specification
 
 
 ## Output Types
 
-* [`blackhole`](blackhole.html): 
-Use a [Blackhole Target](blackhole.html) to execute mappings without using the results
+* [`blackhole`](blackhole.md): 
+Use a [Blackhole Target](blackhole.md) to execute mappings without using the results
 
-* [`console`](console.html): 
-Use [Console Target](console.html) to dump the contents of a mapping onto the console
+* [`console`](console.md): 
+Use [Console Target](console.md) to dump the contents of a mapping onto the console
 
-* [`copy`](copy.html): 
+* [`copy`](copy.md): 
 
-* [`copyFile`](copy-file.html): 
+* [`copyFile`](copy-file.md): 
 
-* [`count`](count.html): 
+* [`count`](count.md): 
 
-* [`getFile`](get-file.html): 
+* [`getFile`](get-file.md): 
 
-* [`hiveDatabase`](hive-database.html): 
+* [`hiveDatabase`](hive-database.md): 
 
-* [`local`](local.html): 
-Use the [Local Target](local.html) to write into a local CSV file
+* [`local`](local.md): 
+Use the [Local Target](local.md) to write into a local CSV file
 
-* [`relation`](relation.html): 
-Use the [Relation Target](relation.html) to write into a relation
+* [`relation`](relation.md): 
+Use the [Relation Target](relation.md) to write into a relation
 
 ## Metrics
 

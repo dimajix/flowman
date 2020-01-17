@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Alias Mapping
-permalink: /spec/mapping/alias.html
----
+
 # Alias Mapping
 
 Provides a new name for an existing mapping. This may be helpful for placeholders

@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Lifecycles
-permalink: /lifecycle.html
----
+
 # Lifecycles and Phases
 
 Flowman sees data as artifacts with a common lifecycle. The full lifecycle consists out of specific phases, as follows:

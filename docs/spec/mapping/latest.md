@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Latest Mapping
-permalink: /spec/mapping/latest.html
----
+
 # Latest Mapping
 
 The `latest` mapping keeps only the latest (newest) record per ID. This is useful

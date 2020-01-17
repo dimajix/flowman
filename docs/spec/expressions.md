@@ -1,8 +1,3 @@
----
-layout: page
-title: Flowman Expression Language
-permalink: /spec/expressions.html
----
 # Flowman Expressions
 
 Flowman allows to use *expressions* at many places in the YAML specification files. For example

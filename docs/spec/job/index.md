@@ -1,8 +1,3 @@
----
-layout: page
-title: Flowman Job Specification
-permalink: /spec/job/index.html
----
 # Flowman Jobs
 
 In addition to a completely data centric data flow specification, Flowman also supports so called *jobs*, which simply
@@ -60,7 +55,7 @@ For each job Flowman provides the following execution metrics:
 
 A Job optionally can have parameters, which play a special role. First they have to be
 specified when a job is run from the command line (via `flowexec job run param=value`) or
-when a job is called is a subroutine via a [`call`](call.html) task.
+when a job is called is a subroutine via a [`call`](call.md) task.
 
 Second flowman can be conifgured such that every run of a job is logged into a database. The
 log entry includes the job's name and also all values for all parameters. This way it is 

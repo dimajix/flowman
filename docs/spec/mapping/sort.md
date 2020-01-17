@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Sort Mapping
-permalink: /spec/mapping/sort.html
----
+
 # Sort Mapping
 The `sort` mapping simply sorts data by the specified columns and sort order. Note that 
 downstream mappings may destroy the sort order again, so this should be the last operation

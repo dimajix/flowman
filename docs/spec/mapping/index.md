@@ -1,8 +1,3 @@
----
-layout: page
-title: Flowman Mapping Specification
-permalink: /spec/mapping/index.html
----
 # Flowman Mapping Specification
 
 Flowman uses the notion of `mappings` in order to specify the data flow and all data 
@@ -91,78 +86,78 @@ values are
 Flowman supports different kinds of operations, the following list gives you an exhaustive
 overview of all mappings implemented by Flowman
 
-* [`aggregate`](aggregate.html): 
-Use an [Aggregation](aggregate.html) mapping to perform aggregations for creating cubes
+* [`aggregate`](aggregate.md): 
+Use an [Aggregation](aggregate.md) mapping to perform aggregations for creating cubes
 
-* [`alias`](alias.html): 
-Use an [Alias](alias.html) to provide a new name to an existing mapping
+* [`alias`](alias.md): 
+Use an [Alias](alias.md) to provide a new name to an existing mapping
 
-* [`assemble`](assemble.html): 
-Use an [Assemble](assemble.html) mapping to reassemble a nested data structure like from JSON or Avro
+* [`assemble`](assemble.md): 
+Use an [Assemble](assemble.md) mapping to reassemble a nested data structure like from JSON or Avro
 
-* [`coalesce`](coalesce.html):
+* [`coalesce`](coalesce.md):
 Reduces the number of Spark partitions by logically merging partitions together.  
 
-* [`conform`](conform.html): 
-Using [Conforming](conform.html) you can apply a schema with a fixed order of fields and data types
+* [`conform`](conform.md): 
+Using [Conforming](conform.md) you can apply a schema with a fixed order of fields and data types
 
-* [`deduplicate`](deduplicate.html): 
-Use a [Deduplicate](deduplicate.html) mapping for deduplicating records based on specific columns
+* [`deduplicate`](deduplicate.md): 
+Use a [Deduplicate](deduplicate.md) mapping for deduplicating records based on specific columns
 
-* [`distinct`](distinct.html): 
-Use a [Distinct](distinct.html) mapping for removing duplicates based on all columns
+* [`distinct`](distinct.md): 
+Use a [Distinct](distinct.md) mapping for removing duplicates based on all columns
 
-* [`explode`](exploe.html): 
-With [Explode](explode.html) you can create multiple records from an array
+* [`explode`](explode.md): 
+With [Explode](explode.md) you can create multiple records from an array
 
-* [`extend`](extend.html): 
-With [Extend](extend.html) you can add new columns to a mapping
+* [`extend`](extend.md): 
+With [Extend](extend.md) you can add new columns to a mapping
 
-* [`extractJson`](json-extract.html): 
-[Extract columns from JSON](json-extract.html) for transforming raw JSON data into structured data 
+* [`extractJson`](json-extract.md): 
+[Extract columns from JSON](json-extract.md) for transforming raw JSON data into structured data 
 
-* [`filter`](filter.html): 
-Use [Filter](filter.html) to apply filter logic (essentially a `WHERE` condition)
+* [`filter`](filter.md): 
+Use [Filter](filter.md) to apply filter logic (essentially a `WHERE` condition)
 
-* [`flatten`](flatten.html): 
-Use [Flatten](flatten.html) to flatten the schema of a nested data structure into a simple list of columns.
+* [`flatten`](flatten.md): 
+Use [Flatten](flatten.md) to flatten the schema of a nested data structure into a simple list of columns.
 
-* [`join`](join.html): 
-Use a [Join](join.html) to merge two mappings based on a common key or a join condition
+* [`join`](join.md): 
+Use a [Join](join.md) to merge two mappings based on a common key or a join condition
 
-* [`latest`](latest.html):
+* [`latest`](latest.md):
 Select the latest version of of multiple records with a unique key and a timestamp 
 
-* [`project`](project.html): 
-Using [Projections](project.html) you can select a subset of columns
+* [`project`](project.md): 
+Using [Projections](project.md) you can select a subset of columns
 
-* [`read` / `readRelation`](read-relation.html):
-A [Read](read-relation.html) mapping reads in data from a relation.
+* [`read` / `readRelation`](read-relation.md):
+A [Read](read-relation.md) mapping reads in data from a relation.
  
-* [`rebalance`](rebalance.html):
+* [`rebalance`](rebalance.md):
 Shuffles data to produce a specified amount of Spark partitions with an approximately equal number
 of records.
 
-* [`repartition`](repartition.html):
+* [`repartition`](repartition.md):
 Changes the number of (Spark) partitions of the result of a mapping.
 
-* [`select`](select.html):
+* [`select`](select.md):
 Evaluate arbitrary SQL expressions
 
-* [`schema`](schema.html):
+* [`schema`](schema.md):
 Apply a schema to input data
 
-* [`sort`](sort.html):
-[Sort](sort.html) records according to column values
+* [`sort`](sort.md):
+[Sort](sort.md) records according to column values
 
-* [`sql`](sql.html): An [SQL](sql.html) mapping allows to specify any SQL statement supported by
+* [`sql`](sql.md): An [SQL](sql.md) mapping allows to specify any SQL statement supported by
 Spark SQL. You can reference any other mapping as tables within the statement.
 
-* [`union`](union.html):
-With a [Union](union.html) mapping, all records of multiple mappings can be appended to a single 
+* [`union`](union.md):
+With a [Union](union.md) mapping, all records of multiple mappings can be appended to a single 
 new mapping. Essentially works like a SQL `UNION ALL`. 
 
-* [`unpackJson`](json-unpack.html): 
-[Unpack JSON columns](json-unpack.html) for extracting individual columns containing raw JSON data.
+* [`unpackJson`](json-unpack.md): 
+[Unpack JSON columns](json-unpack.md) for extracting individual columns containing raw JSON data.
 
-* [`update`](update.html):
+* [`update`](update.md):

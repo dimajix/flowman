@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Conform Mapping
-permalink: /spec/mapping/conform.html
----
+
 # Conform Mapping
 The `conform` mapping performs simply name and type mangling transformations to conform data to some standard. For
 example you can replace all date columns by timestamp columns (this is required for older versions of Hive) or

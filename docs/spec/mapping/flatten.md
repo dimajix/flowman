@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Flatten Mapping
-permalink: /spec/mapping/flatten.html
----
+
 # Flatten Mapping
 The `flatten` mapping flattens all nested structure into a flat list of simple columns. The columns have their original
 path encoded into their name, such that conflicts between same names in different sub trees are avoided. You can also

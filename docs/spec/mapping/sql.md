@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman SQL Mapping
-permalink: /spec/mapping/sql.html
----
+
 # SQL Mapping
 The `sql` mapping allows to execute any SQL transformation which contains Spark SQL code.
 

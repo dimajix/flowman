@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman File Relation
-permalink: /spec/relation/file.html
----
+
 # File Relations
 
 ## Example

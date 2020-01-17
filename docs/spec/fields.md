@@ -1,8 +1,3 @@
----
-layout: page
-title: Flowman Fields & Values
-permalink: /spec/fields.html
----
 # Fields & Values
 
 In various Flowman places, flowman makes use of data type definitions. These are used for describing the layout of

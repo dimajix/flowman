@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Schema Mapping
-permalink: /spec/mapping/schema.html
----
+
 # Schema Mapping
 The `schema` mapping performs a *projection* of an input mapping onto a specific set of columns
 and also performs type conversions. This corresponds to a simple SQL `SELECT` with a series of

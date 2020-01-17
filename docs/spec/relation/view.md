@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Hive View Relation
-permalink: /spec/relation/view.html
----
+
 # Hive View Relations
 
 ## Example

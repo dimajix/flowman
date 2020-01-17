@@ -1,9 +1,3 @@
----
-layout: page
-title: Flowman
-permalink: /index.html
----
-
 # What is Flowman
 
 Flowman is a Spark based ETL program that simplifies the act of writing data transformations.
@@ -30,14 +24,14 @@ and schema information) in a single place managed by a single program.
 # Where to go from here
 
 ## Installation
-* [Flowman Installation](installation.html): Installation Guide
+* [Flowman Installation](installation.md): Installation Guide
 
 ## CLI Documentation
 
 Flowman provides a command line utility (CLI) for running flows. Details are described in the
 following sections:
 
-* [Flowman CLI](cli/flowexec.html): Documentation of the Flowman CLI
+* [Flowman CLI](cli/flowexec.md): Documentation of the Flowman CLI
 
 
 ## Specification Documentation
@@ -46,9 +40,9 @@ So called specifications describe the logical data flow, data sources and more. 
 specification contains multiple entities like mappings, data models and jobs to be executed.
 More detail on all these items is described in the following sections:
 
-* [Specification Overview](spec/index.html): An introduction for writing new flows
-* [Mappings](spec/mapping/index.html): Documentation of available data transformations
-* [Relations](spec/relation/index.html): Documentation of available data sources and sinks
-* [Targets](spec/target/index.html): Documentation of available build targets
-* [Schema](spec/schema/index.html): Documentation of available schema descriptions
-* [Jobs](spec/job/index.html): Documentation of creating jobs and building targets
+* [Specification Overview](spec/index.md): An introduction for writing new flows
+* [Mappings](spec/mapping/index.md): Documentation of available data transformations
+* [Relations](spec/relation/index.md): Documentation of available data sources and sinks
+* [Targets](spec/target/index.md): Documentation of available build targets
+* [Schema](spec/schema/index.md): Documentation of available schema descriptions
+* [Jobs](spec/job/index.md): Documentation of creating jobs and building targets

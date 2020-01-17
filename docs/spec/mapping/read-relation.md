@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Read Mapping
-permalink: /spec/mapping/read-relation.html
----
+
 # Read Mapping
 
 

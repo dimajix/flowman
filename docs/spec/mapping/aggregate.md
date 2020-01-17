@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Aggregate Mapping
-permalink: /spec/mapping/aggregate.html
----
+
 # Aggregate Mapping
 
 ## Example

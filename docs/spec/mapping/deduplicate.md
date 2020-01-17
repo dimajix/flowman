@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Deduplicate Mapping
-permalink: /spec/mapping/deduplicate.html
----
+
 # Deduplicate Mapping
 
 ## Example

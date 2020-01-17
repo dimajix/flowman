@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Copy Target
-permalink: /spec/target/copy.html
----
+
 # Copy Target
 
 The copy target can be used to copy contents of one data set to another. A dataset can be 'file', 'mapping', 'relation'

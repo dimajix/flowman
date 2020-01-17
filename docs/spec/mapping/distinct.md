@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Distinct Mapping
-permalink: /spec/mapping/distinct.html
----
+
 # Distinct Mapping
 
 

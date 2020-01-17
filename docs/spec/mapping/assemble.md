@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Assemble Mapping
-permalink: /spec/mapping/assemble.html
----
+
 # Assemble Mapping
 
 The assemble mapping is used to reassemble data with a possibly nested schema. For example it is possible to extract

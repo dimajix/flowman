@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Repartition Mapping
-permalink: /spec/mapping/repartition.html
----
+
 # Repartition Mapping
 
 Shuffles data to produce a specified amount of Spark partitions by using the

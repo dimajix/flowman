@@ -1,8 +1,4 @@
----
-layout: page
-title: Installing Flowman
-permalink: /installation.html
----
+
 # Flowman Installation Guide
 
 ## Configuration

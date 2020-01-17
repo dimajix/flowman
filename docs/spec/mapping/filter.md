@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Filter Mapping
-permalink: /spec/mapping/filter.html
----
+
 # Filter Mapping
 
 ## Example

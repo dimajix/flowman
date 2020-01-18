@@ -43,6 +43,14 @@ Specifies the list of dimensions to aggregate on
 Specifies the list of aggregations to perform. Each aggregation has a name (the key in the
 map) and an aggregation expression. The name corresponds to the outgoing column name.
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* aggregation.
+
+
+## Outputs
+* `main` - the only output of the aggregate mapping
+
+
 ## Description
 Essentially the `aggregate` mapping performs a SQL `SELECT ... GROUP BY ...` operations. The
 example above would be equivalent to the following SQL statemtn:

@@ -54,13 +54,13 @@ case class DeleteFileTarget(
 
 
 class DeleteFileTargetSpec extends TargetSpec {
-    @JsonProperty(value = "path", required = true) private var path: String = ""
+    @JsonProperty(value = "target", required = true) private var target: String = ""
     @JsonProperty(value = "recursive", required = false) private var recursive: String = "true"
 
     override def instantiate(context: Context): DeleteFileTarget = {
         DeleteFileTarget(
             instanceProperties(context),
-            new Path(context.evaluate(path)),
+            new Path(context.evaluate(target)),
             context.evaluate(recursive).toBoolean
         )
     }

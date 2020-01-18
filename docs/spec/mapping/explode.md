@@ -1,4 +1,3 @@
-
 # Explode Mapping
 
 The `explode` mapping is used for creating multiple records from an array field. The mapping has
@@ -69,6 +68,10 @@ You can either drop some columns, keep columns or also rename columns.
   * `drop` **(optional)** *(type: list)*
   * `keep` **(optional)** *(type: list)*
   * `rename` **(optional)** *(type: map)*
+
   
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

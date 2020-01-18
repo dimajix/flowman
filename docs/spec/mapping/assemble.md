@@ -71,6 +71,9 @@ Cache mode for the results of this mapping. Supported values are
 * `input` **(mandatory)** *(string)*:
 The name of the input mapping
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* assembling.
+
 * `columns` **(mandatory)** *(objects)*:
 This part contains the assembling specification. It consists of an array with the following possible sub elements:
   * `append` - Appends one or more columns from the input to the result
@@ -139,6 +142,10 @@ This part contains the assembling specification. It consists of an array with th
         Specify the name of the new nested structure 
     * `columns` **(mandatory)** *(map: string)*:
         Specify all columns in the incoming data which should be put together as a new structure
+
+
+## Outputs
+* `main` - the only output of the aggregate mapping
 
 
 ## Description

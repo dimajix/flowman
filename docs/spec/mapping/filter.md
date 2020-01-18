@@ -32,6 +32,10 @@ Specifies the name of the input mapping to be filtered.
 Specifies the condition as a SQL expression to filter on
 
 
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description
 The `filter` mapping essentially corresponds to a SQL `WHERE` or `HAVING` clause. The example
 above would be equivalent to the following SQL statement:

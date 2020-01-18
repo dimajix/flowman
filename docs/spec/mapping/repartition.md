@@ -45,6 +45,10 @@ The number of output partitions
 Specifies if the records within each partition should also be sorted
 
 
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description
 
 This transformation can be used as part of a processing optimization where you want

@@ -35,4 +35,8 @@ The name of the input mapping
 The number of output partitions
 
 
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description

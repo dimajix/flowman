@@ -1,15 +1,15 @@
-# Flowman JSON Schema
-The *JSON schema* refers to a JSON schema definition. Note that by the nature of JSON, there is no well defined
-ordering of fields within the definition.
+# Flowman Spark Schema
+
+The *Spark schema* refers to a schema produced by Apache Spark.
 
 ## Example
 ```yaml
-kind: json
+kind: spark
 file: "${project.basedir}/test/data/results/${relation}/schema.json"
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `json`
+* `kind` **(mandatory)** *(type: string)*: `spark`
 * `file` **(optional)** *(type: string)*:
 Specifies the path of a schema file.
 * `url` **(optional)** *(type: string)*:

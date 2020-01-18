@@ -73,4 +73,10 @@ Allows accepting quoting of all character using backslash quoting mechanism
 Allows JSON Strings to contain unquoted control characters (ASCII characters with value less
 than 32, including tab and line feed characters) or not.
 
+
+## Outputs
+* `main` - the primary output of the mapping containing the parsed JSON records
+* `error` - the error output of the mapping containing all unparsable records
+
+
 ## Description

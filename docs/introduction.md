@@ -1,4 +1,6 @@
-# What is Flowman
+# Flowman Introduction
+
+## What is Flowman
 
 Flowman is a Spark based ETL program that simplifies the act of writing data transformations.
 The main idea is that users write so called *specifications* in purely declarative YAML files
@@ -11,7 +13,7 @@ managing physical data models, i.e. Hive tables. Flowman can create such tables 
 specification with the correct schema. This helps to keep all aspects (like transformations
 and schema information) in a single place managed by a single program.
 
-## Noteable Features
+### Noteable Features
 
 * Declarative syntax in YAML files
 * Data model management (Create and Destroy Hive tables or file based storage)
@@ -21,20 +23,22 @@ and schema information) in a single place managed by a single program.
 * Extendable via Plugins
 
 
-# Where to go from here
+## Where to go from here
 
-## Installation
+### Installation
 * [Flowman Installation](installation.md): Installation Guide
 
-## CLI Documentation
+
+### CLI Documentation
 
 Flowman provides a command line utility (CLI) for running flows. Details are described in the
 following sections:
 
-* [Flowman CLI](cli/flowexec.md): Documentation of the Flowman CLI
+* [Flowman Executor](cli/flowexec.md): Documentation of the Flowman Executor CLI
+* [Flowman Server](cli/flowserver.md): Documentation of the Flowman Server CLI
 
 
-## Specification Documentation
+### Specification Documentation
 
 So called specifications describe the logical data flow, data sources and more. A full
 specification contains multiple entities like mappings, data models and jobs to be executed.
@@ -46,3 +50,8 @@ More detail on all these items is described in the following sections:
 * [Targets](spec/target/index.md): Documentation of available build targets
 * [Schema](spec/schema/index.md): Documentation of available schema descriptions
 * [Jobs](spec/job/index.md): Documentation of creating jobs and building targets
+
+
+### Cookbooks
+
+* [Testing](cookbook/testing.md) How to implement tests in Flowman

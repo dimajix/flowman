@@ -35,5 +35,12 @@ Specifies the name of the input mapping to be filtered.
 
 * `columns` **(mandatory)** *(type: list:string)*:
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* projection.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

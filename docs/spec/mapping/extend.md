@@ -36,6 +36,11 @@ Specifies the name of the input mapping.
 * `columns` **(optional)** *(type: map:string)*:
 Specifies a map of new column names with an expression for calculating them.
 
+
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description
 Essentially an `extend` mapping works like a simple SQL `SELECT` statement with all incoming
 columns select by `*` and additional named columns. For example the mapping above would be

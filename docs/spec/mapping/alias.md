@@ -29,5 +29,10 @@ Cache mode for the results of this mapping. Supported values are
 
 * `input` **(mandatory)** *(string)*:
 
+
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description
 An alias mapping simply provides an additional name to the input mapping.

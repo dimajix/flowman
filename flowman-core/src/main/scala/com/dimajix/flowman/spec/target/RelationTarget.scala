@@ -208,7 +208,7 @@ object RelationTargetSpec {
     }
 }
 class RelationTargetSpec extends TargetSpec {
-    @JsonProperty(value="input", required=true) private var input:String = ""
+    @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:String = _
     @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
@@ -218,7 +218,7 @@ class RelationTargetSpec extends TargetSpec {
     override def instantiate(context: Context): RelationTarget = {
         RelationTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             RelationIdentifier.parse(context.evaluate(relation)),
             context.evaluate(mode),
             context.evaluate(partition),

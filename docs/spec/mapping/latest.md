@@ -39,3 +39,7 @@ the record with the highest value will be kept.
 * `keyColumns`
 Specifies one or more columns forming a primary key or ID. Different versions of the
 same entity are then distinguished by the `versionColumn` 
+
+
+## Outputs
+* `main` - the only output of the mapping

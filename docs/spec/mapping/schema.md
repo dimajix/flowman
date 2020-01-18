@@ -40,5 +40,12 @@ Specifies the list of column names (key) with their type (value)
 * `schema` **(optional)** *(type: string)*:
 As an alternative of specifying a list of columns you can also directly specify a schema.
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* schema operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

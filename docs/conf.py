@@ -175,7 +175,10 @@ from recommonmark.transform import AutoStructify
 
 def setup(app):
     app.add_config_value('recommonmark_config', {
-        'auto_toc_tree_section': 'Contents',
+        #'auto_toc_tree_section': 'Contents',
+        'auto_toc_tree_section': False,
+        'enable_auto_toc_tree': True,
+        'enable_eval_rst': True,
         'enable_math': False,
         'enable_inline_math': False
     }, True)

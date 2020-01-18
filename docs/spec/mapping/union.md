@@ -40,6 +40,13 @@ will be used.
  If set to true, only distinct records will be returned (using the specified or inferred set 
  of columns).
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* the union operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description
 

@@ -47,6 +47,10 @@ The name of a file containing the SQL to execute.
 A url pointing to a resource containing the SQL to execute.
 
 
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description
 The `recursiveSql` mapping allows to execute recursive SQL statements, which refer to themselves. The result of each
 step is made available as a temporary table `__this__`. Currently the query has to be a `UNION` where the first part

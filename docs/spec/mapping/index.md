@@ -1,4 +1,4 @@
-# Flowman Mapping Specification
+# Flowman Mappings
 
 Flowman uses the notion of `mappings` in order to specify the data flow and all data 
 transformations. A mapping somewhat corresponds to a temporary view in the SQL world: You 
@@ -86,78 +86,10 @@ values are
 Flowman supports different kinds of operations, the following list gives you an exhaustive
 overview of all mappings implemented by Flowman
 
-* [`aggregate`](aggregate.md): 
-Use an [Aggregation](aggregate.md) mapping to perform aggregations for creating cubes
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-* [`alias`](alias.md): 
-Use an [Alias](alias.md) to provide a new name to an existing mapping
-
-* [`assemble`](assemble.md): 
-Use an [Assemble](assemble.md) mapping to reassemble a nested data structure like from JSON or Avro
-
-* [`coalesce`](coalesce.md):
-Reduces the number of Spark partitions by logically merging partitions together.  
-
-* [`conform`](conform.md): 
-Using [Conforming](conform.md) you can apply a schema with a fixed order of fields and data types
-
-* [`deduplicate`](deduplicate.md): 
-Use a [Deduplicate](deduplicate.md) mapping for deduplicating records based on specific columns
-
-* [`distinct`](distinct.md): 
-Use a [Distinct](distinct.md) mapping for removing duplicates based on all columns
-
-* [`explode`](explode.md): 
-With [Explode](explode.md) you can create multiple records from an array
-
-* [`extend`](extend.md): 
-With [Extend](extend.md) you can add new columns to a mapping
-
-* [`extractJson`](json-extract.md): 
-[Extract columns from JSON](json-extract.md) for transforming raw JSON data into structured data 
-
-* [`filter`](filter.md): 
-Use [Filter](filter.md) to apply filter logic (essentially a `WHERE` condition)
-
-* [`flatten`](flatten.md): 
-Use [Flatten](flatten.md) to flatten the schema of a nested data structure into a simple list of columns.
-
-* [`join`](join.md): 
-Use a [Join](join.md) to merge two mappings based on a common key or a join condition
-
-* [`latest`](latest.md):
-Select the latest version of of multiple records with a unique key and a timestamp 
-
-* [`project`](project.md): 
-Using [Projections](project.md) you can select a subset of columns
-
-* [`read` / `readRelation`](read-relation.md):
-A [Read](read-relation.md) mapping reads in data from a relation.
- 
-* [`rebalance`](rebalance.md):
-Shuffles data to produce a specified amount of Spark partitions with an approximately equal number
-of records.
-
-* [`repartition`](repartition.md):
-Changes the number of (Spark) partitions of the result of a mapping.
-
-* [`select`](select.md):
-Evaluate arbitrary SQL expressions
-
-* [`schema`](schema.md):
-Apply a schema to input data
-
-* [`sort`](sort.md):
-[Sort](sort.md) records according to column values
-
-* [`sql`](sql.md): An [SQL](sql.md) mapping allows to specify any SQL statement supported by
-Spark SQL. You can reference any other mapping as tables within the statement.
-
-* [`union`](union.md):
-With a [Union](union.md) mapping, all records of multiple mappings can be appended to a single 
-new mapping. Essentially works like a SQL `UNION ALL`. 
-
-* [`unpackJson`](json-unpack.md): 
-[Unpack JSON columns](json-unpack.md) for extracting individual columns containing raw JSON data.
-
-* [`update`](update.md):
+   *
+```

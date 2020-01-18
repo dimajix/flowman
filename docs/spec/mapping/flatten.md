@@ -39,4 +39,12 @@ Note that the naming will only be used for concatenating column names and not fo
 This means that if your column names are using camel case and you specify `snakeCase` then the path elements are left
 unchanged but concatenated using an underscore (`_`).
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* flatten operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description

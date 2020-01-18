@@ -1,5 +1,5 @@
+# Flowman Relations
 
-# Flowman Relation Specification
 Physical data sources (like Hive tables, relational SQL databases, files etc) are specified
 using so called *relations*. Data flows can read and write from and to relations via 
 appropriate mappings ([Read Mapping](../mapping/read-relation.md)) or build targets ([Relation

@@ -72,12 +72,12 @@ case class CountTarget(
 
 
 class CountTargetSpec extends TargetSpec {
-    @JsonProperty(value = "input", required=true) private var input:String = _
+    @JsonProperty(value = "mapping", required=true) private var mapping:String = _
 
     override def instantiate(context: Context): CountTarget = {
         CountTarget(
             Target.Properties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input))
+            MappingOutputIdentifier.parse(context.evaluate(mapping))
         )
     }
 }

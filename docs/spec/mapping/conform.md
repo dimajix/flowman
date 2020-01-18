@@ -1,4 +1,3 @@
-
 # Conform Mapping
 The `conform` mapping performs simply name and type mangling transformations to conform data to some standard. For
 example you can replace all date columns by timestamp columns (this is required for older versions of Hive) or
@@ -44,6 +43,13 @@ Specifies the list of types and how they should be replaced
 
 * `flatten` **(optional)** *(type: boolean)* *(default: false)*:
 Flattens all nested structs into a flat list of columns if set to `true`
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* conforming.
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

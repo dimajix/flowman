@@ -43,5 +43,12 @@ Specifies the list of columns and types to read from the relation. This schema
 will be applied to the records after they have been read and interpreted by the
 underlying source.
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied for reading only a subset of records.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

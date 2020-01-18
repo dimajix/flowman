@@ -49,6 +49,10 @@ The name of a file containing the SQL to execute.
 A url pointing to a resource containing the SQL to execute.
 
 
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description
 The `sql` mapping is easy to use, you can simply type in the SQL to be executed. Flowman will
 take care of instantiating all upstream mappings, which are refernced as table names in the

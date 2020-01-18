@@ -170,7 +170,7 @@ case class LocalTarget(
 
 
 class LocalTargetSpec extends TargetSpec {
-    @JsonProperty(value="input", required=true) private var input:String = _
+    @JsonProperty(value="mapping", required=true) private var mapping:String = _
     @JsonProperty(value="filename", required=true) private var filename:String = _
     @JsonProperty(value="encoding", required=true) private var encoding:String = "UTF-8"
     @JsonProperty(value="header", required=true) private var header:String = "true"
@@ -183,7 +183,7 @@ class LocalTargetSpec extends TargetSpec {
     override def instantiate(context: Context): LocalTarget = {
         LocalTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             context.evaluate(filename),
             context.evaluate(encoding),
             context.evaluate(header).toBoolean,

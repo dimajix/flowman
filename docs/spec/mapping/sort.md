@@ -36,4 +36,12 @@ Cache mode for the results of this mapping. Supported values are
 Specifies the sort columns. The column names are specified as the key and the sort order as
 the values. `asc` and `desc` are supported for sort order. 
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* the sort operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description

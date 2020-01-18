@@ -64,12 +64,14 @@ on the data processing result (for example the processing date range). Other set
 credentials should not be provided as job parameters, but as normal environment variables
 instead.
 
+
 ## Job Isolation
 
 Because a Job might be invoked with different values for the same set of parameters, each 
 Job will be executed in a logically isolated environment, where all cached data is cleared
 after the Job is finished. This way it is ensured that all mappings which rely on specific
 parameter values, are reevaluated when the same Job is run mutliple times within a project.
+
 
 ## Metrics
 

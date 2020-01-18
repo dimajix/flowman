@@ -42,4 +42,12 @@ of column names to join on. These columns need to be existing in all input mappi
 Specifies the join mode. The following modes are supported:
 `inner`, `cross`, `outer`, `full`, `full_outer`, `left`, `left_outer`, `right`, `right_outer`.
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* join operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
+
 ## Description

@@ -1,4 +1,4 @@
-# Flowman Build Targets
+# Build Targets
 
 From a top level perspective, Flowman works like a build tool like make or maven. Of course in contrast to classical
 build tools, the project specification in Flowman also contains the logic to be build (normally that is separated
@@ -8,41 +8,15 @@ Each target supports at least some [build phases](../../lifecycle.md)
 
 
 ## Target Types
-
 Flowman supports different target types, each used for a different kind of a physical entity or build recipe.
 
-* [`blackhole`](blackhole.md): 
-Use a [Blackhole Target](blackhole.md) to execute mappings without using the results
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-* [`console`](console.md): 
-Use [Console Target](console.md) to dump the contents of a mapping onto the console
-
-* [`copy`](copy.md): 
-Use the [Copy Target](copy.md) to copy one [dataset](../dataset/index.md) to another one.
-
-* [`copyFile`](copy-file.md): 
-
-* [`count`](count.md):
-Use [Count Target](count.md) to count the records of a given mapping.
-
-* [`file`](file.md): 
-Use the [File Target](file.md) to write to files in a shared filesystem like HDFS or S3.
-
-* [`getFile`](get-file.md): 
-Use the [Get File Target](get-file.md) to copy a file from a shared filesystem like HDFS or S3 to the local filesystem. 
-
-* [`hiveDatabase`](hive-database.md): 
-Use the [Hive Database Target](hive-database.md) to create a new Hive database
-
-* [`local`](local.md): 
-Use the [Local Target](local.md) to write into a local CSV file
-
-* [`putFile`](put-file.md): 
-Use the [Put File Target](put-file.md) to copy a file from the local filesystem to a shared filesystem like HDFS or S3. 
-
-* [`relation`](relation.md): 
-Use the [Relation Target](relation.md) to write into a relation
-
+   *
+```
 
 ## Metrics
 

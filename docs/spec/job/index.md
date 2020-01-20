@@ -1,4 +1,4 @@
-# Flowman Jobs
+# Jobs
 
 In addition to a completely data centric data flow specification, Flowman also supports so called *jobs*, which simply
 provide a list of targets to be built. The correct build order of all specified build targets is determined

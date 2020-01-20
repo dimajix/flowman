@@ -1,4 +1,4 @@
-# Flowman Mappings
+# Mappings
 
 Flowman uses the notion of `mappings` in order to specify the data flow and all data 
 transformations. A mapping somewhat corresponds to a temporary view in the SQL world: You 

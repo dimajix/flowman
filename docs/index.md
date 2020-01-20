@@ -55,3 +55,26 @@ More detail on all these items is described in the following sections:
 ### Cookbooks
 
 * [Testing](cookbook/testing.md) How to implement tests in Flowman
+
+
+## Table of Contents
+
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   introduction
+   installation
+   lifecycle
+   spec/index
+   spec/relation/index
+   spec/mapping/index
+   spec/target/index
+   spec/job/index
+   spec/dataset/index
+   spec/schema/index
+   spec/connection/index
+   spec/metric/index
+   cookbook/index
+```

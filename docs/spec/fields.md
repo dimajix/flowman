@@ -1,4 +1,4 @@
-# Fields & Values
+# Fields, Data Types & Values
 
 In various places, Flowman makes use of data type definitions. These are used for describing the layout of
 data sources and sinks like CSV files but they are also used for describing external tables like Hive 

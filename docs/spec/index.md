@@ -1,4 +1,4 @@
-# Flowman Flow Specification
+# Project Specification
 
 Flowman uses so called *flow specifications* which contain all details of data transformations
 and additional processing steps. Flow specifications are provided by the user as (potentially 
@@ -39,3 +39,4 @@ Flowman has a couple of different main entities, which are documented seperately
 ## Misc Documentation
 * [Fields](fields.md)
 * [Expressions](expressions.md)
+

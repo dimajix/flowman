@@ -1,4 +1,4 @@
-# Flowman Profiles
+# Profiles
 
 Flowman supports so called *profiles* which contain again some specifications like environment
 variables, Spark configurations and connections. But in contrast to a module definition, these

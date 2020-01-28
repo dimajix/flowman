@@ -58,7 +58,6 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         )
 
         target.requires(Phase.CREATE) should be (Set())
-        target.requires(Phase.MIGRATE) should be (Set())
         target.requires(Phase.BUILD) should be (Set())
         target.requires(Phase.VERIFY) should be (Set(
             ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))
@@ -81,7 +80,6 @@ class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         )
 
         target.requires(Phase.CREATE) should be (Set())
-        target.requires(Phase.MIGRATE) should be (Set())
         target.requires(Phase.BUILD) should be (Set())
         target.requires(Phase.VERIFY) should be (Set(
             ResourceIdentifier.ofFile(new Path("no_such_file")),

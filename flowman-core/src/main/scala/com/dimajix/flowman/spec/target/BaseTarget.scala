@@ -62,7 +62,7 @@ abstract class BaseTarget extends Target {
      * Returns all phases which are implemented by this target in the execute method
      * @return
      */
-    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.MIGRATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
 
     /**
       * Returns a list of physical resources produced by this target
@@ -85,7 +85,6 @@ abstract class BaseTarget extends Target {
     override def execute(executor: Executor, phase: Phase) : Unit = {
         phase match {
             case Phase.CREATE => create(executor)
-            case Phase.MIGRATE => migrate(executor)
             case Phase.BUILD => build(executor)
             case Phase.VERIFY => verify(executor)
             case Phase.TRUNCATE => truncate(executor)
@@ -99,7 +98,6 @@ abstract class BaseTarget extends Target {
       * @param executor
       */
     protected def create(executor:Executor) : Unit = {}
-    protected def migrate(executor:Executor) : Unit = {}
 
     /**
       * Abstract method which will perform the output operation. All required tables need to be

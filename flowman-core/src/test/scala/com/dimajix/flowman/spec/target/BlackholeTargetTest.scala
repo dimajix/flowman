@@ -42,7 +42,7 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
                |targets:
                |  out:
                |    kind: blackhole
-               |    input: some_table
+               |    mapping: some_table
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()

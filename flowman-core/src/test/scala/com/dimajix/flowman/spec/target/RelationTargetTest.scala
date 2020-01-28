@@ -45,7 +45,7 @@ class RelationTargetTest extends FlatSpec with Matchers {
                |targets:
                |  out:
                |    kind: relation
-               |    input: some_table
+               |    mapping: some_table
                |    relation: some_relation
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -56,14 +56,12 @@ class RelationTargetTest extends FlatSpec with Matchers {
         target.kind should be ("relation")
 
         target.requires(Phase.CREATE) should be (Set())
-        target.requires(Phase.MIGRATE) should be (Set())
         target.requires(Phase.BUILD) should be (Set())
         target.requires(Phase.VERIFY) should be (Set())
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
 
         target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
-        target.provides(Phase.MIGRATE) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
         target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set())

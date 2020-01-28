@@ -72,7 +72,6 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
 }
 
 class CreateCommand extends PhaseCommand(Phase.CREATE)
-class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
 class VerifyCommand extends PhaseCommand(Phase.VERIFY)
 class TruncateCommand extends PhaseCommand(Phase.TRUNCATE)
 class DestroyCommand extends PhaseCommand(Phase.DESTROY)

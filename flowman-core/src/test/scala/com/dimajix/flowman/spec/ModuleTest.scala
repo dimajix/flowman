@@ -33,7 +33,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |targets:
               |  blackhole:
               |    kind: blackhole
-              |    input: input
+              |    mapping: input
               |relations:
               |  empty:
               |    kind: null
@@ -61,7 +61,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
               |targets:
               |  blackhole:
               |    kind: blackhole
-              |    input: input
+              |    mapping: input
               |
               |mappings:
               |  input:

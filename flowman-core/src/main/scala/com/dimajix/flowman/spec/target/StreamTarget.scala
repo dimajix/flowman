@@ -73,21 +73,15 @@ case class StreamTarget(
     override def create(executor: Executor) : Unit = {
         require(executor != null)
 
-        logger.info(s"Creating relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.create(executor, true)
-    }
-
-    /**
-      * Tries to migrate the given target to the newest schema
-      * @param executor
-      */
-    override def migrate(executor: Executor) : Unit = {
-        require(executor != null)
-
-        logger.info(s"Migrating relation '$relation'")
-        val rel = context.getRelation(relation)
-        rel.migrate(executor)
+        if (rel.exists(executor)) {
+            logger.info(s"Migrating existing relation '$relation'")
+            rel.migrate(executor)
+        }
+        else {
+            logger.info(s"Creating relation '$relation'")
+            rel.create(executor, true)
+        }
     }
 
     /**

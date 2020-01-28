@@ -73,9 +73,9 @@ case class RelationTarget(
      */
     override def phases : Set[Phase] = {
         if (mapping.nonEmpty)
-            Set(Phase.CREATE, Phase.MIGRATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+            Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
         else
-            Set(Phase.CREATE, Phase.MIGRATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+            Set(Phase.CREATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
     }
 
     /**
@@ -87,7 +87,7 @@ case class RelationTarget(
         val rel = context.getRelation(relation)
 
         phase match {
-            case Phase.CREATE|Phase.MIGRATE|Phase.DESTROY => rel.provides
+            case Phase.CREATE|Phase.DESTROY => rel.provides
             case Phase.BUILD if (mapping.nonEmpty) => rel.provides ++ rel.resources(partition)
             case _ => Set()
         }
@@ -101,7 +101,7 @@ case class RelationTarget(
         val rel = context.getRelation(relation)
 
         phase match {
-            case Phase.CREATE|Phase.MIGRATE|Phase.DESTROY => rel.requires
+            case Phase.CREATE|Phase.DESTROY => rel.requires
             case Phase.BUILD if (mapping.nonEmpty) => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
         }
@@ -114,21 +114,15 @@ case class RelationTarget(
     override def create(executor: Executor) : Unit = {
         require(executor != null)
 
-        logger.info(s"Creating relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.create(executor, true)
-    }
-
-    /**
-      * Tries to migrate the given target to the newest schema
-      * @param executor
-      */
-    override def migrate(executor: Executor) : Unit = {
-        require(executor != null)
-
-        logger.info(s"Migrating relation '$relation'")
-        val rel = context.getRelation(relation)
-        rel.migrate(executor)
+        if (rel.exists(executor)) {
+            logger.info(s"Migrating existing relation '$relation'")
+            rel.migrate(executor)
+        }
+        else {
+            logger.info(s"Creating relation '$relation'")
+            rel.create(executor, true)
+        }
     }
 
     /**

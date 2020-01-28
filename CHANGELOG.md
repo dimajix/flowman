@@ -1,4 +1,10 @@
-# Version 0.12.1 - 
+# Version 0.13.0
+
+* Merge 'migrate' phase into 'create' phase
+* Rename 'input' field to 'mapping' in most targets
+
+
+# Version 0.12.1 - 2020-01-15
 
 * Improve support for Swagger Schema
 * Fix infinite loop in recursiveSql

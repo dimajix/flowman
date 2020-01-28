@@ -45,7 +45,7 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
                |targets:
                |  out:
                |    kind: local
-               |    input: some_table
+               |    mapping: some_table
                |    filename: $outputPath
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")

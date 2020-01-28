@@ -119,14 +119,12 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         targetFilename.isFile() should be (true)
 
         target.provides(Phase.CREATE) should be(Set())
-        target.provides(Phase.MIGRATE) should be(Set())
         target.provides(Phase.BUILD) should be(Set(ResourceIdentifier.ofLocal(new File(tempDir, "/copy-relation-output.csv"))))
         target.provides(Phase.VERIFY) should be(Set())
         target.provides(Phase.TRUNCATE) should be(Set())
         target.provides(Phase.DESTROY) should be(Set())
 
         target.requires(Phase.CREATE) should be(Set())
-        target.requires(Phase.MIGRATE) should be(Set())
         target.requires(Phase.BUILD) should be(Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
         target.requires(Phase.VERIFY) should be(Set())
         target.requires(Phase.TRUNCATE) should be(Set())

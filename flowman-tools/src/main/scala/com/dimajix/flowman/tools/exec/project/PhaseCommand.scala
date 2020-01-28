@@ -93,8 +93,6 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
 
 class CreateCommand extends PhaseCommand(Phase.CREATE)
 
-class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
-
 class BuildCommand extends PhaseCommand(Phase.BUILD)
 
 class VerifyCommand extends PhaseCommand(Phase.VERIFY)

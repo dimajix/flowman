@@ -33,7 +33,6 @@ class TargetCommand extends NestedCommand {
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="validate",impl=classOf[ValidateCommand]),
         new SubCommand(name="create",impl=classOf[CreateCommand]),
-        new SubCommand(name="migrate",impl=classOf[MigrateCommand]),
         new SubCommand(name="build",impl=classOf[BuildCommand]),
         new SubCommand(name="verify",impl=classOf[VerifyCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),

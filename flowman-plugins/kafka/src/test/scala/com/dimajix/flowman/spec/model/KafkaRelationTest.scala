@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -122,7 +123,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         )
 
         val values = (0 to 20).map(_.toString).toDF
-        relation.write(executor, values, Map(), "append")
+        relation.write(executor, values, Map(), OutputMode.APPEND)
 
         val schema = StructType(Seq(StructField("value", BinaryType)))
         val df = relation.read(executor, Some(schema), Map()).select(expr("CAST(value AS STRING)"))
@@ -152,7 +153,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
             (col("value") * 2).cast(StringType) as "key",
             col("value").cast(StringType) as "value"
         )
-        relation.write(executor, values, Map(), "append")
+        relation.write(executor, values, Map(), OutputMode.APPEND)
 
         val schema = StructType(Seq(StructField("key", BinaryType), StructField("value", BinaryType)))
         val df = relation.read(executor, Some(schema), Map()).select(expr("CONCAT(CAST(key AS STRING),'_',CAST(value AS STRING))"))

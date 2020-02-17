@@ -25,6 +25,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -77,7 +78,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         outputPath.resolve("data.csv").toFile.exists() should be (false)
-        relation.write(executor, df, Map(), "overwrite")
+        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         outputPath.resolve("data.csv").toFile.exists() should be (true)
 
         relation.truncate(executor)
@@ -128,7 +129,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
-        relation.write(executor, df, Map(), "overwrite")
+        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         relation.destroy(executor)
@@ -178,7 +179,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
-        relation.write(executor, df, Map(), "overwrite")
+        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         relation.destroy(executor)
@@ -229,7 +230,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
-        relation.write(executor, df, Map(), "overwrite")
+        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         relation.destroy(executor)

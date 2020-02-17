@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -200,7 +201,7 @@ class HiveUnionTableRelation(
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
         require(executor != null)
 
         val catalog = executor.catalog
@@ -228,7 +229,7 @@ class HiveUnionTableRelation(
 
         // 4. Write to that table
         val relation = tableRelation(table, None)
-        relation.write(executor, df, partition, "overwrite")
+        relation.write(executor, df, partition, OutputMode.OVERWRITE)
     }
 
     /**

@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -142,7 +143,7 @@ class JdbcRelation(
       * @param partition
       * @param mode
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         require(executor != null)
         require(df != null)
         require(partition != null)
@@ -162,7 +163,7 @@ class JdbcRelation(
         if (partition.isEmpty) {
             // Write partition into DataBase
             this.writer(executor, dfExt)
-                .mode(mode)
+                .mode(mode.batchMode)
                 .jdbc(url, tableIdentifier.unquotedString, props)
         }
         else {
@@ -172,21 +173,21 @@ class JdbcRelation(
                     .jdbc(url, tableIdentifier.unquotedString, props)
             }
 
-            mode.toLowerCase(Locale.ROOT) match {
-                case "overwrite" =>
+            mode match {
+                case OutputMode.OVERWRITE =>
                     withStatement { (statement, _) =>
                         val condition = partitionCondition(dialect, partition)
                         val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
                         statement.executeUpdate(query)
                     }
                     writePartition()
-                case "append" =>
+                case OutputMode.APPEND =>
                     writePartition()
-                case "ignore" =>
+                case OutputMode.IGNORE_IF_EXISTS =>
                     if (!checkPartition(partition)) {
                         writePartition()
                     }
-                case "error" | "errorifexists" | "default" =>
+                case OutputMode.ERROR_IF_EXISTS =>
                     if (!checkPartition(partition)) {
                         writePartition()
                     }

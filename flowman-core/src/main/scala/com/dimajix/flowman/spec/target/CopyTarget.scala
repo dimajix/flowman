@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.ResourceIdentifier
@@ -44,7 +45,7 @@ case class CopyTarget(
     target:Dataset,
     schema:Option[CopyTarget.Schema],
     parallelism:Int,
-    mode:String
+    mode:OutputMode
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CopyTarget])
 
@@ -190,7 +191,7 @@ class CopyTargetSpec extends TargetSpec {
             target.instantiate(context),
             schema.map(_.instantiate(context)),
             context.evaluate(parallelism).toInt,
-            context.evaluate(mode)
+            OutputMode.ofString(context.evaluate(mode))
         )
     }
 }

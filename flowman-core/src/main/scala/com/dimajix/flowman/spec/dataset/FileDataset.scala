@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
@@ -120,13 +121,13 @@ case class FileDataset(
       * @param executor
       * @param df - dataframe to write
       */
-    override def write(executor: Executor, df: DataFrame, mode: String) : Unit = {
+    override def write(executor: Executor, df: DataFrame, mode: OutputMode) : Unit = {
         val outputDf = SchemaUtils.applySchema(df, columns.map(_.sparkType))
 
         outputDf.write
             .options(options)
             .format(format)
-            .mode(mode)
+            .mode(mode.batchMode)
             .save(location.toString)
     }
 

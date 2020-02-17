@@ -22,6 +22,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
@@ -99,7 +100,7 @@ case class RelationDataset(
       * @param executor
       * @param df - dataframe to write
       */
-    override def write(executor: Executor, df: DataFrame, mode: String): Unit = {
+    override def write(executor: Executor, df: DataFrame, mode: OutputMode): Unit = {
         val instance = context.getRelation(relation)
         instance.write(executor, df, partition, mode)
     }

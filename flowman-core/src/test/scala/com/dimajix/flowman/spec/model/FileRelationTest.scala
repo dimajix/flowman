@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.MappingIdentifier
 import com.dimajix.flowman.spec.Module
@@ -128,7 +129,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         outputPath.resolve("data.csv").toFile.exists() should be (false)
-        relation.write(executor, df, Map(), "overwrite")
+        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         outputPath.resolve("data.csv").toFile.exists() should be (true)
 
         relation.truncate(executor)
@@ -181,7 +182,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        relation.write(executor, df, Map("p_col" -> SingleValue("2")), "overwrite")
+        relation.write(executor, df, Map("p_col" -> SingleValue("2")), OutputMode.OVERWRITE)
 
         val df_p1 = relation.read(executor, None, Map("p_col" -> SingleValue("1")))
         df_p1.count() should be (0)

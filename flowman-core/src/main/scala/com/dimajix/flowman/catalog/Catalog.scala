@@ -33,6 +33,8 @@ import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
+import org.apache.spark.sql.execution.command.AnalyzePartitionCommand
+import org.apache.spark.sql.execution.command.AnalyzeTableCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
@@ -42,12 +44,13 @@ import org.apache.spark.sql.execution.command.PersistedView
 import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.PartitionSchema
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = null) {
+class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalog: ExternalCatalog = null) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
@@ -158,6 +161,30 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             if (externalCatalog != null) {
                 externalCatalog.createTable(table)
             }
+        }
+    }
+
+    /**
+      * Refreshes any meta information about a table. This might be required either when the schema changes
+      * or when new data is written into a table
+      * @param table
+      */
+    def refreshTable(table:TableIdentifier) : Unit = {
+        require(table != null)
+
+        if (!tableExists(table)) {
+            throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
+        }
+
+        if (config.flowmanConf.hiveAnalyzeTable) {
+            val cmd = AnalyzeTableCommand(table, false)
+            cmd.run(spark)
+        }
+
+        // Publish table to external catalog
+        if (externalCatalog != null) {
+            val definition = catalog.externalCatalog.getTable(table.database.getOrElse(""), table.table)
+            externalCatalog.alterTable(definition)
         }
     }
 
@@ -323,6 +350,11 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
         val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
         cmd.run(spark)
 
+        if (config.flowmanConf.hiveAnalyzeTable) {
+            val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
+            cmd.run(spark)
+        }
+
         if (externalCatalog != null) {
             val catalogTable = catalog.getTableMetadata(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
@@ -347,22 +379,38 @@ class Catalog(val spark:SparkSession, val externalCatalog: ExternalCatalog = nul
             val cmd = AlterTableSetLocationCommand(table, Some(sparkPartition), location.toString)
             cmd.run(spark)
 
-            if (externalCatalog != null) {
-                val catalogTable = catalog.getTableMetadata(table)
-                val catalogPartition = catalog.getPartition(table, sparkPartition)
-                externalCatalog.alterPartition(catalogTable, catalogPartition)
-            }
+            refreshPartition(table, partition)
         }
         else {
-            logger.info(s"Adding partition ${partition.spec} to table $table at '$location'")
-            val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
-            cmd.run(spark)
+            addPartition(table, partition, location)
+        }
+    }
 
-            if (externalCatalog != null) {
-                val catalogTable = catalog.getTableMetadata(table)
-                val catalogPartition = catalog.getPartition(table, sparkPartition)
-                externalCatalog.addPartition(catalogTable, catalogPartition)
-            }
+    /**
+      * Adds a new partition or replaces an existing partition to an existing table.
+      * @param table
+      * @param partition
+      */
+    def refreshPartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
+        require(table != null)
+        require(partition != null && partition.nonEmpty)
+
+        val sparkPartition = partition.mapValues(_.toString).toMap
+        logger.info(s"Refreshing partition ${partition.spec} of table $table")
+
+        if (!partitionExists(table, partition)) {
+            throw new NoSuchPartitionException(table.database.getOrElse(""), table.table, sparkPartition)
+        }
+
+        if (config.flowmanConf.hiveAnalyzeTable) {
+            val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
+            cmd.run(spark)
+        }
+
+        if (externalCatalog != null) {
+            val catalogTable = catalog.getTableMetadata(table)
+            val catalogPartition = catalog.getPartition(table, sparkPartition)
+            externalCatalog.alterPartition(catalogTable, catalogPartition)
         }
     }
 

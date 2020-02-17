@@ -21,7 +21,6 @@ import scala.collection.immutable.Nil
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.spec.schema.Schema
@@ -134,7 +134,7 @@ case class KafkaRelation(
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
         require(executor != null)
         require(df != null)
         require(partition != null)
@@ -145,7 +145,7 @@ case class KafkaRelation(
 
         this.writer(executor, df)
             .format("kafka")
-            .mode(mode)
+            .mode(mode.batchMode)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .save()
@@ -195,7 +195,7 @@ case class KafkaRelation(
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.streamWriter(executor, df, mode, checkpointLocation)
+        this.streamWriter(executor, df, mode.streamMode, checkpointLocation)
            .format("kafka")
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)

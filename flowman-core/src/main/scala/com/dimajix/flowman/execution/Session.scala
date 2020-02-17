@@ -352,7 +352,7 @@ class Session private[execution](
             null
         }
     }
-    private lazy val _catalog = new Catalog(spark, _externalCatalog)
+    private lazy val _catalog = new Catalog(spark, config, _externalCatalog)
 
     private lazy val _projecStore : Store = {
         if (_namespace != null && _namespace.storage != null) {

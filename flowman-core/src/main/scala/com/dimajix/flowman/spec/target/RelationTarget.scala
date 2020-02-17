@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.spec.MappingOutputIdentifier
@@ -36,7 +37,7 @@ object RelationTarget {
             Target.Properties(context),
             MappingOutputIdentifier(""),
             relation,
-            "overwrite",
+            OutputMode.OVERWRITE,
             Map(),
             16,
             false
@@ -47,7 +48,7 @@ case class RelationTarget(
     instanceProperties: Target.Properties,
     mapping:MappingOutputIdentifier,
     relation: RelationIdentifier,
-    mode: String,
+    mode: OutputMode,
     partition: Map[String,String],
     parallelism: Int,
     rebalance: Boolean
@@ -214,7 +215,7 @@ class RelationTargetSpec extends TargetSpec {
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             RelationIdentifier.parse(context.evaluate(relation)),
-            context.evaluate(mode),
+            OutputMode.ofString(context.evaluate(mode)),
             context.evaluate(partition),
             context.evaluate(parallelism).toInt,
             context.evaluate(rebalance).toBoolean

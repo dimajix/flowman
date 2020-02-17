@@ -22,12 +22,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.NamedSpec
@@ -37,7 +37,6 @@ import com.dimajix.flowman.spec.RelationIdentifier
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
 import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.TypeRegistry
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -152,7 +151,7 @@ abstract class Relation extends AbstractInstance {
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:String = "OVERWRITE") : Unit
+    def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
       * Removes one or more partitions.

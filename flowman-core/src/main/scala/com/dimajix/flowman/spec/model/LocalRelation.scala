@@ -30,6 +30,7 @@ import com.dimajix.spark.sql.local.implicits._
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.ResourceIdentifier
@@ -138,7 +139,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
         require(executor != null)
         require(df != null)
         require(partition != null)
@@ -155,7 +156,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         val writer = outputDf.writeLocal.options(options)
 
         writer.format(format)
-            .mode(mode)
+            .mode(mode.batchMode)
             .save(outputFile)
     }
 

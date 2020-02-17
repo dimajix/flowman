@@ -28,6 +28,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -117,27 +118,27 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.read(executor, None).count() should be (0)
 
         // Write records
-        relation.write(executor, df, mode="overwrite")
+        relation.write(executor, df, mode=OutputMode.OVERWRITE)
         relation.read(executor, None).count() should be (2)
 
         // Append records
-        relation.write(executor, df, mode="append")
+        relation.write(executor, df, mode=OutputMode.APPEND)
         relation.read(executor, None).count() should be (4)
 
 
         // Try write records
-        relation.write(executor, df, mode="ignore")
+        relation.write(executor, df, mode=OutputMode.IGNORE_IF_EXISTS)
         relation.read(executor, None).count() should be (4)
 
         relation.truncate(executor)
         relation.read(executor, None).count() should be (0)
 
-        relation.write(executor, df, mode="ignore")
+        relation.write(executor, df, mode=OutputMode.IGNORE_IF_EXISTS)
         relation.read(executor, None).count() should be (0)
 
 
         // Try write records
-        an[Exception] shouldBe thrownBy(relation.write(executor, df, mode="error"))
+        an[Exception] shouldBe thrownBy(relation.write(executor, df, mode=OutputMode.ERROR_IF_EXISTS))
         relation.read(executor, None).count() should be (0)
 
 
@@ -208,38 +209,38 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.read(executor, None).count() should be (0)
 
         // Write records
-        relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("1")))
+        relation.write(executor, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("1")))
         relation.read(executor, None).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
-        relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("1")))
+        relation.write(executor, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("1")))
         relation.read(executor, None).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
-        relation.write(executor, df, mode="overwrite", partition=Map("p_col" -> SingleValue("2")))
+        relation.write(executor, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("2")))
         relation.read(executor, None).count() should be (4)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Append records
-        relation.write(executor, df, mode="append", partition=Map("p_col" -> SingleValue("1")))
+        relation.write(executor, df, mode=OutputMode.APPEND, partition=Map("p_col" -> SingleValue("1")))
         relation.read(executor, None).count() should be (6)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Try write records
-        relation.write(executor, df, mode="ignore", partition=Map("p_col" -> SingleValue("1")))
+        relation.write(executor, df, mode=OutputMode.IGNORE_IF_EXISTS, partition=Map("p_col" -> SingleValue("1")))
         relation.read(executor, None).count() should be (6)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Try write records
-        relation.write(executor, df, mode="ignore", partition=Map("p_col" -> SingleValue("3")))
+        relation.write(executor, df, mode=OutputMode.IGNORE_IF_EXISTS, partition=Map("p_col" -> SingleValue("3")))
         relation.read(executor, None).count() should be (8)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
@@ -247,7 +248,7 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // Try write records
-        an[Exception] shouldBe thrownBy(relation.write(executor, df, mode="error"))
+        an[Exception] shouldBe thrownBy(relation.write(executor, df, mode=OutputMode.ERROR_IF_EXISTS))
         relation.read(executor, None).count() should be (8)
 
         // Clean table
@@ -317,7 +318,7 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             .withColumnRenamed("_2", "int_col")
 
         relation_t0.create(executor)
-        relation_t0.write(executor, df, mode="overwrite")
+        relation_t0.write(executor, df, mode=OutputMode.OVERWRITE)
 
         // Spark up until 2.4.3 has problems with Derby
         if (spark.version > "2.4.3") {

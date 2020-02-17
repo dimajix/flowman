@@ -36,6 +36,7 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.IncompatibleSchemaException
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.PartitionField
@@ -111,7 +112,7 @@ class HiveTableRelation(
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: String): Unit = {
+    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode:OutputMode = OutputMode.OVERWRITE): Unit = {
         require(executor != null)
         require(df != null)
         require(partition != null)
@@ -135,7 +136,7 @@ class HiveTableRelation(
       * @param partitionSpec
       * @param mode
       */
-    private def writeHive(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode: String): Unit = {
+    private def writeHive(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
         require(executor != null)
         require(df != null)
         require(partitionSpec != null)
@@ -149,13 +150,14 @@ class HiveTableRelation(
         // Helper method for Spark < 2.4
         implicit def toAttributeNames(atts:Seq[Attribute]) : Seq[String] = atts.map(_.name)
 
+        val spark = executor.spark
+        val catalog = executor.catalog
+
         if (partitionSpec.nonEmpty) {
-            val spark = executor.spark
-            val catalog = executor.catalog
             val hiveTable = catalog.getTable(TableIdentifier(table, database))
             val query = outputDf.queryExecution.logical
 
-            val overwrite = mode.toLowerCase(Locale.ROOT) == "overwrite"
+            val overwrite = mode == OutputMode.OVERWRITE
             val cmd = InsertIntoHiveTable(
                 table = hiveTable,
                 partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
@@ -167,15 +169,16 @@ class HiveTableRelation(
             val qe = spark.sessionState.executePlan(cmd)
             SQLExecution.withNewExecutionId(spark, qe)(qe.toRdd)
 
-            // Finally add Hive partition
-            val location = catalog.getPartitionLocation(tableIdentifier, partitionSpec)
-            catalog.addOrReplacePartition(tableIdentifier, partitionSpec, location)
+            // Finally refresh Hive partition
+            catalog.refreshPartition(tableIdentifier, partitionSpec)
         }
         else {
             outputDf.write
-                .mode(mode)
+                .mode(mode.batchMode)
                 .options(options)
                 .insertInto(tableIdentifier.unquotedString)
+
+            catalog.refreshTable(tableIdentifier)
         }
     }
 
@@ -188,7 +191,7 @@ class HiveTableRelation(
       * @param partitionSpec
       * @param mode
       */
-    private def writeSpark(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode: String): Unit = {
+    private def writeSpark(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
         require(executor != null)
         require(df != null)
         require(partitionSpec != null)
@@ -210,13 +213,16 @@ class HiveTableRelation(
         logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
         this.writer(executor, df)
             .format(format)
-            .mode(mode)
+            .mode(mode.batchMode)
             .save(outputPath.toString)
 
         // Finally add Hive partition
+        val catalog = executor.catalog
         if (partitionSpec.nonEmpty) {
-            val catalog = executor.catalog
             catalog.addOrReplacePartition(tableIdentifier, partitionSpec, outputPath)
+        }
+        else {
+            catalog.refreshTable(tableIdentifier)
         }
     }
 

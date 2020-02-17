@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.spec.ResourceIdentifier
@@ -143,7 +144,7 @@ class FileRelation(
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
         require(executor != null)
         require(partition != null)
 
@@ -156,7 +157,7 @@ class FileRelation(
 
         this.writer(executor, df)
             .format(format)
-            .mode(mode)
+            .mode(mode.batchMode)
             .save(outputPath.toString)
     }
 

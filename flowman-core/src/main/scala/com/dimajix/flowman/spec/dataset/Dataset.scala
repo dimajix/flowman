@@ -23,6 +23,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.spec.AbstractInstance
 import com.dimajix.flowman.spec.Instance
 import com.dimajix.flowman.spec.Namespace
@@ -105,7 +106,7 @@ abstract class Dataset extends AbstractInstance {
       * @param executor
       * @param df - dataframe to write
       */
-    def write(executor:Executor, df:DataFrame, mode:String = "OVERWRITE") : Unit
+    def write(executor:Executor, df:DataFrame, mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
       * Returns the schema as produced by this dataset, relative to the given input schema

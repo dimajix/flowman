@@ -16,16 +16,14 @@
 
 package com.dimajix.flowman.spec.target
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.streaming.OutputMode
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.spec.MappingOutputIdentifier
 import com.dimajix.flowman.spec.RelationIdentifier
@@ -128,18 +126,12 @@ case class StreamTarget(
 class StreamTargetSpec extends TargetSpec {
     @JsonProperty(value="input", required=true) private var input:String = _
     @JsonProperty(value="relation", required=true) private var relation:String = _
-    @JsonProperty(value="mode", required=false) private var mode:String = OutputMode.Update().toString
+    @JsonProperty(value="mode", required=false) private var mode:String = OutputMode.UPDATE.toString
     @JsonProperty(value="checkpointLocation", required=false) private var checkpointLocation:String = _
     @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
 
     override def instantiate(context: Context): Target = {
-        val  mode = context.evaluate(this.mode).toUpperCase(Locale.ROOT) match {
-            case "APPEND" => OutputMode.Append()
-            case "COMPLETE" => OutputMode.Complete()
-            case "UPDATE" => OutputMode.Update()
-            case mode:String => throw new IllegalArgumentException(s"Unsupported output mode '$mode'")
-        }
-
+        val  mode = OutputMode.ofString(context.evaluate(this.mode))
         val checkpointLocation = Option(context.evaluate(this.checkpointLocation))
             .map(_.trim)
             .filter(_.nonEmpty)

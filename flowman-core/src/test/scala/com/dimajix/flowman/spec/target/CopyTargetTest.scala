@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.Module
@@ -59,7 +60,7 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         val target = targetSpec.instantiate(context)
         target.source should be (RelationDataset(Dataset.Properties(context, "relation(local_file)", "relation"), RelationIdentifier("local_file"), Map("spc" -> SingleValue("part_value"))))
         target.target should be (RelationDataset(Dataset.Properties(context, "relation(some_hive_table)","relation"), RelationIdentifier("some_hive_table"), Map("tpc" -> SingleValue("p2"))))
-        target.mode should be ("append")
+        target.mode should be (OutputMode.APPEND)
     }
 
     it should "work" in {

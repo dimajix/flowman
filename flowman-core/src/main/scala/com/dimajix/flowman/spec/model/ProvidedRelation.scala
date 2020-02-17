@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.spec.ResourceIdentifier
 import com.dimajix.flowman.spec.SimpleResourceIdentifier
 import com.dimajix.flowman.spec.schema.Schema
@@ -86,7 +87,7 @@ class ProvidedRelation(
       * @param df
       * @param partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:String) : Unit = {
+    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         throw new UnsupportedOperationException(s"Writing into provided table '$table' not supported in relation '$identifier'")
     }
 

@@ -59,12 +59,12 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id"),
-            "ts",
+            Seq("ts"),
             RankMapping.Latest
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
-        mapping.versionColumn should be ("ts")
+        mapping.versionColumns should be (Seq("ts"))
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
@@ -100,12 +100,12 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id"),
-            "ts",
+            Seq("ts"),
             RankMapping.Earliest
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
-        mapping.versionColumn should be ("ts")
+        mapping.versionColumns should be (Seq("ts"))
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
@@ -138,7 +138,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id"),
-            "ts",
+            Seq("ts"),
             RankMapping.Latest
         )
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
@@ -165,12 +165,12 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df1"),
             Seq("id._1"),
-            "ts._2",
+            Seq("ts._2"),
             RankMapping.Latest
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id._1" ))
-        mapping.versionColumn should be ("ts._2")
+        mapping.versionColumns should be (Seq("ts._2"))
         mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
@@ -189,7 +189,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |input: df1
               |keyColumns:
               | - id
-              |versionColumn: v
+              |versionColumns: v
             """.stripMargin
         val mappingSpec = ObjectMapper.parse[MappingSpec](spec)
         mappingSpec shouldBe a[LatestMappingSpec]
@@ -199,7 +199,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val latest = mapping.asInstanceOf[RankMapping]
         latest.input should be (MappingOutputIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))
-        latest.versionColumn should be ("v")
+        latest.versionColumns should be (Seq("v"))
     }
 
     it should "be parseable as 'earliest' mapping" in {
@@ -209,7 +209,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |input: df1
               |keyColumns:
               | - id
-              |versionColumn: v
+              |versionColumns: v
             """.stripMargin
         val mappingSpec = ObjectMapper.parse[MappingSpec](spec)
         mappingSpec shouldBe a[EarliestMappingSpec]
@@ -219,7 +219,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val latest = mapping.asInstanceOf[RankMapping]
         latest.input should be (MappingOutputIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))
-        latest.versionColumn should be ("v")
+        latest.versionColumns should be (Seq("v"))
     }
 
     it should "be convertible to SQL" in (if (hiveSupported) {
@@ -248,7 +248,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
               |    kind: latest
               |    input: some_table
               |    keyColumns: col_0
-              |    versionColumn: ts
+              |    versionColumns: ts
               |""".stripMargin
 
         val session = Session.builder().withSparkSession(spark).build()

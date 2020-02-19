@@ -47,12 +47,12 @@ object RankMapping {
 }
 
 case class RankMapping(
-    instanceProperties:Mapping.Properties,
-    input:MappingOutputIdentifier,
-    keyColumns:Seq[String],
-    versionColumn:String,
-    mode:RankMapping.Mode,
-    filter:Option[String] = None
+                          instanceProperties:Mapping.Properties,
+                          input:MappingOutputIdentifier,
+                          keyColumns:Seq[String],
+                          versionColumns:Seq[String],
+                          mode:RankMapping.Mode,
+                          filter:Option[String] = None
 ) extends BaseMapping {
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
@@ -77,10 +77,10 @@ case class RankMapping(
         val df = tables(input)
 
         val order = mode match {
-            case Earliest => col(versionColumn).asc
-            case Latest => col(versionColumn).desc
+            case Earliest => versionColumns.map(col(_).asc)
+            case Latest => versionColumns.map(col(_).desc)
         }
-        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(order)
+        val window = Window.partitionBy(keyColumns.map(col):_*).orderBy(order:_*)
         val latest = df.select(col("*"), row_number().over(window) as "flowman_gen_rank")
             .filter(col("flowman_gen_rank") === 1)
             .drop(col("flowman_gen_rank"))
@@ -108,7 +108,7 @@ case class RankMapping(
 
 abstract class RankMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input:String = _
-    @JsonProperty(value = "versionColumn", required = true) private var versionColumn:String = _
+    @JsonProperty(value = "versionColumns", required = true) private var versionColumn:Seq[String] = Seq()
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
@@ -124,7 +124,7 @@ abstract class RankMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
-            context.evaluate(versionColumn),
+            versionColumn.map(context.evaluate),
             mode,
             context.evaluate(filter)
         )

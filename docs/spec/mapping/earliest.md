@@ -1,22 +1,22 @@
 
-# Latest Mapping
+# Earliest Mapping
 
-The `latest` mapping keeps only the latest (newest) record per ID. This is useful
-when working with streams of change events and you only want to keep the newest
+The `earliest` mapping keeps only the earliest (oldest) record per ID. This is useful
+when working with streams of change events and you only want to keep the first
 event for each ID.
 
 ## Example
 ```
 mappings:
-  latest_customer_updates:
-    kind: latest
+  first_customer_updates:
+    kind: earliest
     input: all_customer_updates
     versionColumns: ts
     keyColumns: customer_id
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(string)*: `latest`
+* `kind` **(mandatory)** *(string)*: `earliest`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.

@@ -272,6 +272,7 @@
         <module>flowman-spark-testing</module>
         <module>flowman-spark-sources</module>
         <module>flowman-core</module>
+        <module>flowman-spec</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
@@ -652,6 +653,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spec</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.server.model
 
-import com.dimajix.flowman.spec
+import com.dimajix.flowman.model
 
 
 object Converter {
-    def ofSpec(ns:spec.Namespace) : Namespace = {
+    def ofSpec(ns:spec.NamespaceSpec) : Namespace = {
         Namespace(
             ns.name,
             ns.environment,

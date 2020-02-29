@@ -1,0 +1,10 @@
+com.dimajix.flowman.spec.catalog.CatalogSpecAnnotationHandler
+com.dimajix.flowman.spec.connection.ConnectionSpecAnnotationHandler
+com.dimajix.flowman.spec.dataset.DatasetSpecAnnotationHandler
+com.dimajix.flowman.spec.history.HistorySpecAnnotationHandler
+com.dimajix.flowman.spec.mapping.MappingSpecAnnotationHandler
+com.dimajix.flowman.spec.metric.MetricSinkSpecAnnotationHandler
+com.dimajix.flowman.spec.relation.RelationSpecAnnotationHandler
+com.dimajix.flowman.spec.schema.SchemaSpecAnnotationHandler
+com.dimajix.flowman.spec.storage.StorageSpecAnnotationHandler
+com.dimajix.flowman.spec.target.TargetSpecAnnotationHandler

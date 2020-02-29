@@ -43,7 +43,7 @@ class FixedGaugeMetricBundle(override val name:String, override val labels:Map[S
       * @param name
       * @param value
       */
-    def update(name:String, value:Double) = {
+    def update(name:String, value:Double) : Unit = {
         gauges.update(name, new FixedGaugeMetric(this.name, labels.updated(metricKey, name), value))
     }
 }

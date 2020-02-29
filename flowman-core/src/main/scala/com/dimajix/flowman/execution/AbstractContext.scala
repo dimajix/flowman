@@ -18,8 +18,8 @@ package com.dimajix.flowman.execution
 
 import java.io.StringWriter
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkConf
@@ -28,8 +28,9 @@ import org.slf4j.Logger
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.Profile
-import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.Profile
+import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.templating.RecursiveValue
 import com.dimajix.flowman.templating.Velocity
 
@@ -40,7 +41,7 @@ object AbstractContext {
     abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) /*extends Context.Builder[B,C]*/ { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
-        private var _connections = Seq[(String, ConnectionSpec, SettingLevel)]()
+        private var _connections = Seq[(String, Template[Connection], SettingLevel)]()
 
         protected val logger:Logger
 
@@ -51,7 +52,7 @@ object AbstractContext {
         def build() : C = {
             val rawEnvironment = mutable.Map[String,(Any, Int)]()
             val rawConfig = mutable.Map[String,(String, Int)]()
-            val rawConnections = mutable.Map[String, (ConnectionSpec, Int)]()
+            val rawConnections = mutable.Map[String, (Template[Connection], Int)]()
 
             if (parent != null) {
                 parent.rawEnvironment.foreach(kv => rawEnvironment.update(kv._1, kv._2))
@@ -78,7 +79,7 @@ object AbstractContext {
                 }
             }
 
-            def addConnection(name:String, connection:ConnectionSpec, settingLevel: SettingLevel) : Unit = {
+            def addConnection(name:String, connection:Template[Connection], settingLevel: SettingLevel) : Unit = {
                 val currentValue = rawConnections.getOrElse(name, (null, SettingLevel.NONE.level))
                 if (currentValue._2 <= settingLevel.level) {
                     rawConnections.update(name, (connection, settingLevel.level))
@@ -123,7 +124,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        def withConnections(connections:Map[String,ConnectionSpec]) : B = {
+        def withConnections(connections:Map[String,Template[Connection]]) : B = {
             require(connections != null)
             withConnections(connections, defaultSettingLevel)
             this
@@ -133,7 +134,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        def withConnections(connections:Map[String,ConnectionSpec], level:SettingLevel) : B = {
+        def withConnections(connections:Map[String,Template[Connection]], level:SettingLevel) : B = {
             require(connections != null)
             require(level != null)
             _connections = _connections ++ connections.map(kv => (kv._1, kv._2, level))
@@ -213,7 +214,7 @@ object AbstractContext {
             this
         }
 
-        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : C
+        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : C
     }
 }
 

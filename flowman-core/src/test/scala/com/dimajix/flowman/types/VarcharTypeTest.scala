@@ -19,7 +19,7 @@ package com.dimajix.flowman.types
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.util.ObjectMapper
 
 
 class VarcharTypeTest extends FlatSpec with Matchers {

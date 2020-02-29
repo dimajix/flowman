@@ -23,17 +23,37 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.connection.JdbcConnectionSpec
-import com.dimajix.flowman.spec.history.JdbcHistorySpec
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.target.NullTargetSpec
+import com.dimajix.flowman.history.JdbcStateStore
+import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.types.StringType
 
 
 class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
+    object NullTarget {
+        def apply(name:String, partition: Map[String,String] = Map()) : Context => NullTarget = {
+            ctx:Context => NullTarget(Target.Properties(ctx, name), ctx.evaluate(partition))
+        }
+    }
+    case class NullTarget(
+        instanceProperties: Target.Properties,
+        partition: Map[String,String]
+    ) extends BaseTarget {
+        override def instance: TargetInstance = {
+            TargetInstance(
+                namespace.map(_.name).getOrElse(""),
+                project.map(_.name).getOrElse(""),
+                name,
+                partition
+            )
+        }
+    }
+
     var tempDir:Path = _
 
     before {
@@ -46,19 +66,16 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     "The JdbcStateStore" should "work with empty jobs" in {
         val db = tempDir.resolve("mydb")
-        val ns = Namespace.builder()
-            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
-            .build()
         val session = Session.builder()
-            .withNamespace(ns)
             .build()
 
         val batch = Job.builder(session.context)
             .setName("batch")
             .build()
 
-        val monitor = JdbcHistorySpec("logger")
-        val runner = new MonitoredRunner(monitor.instantiate(session.context))
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val monitor = JdbcStateStore(connection)
+        val runner = new MonitoredRunner(monitor)
         runner.executeJob(session.executor, batch, Seq(Phase.CREATE), Map(), force=false) should be (Status.SUCCESS)
         runner.executeJob(session.executor, batch, Seq(Phase.CREATE), Map(), force=false) should be (Status.SUCCESS)
         runner.executeJob(session.executor, batch, Seq(Phase.CREATE), Map(), force=true) should be (Status.SUCCESS)
@@ -66,11 +83,11 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     it should "be used in a Session" in {
         val db = tempDir.resolve("mydb")
-        val monitor = JdbcHistorySpec("logger")
-        val ns = Namespace.builder()
-            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
-            .setStateStore(monitor)
-            .build()
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val ns = Namespace(
+            name = "default",
+            history = Some(JdbcStateStore(connection))
+        )
         val session = Session.builder()
             .withNamespace(ns)
             .build()
@@ -87,14 +104,15 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     it should "work with non-empty jobs" in {
         val db = tempDir.resolve("mydb")
-        val monitor = JdbcHistorySpec("logger")
-        val project = Project.builder()
-            .addTarget("t0", NullTargetSpec("t0"))
-            .build()
-        val ns = Namespace.builder()
-            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
-            .setStateStore(monitor)
-            .build()
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val ns = Namespace(
+            name = "default",
+            history = Some(JdbcStateStore(connection))
+        )
+        val project = Project(
+            name = "default",
+            targets = Map("t0" -> NullTarget("t0"))
+        )
         val session = Session.builder()
             .withNamespace(ns)
             .withProject(project)
@@ -113,11 +131,11 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     it should "catch exceptions" in {
         val db = tempDir.resolve("mydb")
-        val stateStore = JdbcHistorySpec("logger")
-        val ns = Namespace.builder()
-            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
-            .setStateStore(stateStore)
-            .build()
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val ns = Namespace(
+            name = "default",
+            history = Some(JdbcStateStore(connection))
+        )
         val session = Session.builder()
             .withNamespace(ns)
             .build()
@@ -133,14 +151,15 @@ class JdbcMonitorRunnerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     it should "support parameters in targets" in {
         val db = tempDir.resolve("mydb")
-        val stateStore = JdbcHistorySpec("logger")
-        val project = Project.builder()
-            .addTarget("t0", NullTargetSpec("t0", Map("p1" -> "$p1")))
-            .build()
-        val ns = Namespace.builder()
-            .addConnection("logger", JdbcConnectionSpec("org.apache.derby.jdbc.EmbeddedDriver", "jdbc:derby:"+db+";create=true", "", ""))
-            .setStateStore(stateStore)
-            .build()
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val ns = Namespace(
+            name = "default",
+            history = Some(JdbcStateStore(connection))
+        )
+        val project = Project(
+            name = "default",
+            targets = Map("t0" -> NullTarget("t0", Map("p1" -> "$p1")))
+        )
         val session = Session.builder()
             .withNamespace(ns)
             .withProject(project)

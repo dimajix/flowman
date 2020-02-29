@@ -24,8 +24,8 @@ import org.apache.spark.sql.SparkSession
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 

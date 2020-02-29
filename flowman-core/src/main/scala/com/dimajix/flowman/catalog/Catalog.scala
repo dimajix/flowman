@@ -45,12 +45,12 @@ import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.Configuration
-import com.dimajix.flowman.spec.schema.PartitionField
-import com.dimajix.flowman.spec.schema.PartitionSchema
+import com.dimajix.flowman.model.PartitionField
+import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.util.SchemaUtils
 
 
-class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalog: ExternalCatalog = null) {
+class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalog: Option[ExternalCatalog] = None) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
@@ -158,9 +158,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             table.storage.locationUri.foreach(location => createLocation(new Path(location)))
 
             // Publish table to external catalog
-            if (externalCatalog != null) {
-                externalCatalog.createTable(table)
-            }
+            externalCatalog.foreach(_.createTable(table))
         }
     }
 
@@ -182,9 +180,9 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         }
 
         // Publish table to external catalog
-        if (externalCatalog != null) {
-            val definition = catalog.externalCatalog.getTable(table.database.getOrElse(""), table.table)
-            externalCatalog.alterTable(definition)
+        externalCatalog.foreach { catalog =>
+            val definition = this.catalog.externalCatalog.getTable(table.database.getOrElse(""), table.table)
+            catalog.alterTable(definition)
         }
     }
 
@@ -252,9 +250,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             cmd.run(spark)
 
             // Remove table from external catalog
-            if (externalCatalog != null) {
-                externalCatalog.dropTable(catalogTable)
-            }
+            externalCatalog.foreach(_.dropTable(catalogTable))
         }
     }
 
@@ -276,9 +272,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.parameters)))
         }
 
-        if (externalCatalog != null) {
-            externalCatalog.truncateTable(catalogTable)
-        }
+        externalCatalog.foreach(_.truncateTable(catalogTable))
     }
 
     def addTableColumns(table:TableIdentifier, colsToAdd: Seq[StructField]) : Unit = {
@@ -292,9 +286,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val cmd = AlterTableAddColumnsCommand(table, colsToAdd)
         cmd.run(spark)
 
-        if (externalCatalog != null) {
-            externalCatalog.alterTable(catalogTable)
-        }
+        externalCatalog.foreach(_.alterTable(catalogTable))
     }
 
     /**
@@ -355,10 +347,10 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             cmd.run(spark)
         }
 
-        if (externalCatalog != null) {
+        externalCatalog.foreach { ec =>
             val catalogTable = catalog.getTableMetadata(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
-            externalCatalog.addPartition(catalogTable, catalogPartition)
+            ec.addPartition(catalogTable, catalogPartition)
         }
     }
 
@@ -407,10 +399,10 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             cmd.run(spark)
         }
 
-        if (externalCatalog != null) {
+        externalCatalog.foreach { ec =>
             val catalogTable = catalog.getTableMetadata(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
-            externalCatalog.alterPartition(catalogTable, catalogPartition)
+            ec.alterPartition(catalogTable, catalogPartition)
         }
     }
 
@@ -427,11 +419,11 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val location = getPartitionLocation(table, partition)
         truncateLocation(location)
 
-        if (externalCatalog != null) {
+        externalCatalog.foreach { ec =>
             val sparkPartition = partition.mapValues(_.toString).toMap
             val catalogTable = catalog.getTableMetadata(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
-            externalCatalog.truncatePartition(catalogTable, catalogPartition)
+            ec.truncatePartition(catalogTable, catalogPartition)
         }
     }
 
@@ -476,11 +468,11 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge=false, retainData=false)
         cmd.run(spark)
 
-        if (externalCatalog != null) {
+        externalCatalog.foreach { ec =>
             val catalogTable = catalog.getTableMetadata(table)
             sparkPartitions.foreach { partition =>
                 val catalogPartition = catalog.getPartition(table, partition)
-                externalCatalog.dropPartition(catalogTable, catalogPartition)
+                ec.dropPartition(catalogTable, catalogPartition)
             }
         }
     }
@@ -501,10 +493,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             cmd.run(spark)
 
             // Publish view to external catalog
-            if (externalCatalog != null) {
-                val t = getTable(table)
-                externalCatalog.createView(t)
-            }
+            externalCatalog.foreach(_.createView(getTable(table)))
         }
     }
 
@@ -518,10 +507,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         cmd.run(spark)
 
         // Publish view to external catalog
-        if (externalCatalog != null) {
-            val t = getTable(table)
-            externalCatalog.alterView(t)
-        }
+        externalCatalog.foreach(_.alterView(getTable(table)))
     }
 
     /**
@@ -546,9 +532,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             cmd.run(spark)
 
             // Remove table from external catalog
-            if (externalCatalog != null) {
-                externalCatalog.dropView(catalogTable)
-            }
+            externalCatalog.foreach(_.dropView(catalogTable))
         }
     }
 

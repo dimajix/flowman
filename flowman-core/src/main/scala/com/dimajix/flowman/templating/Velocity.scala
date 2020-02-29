@@ -22,6 +22,10 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.apache.velocity.runtime.RuntimeConstants
 
+import com.dimajix.flowman.annotation.TemplateObject
+import com.dimajix.flowman.spi.ClassAnnotationHandler
+import com.dimajix.flowman.spi.ClassAnnotationScanner
+
 
 object Velocity {
     private val classes = mutable.Map[String,Class[_]]()
@@ -51,6 +55,9 @@ object Velocity {
       * @return
       */
     def newContext() : VelocityContext = {
+        // Ensure that all extensions are loaded
+        ClassAnnotationScanner.load()
+
         val context = new VelocityContext()
 
         // Add instances of all custom classses
@@ -79,4 +86,11 @@ object Velocity {
         ve.init()
         ve
     }
+}
+
+
+class TemplateObjectHandler extends ClassAnnotationHandler {
+    override def annotation: Class[_] = classOf[TemplateObject]
+
+    override def register(clazz: Class[_]): Unit = Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz)
 }

@@ -18,12 +18,12 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.JobToken
+import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.history.TargetToken
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.TargetInstance
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.TargetInstance
 
 
 /**

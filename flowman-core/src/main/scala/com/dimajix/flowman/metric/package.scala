@@ -21,13 +21,13 @@ import scala.util.Success
 import scala.util.Try
 
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.spec.Metadata
+import com.dimajix.flowman.model.Metadata
 
 
 package object metric {
     def withMetrics[T](metricSystem:MetricSystem, metrics:MetricBoard)(fn: => T) : T = {
         // Publish metrics
-        metrics.reset()
+        metrics.reset(metricSystem)
         metricSystem.addBoard(metrics)
 
         // Run original function

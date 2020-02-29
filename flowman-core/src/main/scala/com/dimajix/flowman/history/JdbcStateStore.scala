@@ -22,8 +22,6 @@ import java.sql.SQLTransientException
 import java.sql.Timestamp
 import java.time.Clock
 
-import scala.annotation.tailrec
-
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 import slick.jdbc.DerbyProfile
@@ -33,8 +31,8 @@ import slick.jdbc.PostgresProfile
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.TargetInstance
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.TargetInstance
 
 
 
@@ -49,7 +47,7 @@ object JdbcStateStore {
 }
 
 
-class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateStore {
+case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateStore {
     import JdbcStateRepository._
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])

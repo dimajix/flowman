@@ -29,169 +29,167 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
 
 
-class SessionBuilder {
-    private var _sparkSession: SparkConf => SparkSession = (_ => null)
-    private var _sparkMaster:Option[String] = None
-    private var _sparkName:Option[String] = None
-    private var _config = Map[String,String]()
-    private var _environment = Map[String,String]()
-    private var _profiles = Set[String]()
-    private var _project:Project = _
-    private var _namespace:Namespace = _
-    private var _jars = Set[String]()
-
-    /**
-      * Injects an existing Spark session. If no session is provided, Flowman will create its own Spark session
-      * @param session
-      * @return
-      */
-    def withSparkSession(session:SparkConf => SparkSession) : SessionBuilder = {
-        require(session != null)
-        _sparkSession = session
-        this
-    }
-    def withSparkSession(session:SparkSession) : SessionBuilder = {
-        require(session != null)
-        _sparkSession = (_:SparkConf) => session
-        this
-    }
-    def withSparkName(name:String) : SessionBuilder = {
-        require(name != null)
-        _sparkName = Some(name)
-        this
-    }
-    def withSparkMaster(master:String) : SessionBuilder = {
-        require(master != null)
-        _sparkMaster = Some(master)
-        this
-    }
-
-    /**
-      * Adds Spark config variables which actually will override any variables given in specs
-      * @param config
-      * @return
-      */
-    def withConfig(config:Map[String,String]) : SessionBuilder = {
-        require(config != null)
-        _config = _config ++ config
-        this
-    }
-
-    /**
-      * Adds Spark config variables which actually will override any variables given in specs
-      * @param key
-      * @param value
-      * @return
-      */
-    def withConfig(key:String, value:String) : SessionBuilder = {
-        require(key != null)
-        require(value != null)
-        _config = _config.updated(key, value)
-        this
-    }
-
-    /**
-      * Adds environment variables which actually will override any variables given in specs
-      * @param env
-      * @return
-      */
-    def withEnvironment(env:Map[String,String]) : SessionBuilder = {
-        require(env != null)
-        _environment = _environment ++ env
-        this
-    }
-
-    /**
-      * Adds environment variables which actually will override any variables given in specs
-      * @param key
-      * @param value
-      * @return
-      */
-    def withEnvironment(key:String,value:String) : SessionBuilder = {
-        require(key != null)
-        require(value != null)
-        _environment = _environment + (key -> value)
-        this
-    }
-
-    /**
-      * Adds a Namespace to source more configuration from
-      * @param namespace
-      * @return
-      */
-    def withNamespace(namespace:Namespace) : SessionBuilder = {
-        _namespace = namespace
-        this
-    }
-
-    /**
-      * Adds a project to source more configurations from.
-      * @param project
-      * @return
-      */
-    def withProject(project:Project) : SessionBuilder = {
-        _project = project
-        this
-    }
-
-    /**
-      * Adds a new profile to be activated
-      * @param profile
-      * @return
-      */
-    def withProfile(profile:String) : SessionBuilder = {
-        require(profile != null)
-        _profiles = _profiles + profile
-        this
-    }
-
-    /**
-      * Adds a list of profile names to be activated. This does not remove any previously activated profile
-      * @param profiles
-      * @return
-      */
-    def withProfiles(profiles:Seq[String]) : SessionBuilder = {
-        require(profiles != null)
-        _profiles = _profiles ++ profiles
-        this
-    }
-
-    /**
-      * Adds JAR files to this session which will be distributed to all Spark nodes
-      * @param jars
-      * @return
-      */
-    def withJars(jars:Seq[String]) : SessionBuilder = {
-        require(jars != null)
-        _jars = _jars ++ jars
-        this
-    }
-
-    def disableSpark() : SessionBuilder = {
-        _sparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
-        this
-    }
-
-    /**
-      * Build the Flowman session and applies all previously specified options
-      * @return
-      */
-    def build() : Session = {
-        val session = new Session(_namespace, _project, _sparkSession, _sparkMaster, _sparkName, _config, _environment, _profiles, _jars)
-        session
-    }
-}
-
-
 object Session {
-    def builder() = new SessionBuilder
+    class Builder {
+        private var sparkSession: SparkConf => SparkSession = (_ => null)
+        private var sparkMaster:Option[String] = None
+        private var sparkName:Option[String] = None
+        private var config = Map[String,String]()
+        private var environment = Map[String,String]()
+        private var profiles = Set[String]()
+        private var project:Option[Project] = None
+        private var namespace:Option[Namespace] = None
+        private var jars = Set[String]()
+
+        /**
+         * Injects an existing Spark session. If no session is provided, Flowman will create its own Spark session
+         * @param session
+         * @return
+         */
+        def withSparkSession(session:SparkConf => SparkSession) : Builder = {
+            require(session != null)
+            sparkSession = session
+            this
+        }
+        def withSparkSession(session:SparkSession) : Builder = {
+            require(session != null)
+            sparkSession = (_:SparkConf) => session
+            this
+        }
+        def withSparkName(name:String) : Builder = {
+            require(name != null)
+            sparkName = Some(name)
+            this
+        }
+        def withSparkMaster(master:String) : Builder = {
+            require(master != null)
+            sparkMaster = Some(master)
+            this
+        }
+
+        /**
+         * Adds Spark config variables which actually will override any variables given in specs
+         * @param config
+         * @return
+         */
+        def withConfig(config:Map[String,String]) : Builder = {
+            require(config != null)
+            this.config = this.config ++ config
+            this
+        }
+
+        /**
+         * Adds Spark config variables which actually will override any variables given in specs
+         * @param key
+         * @param value
+         * @return
+         */
+        def withConfig(key:String, value:String) : Builder = {
+            require(key != null)
+            require(value != null)
+            config = config.updated(key, value)
+            this
+        }
+
+        /**
+         * Adds environment variables which actually will override any variables given in specs
+         * @param env
+         * @return
+         */
+        def withEnvironment(env:Map[String,String]) : Builder = {
+            require(env != null)
+            environment = environment ++ env
+            this
+        }
+
+        /**
+         * Adds environment variables which actually will override any variables given in specs
+         * @param key
+         * @param value
+         * @return
+         */
+        def withEnvironment(key:String,value:String) : Builder = {
+            require(key != null)
+            require(value != null)
+            environment = environment + (key -> value)
+            this
+        }
+
+        /**
+         * Adds a Namespace to source more configuration from
+         * @param namespace
+         * @return
+         */
+        def withNamespace(namespace:Namespace) : Builder = {
+            this.namespace = Some(namespace)
+            this
+        }
+
+        /**
+         * Adds a project to source more configurations from.
+         * @param project
+         * @return
+         */
+        def withProject(project:Project) : Builder = {
+            this.project = Some(project)
+            this
+        }
+
+        /**
+         * Adds a new profile to be activated
+         * @param profile
+         * @return
+         */
+        def withProfile(profile:String) : Builder = {
+            require(profile != null)
+            profiles = profiles + profile
+            this
+        }
+
+        /**
+         * Adds a list of profile names to be activated. This does not remove any previously activated profile
+         * @param profiles
+         * @return
+         */
+        def withProfiles(profiles:Seq[String]) : Builder = {
+            require(profiles != null)
+            this.profiles = this.profiles ++ profiles
+            this
+        }
+
+        /**
+         * Adds JAR files to this session which will be distributed to all Spark nodes
+         * @param jars
+         * @return
+         */
+        def withJars(jars:Seq[String]) : Builder = {
+            require(jars != null)
+            this.jars = this.jars ++ jars
+            this
+        }
+
+        def disableSpark() : Builder = {
+            sparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
+            this
+        }
+
+        /**
+         * Build the Flowman session and applies all previously specified options
+         * @return
+         */
+        def build() : Session = {
+            new Session(namespace, project, sparkSession, sparkMaster, sparkName, config, environment, profiles, jars)
+        }
+    }
+
+    def builder() = new Builder
 }
 
 
@@ -210,8 +208,8 @@ object Session {
   * @param _jars
   */
 class Session private[execution](
-    _namespace:Namespace,
-    _project:Project,
+    _namespace:Option[Namespace],
+    _project:Option[Project],
     _sparkSession:SparkConf => SparkSession,
     _sparkMaster:Option[String],
     _sparkName:Option[String],
@@ -317,21 +315,21 @@ class Session private[execution](
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
             .withProjectResolver(loadProject)
-        if (_namespace != null) {
-            _profiles.foreach(p => namespace.profiles.get(p).foreach { profile =>
+        _namespace.foreach { ns =>
+            _profiles.foreach(p => ns.profiles.get(p).foreach { profile =>
                 logger.info(s"Applying namespace profile $p")
                 builder.withProfile(profile)
             })
-            builder.withEnvironment(namespace.environment)
-            builder.withConfig(namespace.config.toMap)
+            builder.withEnvironment(ns.environment)
+            builder.withConfig(ns.config)
         }
         builder.build()
     }
 
     private lazy val _configuration = {
-        val config = if (_project != null) {
+        val config = if (_project.nonEmpty) {
             logger.info("Using project specific configuration settings")
-            getContext(_project).config
+            getContext(_project.get).config
         }
         else {
             logger.info("Using global configuration settings")
@@ -344,44 +342,25 @@ class Session private[execution](
         new RootExecutor(this)
     }
 
-    private lazy val _externalCatalog : ExternalCatalog = {
-        if (_namespace != null && _namespace.catalog != null) {
-            _namespace.catalog.instantiate(this)
-        }
-        else {
-            null
-        }
+    private lazy val _externalCatalog : Option[ExternalCatalog] = {
+        _namespace.flatMap(_.catalog).map(_.instantiate(rootContext))
     }
     private lazy val _catalog = new Catalog(spark, config, _externalCatalog)
 
-    private lazy val _projecStore : Store = {
-        if (_namespace != null && _namespace.storage != null) {
-            _namespace.storage.instantiate(rootContext)
-        }
-        else {
-            new NullStore
-        }
+    private lazy val _projectStore : Store = {
+        _namespace.flatMap(_.store).map(_.instantiate(rootContext)).getOrElse(new NullStore)
     }
 
     private lazy val _history = {
-        if (_namespace != null && _namespace.history != null)
-            _namespace.history.instantiate(rootContext)
-        else
-            new NullStateStore
+        _namespace.flatMap(_.history).map(_.instantiate(rootContext)).getOrElse(new NullStateStore)
     }
     private lazy val _runner = {
-        if (_namespace != null && _namespace.history != null)
-            new MonitoredRunner(_history)
-        else
-            new SimpleRunner
+        _namespace.flatMap(_.history).map(_.instantiate(rootContext)).map(new MonitoredRunner(_)).getOrElse(new SimpleRunner)
     }
 
     private lazy val metricSystem = {
         val system = new MetricSystem
-        if (_namespace != null && _namespace.metrics != null) {
-            val sink = _namespace.metrics.instantiate(rootContext)
-            system.addSink(sink)
-        }
+        _namespace.flatMap(_.metrics).map(_.instantiate(rootContext)).foreach(system.addSink)
         system
     }
 
@@ -390,19 +369,19 @@ class Session private[execution](
       * Returns the Namespace tied to this Flowman session.
       * @return
       */
-    def namespace : Namespace = _namespace
+    def namespace : Option[Namespace] = _namespace
+
+    /**
+     * Returns the Project tied to this Flowman session.
+     * @return
+     */
+    def project : Option[Project] = _project
 
     /**
       * Returns the storage used to manage projects
       * @return
       */
-    def store : Store = _projecStore
-
-    /**
-      * Returns the Project tied to this Flowman session.
-      * @return
-      */
-    def project : Project = _project
+    def store : Store = _projectStore
 
     /**
       * Returns the history store
@@ -491,9 +470,10 @@ class Session private[execution](
       * @return
       */
     def newSession(project:Project) : Session = {
+        require(project != null)
         new Session(
             _namespace,
-            project,
+            Some(project),
             _ => spark.newSession(),
             _sparkMaster,
             _sparkName,
@@ -509,7 +489,17 @@ class Session private[execution](
       * @return
       */
     def newSession() : Session = {
-        newSession(_project)
+        new Session(
+            _namespace,
+            _project,
+            _ => spark.newSession(),
+            _sparkMaster,
+            _sparkName,
+            _config,
+            _environment,
+            _profiles,
+            Set()
+        )
     }
 
     def shutdown() : Unit = {

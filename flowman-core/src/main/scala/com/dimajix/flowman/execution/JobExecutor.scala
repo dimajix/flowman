@@ -18,9 +18,9 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.Target
 
 
 /**
@@ -51,7 +51,7 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
         .build()
 
     /** The context that should be used for resolving variables and instantiating objects */
-    val context : Context = if (job.context.project != null) rootContext.getProjectContext(job.context.project) else rootContext
+    val context : Context = if (job.context.project.nonEmpty) rootContext.getProjectContext(job.context.project.get) else rootContext
     /** The executor that should be used for running targets */
     val executor : Executor = if (isolated) new ScopedExecutor(parentExecutor) else parentExecutor
 

@@ -25,12 +25,12 @@ import javax.ws.rs.Path
 
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.NamespaceSpec
 
 
 @Api(value = "/namespace", produces = "application/json", consumes = "application/json")
 @Path("/namespace")
-class NamespaceService(ns:Namespace) {
+class NamespaceService(ns:NamespaceSpec) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.server.model.JsonSupport._

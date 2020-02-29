@@ -21,7 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.catalog.ImpalaExternalCatalog
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.spec.NamespaceSpec
 
 
 class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
@@ -38,7 +38,7 @@ class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
               |  connection: impala
             """.stripMargin
 
-        val namespace = Namespace.read.string(spec)
+        val namespace = NamespaceSpec.read.string(spec)
         namespace.catalog should not be (null)
         namespace.catalog shouldBe an[ImpalaCatalogSpec]
 

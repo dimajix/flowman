@@ -21,17 +21,15 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 
 
 class ProjectContextTest extends FlatSpec with Matchers {
     "The ProjectContext" should "provide Project related vars" in {
-        val spec =
-            """
-              |name: my_project
-              |version: 1.0
-            """.stripMargin
-        val project = Project.read.string(spec)
+        val project = Project(
+            name = "my_project",
+            version = Some("1.0")
+        )
         val session = Session.builder()
             .build()
 
@@ -45,7 +43,12 @@ class ProjectContextTest extends FlatSpec with Matchers {
     it should "correctly interpolate project variables" in {
         val fs = FileSystem(new Configuration())
         val file = fs.file("test/project/TestProject.yml")
-        val project = Project.read.file(file)
+        val project = Project(
+            name = "test",
+            version = Some("1.0"),
+            filename = Some(file.absolute),
+            basedir = Some(file.absolute.parent)
+        )
         val session = Session.builder()
             .build()
 

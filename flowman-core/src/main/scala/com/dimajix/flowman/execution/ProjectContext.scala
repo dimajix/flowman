@@ -20,20 +20,21 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Profile
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Profile
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.templating.FileWrapper
 
 
@@ -49,12 +50,12 @@ object ProjectContext {
             this
         }
 
-        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : ProjectContext = {
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : ProjectContext = {
             case object ProjectWrapper {
-                def getBasedir() : FileWrapper = FileWrapper(project.basedir)
-                def getFilename() : FileWrapper = FileWrapper(project.filename)
+                def getBasedir() : FileWrapper = FileWrapper(project.basedir.getOrElse(File.empty))
+                def getFilename() : FileWrapper = FileWrapper(project.filename.getOrElse(File.empty))
                 def getName() : String = project.name
-                def getVersion() : String = project.version
+                def getVersion() : String = project.version.getOrElse("")
 
                 override def toString: String = project.name
             }
@@ -72,26 +73,28 @@ object ProjectContext {
   * Execution context for a specific Flowman project. This will interpolate all resources within the project
   * or (if the resource is fully qualified) walks up into the parent context.
   * @param parent
-  * @param project
+  * @param _project
   */
 class ProjectContext private[execution](
    parent:Context,
-   override val project:Project,
+   _project:Project,
    fullEnv:Map[String,(Any, Int)],
    fullConfig:Map[String,(String, Int)],
-   nonProjectConnections:Map[String, ConnectionSpec]
+   nonProjectConnections:Map[String, Template[Connection]]
 ) extends AbstractContext(parent, fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
-    private val bundles = mutable.Map[String,Job]()
+    private val jobs = mutable.Map[String,Job]()
 
     /**
       * Returns the namespace associated with this context. Can be null
       * @return
       */
-    override def namespace : Namespace = parent.namespace
+    override def namespace : Option[Namespace] = parent.namespace
+
+    override def project : Option[Project] = Some(_project)
 
     /**
       * Returns the root context in a hierarchy of connected contexts
@@ -109,9 +112,9 @@ class ProjectContext private[execution](
     override def getMapping(identifier: MappingIdentifier): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == project.name)) {
+        if (identifier.project.forall(_ == _project.name)) {
             mappings.getOrElseUpdate(identifier.name,
-                project.mappings
+                _project.mappings
                     .getOrElse(identifier.name,
                         throw new NoSuchMappingException(identifier)
                     )
@@ -133,9 +136,9 @@ class ProjectContext private[execution](
     override def getRelation(identifier: RelationIdentifier): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == project.name)) {
+        if (identifier.project.forall(_ == _project.name)) {
             relations.getOrElseUpdate(identifier.name,
-                project.relations
+                _project.relations
                     .getOrElse(identifier.name,
                         throw new NoSuchRelationException(identifier)
                     )
@@ -157,9 +160,9 @@ class ProjectContext private[execution](
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == project.name)) {
+        if (identifier.project.forall(_ == _project.name)) {
             targets.getOrElseUpdate(identifier.name,
-                project.targets
+                _project.targets
                     .getOrElse(identifier.name,
                         throw new NoSuchTargetException(identifier)
                     )
@@ -180,11 +183,11 @@ class ProjectContext private[execution](
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == project.name)) {
+        if (identifier.project.forall(_ == _project.name)) {
             connections.getOrElseUpdate(identifier.name,
                 if (identifier.project.nonEmpty) {
                     // Explicit project identifier specified, only look in project connections
-                    project.connections
+                    _project.connections
                         .getOrElse(identifier.name,
                             throw new NoSuchConnectionException(identifier)
                         )
@@ -193,7 +196,7 @@ class ProjectContext private[execution](
                 else {
                     // No project specifier given, first look into non-project connections, then try project connections
                     nonProjectConnections.getOrElse(identifier.name,
-                        project.connections
+                        _project.connections
                             .getOrElse(identifier.name,
                                 throw new NoSuchConnectionException(identifier)
                             )
@@ -217,9 +220,9 @@ class ProjectContext private[execution](
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == project.name)) {
-            bundles.getOrElseUpdate(identifier.name,
-                project.jobs
+        if (identifier.project.forall(_ == _project.name)) {
+            jobs.getOrElseUpdate(identifier.name,
+                _project.jobs
                     .getOrElse(identifier.name,
                         throw new NoSuchJobException(identifier)
                     )

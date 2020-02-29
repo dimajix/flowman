@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,18 @@ import org.apache.spark.SparkConf
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 
 case class SettingLevel(
     level:Int
@@ -53,13 +53,13 @@ abstract class Context {
       * Returns the namespace associated with this context. Can be null
       * @return
       */
-    def namespace : Namespace
+    def namespace : Option[Namespace]
 
     /**
       * Returns the project associated with this context. Can be null
       * @return
       */
-    def project : Project
+    def project : Option[Project]
 
     /**
       * Returns the root context in a hierarchy of connected contexts

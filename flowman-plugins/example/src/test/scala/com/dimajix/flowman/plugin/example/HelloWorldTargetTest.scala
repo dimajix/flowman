@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.spec.ModuleSpec
 
 
 class HelloWorldTargetTest extends FlatSpec with Matchers {
@@ -32,7 +32,7 @@ class HelloWorldTargetTest extends FlatSpec with Matchers {
               |  custom:
               |    kind: hello-world
             """.stripMargin
-        val module = Module.read.string(spec)
+        val module = ModuleSpec.read.string(spec)
         module.targets.keys should contain("custom")
 
         val target = module.targets("custom").instantiate(session.context)

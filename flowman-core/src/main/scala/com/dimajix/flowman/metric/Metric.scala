@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,27 +72,4 @@ abstract class MetricBundle {
       * Resets and/or removes all metrics in this bundle.
       */
     def reset() : Unit
-}
-
-
-/**
-  * A MetricBoard is a collection of multiple MetricBundles to be published together to one or multiple MetricSinks
-  * @param labels
-  * @param bundles
-  */
-case class MetricBoard(
-    labels:Map[String,String],
-    bundles:Seq[MetricBundle]
-) {
-    def reset() : Unit =  bundles.foreach(_.reset())
-    def metrics : Seq[Metric] = bundles.flatMap(_.metrics)
-}
-
-
-case class Selector(
-   name:Option[String] = None,
-   labels:Map[String,String] = Map()
-) {
-    require(name != null)
-    require(labels != null)
 }

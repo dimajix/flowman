@@ -23,8 +23,8 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
-import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.spark.testing.LocalSparkSession
 
 

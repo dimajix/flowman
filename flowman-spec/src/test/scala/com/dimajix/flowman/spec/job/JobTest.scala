@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.job
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.verify
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -35,7 +37,6 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.types.StringType
-
 
 object GrabEnvironmentTarget {
     var environment:Map[String,Any] = Map()
@@ -362,7 +363,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job.labels should be (Map("job_label" -> "xyz"))
 
         session.runner.executeJob(executor, job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        verify(metricSink).addBoard(any())
+        verify(metricSink).addBoard(any(), any())
         verify(metricSink).commit(any())
         verify(metricSink).removeBoard(any())
     }

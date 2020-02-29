@@ -98,7 +98,7 @@ class JobSpec extends NamedSpec[Job] {
         val curTargets = targets.map(context.evaluate).map(TargetIdentifier.parse)
         val allTargets = parentTargets ++ curTargets
 
-        val allMetrics = metrics.map(_.instantiate(context)).orElse(parentMetrics)
+        val allMetrics = metrics.orElse(parentMetrics)
 
         Job(
             instanceProperties(context),

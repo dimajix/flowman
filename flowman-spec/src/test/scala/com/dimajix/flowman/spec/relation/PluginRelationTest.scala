@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.annotation.RelationType
-import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spi.CustomRelationSpec
 
 

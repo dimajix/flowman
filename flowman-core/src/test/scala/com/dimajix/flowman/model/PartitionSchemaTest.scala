@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.schema
+package com.dimajix.flowman.model
 
-import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.RangeValue
@@ -47,8 +45,6 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
-        val session = Session.builder().build()
-        implicit val context = session.context
         val partitions = Map(
             "p1" -> SingleValue("lala"),
             "p2" -> SingleValue("123")
@@ -69,8 +65,6 @@ class PartitionSchemaTest extends FlatSpec with Matchers {
         )
         val partitionSchema = PartitionSchema(partitionColumns)
 
-        val session = Session.builder().build()
-        implicit val context = session.context
         val partitions = Map(
             "p1" -> ArrayValue("lala", "lolo"),
             "p2" -> RangeValue("123", "127", Some("2"))

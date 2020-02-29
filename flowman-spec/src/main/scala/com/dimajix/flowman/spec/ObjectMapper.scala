@@ -16,15 +16,9 @@
 
 package com.dimajix.flowman.spec
 
-import java.io.InputStream
-import java.net.URL
-
-import scala.reflect.ClassTag
-
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.history.HistorySpec
@@ -32,14 +26,14 @@ import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.util.ObjectMapper
+import com.dimajix.flowman.util.{ObjectMapper => CoreObjectMapper}
 
 
 /**
   * This singleton provides a preconfigured Jackson ObjectMapper which already contains all
   * extensions and can directly be used for reading flowman specification files
   */
-object ObjectMapper extends ObjectMapper {
+object ObjectMapper extends CoreObjectMapper {
     /**
       * Create a new Jackson ObjectMapper
       * @return

@@ -157,7 +157,7 @@ class MergeFilesTargetSpec extends TargetSpec {
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
     override def instantiate(context: Context): MergeFilesTarget = {
-        spec.target.MergeFilesTarget(
+        MergeFilesTarget(
             instanceProperties(context),
             new Path(context.evaluate(source)),
             new Path(context.evaluate(target)),

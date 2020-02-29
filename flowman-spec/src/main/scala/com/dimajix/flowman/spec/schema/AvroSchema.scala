@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.AvroSchemaUtils
 

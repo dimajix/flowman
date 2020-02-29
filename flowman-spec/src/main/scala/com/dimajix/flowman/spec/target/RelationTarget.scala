@@ -25,9 +25,12 @@ import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.spec.RelationIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.types.SingleValue
 
 

@@ -1,10 +1,48 @@
-package com.dimajix.flowman;
+package com.dimajix.flowman
+
+import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+
+object JacksonTest {
+
+    class SequenceElement {
+        @JsonBackReference
+        var parent: SequenceContainer = _
+        @JsonProperty(value = "name")
+        var name: String = _
+    }
+
+    class SequenceContainer {
+        @JsonProperty(value = "children") var children: Seq[SequenceElement] = _
+    }
+
+    class OptionContainer {
+        @JsonProperty(value = "key") var key: String = _
+        @JsonProperty(value = "val") var value: Option[String] = _
+    }
+
+    case class CaseClassWithDefaults @JsonCreator(mode=JsonCreator.Mode.DISABLED)(
+        @JsonProperty(value = "key", defaultValue = "key") key: String = "key",
+        @JsonProperty(value = "value", defaultValue = "value") value: String = "value"
+    ) {
+        @JsonCreator
+        def this() = this("key", "value")
+    }
+}
+
 
 class JacksonTest extends FlatSpec with Matchers {
     val mapper = new ObjectMapper(new YAMLFactory())
     mapper.registerModule(DefaultScalaModule)
 
     import JacksonTest._
+
     "The BackReference" should "be filled out" in {
        val yaml =
            """

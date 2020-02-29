@@ -25,7 +25,8 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.dataset.Dataset
+import com.dimajix.flowman.model.Dataset
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.FileDataset
 import com.dimajix.spark.testing.LocalSparkSession
 

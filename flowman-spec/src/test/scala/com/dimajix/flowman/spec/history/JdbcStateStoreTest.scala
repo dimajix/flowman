@@ -26,7 +26,6 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.execution.NoSuchConnectionException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.job.Job
 
 
 class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {

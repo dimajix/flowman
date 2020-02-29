@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Target
 import com.dimajix.spark.testing.LocalTempDir
 
 

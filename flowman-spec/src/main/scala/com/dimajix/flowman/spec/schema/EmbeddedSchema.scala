@@ -20,8 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.AbstractInstance
-import com.dimajix.flowman.model.Instance
-import com.dimajix.flowman.spec.AbstractInstance
+import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 
 

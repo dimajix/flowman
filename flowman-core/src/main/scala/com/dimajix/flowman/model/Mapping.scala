@@ -27,18 +27,20 @@ import com.dimajix.spark.sql.catalyst.PlanUtils
 
 
 object Mapping {
-    def apply(context:Context, name:String="") : Properties = {
-        Properties(
-            context,
-            context.namespace,
-            context.project,
-            name,
-            "",
-            Map(),
-            false,
-            false,
-            StorageLevel.NONE
-        )
+    object Properties {
+        def apply(context: Context, name: String = ""): Properties = {
+            Properties(
+                context,
+                context.namespace,
+                context.project,
+                name,
+                "",
+                Map(),
+                false,
+                false,
+                StorageLevel.NONE
+            )
+        }
     }
     final case class Properties(
         context: Context,

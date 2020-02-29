@@ -57,7 +57,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "null", value = classOf[NullTargetSpec]),
     new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTargetSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationTargetSpec]),
-    new JsonSubTypes.Type(name = "schema", value = classOf[TargetTargetSpec]),
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaTargetSpec]),
     new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTargetSpec]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateTargetSpec]))

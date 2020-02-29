@@ -70,7 +70,7 @@ class SessionTest extends FlatSpec with Matchers {
             .build()
         session.spark.conf.get("spark.lala") should be ("lala_cmdline")
         session.spark.conf.get("spark.lolo") should be ("lolo_cmdline")
-        session.spark.conf.get("spark.lili") should be ("lili_project")
+        session.spark.conf.get("spark.lili") should be ("lili.project")
         session.spark.stop()
     }
 

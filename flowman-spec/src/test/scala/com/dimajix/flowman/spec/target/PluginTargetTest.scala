@@ -22,7 +22,9 @@ import org.scalatest.Matchers
 import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Target
 
 
 case class AnnotatedTarget(instanceProperties:Target.Properties) extends BaseTarget {
@@ -46,7 +48,7 @@ class PluginTargetTest extends FlatSpec with Matchers  {
             """.stripMargin
         val module = Module.read.string(spec)
         module.targets.keys should contain("custom")
-        val target = module.targets("custom")(session.context)
+        val target = module.targets("custom").instantiate(session.context)
         target shouldBe an[AnnotatedTarget]
     }
 

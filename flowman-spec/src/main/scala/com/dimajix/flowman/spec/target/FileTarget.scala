@@ -25,8 +25,11 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetInstance
 
 
 object FileTarget {

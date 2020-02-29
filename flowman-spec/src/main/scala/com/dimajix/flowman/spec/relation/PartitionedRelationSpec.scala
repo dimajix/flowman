@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@ package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-import com.dimajix.flowman.spec.schema.Schema
-import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.spec.schema.PartitionFieldSpec
 
 
-
-trait SchemaRelationSpec { this: RelationSpec =>
-    @JsonProperty(value = "schema", required = false) protected var schema: Option[SchemaSpec] = None
+trait PartitionedRelationSpec { this: RelationSpec =>
+    @JsonProperty(value = "partitions", required = false) protected var partitions: Seq[PartitionFieldSpec] = Seq()
 }

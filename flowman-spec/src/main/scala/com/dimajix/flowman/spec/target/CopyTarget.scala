@@ -25,8 +25,10 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.spec.dataset.Dataset
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.SchemaWriter

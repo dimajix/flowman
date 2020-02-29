@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.Target
 
 
 case class DeleteFileTarget(

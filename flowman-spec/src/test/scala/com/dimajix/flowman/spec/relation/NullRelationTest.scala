@@ -23,6 +23,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Relation
 import com.dimajix.spark.testing.LocalSparkSession
 
 

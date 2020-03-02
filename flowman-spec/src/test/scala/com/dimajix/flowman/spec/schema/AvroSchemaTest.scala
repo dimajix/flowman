@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
+import com.google.common.io.Resources
+import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -110,10 +112,11 @@ class AvroSchemaTest extends FlatSpec with Matchers {
     }
 
     it should "be readable from an external file" in {
+        val basedir = new Path(Resources.getResource(".").toURI)
         val spec =
-            """
+            s"""
               |kind: avro
-              |file: test/schema/AvroSchema.json
+              |file: $basedir/schema/AvroSchema.json
             """.stripMargin
 
         val session = Session.builder().build()

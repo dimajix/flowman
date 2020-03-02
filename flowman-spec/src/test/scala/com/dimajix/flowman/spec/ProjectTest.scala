@@ -16,7 +16,9 @@
 
 package com.dimajix.flowman.spec
 
+import com.google.common.io.Resources
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -33,19 +35,20 @@ class ProjectTest extends FlatSpec with Matchers {
             """.stripMargin
         val project = Project.read.string(spec)
         project.name should be ("test")
-        project.version should be ("1.0")
-        project.filename.toString should be ("")
-        project.basedir.toString should be ("")
+        project.version should be (Some("1.0"))
+        project.filename should be (None)
+        project.basedir should be (None)
     }
 
     it should "be readable from a file" in {
+        val basedir = new Path(Resources.getResource(".").toURI)
         val fs = FileSystem(new Configuration())
-        val file = fs.file("test/project/TestProject.yml")
+        val file = fs.file(new Path(basedir, "project/TestProject.yml"))
         val project = Project.read.file(file)
         project.name should be ("test")
-        project.version should be ("1.0")
-        project.filename.toString should be (file.absolute.toString)
-        project.basedir.toString should be (file.absolute.parent.toString)
+        project.version should be (Some("1.0"))
+        project.filename should be (Some(file.absolute))
+        project.basedir should be (Some(file.absolute.parent))
         project.environment should contain("x" -> "y")
         project.config should contain("spark.lala" -> "lolo")
     }

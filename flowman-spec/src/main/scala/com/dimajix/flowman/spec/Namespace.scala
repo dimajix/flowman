@@ -39,7 +39,7 @@ class NamespaceSpec {
     @JsonProperty(value="catalog") private var catalog: Option[CatalogSpec] = None
     @JsonProperty(value="history") private var history : Option[HistorySpec] = None
     @JsonProperty(value="metrics") private var metrics : Option[MetricSinkSpec] = None
-    @JsonProperty(value="plugins") private var _plugins: Seq[String] = Seq()
+    @JsonProperty(value="plugins") private var plugins: Seq[String] = Seq()
 
     def instantiate() : Namespace = {
         Namespace(
@@ -51,7 +51,8 @@ class NamespaceSpec {
             store,
             catalog,
             history,
-            metrics
+            metrics,
+            plugins
         )
     }
 }

@@ -28,6 +28,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest

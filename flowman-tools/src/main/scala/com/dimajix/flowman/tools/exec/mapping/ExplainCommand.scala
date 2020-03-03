@@ -25,11 +25,10 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 

@@ -27,10 +27,11 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.SystemSettings
 import com.dimajix.flowman.plugin.PluginManager
 import com.dimajix.flowman.spec.NamespaceSpec
-import com.dimajix.flowman.spec.Project
 import com.dimajix.flowman.tools.exec.Driver
 
 
@@ -42,7 +43,7 @@ class Tool {
     // Second load global system settings (including plugins for namespaces)
     val systemSettings:SystemSettings = loadSystemSettings()
     // Third load namespace
-    val namespace:NamespaceSpec = loadNamespace()
+    val namespace:Namespace = loadNamespace()
 
     private def createPluginManager() : PluginManager = {
         val pluginManager = new PluginManager
@@ -62,12 +63,12 @@ class Tool {
         settings
     }
 
-    private def loadNamespace() : NamespaceSpec = {
+    private def loadNamespace() : Namespace = {
         val ns = ToolConfig.confDirectory
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)
-            .map(file => NamespaceSpec.read.file(file))
-            .getOrElse(NamespaceSpec.read.default())
+            .map(file => Namespace.read.file(file))
+            .getOrElse(Namespace.read.default())
 
         // Load all plugins from Namespace
         ns.plugins.foreach(plugins.load)

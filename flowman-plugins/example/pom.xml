@@ -54,7 +54,7 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-core</artifactId>
+            <artifactId>flowman-spec</artifactId>
             <scope>provided</scope>
         </dependency>
 

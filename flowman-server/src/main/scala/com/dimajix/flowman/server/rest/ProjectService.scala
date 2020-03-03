@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.storage.Store
 
 

@@ -89,7 +89,8 @@ final case class Namespace(
     store:Option[Template[Store]] = None,
     catalog:Option[Template[ExternalCatalog]] = None,
     history:Option[Template[StateStore]] = None,
-    metrics:Option[Template[MetricSink]] = None
+    metrics:Option[Template[MetricSink]] = None,
+    plugins:Seq[String] = Seq()
 ){
 }
 

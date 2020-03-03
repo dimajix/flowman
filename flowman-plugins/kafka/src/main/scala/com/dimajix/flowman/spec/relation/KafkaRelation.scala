@@ -30,9 +30,11 @@ import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
-import com.dimajix.flowman.spec.schema.Schema
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue

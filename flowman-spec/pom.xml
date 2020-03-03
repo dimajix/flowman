@@ -23,6 +23,36 @@
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.json:json</include>
+                                    <include>com.github.everit-org.json-schema:org.everit.json.schema</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.json</pattern>
+                                    <shadedPattern>com.dimajix.shade.json</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.everit.json</pattern>
+                                    <shadedPattern>com.dimajix.shade.everit</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

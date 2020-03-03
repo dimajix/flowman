@@ -666,6 +666,7 @@
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>

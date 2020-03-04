@@ -48,7 +48,6 @@ class ProjectService(store:Store) {
     private val logger = LoggerFactory.getLogger(classOf[ProjectService])
 
     import akka.http.scaladsl.server.Directives._
-
     import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : Route = pathPrefix("project") {(

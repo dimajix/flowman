@@ -32,6 +32,7 @@ import com.dimajix.flowman.server.model.Converter
 @Path("/namespace")
 class NamespaceService(ns:Namespace) {
     import akka.http.scaladsl.server.Directives._
+    import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("namespace") {
         pathEndOrSingleSlash {

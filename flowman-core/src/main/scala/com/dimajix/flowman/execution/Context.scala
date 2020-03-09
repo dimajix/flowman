@@ -16,9 +16,10 @@
 
 package com.dimajix.flowman.execution
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
@@ -167,7 +168,7 @@ abstract class Context {
       *
       * @return
       */
-    def config: Map[String, String]
+    def config : Configuration
     def rawConfig : Map[String,(String, Int)]
 
     /**
@@ -175,7 +176,7 @@ abstract class Context {
       *
       * @return
       */
-    def environment: Map[String, Any]
+    def environment : Environment
     def rawEnvironment : Map[String,(Any, Int)]
 
     /**
@@ -202,5 +203,5 @@ abstract class Context {
       * necessarily the one used by the active Spark session
       * @return
       */
-    def hadoopConf : Configuration
+    def hadoopConf : HadoopConf
 }

@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.execution
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.catalog.ExternalCatalog
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.NullStateStore
@@ -326,8 +327,8 @@ class Session private[execution](
         builder.build()
     }
 
-    private lazy val _configuration = {
-        val config = if (_project.nonEmpty) {
+    private lazy val _configuration : Configuration = {
+        if (_project.nonEmpty) {
             logger.info("Using project specific configuration settings")
             getContext(_project.get).config
         }
@@ -335,7 +336,6 @@ class Session private[execution](
             logger.info("Using global configuration settings")
             context.config
         }
-        new com.dimajix.flowman.config.Configuration(config)
     }
 
     private lazy val rootExecutor : RootExecutor = {
@@ -424,10 +424,10 @@ class Session private[execution](
       */
     def sparkRunning: Boolean = sparkSession != null
 
-    def config : com.dimajix.flowman.config.Configuration = _configuration
+    def config : Configuration = _configuration
     def flowmanConf : FlowmanConf = _configuration.flowmanConf
     def sparkConf : SparkConf = _configuration.sparkConf
-    def hadoopConf : Configuration = _configuration.hadoopConf
+    def hadoopConf : HadoopConf = _configuration.hadoopConf
 
     /**
       * Returns the FileSystem as configured in Hadoop

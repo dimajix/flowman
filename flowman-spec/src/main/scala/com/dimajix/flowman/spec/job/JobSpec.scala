@@ -102,7 +102,6 @@ class JobSpec extends NamedSpec[Job] {
 
         Job(
             instanceProperties(context),
-            description.map(context.evaluate),
             allParameters.values.toSeq,
             allEnvironment,
             allTargets.toSeq,
@@ -123,7 +122,8 @@ class JobSpec extends NamedSpec[Job] {
             context.namespace,
             context.project,
             name,
-            context.evaluate(labels)
+            context.evaluate(labels),
+            description.map(context.evaluate)
         )
     }
 }

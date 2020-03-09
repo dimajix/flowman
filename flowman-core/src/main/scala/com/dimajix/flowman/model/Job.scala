@@ -89,7 +89,8 @@ object Job {
                 context.namespace,
                 context.project,
                 name,
-                Map()
+                Map(),
+                None
             )
         }
     }
@@ -98,7 +99,8 @@ object Job {
         namespace:Option[Namespace],
         project:Option[Project],
         name: String,
-        labels: Map[String, String]
+        labels: Map[String, String],
+        description:Option[String]
    ) extends Instance.Properties {
         override val kind : String = "batch"
    }
@@ -111,8 +113,7 @@ object Job {
         private var targets:Seq[TargetIdentifier] = Seq()
 
         def build() : Job = Job(
-            Job.Properties(context, name),
-            description,
+            Job.Properties(context, name).copy(description=description),
             parameters,
             Map(),
             targets
@@ -162,10 +163,9 @@ object Job {
 
 final case class Job(
     instanceProperties:Job.Properties,
-    description:Option[String] = None,
     parameters:Seq[Job.Parameter] = Seq(),
     environment:Map[String,String] = Map(),
-    targets:Seq[TargetIdentifier],
+    targets:Seq[TargetIdentifier] = Seq(),
     metrics:Option[Template[MetricBoard]] = None
 ) extends AbstractInstance {
     private val logger = LoggerFactory.getLogger(classOf[Job])
@@ -178,6 +178,12 @@ final case class Job(
       * @return
       */
     def identifier : JobIdentifier = JobIdentifier(name, project.map(_.name))
+
+    /**
+      * Returns a description of the job
+      * @return
+      */
+    def description : Option[String] = instanceProperties.description
 
     /**
       * Returns a JobInstance used for state management

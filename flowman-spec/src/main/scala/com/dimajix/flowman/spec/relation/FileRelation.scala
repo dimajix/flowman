@@ -61,7 +61,7 @@ case class FileRelation(
         FileCollector.builder(context.hadoopConf)
             .path(location)
             .pattern(pattern)
-            .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment)
+            .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
 

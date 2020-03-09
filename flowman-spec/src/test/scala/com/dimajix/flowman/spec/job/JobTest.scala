@@ -49,7 +49,7 @@ case class GrabEnvironmentTarget(instanceProperties:Target.Properties) extends B
       * @param executor
       */
     override def build(executor: Executor): Unit = {
-        GrabEnvironmentTarget.environment = context.environment.filter{ case (k,v) => k != "project" }
+        GrabEnvironmentTarget.environment = context.environment.toMap.filter{ case (k,v) => k != "project" }
     }
 }
 

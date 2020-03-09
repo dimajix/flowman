@@ -18,10 +18,11 @@ package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
@@ -84,7 +85,6 @@ class RootContext private[execution](
     nonNamespaceConnections:Map[String, Template[Connection]]
 ) extends AbstractContext(null, fullEnv, fullConfig) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
-    private val _configuration = new com.dimajix.flowman.config.Configuration(config)
     private lazy val _fs = FileSystem(hadoopConf)
 
     private val connections = mutable.Map[String,Connection]()
@@ -236,19 +236,19 @@ class RootContext private[execution](
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */
-    override def flowmanConf : FlowmanConf = _configuration.flowmanConf
+    override def flowmanConf : FlowmanConf = config.flowmanConf
 
     /**
       * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
       * is not necessarily the one used by the Spark Session!
       * @return
       */
-    override def sparkConf: SparkConf = _configuration.sparkConf
+    override def sparkConf: SparkConf = config.sparkConf
 
     /**
       * Returns a Hadoop Configuration object which contains all settings form the configuration. The object is not
       * necessarily the one used by the active Spark session
       * @return
       */
-    override def hadoopConf: Configuration = _configuration.hadoopConf
+    override def hadoopConf: HadoopConf = config.hadoopConf
 }

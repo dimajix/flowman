@@ -21,11 +21,12 @@ import java.io.StringWriter
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
@@ -36,8 +37,6 @@ import com.dimajix.flowman.templating.Velocity
 
 
 object AbstractContext {
-    private lazy val rootContext = Velocity.newContext()
-
     abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) /*extends Context.Builder[B,C]*/ { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
@@ -224,28 +223,8 @@ abstract class AbstractContext(
     override val rawEnvironment:Map[String,(Any, Int)],
     override val rawConfig:Map[String,(String, Int)]
 ) extends Context {
-    protected final val templateEngine = Velocity.newEngine()
-    protected final val templateContext = new VelocityContext(AbstractContext.rootContext)
-
-    // Configure templating context
-    rawEnvironment.foreach { case (key,(value,_)) =>
-        val finalValue = value match {
-            case s:String => RecursiveValue(templateEngine, templateContext, s)
-            case v:Any => v
-            case null => null
-        }
-        templateContext.put(key, finalValue)
-    }
-
-    private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) = {
-        val output = new StringWriter()
-        val context = if (additionalValues.nonEmpty)
-            new VelocityContext(additionalValues.asJava, templateContext)
-        else
-            templateContext
-        templateEngine.evaluate(context, output, "context", string)
-        output.getBuffer.toString
-    }
+    private val _environment = new Environment(rawEnvironment)
+    private lazy val _configuration = new Configuration(rawConfig.map { case(k,v) => k -> evaluate(v._1) })
 
     /**
       * Evaluates a string containing expressions to be processed.
@@ -253,7 +232,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    override def evaluate(string:String) : String = evaluate(string, Map())
+    override def evaluate(string:String) : String = _environment.evaluate(string)
 
     /**
       * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
@@ -262,12 +241,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    override def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String = {
-        if (string != null)
-            evaluateNotNull(string, additionalValues)
-        else
-            null
-    }
+    override def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String = _environment.evaluate(string, additionalValues)
 
     /**
       * Evaluates a string containing expressions to be processed.
@@ -275,9 +249,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    def evaluate(string:Option[String]) : Option[String] = {
-        string.map(evaluate).map(_.trim).filter(_.nonEmpty)
-    }
+    override def evaluate(string:Option[String]) : Option[String] = _environment.evaluate(string)
 
     /**
       * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
@@ -286,9 +258,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String] = {
-        string.map(s => evaluate(s, additionalValues)).map(_.trim).filter(_.nonEmpty)
-    }
+    override def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String] = _environment.evaluate(string, additionalValues)
 
     /**
       * Evaluates a key-value map containing values with expressions to be processed.
@@ -296,7 +266,7 @@ abstract class AbstractContext(
       * @param map
       * @return
       */
-    def evaluate(map: Map[String,String]): Map[String,String] = evaluate(map, Map())
+    override def evaluate(map: Map[String,String]): Map[String,String] = _environment.evaluate(map)
 
     /**
       * Evaluates a key-value map containing values with expressions to be processed.  This variant also accepts a
@@ -305,25 +275,20 @@ abstract class AbstractContext(
       * @param map
       * @return
       */
-    override def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String] = {
-        map.map { case(name,value) => (name, evaluate(value, additionalValues)) }
-    }
+    override def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String] = _environment.evaluate(map, additionalValues)
 
     /**
       * Returns all configuration options as a key-value map
       * @return
       */
-    override def config : Map[String,String] = rawConfig.map { case(k,v) => k -> evaluate(v._1) }
+    override def config : Configuration = _configuration
 
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    override def environment : Map[String,Any] = rawEnvironment.map {
-        case (k, (s: String, _)) => k -> evaluate(s)
-        case (k, (any, _)) => k -> any
-    }
+    override def environment : Environment = _environment
 
     /**
       * Returns the FileSystem as configured in Hadoop
@@ -349,5 +314,5 @@ abstract class AbstractContext(
       * necessarily the one used by the active Spark session
       * @return
       */
-    override def hadoopConf : Configuration = root.hadoopConf
+    override def hadoopConf : HadoopConf = root.hadoopConf
 }

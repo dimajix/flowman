@@ -65,7 +65,7 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
       */
     def instance : JobInstance = job.instance(arguments.map{ case(k,v) => k -> v.toString })
 
-    def environment : Map[String,Any] = context.environment
+    def environment : Environment = context.environment
 
     /**
       * Executes a single phase of the job. This method will also check if the arguments passed to the constructor

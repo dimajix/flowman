@@ -57,19 +57,19 @@ object HiveTableRelation {
 
 case class HiveTableRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Option[Schema],
-    override val partitions: Seq[PartitionField],
-    override val database: Option[String],
+    override val schema:Option[Schema] = None,
+    override val partitions: Seq[PartitionField] = Seq(),
+    override val database: Option[String] = None,
     override val table: String,
-    external: Boolean,
-    location: Option[Path],
-    format: String,
-    rowFormat: Option[String],
-    inputFormat: Option[String],
-    outputFormat: Option[String],
-    properties: Map[String, String],
-    serdeProperties: Map[String, String],
-    writer: String
+    external: Boolean = false,
+    location: Option[Path] = None,
+    format: String = "parquet",
+    rowFormat: Option[String] = None,
+    inputFormat: Option[String] = None,
+    outputFormat: Option[String] = None,
+    properties: Map[String, String] = Map(),
+    serdeProperties: Map[String, String] = Map(),
+    writer: String = "hive"
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
 

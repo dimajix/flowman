@@ -17,30 +17,43 @@
 package com.dimajix.flowman.dsl
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.execution.Environment
+import com.dimajix.flowman.model
 import com.dimajix.flowman.model.JobIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TargetIdentifier
+
+
+case class Job(
+    parameters:Environment => Seq[model.Job.Parameter] = _ => Seq(),
+    environment:Environment => Map[String,String] = _ => Map(),
+    targets:Environment => Seq[TargetIdentifier] = _ => Seq(),
+    extend:Environment => Seq[String] = _ => Seq()
+) extends JobGen {
+    override def apply(props:model.Job.Properties): model.Job = {
+        val env = props.context.environment
+        model.Job(
+            props
+        )
+    }
+}
 
 
 case class JobWrapper(
-    job:Job.Properties => Job,
+    job:model.Job.Properties => model.Job,
     name:String = "",
-    labels:Map[String,String] = Map(),
-    description:Option[String] = None
-) extends Template[Job] {
-    def label(kv:(String,String)) : JobWrapper = copy(labels=labels + kv)
-    def description(desc:String) : JobWrapper = copy(description=Some(desc))
+    labels:Environment => Map[String,String] = _ => Map(),
+    description:Environment => Option[String] = _ => None
+) extends Wrapper[model.Job] {
+    override def identifier : JobIdentifier = ???
+
+    def label(kv:(String,String)) : JobWrapper = copy(labels=env => labels(env) + kv)
+    def description(desc:String) : JobWrapper = copy(description=_ => Some(desc))
     def named(name:String) : JobWrapper = copy(name=name)
     def as(name:String) : JobWrapper = named(name)
 
-    def extend(job:String) : JobWrapper = ???
-    def extend(job:JobIdentifier) : JobWrapper = ???
-    def extend(job:JobWrapper) : JobWrapper = ???
-
-    def identifier : JobIdentifier = ???
-
-    override def instantiate(context: Context): Job = {
-        val props = Job.Properties(context, context.namespace, context.project, name, labels, description)
-        job(props)
+    override def instantiate(context: Context): model.Job = {
+        val env = context.environment
+        val props = model.Job.Properties(context, context.namespace, context.project, name, labels(env), description(env))
+        model.Job(props)
     }
 }

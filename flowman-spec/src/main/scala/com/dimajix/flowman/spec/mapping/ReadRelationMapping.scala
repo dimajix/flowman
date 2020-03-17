@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
@@ -28,17 +29,18 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.ArrayValue
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
 
 
 case class ReadRelationMapping(
     instanceProperties:Mapping.Properties,
     relation:RelationIdentifier,
-    columns:Map[String,String] = Map(),
+    columns:Seq[Field] = Seq(),
     partitions:Map[String,FieldValue] = Map(),
     filter:Option[String] = None
 ) extends BaseMapping {
@@ -74,7 +76,7 @@ case class ReadRelationMapping(
         require(executor != null)
         require(input != null)
 
-        val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
+        val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
         logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")} and filter '${filter.getOrElse("")}'")
 
         // Read relation
@@ -97,7 +99,7 @@ case class ReadRelationMapping(
         require(input != null)
 
         val schema = if (columns.nonEmpty) {
-            StructType.of(SchemaUtils.createSchema(columns.toSeq))
+            StructType(columns)
         }
         else {
             val relation = context.getRelation(this.relation)
@@ -130,7 +132,7 @@ class ReadRelationMappingSpec extends MappingSpec {
         ReadRelationMapping(
             instanceProperties(context),
             RelationIdentifier(context.evaluate(relation)),
-            context.evaluate(columns),
+            context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             partitions,
             context.evaluate(filter)
         )

@@ -22,9 +22,9 @@ import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
 import org.slf4j.Logger
 
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
@@ -44,9 +44,9 @@ object ExternalSchema {
   */
 abstract class ExternalSchema extends AbstractInstance with Schema {
     protected val logger: Logger
-    protected val file: File
-    protected val url: URL
-    protected val spec: String
+    protected val file: Option[Path]
+    protected val url: Option[URL]
+    protected val spec: Option[String]
 
     /**
       * Returns the description of the schema. This will be cached once and for ever
@@ -88,9 +88,10 @@ abstract class ExternalSchema extends AbstractInstance with Schema {
       * @return
       */
     protected def loadSchemaSpec : String = {
-        if (file != null) {
-            logger.info(s"Loading schema from file $file")
-            val input = file.open()
+        if (file.nonEmpty) {
+            logger.info(s"Loading schema from file ${file.get}")
+            val fs = context.fs
+            val input = fs.file(file.get).open()
             try {
                 val writer = new StringWriter()
                 IOUtils.copy(input, writer, Charset.forName("UTF-8"))
@@ -100,12 +101,12 @@ abstract class ExternalSchema extends AbstractInstance with Schema {
                 input.close()
             }
         }
-        else if (url != null) {
-            logger.info(s"Loading schema from url $url")
-            IOUtils.toString(url)
+        else if (url.nonEmpty) {
+            logger.info(s"Loading schema from url ${url.get}")
+            IOUtils.toString(url.get)
         }
-        else if (spec != null && spec.nonEmpty) {
-            spec
+        else if (spec.exists(_.nonEmpty)) {
+            spec.get
         }
         else {
             throw new IllegalArgumentException("A schema needs either a 'file', 'url' or a 'spec' element")
@@ -119,7 +120,7 @@ abstract class ExternalSchema extends AbstractInstance with Schema {
   * Helper class for external schemas which are stored in files or at URLs
   */
 abstract class ExternalSchemaSpec extends SchemaSpec {
-    @JsonProperty(value = "file", required = false) protected var file: String = _
-    @JsonProperty(value = "url", required = false) protected var url: String = _
-    @JsonProperty(value = "spec", required = false) protected var spec: String = _
+    @JsonProperty(value = "file", required = false) protected var file: Option[String] = None
+    @JsonProperty(value = "url", required = false) protected var url: Option[String] = None
+    @JsonProperty(value = "spec", required = false) protected var spec: Option[String] = None
 }

@@ -16,6 +16,11 @@
 
 package com.dimajix.flowman.dsl
 
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.Identifier
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Template
+
 
 class Field {
     private var name:String = _
@@ -27,17 +32,41 @@ class FieldList {
 
     def :=(values:String*) : Unit = ???
     def +=(values:String*) : Unit = ???
+
+    def toSeq : Seq[String] = ???
+}
+class FieldMap {
+    def :=(values:(String,String)*) : Unit = ???
+    def +=(values:(String,String)*) : Unit = ???
+
+    def toMap : Map[String,String] = ???
 }
 
 
-class WrapperList[T] extends Map[String,T] {
+class WrapperList[S,T <: Wrapper[S]] extends Map[String,T] {
     override def +[B1 >: T](kv: (String, B1)): Map[String, B1] = ???
     override def get(key: String): Option[T] = ???
     override def iterator: Iterator[(String, T)] = ???
     override def -(key: String): Map[String, T] = ???
 
-    def :=(seq: Seq[T]) = ???
+    def :=(seq: T*) = ???
     def +=(rel: T) = ???
-    def +=(seq: Seq[T]) = ???
+    def +=(seq: T*) = ???
     def +=(fn: => Unit) = ???
+
+    def identifiers : Seq[Identifier[S]] = map { case(k,v) => v.identifier }.toSeq
 }
+
+
+trait Wrapper[T] extends Template[T] {
+    def identifier : Identifier[T] = ???
+}
+
+
+trait TargetGen extends (model.Target.Properties => model.Target)
+trait RelationGen extends (model.Relation.Properties => model.Relation)
+trait MappingGen extends (model.Mapping.Properties => model.Mapping)
+trait JobGen extends (model.Job.Properties => model.Job)
+
+trait SchemaGen extends (model.Schema.Properties => model.Schema)
+trait DatasetGen extends (model.Dataset.Properties => model.Dataset)

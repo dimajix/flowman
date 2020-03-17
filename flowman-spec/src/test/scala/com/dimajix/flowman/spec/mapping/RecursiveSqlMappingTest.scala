@@ -63,7 +63,7 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
 
         val mapping = RecursiveSqlMapping(
             Mapping.Properties(context),
-            """
+            Some("""
               |SELECT
               |     0 AS n,
               |     1 AS fact
@@ -75,9 +75,9 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
               |     (n+1)*fact AS fact
               |FROM __this__
               |WHERE n < 6
-              |""".stripMargin,
-            null,
-            null
+              |""".stripMargin),
+            None,
+            None
         )
 
         val resultDf = mapping.execute(executor, Map())("main")
@@ -111,7 +111,7 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
 
         val mapping = RecursiveSqlMapping(
             Mapping.Properties(context),
-            """
+            Some("""
               |SELECT
               |     0 AS n,
               |     1 AS fact
@@ -123,9 +123,9 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
               |     (n+1)*fact AS fact
               |FROM __this__
               |WHERE n < 6
-              |""".stripMargin,
-            null,
-            null
+              |""".stripMargin),
+            None,
+            None
         )
 
         val resultDf = mapping.execute(executor, Map())("main")

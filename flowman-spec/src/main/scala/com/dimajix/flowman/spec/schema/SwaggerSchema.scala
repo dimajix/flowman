@@ -19,10 +19,10 @@ package com.dimajix.flowman.spec.schema
 import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 
@@ -33,9 +33,9 @@ import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
   */
 case class SwaggerSchema(
     instanceProperties:Schema.Properties,
-    override val file: File,
-    override val url: URL,
-    override val spec: String,
+    override val file: Option[Path],
+    override val url: Option[URL],
+    override val spec: Option[String],
     entity: Option[String],
     nullable: Boolean
 ) extends ExternalSchema {
@@ -70,8 +70,8 @@ class SwaggerSchemaSpec extends ExternalSchemaSpec {
     override def instantiate(context: Context): SwaggerSchema = {
         SwaggerSchema(
             Schema.Properties(context),
-            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
-            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull,
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec),
             entity.map(context.evaluate),
             context.evaluate(nullable).toBoolean

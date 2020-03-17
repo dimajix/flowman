@@ -39,14 +39,14 @@ case class ExtractJsonMapping(
     input:MappingOutputIdentifier,
     column: String,
     schema: Schema,
-    parseMode: String,
-    allowComments: Boolean,
-    allowUnquotedFieldNames: Boolean,
-    allowSingleQuotes: Boolean,
-    allowNumericLeadingZeros: Boolean,
-    allowNonNumericNumbers: Boolean,
-    allowBackslashEscapingAnyCharacter: Boolean,
-    allowUnquotedControlChars: Boolean
+    parseMode: String = "PERMISSIVE",
+    allowComments: Boolean = false,
+    allowUnquotedFieldNames: Boolean = false,
+    allowSingleQuotes: Boolean = true,
+    allowNumericLeadingZeros: Boolean = false,
+    allowNonNumericNumbers: Boolean = true,
+    allowBackslashEscapingAnyCharacter: Boolean = false,
+    allowUnquotedControlChars: Boolean = false
 ) extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)

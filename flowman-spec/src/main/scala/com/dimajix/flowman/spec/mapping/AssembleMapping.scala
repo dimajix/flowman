@@ -31,7 +31,7 @@ import com.dimajix.flowman.types.StructType
 
 
 object AssembleMapping {
-    abstract class Entry {
+    sealed abstract class Entry {
         def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder
     }
 

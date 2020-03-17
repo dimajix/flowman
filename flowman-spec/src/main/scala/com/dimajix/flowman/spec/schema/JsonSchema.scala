@@ -20,6 +20,7 @@ import java.net.URL
 
 import scala.collection.JavaConverters._
 
+import org.apache.hadoop.fs.Path
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
 import org.everit.json.schema.EnumSchema
@@ -34,7 +35,6 @@ import org.json.JSONTokener
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
@@ -54,9 +54,9 @@ import com.dimajix.flowman.types.VarcharType
   */
 case class JsonSchema(
     instanceProperties:Schema.Properties,
-    override val file: File,
-    override val url: URL,
-    override val spec: String
+    override val file: Option[Path],
+    override val url: Option[URL],
+    override val spec: Option[String]
 ) extends ExternalSchema {
     protected override val logger = LoggerFactory.getLogger(classOf[JsonSchema])
 
@@ -123,8 +123,8 @@ class JsonSchemaSpec extends ExternalSchemaSpec {
     override def instantiate(context: Context): JsonSchema = {
         JsonSchema(
             Schema.Properties(context),
-            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
-            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull,
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec)
         )
     }

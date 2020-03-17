@@ -32,12 +32,12 @@ object Environment {
 }
 
 
-class Environment(rawEnvironment:Map[String,(Any, Int)]) {
+class Environment(rawEnvironment:Map[String,Any]) {
     protected final val templateEngine = Velocity.newEngine()
     protected final val templateContext = new VelocityContext(Environment.rootContext)
 
     // Configure templating context
-    rawEnvironment.foreach { case (key,(value,_)) =>
+    rawEnvironment.foreach { case (key,value) =>
         val finalValue = value match {
             case s:String => RecursiveValue(templateEngine, templateContext, s)
             case v:Any => v
@@ -46,7 +46,7 @@ class Environment(rawEnvironment:Map[String,(Any, Int)]) {
         templateContext.put(key, finalValue)
     }
 
-    private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) = {
+    private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) : String = {
         val output = new StringWriter()
         val context = if (additionalValues.nonEmpty)
             new VelocityContext(additionalValues.asJava, templateContext)
@@ -119,24 +119,33 @@ class Environment(rawEnvironment:Map[String,(Any, Int)]) {
     }
 
     /**
-      * Returns the current environment used for replacing variables
+      * Returns the current environment used for replacing variables. References to other variables or functions
+      * will be resolved and evaluated.
       *
       * @return
       */
     def toMap : Map[String,Any] = rawEnvironment.map {
-        case (k, (s: String, _)) => k -> evaluate(s)
-        case (k, (any, _)) => k -> any
+        case (k, s: String) => k -> evaluate(s)
+        case (k, any) => k -> any
     }
 
+    /**
+      * Returns the current environment used for replacing variables. References to other variables or functions
+      * will be resolved and evaluated.
+      *
+      * @return
+      */
     def toSeq : Seq[(String,Any)] = toMap.toSeq
 
-    def apply(key:String) : Any = get(key) match {
-        case Some(x) => x
+    def contains(key:String) : Boolean = rawEnvironment.contains(key)
+
+    def apply(key:String) : String = get(key) match {
+        case Some(x) => x.toString
         case None => throw new NoSuchElementException(s"Environment variable '$key' not found")
     }
 
     def get(key:String) : Option[Any] = rawEnvironment.get(key).map  {
-        case (s: String, _) => evaluate(s)
-        case (any, _) => any
+        case s: String => evaluate(s)
+        case any => any
     }
 }

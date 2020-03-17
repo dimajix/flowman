@@ -28,16 +28,18 @@ case class RelationWrapper(
           labels:Map[String,String] = Map(),
           description:Option[String] = None,
           options:Map[String,String] = Map()
-) extends Template[Relation] {
+) extends Wrapper[Relation] {
+    override def identifier : RelationIdentifier = ???
+
     def label(kv:(String,String)) : RelationWrapper = copy(labels=labels + kv)
     def description(desc:String) : RelationWrapper = copy(description=Some(desc))
     def option(kv:(String,String)): RelationWrapper = copy(options=options + kv)
     def named(name:String) : RelationWrapper = copy(name=name)
     def as(name:String) : RelationWrapper = named(name)
-    def identifier : RelationIdentifier = ???
 
     override def instantiate(context: Context): Relation = {
         val props = Relation.Properties(context, context.namespace, context.project, name, "", labels, description, options)
         rel(props)
     }
 }
+

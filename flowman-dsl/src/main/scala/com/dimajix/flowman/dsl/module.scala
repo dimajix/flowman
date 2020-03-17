@@ -16,9 +16,17 @@
 
 package com.dimajix.flowman.dsl
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model
-import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.Identifier
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Template
 
 
 class Project {
@@ -32,18 +40,46 @@ class Project {
 }
 
 
-class Module {
+trait WithWrapper {
     implicit class NamedRelation(name:String) {
-        //def :=(rel:Relation.Properties => Relation) : RelationWrapper = RelationWrapper(rel)
         def :=(rel:RelationWrapper) : RelationWrapper = rel as name
+        def :=(mapping:MappingWrapper) : MappingWrapper = mapping as name
+        def :=(rel:TargetWrapper) : TargetWrapper = rel as name
+        def :=(job:JobWrapper) : JobWrapper = job as name
     }
-    implicit def wrapRelation(_rel:Relation.Properties => Relation) : RelationWrapper = RelationWrapper(_rel)
-    implicit def wrapJob(_job:Job.Properties => Job) : JobWrapper = JobWrapper(_job)
+    implicit def wrapRelation(relation:model.Relation.Properties => model.Relation) : RelationWrapper = RelationWrapper(relation)
+    implicit def wrapMapping(mapping:model.Mapping.Properties => model.Mapping) : MappingWrapper = MappingWrapper(mapping)
+    implicit def wrapTarget(target:model.Target.Properties => model.Target) : TargetWrapper = TargetWrapper(target)
+    implicit def wrapJob(job:model.Job.Properties => model.Job) : JobWrapper = JobWrapper(job)
 
-    def relation(name:String) : RelationWrapper = ???
-    val relations : RelationList = ???
-    val jobs : JobList = ???
-    val modules : ModuleList = ???
+    implicit def toFactory[T](v:T) : Environment => T = _ => v
+    implicit def toOption[T](v:T) : Option[T] = Some(v)
+    implicit def toOptionFactory[T](v:T) : Environment => Option[T] = _ => Some(v)
+
+    implicit def toTemplate(schema:SchemaGen) : Template[Schema] = new Template[Schema] {
+        override def instantiate(context: Context): Schema = schema(Schema.Properties(context))
+    }
+    implicit def toOptionTemplate(schema:SchemaGen) : Option[Template[Schema]] = Some(toTemplate(schema))
+
+    implicit def toIdentifierList[S,T <: Wrapper[S]](wrappers:WrapperList[S,T]) : Seq[Identifier[S]] = wrappers.identifiers
+    implicit def toIdentifierListFactory[S,T <: Wrapper[S]](wrappers:WrapperList[S,T]) : Environment => Seq[Identifier[S]] = _ => wrappers.identifiers
+
+    def relation(name:String) : RelationIdentifier = ???
+    def mapping(name:String) : MappingIdentifier = ???
+    def output(name:String) : MappingOutputIdentifier = ???
+    def target(name:String) : TargetIdentifier = ???
+    def job(name:String) : JobIdentifier = ???
+}
+
+
+class Module extends WithWrapper {
+    val relations : RelationList = new RelationList()
+    val mappings : MappingList = new MappingList()
+    val targets : TargetList = new TargetList()
+    val jobs : JobList = new JobList()
+    val modules : ModuleList = new ModuleList()
+    val environment = new FieldMap()
+    val config = new FieldMap()
 
     def instantiate() : model.Module = ???
 }

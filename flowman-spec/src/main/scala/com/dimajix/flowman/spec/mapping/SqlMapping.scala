@@ -22,11 +22,11 @@ import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -34,10 +34,10 @@ import com.dimajix.spark.sql.SqlParser
 
 
 case class SqlMapping(
-    instanceProperties:Mapping.Properties,
-    sql:String,
-    file:File,
-    url:URL
+     instanceProperties:Mapping.Properties,
+     sql:Option[String],
+     file:Option[Path],
+     url:Option[URL]
 )
 extends BaseMapping {
     /**
@@ -71,11 +71,12 @@ extends BaseMapping {
     }
 
     private def statement : String = {
-        if (sql != null && sql.nonEmpty) {
-            sql
+        if (sql.exists(_.nonEmpty)) {
+            sql.get
         }
-        else if (file != null) {
-            val input = file.open()
+        else if (file.nonEmpty) {
+            val fs = context.fs
+            val input = fs.file(file.get).open()
             try {
                 val writer = new StringWriter()
                 IOUtils.copy(input, writer, Charset.forName("UTF-8"))
@@ -85,8 +86,8 @@ extends BaseMapping {
                 input.close()
             }
         }
-        else if (url != null) {
-            IOUtils.toString(url)
+        else if (url.nonEmpty) {
+            IOUtils.toString(url.get)
         }
         else {
             throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")
@@ -97,9 +98,9 @@ extends BaseMapping {
 
 
 class SqlMappingSpec extends MappingSpec {
-    @JsonProperty(value="sql", required=false) private var sql:String = _
-    @JsonProperty(value="file", required=false) private var file:String = _
-    @JsonProperty(value="url", required=false) private var url: String = _
+    @JsonProperty(value="sql", required=false) private var sql:Option[String] = None
+    @JsonProperty(value="file", required=false) private var file:Option[String] = None
+    @JsonProperty(value="url", required=false) private var url: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -110,8 +111,8 @@ class SqlMappingSpec extends MappingSpec {
         SqlMapping(
             instanceProperties(context),
             context.evaluate(sql),
-            Option(file).map(context.evaluate).filter(_.nonEmpty).map(context.fs.file).orNull,
-            Option(url).map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)).orNull
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u))
         )
     }
 }

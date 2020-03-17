@@ -223,7 +223,7 @@ abstract class AbstractContext(
     override val rawEnvironment:Map[String,(Any, Int)],
     override val rawConfig:Map[String,(String, Int)]
 ) extends Context {
-    private val _environment = new Environment(rawEnvironment)
+    private val _environment = new Environment(rawEnvironment.map { case(k,v) => k -> v._1 })
     private lazy val _configuration = new Configuration(rawConfig.map { case(k,v) => k -> evaluate(v._1) })
 
     /**

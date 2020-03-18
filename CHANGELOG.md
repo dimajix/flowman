@@ -1,5 +1,7 @@
 # Version 0.13.0
 
+* Implement new Scala DSL for creating projects
+* Lots of minor code improvements
 * Merge 'migrate' phase into 'create' phase
 * Rename 'input' field to 'mapping' in most targets
 

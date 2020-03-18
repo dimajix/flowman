@@ -22,6 +22,7 @@ import org.apache.spark.storage.StorageLevel
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
+import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.catalyst.PlanUtils
 
@@ -52,7 +53,9 @@ object Mapping {
         broadcast:Boolean,
         checkpoint:Boolean,
         cache:StorageLevel
-    ) extends Instance.Properties
+    ) extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
+    }
 }
 
 

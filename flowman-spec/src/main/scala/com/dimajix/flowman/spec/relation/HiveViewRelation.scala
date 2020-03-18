@@ -113,7 +113,6 @@ case class HiveViewRelation(
             val curTable = catalog.getTable(tableIdentifier)
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
-                curTable.schema
                 if (curTable.viewText.get != newSelect) {
                     logger.info(s"Migrating Hive view relation '$identifier' with VIEW $tableIdentifier")
                     catalog.alterView(tableIdentifier, newSelect)

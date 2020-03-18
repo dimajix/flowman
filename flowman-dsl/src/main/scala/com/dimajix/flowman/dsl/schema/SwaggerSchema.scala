@@ -21,28 +21,27 @@ import java.net.URL
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.SchemaGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema
 
 
 case class SwaggerSchema(
-    file: Environment => Option[Path] = _ => None,
-    url: Environment => Option[URL] = _ => None,
-    spec: Environment => Option[String] = _ => None,
-    entity: Environment => Option[String] = _ => None,
-    nullable: Environment => Boolean = _ => false
+    file: Option[Path] = None,
+    url: Option[URL] = None,
+    spec: Option[String] = None,
+    entity: Option[String] = None,
+    nullable: Boolean = false
 )
 extends SchemaGen {
     override def apply(props:Schema.Properties) : schema.SwaggerSchema = {
         val env = props.context.environment
         schema.SwaggerSchema(
             props,
-            file(env),
-            url(env),
-            spec(env),
-            entity(env),
-            nullable(env)
+            file,
+            url,
+            spec,
+            entity,
+            nullable
         )
     }
 }

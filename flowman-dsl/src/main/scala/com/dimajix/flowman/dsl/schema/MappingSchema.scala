@@ -17,21 +17,19 @@
 package com.dimajix.flowman.dsl.schema
 
 import com.dimajix.flowman.dsl.SchemaGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema
 
 
 case class MappingSchema(
-    mapping: Environment => MappingOutputIdentifier
+    mapping: MappingOutputIdentifier
 )
 extends SchemaGen {
     override def apply(props:Schema.Properties) : schema.MappingSchema = {
-        val env = props.context.environment
         schema.MappingSchema(
             props,
-            mapping(env)
+            mapping
         )
     }
 }

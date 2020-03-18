@@ -19,6 +19,7 @@ package com.dimajix.flowman.model
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.model.Dataset.Properties
 
 /**
   *
@@ -64,7 +65,9 @@ object Target {
         labels:Map[String,String],
         before: Seq[TargetIdentifier],
         after: Seq[TargetIdentifier]
-    ) extends Instance.Properties
+    ) extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
+    }
 }
 
 

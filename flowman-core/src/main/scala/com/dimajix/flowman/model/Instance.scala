@@ -33,13 +33,15 @@ trait Template[T] {
 
 
 object Instance {
-    trait Properties {
+    trait Properties[T <: Properties[T]] {
         val context: Context
         val namespace: Option[Namespace]
         val project: Option[Project]
         val name: String
         val kind: String
         val labels: Map[String, String]
+
+        def withName(name:String) : T
     }
 }
 
@@ -104,7 +106,7 @@ trait Instance {
 
 
 abstract class AbstractInstance extends Instance {
-    protected def instanceProperties : Instance.Properties
+    protected def instanceProperties : Instance.Properties[_]
 
     /**
       * Returns the name of the resource

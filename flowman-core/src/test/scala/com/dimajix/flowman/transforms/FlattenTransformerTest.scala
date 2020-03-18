@@ -49,7 +49,7 @@ class FlattenTransformerTest extends FlatSpec with Matchers with LocalSparkSessi
         val inputDf = spark.read.json(inputDs)
         val inputSchema = ftypes.StructType.of(inputDf.schema)
 
-        val xfs = FlattenTransformer(FlattenTransformer.SNAKE_CASE)
+        val xfs = FlattenTransformer(CaseFormat.SNAKE_CASE)
 
         val expectedSchema = StructType(Seq(
             StructField("stupid_name_secret_struct_other_field", LongType),
@@ -85,7 +85,7 @@ class FlattenTransformerTest extends FlatSpec with Matchers with LocalSparkSessi
         val inputDf = spark.read.json(inputDs)
         val inputSchema = ftypes.StructType.of(inputDf.schema)
 
-        val xfs = FlattenTransformer(FlattenTransformer.SNAKE_CASE)
+        val xfs = FlattenTransformer(CaseFormat.SNAKE_CASE)
 
         val expectedSchema = StructType(Seq(
             StructField("embedded_stuff_struct_array", ArrayType(

@@ -35,6 +35,7 @@ import com.dimajix.flowman.spec.mapping.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.mapping.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.mapping.AssembleMapping.RenameEntry
 import com.dimajix.flowman.spec.mapping.AssembleMapping.StructEntry
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -156,13 +157,13 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
-                AppendEntry("", Seq("lala", "lolo"), Seq()),
-                AppendEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
+                NestEntry("clever_name", Path("stupidName"), Seq(), Seq(Path("secret.field"))),
+                AppendEntry(Path(""), Seq(Path("lala"), Path("lolo")), Seq()),
+                AppendEntry(Path(""), Seq(), Seq(Path("stupidName"), Path("embedded.structure.secret"), Path("embedded.old_structure"))),
                 StructEntry("sub_structure", Seq(
-                    AppendEntry("embedded.old_structure", Seq(), Seq())
+                    AppendEntry(Path("embedded.old_structure"), Seq(), Seq())
                 )),
-                LiftEntry("stupidName", Seq("secret.field"))
+                LiftEntry(Path("stupidName"), Seq(Path("secret.field")))
             )
         )
 
@@ -203,13 +204,13 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                NestEntry("clever_name", "stupidName", Seq(), Seq("secret.field")),
-                AppendEntry("", Seq("lala", "lolo"), Seq()),
-                AppendEntry("", Seq(), Seq("stupidName", "embedded.structure.secret", "embedded.old_structure")),
+                NestEntry("clever_name", Path("stupidName"), Seq(), Seq(Path("secret.field"))),
+                AppendEntry(Path(""), Seq(Path("lala"), Path("lolo")), Seq()),
+                AppendEntry(Path(""), Seq(), Seq(Path("stupidName"), Path("embedded.structure.secret"), Path("embedded.old_structure"))),
                 StructEntry("sub_structure", Seq(
-                    AppendEntry("embedded.old_structure", Seq(), Seq())
+                    AppendEntry(Path("embedded.old_structure"), Seq(), Seq())
                 )),
-                LiftEntry("stupidName", Seq("secret.field"))
+                LiftEntry(Path("stupidName"), Seq(Path("secret.field")))
             )
         )
 
@@ -248,7 +249,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                ExplodeEntry("array", "embedded.struct_array")
+                ExplodeEntry("array", Path("embedded.struct_array"))
             )
         )
 
@@ -277,7 +278,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                ExplodeEntry("embedded.struct_array")
+                ExplodeEntry(Path("embedded.struct_array"))
             )
         )
 
@@ -306,7 +307,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                ExplodeEntry("embedded.old_structure.value")
+                ExplodeEntry(Path("embedded.old_structure.value"))
             )
         )
 
@@ -330,7 +331,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                ExplodeEntry("no_such_path")
+                ExplodeEntry(Path("no_such_path"))
             )
         )
 
@@ -345,7 +346,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                RenameEntry("embedded", Map("new_elem" -> "old_structure"))
+                RenameEntry(Path("embedded"), Map("new_elem" -> Path("old_structure")))
             )
         )
 
@@ -371,8 +372,8 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
-                AppendEntry("embedded.structure", Seq("public"), Seq()),
-                RenameEntry("embedded", Map("new_elem" -> "no_such_field"))
+                AppendEntry(Path("embedded.structure"), Seq(Path("public")), Seq()),
+                RenameEntry(Path("embedded"), Map("new_elem" -> Path("no_such_field")))
             )
         )
 

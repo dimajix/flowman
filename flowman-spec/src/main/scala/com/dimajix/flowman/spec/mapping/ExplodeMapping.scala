@@ -27,6 +27,7 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.transforms.ExplodeTransformer
 import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.transforms.IdentityTransformer
@@ -37,9 +38,9 @@ import com.dimajix.flowman.types.StructType
 
 object ExplodeMapping {
     case class Columns(
-        keep: Seq[Path],
-        drop: Seq[Path],
-        rename: Map[String,Path]
+        keep: Seq[Path] = Seq(),
+        drop: Seq[Path] = Seq(),
+        rename: Map[String,Path] = Map()
     )
 }
 
@@ -47,10 +48,10 @@ case class ExplodeMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
     array: Path,
-    outerColumns: ExplodeMapping.Columns,
-    innerColumns: ExplodeMapping.Columns,
-    flatten: Boolean,
-    naming: String
+    outerColumns: ExplodeMapping.Columns = ExplodeMapping.Columns(),
+    innerColumns: ExplodeMapping.Columns = ExplodeMapping.Columns(),
+    flatten: Boolean = false,
+    naming: CaseFormat = CaseFormat.SNAKE_CASE
 ) extends BaseMapping {
     override def outputs: Seq[String] = Seq("main", "explode")
 
@@ -167,7 +168,7 @@ class ExplodeMappingSpec extends MappingSpec {
             outerColumns.instantiate(context),
             innerColumns.instantiate(context),
             context.evaluate(flatten).toBoolean,
-            context.evaluate(naming)
+            CaseFormat.ofString(context.evaluate(naming))
         )
     }
 }

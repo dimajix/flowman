@@ -21,21 +21,18 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 
 
-case class TargetWrapper(
-    target:Target.Properties => Target,
-    name:String = "",
-    labels:Map[String,String] = Map(),
-    before:Seq[TargetIdentifier] = Seq(),
-    after:Seq[TargetIdentifier] = Seq()
-) extends Wrapper[Target] {
-    override def identifier : TargetIdentifier = ???
 
-    def label(kv:(String,String)) : TargetWrapper = copy(labels=labels + kv)
-    def named(name:String) : TargetWrapper = copy(name=name)
-    def as(name:String) : TargetWrapper = named(name)
-
-    override def instantiate(context: Context): Target = {
-        val props = Target.Properties(context, context.namespace, context.project, name, "", labels, before, after)
-        target(props)
+class TargetWrapperFunctions(wrapper:Wrapper[Target, Target.Properties]) {
+    def label(kv:(String,String)) : TargetWrapper = new TargetWrapper {
+        override def gen: Target.Properties => Target = wrapper.gen
+        override def props: Context => Target.Properties = ctx => {
+            val props = wrapper.props(ctx)
+            props.copy(labels = props.labels + kv)
+        }
     }
+}
+
+case class TargetGenHolder(r:TargetGen) extends TargetWrapper {
+    override def gen: Target.Properties => Target = r
+    override def props: Context => Target.Properties = c => Target.Properties(c)
 }

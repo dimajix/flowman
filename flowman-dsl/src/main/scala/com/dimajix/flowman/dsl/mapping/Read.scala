@@ -17,7 +17,6 @@
 package com.dimajix.flowman.dsl.mapping
 
 import com.dimajix.flowman.dsl.MappingGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spec.mapping.ReadRelationMapping
@@ -26,19 +25,19 @@ import com.dimajix.flowman.types.FieldValue
 
 
 case class Read(
-    relation:Environment => RelationIdentifier,
-    columns:Environment => Seq[Field] = _ => Seq(),
-    partitions:Environment => Map[String,FieldValue] = _ => Map(),
-    filter:Environment => Option[String] = _ => None
+    relation:RelationIdentifier,
+    columns:Seq[Field] = Seq(),
+    partitions:Map[String,FieldValue] = Map(),
+    filter:Option[String] = None
 ) extends MappingGen {
     def apply(props:Mapping.Properties) : ReadRelationMapping = {
         val env = props.context.environment
         ReadRelationMapping(
             props,
-            relation(env),
-            columns(env),
-            partitions(env),
-            filter(env)
+            relation,
+            columns,
+            partitions,
+            filter
         )
     }
 }

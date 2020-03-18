@@ -19,7 +19,6 @@ package com.dimajix.flowman.dsl.relation
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.RelationGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
@@ -29,22 +28,21 @@ import com.dimajix.flowman.spec.relation.HiveUnionTableRelation
 
 case class HiveUnionTable(
     schema:Option[Template[Schema]] = None,
-    partitions: Environment => Seq[PartitionField] = _ => Seq(),
-    tableDatabase: Environment => Option[String] = _ => None,
-    tablePrefix: Environment => String,
-    locationPrefix: Environment => Option[Path] = _ => None,
-    viewDatabase: Environment => Option[String] = _ => None,
-    view: Environment => String,
-    external: Environment => Boolean = _ => false,
-    format: Environment => String = _ => "parquet",
-    rowFormat: Environment => Option[String] = _ => None,
-    inputFormat: Environment => Option[String] = _ => None,
-    outputFormat: Environment => Option[String] = _ => None,
-    properties: Environment => Map[String, String] = _ => Map(),
-    serdeProperties: Environment => Map[String, String] = _ => Map()
+    partitions: Seq[PartitionField] = Seq(),
+    tableDatabase: Option[String] = None,
+    tablePrefix: String,
+    locationPrefix: Option[Path] = None,
+    viewDatabase: Option[String] = None,
+    view: String,
+    external: Boolean = false,
+    format: String = "parquet",
+    rowFormat: Option[String] = None,
+    inputFormat: Option[String] = None,
+    outputFormat: Option[String] = None,
+    properties: Map[String, String] = Map(),
+    serdeProperties: Map[String, String] = Map()
 ) extends RelationGen {
     override def apply(props:Relation.Properties) : HiveUnionTableRelation = {
-        val env = props.context.environment
         ???
     }
 }

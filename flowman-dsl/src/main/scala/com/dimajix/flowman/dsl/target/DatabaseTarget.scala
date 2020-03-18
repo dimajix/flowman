@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,6 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.transforms
-
-import com.dimajix.flowman.transforms.schema.Node
-import com.dimajix.flowman.transforms.schema.NodeOps
-import com.dimajix.flowman.transforms.schema.TreeTransformer
+package com.dimajix.flowman.dsl.target
 
 
-case class CaseFormatter(format:CaseFormat) extends TreeTransformer {
-    private def rename(str:String) : String = {
-        format.format(str)
-    }
-
-    override def transform[T](root:Node[T])(implicit ops:NodeOps[T]) : Node[T] = {
-        root.transform(node => node.withName(rename(node.name)))
-    }
-}

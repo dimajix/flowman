@@ -20,13 +20,13 @@ import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.transforms.CaseFormatter
 import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.transforms.Transformer
@@ -39,9 +39,9 @@ case class ConformMapping(
     instanceProperties:Mapping.Properties,
     input : MappingOutputIdentifier,
     types : Map[String,FieldType] = Map(),
-    naming : String = null,
+    naming : Option[CaseFormat] = None,
     flatten : Boolean = false,
-    filter:Option[String] = None
+    filter : Option[String] = None
 )
 extends BaseMapping {
     /**
@@ -97,8 +97,8 @@ extends BaseMapping {
     private def transforms : Seq[Transformer] = {
         Seq(
             Option(types).filter(_.nonEmpty).map(t => TypeReplacer(t)),
-            Option(naming).filter(_.nonEmpty).map(f => CaseFormatter(f)),
-            Option(flatten).filter(_ == true).map(_ => FlattenTransformer(Option(naming).filter(_.nonEmpty).getOrElse("snakeCase")))
+            naming.map(f => CaseFormatter(f)),
+            if(flatten) Some(FlattenTransformer(naming.get)) else None
         ).flatten
     }
 }
@@ -116,7 +116,7 @@ class ConformMappingSpec extends MappingSpec {
 
     @JsonProperty(value = "input", required = true) private[spec] var input: String = _
     @JsonProperty(value = "types", required = false) private[spec] var types: Map[String, String] = Map()
-    @JsonProperty(value = "naming", required = false) private[spec] var naming: String = _
+    @JsonProperty(value = "naming", required = false) private[spec] var naming: Option[String] = None
     @JsonProperty(value = "flatten", required = false) private[spec] var flatten: String = "false"
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
@@ -133,7 +133,7 @@ class ConformMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(input)),
             types,
-            context.evaluate(naming),
+            context.evaluate(naming).filter(_.nonEmpty).map(CaseFormat.ofString),
             context.evaluate(flatten).toBoolean,
             context.evaluate(filter)
         )

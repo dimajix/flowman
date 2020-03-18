@@ -26,23 +26,22 @@ import com.dimajix.flowman.spec.target
 
 
 case class RelationTarget(
-    mapping:Environment => MappingOutputIdentifier = _ => MappingOutputIdentifier.empty,
-    relation:Environment => RelationIdentifier,
-    mode: Environment => OutputMode = _ => OutputMode.OVERWRITE,
-    partition: Environment => Map[String,String] = _ => Map(),
-    parallelism: Environment => Int = _ => 16,
-    rebalance: Environment => Boolean = _ => false
+    mapping:MappingOutputIdentifier = MappingOutputIdentifier.empty,
+    relation:RelationIdentifier,
+    mode:OutputMode = OutputMode.OVERWRITE,
+    partition:Map[String,String] = Map(),
+    parallelism:Int = 16,
+    rebalance:Boolean = false
 ) extends TargetGen {
     override def apply(props:Target.Properties) : target.RelationTarget = {
-        val env = props.context.environment
         target.RelationTarget(
             props,
-            mapping = mapping(env),
-            relation = relation(env),
-            mode = mode(env),
-            partition = partition(env),
-            parallelism = parallelism(env),
-            rebalance = rebalance(env)
+            mapping = mapping,
+            relation = relation,
+            mode = mode,
+            partition = partition,
+            parallelism = parallelism,
+            rebalance = rebalance
         )
     }
 }

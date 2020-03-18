@@ -8,11 +8,17 @@ import com.dimajix.flowman.types.Field
 
 
 case class EmbeddedSchema(
-    description : Environment => Option[String] = _ => None,
-    fields : Environment => Seq[Field] = _ => Seq(),
-    primaryKey : Environment => Seq[String] = _ => Seq()
+    description : Option[String] = None,
+    fields : Seq[Field] = Seq(),
+    primaryKey : Seq[String] = Seq()
 ) extends SchemaGen {
     override def apply(props:Schema.Properties) : schema.EmbeddedSchema = {
-        ???
+        val env = props.context.environment
+        schema.EmbeddedSchema(
+            props,
+            description,
+            fields,
+            primaryKey
+        )
     }
 }

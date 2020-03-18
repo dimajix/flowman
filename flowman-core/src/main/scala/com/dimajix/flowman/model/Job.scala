@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.JobExecutor
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.MetricBoard
+import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.model.Job.Parameter
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
@@ -101,24 +102,34 @@ object Job {
         name: String,
         labels: Map[String, String],
         description:Option[String]
-   ) extends Instance.Properties {
+   ) extends Instance.Properties[Properties] {
         override val kind : String = "batch"
+        override def withName(name: String): Properties = copy(name=name)
    }
 
     class Builder(context:Context) {
         require(context != null)
         private var name:String = ""
+        private var labels:Map[String,String] = Map()
         private var description:Option[String] = None
         private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
+        private var environment:Map[String,String] = Map()
 
         def build() : Job = Job(
-            Job.Properties(context, name).copy(description=description),
+            Job.Properties(context, context.namespace, context.project, name, labels, description),
             parameters,
-            Map(),
+            environment,
             targets
         )
-
+        def setProperties(props:Job.Properties) : Builder = {
+            require(props != null)
+            require(props.context eq context)
+            name = props.name
+            labels = props.labels
+            description = props.description
+            this
+        }
         def setName(name:String) : Builder = {
             require(name != null)
             this.name = name
@@ -145,6 +156,11 @@ object Job {
             this.parameters = this.parameters :+ Parameter(name, ftype, granularity, value)
             this
         }
+        def setEnvironment(env:Map[String,String]) : Builder = {
+            require(env != null)
+            this.environment = env
+            this
+        }
         def setTargets(targets:Seq[TargetIdentifier]) : Builder = {
             require(targets != null)
             this.targets = targets
@@ -158,6 +174,46 @@ object Job {
     }
 
     def builder(context: Context) : Builder = new Builder(context)
+
+    /**
+     * Creates a new Job from an existing job and a list of parent jobs
+     * @param job
+     * @param parents
+     * @return
+     */
+    def merge(job:Job, parents:Seq[Job]) : Job = {
+        val parentParameters = parents
+            .map(job => job.parameters.map(p => (p.name, p)).toMap)
+            .reduceOption((params, elems) => params ++ elems)
+            .getOrElse(Map())
+        val parentEnvironment = parents
+            .map(job => job.environment)
+            .reduceOption((envs, elems) => envs ++ elems)
+            .getOrElse(Map())
+        val parentTargets = parents
+            .map(job => job.targets.toSet)
+            .reduceOption((targets, elems) => targets ++ elems)
+            .getOrElse(Set())
+        val parentMetrics = parents
+            .flatMap(job => job.metrics)
+            .headOption
+
+        val allEnvironment = parentEnvironment ++ job.environment
+
+        val allParameters = parentParameters -- allEnvironment.keySet ++ job.parameters.map(p => (p.name,p)).toMap
+
+        val allTargets = parentTargets ++ job.targets
+
+        val allMetrics = job.metrics.orElse(parentMetrics)
+
+        Job(
+            job.instanceProperties,
+            allParameters.values.toSeq,
+            allEnvironment,
+            allTargets.toSeq,
+            allMetrics
+        )
+    }
 }
 
 

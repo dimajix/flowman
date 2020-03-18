@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -61,7 +62,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = DropMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df"),
-            Seq("_1", "_3")
+            Seq(Path("_1"), Path("_3"))
         )
         val expectedSchema = StructType(Seq(
             StructField("_2", StringType),
@@ -89,7 +90,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = DropMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("df"),
-            Seq("_1", "_3", "no_such_column")
+            Seq(Path("_1"), Path("_3"), Path("no_such_column"))
         )
         val expectedSchema = StructType(Seq(
             StructField("_2", StringType),

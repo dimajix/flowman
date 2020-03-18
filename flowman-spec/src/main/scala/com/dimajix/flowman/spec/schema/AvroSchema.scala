@@ -32,7 +32,7 @@ import com.dimajix.flowman.types.AvroSchemaUtils
   * Schema implementation for reading Avro schemas.
   */
 case class AvroSchema(
-    instanceProperties:Instance.Properties,
+    instanceProperties:Schema.Properties,
     override val file: Option[Path],
     override val url: Option[URL],
     override val spec: Option[String]

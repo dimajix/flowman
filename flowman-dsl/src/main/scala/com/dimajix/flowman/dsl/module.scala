@@ -20,6 +20,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.Identifier
+import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -27,6 +28,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.transforms.schema.Path
 
 
 class Project {
@@ -37,42 +39,114 @@ class Project {
     val plugins = new FieldList
 
     val modules = new ModuleList
+
+    def instantiate() : model.Project = {
+        val modules = this.modules.toSeq
+
+        model.Project(
+            name = name.toString,
+            version = version.toOption,
+            description = description.toOption,
+
+            config = modules.flatMap(_.config.toSeq).toMap,
+            environment = modules.flatMap(_.environment.toSeq).toMap,
+            profiles = Map(),
+            relations = modules.flatMap(_.relations.toSeq.map(r => r.name -> r)).toMap,
+            connections = Map(),
+            mappings = modules.flatMap(_.mappings.toSeq).map(m => m.name -> m).toMap,
+            targets = modules.flatMap(_.targets.toSeq).map(t => t.name -> t).toMap,
+            jobs = modules.flatMap(_.jobs.toSeq).map(j => j.name -> j).toMap
+        )
+    }
 }
 
 
-trait WithWrapper {
+trait Converters {
     implicit class NamedRelation(name:String) {
-        def :=(rel:RelationWrapper) : RelationWrapper = rel as name
-        def :=(mapping:MappingWrapper) : MappingWrapper = mapping as name
-        def :=(rel:TargetWrapper) : TargetWrapper = rel as name
-        def :=(job:JobWrapper) : JobWrapper = job as name
+        def :=[T <: Instance,P <: Instance.Properties[P]](rel:Wrapper[T, P]) : NamedWrapper[T, P] = NamedWrapper[T,P](name, rel)
     }
-    implicit def wrapRelation(relation:model.Relation.Properties => model.Relation) : RelationWrapper = RelationWrapper(relation)
-    implicit def wrapMapping(mapping:model.Mapping.Properties => model.Mapping) : MappingWrapper = MappingWrapper(mapping)
-    implicit def wrapTarget(target:model.Target.Properties => model.Target) : TargetWrapper = TargetWrapper(target)
-    implicit def wrapJob(job:model.Job.Properties => model.Job) : JobWrapper = JobWrapper(job)
+    implicit def wrapRelation(relation:model.Relation.Properties => model.Relation) : RelationWrapper = RelationGenHolder(relation)
+    implicit def wrapMapping(mapping:model.Mapping.Properties => model.Mapping) : MappingWrapper = MappingGenHolder(mapping)
+    implicit def wrapTarget(target:model.Target.Properties => model.Target) : TargetWrapper = TargetGenHolder(target)
+    implicit def wrapJob(job:model.Job.Properties => model.Job) : JobWrapper = JobGenHolder(job)
 
-    implicit def toFactory[T](v:T) : Environment => T = _ => v
+    implicit def relationFunctions(gen:RelationGen) : RelationWrapperFunctions = new RelationWrapperFunctions(wrapRelation(gen))
+    implicit def relationFunctions(wrapper:RelationWrapper) : RelationWrapperFunctions = new RelationWrapperFunctions(wrapper)
+    implicit def mappingFunctions(gen:MappingGen) : MappingWrapperFunctions = new MappingWrapperFunctions(wrapMapping(gen))
+    implicit def mappingFunctions(wrapper:MappingWrapper) :MappingWrapperFunctions = new MappingWrapperFunctions(wrapper)
+    implicit def targetFunctions(gen:TargetGen) : TargetWrapperFunctions = new TargetWrapperFunctions(wrapTarget(gen))
+    implicit def targetFunctions(wrapper:TargetWrapper) : TargetWrapperFunctions = new TargetWrapperFunctions(wrapper)
+
     implicit def toOption[T](v:T) : Option[T] = Some(v)
-    implicit def toOptionFactory[T](v:T) : Environment => Option[T] = _ => Some(v)
+
+    implicit def toSeq[T](v:T) : Seq[T] = Seq(v)
 
     implicit def toTemplate(schema:SchemaGen) : Template[Schema] = new Template[Schema] {
         override def instantiate(context: Context): Schema = schema(Schema.Properties(context))
     }
     implicit def toOptionTemplate(schema:SchemaGen) : Option[Template[Schema]] = Some(toTemplate(schema))
 
-    implicit def toIdentifierList[S,T <: Wrapper[S]](wrappers:WrapperList[S,T]) : Seq[Identifier[S]] = wrappers.identifiers
-    implicit def toIdentifierListFactory[S,T <: Wrapper[S]](wrappers:WrapperList[S,T]) : Environment => Seq[Identifier[S]] = _ => wrappers.identifiers
-
-    def relation(name:String) : RelationIdentifier = ???
-    def mapping(name:String) : MappingIdentifier = ???
-    def output(name:String) : MappingOutputIdentifier = ???
-    def target(name:String) : TargetIdentifier = ???
-    def job(name:String) : JobIdentifier = ???
+    implicit def toIdentifierList[S <: Instance,P <: Instance.Properties[P]](wrappers:WrapperList[S,P]) : Seq[Identifier[S]] = wrappers.identifiers
 }
 
 
-class Module extends WithWrapper {
+trait ContextAware {
+    def withContext[S <: Instance,P <: Instance.Properties[P]](fn:Context => Wrapper[S, P]): Wrapper[S, P] = new Wrapper[S, P] {
+        override def gen: P => S = p => fn(p.context).gen(p)
+        override def props: Context => P = c => fn(c).props(c)
+    }
+
+    def withEnvironment[S <: Instance,P <: Instance.Properties[P]](fn:Environment => Wrapper[S, P]): Wrapper[S, P] = new Wrapper[S, P] {
+        override def gen: P => S = p => fn(p.context.environment).gen(p)
+        override def props: Context => P = c => fn(c.environment).props(c)
+    }
+}
+
+
+trait Functions {
+    def path(str:String) : Path = Path(str)
+}
+
+
+trait Identifiers {
+    /**
+     * Returns a RelationIdentifier for the specified relation of the current project
+     * @param name
+     * @return
+     */
+    def relation(name:String) : RelationIdentifier = RelationIdentifier(name, None)
+
+    /**
+     * Returns a MappingIdentifier for the specified mapping of the current project
+     * @param name
+     * @return
+     */
+    def mapping(name:String) : MappingIdentifier = MappingIdentifier(name, None)
+
+    /**
+     * Returns a MappingOutputIdentifier for the specified mapping output  of the current project
+     * @param name
+     * @return
+     */
+    def output(name:String, output:String="main") : MappingOutputIdentifier = MappingOutputIdentifier(name, output, None)
+
+    /**
+     * Returns a TargetIdentifier for the specified build target of the current project
+     * @param name
+     * @return
+     */
+    def target(name:String) : TargetIdentifier = TargetIdentifier(name, None)
+
+    /**
+     * Returns a JobIdentifier for the specified job of the current project
+     * @param name
+     * @return
+     */
+    def job(name:String) : JobIdentifier = JobIdentifier(name, None)
+}
+
+
+class Module extends Converters with Identifiers with Functions with ContextAware {
     val relations : RelationList = new RelationList()
     val mappings : MappingList = new MappingList()
     val targets : TargetList = new TargetList()
@@ -81,14 +155,24 @@ class Module extends WithWrapper {
     val environment = new FieldMap()
     val config = new FieldMap()
 
-    def instantiate() : model.Module = ???
+    def instantiate() : model.Module = {
+        val modules = this.modules.toSeq
+        model.Module(
+            config = modules.flatMap(_.config.toSeq).toMap ++ config.toMap,
+            environment = modules.flatMap(_.environment.toSeq).toMap ++ environment.toMap,
+            profiles = Map(),
+            relations = modules.flatMap(_.relations.toSeq.map(r => r.name -> r)).toMap ++ relations.toMap,
+            connections = Map(),
+            mappings = modules.flatMap(_.mappings.toSeq).map(m => m.name -> m).toMap ++ mappings.toMap,
+            targets = modules.flatMap(_.targets.toSeq).map(t => t.name -> t).toMap ++ targets.toMap,
+            jobs = modules.flatMap(_.jobs.toSeq).map(j => j.name -> j).toMap ++ jobs.toMap
+        )
+    }
 }
 
 
-class ModuleList extends Seq[Module] {
-    override def length: Int = ???
-    override def apply(idx: Int): Module = ???
-    override def iterator: Iterator[Module] = ???
+class ModuleList {
+    def +=(m:Module*) : ModuleList = ???
 
-    def +=(m:Module*) = ???
+    def toSeq : Seq[Module] = ???
 }

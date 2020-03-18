@@ -16,57 +16,67 @@
 
 package com.dimajix.flowman.dsl
 
-import com.dimajix.flowman.model
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Identifier
-import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.Template
 
 
 class Field {
-    private var name:String = _
+    private var value:Option[String] = None
 
-    def :=(value:String) : Unit = ???
+    override def toString: String = value.getOrElse("")
+
+    def :=(value:String) : Unit = this.value = Some(value)
+
+    def toOption : Option[String] = value
 }
 class FieldList {
     private var values:Seq[String] = Seq()
 
-    def :=(values:String*) : Unit = ???
-    def +=(values:String*) : Unit = ???
+    override def toString: String = values.toString()
 
-    def toSeq : Seq[String] = ???
+    def :=(values:String*) : Unit = this.values = values
+    def +=(values:String*) : Unit = this.values = this.values ++ values
+
+    def toSeq : Seq[String] = values
 }
 class FieldMap {
-    def :=(values:(String,String)*) : Unit = ???
-    def +=(values:(String,String)*) : Unit = ???
+    private var values:Map[String,String] = Map()
 
-    def toMap : Map[String,String] = ???
+    def :=(values:(String,String)*) : Unit = this.values = values.toMap
+    def +=(values:(String,String)*) : Unit = this.values = this.values ++ values.toMap
+
+    def toSeq : Seq[(String,String)] = values.toSeq
+    def toMap : Map[String,String] = values
 }
 
 
-class WrapperList[S,T <: Wrapper[S]] extends Map[String,T] {
-    override def +[B1 >: T](kv: (String, B1)): Map[String, B1] = ???
-    override def get(key: String): Option[T] = ???
-    override def iterator: Iterator[(String, T)] = ???
-    override def -(key: String): Map[String, T] = ???
 
-    def :=(seq: T*) = ???
-    def +=(rel: T) = ???
-    def +=(seq: T*) = ???
-    def +=(fn: => Unit) = ???
+trait Wrapper[T <: Instance, P <: Instance.Properties[P]] {
+    def gen:P => T
+    def props:Context => P
+}
 
-    def identifiers : Seq[Identifier[S]] = map { case(k,v) => v.identifier }.toSeq
+case class NamedWrapper[T <: Instance, P <: Instance.Properties[P]](name:String, wrapper:Wrapper[T,P]) extends Template[T] {
+    def identifier : Identifier[T] = Identifier[T](name, None)
+
+    override def instantiate(context: Context): T = {
+        val props = wrapper.props(context).withName(name)
+        wrapper.gen(props)
+    }
 }
 
 
-trait Wrapper[T] extends Template[T] {
-    def identifier : Identifier[T] = ???
+final class WrapperList[S <: Instance,P <: Instance.Properties[P]] {
+    private var wrappers : Seq[NamedWrapper[S,P]] = Seq()
+
+    def :=(seq: NamedWrapper[S,P]*) : Unit = wrappers = seq
+    def +=(seq: NamedWrapper[S,P]) : Unit = wrappers = wrappers :+ seq
+    def +=(seq: NamedWrapper[S,P]*) : Unit = wrappers = wrappers ++ seq
+
+    def identifiers : Seq[Identifier[S]] = wrappers.map(_.identifier)
+
+    def toSeq : Seq[NamedWrapper[S,P]] = wrappers
+    def toMap : Map[String,NamedWrapper[S,P]] = wrappers.map(w => w.name -> w).toMap
 }
-
-
-trait TargetGen extends (model.Target.Properties => model.Target)
-trait RelationGen extends (model.Relation.Properties => model.Relation)
-trait MappingGen extends (model.Mapping.Properties => model.Mapping)
-trait JobGen extends (model.Job.Properties => model.Job)
-
-trait SchemaGen extends (model.Schema.Properties => model.Schema)
-trait DatasetGen extends (model.Dataset.Properties => model.Dataset)

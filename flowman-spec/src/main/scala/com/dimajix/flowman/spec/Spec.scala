@@ -56,5 +56,5 @@ abstract class NamedSpec[T] extends Spec[T] {
       * @param context
       * @return
       */
-    protected def instanceProperties(context:Context) : Instance.Properties
+    protected def instanceProperties(context:Context) : Instance.Properties[_]
 }

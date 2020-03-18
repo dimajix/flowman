@@ -18,28 +18,31 @@ package com.dimajix.flowman.dsl
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.model.Template
 
 
-case class RelationWrapper(
-          rel:Relation.Properties => Relation,
-          name:String = "",
-          labels:Map[String,String] = Map(),
-          description:Option[String] = None,
-          options:Map[String,String] = Map()
-) extends Wrapper[Relation] {
-    override def identifier : RelationIdentifier = ???
-
-    def label(kv:(String,String)) : RelationWrapper = copy(labels=labels + kv)
-    def description(desc:String) : RelationWrapper = copy(description=Some(desc))
-    def option(kv:(String,String)): RelationWrapper = copy(options=options + kv)
-    def named(name:String) : RelationWrapper = copy(name=name)
-    def as(name:String) : RelationWrapper = named(name)
-
-    override def instantiate(context: Context): Relation = {
-        val props = Relation.Properties(context, context.namespace, context.project, name, "", labels, description, options)
-        rel(props)
+class RelationWrapperFunctions(wrapper:Wrapper[Relation, Relation.Properties]) {
+    def label(kv:(String,String)) : RelationWrapper = new RelationWrapper {
+        override def gen: Relation.Properties => Relation = wrapper.gen
+        override def props: Context => Relation.Properties = ctx => {
+            val props = wrapper.props(ctx)
+            props.copy(labels = props.labels + kv)
+        }
+    }
+    def description(desc:String) : RelationWrapper = new RelationWrapper {
+        override def gen: Relation.Properties => Relation = wrapper.gen
+        override def props: Context => Relation.Properties = ctx =>
+            wrapper.props(ctx).copy(description = Some(desc))
+    }
+    def option(kv:(String,String)): RelationWrapper = new RelationWrapper {
+        override def gen: Relation.Properties => Relation = wrapper.gen
+        override def props: Context => Relation.Properties = ctx => {
+            val props = wrapper.props(ctx)
+            props.copy(options = props.options + kv)
+        }
     }
 }
 
+case class RelationGenHolder(r:RelationGen) extends RelationWrapper {
+    override def gen: Relation.Properties => Relation = r
+    override def props: Context => Relation.Properties = c => Relation.Properties(c)
+}

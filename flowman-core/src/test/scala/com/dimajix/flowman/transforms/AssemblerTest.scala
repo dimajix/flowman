@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -92,23 +93,23 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     "The assembler" should "work" in {
         val asm = Assembler.builder()
             .nest("clever_name")(
-                _.path("stupidName")
-                    .drop("secret.field")
+                _.path(Path("stupidName"))
+                    .drop(Path("secret.field"))
             )
             .columns(
-                _.path("")
-                    .keep(Seq("lala", "lolo"))
+                _.path(Path(""))
+                    .keep(Seq(Path("lala"), Path("lolo")))
             )
             .columns(
-                _.path("")
-                    .drop("stupidName")
-                    .drop("embedded.structure.secret")
-                    .drop("embedded.old_structure")
-                    .drop("top_array")
+                _.path(Path(""))
+                    .drop(Path("stupidName"))
+                    .drop(Path("embedded.structure.secret"))
+                    .drop(Path("embedded.old_structure"))
+                    .drop(Path("top_array"))
             )
             .assemble("sub_structure")(
                 _.columns(
-                    _.path("embedded.old_structure")
+                    _.path(Path("embedded.old_structure"))
                 )
             )
             .build()
@@ -147,10 +148,10 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support keep" in {
         val asm = Assembler.builder()
             .columns(
-                _.path("")
-                    .keep("embedded")
-                    .drop("embedded.structure.secret")
-                    .drop("embedded.old_structure")
+                _.path(Path(""))
+                    .keep(Path("embedded"))
+                    .drop(Path("embedded.structure.secret"))
+                    .drop(Path("embedded.old_structure"))
             )
             .build()
 
@@ -179,8 +180,8 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support nest" in {
         val asm = Assembler.builder()
             .nest("clever_name")(
-                _.path("stupidName")
-                    .drop("secret.field")
+                _.path(Path("stupidName"))
+                    .drop(Path("secret.field"))
             )
             .build()
 
@@ -203,8 +204,8 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support lift" in {
         val asm = Assembler.builder()
             .lift(
-                _.path("stupidName")
-                    .column("secret.field")
+                _.path(Path("stupidName"))
+                    .column(Path("secret.field"))
             )
             .build()
 
@@ -224,7 +225,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
         val asm = Assembler.builder()
             .assemble("sub_structure")(
                 _.columns(
-                    _.path("embedded.old_structure")
+                    _.path(Path("embedded.old_structure"))
                 )
             )
             .build()
@@ -250,7 +251,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
 //        val asm = Assembler.builder()
 //            .assemble("new_name")(
 //                _.columns(
-//                    _.path("embedded.old_structure.value")
+//                    _.path(Path("embedded.old_structure.value"))
 //                )
 //            )
 //            .build()
@@ -268,7 +269,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support renaming a column via nest" in {
         val asm = Assembler.builder()
             .nest("new_name")(
-                _.path("embedded.old_structure.value")
+                _.path(Path("embedded.old_structure.value"))
             )
             .build()
 
@@ -287,7 +288,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "not ignore non-existing paths and structs" in {
         val asm = Assembler.builder()
             .nest("new_name")(
-                _.path("embedded.no_such_field")
+                _.path(Path("embedded.no_such_field"))
             )
             .build()
 
@@ -297,7 +298,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support explode on simple arrays" in {
         val asm = Assembler.builder()
             .explode(
-                _.path("embedded.old_structure.value")
+                _.path(Path("embedded.old_structure.value"))
             )
             .build()
 
@@ -316,7 +317,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support top level explode on complex arrays with rename" in {
         val asm = Assembler.builder()
             .explode("array")(
-                _.path("top_array")
+                _.path(Path("top_array"))
             )
             .build()
 
@@ -338,7 +339,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support nested explode on complex arrays" in {
         val asm = Assembler.builder()
             .explode(
-                _.path("embedded.struct_array")
+                _.path(Path("embedded.struct_array"))
             )
             .build()
 
@@ -360,7 +361,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support nested explode on complex arrays with rename" in {
         val asm = Assembler.builder()
             .explode("array")(
-                _.path("embedded.struct_array")
+                _.path(Path("embedded.struct_array"))
             )
             .build()
 
@@ -382,7 +383,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "throw an error for explode with non-existing paths" in {
         val asm = Assembler.builder()
             .explode("array")(
-                _.path("embedded.no_such_path")
+                _.path(Path("embedded.no_such_path"))
             )
             .build()
 
@@ -392,8 +393,8 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support renaming" in {
         val asm = Assembler.builder()
             .rename(
-                _.path("embedded")
-                    .column("s", "structure")
+                _.path(Path("embedded"))
+                    .column("s", Path("structure"))
             )
             .build()
 
@@ -417,12 +418,12 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "support renaming non-existing columns" in {
         val asm = Assembler.builder()
             .columns(
-                _.path("embedded.structure")
-                    .keep("public")
+                _.path(Path("embedded.structure"))
+                    .keep(Path("public"))
             )
             .rename(
-                _.path("embedded")
-                    .column("s", "no_such_element")
+                _.path(Path("embedded"))
+                    .column("s", Path("no_such_element"))
             )
             .build()
 
@@ -441,7 +442,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
     it should "throw an exception on non-existing path in renam" in {
         val asm = Assembler.builder()
             .rename(
-                _.path("embedded.no_such_path")
+                _.path(Path("embedded.no_such_path"))
             )
             .build()
 

@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.transforms
 
-import com.dimajix.common.text.CaseUtils
 import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.LeafNode
 import com.dimajix.flowman.transforms.schema.MapNode
@@ -26,26 +25,9 @@ import com.dimajix.flowman.transforms.schema.StructNode
 import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
-object FlattenTransformer {
-    val CAMEL_CASE = "camelCase"
-    val SNAKE_CASE = "snakeCase"
-
-    val ALL_CASES = Seq(CAMEL_CASE, SNAKE_CASE)
-}
-
-
-case class FlattenTransformer(format:String) extends TreeTransformer {
-    import FlattenTransformer._
-
-    private val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(format))
-    if (!ALL_CASES.contains(caseFormat))
-        throw new IllegalArgumentException(s"Case format '$format' not supported, please use one of ${ALL_CASES.mkString(",")}")
-
+case class FlattenTransformer(format:CaseFormat) extends TreeTransformer {
     private def rename(prefix:String, name:String) : String = {
-        caseFormat match {
-            case CAMEL_CASE => if (prefix.isEmpty) name else prefix + (name.head.toUpper + name.tail)
-            case SNAKE_CASE => if (prefix.isEmpty) name else prefix + "_" + name
-        }
+        format.concat(prefix, name)
     }
 
     private def flatten[T](node:Node[T], prefix:String) : Seq[Node[T]] = {

@@ -19,7 +19,6 @@ package com.dimajix.flowman.dsl.relation
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.RelationGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
@@ -29,10 +28,10 @@ import com.dimajix.flowman.spec.relation
 
 case class FileRelation(
     schema:Option[Template[Schema]] = None,
-    partitions:Environment =>  Seq[PartitionField] = _ => Seq(),
-    location:Environment => Path,
-    pattern:Environment => String = _ => "",
-    format:Environment => String
+    partitions: Seq[PartitionField] = Seq(),
+    location:Path,
+    pattern:String = "",
+    format:String
 ) extends RelationGen {
     override def apply(props:Relation.Properties) : relation.FileRelation = {
         ???

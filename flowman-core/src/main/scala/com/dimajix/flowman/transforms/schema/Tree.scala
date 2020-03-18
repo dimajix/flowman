@@ -20,6 +20,7 @@ import java.util.Locale
 
 
 object Path {
+    val empty = Path(Seq())
     /**
       * Create an empty column path, which represents the root structure
       * @return

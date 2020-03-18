@@ -72,41 +72,15 @@ class JobSpec extends NamedSpec[Job] {
         require(context != null)
 
         val parents = this.parents.map(job => context.getJob(JobIdentifier(job)))
-
-        val parentParameters = parents
-            .map(job => job.parameters.map(p => (p.name, p)).toMap)
-            .reduceOption((params, elems) => params ++ elems)
-            .getOrElse(Map())
-        val parentEnvironment = parents
-            .map(job => job.environment)
-            .reduceOption((envs, elems) => envs ++ elems)
-            .getOrElse(Map())
-        val parentTargets = parents
-            .map(job => job.targets.toSet)
-            .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Set())
-        val parentMetrics = parents
-            .flatMap(job => job.metrics)
-            .headOption
-
-        val curEnvironment = splitSettings(environment).toMap
-        val allEnvironment = parentEnvironment ++ curEnvironment
-
-        val curParameters = parameters.map(_.instantiate(context)).map(p => (p.name,p)).toMap
-        val allParameters = parentParameters -- allEnvironment.keySet ++ curParameters
-
-        val curTargets = targets.map(context.evaluate).map(TargetIdentifier.parse)
-        val allTargets = parentTargets ++ curTargets
-
-        val allMetrics = metrics.orElse(parentMetrics)
-
-        Job(
+        val job = Job(
             instanceProperties(context),
-            allParameters.values.toSeq,
-            allEnvironment,
-            allTargets.toSeq,
-            allMetrics
+            parameters.map(_.instantiate(context)),
+            splitSettings(environment).toMap,
+            targets.map(context.evaluate).map(TargetIdentifier.parse),
+            metrics
         )
+
+        Job.merge(job, parents)
     }
 
     /**

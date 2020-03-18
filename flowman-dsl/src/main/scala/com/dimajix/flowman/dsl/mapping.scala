@@ -20,29 +20,24 @@ import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingIdentifier
-import com.dimajix.flowman.model.MappingOutputIdentifier
 
 
-case class MappingWrapper(
-    rel:Mapping.Properties => Mapping,
-    name:String = "",
-    labels:Map[String,String] = Map(),
-    broadcast:Boolean = false,
-    checkpoint:Boolean = false,
-    cache:StorageLevel = StorageLevel.NONE
-) extends Wrapper[Mapping] {
-    override def identifier : MappingIdentifier = ???
-
-    def label(kv:(String,String)) : MappingWrapper = copy(labels=labels + kv)
-    def named(name:String) : MappingWrapper = copy(name=name)
-    def as(name:String) : MappingWrapper = named(name)
-
-    def output : MappingOutputIdentifier = output("main")
-    def output(name:String) : MappingOutputIdentifier = MappingOutputIdentifier(identifier, name)
-
-    override def instantiate(context: Context): Mapping = {
-        val props = Mapping.Properties(context, context.namespace, context.project, name, "", labels, broadcast, checkpoint, cache)
-        rel(props)
+class MappingWrapperFunctions(wrapper:Wrapper[Mapping, Mapping.Properties]) {
+    def label(kv:(String,String)) : MappingWrapper = new MappingWrapper {
+        override def gen: Mapping.Properties => Mapping = wrapper.gen
+        override def props: Context => Mapping.Properties = ctx => {
+            val props = wrapper.props(ctx)
+            props.copy(labels = props.labels + kv)
+        }
     }
+    def cached(level:StorageLevel) : MappingWrapper = new MappingWrapper {
+        override def gen: Mapping.Properties => Mapping = wrapper.gen
+        override def props: Context => Mapping.Properties = ctx =>
+            wrapper.props(ctx).copy(cache = level)
+    }
+}
+
+case class MappingGenHolder(r:MappingGen) extends MappingWrapper {
+    override def gen: Mapping.Properties => Mapping = r
+    override def props: Context => Mapping.Properties = c => Mapping.Properties(c)
 }

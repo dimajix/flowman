@@ -27,6 +27,8 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.Assembler
+import com.dimajix.flowman.transforms.CaseFormat
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
 
 
@@ -35,7 +37,7 @@ object AssembleMapping {
         def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder
     }
 
-    case class AppendEntry(path:String, keep:Seq[String], drop:Seq[String]) extends Entry {
+    case class AppendEntry(path:Path=Path.empty, keep:Seq[Path]=Seq(), drop:Seq[Path]=Seq()) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.columns(
                 _.path(path)
@@ -45,7 +47,7 @@ object AssembleMapping {
         }
     }
 
-    case class FlattenEntry(path:String, keep:Seq[String], drop:Seq[String], prefix:String="", naming:String="snakeCase") extends Entry {
+    case class FlattenEntry(path:Path=Path.empty, keep:Seq[Path]=Seq(), drop:Seq[Path]=Seq(), prefix:String="", naming:CaseFormat=CaseFormat.SNAKE_CASE) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.flatten(
                 _.path(path)
@@ -57,7 +59,7 @@ object AssembleMapping {
         }
     }
 
-    case class LiftEntry(path:String, columns:Seq[String]) extends Entry {
+    case class LiftEntry(path:Path=Path.empty, columns:Seq[Path]) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.lift(
                 _.path(path)
@@ -66,7 +68,7 @@ object AssembleMapping {
         }
     }
 
-    case class RenameEntry(path:String, columns:Map[String,String]) extends Entry {
+    case class RenameEntry(path:Path=Path.empty, columns:Map[String,Path]) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.rename(
                 _.path(path)
@@ -81,7 +83,7 @@ object AssembleMapping {
         }
     }
 
-    case class NestEntry(name:String, path:String, keep:Seq[String], drop:Seq[String]) extends Entry {
+    case class NestEntry(name:String, path:Path=Path.empty, keep:Seq[Path]=Seq(), drop:Seq[Path]=Seq()) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             builder.nest(name)(
                 _.path(path)
@@ -92,11 +94,11 @@ object AssembleMapping {
     }
 
     object ExplodeEntry {
-        def apply(path:String) : ExplodeEntry = {
+        def apply(path:Path) : ExplodeEntry = {
             ExplodeEntry("", path)
         }
     }
-    case class ExplodeEntry(name:String, path:String) extends Entry {
+    case class ExplodeEntry(name:String, path:Path) extends Entry {
         override def build(builder:Assembler.StructBuilder) : Assembler.StructBuilder = {
             if (name.nonEmpty) {
                 builder.explode(name)(
@@ -197,9 +199,9 @@ object AssembleMappingSpec {
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.AppendEntry(
-                context.evaluate(path),
-                keep.map(context.evaluate),
-                drop.map(context.evaluate)
+                Path(context.evaluate(path)),
+                keep.map(p => Path(context.evaluate(p))),
+                drop.map(p => Path(context.evaluate(p)))
             )
         }
     }
@@ -213,11 +215,11 @@ object AssembleMappingSpec {
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.FlattenEntry(
-                context.evaluate(path),
-                keep.map(context.evaluate),
-                drop.map(context.evaluate),
+                Path(context.evaluate(path)),
+                keep.map(p => Path(context.evaluate(p))),
+                drop.map(p => Path(context.evaluate(p))),
                 prefix,
-                naming
+                CaseFormat.ofString(context.evaluate(naming))
             )
         }
     }
@@ -228,8 +230,8 @@ object AssembleMappingSpec {
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.LiftEntry(
-                context.evaluate(path),
-                columns.map(context.evaluate)
+                Path(context.evaluate(path)),
+                columns.map(p => Path(context.evaluate(p)))
             )
         }
     }
@@ -240,8 +242,8 @@ object AssembleMappingSpec {
 
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.RenameEntry(
-                context.evaluate(path),
-                context.evaluate(columns)
+                Path(context.evaluate(path)),
+                context.evaluate(columns).map(kv => kv._1 -> Path(kv._2))
             )
         }
     }
@@ -267,9 +269,9 @@ object AssembleMappingSpec {
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.NestEntry(
                 context.evaluate(name),
-                context.evaluate(path),
-                keep.map(context.evaluate),
-                drop.map(context.evaluate)
+                Path(context.evaluate(path)),
+                keep.map(p => Path(context.evaluate(p))),
+                drop.map(p => Path(context.evaluate(p)))
             )
         }
     }
@@ -281,7 +283,7 @@ object AssembleMappingSpec {
         def instantiate(context: Context) : AssembleMapping.Entry = {
             AssembleMapping.ExplodeEntry(
                 context.evaluate(name),
-                context.evaluate(path)
+                Path(context.evaluate(path))
             )
         }
     }

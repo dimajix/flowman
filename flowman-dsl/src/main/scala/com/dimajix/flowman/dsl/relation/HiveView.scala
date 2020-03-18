@@ -17,7 +17,6 @@
 package com.dimajix.flowman.dsl.relation
 
 import com.dimajix.flowman.dsl.RelationGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -25,21 +24,20 @@ import com.dimajix.flowman.spec.relation.HiveViewRelation
 
 
 case class HiveView(
-    database: Environment => Option[String] = _ => None,
-    view: Environment => String,
-    partitions: Environment => Seq[PartitionField] = _ => Seq(),
-    sql: Environment => Option[String] = _ => None,
-    mapping: Environment => Option[MappingOutputIdentifier] = _ => None
+    database: Option[String] = None,
+    view: String,
+    partitions: Seq[PartitionField] = Seq(),
+    sql: Option[String] = None,
+    mapping: Option[MappingOutputIdentifier] = None
 ) extends RelationGen {
     override def apply(props: Relation.Properties): HiveViewRelation = {
-        val env = props.context.environment
         HiveViewRelation(
             props,
-            database(env),
-            view(env),
-            partitions(env),
-            sql(env),
-            mapping(env)
+            database,
+            view,
+            partitions,
+            sql,
+            mapping
         )
     }
 }

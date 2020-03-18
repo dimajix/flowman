@@ -39,7 +39,9 @@ object Connection {
         name: String,
         kind: String,
         labels: Map[String, String]
-    ) extends Instance.Properties
+    ) extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
+    }
 }
 
 /**

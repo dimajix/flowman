@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -71,7 +72,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         val mapping = FlattenMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
-            "snakeCase"
+            CaseFormat.SNAKE_CASE
         )
 
         val expectedSchema = StructType(Seq(

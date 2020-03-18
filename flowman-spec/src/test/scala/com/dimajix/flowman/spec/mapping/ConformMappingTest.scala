@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -141,7 +142,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
-            naming="camelCase"
+            naming=Some(CaseFormat.CAMEL_CASE)
         )
 
         val expectedSchema = StructType(Seq(
@@ -172,7 +173,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
-            naming="snakeCase",
+            naming=Some(CaseFormat.SNAKE_CASE),
             flatten=true
         )
 

@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
@@ -110,7 +111,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
                 Map()
             ),
             true,
-            "snakeCase"
+            CaseFormat.SNAKE_CASE
         )
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -149,7 +150,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
                 Map()
             ),
             true,
-            "snakeCase"
+            CaseFormat.SNAKE_CASE
         )
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -186,7 +187,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
                 Map("result" -> Path("inner_col0"))
             ),
             true,
-            "snakeCase"
+            CaseFormat.SNAKE_CASE
         )
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -224,7 +225,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
                 Map()
             ),
             true,
-            "snakeCase"
+            CaseFormat.SNAKE_CASE
         )
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")

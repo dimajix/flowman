@@ -24,17 +24,16 @@ import com.dimajix.flowman.spec.mapping.DeduplicateMapping
 
 
 case class Deduplicate(
-    input:Environment => MappingOutputIdentifier,
-    columns:Environment => Seq[String] = _ => Seq(),
-    filter:Environment => Option[String] = _ => None
+    input:MappingOutputIdentifier,
+    columns:Seq[String] = Seq(),
+    filter:Option[String] = None
 ) extends MappingGen {
     def apply(props:Mapping.Properties) : DeduplicateMapping = {
-        val env = props.context.environment
         DeduplicateMapping(
             props,
-            input(env),
-            columns(env),
-            filter(env)
+            input,
+            columns,
+            filter
         )
     }
 }

@@ -19,30 +19,42 @@ package com.dimajix.flowman.dsl.mapping
 import com.dimajix.flowman.dsl.MappingGen
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
-import com.dimajix.flowman.spec.mapping.HistorizeMapping
-import com.dimajix.flowman.spec.mapping.InsertPosition
+import com.dimajix.flowman.spec.mapping.RankMapping
 
 
-case class Historize(
+case class Latest(
     input:MappingOutputIdentifier,
     keyColumns:Seq[String],
-    timeColumn:String,
-    validFromColumn:String,
-    validToColumn:String,
-    filter:Option[String] = None,
-    columnInsertPosition:InsertPosition = InsertPosition.END
+    versionColumns:Seq[String],
+    filter:Option[String] = None
 ) extends MappingGen {
-    def apply(props: Mapping.Properties): HistorizeMapping = {
-        val env = props.context.environment
-        HistorizeMapping(
+    def apply(props: Mapping.Properties): RankMapping = {
+        RankMapping(
             props,
             input,
             keyColumns,
-            timeColumn,
-            validFromColumn,
-            validToColumn,
-            filter,
-            columnInsertPosition
+            versionColumns,
+            RankMapping.Latest,
+            filter
+        )
+    }
+}
+
+
+case class Earliest(
+    input:MappingOutputIdentifier,
+    keyColumns:Seq[String],
+    versionColumns:Seq[String],
+    filter:Option[String] = None
+) extends MappingGen {
+    def apply(props: Mapping.Properties): RankMapping = {
+        RankMapping(
+            props,
+            input,
+            keyColumns,
+            versionColumns,
+            RankMapping.Earliest,
+            filter
         )
     }
 }

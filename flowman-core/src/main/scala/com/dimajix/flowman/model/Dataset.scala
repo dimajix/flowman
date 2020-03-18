@@ -21,6 +21,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.model.Connection.Properties
 import com.dimajix.flowman.types.StructType
 
 
@@ -45,7 +46,9 @@ object Dataset {
         name:String,
         kind:String,
         labels:Map[String,String]
-    ) extends Instance.Properties
+    ) extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
+    }
 }
 
 

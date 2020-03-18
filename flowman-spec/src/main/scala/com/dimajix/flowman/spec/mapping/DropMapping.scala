@@ -25,13 +25,14 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.transforms.Assembler
+import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
 
 
 case class DropMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[String],
+    columns:Seq[Path],
     filter:Option[String] = None
 ) extends BaseMapping {
     /**
@@ -102,7 +103,7 @@ class DropMappingSpec extends MappingSpec {
         DropMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.map(context.evaluate),
+            columns.map(c => Path(context.evaluate(c))),
             context.evaluate(filter)
         )
     }

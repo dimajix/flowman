@@ -23,37 +23,48 @@ import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
 
 
+object Job {
+    type Parameter = model.Job.Parameter
+}
+
 case class Job(
-    parameters:Environment => Seq[model.Job.Parameter] = _ => Seq(),
-    environment:Environment => Map[String,String] = _ => Map(),
-    targets:Environment => Seq[TargetIdentifier] = _ => Seq(),
-    extend:Environment => Seq[String] = _ => Seq()
+    parameters:Seq[Job.Parameter] = Seq(),
+    environment:Map[String,String] = Map(),
+    targets:Seq[TargetIdentifier] = Seq(),
+    parents:Seq[String] = Seq()
 ) extends JobGen {
     override def apply(props:model.Job.Properties): model.Job = {
-        val env = props.context.environment
-        model.Job(
-            props
+        val context = props.context
+        val parents = this.parents.map(job => context.getJob(JobIdentifier(job)))
+
+        val job = model.Job(
+            props,
+            parameters,
+            environment,
+            targets
         )
+
+        model.Job.merge(job, parents)
     }
 }
 
 
-case class JobWrapper(
-    job:model.Job.Properties => model.Job,
-    name:String = "",
-    labels:Environment => Map[String,String] = _ => Map(),
-    description:Environment => Option[String] = _ => None
-) extends Wrapper[model.Job] {
-    override def identifier : JobIdentifier = ???
-
-    def label(kv:(String,String)) : JobWrapper = copy(labels=env => labels(env) + kv)
-    def description(desc:String) : JobWrapper = copy(description=_ => Some(desc))
-    def named(name:String) : JobWrapper = copy(name=name)
-    def as(name:String) : JobWrapper = named(name)
-
-    override def instantiate(context: Context): model.Job = {
-        val env = context.environment
-        val props = model.Job.Properties(context, context.namespace, context.project, name, labels(env), description(env))
-        model.Job(props)
+class JobWrapperFunctions(wrapper:Wrapper[model.Job, model.Job.Properties]) {
+    def label(kv:(String,String)) : JobWrapper = new JobWrapper {
+        override def gen: model.Job.Properties => model.Job = wrapper.gen
+        override def props: Context => model.Job.Properties = ctx => {
+            val props = wrapper.props(ctx)
+            props.copy(labels = props.labels + kv)
+        }
     }
+    def description(desc:String) : JobWrapper = new JobWrapper {
+        override def gen: model.Job.Properties => model.Job = wrapper.gen
+        override def props: Context => model.Job.Properties = ctx =>
+            wrapper.props(ctx).copy(description = Some(desc))
+    }
+}
+
+case class JobGenHolder(r:JobGen) extends JobWrapper {
+    override def gen: model.Job.Properties => model.Job = r
+    override def props: Context => model.Job.Properties = c => model.Job.Properties(c)
 }

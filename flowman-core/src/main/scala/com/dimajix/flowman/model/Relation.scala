@@ -33,6 +33,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -64,7 +65,9 @@ object Relation {
         description:Option[String],
         options:Map[String,String]
     )
-    extends Instance.Properties
+    extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
+    }
 }
 
 

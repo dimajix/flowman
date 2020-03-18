@@ -24,15 +24,16 @@ import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.types.StructType
 
 
 case class FlattenMapping(
-     instanceProperties:Mapping.Properties,
-     input:MappingOutputIdentifier,
-     naming:String,
-     filter:Option[String] = None
+    instanceProperties:Mapping.Properties,
+    input:MappingOutputIdentifier,
+    naming:CaseFormat,
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -100,7 +101,7 @@ class FlattenMappingSpec extends MappingSpec {
         FlattenMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            context.evaluate(naming),
+            CaseFormat.ofString(context.evaluate(naming)),
             context.evaluate(filter)
         )
     }

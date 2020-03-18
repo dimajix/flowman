@@ -21,23 +21,21 @@ import java.net.URL
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.SchemaGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema
 
 
 case class SparkSchema(
-    file: Environment => Option[Path] = _ => None,
-    url: Environment => Option[URL] = _ => None,
-    spec: Environment => Option[String] = _ => None
+    file: Option[Path] = None,
+    url: Option[URL] = None,
+    spec: Option[String] = None
 ) extends SchemaGen {
     override def apply(props:Schema.Properties) : schema.SparkSchema = {
-        val env = props.context.environment
         schema.SparkSchema(
             props,
-            file(env),
-            url(env),
-            spec(env)
+            file,
+            url,
+            spec
         )
     }
 }

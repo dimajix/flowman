@@ -17,6 +17,7 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
@@ -41,7 +42,8 @@ object Schema {
         name: String,
         kind: String,
         labels: Map[String, String]
-    ) extends Instance.Properties {
+    ) extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
     }
 }
 

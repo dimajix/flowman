@@ -36,7 +36,7 @@ extends AbstractInstance with Schema {
 
 
 class EmbeddedSchemaSpec extends SchemaSpec {
-    @JsonProperty(value="fields", required=false) private var fields: Seq[Field] = _
+    @JsonProperty(value="fields", required=false) private var fields: Seq[Field] = Seq()
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value="primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
 

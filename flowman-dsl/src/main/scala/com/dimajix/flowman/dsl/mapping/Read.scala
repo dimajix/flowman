@@ -31,7 +31,6 @@ case class Read(
     filter:Option[String] = None
 ) extends MappingGen {
     def apply(props:Mapping.Properties) : ReadRelationMapping = {
-        val env = props.context.environment
         ReadRelationMapping(
             props,
             relation,

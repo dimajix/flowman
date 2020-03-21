@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.dsl.relation
+package com.dimajix.flowman.dsl.mapping
 
-import org.apache.hadoop.fs.Path
-
-import com.dimajix.flowman.dsl.RelationGen
-import com.dimajix.flowman.model.PartitionField
-import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.dsl.MappingGen
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.Template
-import com.dimajix.flowman.spec.relation
+import com.dimajix.flowman.spec.mapping.UnionMapping
 
 
-case class FileRelation(
+case class Union(
+    inputs:Seq[MappingOutputIdentifier],
     schema:Option[Template[Schema]] = None,
-    partitions: Seq[PartitionField] = Seq(),
-    location:Path,
-    pattern:String = "",
-    format:String
-) extends RelationGen {
-    override def apply(props:Relation.Properties) : relation.FileRelation = {
+    distinct:Boolean = false,
+    filter:Option[String] = None
+) extends MappingGen {
+    def apply(props:Mapping.Properties) : UnionMapping = {
         val context = props.context
-        relation.FileRelation(
+        UnionMapping(
             props,
+            inputs,
             schema.map(_.instantiate(context)),
-            partitions,
-            location,
-            pattern,
-            format
+            distinct,
+            filter
         )
     }
 }

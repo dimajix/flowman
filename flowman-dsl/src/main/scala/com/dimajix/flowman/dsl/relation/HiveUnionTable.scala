@@ -43,6 +43,23 @@ case class HiveUnionTable(
     serdeProperties: Map[String, String] = Map()
 ) extends RelationGen {
     override def apply(props:Relation.Properties) : HiveUnionTableRelation = {
-        ???
+        val context = props.context
+        HiveUnionTableRelation(
+            props,
+            schema.map(_.instantiate(context)),
+            partitions,
+            tableDatabase,
+            tablePrefix,
+            locationPrefix,
+            viewDatabase,
+            view,
+            external,
+            format,
+            rowFormat,
+            inputFormat,
+            outputFormat,
+            properties,
+            serdeProperties
+        )
     }
 }

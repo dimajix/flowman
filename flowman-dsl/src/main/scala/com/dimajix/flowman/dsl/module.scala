@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.dsl
 
+import scala.collection.SeqLike
+import scala.collection.mutable
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model
@@ -41,7 +44,7 @@ class Project {
     val modules = new ModuleList
 
     def instantiate() : model.Project = {
-        val modules = this.modules.toSeq
+        val modules = this.modules.map(_.instantiate())
 
         model.Project(
             name = name.toString,
@@ -51,11 +54,11 @@ class Project {
             config = modules.flatMap(_.config.toSeq).toMap,
             environment = modules.flatMap(_.environment.toSeq).toMap,
             profiles = Map(),
-            relations = modules.flatMap(_.relations.toSeq.map(r => r.name -> r)).toMap,
+            relations = modules.flatMap(_.relations).toMap,
             connections = Map(),
-            mappings = modules.flatMap(_.mappings.toSeq).map(m => m.name -> m).toMap,
-            targets = modules.flatMap(_.targets.toSeq).map(t => t.name -> t).toMap,
-            jobs = modules.flatMap(_.jobs.toSeq).map(j => j.name -> j).toMap
+            mappings = modules.flatMap(_.mappings).toMap,
+            targets = modules.flatMap(_.targets).toMap,
+            jobs = modules.flatMap(_.jobs).toMap
         )
     }
 }
@@ -80,6 +83,7 @@ trait Converters {
     implicit def toOption[T](v:T) : Option[T] = Some(v)
 
     implicit def toSeq[T](v:T) : Seq[T] = Seq(v)
+    implicit def toMap[K,V](kv:(K,V)) : Map[K,V] = Map(kv)
 
     implicit def toTemplate(schema:SchemaGen) : Template[Schema] = new Template[Schema] {
         override def instantiate(context: Context): Schema = schema(Schema.Properties(context))
@@ -156,23 +160,32 @@ class Module extends Converters with Identifiers with Functions with ContextAwar
     val config = new FieldMap()
 
     def instantiate() : model.Module = {
-        val modules = this.modules.toSeq
+        val modules = this.modules.map(_.instantiate())
         model.Module(
             config = modules.flatMap(_.config.toSeq).toMap ++ config.toMap,
             environment = modules.flatMap(_.environment.toSeq).toMap ++ environment.toMap,
             profiles = Map(),
-            relations = modules.flatMap(_.relations.toSeq.map(r => r.name -> r)).toMap ++ relations.toMap,
+            relations = modules.flatMap(_.relations.toSeq).toMap ++ relations.toMap,
             connections = Map(),
-            mappings = modules.flatMap(_.mappings.toSeq).map(m => m.name -> m).toMap ++ mappings.toMap,
-            targets = modules.flatMap(_.targets.toSeq).map(t => t.name -> t).toMap ++ targets.toMap,
-            jobs = modules.flatMap(_.jobs.toSeq).map(j => j.name -> j).toMap ++ jobs.toMap
+            mappings = modules.flatMap(_.mappings.toSeq).toMap ++ mappings.toMap,
+            targets = modules.flatMap(_.targets.toSeq).toMap ++ targets.toMap,
+            jobs = modules.flatMap(_.jobs.toSeq).toMap ++ jobs.toMap
         )
     }
 }
 
 
-class ModuleList {
-    def +=(m:Module*) : ModuleList = ???
+class ModuleList(private var modules:Seq[Module] = Seq()) extends Seq[Module] {
+    def +=(m:Module*) : Unit = this.modules = this.modules ++ m
 
-    def toSeq : Seq[Module] = ???
+    def relations : RelationList = new RelationList(modules.flatMap(m => m.relations ++ m.modules.relations))
+    def mappings : MappingList = new MappingList(modules.flatMap(m => m.mappings ++ m.modules.mappings))
+    def targets : TargetList = new TargetList(modules.flatMap(m => m.targets ++ m.modules.targets))
+    def jobs : JobList = new JobList(modules.flatMap(m => m.jobs ++ m.modules.jobs))
+    def environment : Map[String,String] = modules.flatMap(m => m.environment.toSeq ++ m.modules.environment.toSeq).toMap
+    def config : Map[String,String] = modules.flatMap(m => m.config.toSeq ++ m.modules.config.toSeq).toMap
+
+    override def length: Int = modules.length
+    override def apply(idx: Int): Module = modules(idx)
+    override def iterator: Iterator[Module] = modules.iterator
 }

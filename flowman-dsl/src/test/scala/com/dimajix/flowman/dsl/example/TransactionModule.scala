@@ -56,5 +56,5 @@ object TransactionModule extends Module with ModuleCommon {
     )
     modules += (
         LatestAndHistory("transaction")
-        )
+    )
 }

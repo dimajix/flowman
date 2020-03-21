@@ -3,8 +3,10 @@ package com.dimajix.flowman.dsl.example
 import com.dimajix.flowman.dsl.Module
 
 
-object Environment extends Module {
+object EnvironmentModule extends Module {
     environment += (
+        "app_name" -> "${project.name}",
+        "app_version" -> "${project.version}",
         "processing_date" -> "2019-03-01",
         "test_basedir" -> "/tmp/edl-crm-provider",
         "hdfs_landing_dir" -> "${hdfs_basedir}/landing",

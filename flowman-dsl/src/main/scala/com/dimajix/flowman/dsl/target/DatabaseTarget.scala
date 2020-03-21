@@ -16,4 +16,18 @@
 
 package com.dimajix.flowman.dsl.target
 
+import com.dimajix.flowman.dsl.TargetGen
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.target.HiveDatabaseTarget
 
+
+case class DatabaseTarget(
+    database:String
+) extends TargetGen {
+    override def apply(props: Target.Properties): HiveDatabaseTarget = {
+        HiveDatabaseTarget(
+            props,
+            database
+        )
+    }
+}

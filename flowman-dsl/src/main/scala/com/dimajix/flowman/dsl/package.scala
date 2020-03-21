@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman
 
-import com.dimajix.flowman.model.Relation
-
 
 package object dsl {
     type RelationList = WrapperList[model.Relation,model.Relation.Properties]

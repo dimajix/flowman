@@ -31,11 +31,11 @@ case class Job(
     parameters:Seq[Job.Parameter] = Seq(),
     environment:Map[String,String] = Map(),
     targets:Seq[TargetIdentifier] = Seq(),
-    parents:Seq[String] = Seq()
+    parents:Seq[JobIdentifier] = Seq()
 ) extends JobGen {
     override def apply(props:model.Job.Properties): model.Job = {
         val context = props.context
-        val parents = this.parents.map(job => context.getJob(JobIdentifier(job)))
+        val parents = this.parents.map(job => context.getJob(job))
 
         val job = model.Job(
             props,

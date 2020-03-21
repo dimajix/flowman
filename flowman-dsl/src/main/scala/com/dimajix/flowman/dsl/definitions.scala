@@ -68,8 +68,11 @@ case class NamedWrapper[T <: Instance, P <: Instance.Properties[P]](name:String,
 }
 
 
-final class WrapperList[S <: Instance,P <: Instance.Properties[P]] {
-    private var wrappers : Seq[NamedWrapper[S,P]] = Seq()
+final class WrapperList[S <: Instance,P <: Instance.Properties[P]](private var wrappers : Seq[NamedWrapper[S,P]] = Seq())
+    extends Seq[NamedWrapper[S,P]] {
+    override def length: Int = wrappers.length
+    override def apply(idx: Int): NamedWrapper[S, P] = wrappers(idx)
+    override def iterator: Iterator[NamedWrapper[S, P]] = wrappers.iterator
 
     def :=(seq: NamedWrapper[S,P]*) : Unit = wrappers = seq
     def +=(seq: NamedWrapper[S,P]) : Unit = wrappers = wrappers :+ seq
@@ -77,6 +80,5 @@ final class WrapperList[S <: Instance,P <: Instance.Properties[P]] {
 
     def identifiers : Seq[Identifier[S]] = wrappers.map(_.identifier)
 
-    def toSeq : Seq[NamedWrapper[S,P]] = wrappers
     def toMap : Map[String,NamedWrapper[S,P]] = wrappers.map(w => w.name -> w).toMap
 }

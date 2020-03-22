@@ -14,29 +14,22 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.dsl.mapping
+package com.dimajix.flowman.dsl.dataset
 
-import com.dimajix.flowman.dsl.MappingGen
-import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.dsl.DatasetGen
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.MappingOutputIdentifier
-import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
-import com.dimajix.flowman.spec.mapping.ExtractJsonMapping
+import com.dimajix.flowman.spec.dataset
 
 
-case class ExtractJson(
-    input:MappingOutputIdentifier,
-    column:String,
-    schema:Template[Schema],
-    parseMode:String = "PERMISSIVE"
-) extends MappingGen {
-    def apply(props:Mapping.Properties) : ExtractJsonMapping = {
-        ExtractJsonMapping(
-            props,
-            input,
-            column,
-            schema.instantiate(props.context),
-            parseMode
+case class MappingDataset (
+    mapping: MappingOutputIdentifier
+) extends DatasetGen {
+    override def instantiate(context: Context): dataset.MappingDataset = {
+        dataset.MappingDataset(
+            Dataset.Properties(context),
+            mapping
         )
     }
 }

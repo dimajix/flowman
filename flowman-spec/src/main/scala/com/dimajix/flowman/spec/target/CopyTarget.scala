@@ -45,9 +45,9 @@ case class CopyTarget(
     instanceProperties:Target.Properties,
     source:Dataset,
     target:Dataset,
-    schema:Option[CopyTarget.Schema],
-    parallelism:Int,
-    mode:OutputMode
+    schema:Option[CopyTarget.Schema] = None,
+    parallelism:Int = 16,
+    mode:OutputMode = OutputMode.OVERWRITE
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CopyTarget])
 

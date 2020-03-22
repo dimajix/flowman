@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.SchemaUtils
@@ -41,7 +42,7 @@ case class FileDataset(
     location:Path,
     format:String,
     options:Map[String,String] = Map(),
-    columns:Option[StructType] = None
+    schema:Option[Schema] = None
 ) extends AbstractInstance with Dataset {
     private val logger = LoggerFactory.getLogger(classOf[FileDataset])
 
@@ -101,7 +102,7 @@ case class FileDataset(
             .options(options)
             .format(format)
 
-        val reader = columns.map(s => baseReader.schema(s.sparkType)).getOrElse(baseReader)
+        val reader = this.schema.map(s => baseReader.schema(s.sparkSchema)).getOrElse(baseReader)
 
         // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
         // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
@@ -124,7 +125,7 @@ case class FileDataset(
       * @param df - dataframe to write
       */
     override def write(executor: Executor, df: DataFrame, mode: OutputMode) : Unit = {
-        val outputDf = SchemaUtils.applySchema(df, columns.map(_.sparkType))
+        val outputDf = SchemaUtils.applySchema(df, schema.map(_.sparkSchema))
 
         outputDf.write
             .options(options)
@@ -139,7 +140,7 @@ case class FileDataset(
       * @return
       */
     override def describe(executor:Executor) : Option[StructType] = {
-        columns
+        schema.map(s => StructType(s.fields))
     }
 }
 
@@ -149,7 +150,7 @@ class FileDatasetSpec extends DatasetSpec {
     @JsonProperty(value="location", required = true) private var location: String = "/"
     @JsonProperty(value="format", required = false) private var format: String = "csv"
     @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
-    @JsonProperty(value="schema", required = false) protected var schema: SchemaSpec = _
+    @JsonProperty(value="schema", required = false) protected var schema: Option[SchemaSpec] = None
 
     override def instantiate(context: Context): FileDataset = {
         val location = new Path(context.evaluate(this.location))
@@ -158,7 +159,7 @@ class FileDatasetSpec extends DatasetSpec {
             location,
             context.evaluate(format),
             context.evaluate(options),
-            Option(schema).map(s => StructType(s.instantiate(context).fields))
+            schema.map(_.instantiate(context))
         )
     }
 }

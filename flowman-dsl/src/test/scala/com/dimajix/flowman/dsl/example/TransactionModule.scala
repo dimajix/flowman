@@ -12,39 +12,39 @@ object TransactionModule extends Module with ModuleCommon {
     mappings := (
         "transaction_array" := Explode(
             input = output("qualityreport_events"),
-            array = path("QualityReportedTransactions.TransactionData"),
+            array = col("QualityReportedTransactions.TransactionData"),
             outerColumns = Explode.Columns(
-                keep = path("metadata"),
-                drop = path("metadata.correlationIds")
+                keep = col("metadata"),
+                drop = col("metadata.correlationIds")
             )
         ),
         "transaction_updates" := Assemble(
             input = output("transaction_array"),
             columns = Assemble.Flatten(
                 drop = Seq(
-                    path("ErrorInfo"),
-                    path("AirPlusMerchant.Address"),
-                    path("Booker.Address"),
-                    path("CarRental"),
-                    path("CommissionPassback"),
-                    path("Contact"),
-                    path("CreditCardMerchant.Address"),
-                    path("Description"),
-                    path("Fee"),
-                    path("FinancialInformation"),
-                    path("Card.AidaCardUser.Address"),
-                    path("Flight"),
-                    path("GroundTransportation"),
-                    path("HotelStay"),
-                    path("MICE"),
-                    path("OtherItem"),
-                    path("Purchase"),
-                    path("RailJourney"),
-                    path("ShipJourney"),
-                    path("Supplier.Address"),
-                    path("Tax"),
-                    path("Toll"),
-                    path("TravelAgencyBooking")
+                    col("ErrorInfo"),
+                    col("AirPlusMerchant.Address"),
+                    col("Booker.Address"),
+                    col("CarRental"),
+                    col("CommissionPassback"),
+                    col("Contact"),
+                    col("CreditCardMerchant.Address"),
+                    col("Description"),
+                    col("Fee"),
+                    col("FinancialInformation"),
+                    col("Card.AidaCardUser.Address"),
+                    col("Flight"),
+                    col("GroundTransportation"),
+                    col("HotelStay"),
+                    col("MICE"),
+                    col("OtherItem"),
+                    col("Purchase"),
+                    col("RailJourney"),
+                    col("ShipJourney"),
+                    col("Supplier.Address"),
+                    col("Tax"),
+                    col("Toll"),
+                    col("TravelAgencyBooking")
                 )
             )
         ),

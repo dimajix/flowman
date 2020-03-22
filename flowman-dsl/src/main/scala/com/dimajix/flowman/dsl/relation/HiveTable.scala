@@ -46,6 +46,7 @@ case class HiveTable(
             props,
             database = database,
             schema = schema.map(s => s.instantiate(props.context)),
+            partitions = partitions,
             table = table,
             external = external,
             location = location,

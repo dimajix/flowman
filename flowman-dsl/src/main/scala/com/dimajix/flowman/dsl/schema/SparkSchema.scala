@@ -21,6 +21,7 @@ import java.net.URL
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.SchemaGen
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema
 
@@ -30,9 +31,9 @@ case class SparkSchema(
     url: Option[URL] = None,
     spec: Option[String] = None
 ) extends SchemaGen {
-    override def apply(props:Schema.Properties) : schema.SparkSchema = {
+    override def instantiate(context:Context) : schema.SparkSchema = {
         schema.SparkSchema(
-            props,
+            Schema.Properties(context),
             file,
             url,
             spec

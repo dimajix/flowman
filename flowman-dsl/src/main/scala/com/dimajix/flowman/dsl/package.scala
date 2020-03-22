@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman
 
+import com.dimajix.flowman.model.Template
+
 
 package object dsl {
     type RelationList = WrapperList[model.Relation,model.Relation.Properties]
@@ -33,6 +35,6 @@ package object dsl {
     type MappingGen = (model.Mapping.Properties => model.Mapping)
     type JobGen = (model.Job.Properties => model.Job)
 
-    type SchemaGen = (model.Schema.Properties => model.Schema)
-    type DatasetGen = (model.Dataset.Properties => model.Dataset)
+    type SchemaGen = Template[model.Schema]
+    type DatasetGen = Template[model.Dataset]
 }

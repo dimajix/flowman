@@ -16,19 +16,11 @@
 
 package com.dimajix.flowman.model
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.verify
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
-import com.dimajix.flowman.annotation.TargetType
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.RangeValue

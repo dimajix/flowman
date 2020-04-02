@@ -12,7 +12,7 @@ object TransactionModule extends Module with ModuleCommon {
     mappings := (
         "transaction_array" := Explode(
             input = output("qualityreport_events"),
-            array = path("QualityReportedTransactions.TransactionData"),
+            array = path("Nested.Path"),
             outerColumns = Explode.Columns(
                 keep = path("metadata"),
                 drop = path("metadata.correlationIds")
@@ -23,28 +23,7 @@ object TransactionModule extends Module with ModuleCommon {
             columns = Assemble.Flatten(
                 drop = Seq(
                     path("ErrorInfo"),
-                    path("AirPlusMerchant.Address"),
-                    path("Booker.Address"),
-                    path("CarRental"),
-                    path("CommissionPassback"),
-                    path("Contact"),
-                    path("CreditCardMerchant.Address"),
-                    path("Description"),
-                    path("Fee"),
-                    path("FinancialInformation"),
-                    path("Card.AidaCardUser.Address"),
-                    path("Flight"),
-                    path("GroundTransportation"),
-                    path("HotelStay"),
-                    path("MICE"),
-                    path("OtherItem"),
-                    path("Purchase"),
-                    path("RailJourney"),
-                    path("ShipJourney"),
-                    path("Supplier.Address"),
-                    path("Tax"),
-                    path("Toll"),
-                    path("TravelAgencyBooking")
+                    path("Tax")
                 )
             )
         ),

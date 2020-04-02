@@ -47,7 +47,7 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
     private val rootContext = RootContext.builder(job.context)
         .withEnvironment("force", force)
         .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
-        .withEnvironment(job.environment, SettingLevel.SCOPE_OVERRIDE)
+        .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
         .build()
 
     /** The context that should be used for resolving variables and instantiating objects */

@@ -38,7 +38,7 @@ object DqmModule extends Module {
 object DqmProject extends Project {
     name := "dqm"
     version := "1.0"
-    description := "EDL DQM Provider"
+    description := "Data Provider"
 
     modules += DqmModule
 }

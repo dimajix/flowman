@@ -22,7 +22,7 @@ object ErrorModule extends Module {
             HiveTable(
                 database = database,
                 table = "edl_dqm_provider",
-                location = new Path(env.evaluate("$hdfs_basedir/error/edl_dqm_provider")),
+                location = new Path(env.evaluate("$hdfs_basedir/error/${app_name}")),
                 external = true,
                 format = "parquet",
                 partitions = PartitionField(

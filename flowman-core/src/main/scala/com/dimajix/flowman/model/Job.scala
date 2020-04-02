@@ -161,6 +161,12 @@ object Job {
             this.environment = env
             this
         }
+        def addEnvironment(key:String, value:String) : Builder = {
+            require(key != null)
+            require(value != null)
+            this.environment = this.environment + (key -> value)
+            this
+        }
         def setTargets(targets:Seq[TargetIdentifier]) : Builder = {
             require(targets != null)
             this.targets = targets

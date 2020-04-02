@@ -17,6 +17,7 @@
 package com.dimajix.flowman.dsl.schema
 
 import com.dimajix.flowman.dsl.SchemaGen
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema
@@ -26,9 +27,9 @@ case class MappingSchema(
     mapping: MappingOutputIdentifier
 )
 extends SchemaGen {
-    override def apply(props:Schema.Properties) : schema.MappingSchema = {
+    override def instantiate(context:Context) : schema.MappingSchema = {
         schema.MappingSchema(
-            props,
+            Schema.Properties(context),
             mapping
         )
     }

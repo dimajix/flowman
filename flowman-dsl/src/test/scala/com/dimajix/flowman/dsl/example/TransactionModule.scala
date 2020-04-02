@@ -12,18 +12,18 @@ object TransactionModule extends Module with ModuleCommon {
     mappings := (
         "transaction_array" := Explode(
             input = output("qualityreport_events"),
-            array = path("Nested.Path"),
+            array = col("Nested.Path"),
             outerColumns = Explode.Columns(
-                keep = path("metadata"),
-                drop = path("metadata.correlationIds")
+                keep = col("metadata"),
+                drop = col("metadata.correlationIds")
             )
         ),
         "transaction_updates" := Assemble(
             input = output("transaction_array"),
             columns = Assemble.Flatten(
                 drop = Seq(
-                    path("ErrorInfo"),
-                    path("Tax")
+                    col("ErrorInfo"),
+                    col("Tax")
                 )
             )
         ),

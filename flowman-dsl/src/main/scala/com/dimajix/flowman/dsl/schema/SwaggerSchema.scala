@@ -21,6 +21,7 @@ import java.net.URL
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.SchemaGen
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema
 
@@ -33,10 +34,9 @@ case class SwaggerSchema(
     nullable: Boolean = false
 )
 extends SchemaGen {
-    override def apply(props:Schema.Properties) : schema.SwaggerSchema = {
-        val env = props.context.environment
+    override def instantiate(context:Context) : schema.SwaggerSchema = {
         schema.SwaggerSchema(
-            props,
+            Schema.Properties(context),
             file,
             url,
             spec,

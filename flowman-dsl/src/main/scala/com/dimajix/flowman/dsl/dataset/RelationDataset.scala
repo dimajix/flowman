@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.dsl.target
+package com.dimajix.flowman.dsl.dataset
 
-import com.dimajix.flowman.dsl.TargetGen
+import com.dimajix.flowman.dsl.DatasetGen
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Dataset
-import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.Template
-import com.dimajix.flowman.spec.target
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.spec.dataset
+import com.dimajix.flowman.types.SingleValue
 
 
-case class CompareTarget(
-    actual:Template[Dataset],
-    expected:Template[Dataset]
-) extends TargetGen {
-    override def apply(props: Target.Properties): target.CompareTarget = {
-        val context = props.context
-        target.CompareTarget(
-            props,
-            actual.instantiate(context),
-            expected.instantiate(context)
+case class RelationDataset (
+    relation: RelationIdentifier,
+    partition:Map[String,SingleValue] = Map()
+) extends DatasetGen {
+    override def instantiate(context: Context): dataset.RelationDataset = {
+        dataset.RelationDataset(
+            Dataset.Properties(context),
+            relation,
+            partition
         )
     }
 }

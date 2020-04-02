@@ -17,13 +17,13 @@
 package com.dimajix.flowman.dsl
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
 
 
 object Job {
+    val Parameter = model.Job.Parameter
     type Parameter = model.Job.Parameter
 }
 

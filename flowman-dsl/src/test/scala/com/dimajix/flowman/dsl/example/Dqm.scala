@@ -20,9 +20,9 @@ object DqmModule extends Module {
     jobs := (
         "main" := Job(
             parameters = Seq(
-                new Job.Parameter("processing_date", DateType, default=Date.valueOf("2019-01-01")),
-                new Job.Parameter("run_date", DateType, default=Date.valueOf("2019-01-01")),
-                new Job.Parameter("run_id", StringType, default="unknown_run_id")
+                Job.Parameter("processing_date", DateType, default=Date.valueOf("2019-01-01")),
+                Job.Parameter("run_date", DateType, default=Date.valueOf("2019-01-01")),
+                Job.Parameter("run_id", StringType, default="unknown_run_id")
             ),
             targets = modules.targets.identifiers ++ targets.identifiers
         ),

@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.dsl
 
-import scala.collection.SeqLike
-import scala.collection.mutable
+import org.apache.hadoop.{fs => hdfs}
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Environment
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.Identifier
 import com.dimajix.flowman.model.Instance
@@ -85,11 +85,6 @@ trait Converters {
     implicit def toSeq[T](v:T) : Seq[T] = Seq(v)
     implicit def toMap[K,V](kv:(K,V)) : Map[K,V] = Map(kv)
 
-    implicit def toTemplate(schema:SchemaGen) : Template[Schema] = new Template[Schema] {
-        override def instantiate(context: Context): Schema = schema(Schema.Properties(context))
-    }
-    implicit def toOptionTemplate(schema:SchemaGen) : Option[Template[Schema]] = Some(toTemplate(schema))
-
     implicit def toIdentifierList[S <: Instance,P <: Instance.Properties[P]](wrappers:WrapperList[S,P]) : Seq[Identifier[S]] = wrappers.identifiers
 }
 
@@ -108,7 +103,12 @@ trait ContextAware {
 
 
 trait Functions {
-    def path(str:String) : Path = Path(str)
+    def col(str:String) : Path = Path(str)
+    def path(str:String) : hdfs.Path = new hdfs.Path(str)
+    def path(parent:String, child:String) : hdfs.Path = new hdfs.Path(parent, child)
+    def path(parent:hdfs.Path, child:String) : hdfs.Path = new hdfs.Path(parent, child)
+    def path(parent:String, child:hdfs.Path) : hdfs.Path = new hdfs.Path(parent, child)
+    def path(parent:hdfs.Path, child:hdfs.Path) : hdfs.Path = new hdfs.Path(parent, child)
 }
 
 

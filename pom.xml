@@ -53,7 +53,7 @@
         <hadoop.version>2.8.5</hadoop.version>
         <hive.version>2.3.3</hive.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.4</spark.version>
+        <spark.version>2.4.5</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
         <aws.version>1.10.6</aws.version>
@@ -64,7 +64,7 @@
         <ivy.version>2.4.0</ivy.version>
         <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
-        <jackson.databind.version>2.6.7.1</jackson.databind.version>
+        <jackson.databind.version>2.6.7.3</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <json4s.version>3.5.3</json4s.version>
         <json.version>20190722</json.version>
@@ -178,10 +178,10 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
-                <spark.version>2.4.4</spark.version>
+                <spark.version>2.4.5</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
-                <jackson.databind.version>2.6.7.1</jackson.databind.version>
+                <jackson.databind.version>2.6.7.3</jackson.databind.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
                 <json4s.version>3.5.3</json4s.version>
@@ -272,6 +272,8 @@
         <module>flowman-spark-testing</module>
         <module>flowman-spark-sources</module>
         <module>flowman-core</module>
+        <module>flowman-spec</module>
+        <module>flowman-dsl</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
@@ -657,8 +659,21 @@
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spec</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-dsl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>

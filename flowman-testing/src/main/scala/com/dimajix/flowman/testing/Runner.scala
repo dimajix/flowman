@@ -35,9 +35,9 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 
 
 object Runner {
@@ -133,7 +133,8 @@ class Runner private(
     project: Project,
     environment: Map[String,String],
     profiles: Seq[String],
-    sparkMaster:String) {
+    sparkMaster:String
+) {
 
     val tempDir : File = createTempDir()
 

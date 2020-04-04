@@ -21,7 +21,7 @@ import java.io.PrintStream
 import org.kohsuke.args4j.CmdLineParser
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 
 
 abstract class NestedCommand extends Command {

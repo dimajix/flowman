@@ -49,7 +49,7 @@ class CaseFormatterTest extends FlatSpec with Matchers with LocalSparkSession {
         val inputDf = spark.read.json(inputDs)
         val inputSchema = ftypes.StructType.of(inputDf.schema)
 
-        val xfs = CaseFormatter(CaseFormatter.CAMEL_CASE)
+        val xfs = CaseFormatter(CaseFormat.CAMEL_CASE)
 
         val expectedSchema = StructType(Seq(
             StructField("stupidName", StructType(
@@ -93,7 +93,7 @@ class CaseFormatterTest extends FlatSpec with Matchers with LocalSparkSession {
         val inputDf = spark.read.json(inputDs)
         val inputSchema = ftypes.StructType.of(inputDf.schema)
 
-        val xfs = CaseFormatter(CaseFormatter.CAMEL_CASE)
+        val xfs = CaseFormatter(CaseFormat.CAMEL_CASE)
 
         val expectedSchema = StructType(Seq(
             StructField("embeddedStuff", StructType(

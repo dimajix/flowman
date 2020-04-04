@@ -20,12 +20,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.TargetInstance
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.TargetInstance
 
 
 class NullStateStoreTest extends FlatSpec with Matchers {

@@ -11,7 +11,7 @@ mappings:
   latest_customer_updates:
     kind: latest
     input: all_customer_updates
-    versionColumn: ts
+    versionColumns: ts
     keyColumns: customer_id
 ```
 
@@ -32,13 +32,13 @@ Cache mode for the results of this mapping. Supported values are
 
 * `input` **(mandatory)** *(string)*:
 
-* `versionColumn`
-Specifies the column where the version (or timestamp) is contained. For each ID only
+* `versionColumns`
+Specifies the columns where the version (or timestamp) is contained. For each ID only
 the record with the highest value will be kept.
 
 * `keyColumns`
 Specifies one or more columns forming a primary key or ID. Different versions of the
-same entity are then distinguished by the `versionColumn` 
+same entity are then distinguished by the `versionColumns` 
 
 
 ## Outputs

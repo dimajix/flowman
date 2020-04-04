@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.hadoop.File
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 
 
 class FileStore(root:File) extends Store {

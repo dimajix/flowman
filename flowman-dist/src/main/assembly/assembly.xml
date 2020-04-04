@@ -62,6 +62,8 @@
             <includes>
                 <include>com.dimajix.flowman:flowman-spark-sources</include>
                 <include>com.dimajix.flowman:flowman-core</include>
+                <include>com.dimajix.flowman:flowman-spec</include>
+                <include>com.dimajix.flowman:flowman-dsl</include>
                 <include>com.dimajix.flowman:flowman-tools</include>
                 <include>com.dimajix.flowman:flowman-server</include>
             </includes>

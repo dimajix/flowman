@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.server.model
 
-import com.dimajix.flowman.spec
+import com.dimajix.flowman.model
 
 
 object Converter {
-    def ofSpec(ns:spec.Namespace) : Namespace = {
+    def ofSpec(ns:model.Namespace) : Namespace = {
         Namespace(
             ns.name,
             ns.environment,
@@ -31,7 +31,7 @@ object Converter {
         )
     }
 
-    def ofSpec(project:spec.Project) : Project = {
+    def ofSpec(project:model.Project) : Project = {
         Project(
             project.name,
             project.version,
@@ -44,7 +44,7 @@ object Converter {
         )
     }
 
-    def ofSpec(job:spec.job.Job) : Job = {
+    def ofSpec(job:model.Job) : Job = {
         Job(
             job.name,
             job.description,

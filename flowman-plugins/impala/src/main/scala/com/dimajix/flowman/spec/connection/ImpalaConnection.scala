@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.flowman.annotation.ConnectionType
 import com.dimajix.flowman.catalog.ImpalaExternalCatalog
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.BaseConnection
+import com.dimajix.flowman.model.Connection
 
 
 case class ImpalaConnection(

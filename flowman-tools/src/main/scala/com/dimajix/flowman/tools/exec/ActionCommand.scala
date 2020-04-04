@@ -17,9 +17,8 @@
 package com.dimajix.flowman.tools.exec
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 
 
 abstract class ActionCommand extends Command {

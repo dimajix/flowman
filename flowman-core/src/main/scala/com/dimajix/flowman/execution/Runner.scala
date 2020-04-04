@@ -17,8 +17,8 @@
 package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.history.JobToken
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.Target
 
 
 /**

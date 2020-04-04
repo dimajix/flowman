@@ -21,7 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.catalog.ImpalaExternalCatalog
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Namespace
+import com.dimajix.flowman.model.Namespace
 
 
 class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
@@ -40,13 +40,13 @@ class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
 
         val namespace = Namespace.read.string(spec)
         namespace.catalog should not be (null)
-        namespace.catalog shouldBe an[ImpalaCatalogSpec]
+        namespace.catalog shouldBe a[Some[ImpalaCatalogSpec]]
 
         val session = Session.builder()
             .withNamespace(namespace)
             .build()
 
-        val catalog = namespace.catalog.instantiate(session)
-        catalog shouldBe an[ImpalaExternalCatalog]
+        val catalog = namespace.catalog.instantiate(session.context)
+        catalog shouldBe an[Some[ImpalaExternalCatalog]]
     }
 }

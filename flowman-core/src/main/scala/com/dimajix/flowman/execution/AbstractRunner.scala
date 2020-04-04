@@ -26,10 +26,10 @@ import com.dimajix.flowman.history.JobToken
 import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.target.TargetInstance
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetInstance
 
 
 abstract class AbstractRunner extends Runner {
@@ -220,11 +220,11 @@ abstract class AbstractRunner extends Runner {
             .withEnvironment("phase", phase.toString)
             .build()
 
-        val metrics = job.metrics.map(_.instantiate(metricContext, metricSystem))
+        val metrics = job.metrics.map(_.instantiate(metricContext))
 
         // Publish metrics
         metrics.foreach { metrics =>
-            metrics.reset()
+            metrics.reset(metricSystem)
             metricSystem.addBoard(metrics)
         }
 

@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.model.Module
 
 
 class HelloWorldTargetTest extends FlatSpec with Matchers {

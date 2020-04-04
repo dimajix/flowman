@@ -25,15 +25,14 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.ActionCommand
 import com.dimajix.flowman.types.FieldValue

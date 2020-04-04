@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.Module
+import com.dimajix.flowman.model.Module
 
 
 class SessionTest extends FlatSpec with Matchers {
@@ -59,15 +59,10 @@ class SessionTest extends FlatSpec with Matchers {
     }
 
     it should "apply configs in correct order" in {
-        val spec =
-            """
-              |environment:
-              |  - x=y
-              |config:
-              |  - spark.lala=lala_project
-              |  - spark.lili=lili_project
-              """.stripMargin
-        val module = Module.read.string(spec)
+        val module = Module(
+            environment = Map("x" -> "y"),
+            config = Map("spark.lala" -> "lala.project", "spark.lili" -> "lili.project")
+        )
         val project = module.toProject("project")
         val session = Session.builder()
             .withConfig(Map("spark.lala" -> "lala_cmdline", "spark.lolo" -> "lolo_cmdline"))
@@ -75,7 +70,7 @@ class SessionTest extends FlatSpec with Matchers {
             .build()
         session.spark.conf.get("spark.lala") should be ("lala_cmdline")
         session.spark.conf.get("spark.lolo") should be ("lolo_cmdline")
-        session.spark.conf.get("spark.lili") should be ("lili_project")
+        session.spark.conf.get("spark.lili") should be ("lili.project")
         session.spark.stop()
     }
 
@@ -84,7 +79,7 @@ class SessionTest extends FlatSpec with Matchers {
             .build()
         session.sparkRunning should be (false)
 
-        val newSession = session.newSession(null)
+        val newSession = session.newSession()
         session.sparkRunning should be (false)
         newSession.sparkRunning should be (false)
 
@@ -103,7 +98,7 @@ class SessionTest extends FlatSpec with Matchers {
             .withConfig(Map("spark.lala" -> "lolo"))
             .build()
 
-        val newSession = session.newSession(null)
+        val newSession = session.newSession()
 
         session.spark.conf.get("spark.lala") should be ("lolo")
         newSession.spark.conf.get("spark.lala") should be ("lolo")
@@ -114,7 +109,7 @@ class SessionTest extends FlatSpec with Matchers {
             .withSparkName("My Spark App")
             .build()
 
-        val newSession = session.newSession(null)
+        val newSession = session.newSession()
 
         session.spark.conf.get("spark.app.name") should be ("My Spark App")
         newSession.spark.conf.get("spark.app.name") should be ("My Spark App")
@@ -126,7 +121,7 @@ class SessionTest extends FlatSpec with Matchers {
             .withSparkName("To be overriden")
             .build()
 
-        val newSession = session.newSession(null)
+        val newSession = session.newSession()
 
         session.spark.conf.get("spark.app.name") should be ("My Spark App")
         newSession.spark.conf.get("spark.app.name") should be ("My Spark App")

@@ -20,9 +20,6 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.DataFrame
 
-import com.dimajix.common.text.CaseUtils
-import com.dimajix.flowman.transforms.FlattenTransformer.CAMEL_CASE
-import com.dimajix.flowman.transforms.FlattenTransformer.SNAKE_CASE
 import com.dimajix.flowman.transforms.schema.ArrayNode
 import com.dimajix.flowman.transforms.schema.ColumnTree
 import com.dimajix.flowman.transforms.schema.LeafNode
@@ -60,24 +57,24 @@ object Assembler {
         private val _keep = mutable.ListBuffer[Path]()
         private val _drop = mutable.ListBuffer[Path]()
 
-        def path(p:String) : ColumnBuilder = {
-            _path = Path(p)
+        def path(p:Path) : ColumnBuilder = {
+            _path = p
             this
         }
-        def keep(c:String) : ColumnBuilder = {
-            _keep += Path(c)
+        def keep(c:Path) : ColumnBuilder = {
+            _keep += c
             this
         }
-        def keep(c:Seq[String]) : ColumnBuilder = {
-            _keep ++= c.map(Path(_))
+        def keep(c:Seq[Path]) : ColumnBuilder = {
+            _keep ++= c
             this
         }
-        def drop(c:String) : ColumnBuilder = {
-            _drop += Path(c)
+        def drop(c:Path) : ColumnBuilder = {
+            _drop += c
             this
         }
-        def drop(c:Seq[String]) : ColumnBuilder = {
-            _drop ++= c.map(Path(_))
+        def drop(c:Seq[Path]) : ColumnBuilder = {
+            _drop ++= c
             this
         }
 
@@ -94,33 +91,33 @@ object Assembler {
         private val _keep = mutable.ListBuffer[Path]()
         private val _drop = mutable.ListBuffer[Path]()
         private var _prefix = ""
-        private var _naming = "snakeCase"
+        private var _naming:CaseFormat = CaseFormat.SNAKE_CASE
 
-        def path(p:String) : FlattenBuilder = {
-            _path = Path(p)
+        def path(p:Path) : FlattenBuilder = {
+            _path = p
             this
         }
-        def keep(c:String) : FlattenBuilder = {
-            _keep += Path(c)
+        def keep(c:Path) : FlattenBuilder = {
+            _keep += c
             this
         }
-        def keep(c:Seq[String]) : FlattenBuilder = {
-            _keep ++= c.map(Path(_))
+        def keep(c:Seq[Path]) : FlattenBuilder = {
+            _keep ++= c
             this
         }
-        def drop(c:String) : FlattenBuilder = {
-            _drop += Path(c)
+        def drop(c:Path) : FlattenBuilder = {
+            _drop += c
             this
         }
-        def drop(c:Seq[String]) : FlattenBuilder = {
-            _drop ++= c.map(Path(_))
+        def drop(c:Seq[Path]) : FlattenBuilder = {
+            _drop ++= c
             this
         }
         def prefix(p:String) : FlattenBuilder = {
             _prefix = p
             this
         }
-        def naming(n:String) : FlattenBuilder = {
+        def naming(n:CaseFormat) : FlattenBuilder = {
             _naming = n
             this
         }
@@ -137,16 +134,16 @@ object Assembler {
         private var _path = Path()
         private val _columns = mutable.ListBuffer[Path]()
 
-        def path(c:String) : LiftBuilder = {
-            _path = Path(c)
+        def path(c:Path) : LiftBuilder = {
+            _path = c
             this
         }
-        def column(c:String) : LiftBuilder = {
-            _columns += Path(c)
+        def column(c:Path) : LiftBuilder = {
+            _columns += c
             this
         }
-        def columns(c:Seq[String]) : LiftBuilder = {
-            _columns ++= c.map(Path(_))
+        def columns(c:Seq[Path]) : LiftBuilder = {
+            _columns ++= c
             this
         }
 
@@ -221,16 +218,16 @@ object Assembler {
         private var _path = Path()
         private val _columns = mutable.ListBuffer[(String,Path)]()
 
-        def path(p:String) : RenameBuilder = {
-            _path = Path(p)
+        def path(p:Path) : RenameBuilder = {
+            _path = p
             this
         }
-        def column(newName:String, oldName:String) : RenameBuilder = {
-            _columns += ((newName, Path(oldName)))
+        def column(newName:String, oldName:Path) : RenameBuilder = {
+            _columns += ((newName, oldName))
             this
         }
-        def columns(c:Seq[(String,String)]) : RenameBuilder = {
-            _columns ++= c.map(e => (e._1, Path(e._2)))
+        def columns(c:Seq[(String,Path)]) : RenameBuilder = {
+            _columns ++= c
             this
         }
 
@@ -242,8 +239,8 @@ object Assembler {
     class ExplodeBuilder(name:String) extends Builder {
         private var _path = Path()
 
-        def path(p:String) : ExplodeBuilder = {
-            _path = Path(p)
+        def path(p:Path) : ExplodeBuilder = {
+            _path = p
             this
         }
 
@@ -320,14 +317,9 @@ class ColumnAssembler private[transforms] (path:Path, keep:Seq[Path], drop:Seq[P
   * @param keep
   * @param drop
   */
-class FlattenAssembler private[transforms] (path:Path,keep:Seq[Path], drop:Seq[Path], prefix:String="", naming:String="snakeCase") extends Assembler {
-    private val caseFormat = CaseUtils.joinCamel(CaseUtils.splitGeneric(naming))
-
+class FlattenAssembler private[transforms] (path:Path,keep:Seq[Path], drop:Seq[Path], prefix:String="", naming:CaseFormat=CaseFormat.SNAKE_CASE) extends Assembler {
     private def rename(prefix:String, name:String) : String = {
-        caseFormat match {
-            case CAMEL_CASE => if (prefix.isEmpty) name else prefix + (name.head.toUpper + name.tail)
-            case SNAKE_CASE => if (prefix.isEmpty) name else prefix + "_" + name
-        }
+        naming.concat(prefix, name)
     }
 
     private def flatten[T](node:Node[T], prefix:String) : Seq[Node[T]] = {

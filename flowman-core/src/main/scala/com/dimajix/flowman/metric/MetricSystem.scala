@@ -20,8 +20,38 @@ import scala.collection.mutable
 
 import com.dimajix.common.IdentityHashSet
 
+trait MetricCatalog {
+    /**
+     * returns all metrics
+     * @return
+     */
+    def metrics : Seq[Metric]
 
-class MetricSystem {
+    /**
+     * Returns all currently registered MetricBundles
+     * @return
+     */
+    def bundles : Seq[MetricBundle]
+
+    /**
+     * Finds all metrics with the given attributes. All returned metrics will contain the specified
+     * key-value pairs as labels, although the metrics may contain additional labels
+     * @param selector
+     * @return
+     */
+    def findMetric(selector:Selector) : Seq[Metric]
+
+    /**
+     * Finds all metric bundles with the given attributes. All returned bundles will contain the specified
+     * key-value pairs as labels, although the metric bundles may contain additional labels
+     * @param selector
+     * @return
+     */
+    def findBundle(selector:Selector) : Seq[MetricBundle]
+}
+
+
+class MetricSystem extends MetricCatalog {
     private val metricBundles : mutable.Set[MetricBundle] = IdentityHashSet()
     private val metricBoards : mutable.Set[MetricBoard] = IdentityHashSet()
     private val metricSinks : mutable.Set[MetricSink] = IdentityHashSet()
@@ -58,7 +88,13 @@ class MetricSystem {
       * Returns all currently registered MetricBundles
       * @return
       */
-    def bundles : Seq[MetricBundle] = metricBundles.toSeq
+    override def bundles : Seq[MetricBundle] = metricBundles.toSeq
+
+    /**
+     * returns all metrics
+     * @return
+     */
+    override def metrics : Seq[Metric] = metricBundles.toSeq.flatMap(_.metrics)
 
     /**
       * Adds a new MetricBoard to the system. The board is also added to all previously registered sinks.
@@ -66,7 +102,7 @@ class MetricSystem {
       */
     def addBoard(board:MetricBoard) : Unit = {
         if (metricBoards.add(board)) {
-            metricSinks.foreach(_.addBoard(board))
+            metricSinks.foreach(_.addBoard(board, this))
         }
     }
 
@@ -97,7 +133,7 @@ class MetricSystem {
       */
     def addSink(sink:MetricSink) : Unit = {
         if (metricSinks.add(sink)) {
-            metricBoards.foreach(b => sink.addBoard(b))
+            metricBoards.foreach(b => sink.addBoard(b, this))
         }
     }
 
@@ -118,13 +154,6 @@ class MetricSystem {
     def sinks : Seq[MetricSink] = metricSinks.toSeq
 
     /**
-      * Commits all metrics in all sinks. This will push all active sinks to publish their metrics
-      */
-    def commitSinks() : Unit = {
-        metricSinks.foreach(_.commit())
-    }
-
-    /**
       * Resets all metric bundles in this registry
       */
     def resetMetrics() : Unit = {
@@ -137,7 +166,7 @@ class MetricSystem {
       * @param selector
       * @return
       */
-    def findMetric(selector:Selector) : Seq[Metric] = {
+    override def findMetric(selector:Selector) : Seq[Metric] = {
         require(selector != null)
 
         // Matches bundle labels to query. Only existing labels need to match
@@ -171,7 +200,7 @@ class MetricSystem {
       * @param selector
       * @return
       */
-    def findBundle(selector:Selector) : Seq[MetricBundle] = {
+    override def findBundle(selector:Selector) : Seq[MetricBundle] = {
         require(selector != null)
 
         def matchBundle(bundle:MetricBundle) : Boolean = {
@@ -182,13 +211,5 @@ class MetricSystem {
 
         metricBundles.toSeq
             .filter(b => matchBundle(b))
-    }
-
-    /**
-      * returns all metrics
-      * @return
-      */
-    def metrics : Seq[Metric] = {
-        metricBundles.toSeq.flatMap(_.metrics)
     }
 }

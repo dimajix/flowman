@@ -18,29 +18,29 @@ package com.dimajix.flowman.execution
 
 import java.io.StringWriter
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.Profile
-import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.Profile
+import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.templating.RecursiveValue
 import com.dimajix.flowman.templating.Velocity
 
 
 object AbstractContext {
-    private lazy val rootContext = Velocity.newContext()
-
     abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) /*extends Context.Builder[B,C]*/ { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
-        private var _connections = Seq[(String, ConnectionSpec, SettingLevel)]()
+        private var _connections = Seq[(String, Template[Connection], SettingLevel)]()
 
         protected val logger:Logger
 
@@ -51,7 +51,7 @@ object AbstractContext {
         def build() : C = {
             val rawEnvironment = mutable.Map[String,(Any, Int)]()
             val rawConfig = mutable.Map[String,(String, Int)]()
-            val rawConnections = mutable.Map[String, (ConnectionSpec, Int)]()
+            val rawConnections = mutable.Map[String, (Template[Connection], Int)]()
 
             if (parent != null) {
                 parent.rawEnvironment.foreach(kv => rawEnvironment.update(kv._1, kv._2))
@@ -78,7 +78,7 @@ object AbstractContext {
                 }
             }
 
-            def addConnection(name:String, connection:ConnectionSpec, settingLevel: SettingLevel) : Unit = {
+            def addConnection(name:String, connection:Template[Connection], settingLevel: SettingLevel) : Unit = {
                 val currentValue = rawConnections.getOrElse(name, (null, SettingLevel.NONE.level))
                 if (currentValue._2 <= settingLevel.level) {
                     rawConnections.update(name, (connection, settingLevel.level))
@@ -123,7 +123,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        def withConnections(connections:Map[String,ConnectionSpec]) : B = {
+        def withConnections(connections:Map[String,Template[Connection]]) : B = {
             require(connections != null)
             withConnections(connections, defaultSettingLevel)
             this
@@ -133,7 +133,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        def withConnections(connections:Map[String,ConnectionSpec], level:SettingLevel) : B = {
+        def withConnections(connections:Map[String,Template[Connection]], level:SettingLevel) : B = {
             require(connections != null)
             require(level != null)
             _connections = _connections ++ connections.map(kv => (kv._1, kv._2, level))
@@ -213,7 +213,7 @@ object AbstractContext {
             this
         }
 
-        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : C
+        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : C
     }
 }
 
@@ -223,28 +223,8 @@ abstract class AbstractContext(
     override val rawEnvironment:Map[String,(Any, Int)],
     override val rawConfig:Map[String,(String, Int)]
 ) extends Context {
-    protected final val templateEngine = Velocity.newEngine()
-    protected final val templateContext = new VelocityContext(AbstractContext.rootContext)
-
-    // Configure templating context
-    rawEnvironment.foreach { case (key,(value,_)) =>
-        val finalValue = value match {
-            case s:String => RecursiveValue(templateEngine, templateContext, s)
-            case v:Any => v
-            case null => null
-        }
-        templateContext.put(key, finalValue)
-    }
-
-    private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) = {
-        val output = new StringWriter()
-        val context = if (additionalValues.nonEmpty)
-            new VelocityContext(additionalValues.asJava, templateContext)
-        else
-            templateContext
-        templateEngine.evaluate(context, output, "context", string)
-        output.getBuffer.toString
-    }
+    private val _environment = new Environment(rawEnvironment.map { case(k,v) => k -> v._1 })
+    private lazy val _configuration = new Configuration(rawConfig.map { case(k,v) => k -> evaluate(v._1) })
 
     /**
       * Evaluates a string containing expressions to be processed.
@@ -252,7 +232,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    override def evaluate(string:String) : String = evaluate(string, Map())
+    override def evaluate(string:String) : String = _environment.evaluate(string)
 
     /**
       * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
@@ -261,12 +241,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    override def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String = {
-        if (string != null)
-            evaluateNotNull(string, additionalValues)
-        else
-            null
-    }
+    override def evaluate(string:String, additionalValues:Map[String,AnyRef]) : String = _environment.evaluate(string, additionalValues)
 
     /**
       * Evaluates a string containing expressions to be processed.
@@ -274,9 +249,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    def evaluate(string:Option[String]) : Option[String] = {
-        string.map(evaluate).map(_.trim).filter(_.nonEmpty)
-    }
+    override def evaluate(string:Option[String]) : Option[String] = _environment.evaluate(string)
 
     /**
       * Evaluates a string containing expressions to be processed. This variant also accepts a key-value Map
@@ -285,9 +258,7 @@ abstract class AbstractContext(
       * @param string
       * @return
       */
-    def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String] = {
-        string.map(s => evaluate(s, additionalValues)).map(_.trim).filter(_.nonEmpty)
-    }
+    override def evaluate(string:Option[String], additionalValues:Map[String,AnyRef]) : Option[String] = _environment.evaluate(string, additionalValues)
 
     /**
       * Evaluates a key-value map containing values with expressions to be processed.
@@ -295,7 +266,7 @@ abstract class AbstractContext(
       * @param map
       * @return
       */
-    def evaluate(map: Map[String,String]): Map[String,String] = evaluate(map, Map())
+    override def evaluate(map: Map[String,String]): Map[String,String] = _environment.evaluate(map)
 
     /**
       * Evaluates a key-value map containing values with expressions to be processed.  This variant also accepts a
@@ -304,25 +275,20 @@ abstract class AbstractContext(
       * @param map
       * @return
       */
-    override def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String] = {
-        map.map { case(name,value) => (name, evaluate(value, additionalValues)) }
-    }
+    override def evaluate(map: Map[String,String], additionalValues:Map[String,AnyRef]): Map[String,String] = _environment.evaluate(map, additionalValues)
 
     /**
       * Returns all configuration options as a key-value map
       * @return
       */
-    override def config : Map[String,String] = rawConfig.map { case(k,v) => k -> evaluate(v._1) }
+    override def config : Configuration = _configuration
 
     /**
       * Returns the current environment used for replacing variables
       *
       * @return
       */
-    override def environment : Map[String,Any] = rawEnvironment.map {
-        case (k, (s: String, _)) => k -> evaluate(s)
-        case (k, (any, _)) => k -> any
-    }
+    override def environment : Environment = _environment
 
     /**
       * Returns the FileSystem as configured in Hadoop
@@ -348,5 +314,5 @@ abstract class AbstractContext(
       * necessarily the one used by the active Spark session
       * @return
       */
-    override def hadoopConf : Configuration = root.hadoopConf
+    override def hadoopConf : HadoopConf = root.hadoopConf
 }

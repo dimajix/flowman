@@ -16,12 +16,12 @@
 
 package com.dimajix.flowman.execution
 
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
+import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.TargetIdentifier
 
 
 class ExecutionException(

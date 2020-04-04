@@ -1,14 +1,17 @@
 # Lifecycles and Phases
 
-Flowman sees data as artifacts with a common lifecycle. The full lifecycle consists out of specific phases, as follows:
+Flowman sees data as artifacts with a common lifecycle, from creation until deletion. The lifecycle itself consists of 
+multiple different phases, each of them representing one stage of the whole lifecycle. 
+
+## Lifecycle Phases
+
+The full lifecycle consists out of specific phases, as follows:
 
 1. **CREATE**.
 This will create all relations (tables and directories) specified as targets. The tables will not contain any data,
-they only provide an empty hull.
-
-If a target already exists, a migration will be started instead. This will migrate a relation (table or directory) to a
-new schema, if required. Note that this is not supported by all target types, and even if a target supports migration 
-in general, it may not be possible due to unmigratable changes.
+they only provide an empty hull. If a target already exists, a migration will be started instead. This will migrate a 
+relation (table or directory) to a new schema, if required. Note that this is not supported by all target types, and 
+even if a target supports migration in general, it may not be possible due to unmigratable changes.
 
 2. **BUILD**.
 The *build* phase will actually create all records and fill them into the specified relations.

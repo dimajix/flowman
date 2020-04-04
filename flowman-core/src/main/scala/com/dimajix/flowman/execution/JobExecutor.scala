@@ -18,9 +18,9 @@ package com.dimajix.flowman.execution
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.Target
 
 
 /**
@@ -47,11 +47,11 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
     private val rootContext = RootContext.builder(job.context)
         .withEnvironment("force", force)
         .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
-        .withEnvironment(job.environment, SettingLevel.SCOPE_OVERRIDE)
+        .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
         .build()
 
     /** The context that should be used for resolving variables and instantiating objects */
-    val context : Context = if (job.context.project != null) rootContext.getProjectContext(job.context.project) else rootContext
+    val context : Context = if (job.context.project.nonEmpty) rootContext.getProjectContext(job.context.project.get) else rootContext
     /** The executor that should be used for running targets */
     val executor : Executor = if (isolated) new ScopedExecutor(parentExecutor) else parentExecutor
 
@@ -65,7 +65,7 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
       */
     def instance : JobInstance = job.instance(arguments.map{ case(k,v) => k -> v.toString })
 
-    def environment : Map[String,Any] = context.environment
+    def environment : Environment = context.environment
 
     /**
       * Executes a single phase of the job. This method will also check if the arguments passed to the constructor

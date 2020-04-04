@@ -24,8 +24,8 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
-import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.flow.Mapping
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 

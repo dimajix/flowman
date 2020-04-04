@@ -12,7 +12,7 @@ object TransactionModule extends Module with ModuleCommon {
     mappings := (
         "transaction_array" := Explode(
             input = output("qualityreport_events"),
-            array = col("Nested.Path"),
+            array = col("data.transactions"),
             outerColumns = Explode.Columns(
                 keep = col("metadata"),
                 drop = col("metadata.correlationIds")

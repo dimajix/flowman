@@ -1,0 +1,79 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+      "name" : "metadata",
+      "nullable": true,
+      "type" : {
+          "type": "struct",
+          "fields": [
+              {
+                  "name": "eventId",
+                  "type": "string",
+                  "nullable": true
+              },
+              {
+                  "name": "eventHost",
+                  "type": "string",
+                  "nullable": true
+              },
+              {
+                  "name": "eventSource",
+                  "type": "string",
+                  "nullable": true
+              },
+              {
+                  "name": "eventType",
+                  "type": "string",
+                  "nullable": true
+              },
+              {
+                  "name": "occurredAt",
+                  "type": "timestamp",
+                  "nullable": true,
+                  "metadata": {
+                      "comment": "When the event was created",
+                      "format": "date-time"
+                  }
+              },
+              {
+                  "name": "version",
+                  "type": "string",
+                  "nullable": true,
+                  "metadata": {
+                      "comment": "Version of the schema."
+                  }
+              },
+              {
+                  "name": "partition",
+                  "type": "string",
+                  "nullable": true
+              }
+          ]
+      }
+      },
+      {
+          "name" : "data",
+          "nullable" : true,
+          "type" : {
+              "type" : "struct",
+              "fields" : [
+                  {
+                      "name" : "transactions",
+                      "nullable" : true,
+                      "type" : {
+                          "type" : "array",
+                          "containsNull" : false,
+                          "elementType" : {
+                              "type" : "struct",
+                              "fields": [ {
+                                  "name" : "transaction_id",
+                                  "type" : "string",
+                                  "nullable" : true
+                              } ]
+                          }
+                      }
+                  }
+              ]
+          }
+      } ]
+}

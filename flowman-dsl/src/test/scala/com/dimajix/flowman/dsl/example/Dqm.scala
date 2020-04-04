@@ -5,16 +5,25 @@ import java.sql.Date
 import com.dimajix.flowman.dsl.Job
 import com.dimajix.flowman.dsl.Module
 import com.dimajix.flowman.dsl.Project
+import com.dimajix.flowman.dsl.target.DatabaseTarget
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.StringType
 
 
 object DqmModule extends Module {
+    val database = "dqm"
+
     modules += (
         EnvironmentModule,
-        LandingModule("stream.qualityreport", "qualityreport", "some_schema"),
+        LandingModule("stream.events", "qualityreport", "example-schema"),
         TransactionModule,
         ErrorModule
+    )
+
+    targets += (
+        "dqm_database" := DatabaseTarget(
+            database = database
+        )
     )
 
     jobs := (

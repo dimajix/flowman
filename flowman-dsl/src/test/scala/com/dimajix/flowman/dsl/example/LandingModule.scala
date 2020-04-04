@@ -1,5 +1,6 @@
 package com.dimajix.flowman.dsl.example
 
+import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.dsl.Module
@@ -28,15 +29,14 @@ case class LandingModule(kafkaTopic:String, entity:String, schema:String) extend
                 )
             },
 
-            "events_extracted" := withEnvironment { env =>
+            "events_extracted" :=
                 ExtractJson(
                     input = output("events_raw"),
                     column = "value",
                     schema = SparkSchema(
-                        file = new Path(env.evaluate(s"$${project.basedir}/schema/${schema}"))
+                        file = path(Resources.getResource(s"schema/${schema}.json").toURI)
                     )
-                )
-            },
+                ),
 
             "error" := withEnvironment { env =>
                 Extend(

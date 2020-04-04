@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.dsl
 
+import java.net.URI
+
 import org.apache.hadoop.{fs => hdfs}
 
 import com.dimajix.flowman.execution.Context
@@ -104,6 +106,8 @@ trait ContextAware {
 
 trait Functions {
     def col(str:String) : Path = Path(str)
+    def path(uri:URI) : hdfs.Path = new hdfs.Path(uri)
+    def path(parent:URI, child:String) : hdfs.Path = new hdfs.Path(parent.resolve(child))
     def path(str:String) : hdfs.Path = new hdfs.Path(str)
     def path(parent:String, child:String) : hdfs.Path = new hdfs.Path(parent, child)
     def path(parent:hdfs.Path, child:String) : hdfs.Path = new hdfs.Path(parent, child)

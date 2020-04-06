@@ -49,7 +49,8 @@ object SchemaUtils {
                 val rFractionalPrecision = rs
                 val totalIntegerPrecision = scala.math.max(lIntegerPrecision, rIntegerPrecision)
                 val totalFractionalPrecision = scala.math.max(lFractionalPrecision, rFractionalPrecision)
-                DecimalType(totalIntegerPrecision + totalFractionalPrecision, totalFractionalPrecision)
+                val totalPrecision = scala.math.min(totalIntegerPrecision + totalFractionalPrecision, DecimalType.MAX_PRECISION)
+                DecimalType(totalPrecision, totalFractionalPrecision)
 
             // Integrals are promoted to bigger type
             case (IntegralType(_, lp), IntegralType(_, rp)) =>

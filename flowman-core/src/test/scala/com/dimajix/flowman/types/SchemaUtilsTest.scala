@@ -138,6 +138,11 @@ class SchemaUtilsTest extends FlatSpec with Matchers {
         SchemaUtils.coerce(DecimalType(4,2), DecimalType(10,1)) should be (DecimalType(11,2))
     }
 
+    it should "limit DecimlTypes to supported precisions" in {
+        SchemaUtils.coerce(DecimalType(38,2), DecimalType(38,10)) should be (DecimalType(38,10))
+        SchemaUtils.coerce(DecimalType(38,2), DecimalType(38,10)).sparkType should be (org.apache.spark.sql.types.DecimalType(38,10))
+    }
+
     it should "coerce VarChar and Char types" in {
         SchemaUtils.coerce(VarcharType(10), VarcharType(10)) should be (VarcharType(10))
         SchemaUtils.coerce(VarcharType(20), VarcharType(10)) should be (VarcharType(20))

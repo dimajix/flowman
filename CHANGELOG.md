@@ -1,4 +1,9 @@
-# Version 0.12.1 - 
+# Version 0.12.2 - 2020-04-06
+
+* Fix type coercion of DecimalTypes
+
+
+# Version 0.12.1 - 2020-01-15
 
 * Improve support for Swagger Schema
 * Fix infinite loop in recursiveSql

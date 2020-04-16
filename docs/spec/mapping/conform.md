@@ -30,7 +30,7 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER`
 
 * `input` **(mandatory)** *(type: string)*:
-Specifies the name of the input mapping to be filtered.
+Specifies the name of the input mapping to be conformed.
 
 * `naming` **(optional)** *(type: string)*:
 Specifies the naming scheme used for the output. The following values are supported:

@@ -14,7 +14,7 @@ mappings:
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `conform`
+* `kind` **(mandatory)** *(type: string)*: `flatten`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.
@@ -29,7 +29,7 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER`
 
 * `input` **(mandatory)** *(type: string)*:
-Specifies the name of the input mapping to be filtered.
+Specifies the name of the input mapping to be flattened.
 
 * `naming` **(optional)** *(type: string)*:
 Specifies the naming scheme used for the output. The following values are supported:

@@ -8,7 +8,7 @@ object EnvironmentModule extends Module {
         "app_name" -> "${project.name}",
         "app_version" -> "${project.version}",
         "processing_date" -> "2019-03-01",
-        "test_basedir" -> "/tmp/edl-crm-provider",
+        "test_basedir" -> "/tmp/flowman-test",
         "hdfs_landing_dir" -> "${hdfs_basedir}/landing",
         "hdfs_structured_dir" -> "${hdfs_basedir}/structured"
     )

@@ -37,7 +37,7 @@ object DqmModule extends Module {
         ),
         "test" := Job(
             environment = Map(
-                "hdfs_basedir" -> "/tmp/dqm"
+                "hdfs_basedir" -> "${test_basedir}"
             ),
             parents = job("main")
         )

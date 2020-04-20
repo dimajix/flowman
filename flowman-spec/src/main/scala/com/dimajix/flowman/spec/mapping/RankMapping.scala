@@ -110,7 +110,7 @@ case class RankMapping(
 
 abstract class RankMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input:String = _
-    @JsonProperty(value = "versionColumns", required = true) private var versionColumn:Seq[String] = Seq()
+    @JsonProperty(value = "versionColumns", required = true) private var versionColumns:Seq[String] = Seq()
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
@@ -126,7 +126,7 @@ abstract class RankMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
-            versionColumn.map(context.evaluate),
+            versionColumns.map(context.evaluate),
             mode,
             context.evaluate(filter)
         )

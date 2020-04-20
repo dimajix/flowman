@@ -36,6 +36,7 @@ case class HistorizeMapping(
     input:MappingOutputIdentifier,
     keyColumns:Seq[String],
     timeColumn:String,
+    versionColumns:Seq[String],
     validFromColumn:String,
     validToColumn:String,
     filter:Option[String] = None,
@@ -63,8 +64,14 @@ case class HistorizeMapping(
 
         val df = tables(input)
 
+        val versionColumns =
+            if (this.versionColumns.nonEmpty)
+                this.versionColumns.map(col)
+            else
+                Seq(col(timeColumn))
+
         val window = Window.partitionBy(keyColumns.map(col):_*)
-            .orderBy(col(timeColumn))
+            .orderBy(versionColumns:_*)
             .rowsBetween(1,1)
         val validFromColumn = col(timeColumn) as this.validFromColumn
         val validToColumn = lead(col(timeColumn), 1).over(window) as this.validToColumn
@@ -126,7 +133,8 @@ case class HistorizeMapping(
 class HistorizeMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input:String = _
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns:Seq[String] = Seq()
-    @JsonProperty(value = "timeColumn", required = true) private var versionColumn:String = _
+    @JsonProperty(value = "timeColumn", required = false) private var timeColumn:String = _
+    @JsonProperty(value = "versionColumns", required = false) private var versionColumns:Seq[String] = Seq()
     @JsonProperty(value = "validFromColumn", required = false) private var validFromColumn:String = "valid_from"
     @JsonProperty(value = "validToColumn", required = false) private var validToColumn:String = "valid_to"
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
@@ -142,7 +150,8 @@ class HistorizeMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
-            context.evaluate(versionColumn),
+            context.evaluate(timeColumn),
+            versionColumns.map(context.evaluate),
             context.evaluate(validFromColumn),
             context.evaluate(validToColumn),
             context.evaluate(filter),

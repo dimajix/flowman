@@ -58,6 +58,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
             MappingOutputIdentifier("df1"),
             Seq("id"),
             "ts",
+            Seq(),
             "valid_from",
             "valid_to"
         )
@@ -85,12 +86,13 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         result.schema should be (expectedSchema)
 
         val rows = result.orderBy("id", "ts").collect()
-        rows.size should be (5)
-        rows(0) should be (Row(mutable.WrappedArray.make(Array(12,2)), 12, "CREATE", 123, 123, 125))
-        rows(1) should be (Row(mutable.WrappedArray.make(Array(12,2)), 12, "UPDATE", 125, 125, 133))
-        rows(2) should be (Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133, 133, 134))
-        rows(3) should be (Row(mutable.WrappedArray.make(Array(12,4)), 12, "UPDATE", 134, 134, null))
-        rows(4) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123, 123, null))
+        rows should be (Array(
+            Row(mutable.WrappedArray.make(Array(12,2)), 12, "CREATE", 123, 123, 125),
+            Row(mutable.WrappedArray.make(Array(12,2)), 12, "UPDATE", 125, 125, 133),
+            Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133, 133, 134),
+            Row(mutable.WrappedArray.make(Array(12,4)), 12, "UPDATE", 134, 134, null),
+            Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123, 123, null)
+        ))
     }
 
     it should "support adding new columns at the beginning" in {
@@ -110,6 +112,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
             MappingOutputIdentifier("df1"),
             Seq("id"),
             "ts",
+            Seq(),
             "valid_from",
             "valid_to",
             None,
@@ -139,6 +142,60 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         val rows = result.orderBy("id", "ts").collect()
         rows.size should be (1)
         rows(0) should be (Row(123, null, 12, 123))
+    }
+
+    it should "support versionColumns" in  {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.executor
+
+        val json_1 = Seq(
+            """{"version_major":1, "version_minor":1, "ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
+            """{"version_major":1, "version_minor":2, "ts":125,"id":12, "a":[12,2], "op":"UPDATE"}""",
+            """{"version_major":2, "version_minor":1, "ts":133,"id":12, "a":[12,3], "op":"UPDATE"}""",
+            """{"version_major":3, "version_minor":1, "ts":134,"id":12, "a":[12,4], "op":"UPDATE"}""",
+            """{"version_major":1, "version_minor":1, "ts":123,"id":13, "a":[13,2], "op":"CREATE"}"""
+        ).toDS
+        val df = spark.read.json(json_1)
+
+        val mapping = HistorizeMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("df1"),
+            Seq("id"),
+            "ts",
+            Seq("version_major", "version_minor"),
+            "valid_from",
+            "valid_to"
+        )
+
+        val expectedSchema = StructType(Seq(
+            StructField("a", ArrayType(LongType)),
+            StructField("id", LongType),
+            StructField("op", StringType),
+            StructField("ts", LongType),
+            StructField("version_major", LongType),
+            StructField("version_minor", LongType),
+            StructField("valid_from", LongType),
+            StructField("valid_to", LongType)
+        ))
+
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        resultSchema should be (com.dimajix.flowman.types.StructType.of(expectedSchema))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
+        result.schema should be (expectedSchema)
+
+        val rows = result.orderBy("id", "ts").collect()
+        rows should be (Array(
+            Row(mutable.WrappedArray.make(Array(12,2)), 12, "CREATE", 123, 1, 1, 123, 125),
+            Row(mutable.WrappedArray.make(Array(12,2)), 12, "UPDATE", 125, 1, 2, 125, 133),
+            Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133, 2, 1, 133, 134),
+            Row(mutable.WrappedArray.make(Array(12,4)), 12, "UPDATE", 134, 3, 1, 134, null),
+            Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123, 1, 1, 123, null)
+        ))
+
     }
 
     it should "be convertible to SQL" in (if (hiveSupported) {

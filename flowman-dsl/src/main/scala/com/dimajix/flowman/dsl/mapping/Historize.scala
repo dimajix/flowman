@@ -27,18 +27,19 @@ case class Historize(
     input:MappingOutputIdentifier,
     keyColumns:Seq[String],
     timeColumn:String,
-    validFromColumn:String,
-    validToColumn:String,
+    versionColumns:Seq[String] = Seq(),
+    validFromColumn:String = "validFrom",
+    validToColumn:String = "validTo",
     filter:Option[String] = None,
     columnInsertPosition:InsertPosition = InsertPosition.END
 ) extends MappingGen {
     def apply(props: Mapping.Properties): HistorizeMapping = {
-        val env = props.context.environment
         HistorizeMapping(
             props,
             input,
             keyColumns,
             timeColumn,
+            versionColumns,
             validFromColumn,
             validToColumn,
             filter,

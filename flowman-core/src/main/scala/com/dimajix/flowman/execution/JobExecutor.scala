@@ -87,15 +87,18 @@ class JobExecutor(parentExecutor:Executor, val job:Job, args:Map[String,Any], fo
         argNames.diff(paramNames).foreach(p => throw new IllegalArgumentException(s"Unexpected argument '$p' not defined in job '${job.identifier}'"))
         paramNames.diff(argNames).foreach(p => throw new IllegalArgumentException(s"Required parameter '$p' not specified for job '${job.identifier}'"))
 
-        val targets = job.targets.map(t => context.getTarget(t)).filter(_.phases.contains(phase))
-        val order = phase match {
+        // First determine ordering before filtering active targets, since their might be some transitive dependencies
+        // in place. For example accessing a VIEW which does not require a BUILD but accesses other resources
+        val targets = job.targets.map(t => context.getTarget(t))
+        val orderedTargets = phase match {
             case Phase.DESTROY | Phase.TRUNCATE => TargetOrdering.sort(targets, phase).reverse
             case _ => TargetOrdering.sort(targets, phase)
         }
+        val activeTargets = orderedTargets.filter(_.phases.contains(phase))
 
-        logger.info(s"Executing phase '$phase' with sequence: ${order.map(_.identifier).mkString(", ")}")
+        logger.info(s"Executing phase '$phase' with sequence: ${activeTargets.map(_.identifier).mkString(", ")}")
 
-        Status.ofAll(order) { target => fn(executor,target,force) }
+        Status.ofAll(activeTargets) { target => fn(executor,target,force) }
     }
 
     /**

@@ -1,1 +1,1 @@
-com.dimajix.flowman.spec.ClassAnnotationScannerPluginListener
+com.dimajix.flowman.spi.ClassAnnotationScannerPluginListener

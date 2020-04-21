@@ -1,9 +1,11 @@
-# Version 0.13.0
+# Version 0.13.0 - 2020-04-21
 
+* Refactor Maven module structure
 * Implement new Scala DSL for creating projects
-* Lots of minor code improvements
+* Fix ordering bug in target execution
 * Merge 'migrate' phase into 'create' phase
 * Rename 'input' field to 'mapping' in most targets
+* Lots of minor code improvements
 
 
 # Version 0.12.2 - 2020-04-06

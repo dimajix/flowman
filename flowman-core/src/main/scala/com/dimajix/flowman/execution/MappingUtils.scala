@@ -18,14 +18,9 @@ package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
-import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
-
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.MappingOutputIdentifier
-import com.dimajix.flowman.spec.ResourceIdentifier
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 
 
 object MappingUtils {

@@ -20,50 +20,46 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.flow.MappingSpec
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.job.JobSpec
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.model.RelationSpec
-import com.dimajix.flowman.spec.target.Target
-import com.dimajix.flowman.spec.target.TargetSpec
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Template
 
 
 object ScopeContext {
     class Builder(parent:Context) extends AbstractContext.Builder[Builder,ScopeContext](parent, SettingLevel.SCOPE_OVERRIDE) {
         require(parent != null)
 
-        private var mappings = Map[String, MappingSpec]()
-        private var relations = Map[String, RelationSpec]()
-        private var targets = Map[String, TargetSpec]()
-        private var jobs = Map[String, JobSpec]()
+        private var mappings = Map[String, Template[Mapping]]()
+        private var relations = Map[String, Template[Relation]]()
+        private var targets = Map[String, Template[Target]]()
+        private var jobs = Map[String, Template[Job]]()
 
-        def withMappings(mappings:Map[String,MappingSpec]) : Builder = {
+        def withMappings(mappings:Map[String,Template[Mapping]]) : Builder = {
             require(mappings != null)
             this.mappings = this.mappings ++ mappings
             this
         }
-        def withRelations(relations:Map[String,RelationSpec]) : Builder = {
+        def withRelations(relations:Map[String,Template[Relation]]) : Builder = {
             require(relations != null)
             this.relations = this.relations ++ relations
             this
         }
-        def withTargets(targets:Map[String,TargetSpec]) : Builder = {
+        def withTargets(targets:Map[String,Template[Target]]) : Builder = {
             require(targets != null)
             this.targets = this.targets ++ targets
             this
         }
-        def withJobs(jobs:Map[String,JobSpec]) : Builder = {
+        def withJobs(jobs:Map[String,Template[Job]]) : Builder = {
             require(jobs != null)
             this.jobs = this.jobs ++ jobs
             this
@@ -71,7 +67,7 @@ object ScopeContext {
 
         override protected val logger = LoggerFactory.getLogger(classOf[ScopeContext])
 
-        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : ScopeContext = {
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : ScopeContext = {
             new ScopeContext(
                 parent,
                 env,
@@ -93,11 +89,11 @@ class ScopeContext(
     parent:Context,
     fullEnv:Map[String,(Any, Int)],
     fullConfig:Map[String,(String, Int)],
-    scopeMappings:Map[String,MappingSpec] = Map(),
-    scopeRelations:Map[String,RelationSpec] = Map(),
-    scopeTargets:Map[String,TargetSpec] = Map(),
-    scopeConnections:Map[String,ConnectionSpec] = Map(),
-    scopeJobs:Map[String,JobSpec] = Map()
+    scopeMappings:Map[String,Template[Mapping]] = Map(),
+    scopeRelations:Map[String,Template[Relation]] = Map(),
+    scopeTargets:Map[String,Template[Target]] = Map(),
+    scopeConnections:Map[String,Template[Connection]] = Map(),
+    scopeJobs:Map[String,Template[Job]] = Map()
 ) extends AbstractContext(parent, fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
@@ -105,8 +101,8 @@ class ScopeContext(
     private val connections = mutable.Map[String,Connection]()
     private val jobs = mutable.Map[String,Job]()
 
-    override def namespace: Namespace = parent.namespace
-    override def project: Project = parent.project
+    override def namespace: Option[Namespace] = parent.namespace
+    override def project: Option[Project] = parent.project
     override def root: RootContext = parent.root
     override def getConnection(identifier: ConnectionIdentifier): Connection = {
         if (identifier.project.isEmpty) {

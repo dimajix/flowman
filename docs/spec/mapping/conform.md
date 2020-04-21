@@ -1,8 +1,3 @@
----
-layout: page
-title: Flowman Conform Mapping
-permalink: /spec/mapping/conform.html
----
 # Conform Mapping
 The `conform` mapping performs simply name and type mangling transformations to conform data to some standard. For
 example you can replace all date columns by timestamp columns (this is required for older versions of Hive) or
@@ -35,7 +30,7 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER`
 
 * `input` **(mandatory)** *(type: string)*:
-Specifies the name of the input mapping to be filtered.
+Specifies the name of the input mapping to be conformed.
 
 * `naming` **(optional)** *(type: string)*:
 Specifies the naming scheme used for the output. The following values are supported:
@@ -48,6 +43,13 @@ Specifies the list of types and how they should be replaced
 
 * `flatten` **(optional)** *(type: boolean)* *(default: false)*:
 Flattens all nested structs into a flat list of columns if set to `true`
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* conforming.
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

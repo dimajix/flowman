@@ -20,31 +20,19 @@ import java.io.File
 import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.util.ObjectMapper
 
 
 object Plugin {
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Plugin])
 
-        private lazy val mapper = {
-            val mapper = new JacksonMapper(new YAMLFactory())
-            mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
-            mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-            mapper.registerModule(DefaultScalaModule)
-            mapper
-        }
-
         private def loadFile(file:File) : Plugin = {
             logger.info(s"Reading plugin descriptor ${file.toString}")
-            val plugin = mapper.readValue(file, classOf[Plugin])
-            plugin._filename = file.getAbsoluteFile
-            plugin._basedir = file.getAbsoluteFile.getParentFile
-            plugin
+            ObjectMapper.read[PluginSpec](file)
+                .instantiate(Some(file))
         }
 
         /**
@@ -73,13 +61,13 @@ object Plugin {
 
         def url(url:URL) : Plugin = {
             logger.info(s"Reading plugin descriptor from url ${url.toString}")
-            val con = url.openConnection()
-            con.setUseCaches(false)
-            mapper.readValue(con.getInputStream, classOf[Plugin])
+            ObjectMapper.read[PluginSpec](url)
+                .instantiate()
         }
 
         def string(text:String) : Plugin = {
-            mapper.readValue(text, classOf[Plugin])
+            ObjectMapper.parse[PluginSpec](text)
+                .instantiate()
         }
     }
 
@@ -87,23 +75,33 @@ object Plugin {
 }
 
 
-class Plugin {
-    @JsonProperty(value="name") private var _name: String = _
-    @JsonProperty(value="description") private var _description: String = ""
-    @JsonProperty(value="version") private var _version: String = ""
-    @JsonProperty(value="isolation") private var _isolation: String = "false"
-    @JsonProperty(value="jars") private var _jars: Seq[String] = Seq()
+final case class Plugin(
+    name : String,
+    description : Option[String] = None,
+    version : Option[String] = None,
+    filename : Option[File] = None,
+    basedir : Option[File] = None,
+    jars : Seq[File] = Seq()
+)
 
-    private var _basedir: File = new File("")
-    private var _filename: File = new File("")
 
-    def name : String = _name
-    def description : String = _description
-    def version : String = _version
-    def filename : File = _filename
-    def basedir : File = _basedir
+class PluginSpec {
+    @JsonProperty(value="name", required = true) private var name: String = _
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
+    @JsonProperty(value="version", required = false) private var version: Option[String] = None
+    @JsonProperty(value="isolation", required = false) private var isolation: String = "false"
+    @JsonProperty(value="jars", required = false) private var jars: Seq[String] = Seq()
 
-    def jars : Seq[File] = _jars.map(name => new File(_basedir, name))
-
-    def load() : Unit = ???
+    def instantiate(filename:Option[File]=None) : Plugin = {
+        val absFilename = filename.map(_.getAbsoluteFile)
+        val parentDircetory = filename.map(_.getParentFile)
+        Plugin(
+            name,
+            description,
+            version,
+            absFilename,
+            parentDircetory,
+            jars.map(name => parentDircetory.map(path => new File(path, name)).getOrElse(new File(name)))
+        )
+    }
 }

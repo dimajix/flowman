@@ -37,6 +37,10 @@ object FlowmanConf {
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
         .createWithDefault(true)
+    val HIVE_ANALYZE_TABLE = buildConf("floman.hive.analyzeTable")
+        .doc("Performs ANALYZE TABLE commands")
+        .booleanConf
+        .createWithDefault(true)
     val HOME_DIRECTORY = buildConf("flowman.home")
         .doc("Home directory of Flowman")
         .fileConf
@@ -68,6 +72,7 @@ class FlowmanConf(settings:Map[String,String]) {
     }
 
     def sparkEnableHive: Boolean = getConf(SPARK_ENABLE_HIVE)
+    def hiveAnalyzeTable: Boolean = getConf(HIVE_ANALYZE_TABLE)
     def homeDirectory: Option[File] = getConf(HOME_DIRECTORY)
     def confDirectory: Option[File] = getConf(CONF_DIRECTORY)
     def pluginDirectory: Option[File] = getConf(PLUGIN_DIRECTORY)

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.12.2</version>
+    <version>0.13.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -15,7 +15,7 @@
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -53,7 +53,7 @@
         <hadoop.version>2.8.5</hadoop.version>
         <hive.version>2.3.3</hive.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.4</spark.version>
+        <spark.version>2.4.5</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
         <aws.version>1.10.6</aws.version>
@@ -64,7 +64,7 @@
         <ivy.version>2.4.0</ivy.version>
         <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
-        <jackson.databind.version>2.6.7.1</jackson.databind.version>
+        <jackson.databind.version>2.6.7.3</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <json4s.version>3.5.3</json4s.version>
         <json.version>20190722</json.version>
@@ -178,10 +178,10 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
-                <spark.version>2.4.4</spark.version>
+                <spark.version>2.4.5</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <jackson.version>2.6.7</jackson.version>
-                <jackson.databind.version>2.6.7.1</jackson.databind.version>
+                <jackson.databind.version>2.6.7.3</jackson.databind.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
                 <json4s.version>3.5.3</json4s.version>
@@ -272,6 +272,8 @@
         <module>flowman-spark-testing</module>
         <module>flowman-spark-sources</module>
         <module>flowman-core</module>
+        <module>flowman-spec</module>
+        <module>flowman-dsl</module>
         <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
@@ -290,11 +292,11 @@
     <repositories>
         <repository>
             <id>maven-central</id>
-            <url>http://repo1.maven.org/maven2/</url>
+            <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
             <id>hortonworks</id>
-            <url>http://repo.hortonworks.com/content/repositories/releases/</url>
+            <url>https://repo.hortonworks.com/content/repositories/releases/</url>
         </repository>
         <repository>
             <id>jitpack.io</id>
@@ -305,7 +307,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>maven-central</id>
-            <url>http://repo1.maven.org/maven2/</url>
+            <url>https://repo1.maven.org/maven2/</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -339,6 +341,7 @@
                 </executions>
                 <configuration>
                     <flattenMode>ossrh</flattenMode>
+                    <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
                 </configuration>
             </plugin>
             <plugin>
@@ -468,7 +471,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                     <configuration>
                         <tarLongFileMode>posix</tarLongFileMode>
                         <archiverConfig>
@@ -558,7 +561,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.1.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -657,8 +660,21 @@
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spec</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-dsl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -1280,60 +1296,70 @@
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity-engine-core</artifactId>
                 <version>${velocity.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.jsuereth</groupId>
                 <artifactId>scala-arm_${scala.api_version}</artifactId>
                 <version>2.0</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>io.github.classgraph</groupId>
                 <artifactId>classgraph</artifactId>
                 <version>4.8.47</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.typesafe.slick</groupId>
                 <artifactId>slick_${scala.api_version}</artifactId>
                 <version>${slick.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.github.everit-org.json-schema</groupId>
                 <artifactId>org.everit.json.schema</artifactId>
                 <version>1.8.0</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.google.re2j</groupId>
                 <artifactId>re2j</artifactId>
                 <version>1.1</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-parser</artifactId>
                 <version>${swagger-parser.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.json</groupId>
                 <artifactId>json</artifactId>
                 <version>${json.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>ch.ethz.ganymed</groupId>
                 <artifactId>ganymed-ssh2</artifactId>
                 <version>262</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

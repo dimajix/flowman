@@ -25,8 +25,8 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.job.JobInstance
-import com.dimajix.flowman.spec.target.TargetInstance
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.TargetInstance
 
 
 class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {

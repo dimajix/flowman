@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Alias Mapping
-permalink: /spec/mapping/alias.html
----
+
 # Alias Mapping
 
 Provides a new name for an existing mapping. This may be helpful for placeholders
@@ -32,6 +28,11 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
 * `input` **(mandatory)** *(string)*:
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description
 An alias mapping simply provides an additional name to the input mapping.

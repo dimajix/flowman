@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Project Mapping
-permalink: /spec/mapping/project.html
----
+
 # Project Mapping
 The `project` mapping performs a *projection* of an input mapping onto a specific set of columns.
 This corresponds to a simple SQL `SELECT` with a series of simple column names.
@@ -38,6 +34,13 @@ Cache mode for the results of this mapping. Supported values are
 Specifies the name of the input mapping to be filtered.
 
 * `columns` **(mandatory)** *(type: list:string)*:
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* projection.
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

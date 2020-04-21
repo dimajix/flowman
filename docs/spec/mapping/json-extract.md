@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Json-Extract Mapping
-permalink: /spec/mapping/json-extract.html
----
+
 # JSON Extract Mapping
 In order to work with JSON data, the `json-extract` mapping extracts structured and possibly
 nested records from a JSON document. The mapping will only extract the data from a single
@@ -76,5 +72,11 @@ Allows accepting quoting of all character using backslash quoting mechanism
 * `allowUnquotedControlChars` **(optional)** *(type: boolean)* *(default: false)*:
 Allows JSON Strings to contain unquoted control characters (ASCII characters with value less
 than 32, including tab and line feed characters) or not.
+
+
+## Outputs
+* `main` - the primary output of the mapping containing the parsed JSON records
+* `error` - the error output of the mapping containing all unparsable records
+
 
 ## Description

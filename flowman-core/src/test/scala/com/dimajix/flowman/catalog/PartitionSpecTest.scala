@@ -20,11 +20,6 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.schema.PartitionField
-import com.dimajix.flowman.spec.schema.PartitionSchema
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.types.StringType
 
 class PartitionSpecTest extends FlatSpec with Matchers {
     "The PartitionSpec" should "provide a Hive compatible path" in {

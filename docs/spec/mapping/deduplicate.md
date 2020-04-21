@@ -1,12 +1,7 @@
----
-layout: page
-title: Flowman Deduplicate Mapping
-permalink: /spec/mapping/deduplicate.html
----
 # Deduplicate Mapping
 
 ## Example
-```
+```yaml
 mappings:
   persons_unique:
     kind: deduplicate
@@ -39,5 +34,13 @@ Specifies the name of the input mapping
 * `columns` **(optional)** *(type: string)* *(default: empty)*:
 Specifies the names of the columns to use for deduplication. The result will still have the
 full set of columns.
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* deduplication.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

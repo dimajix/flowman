@@ -22,8 +22,9 @@ abstract class MetricSink {
       * Adds a MetricBoard to be published by this sink. Publishing could happen on a periodic base in the background
       * or via an explicit call to commit
       * @param board
+      * @param catalog
       */
-    def addBoard(board:MetricBoard) : Unit
+    def addBoard(board:MetricBoard, catalog:MetricCatalog) : Unit
 
     /**
       * Removes a metric board  from the sink again
@@ -38,22 +39,10 @@ abstract class MetricSink {
     def boards : Seq[MetricBoard]
 
     /**
-      * Returns all bundles currently registered to this sink
-      * @return
-      */
-    def bundles : Seq[MetricBundle]
-
-    /**
       * Returns all metrics of all bundles currently registered to this sink
       * @return
       */
     def metrics : Seq[Metric]
-
-    /**
-      * Commits all currently registered metrics. This may be required for some sink for example the PrometheusSink
-      * which uses the Prometheus push gateway.
-      */
-    def commit() : Unit
 
     /**
       * Commits all metrics of a previously registered board. This may be required for some sink for example the

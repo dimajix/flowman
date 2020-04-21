@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Aggregate Mapping
-permalink: /spec/mapping/aggregate.html
----
+
 # Aggregate Mapping
 
 ## Example
@@ -46,6 +42,14 @@ Specifies the list of dimensions to aggregate on
 * `aggregations` **(mandatory)** *(type: map:string)*:
 Specifies the list of aggregations to perform. Each aggregation has a name (the key in the
 map) and an aggregation expression. The name corresponds to the outgoing column name.
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* aggregation.
+
+
+## Outputs
+* `main` - the only output of the aggregate mapping
+
 
 ## Description
 Essentially the `aggregate` mapping performs a SQL `SELECT ... GROUP BY ...` operations. The

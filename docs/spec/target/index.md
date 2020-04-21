@@ -1,41 +1,29 @@
----
-layout: page
-title: Flowman Output Specifications
-permalink: /spec/target/index.html
----
-# Flowman Output Specification
+# Build Targets
+
+From a top level perspective, Flowman works like a build tool like make or maven. Of course in contrast to classical
+build tools, the project specification in Flowman also contains the logic to be build (normally that is separated
+in source code files which get compiles or otherwise processed with additional tools).
+
+Each target supports at least some [build phases](../../lifecycle.md)
 
 
-## Output Types
+## Target Types
+Flowman supports different target types, each used for a different kind of a physical entity or build recipe.
 
-* [`blackhole`](blackhole.html): 
-Use a [Blackhole Target](blackhole.html) to execute mappings without using the results
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-* [`console`](console.html): 
-Use [Console Target](console.html) to dump the contents of a mapping onto the console
-
-* [`copy`](copy.html): 
-
-* [`copyFile`](copy-file.html): 
-
-* [`count`](count.html): 
-
-* [`getFile`](get-file.html): 
-
-* [`hiveDatabase`](hive-database.html): 
-
-* [`local`](local.html): 
-Use the [Local Target](local.html) to write into a local CSV file
-
-* [`relation`](relation.html): 
-Use the [Relation Target](relation.html) to write into a relation
+   *
+```
 
 ## Metrics
 
 For each target Flowman provides the following execution metric:
-* metric: "target_runtime"
+* `metric`: "target_runtime"
 * labels: 
-  * category: "target"
-  * kind:
-  * namespace: 
-  * project: 
+  * `category`: "target"
+  * `kind`: The kind of the target
+  * `namespace`: The name of the namespace
+  * `project`: The name of the project 

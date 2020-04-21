@@ -1,9 +1,4 @@
----
-layout: page
-title: Flowman Mapping Specification
-permalink: /spec/mapping/index.html
----
-# Flowman Mapping Specification
+# Mappings
 
 Flowman uses the notion of `mappings` in order to specify the data flow and all data 
 transformations. A mapping somewhat corresponds to a temporary view in the SQL world: You 
@@ -91,78 +86,10 @@ values are
 Flowman supports different kinds of operations, the following list gives you an exhaustive
 overview of all mappings implemented by Flowman
 
-* [`aggregate`](aggregate.html): 
-Use an [Aggregation](aggregate.html) mapping to perform aggregations for creating cubes
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-* [`alias`](alias.html): 
-Use an [Alias](alias.html) to provide a new name to an existing mapping
-
-* [`assemble`](assemble.html): 
-Use an [Assemble](assemble.html) mapping to reassemble a nested data structure like from JSON or Avro
-
-* [`coalesce`](coalesce.html):
-Reduces the number of Spark partitions by logically merging partitions together.  
-
-* [`conform`](conform.html): 
-Using [Conforming](conform.html) you can apply a schema with a fixed order of fields and data types
-
-* [`deduplicate`](deduplicate.html): 
-Use a [Deduplicate](deduplicate.html) mapping for deduplicating records based on specific columns
-
-* [`distinct`](distinct.html): 
-Use a [Distinct](distinct.html) mapping for removing duplicates based on all columns
-
-* [`explode`](exploe.html): 
-With [Explode](explode.html) you can create multiple records from an array
-
-* [`extend`](extend.html): 
-With [Extend](extend.html) you can add new columns to a mapping
-
-* [`extractJson`](json-extract.html): 
-[Extract columns from JSON](json-extract.html) for transforming raw JSON data into structured data 
-
-* [`filter`](filter.html): 
-Use [Filter](filter.html) to apply filter logic (essentially a `WHERE` condition)
-
-* [`flatten`](flatten.html): 
-Use [Flatten](flatten.html) to flatten the schema of a nested data structure into a simple list of columns.
-
-* [`join`](join.html): 
-Use a [Join](join.html) to merge two mappings based on a common key or a join condition
-
-* [`latest`](latest.html):
-Select the latest version of of multiple records with a unique key and a timestamp 
-
-* [`project`](project.html): 
-Using [Projections](project.html) you can select a subset of columns
-
-* [`read` / `readRelation`](read-relation.html):
-A [Read](read-relation.html) mapping reads in data from a relation.
- 
-* [`rebalance`](rebalance.html):
-Shuffles data to produce a specified amount of Spark partitions with an approximately equal number
-of records.
-
-* [`repartition`](repartition.html):
-Changes the number of (Spark) partitions of the result of a mapping.
-
-* [`select`](select.html):
-Evaluate arbitrary SQL expressions
-
-* [`schema`](schema.html):
-Apply a schema to input data
-
-* [`sort`](sort.html):
-[Sort](sort.html) records according to column values
-
-* [`sql`](sql.html): An [SQL](sql.html) mapping allows to specify any SQL statement supported by
-Spark SQL. You can reference any other mapping as tables within the statement.
-
-* [`union`](union.html):
-With a [Union](union.html) mapping, all records of multiple mappings can be appended to a single 
-new mapping. Essentially works like a SQL `UNION ALL`. 
-
-* [`unpackJson`](json-unpack.html): 
-[Unpack JSON columns](json-unpack.html) for extracting individual columns containing raw JSON data.
-
-* [`update`](update.html):
+   *
+```

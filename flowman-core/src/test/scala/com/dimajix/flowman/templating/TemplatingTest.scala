@@ -25,7 +25,6 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.annotation.TemplateObject
-import com.dimajix.flowman.spi.Registration
 import com.dimajix.flowman.util.UtcTimestamp
 
 
@@ -38,7 +37,6 @@ object TemplatingTest {
 
 
 class TemplatingTest extends FlatSpec with Matchers {
-    Registration.load()
     private val engine = Velocity.newEngine()
     private val context = Velocity.newContext()
 

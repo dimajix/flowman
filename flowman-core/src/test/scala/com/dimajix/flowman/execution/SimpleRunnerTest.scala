@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.types.StringType
 
 

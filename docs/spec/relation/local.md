@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Local Relation
-permalink: /spec/relation/local.html
----
+
 # Local Relations
 In addition to working with file relations backed up by Hadoop compatible file systems (HDFS,
 S3, ...), Flowman also supports the local file system as backend for working with files. The

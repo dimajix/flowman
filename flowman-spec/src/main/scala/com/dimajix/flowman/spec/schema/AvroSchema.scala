@@ -1,0 +1,72 @@
+/*
+ * Copyright 2018 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.dimajix.flowman.spec.schema
+
+import java.net.URL
+
+import org.apache.hadoop.fs.Path
+import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
+import com.dimajix.flowman.types.AvroSchemaUtils
+
+
+/**
+  * Schema implementation for reading Avro schemas.
+  */
+case class AvroSchema(
+    instanceProperties:Schema.Properties,
+    override val file: Option[Path],
+    override val url: Option[URL],
+    override val spec: Option[String]
+) extends ExternalSchema {
+    protected override val logger = LoggerFactory.getLogger(classOf[ExternalSchema])
+
+    /**
+      * Returns the description of the schema
+      * @return
+      */
+    protected override def loadSchema : CachedSchema = {
+        val spec = loadSchemaSpec
+        val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
+        CachedSchema(
+            AvroSchemaUtils.fromAvro(avroSchema),
+            Option(avroSchema.getDoc)
+        )
+    }
+}
+
+
+
+class AvroSchemaSpec extends ExternalSchemaSpec {
+    /**
+      * Creates the instance of the specified Schema with all variable interpolation being performed
+      * @param context
+      * @return
+      */
+    override def instantiate(context: Context): AvroSchema = {
+        AvroSchema(
+            Schema.Properties(context),
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
+            context.evaluate(spec)
+        )
+    }
+}

@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Sort Mapping
-permalink: /spec/mapping/sort.html
----
+
 # Sort Mapping
 The `sort` mapping simply sorts data by the specified columns and sort order. Note that 
 downstream mappings may destroy the sort order again, so this should be the last operation
@@ -39,5 +35,13 @@ Cache mode for the results of this mapping. Supported values are
 * `columns` **(mandatory)** *(list:kv)*: 
 Specifies the sort columns. The column names are specified as the key and the sort order as
 the values. `asc` and `desc` are supported for sort order. 
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* the sort operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

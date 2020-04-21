@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman SFTP Upload Task
-permalink: /spec/job/sftp-upload.html
----
+
 # SFTP Upload Task
 The SFTP upload task is used for uploading data which resides either on the local machine or
 in a Hadoop compatible filesystem (HDFS, S3, ...) to an external SFTP server.

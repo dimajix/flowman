@@ -27,10 +27,11 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.SystemSettings
 import com.dimajix.flowman.plugin.PluginManager
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.SystemSettings
+import com.dimajix.flowman.spec.NamespaceSpec
 import com.dimajix.flowman.tools.exec.Driver
 
 

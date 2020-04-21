@@ -21,12 +21,10 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.util.ObjectMapper
 
 
 class FieldTest extends FlatSpec with Matchers {
-    lazy val mapper = ObjectMapper
-
     "A Field" should "be nullable per default" in {
         val spec =
             """
@@ -37,7 +35,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true))
@@ -55,7 +53,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, true))
@@ -73,7 +71,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (false)
         result.name should be ("lala")
         result.sparkField should be (org.apache.spark.sql.types.StructField("lala", org.apache.spark.sql.types.StringType, false))
@@ -92,7 +90,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.description should be (Some("Some description"))
@@ -112,7 +110,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.size should be (Some(27))
@@ -132,7 +130,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.default should be (Some("27"))
@@ -152,7 +150,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         if (result.default == Some("")) {
@@ -180,7 +178,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.default should be (None)
@@ -200,7 +198,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.default should be (Some(""))
@@ -219,7 +217,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.StringType)
@@ -235,7 +233,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.StringType)
@@ -257,7 +255,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.StructType]
@@ -283,7 +281,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -302,7 +300,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -321,7 +319,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -346,7 +344,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.ftype shouldBe a[ArrayType]
@@ -375,7 +373,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
@@ -392,7 +390,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.StringType)
@@ -409,7 +407,7 @@ class FieldTest extends FlatSpec with Matchers {
         val session = Session.builder().build()
         implicit val context = session.context
 
-        val result = mapper.parse[Field](spec)
+        val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
         result.sparkType should be (org.apache.spark.sql.types.StringType)

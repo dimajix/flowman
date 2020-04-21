@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 

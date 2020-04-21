@@ -1,13 +1,8 @@
----
-layout: page
-title: Flowman Profiles Definition
-permalink: /spec/profiles.html
----
-# Flowman Profiles
+# Profiles
 
 Flowman supports so called *profiles* which contain again some specifications like environment
 variables, Spark configurations and connections. But in contrast to a module definition, these
-entities are not used per default, instead a profile needs to bew *activated* on the command
+entities are not used per default, instead a profile needs to be *activated* on the command
 line.
 
 Using profiles allows to define environment-specific settings (like for the test and for the

@@ -46,7 +46,7 @@ class Server(
         implicit val materializer: ActorMaterializer = ActorMaterializer()
         implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-        val namespaceService = new NamespaceService(session.namespace)
+        val namespaceService = new NamespaceService(session.namespace.get)
         val projectService = new ProjectService(session.store)
         val historyService = new HistoryService(session.history)
 

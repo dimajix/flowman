@@ -20,9 +20,9 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.spec.ResourceIdentifier
-import com.dimajix.flowman.spec.target.BaseTarget
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Target
 
 
 case class DummyTarget(

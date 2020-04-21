@@ -1,9 +1,4 @@
----
-layout: page
-title: Flowman Connection Specification
-permalink: /spec/connection/index.html
----
-# Flowman Connections
+# Connections
 
 For some operations it is required to specify *connections* to other systems. Common examples are 
 JDBC connections to relation databases or SSH connections to SFTP servers. Flowman provides the
@@ -19,10 +14,10 @@ thereby easily allowing to specify different connection parameters for different
 
 ## Connection Types
 
-* [`jdbc`](jdbc.html): 
-Use a [JDBC Connectionb](jdbc.html) to specify database, host and credentials for a JDBC 
-connection
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-* [`ssh` / `sftp`](ssh.html): 
-Use a [SSH Connection](ssh.html) to specify connection credentials required for SSH and SFTP
-access to remote systems
+   *
+```

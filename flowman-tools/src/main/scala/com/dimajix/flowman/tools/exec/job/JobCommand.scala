@@ -22,7 +22,7 @@ import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
 
@@ -32,7 +32,6 @@ class JobCommand extends NestedCommand {
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="create",impl=classOf[CreateCommand]),
-        new SubCommand(name="migrate",impl=classOf[MigrateCommand]),
         new SubCommand(name="build",impl=classOf[BuildCommand]),
         new SubCommand(name="verify",impl=classOf[VerifyCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),

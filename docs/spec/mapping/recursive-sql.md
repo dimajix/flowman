@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman recursive SQL Mapping
-permalink: /spec/mapping/recursive-sql.html
----
+
 # Recursive SQL Mapping
 The `recursiveSql` mapping allows to execute recursive SQL transformation which contains Spark SQL code.
 
@@ -49,6 +45,10 @@ The name of a file containing the SQL to execute.
 
 * `uri` **(optional)** *(type: string)* *(default: empty)*: 
 A url pointing to a resource containing the SQL to execute.
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

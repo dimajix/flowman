@@ -29,9 +29,6 @@ object Phase {
     case object CREATE extends Phase {
         override val value = "create"
     }
-    case object MIGRATE extends Phase {
-        override val value = "migrate"
-    }
     case object BUILD extends Phase {
         override val value = "build"
     }
@@ -48,7 +45,6 @@ object Phase {
     def ofString(status:String) : Phase = {
         status.toLowerCase(Locale.ROOT) match {
             case CREATE.value => CREATE
-            case MIGRATE.value => MIGRATE
             case BUILD.value => BUILD
             case VERIFY.value => VERIFY
             case TRUNCATE.value => TRUNCATE
@@ -66,7 +62,6 @@ object Phase {
 object Lifecycle {
     val BUILD:Seq[Phase] = Seq(
         Phase.CREATE,
-        Phase.MIGRATE,
         Phase.BUILD,
         Phase.VERIFY
     )

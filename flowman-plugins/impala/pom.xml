@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.12.2</version>
+        <version>0.13.0</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -62,7 +62,7 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-core</artifactId>
+            <artifactId>flowman-spec</artifactId>
             <scope>provided</scope>
         </dependency>
 

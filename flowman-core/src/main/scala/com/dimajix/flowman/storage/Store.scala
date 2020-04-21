@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.storage
 
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 
 
 abstract class Store {

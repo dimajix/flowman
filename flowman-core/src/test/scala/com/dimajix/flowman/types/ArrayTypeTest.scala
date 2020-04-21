@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.util.ObjectMapper
 
 
 class ArrayTypeTest extends FlatSpec with Matchers {

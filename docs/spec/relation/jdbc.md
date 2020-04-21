@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman JDBC Relation
-permalink: /spec/relation/jdbc.html
----
+
 # JDBC Relations
 
 ## Example
@@ -23,7 +19,7 @@ permalink: /spec/relation/jdbc.html
  and/or writing to this relation.
 
  * `connection` **(mandatory)** *(type: string)*:
- The *connection* field specifies the name of a [Connection](../connection/index.html)
+ The *connection* field specifies the name of a [Connection](../connection/index.md)
  object which has to be defined elsewhere.
  
  * `database` **(optional)** *(type: string)* *(default: empty)*: 

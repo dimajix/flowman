@@ -18,30 +18,31 @@ package com.dimajix.flowman.execution
 
 import scala.collection.mutable
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.ConnectionIdentifier
-import com.dimajix.flowman.spec.MappingIdentifier
-import com.dimajix.flowman.spec.Namespace
-import com.dimajix.flowman.spec.Profile
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.RelationIdentifier
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.connection.Connection
-import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.flow.Mapping
-import com.dimajix.flowman.spec.job.Job
-import com.dimajix.flowman.spec.model.Relation
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Profile
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Template
 
 
 object RootContext {
-    class Builder private[RootContext](namespace:Namespace, profiles:Seq[String], _parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](_parent, SettingLevel.NAMESPACE_SETTING) {
+    class Builder private[RootContext](namespace:Option[Namespace], profiles:Seq[String], parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
         private var projectResolver:Option[String => Option[Project]] = None
 
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
@@ -56,35 +57,34 @@ object RootContext {
             this
         }
 
-        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, ConnectionSpec]) : RootContext = {
-            case object NamespaceWrapper {
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : RootContext = {
+            class NamespaceWrapper(namespace:Namespace) {
                 def getName() : String = namespace.name
                 override def toString: String = namespace.name
             }
 
             val fullEnv = env ++
-                Option(namespace).map(ns => "namespace" -> (NamespaceWrapper -> SettingLevel.SCOPE_OVERRIDE.level)).toMap
+                namespace.map(ns => "namespace" -> (new NamespaceWrapper(ns) -> SettingLevel.SCOPE_OVERRIDE.level)).toMap
 
             new RootContext(namespace, projectResolver, profiles, fullEnv, config, connections)
         }
     }
 
-    def builder() = new Builder(null, Seq())
-    def builder(namespace:Namespace, profiles:Seq[String]) = new Builder(namespace, profiles)
+    def builder() = new Builder(None, Seq())
+    def builder(namespace:Option[Namespace], profiles:Seq[String]) = new Builder(namespace, profiles)
     def builder(parent:Context) = new Builder(parent.namespace, Seq(), parent)
 }
 
 
 class RootContext private[execution](
-        _namespace:Namespace,
-        projectResolver:Option[String => Option[Project]],
-        profiles:Seq[String],
-        fullEnv:Map[String,(Any, Int)],
-        fullConfig:Map[String,(String, Int)],
-        nonNamespaceConnections:Map[String, ConnectionSpec]
+    _namespace:Option[Namespace],
+    projectResolver:Option[String => Option[Project]],
+    profiles:Seq[String],
+    fullEnv:Map[String,(Any, Int)],
+    fullConfig:Map[String,(String, Int)],
+    nonNamespaceConnections:Map[String, Template[Connection]]
 ) extends AbstractContext(null, fullEnv, fullConfig) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
-    private val _configuration = new com.dimajix.flowman.config.Configuration(config)
     private lazy val _fs = FileSystem(hadoopConf)
 
     private val connections = mutable.Map[String,Connection]()
@@ -93,13 +93,13 @@ class RootContext private[execution](
       * Returns the namespace associated with this context. Can be null
       * @return
       */
-    override def namespace : Namespace = _namespace
+    override def namespace : Option[Namespace] = _namespace
 
     /**
       * Returns the project associated with this context. Can be null
       * @return
       */
-    override def project: Project = null
+    override def project: Option[Project] = None
 
     /**
       * Returns the root context in a hierarchy of connected contexts
@@ -164,11 +164,11 @@ class RootContext private[execution](
             connections.getOrElseUpdate(identifier.name,
                 nonNamespaceConnections.get(identifier.name)
                     .orElse(
-                        Option(namespace)
+                        namespace
                             .flatMap(_.connections.get(identifier.name))
                     )
+                    .map(_.instantiate(this))
                     .getOrElse(throw new NoSuchConnectionException(identifier))
-                    .instantiate(this)
             )
         }
         else {
@@ -236,19 +236,19 @@ class RootContext private[execution](
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */
-    override def flowmanConf : FlowmanConf = _configuration.flowmanConf
+    override def flowmanConf : FlowmanConf = config.flowmanConf
 
     /**
       * Returns a SparkConf object, which contains all Spark settings as specified in the conifguration. The object
       * is not necessarily the one used by the Spark Session!
       * @return
       */
-    override def sparkConf: SparkConf = _configuration.sparkConf
+    override def sparkConf: SparkConf = config.sparkConf
 
     /**
       * Returns a Hadoop Configuration object which contains all settings form the configuration. The object is not
       * necessarily the one used by the active Spark session
       * @return
       */
-    override def hadoopConf: Configuration = _configuration.hadoopConf
+    override def hadoopConf: HadoopConf = config.hadoopConf
 }

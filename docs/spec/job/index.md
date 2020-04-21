@@ -1,9 +1,4 @@
----
-layout: page
-title: Flowman Job Specification
-permalink: /spec/job/index.html
----
-# Flowman Jobs
+# Jobs
 
 In addition to a completely data centric data flow specification, Flowman also supports so called *jobs*, which simply
 provide a list of targets to be built. The correct build order of all specified build targets is determined
@@ -47,20 +42,18 @@ different job in the same project.
 ## Metrics
 
 For each job Flowman provides the following execution metrics:
-* metric: "job_runtime"
+* `metric`: "job_runtime"
 * labels: 
-  * category: "job"
-  * kind: "job"
-  * namespace: 
-  * project: 
-
+  * `category`: "job"
+  * `kind`: "job"
+  * `namespace`: The name of the namespace
+  * `project`: The name of the project 
 
 
 ## Job Parameters
 
 A Job optionally can have parameters, which play a special role. First they have to be
-specified when a job is run from the command line (via `flowexec job run param=value`) or
-when a job is called is a subroutine via a [`call`](call.html) task.
+specified when a job is run from the command line (via `flowexec job run param=value`).
 
 Second flowman can be conifgured such that every run of a job is logged into a database. The
 log entry includes the job's name and also all values for all parameters. This way it is 
@@ -71,12 +64,14 @@ on the data processing result (for example the processing date range). Other set
 credentials should not be provided as job parameters, but as normal environment variables
 instead.
 
+
 ## Job Isolation
 
 Because a Job might be invoked with different values for the same set of parameters, each 
 Job will be executed in a logically isolated environment, where all cached data is cleared
 after the Job is finished. This way it is ensured that all mappings which rely on specific
 parameter values, are reevaluated when the same Job is run mutliple times within a project.
+
 
 ## Metrics
 

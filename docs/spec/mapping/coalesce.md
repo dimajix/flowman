@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Coalesce Mapping
-permalink: /spec/mapping/coalesce.html
----
+
 # Coalesce Mapping
 
 Reduces the number of Spark partitions by logically merging partitions together.  
@@ -37,6 +33,10 @@ The name of the input mapping
 
 * `partitions` **(mandatory)** *(integer)*:
 The number of output partitions
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

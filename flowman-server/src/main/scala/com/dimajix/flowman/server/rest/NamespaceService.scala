@@ -23,16 +23,15 @@ import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.spec.Namespace
 
 
 @Api(value = "/namespace", produces = "application/json", consumes = "application/json")
 @Path("/namespace")
 class NamespaceService(ns:Namespace) {
     import akka.http.scaladsl.server.Directives._
-
     import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("namespace") {

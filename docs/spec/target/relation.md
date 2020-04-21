@@ -1,9 +1,4 @@
----
-layout: page
-title: Flowman Relation Target
-permalink: /spec/target/relation.html
----
-# Relation Target
+# Flowman Relation Target
 
 The relation target operation probably is the most important and common output operation. It 
 writes the result of a mapping to a relation. The relation then is responsible for specifying
@@ -26,10 +21,10 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `relation`
 
-* `input` **(mandatory)** *(type: string)*: 
+* `mapping` **(mandatory)** *(type: string)*: 
 Specifies the name of the input mapping to be written
 
-* `target` **(mandatory)** *(type: string)*: 
+* `relation` **(mandatory)** *(type: string)*: 
 Specifies the name of the relation to write to
 
 * `mode` **(optional)** *(type: string)* *(default=overwrite)*: 
@@ -52,3 +47,12 @@ operation. Each partition will contain approximately the same number of records.
 
 
 ## Description
+
+
+## Supported Phases
+* `CREATE`
+* `MIGRATE`
+* `BUILD`
+* `VERIFY`
+* `TRUNCATE`
+* `DESTROY`

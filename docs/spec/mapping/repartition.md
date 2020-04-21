@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Repartition Mapping
-permalink: /spec/mapping/repartition.html
----
+
 # Repartition Mapping
 
 Shuffles data to produce a specified amount of Spark partitions by using the
@@ -47,6 +43,10 @@ The number of output partitions
 
 * `sort` **(optional)** *(boolean)*:
 Specifies if the records within each partition should also be sorted
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

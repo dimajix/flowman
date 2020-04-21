@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Select Mapping
-permalink: /spec/mapping/select.html
----
+
 # Select Mapping
 
 ## Example
@@ -47,5 +43,13 @@ The name of the input mapping
 * `columns` **(mandatory)** *(map:string)*:
 A map of column names to expressions. The result will contain exactly the columns
 specified here by evaluating each corresponding SQL expression.
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* select operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
+
 
 ## Description

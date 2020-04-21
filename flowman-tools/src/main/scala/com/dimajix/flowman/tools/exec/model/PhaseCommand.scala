@@ -21,14 +21,13 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.target.RelationTargetSpec
 import com.dimajix.flowman.tools.exec.ActionCommand
 
@@ -72,7 +71,6 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
 }
 
 class CreateCommand extends PhaseCommand(Phase.CREATE)
-class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
 class VerifyCommand extends PhaseCommand(Phase.VERIFY)
 class TruncateCommand extends PhaseCommand(Phase.TRUNCATE)
 class DestroyCommand extends PhaseCommand(Phase.DESTROY)

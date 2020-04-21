@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Rebalance Mapping
-permalink: /spec/mapping/rebalance.html
----
+
 # Rebalance Mapping
 
 Shuffles data to produce a specified amount of Spark partitions with an approximately equal number
@@ -37,6 +33,10 @@ The name of the input mapping
 
 * `partitions` **(mandatory)** *(integer)*:
 The number of output partitions
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

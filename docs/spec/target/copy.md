@@ -1,9 +1,4 @@
----
-layout: page
-title: Flowman Copy Target
-permalink: /spec/target/copy.html
----
-# Copy Target
+# Flowman Copy Target
 
 The copy target can be used to copy contents of one data set to another. A dataset can be 'file', 'mapping', 'relation'
 or other supported types.
@@ -40,3 +35,10 @@ Specifies the target data set to be copied
 
 * `schema` **(optional)**:
 Optionally specify a schema to be written.
+
+
+## Supported Phases
+* `BUILD` - The *build* phase will perform the copy operation
+* `VERIFY` - The *verify* phase will ensure that the target exists
+* `TRUNCATE` - The *truncate* phase will remove the target
+* `DESTROY` - The *destroy* phase will remove the target

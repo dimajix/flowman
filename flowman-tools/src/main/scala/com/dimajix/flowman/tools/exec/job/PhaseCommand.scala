@@ -30,9 +30,9 @@ import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.spec.JobIdentifier
-import com.dimajix.flowman.spec.Project
-import com.dimajix.flowman.spec.job.Job
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.ActionCommand
 import com.dimajix.flowman.types.FieldValue
@@ -89,7 +89,6 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
 }
 
 class CreateCommand extends PhaseCommand(Phase.CREATE)
-class MigrateCommand extends PhaseCommand(Phase.MIGRATE)
 class BuildCommand extends PhaseCommand(Phase.BUILD)
 class VerifyCommand extends PhaseCommand(Phase.VERIFY)
 class TruncateCommand extends PhaseCommand(Phase.TRUNCATE)

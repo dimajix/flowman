@@ -1,8 +1,4 @@
----
-layout: page
-title: Flowman Filter Mapping
-permalink: /spec/mapping/filter.html
----
+
 # Filter Mapping
 
 ## Example
@@ -34,6 +30,10 @@ Specifies the name of the input mapping to be filtered.
 
 * `condition` **(mandatory)** *(type: string)*:
 Specifies the condition as a SQL expression to filter on
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

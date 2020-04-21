@@ -19,14 +19,14 @@ package com.dimajix.flowman.plugin
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
+import java.util.ServiceLoader
 
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
-
-import com.dimajix.flowman.spi.Registration
 
 
 /**
@@ -86,8 +86,10 @@ class PluginManager {
                 t.printStackTrace()
         }
 
-        // Invalidate extensions
-        Registration.invalidate(classLoader)
+        // Inform all interested parties that a Plugin has been loaded
+        ServiceLoader.load(classOf[PluginListener])
+            .iterator().asScala
+            .foreach(_.pluginLoaded(plugin, classLoader))
     }
 
     /**

@@ -4,8 +4,8 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.spec.TargetIdentifier
-import com.dimajix.flowman.spec.target.Target
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 
 object TargetOrdering {
     private def normalizeDependencies(target:Target, deps:Seq[TargetIdentifier]) : Seq[TargetIdentifier] = {
@@ -13,7 +13,7 @@ object TargetOrdering {
             if (dep.project.nonEmpty)
                 dep
             else
-                TargetIdentifier(dep.name, Option(target.project).map(_.name))
+                TargetIdentifier(dep.name, target.project.map(_.name))
         )
     }
 

@@ -1,13 +1,12 @@
----
-layout: page
-title: Flowman Distinct Mapping
-permalink: /spec/mapping/distinct.html
----
 # Distinct Mapping
 
 
 ## Example
-```
+```yaml
+mappings:
+  persons_distinct:
+    kind: distinct
+    input: persons
 ```
 
 ## Fields
@@ -26,6 +25,13 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
 * `input` **(mandatory)** *(type: string)*:
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+An optional SQL filter expression that is applied *after* distinct operation.
+
+
+## Outputs
+* `main` - the only output of the mapping
 
 
 ## Description

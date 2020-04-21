@@ -1,0 +1,43 @@
+# Namespace
+
+On top of the very global settings, Flowman also supports so called *namespaces*. Each project is executed within the
+context of one namespace, if nothing else is specified the *defautlt namespace*. Each namespace contains some 
+configuration, such that different namespaces might represent different tenants or different staging environments.
+
+## Example
+```yaml
+name: "default"
+
+history:
+  kind: jdbc
+  connection: flowman_state
+  retries: 3
+  timeout: 1000
+
+connections:
+  flowman_state:
+    driver: $System.getenv('FLOWMAN_HISTORY_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
+    url: $System.getenv('FLOWMAN_HISTORY_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/logdb;create=true'))
+    username: $System.getenv('FLOWMAN_HISTORY_USER', '')
+    password: $System.getenv('FLOWMAN_HISTORY_PASSWORD', '')
+
+config:
+  - spark.sql.warehouse.dir=$System.getenv('FLOWMAN_HOME')/hive/warehouse
+  - hive.metastore.uris=
+  - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=$System.getenv('FLOWMAN_HOME')/hive/db;create=true
+  - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
+
+plugins:
+  - flowman-example
+  - flowman-hbase
+  - flowman-aws
+  - flowman-azure
+  - flowman-kafka
+  - flowman-mariadb
+
+store:
+  kind: file
+  location: $System.getenv('FLOWMAN_HOME')/examples
+```
+
+## Fields

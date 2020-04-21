@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.spec.JobIdentifier
 import com.dimajix.flowman.storage.Store
 
 
@@ -48,7 +48,6 @@ class ProjectService(store:Store) {
     private val logger = LoggerFactory.getLogger(classOf[ProjectService])
 
     import akka.http.scaladsl.server.Directives._
-
     import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : Route = pathPrefix("project") {(

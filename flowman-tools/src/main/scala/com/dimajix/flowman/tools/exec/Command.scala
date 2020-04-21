@@ -22,7 +22,7 @@ import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.spec.Project
+import com.dimajix.flowman.model.Project
 
 
 abstract class Command {

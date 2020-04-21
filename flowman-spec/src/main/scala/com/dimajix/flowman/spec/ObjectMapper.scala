@@ -26,6 +26,7 @@ import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.target.TargetSpec
+import com.dimajix.flowman.spi.ClassAnnotationScanner
 import com.dimajix.flowman.util.{ObjectMapper => CoreObjectMapper}
 
 
@@ -39,7 +40,9 @@ object ObjectMapper extends CoreObjectMapper {
       * @return
       */
     override def mapper : JacksonMapper = {
-        Registration.load()
+        // Ensure that all extensions are loaded
+        ClassAnnotationScanner.load()
+
         val stateStoreTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val catalogTypes = CatalogSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val monitorTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))

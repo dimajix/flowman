@@ -21,6 +21,7 @@ import java.nio.file.FileAlreadyExistsException
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
@@ -43,6 +44,7 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.spark.sql.local.implicits._
 
 
@@ -51,7 +53,7 @@ case class LocalRelation(
     override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     location:Path,
-    pattern:String,
+    pattern:Option[String],
     format:String
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
@@ -118,6 +120,12 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         requireValidPartitionKeys(partitions)
 
+        // Convert partition value to valid Spark literal
+        def toLit(value:Any) : Column = value match {
+            case v:UtcTimestamp => lit(v.toTimestamp())
+            case _ => lit(value)
+        }
+
         val data = mapFiles(partitions) { (partition, paths) =>
             paths.foreach(p => logger.info(s"Reading local relation '$identifier' partition ${HiveDialect.expr.partition(partition)} file '$p'"))
 
@@ -129,7 +137,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
                 .load(paths.map(p => new File(p.toUri)):_*)
 
             // Add partitions values as columns
-            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, lit(p._2)))
+            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
 
         val allData = data.reduce(_ union _)
@@ -297,8 +305,8 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
 class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
     @JsonProperty(value="location", required=true) private var location: String = "/"
-    @JsonProperty(value="format", required=false) private var format: String = "csv"
-    @JsonProperty(value="pattern", required=false) private var pattern: String = _
+    @JsonProperty(value="format", required=true) private var format: String = "csv"
+    @JsonProperty(value="pattern", required=false) private var pattern: Option[String] = None
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed

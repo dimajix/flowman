@@ -57,7 +57,7 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
 }
 
 @JsonDeserialize(using=classOf[FieldValueDeserializer])
-class FieldValue
+sealed class FieldValue
 case class SingleValue(value:String) extends FieldValue {
     require(value != null)
 }

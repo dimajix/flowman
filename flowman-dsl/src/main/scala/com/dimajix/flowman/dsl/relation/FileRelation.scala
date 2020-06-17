@@ -30,8 +30,8 @@ case class FileRelation(
     schema:Option[Template[Schema]] = None,
     partitions: Seq[PartitionField] = Seq(),
     location:Path,
-    pattern:String = "",
-    format:String
+    pattern:Option[String] = None,
+    format:String = "csv"
 ) extends RelationGen {
     override def apply(props:Relation.Properties) : relation.FileRelation = {
         val context = props.context

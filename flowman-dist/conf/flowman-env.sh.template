@@ -30,6 +30,14 @@
 #
 #YARN_QUEUE=
 
+# Specify Spark master
+#
+#SPARK_MASTER=
+
+# Specify additional Spark options to be passed to spark-submit
+#
+#SPARK_OPTS=
+
 # Use a different spark-submit (for example spark2-submit in Cloudera)
 #
 #SPARK_SUBMIT=

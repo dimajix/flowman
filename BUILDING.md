@@ -31,8 +31,8 @@ You might also want to skip unittests (the HBase plugin is currently failing und
 
 ## Build for Custom Spark Version
 
-Per default, dataflow will be built for fairly recent versions of Spark (2.3.2 as of this writing) and
-Hadoop (2.8.3). But of course you can also build for a different version by either using a profile
+Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and
+Hadoop (2.8.5). But of course you can also build for a different version by either using a profile
     
     mvn install -Pspark2.2 -Phadoop2.7 -DskipTests
     

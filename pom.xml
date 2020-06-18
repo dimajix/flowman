@@ -51,12 +51,12 @@
 
     <properties>
         <hadoop.version>2.8.5</hadoop.version>
+        <hadoop-api.version>2.8</hadoop-api.version>
         <hive.version>2.3.3</hive.version>
         <hbase.version>1.2.0</hbase.version>
         <spark.version>2.4.5</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
-        <aws.version>1.10.6</aws.version>
         <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
         <joda.version>2.9.4</joda.version>
@@ -132,6 +132,7 @@
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.3</spark-api.version>
                 <hadoop.version>2.6.0-${cdh.version}</hadoop.version>
+                <hadoop-api.version>2.6</hadoop-api.version>
                 <hive.version>1.1.0-${cdh.version}</hive.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
@@ -222,30 +223,42 @@
             <id>hadoop-2.6</id>
             <properties>
                 <hadoop.version>2.6.5</hadoop.version>
+                <hadoop-api.version>2.6</hadoop-api.version>
             </properties>
         </profile>
         <profile>
             <id>hadoop-2.7</id>
             <properties>
                 <hadoop.version>2.7.7</hadoop.version>
+                <hadoop-api.version>2.7</hadoop-api.version>
             </properties>
         </profile>
         <profile>
             <id>hadoop-2.8</id>
             <properties>
                 <hadoop.version>2.8.5</hadoop.version>
+                <hadoop-api.version>2.8</hadoop-api.version>
             </properties>
         </profile>
         <profile>
             <id>hadoop-2.9</id>
             <properties>
                 <hadoop.version>2.9.2</hadoop.version>
+                <hadoop-api.version>2.9</hadoop-api.version>
             </properties>
         </profile>
         <profile>
             <id>hadoop-3.1</id>
             <properties>
                 <hadoop.version>3.1.2</hadoop.version>
+                <hadoop-api.version>3.1</hadoop-api.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hadoop-3.2</id>
+            <properties>
+                <hadoop.version>3.2.1</hadoop.version>
+                <hadoop-api.version>3.2</hadoop-api.version>
             </properties>
         </profile>
         <profile>
@@ -443,30 +456,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.1.0</version>
-                    <executions>
-                        <execution>
-                            <id>default-resources</id>
-                            <configuration>
-                                <resources>
-                                    <resource>
-                                        <directory>src/main/resources</directory>
-                                        <filtering>true</filtering>
-                                    </resource>
-                                </resources>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>test-resources</id>
-                            <configuration>
-                                <resources>
-                                    <resource>
-                                        <directory>src/test/resources</directory>
-                                        <filtering>true</filtering>
-                                    </resource>
-                                </resources>
-                            </configuration>
-                        </execution>
-                    </executions>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>

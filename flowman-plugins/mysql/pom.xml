@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>flowman-plugin-mariadb</artifactId>
-    <name>Flowman MariaDB plugin</name>
+    <artifactId>flowman-plugin-mysql</artifactId>
+    <name>Flowman MySQL plugin</name>
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>
@@ -14,10 +14,10 @@
     </parent>
 
     <properties>
-        <plugin.name>flowman-mariadb</plugin.name>
+        <plugin.name>flowman-mysql</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
+        <mysql-connector-java.version>8.0.20</mysql-connector-java.version>
     </properties>
 
     <build>
@@ -56,9 +56,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.mariadb.jdbc</groupId>
-            <artifactId>mariadb-java-client</artifactId>
-            <version>${mariadb-java-client.version}</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql-connector-java.version}</version>
         </dependency>
     </dependencies>
 </project>

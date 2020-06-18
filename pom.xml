@@ -281,6 +281,7 @@
         <!--<module>flowman-plugins/hbase</module>-->
         <module>flowman-plugins/impala</module>
         <module>flowman-plugins/mariadb</module>
+        <module>flowman-plugins/mysql</module>
         <module>flowman-testing</module>
         <module>flowman-tools</module>
         <module>flowman-ui</module>

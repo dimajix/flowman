@@ -115,6 +115,7 @@ case class FileRelation(
       */
     override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(executor != null)
+        require(schema != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
@@ -126,7 +127,7 @@ case class FileRelation(
         }
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading file relation '$identifier' partition ${HiveDialect.expr.partition(partition)} from location '$p' as '$format'"))
+            logger.info(s"Reading file relation '$identifier' ${paths.size} files under location ${location} in partition ${partition.spec}")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)
@@ -158,6 +159,7 @@ case class FileRelation(
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
         require(executor != null)
+        require(df != null)
         require(partition != null)
 
         requireAllPartitionKeys(partition)

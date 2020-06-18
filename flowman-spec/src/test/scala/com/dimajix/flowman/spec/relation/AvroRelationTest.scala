@@ -27,7 +27,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
-    "An Avro Hive Table" should "be writeable" in {
+    "An Avro Hive Table" should "be writeable" in (if (hiveSupported) {
         val spark = this.spark
         import spark.implicits._
 
@@ -69,12 +69,12 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             .schema(StructType(relation.schema.get.fields.map(_.sparkField)))
             .json(spark.createDataset(jsons))
 
-        df.printSchema()
-        df.show()
+        //df.printSchema()
+        //df.show()
 
         relation.create(executor)
         relation.write(executor, df)
-    }
+    })
 
     "Avro files" should "be writeable" in {
         val spark = this.spark

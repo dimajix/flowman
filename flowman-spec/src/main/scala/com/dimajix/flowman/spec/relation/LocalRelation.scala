@@ -127,7 +127,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         }
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading local relation '$identifier' partition ${HiveDialect.expr.partition(partition)} file '$p'"))
+            logger.info(s"Reading local relation '$identifier' ${paths.size} files under location ${location} in partition ${partition.spec}")
 
             val reader = executor.spark.readLocal.options(options)
             inputSchema.foreach(s => reader.schema(s))

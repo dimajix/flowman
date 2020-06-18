@@ -155,12 +155,16 @@ case class FileCollector(
       * @return
       */
     def collect(partitions:Iterable[PartitionSpec]) : Seq[Path] = {
-        logger.info(s"Collecting files in location ${path} with pattern '${pattern}'")
+        requirePathAndPattern()
+
+        logger.info(s"Collecting files in location ${path} with pattern '${pattern.get}'")
         flatMap(partitions)(collectPath)
     }
 
     def collect(partition:PartitionSpec) : Seq[Path] = {
-        logger.info(s"Collecting files in location ${path} with pattern '${pattern}'")
+        requirePathAndPattern()
+
+        logger.info(s"Collecting files in location ${path} for partition ${partition.spec} using pattern '${pattern.get}'")
         map(partition)(collectPath)
     }
 
@@ -170,7 +174,7 @@ case class FileCollector(
       * @return
       */
     def collect() : Seq[Path] = {
-        logger.info(s"Collecting files in location ${path} with pattern '${pattern}'")
+        logger.info(s"Collecting files in location ${path}, for all partitions ignoring any pattern")
         map(collectPath)
     }
 
@@ -181,7 +185,9 @@ case class FileCollector(
       * @return
       */
     def delete(partitions:Iterable[PartitionSpec]) : Unit = {
-        logger.info(s"Deleting files in location ${path} with pattern '${pattern}'")
+        requirePathAndPattern()
+
+        logger.info(s"Deleting files in location ${path} with pattern '${pattern.get}'")
         foreach(partitions)(deletePath)
     }
 
@@ -191,7 +197,7 @@ case class FileCollector(
       * @return
       */
     def delete() : Unit = {
-        logger.info(s"Deleting files in location ${path} with pattern '${pattern}'")
+        logger.info(s"Deleting files in location ${path}, for all partitions ignoring any pattern")
         foreach(deletePath _)
     }
 
@@ -265,14 +271,14 @@ case class FileCollector(
     private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
         val isDirectory = try fs.getFileStatus(path).isDirectory catch { case _:FileNotFoundException => false }
         if (isDirectory) {
-          logger.info(s"Collecting files in directory '$path'")
+          logger.debug(s"Collecting files in directory '$path'")
           // If path is a directory, simply list all files
           //fs.listStatus(path).sorted.map(_.getPath).toSeq
           Seq(path)
         }
         else {
           // Otherwise assume a file pattern and try to glob all files
-          logger.info(s"Collecting file(s) using glob pattern '$path'")
+          logger.debug(s"Collecting file(s) using glob pattern '$path'")
           val files = fs.globStatus(path)
           if (files != null)
             files.sorted.map(_.getPath).toSeq

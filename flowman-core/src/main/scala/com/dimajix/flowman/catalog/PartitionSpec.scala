@@ -76,6 +76,11 @@ case class PartitionSpec(values:MapIgnoreCase[Any]) {
                 case _ => any.toString
             }
         }
-        toSeq.map(kv => kv._1 + "=" + str(kv._2)).mkString("(",",",")")
+
+        values.map(kv => kv._1 + "=" + str(kv._2)).mkString("(",", ",")")
+    }
+
+    override def toString: String = {
+        "PartitionSpec" + spec
     }
 }

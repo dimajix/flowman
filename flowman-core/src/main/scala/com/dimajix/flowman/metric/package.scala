@@ -45,7 +45,7 @@ package object metric {
 
     def withWallTime[T](registry: MetricSystem, metadata : Metadata, phase:Phase)(fn: => T) : T = {
         // Create and register bundle
-        val metricName = metadata.kind + "_runtime"
+        val metricName = metadata.category + "_runtime"
         val bundleLabels = Map(
             "category" -> metadata.category,
             "kind" -> metadata.kind,

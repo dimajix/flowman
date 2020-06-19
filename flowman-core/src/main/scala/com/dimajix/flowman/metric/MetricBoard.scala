@@ -21,7 +21,7 @@ package com.dimajix.flowman.metric
  * @param labels
  * @param selections
  */
-case class MetricBoard(
+final case class MetricBoard(
     labels:Map[String,String],
     selections:Seq[MetricSelection]
 ) {
@@ -29,9 +29,9 @@ case class MetricBoard(
      * Resets all Metrics and MetricBundles matching the selections of the board
      * @param catalog
      */
-    def reset(implicit catalog:MetricCatalog) : Unit = {
-        metrics.foreach(_.reset())
-        bundles.foreach(_.reset())
+    def reset(catalog:MetricCatalog) : Unit = {
+        metrics(catalog).foreach(_.reset())
+        bundles(catalog).foreach(_.reset())
     }
 
     /**
@@ -51,54 +51,33 @@ case class MetricBoard(
 /**
  * A MetricSelection represents a possibly dynamic set of Metrics to be published inside a MetricBoard
  */
-abstract class MetricSelection {
-    def name : String
-
+final case class MetricSelection(name:String, selector:Selector, relabel:Map[String,String] => Map[String,String] = identity) {
     /**
      * Returns all metrics identified by this selection. This operation may be expensive, since the set of metrics may be
      * dynamic and change over time
      * @return
      */
-    def metrics(implicit catalog:MetricCatalog) : Seq[Metric]
+    def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = catalog.findMetric(selector)
+        .map(relabelMetric)
 
     /**
      * Returns all bundles identified by this selection. This operation may be expensive, since the set of metrics may be
      * dynamic and change over time
      * @return
      */
-    def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle]
-}
-
-
-case class Selector(
-    name:Option[String] = None,
-    labels:Map[String,String] = Map()
-) {
-    require(name != null)
-    require(labels != null)
-}
-
-
-class DynamicMetricSelection(override val name:String, labels:Map[String,String], selector:Selector, relabel:Map[String,String] => Map[String,String] = identity) extends MetricSelection {
-    /**
-     * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
-     * dynamic and change over time. Therefore you should not cache the result of this method since it may be
-     * invalid over time
-     * @return
-     */
-    override def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = catalog.findMetric(selector)
-        .map(relabelMetric)
-
-    /**
-     * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
-     * dynamic and change over time. Therefore you should not cache the result of this method since it may be
-     * invalid over time
-     * @return
-     */
-    override def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = catalog.findBundle(selector)
+    def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = catalog.findBundle(selector)
 
     private def relabelMetric(metric:Metric) = metric match {
         case gauge:GaugeMetric => new FixedGaugeMetric(name, relabel(gauge.labels), gauge.value)
         case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
     }
+}
+
+
+final case class Selector(
+    name:Option[String] = None,
+    labels:Map[String,String] = Map()
+) {
+    require(name != null)
+    require(labels != null)
 }

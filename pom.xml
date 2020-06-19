@@ -95,6 +95,8 @@
         <commons-text.version>1.6</commons-text.version>
         <httpclient.version>4.5.2</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
+        <netty.version>3.9.9.Final</netty.version>
+        <netty-all.version>4.1.42.Final</netty-all.version>
         <swagger-parser.version>1.0.49</swagger-parser.version>
         <!-- Language versions -->
         <java.version>1.8</java.version>
@@ -995,6 +997,20 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty</artifactId>
+                <version>${netty.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

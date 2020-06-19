@@ -63,6 +63,7 @@ object Runner {
         private var namespace:Namespace = Namespace.read.default()
         private var project:Project = _
         private var environment:Map[String,String] = Map()
+        private var config:Map[String,String] = Map()
         private var profiles:Seq[String] = Seq()
         private var sparkMaster:String = "local[2]"
         private lazy val fs = FileSystem(new Configuration(false))
@@ -115,13 +116,22 @@ object Runner {
             this
         }
 
+        def withConfig(key:String, value:String) : Builder = {
+            config = config + (key -> value)
+            this
+        }
+        def withConfig(env:Map[String,String]) : Builder = {
+            config = config ++ env
+            this
+        }
+
         def withSparkMaster(master:String) : Builder = {
             this.sparkMaster = master
             this
         }
 
         def build() : Runner = {
-            new Runner(namespace, project, environment, profiles, sparkMaster)
+            new Runner(namespace, project, environment, config, profiles, sparkMaster)
         }
     }
 
@@ -133,6 +143,7 @@ class Runner private(
     namespace: Namespace,
     project: Project,
     environment: Map[String,String],
+    config: Map[String,String],
     profiles: Seq[String],
     sparkMaster:String
 ) {
@@ -182,6 +193,7 @@ class Runner private(
         .withEnvironment(environment)
         .withConfig(hiveOverrides)
         .withConfig(sparkOverrides)
+        .withConfig(config)
         .withProfiles(profiles)
         .build()
 

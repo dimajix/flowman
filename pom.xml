@@ -206,15 +206,16 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.0.0-preview</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <spark-api.version>3.0</spark-api.version>
                 <jackson.version>2.10.0</jackson.version>
                 <jackson.databind.version>2.10.0</jackson.databind.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.6.6</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.30</slf4j.version>
                 <kafka.version>2.3.1</kafka.version>
-                <commons-lang3.version>3.8.1</commons-lang3.version>
+                <commons-lang3.version>3.9</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
             </properties>
         </profile>

@@ -157,14 +157,14 @@ case class FileCollector(
     def collect(partitions:Iterable[PartitionSpec]) : Seq[Path] = {
         requirePathAndPattern()
 
-        logger.info(s"Collecting files in location ${path} with pattern '${pattern.get}'")
+        logger.debug(s"Collecting files in location ${path} with pattern '${pattern.get}'")
         flatMap(partitions)(collectPath)
     }
 
     def collect(partition:PartitionSpec) : Seq[Path] = {
         requirePathAndPattern()
 
-        logger.info(s"Collecting files in location ${path} for partition ${partition.spec} using pattern '${pattern.get}'")
+        logger.debug(s"Collecting files in location ${path} for partition ${partition.spec} using pattern '${pattern.get}'")
         map(partition)(collectPath)
     }
 
@@ -174,7 +174,7 @@ case class FileCollector(
       * @return
       */
     def collect() : Seq[Path] = {
-        logger.info(s"Collecting files in location ${path}, for all partitions ignoring any pattern")
+        logger.debug(s"Collecting files in location ${path}, for all partitions ignoring any pattern")
         map(collectPath)
     }
 

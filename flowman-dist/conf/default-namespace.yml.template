@@ -13,6 +13,9 @@ connections:
     username: $System.getenv('FLOWMAN_HISTORY_USER', '')
     password: $System.getenv('FLOWMAN_HISTORY_PASSWORD', '')
 
+metrics:
+  kind: console
+
 config:
   - spark.sql.warehouse.dir=$System.getenv('FLOWMAN_HOME')/hive/warehouse
   - hive.metastore.uris=
@@ -21,11 +24,11 @@ config:
 
 plugins:
   - flowman-example
-  - flowman-hbase
   - flowman-aws
   - flowman-azure
   - flowman-kafka
   - flowman-mariadb
+  - flowman-mysql
 
 store:
   kind: file

@@ -126,8 +126,9 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             case _ => lit(value)
         }
 
+        logger.info(s"Reading local relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"Reading local relation '$identifier' ${paths.size} files under location ${location} in partition ${partition.spec}")
+            logger.info(s"Local relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
             val reader = executor.spark.readLocal.options(options)
             inputSchema.foreach(s => reader.schema(s))

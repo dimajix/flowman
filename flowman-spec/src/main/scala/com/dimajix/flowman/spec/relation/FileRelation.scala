@@ -126,8 +126,9 @@ case class FileRelation(
             case _ => lit(value)
         }
 
+        logger.info(s"Reading file relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"Reading file relation '$identifier' ${paths.size} files under location ${location} in partition ${partition.spec}")
+            logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)

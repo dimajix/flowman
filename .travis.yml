@@ -45,3 +45,7 @@ jobs:
     - name: Hadoop 3.2 with Spark 2.4
       jdk: openjdk8
       script: mvn clean install -Phadoop-3.2 -Pspark-2.4
+
+    - name: CDH 5.15
+      jdk: openjdk8
+      script: mvn clean install -PCDH-5.15

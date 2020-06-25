@@ -119,7 +119,7 @@
     </properties>
 
     <profiles>
-        <!-- First come the Hadoop distributon profiles -->
+        <!-- First come the Hadoop distribution profiles -->
         <profile>
             <id>CDH-5.15</id>
             <repositories>

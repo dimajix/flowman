@@ -61,7 +61,7 @@ object AvroSchemaUtils {
     private def toAvro(field:Field, ns:String) : AField = {
         val schema = toAvro(field.ftype, ns, field.name, field.nullable)
         val default = toAvroDefault(field)
-        new AField(field.name, schema, field.description.orNull, default:Object)
+        new AField(field.name, schema, field.description.orNull, default)
     }
     private def toAvro(ftype:FieldType, ns:String, name:String, nullable:Boolean) : ASchema = {
         val atype = ftype match {

@@ -27,7 +27,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
-    "An Avro Hive Table" should "be writeable" in (if (hiveSupported) {
+    "An Avro Hive Table" should "be writeable" in (if (hiveSupported && spark.version >= "2.4") {
         val spark = this.spark
         import spark.implicits._
 

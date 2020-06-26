@@ -140,6 +140,15 @@
         <dependency>
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick_${scala.api_version}</artifactId>
+            <version>3.2.3</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.47</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

@@ -18,6 +18,9 @@ package org.apache.spark.sql
 
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.execution.command.ViewType
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.internal.SQLConf
@@ -48,4 +51,14 @@ object SparkShim {
             case _ => false
         }
     }
+
+    def withNewExecutionId[T](
+        sparkSession: SparkSession,
+        queryExecution: QueryExecution,
+        name: Option[String] = None)(body: => T): T =
+        SQLExecution.withNewExecutionId(sparkSession, queryExecution)(body)
+
+    val LocalTempView : ViewType = org.apache.spark.sql.execution.command.LocalTempView
+    val GlobalTempView : ViewType = org.apache.spark.sql.execution.command.GlobalTempView
+    val PersistedView : ViewType = org.apache.spark.sql.execution.command.PersistedView
 }

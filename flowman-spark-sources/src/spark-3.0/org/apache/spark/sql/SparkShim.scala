@@ -19,7 +19,10 @@ package org.apache.spark.sql
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
+import org.apache.spark.sql.catalyst.analysis.ViewType
 import org.apache.spark.sql.catalyst.util.IntervalUtils
+import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
@@ -32,7 +35,7 @@ import org.apache.spark.unsafe.types.CalendarInterval
 object SparkShim {
     def getHadoopConf(sparkConf:SparkConf) :org.apache.hadoop.conf.Configuration = SparkHadoopUtil.get.newConfiguration(sparkConf)
 
-    def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.fromString(str)
+    def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.fromDayTimeString(str)
 
     def isStaticConf(key:String) : Boolean = {
         SQLConf.staticConfKeys.contains(key) ||
@@ -52,6 +55,15 @@ object SparkShim {
             case _: FileDataSourceV2 => true
             case _ => false
         }
-
     }
+
+    def withNewExecutionId[T](
+        sparkSession: SparkSession,
+        queryExecution: QueryExecution,
+        name: Option[String] = None)(body: => T): T =
+        SQLExecution.withNewExecutionId(queryExecution, name)(body)
+
+    val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
+    val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView
+    val PersistedView : ViewType = org.apache.spark.sql.catalyst.analysis.PersistedView
 }

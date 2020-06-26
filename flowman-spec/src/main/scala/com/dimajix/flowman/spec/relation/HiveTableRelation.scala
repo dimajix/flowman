@@ -21,12 +21,12 @@ import java.util.Locale
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.catalyst.expressions.Attribute
-import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.StructType
@@ -169,7 +169,7 @@ case class HiveTableRelation(
                 query.output
             )
             val qe = spark.sessionState.executePlan(cmd)
-            SQLExecution.withNewExecutionId(spark, qe)(qe.toRdd)
+            SparkShim.withNewExecutionId(spark, qe)(qe.toRdd)
 
             // Finally refresh Hive partition
             catalog.refreshPartition(tableIdentifier, partitionSpec)

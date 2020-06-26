@@ -29,28 +29,44 @@ You might also want to skip unittests (the HBase plugin is currently failing und
     mvn clean install -DskipTests    
 
 
-## Build for Custom Spark Version
+## Build for Custom Spark / Hadoop Version
 
-Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and
-Hadoop (2.8.5). But of course you can also build for a different version by either using a profile
+Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and Hadoop (2.8.5). 
+But of course you can also build for a different version by either using a profile
     
     mvn install -Pspark2.2 -Phadoop2.7 -DskipTests
     
-This will always select the latest bugfix version within the minor version. You can also specify
-versions explicitly as follows:    
+This will always select the latest bugfix version within the minor version. You can also specify versions explicitly 
+as follows:    
 
     mvn install -Dspark.version=2.2.1 -Dhadoop.version=2.7.3
         
-Note that using profiles is the preferred way, as this gurantees that also dependencies are selected
-using the correct version.
+Note that using profiles is the preferred way, as this guarantees that also dependencies are selected
+using the correct version. The following profiles are available:
 
-        
+* spark-2.3
+* spark-2.4
+* spark-3.0
+* hadoop-2.6
+* hadoop-2.7
+* hadoop-2.8
+* hadoop-2.9
+* hadoop-3.1
+* hadoop-3.2
+* CDH-5.15
+
+
 ## Building for Cloudera
 
 The Maven project also contains preconfigured profiles for Cloudera.
 
     mvn install -Pspark-2.3 -PCDH-5.15 -DskipTests
 
+
+## Skipping Docker Image
+
+Part of the build also is a Docker image. Since you might not want to use it, because you are using different base
+images, you can skip the building of the Docker image via `-Ddockerfile.skip`
 
 # Releasing
 

@@ -93,11 +93,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-parser</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>ch.ethz.ganymed</groupId>
             <artifactId>ganymed-ssh2</artifactId>
             <version>262</version>

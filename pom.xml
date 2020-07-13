@@ -161,6 +161,49 @@
             </dependencyManagement>
         </profile>
 
+        <profile>
+            <id>cdh6.3.3</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <cdh.version>cdh6.3.3</cdh.version>
+                <spark.version>2.4.0-cdh6.3.3</spark.version>
+                <spark-hive.scope>provided</spark-hive.scope>
+                <spark-api.version>2.4</spark-api.version>
+                <hadoop.version>3.0.0-${cdh.version}</hadoop.version>
+                <hadoop-api.version>3.0</hadoop-api.version>
+                <hive.version>2.1.1-${cdh.version}</hive.version>
+                <hbase.version>2.1.0-${cdh.version}</hbase.version>
+                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
+                <avro.version>1.8.2-${cdh.version}</avro.version>
+                <guava.version>14.0.1</guava.version>
+                <json4s.version>3.5.3</json4s.version>
+                <netty-all.version>4.1.42.Final</netty-all.version>
+                <jackson.version>2.9.10</jackson.version>
+                <jackson.databind.version>2.9.10.1</jackson.databind.version>
+                <commons-lang.version>2.6</commons-lang.version>
+                <commons-lang3.version>3.7</commons-lang3.version>
+                <commons-math3.version>3.4.1</commons-math3.version>
+                <commons-collections.version>3.2.1</commons-collections.version>
+                <slf4j.version>1.7.25</slf4j.version>
+                <scala.version>2.11.12</scala.version>
+                <scala.api_version>2.11</scala.api_version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>jetty-sslengine</artifactId>
+                        <version>6.1.26.cloudera.4</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
         <!-- Then come the individual package profiles, which can override distribution settings -->
         <profile>
             <id>spark-2.3</id>

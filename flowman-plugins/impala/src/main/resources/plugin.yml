@@ -4,5 +4,5 @@ version: ${plugin.version}
 isolation: false
 jars:
   - ${plugin.jar}
-  - ImpalaJDBC41-${impala.jdbc.version}.jar
+  - ImpalaJDBC42-${impala.jdbc.version}.jar
   - hive-service-${hive.version}.jar

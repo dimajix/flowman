@@ -2,6 +2,7 @@
 
 * Code improvements
 * Do not implicitly set SPARK_MASTER in configuration
+* Added support for CDH6
 
 
 # Version 0.13.0 - 2020-04-21

@@ -162,7 +162,7 @@
         </profile>
 
         <profile>
-            <id>cdh6.3.3</id>
+            <id>CDH-6.3</id>
             <repositories>
                 <repository>
                     <id>cloudera</id>

@@ -168,10 +168,6 @@
                     <id>cloudera</id>
                     <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
                 </repository>
-                <repository>
-                    <id>cloudera-ext</id>
-                    <url>https://repository.cloudera.com/artifactory/ext-release-local/</url>
-                </repository>
             </repositories>
             <properties>
                 <cdh.version>cdh6.3.3</cdh.version>
@@ -182,7 +178,7 @@
                 <hadoop-api.version>3.0</hadoop-api.version>
                 <hive.version>2.1.1-${cdh.version}</hive.version>
                 <hbase.version>2.1.0-${cdh.version}</hbase.version>
-                <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
+                <kafka.version>2.2.1-${cdh.version}</kafka.version>
                 <avro.version>1.8.2-${cdh.version}</avro.version>
                 <guava.version>14.0.1</guava.version>
                 <json4s.version>3.5.3</json4s.version>

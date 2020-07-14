@@ -25,6 +25,10 @@
             <id>odysseus</id>
             <url>http://repo.odysseusinc.com/artifactory/community-libs-release-local/</url>
         </repository>
+        <repository>
+            <id>cloudera-ext</id>
+            <url>https://repository.cloudera.com/artifactory/ext-release-local/</url>
+        </repository>
     </repositories>
 
     <build>

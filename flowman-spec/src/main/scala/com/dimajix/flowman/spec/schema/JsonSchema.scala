@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 import org.apache.hadoop.fs.Path
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
+import org.everit.json.schema.CombinedSchema
 import org.everit.json.schema.EnumSchema
 import org.everit.json.schema.NullSchema
 import org.everit.json.schema.NumberSchema
@@ -107,7 +108,30 @@ case class JsonSchema(
                 else
                     StringType
             }
-            case _ => throw new UnsupportedOperationException(s"Unsupported type in JSON schema")
+            case obj:CombinedSchema => fromJsonCombinedType(obj)
+            case _ => throw new UnsupportedOperationException(s"Unsupported type in JSON schema: ${schema.getClass}")
+        }
+    }
+
+    private def fromJsonCombinedType(obj:CombinedSchema) : FieldType = {
+        obj.getSubschemas.asScala.map(fromJsonType).reduce { (l,r) =>
+            (l,r) match {
+                case (a:StructType, _) if a.fields.nonEmpty => a
+                case (_, a:StructType) if a.fields.nonEmpty => a
+                case (a:ArrayType, _) => a
+                case (_, a:ArrayType) => a
+                case (StringType, _) => StringType
+                case (_, StringType) => StringType
+                case (v:VarcharType, _) => v
+                case (_, v:VarcharType) => v
+                case (DoubleType, _) => DoubleType
+                case (_, DoubleType) => DoubleType
+                case (LongType, _) => LongType
+                case (_, LongType) => LongType
+                case (BooleanType, _) => BooleanType
+                case (_, BooleanType) => BooleanType
+                case (l, _) => l
+            }
         }
     }
 }

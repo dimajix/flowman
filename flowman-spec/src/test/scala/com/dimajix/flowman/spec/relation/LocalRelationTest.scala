@@ -64,7 +64,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(outputPath.toUri))
-        localRelation.pattern should be ("data.csv")
+        localRelation.pattern should be (Some("data.csv"))
 
         outputPath.toFile.exists() should be (false)
         relation.create(executor)
@@ -116,7 +116,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
-        localRelation.pattern should be (null)
+        localRelation.pattern should be (None)
 
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)
@@ -166,7 +166,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(location.toString + "/csv/test"))
-        localRelation.pattern should be ("data.csv")
+        localRelation.pattern should be (Some("data.csv"))
 
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)
@@ -217,7 +217,7 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(location.toString + "/csv/test"))
-        localRelation.pattern should be ("data.csv")
+        localRelation.pattern should be (Some("data.csv"))
 
         relation.create(executor)
         new File(tempDir, "csv/test").exists() should be (true)

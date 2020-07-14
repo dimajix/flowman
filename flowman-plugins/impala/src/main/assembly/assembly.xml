@@ -9,11 +9,10 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/src/main/resources</directory>
+            <directory>${project.build.outputDirectory}</directory>
             <outputDirectory>plugins/${plugin.name}</outputDirectory>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
-            <filtered>true</filtered>
             <includes>
                 <include>plugin.yml</include>
             </includes>

@@ -102,7 +102,7 @@ case class FileTarget(
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        if (!fs.isDirectory(location)) {
+        if (!fs.getFileStatus(location).isDirectory) {
             logger.info(s"Creating directory '$location' for file relation '$identifier'")
             fs.mkdirs(location)
         }
@@ -156,7 +156,7 @@ case class FileTarget(
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-        if (fs.isDirectory(location)) {
+        if (fs.getFileStatus(location).isDirectory) {
             logger.info(s"Truncating directory '$location' of file relation '$identifier'")
             val files = fs.listStatus(location)
             files.foreach(file => fs.delete(file.getPath, true))

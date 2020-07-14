@@ -27,12 +27,17 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.history.StateStore
+import com.dimajix.flowman.metric.ConsoleMetricSink
 import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.storage.Store
 
 
 object Namespace {
     private lazy val loader = ServiceLoader.load(classOf[NamespaceReader]).iterator().asScala.toSeq
+    private lazy val defaultNamespace = Namespace(
+        name = "default",
+        metrics = Some(Template.of(new ConsoleMetricSink()))
+    )
 
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Namespace])
@@ -66,9 +71,7 @@ object Namespace {
         def string(text:String) : Namespace = {
             reader.string(text)
         }
-        def default() : Namespace = {
-            Namespace(name="default")
-        }
+        def default() : Namespace = defaultNamespace
 
         private def reader : NamespaceReader = {
             loader.find(_.supports(format))

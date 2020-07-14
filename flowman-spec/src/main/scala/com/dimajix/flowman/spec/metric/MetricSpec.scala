@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.metric
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.metric.DynamicMetricSelection
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSelection
 import com.dimajix.flowman.metric.Selector
@@ -34,9 +33,8 @@ class MetricSpec extends Spec[MetricSelection] {
     def instantiate(context:Context) : MetricSelection = {
         def relabel(metrticLabels:Map[String,String]) = context.evaluate(labels, metrticLabels)
 
-        new DynamicMetricSelection(
+        MetricSelection(
             context.evaluate(name),
-            labels,
             selector.instantiate(context),
             relabel
         )

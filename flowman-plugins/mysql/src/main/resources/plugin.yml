@@ -1,0 +1,6 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - mysql-connector-java-${mysql-connector-java.version}.jar

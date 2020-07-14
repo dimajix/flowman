@@ -27,6 +27,6 @@ plugins:
   - flowman-aws
   - flowman-azure
   - flowman-example
-  - flowman-hbase
   - flowman-kafka
   - flowman-mariadb
+  - flowman-mysql

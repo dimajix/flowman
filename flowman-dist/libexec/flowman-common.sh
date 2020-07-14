@@ -14,7 +14,6 @@ if [ -f $HADOOP_HOME/etc/hadoop/hadoop-env.sh ]; then
 fi
 
 # Set basic Spark options
-: ${SPARK_MASTER:="yarn"}
 : ${SPARK_EXECUTOR_CORES:="4"}
 : ${SPARK_EXECUTOR_MEMORY:="8G"}
 : ${SPARK_DRIVER_MEMORY:="2G"}
@@ -59,9 +58,14 @@ if [ "$KRB_PRINCIPAL" != "" ]; then
     SPARK_OPTS="--principal $KRB_PRINCIPAL --keytab $KRB_KEYTAB $SPARK_OPTS"
 fi
 
-# Add YARN ququq
+# Add YARN queue
 if [ "$YARN_QUEUE" != "" ]; then
     SPARK_OPTS="--queue $YARN_QUEUE $SPARK_OPTS"
+fi
+
+# Set Spark master
+if [ "$SPARK_MASTER" != "" ]; then
+    SPARK_OPTS="--master $SPARK_MASTER $SPARK_OPTS"
 fi
 
 
@@ -74,7 +78,6 @@ spark_submit() {
       --driver-memory $SPARK_DRIVER_MEMORY \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.executor.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
-      --master $SPARK_MASTER \
       --class $2 \
       $SPARK_OPTS \
       --jars $LIB_JARS \

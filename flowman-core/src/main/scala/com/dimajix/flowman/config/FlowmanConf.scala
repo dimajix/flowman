@@ -20,6 +20,8 @@ import java.io.File
 import java.nio.file.FileSystem
 import java.util.NoSuchElementException
 
+import com.dimajix.spark.features
+
 
 object FlowmanConf {
     private val configEntries = java.util.Collections.synchronizedMap(
@@ -36,7 +38,7 @@ object FlowmanConf {
     val SPARK_ENABLE_HIVE = buildConf("flowman.spark.enableHive")
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
-        .createWithDefault(true)
+        .createWithDefault(features.hiveSupported)
     val HIVE_ANALYZE_TABLE = buildConf("floman.hive.analyzeTable")
         .doc("Performs ANALYZE TABLE commands")
         .booleanConf

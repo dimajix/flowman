@@ -784,7 +784,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
     }
 
-    it should "support different column orders" in {
+    it should "support different column orders" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -875,9 +875,9 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         // == Destroy ===================================================================
         relation_2.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
-    }
+    })
 
-    it should "support migration by adding new columns" in {
+    it should "support migration by adding new columns" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -1022,7 +1022,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         // == Destroy ===================================================================
         relation_2.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
-    }
+    })
 
     it should "support mapping schemas" in {
         val spec =

@@ -38,6 +38,7 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.spark.features
 
 
 object Runner {
@@ -62,6 +63,7 @@ object Runner {
         private var namespace:Namespace = Namespace.read.default()
         private var project:Project = _
         private var environment:Map[String,String] = Map()
+        private var config:Map[String,String] = Map()
         private var profiles:Seq[String] = Seq()
         private var sparkMaster:String = "local[2]"
         private lazy val fs = FileSystem(new Configuration(false))
@@ -114,13 +116,22 @@ object Runner {
             this
         }
 
+        def withConfig(key:String, value:String) : Builder = {
+            config = config + (key -> value)
+            this
+        }
+        def withConfig(env:Map[String,String]) : Builder = {
+            config = config ++ env
+            this
+        }
+
         def withSparkMaster(master:String) : Builder = {
             this.sparkMaster = master
             this
         }
 
         def build() : Runner = {
-            new Runner(namespace, project, environment, profiles, sparkMaster)
+            new Runner(namespace, project, environment, config, profiles, sparkMaster)
         }
     }
 
@@ -132,6 +143,7 @@ class Runner private(
     namespace: Namespace,
     project: Project,
     environment: Map[String,String],
+    config: Map[String,String],
     profiles: Seq[String],
     sparkMaster:String
 ) {
@@ -147,26 +159,29 @@ class Runner private(
     private val sparkOverrides = Map(
         "javax.jdo.option.ConnectionURL" -> s"jdbc:derby:;databaseName=$metastorePath;create=true",
         "datanucleus.rdbms.datastoreAdapterClassName" -> "org.datanucleus.store.rdbms.adapter.DerbyAdapter",
-        HiveConf.ConfVars.METASTOREURIS.varname -> "",
-        SQLConf.CHECKPOINT_LOCATION.key -> streamingCheckpointPath.toString,
+        "hive.metastore.uris" -> "",
+        SQLConf.CHECKPOINT_LOCATION.key -> streamingCheckpointPath,
         "spark.sql.warehouse.dir" -> warehousePath,
-        "spark.sql.shuffle.partitions" -> "8",
+        SQLConf.SHUFFLE_PARTITIONS.key -> "8",
         "spark.ui.enabled" -> "false"
     )
     // Spark override properties for Hive related configuration stuff
-    private val hiveOverrides = {
-        // We have to mask all properties in hive-site.xml that relates to metastore
-        // data source as we used a local metastore here.
-        HiveConf.ConfVars.values().flatMap { confvar =>
-            if (confvar.varname.contains("datanucleus") ||
-                confvar.varname.contains("jdo")) {
-                Some((confvar.varname, confvar.getDefaultExpr()))
-            }
-            else {
-                None
-            }
-        }.toMap
-    }
+    private val hiveOverrides = if (features.hiveSupported) {
+            // We have to mask all properties in hive-site.xml that relates to metastore
+            // data source as we used a local metastore here.
+            HiveConf.ConfVars.values().flatMap { confvar =>
+                if (confvar.varname.contains("datanucleus") ||
+                    confvar.varname.contains("jdo")) {
+                    Some((confvar.varname, confvar.getDefaultExpr()))
+                }
+                else {
+                    None
+                }
+            }.toMap
+        }
+        else {
+            Map[String,String]()
+        }
 
     /**
       * Provides access to the Flowman session
@@ -178,6 +193,7 @@ class Runner private(
         .withEnvironment(environment)
         .withConfig(hiveOverrides)
         .withConfig(sparkOverrides)
+        .withConfig(config)
         .withProfiles(profiles)
         .build()
 
@@ -223,10 +239,11 @@ class Runner private(
       * @return
       */
     private def createSparkSession(conf:SparkConf) : SparkSession = {
-        val spark = SparkSession.builder()
+        val builder = SparkSession.builder()
             .config(conf)
-            .enableHiveSupport()
-            .getOrCreate()
+        if (features.hiveSupported)
+            builder.enableHiveSupport()
+        val spark = builder.getOrCreate()
         val sc = spark.sparkContext
         sc.setCheckpointDir(checkpointPath)
 
@@ -283,7 +300,7 @@ class Runner private(
                 file.delete()
             }
             catch {
-                case ex:IOException =>
+                case _:IOException =>
             }
         }
     }

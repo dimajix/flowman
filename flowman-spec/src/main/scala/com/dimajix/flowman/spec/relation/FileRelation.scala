@@ -21,6 +21,7 @@ import java.nio.file.FileAlreadyExistsException
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.execution.datasources.DataSource
@@ -45,6 +46,7 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 case class FileRelation(
@@ -52,7 +54,7 @@ case class FileRelation(
     override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
     location:Path,
-    pattern:String,
+    pattern:Option[String],
     format:String
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
@@ -113,12 +115,20 @@ case class FileRelation(
       */
     override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(executor != null)
+        require(schema != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
 
+        // Convert partition value to valid Spark literal
+        def toLit(value:Any) : Column = value match {
+            case v:UtcTimestamp => lit(v.toTimestamp())
+            case _ => lit(value)
+        }
+
+        logger.info(s"Reading file relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val data = mapFiles(partitions) { (partition, paths) =>
-            paths.foreach(p => logger.info(s"Reading file relation '$identifier' partition ${HiveDialect.expr.partition(partition)} from location '$p' as '$format'"))
+            logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(executor)
@@ -136,7 +146,7 @@ case class FileRelation(
             }
 
             // Add partitions values as columns
-            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, lit(p._2)))
+            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
         val allData = data.reduce(_ union _)
         SchemaUtils.applySchema(allData, schema)
@@ -150,6 +160,7 @@ case class FileRelation(
       */
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
         require(executor != null)
+        require(df != null)
         require(partition != null)
 
         requireAllPartitionKeys(partition)
@@ -283,8 +294,8 @@ case class FileRelation(
 
 class FileRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
     @JsonProperty(value="location", required = true) private var location: String = "/"
-    @JsonProperty(value="format", required = false) private var format: String = "csv"
-    @JsonProperty(value="pattern", required = false) private var pattern: String = _
+    @JsonProperty(value="format", required = true) private var format: String = "csv"
+    @JsonProperty(value="pattern", required = false) private var pattern: Option[String] = None
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed

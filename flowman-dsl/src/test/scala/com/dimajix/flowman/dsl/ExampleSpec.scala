@@ -14,7 +14,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class ExampleSpec extends FlatSpec with Matchers with LocalSparkSession {
-    "A Project" should "be loadable" in {
+    "A Project" should "be loadable" in (if (hiveSupported) {
         val project = DqmProject.instantiate()
 
         val session = Session.builder()
@@ -30,5 +30,5 @@ class ExampleSpec extends FlatSpec with Matchers with LocalSparkSession {
         val job = context.getJob(JobIdentifier("test"))
 
         runner.executeJob(executor, job, Lifecycle.ALL) should be (Status.SUCCESS)
-    }
+    })
 }

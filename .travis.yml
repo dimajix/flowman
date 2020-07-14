@@ -1,0 +1,67 @@
+language: java
+sudo: false
+
+cache:
+  directories:
+    - "$HOME/.m2"
+
+services:
+  - docker
+
+jobs:
+  include:
+    - name: Default Build
+      jdk: openjdk8
+      script: mvn clean install
+
+    - name: Hadoop 2.6 with Spark 2.3
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.6 -Pspark-2.3
+
+    - name: Hadoop 2.6 with Spark 2.4
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.6 -Pspark-2.4
+
+    - name: Hadoop 2.7 with Spark 2.3
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.7 -Pspark-2.3
+
+    - name: Hadoop 2.7 with Spark 2.4
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.7 -Pspark-2.4
+
+    - name: Hadoop 2.8 with Spark 2.4
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.8 -Pspark-2.4
+
+    - name: Hadoop 2.9 with Spark 2.4
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.9 -Pspark-2.4
+
+    - name: Hadoop 3.1 with Spark 2.4
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-3.1 -Pspark-2.4
+
+    - name: Hadoop 3.2 with Spark 2.4
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-3.2 -Pspark-2.4
+
+    - name: Hadoop 2.9 with Spark 3.0
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-2.9 -Pspark-3.0 -Ddockerfile.skip
+
+    - name: Hadoop 3.1 with Spark 3.0
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-3.1 -Pspark-3.0 -Ddockerfile.skip
+
+    - name: Hadoop 3.2 with Spark 3.0
+      jdk: openjdk8
+      script: mvn clean install -Phadoop-3.2 -Pspark-3.0 -Ddockerfile.skip
+
+    - name: CDH 5.15
+      jdk: openjdk8
+      script: mvn clean install -PCDH-5.15
+
+    - name: CDH 6.3
+      jdk: openjdk8
+      script: mvn clean install -PCDH-6.3

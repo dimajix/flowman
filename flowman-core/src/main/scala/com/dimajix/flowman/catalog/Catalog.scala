@@ -20,6 +20,7 @@ import java.io.FileNotFoundException
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.DatabaseAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
@@ -40,7 +41,6 @@ import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
-import org.apache.spark.sql.execution.command.PersistedView
 import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
 
@@ -489,7 +489,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.logical
-            val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, PersistedView)
+            val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, SparkShim.PersistedView)
             cmd.run(spark)
 
             // Publish view to external catalog

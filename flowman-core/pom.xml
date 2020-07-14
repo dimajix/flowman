@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.13.0</version>
+        <version>0.13.1</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -78,11 +78,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
         </dependency>
@@ -140,6 +135,15 @@
         <dependency>
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick_${scala.api_version}</artifactId>
+            <version>3.2.3</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.47</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

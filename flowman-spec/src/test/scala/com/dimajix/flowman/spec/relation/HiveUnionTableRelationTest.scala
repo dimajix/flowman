@@ -44,7 +44,7 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkSession with QueryTest {
-    "The HiveUnionTableRelation" should "support the full lifecycle" in {
+    "The HiveUnionTableRelation" should "support the full lifecycle" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -148,9 +148,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
 
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
         relation.destroy(executor, true)
-    }
+    })
 
-    it should "cast compatible types" in {
+    it should "cast compatible types" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -231,9 +231,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
 
         // == Destroy ===================================================================
         relation.destroy(executor)
-    }
+    })
 
-    it should "support partitions" in {
+    it should "support partitions" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -340,9 +340,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         relation.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
-    }
+    })
 
-    it should "support migration by adding new columns" in {
+    it should "support migration by adding new columns" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -532,9 +532,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         relation_2.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
-    }
+    })
 
-    it should "support migration by creating new tables" in {
+    it should "support migration by creating new tables" in (if (hiveSupported) {
         val spec =
             """
               |relations:
@@ -723,9 +723,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
-    }
+    })
 
-    "The generated VIEWs" should "not be too complex" in {
+    "The generated VIEWs" should "not be too complex" in (if (hiveSupported) {
         spark.sql(
             """
               |CREATE TABLE hive_union_0(
@@ -753,5 +753,5 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         ))
         val sql = HiveUnionTableRelation.unionSql(Seq(df1,df2), schema)
         sql should be ("SELECT CAST(`col_0` AS DOUBLE) AS `col_0`, `col_1`, CAST(NULL AS BOOLEAN) AS `col_2`, `ts` FROM `default`.`hive_union_0` UNION ALL SELECT `col_0`, CAST(NULL AS STRING) AS `col_1`, `col_2`, `ts` FROM `default`.`hive_union_1`")
-    }
+    })
 }

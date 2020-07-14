@@ -44,7 +44,6 @@ class MultiMetricBundle(override val name:String, override val labels:Map[String
             }
     }
 
-
     /**
       * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
       * dynamic and change over time
@@ -56,5 +55,7 @@ class MultiMetricBundle(override val name:String, override val labels:Map[String
     /**
       * Resets and/or removes all metrics in this bundle.
       */
-    override def reset(): Unit = bundleMetrics.foreach(_.reset())
+    override def reset(): Unit = {
+        bundleMetrics.clear()
+    }
 }

@@ -31,7 +31,7 @@ import com.dimajix.flowman.jdbc.HiveDialect
 
 
 object ImpalaExternalCatalog {
-    val IMPALA_DEFAULT_DRIVER = "com.cloudera.impala.jdbc41.Driver"
+    val IMPALA_DEFAULT_DRIVER = "com.cloudera.impala.jdbc.Driver"
     val IMPALA_DEFAULT_PORT = 21050
 
     case class Connection(

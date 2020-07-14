@@ -1,8 +1,10 @@
-# Version 0.13.1
+# Version 0.13.1 - 2020-07-14
 
 * Code improvements
 * Do not implicitly set SPARK_MASTER in configuration
-* Added support for CDH6
+* Add support for CDH6
+* Add support for Spark 3.0
+* Improve support for Hadoop 3.x
 
 
 # Version 0.13.0 - 2020-04-21

@@ -54,6 +54,7 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * CDH-5.15
+* CDH-6.3
 
 
 ## Building for Cloudera

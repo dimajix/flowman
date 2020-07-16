@@ -19,6 +19,7 @@ package com.dimajix.flowman.plugin
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
+import java.nio.file.Files
 import java.util.ServiceLoader
 
 import scala.collection.mutable
@@ -73,7 +74,14 @@ class PluginManager {
         _plugins.update(plugin.name, plugin)
 
         // Resolve all JAR files from the plugin
-        val jarFiles = plugin.jars.map(_.toURI.toURL).toArray
+        val jarFiles = plugin.jars.flatMap { file =>
+            val dir = file.getAbsoluteFile.toPath.getParent
+            val matcher = dir.getFileSystem.getPathMatcher("glob:" + file.getName)
+            Files.list(dir)
+                .iterator().asScala
+                .filter(matcher.matches)
+                .map(_.toUri)
+        }
 
         // Extend classpath
         val classLoader = classOf[PluginManager].getClassLoader.asInstanceOf[URLClassLoader]

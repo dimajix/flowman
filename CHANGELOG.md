@@ -1,6 +1,7 @@
 # Version 0.13.2
 
 * Fix AWS plugin for Hadoop 3.x
+* Shade Velocity for better interoperability with Spark 3
 
 
 # Version 0.13.1 - 2020-07-14

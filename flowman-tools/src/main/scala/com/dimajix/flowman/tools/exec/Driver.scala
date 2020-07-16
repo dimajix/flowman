@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
 
@@ -38,7 +39,7 @@ object Driver {
             case Success (false) =>
                 System.exit(1)
             case Failure(exception) =>
-                System.err.println(exception.getMessage)
+                exception.printStackTrace(System.err)
                 System.exit(1)
         }
     }

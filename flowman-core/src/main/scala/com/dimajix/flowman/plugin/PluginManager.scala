@@ -79,8 +79,8 @@ class PluginManager {
             val matcher = dir.getFileSystem.getPathMatcher("glob:" + file.getName)
             Files.list(dir)
                 .iterator().asScala
-                .filter(matcher.matches)
-                .map(_.toUri)
+                .filter(path => matcher.matches(path.getFileName))
+                .map(_.toUri.toURL)
         }
 
         // Extend classpath

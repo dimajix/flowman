@@ -18,7 +18,7 @@ package com.dimajix.flowman.tools.exec
 
 import java.io.PrintStream
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.CmdLineException
@@ -28,6 +28,7 @@ import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
+import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.job.JobCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
@@ -55,6 +56,7 @@ class Arguments(args:Array[String]) {
 
     @Argument(required=false,index=0,metaVar="group",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
+        new SubCommand(name="info",impl=classOf[InfoCommand]),
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
@@ -87,7 +89,7 @@ class Arguments(args:Array[String]) {
     private def parseArgs(args: Array[String]) {
         val parser: CmdLineParser = new CmdLineParser(this)
         try {
-            parser.parseArgument(args.toList)
+            parser.parseArgument(args.toList.asJava)
         }
         catch {
             case e: CmdLineException => {

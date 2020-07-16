@@ -18,15 +18,12 @@ package com.dimajix.flowman.tools.main
 
 import java.io.PrintStream
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
-import org.kohsuke.args4j.spi.SubCommand
-import org.kohsuke.args4j.spi.SubCommandHandler
-import org.kohsuke.args4j.spi.SubCommands
 
 
 class Arguments(args:Array[String]) {
@@ -75,7 +72,7 @@ class Arguments(args:Array[String]) {
     private def parseArgs(args: Array[String]) {
         val parser: CmdLineParser = new CmdLineParser(this)
         try {
-            parser.parseArgument(args.toList)
+            parser.parseArgument(args.toList.asJava)
         }
         catch {
             case e: CmdLineException => {

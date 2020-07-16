@@ -31,5 +31,4 @@ class ListCommand extends ActionCommand {
         project.jobs.keys.foreach(println)
         true
     }
-
 }

@@ -19,6 +19,8 @@ package com.dimajix.flowman.metric
 import java.io.IOException
 import java.net.URI
 
+import scala.util.control.NonFatal
+
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpResponseException
 import org.apache.http.client.ResponseHandler
@@ -82,6 +84,10 @@ extends AbstractMetricSink {
             val httpPost = new HttpPut(url)
             httpPost.setEntity(new StringEntity(payload))
             httpClient.execute(httpPost, handler)
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.warn(s"Cannot publishing metrics to Prometheus at $url", ex)
         }
         finally {
             httpClient.close()

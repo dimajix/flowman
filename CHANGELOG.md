@@ -1,3 +1,8 @@
+# Version 0.13.2
+
+* Fix AWS plugin for Hadoop 3.x
+
+
 # Version 0.13.1 - 2020-07-14
 
 * Code improvements

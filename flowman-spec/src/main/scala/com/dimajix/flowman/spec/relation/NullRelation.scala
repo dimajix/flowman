@@ -96,6 +96,9 @@ case class NullRelation(
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         require(executor != null)
         require(partition != null)
+
+        // Force materialization of all records
+        df.count()
     }
 
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {

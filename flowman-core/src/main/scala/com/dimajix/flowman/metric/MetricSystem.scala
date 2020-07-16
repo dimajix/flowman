@@ -57,6 +57,14 @@ class MetricSystem extends MetricCatalog {
     private val metricSinks : mutable.Set[MetricSink] = IdentityHashSet()
 
     /**
+     * Registers an individual metric. It will be wrapped into a bundle.
+     * @param metric
+     */
+    def addMetric(metric:Metric) : Unit = {
+        metricBundles.add(SingletonMetricBundle(metric))
+    }
+
+    /**
       * Registers a new MetricBundle
       * @param bundle
       */
@@ -72,7 +80,7 @@ class MetricSystem extends MetricCatalog {
         metricBundles.remove(bundle)
     }
 
-    def getOrCreateBundle[T <: MetricBundle](query:Selector, creator: => T) : T = {
+    def getOrCreateBundle[T <: MetricBundle](query:Selector)(creator: => T) : T = {
         metricBundles.find(bundle => query.name.forall(_ == bundle.name) && bundle.labels == query.labels)
             .map(_.asInstanceOf[T])
             .getOrElse{

@@ -35,6 +35,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
+import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
 object Session {
@@ -290,6 +291,9 @@ class Session private[execution](
         if (spark.sparkContext.getCheckpointDir.isEmpty) {
             spark.sparkContext.getConf.getOption("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
         }
+
+        // Register additional planning strategies
+        ExtraStrategies.register(spark)
 
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)

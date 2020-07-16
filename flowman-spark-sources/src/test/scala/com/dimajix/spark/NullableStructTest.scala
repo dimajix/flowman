@@ -21,7 +21,7 @@ import org.apache.spark.sql.functions._
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.spark.functions._
+import com.dimajix.spark.sql.functions._
 import com.dimajix.spark.testing.LocalSparkSession
 
 

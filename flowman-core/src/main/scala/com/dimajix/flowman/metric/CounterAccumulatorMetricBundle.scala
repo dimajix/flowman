@@ -19,7 +19,7 @@ package com.dimajix.flowman.metric
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
-class CounterAccumulatorMetricBundle(override val name:String, override val labels:Map[String,String], val counters:CounterAccumulator, metricKey: String) extends MetricBundle {
+final case class CounterAccumulatorMetricBundle(override val name:String, override val labels:Map[String,String], val counters:CounterAccumulator, metricKey: String) extends MetricBundle {
     /**
       * Returns all metrics in this bundle. This operation may be expensive, since the set of metrics may be
       * dynamic and change over time

@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.metric
+package com.dimajix.spark.sql.catalyst.plans.logical
 
-final case class FixedGaugeMetric(override val name:String, override val labels:Map[String,String], override val value:Double) extends GaugeMetric {
-    /**
-      * Resets this metric
-      */
-    override def reset(): Unit = {}
+import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
+import org.apache.spark.util.LongAccumulator
+
+
+case class CountRecords(child: LogicalPlan, counter:LongAccumulator) extends UnaryNode {
+    override def maxRows: Option[Long] = child.maxRows
+    override def output: Seq[Attribute] = child.output
 }

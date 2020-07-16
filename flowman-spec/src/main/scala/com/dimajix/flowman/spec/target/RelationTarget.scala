@@ -25,6 +25,10 @@ import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.metric.CounterAccumulatorMetricBundle
+import com.dimajix.flowman.metric.LongAccumulatorMetric
+import com.dimajix.flowman.metric.Selector
+import com.dimajix.flowman.metric.SingletonMetricBundle
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
@@ -32,6 +36,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.functions.count_records
 
 
 object RelationTarget {
@@ -145,13 +150,25 @@ case class RelationTarget(
             logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
-            val table = if (rebalance)
+            val dfOut = if (rebalance)
                 dfIn.repartition(parallelism)
             else
                 dfIn.coalesce(parallelism)
 
+            // Setup metric for counting number of records
+            val counter = executor.metrics.findMetric(Selector(Some("target_records"), metadata.asMap))
+                .headOption
+                .map(_.asInstanceOf[LongAccumulatorMetric].counter)
+                .getOrElse {
+                    val counter = executor.spark.sparkContext.longAccumulator
+                    val metric = LongAccumulatorMetric("target_records", metadata.asMap, counter)
+                    executor.metrics.addMetric(metric)
+                    counter
+                }
+
+            val dfCount = count_records(dfOut, counter)
             val rel = context.getRelation(relation)
-            rel.write(executor, table, partition, mode)
+            rel.write(executor, dfCount, partition, mode)
         }
     }
 

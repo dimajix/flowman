@@ -47,11 +47,6 @@ object PlanUtils {
         spark.sessionState.analyzer.execute(logicalPlan)
     }
 
-    def singleRow(spark:SparkSession, schema:StructType) : DataFrame = {
-        val logicalPlan = PlanUtils.singleRowPlan(schema)
-        new Dataset[Row](spark, logicalPlan, RowEncoder(schema))
-    }
-
     def singleRowPlan(schema:StructType) : LogicalPlan = {
         val expressions = schema.map { field =>
             val literal =

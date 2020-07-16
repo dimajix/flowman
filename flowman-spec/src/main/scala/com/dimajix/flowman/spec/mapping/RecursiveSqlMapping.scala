@@ -41,8 +41,8 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SqlParser
-import com.dimajix.spark.sql.catalyst.PlanUtils
 
 
 case class RecursiveSqlMapping(
@@ -135,7 +135,7 @@ extends BaseMapping {
 
         // Create dummy data frames
         val replacements = input.map { case (name,schema) =>
-            name -> PlanUtils.singleRow(spark, schema.sparkType)
+            name -> DataFrameUtils.singleRow(spark, schema.sparkType)
         }
 
         // Register all input DataFrames as temp views

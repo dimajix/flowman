@@ -19,7 +19,7 @@ package com.dimajix.flowman.metric
 import java.time.Instant
 
 
-class WallTimeMetric(override val name:String, override val labels:Map[String,String]) extends GaugeMetric {
+final case class WallTimeMetric(override val name:String, override val labels:Map[String,String]) extends GaugeMetric {
     private var startTime = now()
     private var endTime:Option[Long] = None
 

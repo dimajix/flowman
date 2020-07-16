@@ -51,11 +51,11 @@ import com.dimajix.flowman.util.UtcTimestamp
 
 case class FileRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Option[Schema],
-    override val partitions: Seq[PartitionField],
+    override val schema:Option[Schema] = None,
+    override val partitions: Seq[PartitionField] = Seq(),
     location:Path,
-    pattern:Option[String],
-    format:String
+    pattern:Option[String] = None,
+    format:String = "csv"
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 

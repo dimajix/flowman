@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.dimajix.spark
+package com.dimajix.flowman.metric
 
-import org.apache.spark.sql.Column
-
-import com.dimajix.spark.expressions.CreateNullableStruct
+import org.apache.spark.util.LongAccumulator
 
 
-object functions {
-    @scala.annotation.varargs
-    def nullable_struct(cols: Column*): Column = new Column(CreateNullableStruct(cols.map(_.expr)))
+final case class LongAccumulatorMetric(override val name:String, override val labels:Map[String,String], val counter:LongAccumulator) extends GaugeMetric {
+    override def value: Double = counter.value.toDouble
+
+    override def reset(): Unit = counter.reset()
 }

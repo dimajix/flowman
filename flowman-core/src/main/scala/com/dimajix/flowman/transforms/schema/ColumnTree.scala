@@ -28,7 +28,7 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.spark.{functions => ext_functions}
+import com.dimajix.spark.sql.functions.nullable_struct
 
 
 class ColumnNodeOps extends NodeOps[Column] {
@@ -46,7 +46,7 @@ class ColumnNodeOps extends NodeOps[Column] {
     override def struct_pruned(name:String, children:Seq[Column], nullable:Boolean) : Column = {
         require(children.nonEmpty)
         if (nullable) {
-            withName(name, ext_functions.nullable_struct(children: _*))
+            withName(name, nullable_struct(children: _*))
         }
         else {
             withName(name, functions.struct(children: _*))

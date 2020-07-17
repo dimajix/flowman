@@ -18,12 +18,15 @@ package com.dimajix.flowman.server
 
 import com.dimajix.flowman.server.rest.Configuration
 import com.dimajix.flowman.server.rest.Server
+import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
 
 
 object Application {
     def main(args: Array[String]) : Unit = {
         java.lang.System.setProperty("akka.http.server.remote-address-header", "true")
+
+        Logging.setup()
 
         val server = new Application()
         val result = server.run()
@@ -35,8 +38,6 @@ object Application {
 
 class Application extends Tool {
     def run() : Boolean = {
-        setupLogging(None)
-
         val session = createSession(
             sparkName = "flowman-server",
             disableSpark = true

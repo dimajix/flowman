@@ -90,7 +90,7 @@
                             <relocations>
                                 <relocation>
                                     <pattern>org.apache.velocity</pattern>
-                                    <shadedPattern>com.dimajix.flowman.shade.velocity</shadedPattern>
+                                    <shadedPattern>com.dimajix.shaded.velocity</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>

@@ -21,49 +21,51 @@ import scala.util.Success
 import scala.util.Try
 
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
-import com.dimajix.flowman.tools.exec.job.PhaseCommand
 
 
 object Driver {
     def main(args: Array[String]) : Unit = {
         Try {
-            val options = new Arguments(args)
-
-            // Check if only help is requested
-            if (options.help) {
-                options.printHelp(System.out)
-                true
-            }
-
-            else {
-                val driver = new Driver(options)
-                driver.run()
-            }
+            run(args:_*)
         }
         match {
-            case Success (true) => System.exit(0)
-            case Success (false) => System.exit(1)
-            case Failure(exception) => System.err.println(exception.getMessage)
+            case Success (true) =>
+                System.exit(0)
+            case Success (false) =>
+                System.exit(1)
+            case Failure(exception) =>
+                exception.printStackTrace(System.err)
+                System.exit(1)
+        }
+    }
+
+    def run(args: String*) : Boolean = {
+        val options = new Arguments(args.toArray)
+        // Check if only help is requested
+        if (options.help) {
+            options.printHelp(System.out)
+            true
+        }
+        else {
+            Logging.setup(Option(options.sparkLogging))
+
+            val driver = new Driver(options)
+            driver.run()
         }
     }
 }
 
 
 class Driver(options:Arguments) extends Tool {
-    private val logger = LoggerFactory.getLogger(classOf[Driver])
-
     /**
       * Main method for running this command
       * @return
       */
     def run() : Boolean = {
-        setupLogging(Option(options.sparkLogging))
-
         val project = loadProject(new Path(options.projectFile))
 
         // Create Flowman Session, which also includes a Spark Session

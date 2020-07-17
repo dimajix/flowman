@@ -19,6 +19,7 @@ package com.dimajix.flowman.model
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
@@ -268,8 +269,16 @@ final case class Job(
       */
     def arguments(args:Map[String,String]) : Map[String,Any] = {
         val paramsByName = parameters.map(p => (p.name, p)).toMap
-        val processedArgs = args.map(kv =>
-            (kv._1, paramsByName.getOrElse(kv._1, throw new IllegalArgumentException(s"Parameter '${kv._1}' not defined for job '$name'")).parse(kv._2)))
+        val processedArgs = args.map { case (pname, sval) =>
+            val param = paramsByName.getOrElse(pname, throw new IllegalArgumentException(s"Parameter '$pname' not defined for job '$name'"))
+            val pval = try {
+                param.parse(sval)
+            }
+            catch {
+                case NonFatal(ex) => throw new IllegalArgumentException(s"Cannot parse parameter '$pname' of job '$name' with value '$sval'", ex)
+            }
+            (pname, pval)
+        }
         parameters.flatMap(p => p.default.map(v => p.name -> v)).toMap ++ processedArgs
     }
 
@@ -281,7 +290,12 @@ final case class Job(
       */
     def interpolate(args:Map[String,FieldValue]) : Iterable[Map[String,Any]] = {
         def interpolate(args:Iterable[Map[String,Any]], param:Parameter, values:FieldValue) : Iterable[Map[String,Any]] = {
-            val vals = param.ftype.interpolate(values, param.granularity)
+            val vals = try {
+                param.ftype.interpolate(values, param.granularity)
+            }
+            catch {
+                case NonFatal(ex) => throw new IllegalArgumentException(s"Cannot interpolate parameter '${param.name}' of job '$name' with values '$values'", ex)
+            }
             args.flatMap(map => vals.map(v => map + (param.name -> v)))
         }
 

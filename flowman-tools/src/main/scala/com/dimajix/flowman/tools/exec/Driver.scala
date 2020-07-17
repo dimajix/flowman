@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
 
 
@@ -52,6 +53,8 @@ object Driver {
             true
         }
         else {
+            Logging.setup(Option(options.sparkLogging))
+
             val driver = new Driver(options)
             driver.run()
         }
@@ -65,8 +68,6 @@ class Driver(options:Arguments) extends Tool {
       * @return
       */
     def run() : Boolean = {
-        setupLogging(Option(options.sparkLogging))
-
         val project = loadProject(new Path(options.projectFile))
 
         // Create Flowman Session, which also includes a Spark Session

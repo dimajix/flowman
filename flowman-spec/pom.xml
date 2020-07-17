@@ -50,11 +50,11 @@
                             <relocations>
                                 <relocation>
                                     <pattern>org.json</pattern>
-                                    <shadedPattern>com.dimajix.flowman.shade.json</shadedPattern>
+                                    <shadedPattern>com.dimajix.shaded.json</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.everit.json</pattern>
-                                    <shadedPattern>com.dimajix.flowman.shade.everit</shadedPattern>
+                                    <shadedPattern>com.dimajix.shaded.everit</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>
@@ -91,11 +91,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
         </dependency>
@@ -110,6 +105,7 @@
             <groupId>com.github.everit-org.json-schema</groupId>
             <artifactId>org.everit.json.schema</artifactId>
             <version>1.12.1</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

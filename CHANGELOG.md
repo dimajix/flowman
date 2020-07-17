@@ -1,6 +1,7 @@
 # Version 0.13.2
 
 * Fix AWS plugin for Hadoop 3.x
+* Improve setup of logging
 * Shade Velocity for better interoperability with Spark 3
 
 

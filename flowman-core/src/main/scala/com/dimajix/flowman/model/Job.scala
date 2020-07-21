@@ -16,20 +16,17 @@
 
 package com.dimajix.flowman.model
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.JobExecutor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.metric.MetricBoard
-import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.model.Job.Parameter
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
@@ -54,6 +51,14 @@ final case class JobInstance(
     require(project != null)
     require(job != null)
     require(args != null)
+
+    def asMap =
+         Map(
+            "namespace" -> namespace,
+            "project" -> project,
+            "name" -> job,
+            "job" -> job
+        ) ++ args
 }
 
 object Job {
@@ -116,12 +121,14 @@ object Job {
         private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
         private var environment:Map[String,String] = Map()
+        private var hooks:Seq[Template[Hook]] = Seq()
 
         def build() : Job = Job(
             Job.Properties(context, context.namespace, context.project, name, labels, description),
-            parameters,
-            environment,
-            targets
+            parameters = parameters,
+            environment = environment,
+            targets = targets,
+            hooks = hooks
         )
         def setProperties(props:Job.Properties) : Builder = {
             require(props != null)
@@ -178,6 +185,19 @@ object Job {
             this.targets = this.targets :+ target
             this
         }
+        def addHook(hook:Template[Hook]) : Builder = {
+            require(hook != null)
+            this.hooks = this.hooks :+ hook
+            this
+        }
+        def addHook(hook:Hook) : Builder = {
+            require(hook != null)
+            val template = new Template[Hook] {
+                override def instantiate(context: Context): Hook = hook
+            }
+            this.hooks = this.hooks :+ template
+            this
+        }
     }
 
     def builder(context: Context) : Builder = new Builder(context)
@@ -201,6 +221,10 @@ object Job {
             .map(job => job.targets.toSet)
             .reduceOption((targets, elems) => targets ++ elems)
             .getOrElse(Set())
+        val parentHooks = parents
+            .map(job => job.hooks)
+            .reduceOption((hooks, elems) => hooks ++ elems)
+            .getOrElse(Seq())
         val parentMetrics = parents
             .flatMap(job => job.metrics)
             .headOption
@@ -211,6 +235,8 @@ object Job {
 
         val allTargets = parentTargets ++ job.targets
 
+        val allHooks = parentHooks ++ job.hooks
+
         val allMetrics = job.metrics.orElse(parentMetrics)
 
         Job(
@@ -218,7 +244,8 @@ object Job {
             allParameters.values.toSeq,
             allEnvironment,
             allTargets.toSeq,
-            allMetrics
+            allMetrics,
+            allHooks
         )
     }
 }
@@ -229,10 +256,9 @@ final case class Job(
     parameters:Seq[Job.Parameter] = Seq(),
     environment:Map[String,String] = Map(),
     targets:Seq[TargetIdentifier] = Seq(),
-    metrics:Option[Template[MetricBoard]] = None
+    metrics:Option[Template[MetricBoard]] = None,
+    hooks:Seq[Template[Hook]] = Seq()
 ) extends AbstractInstance {
-    private val logger = LoggerFactory.getLogger(classOf[Job])
-
     override def category: String = "job"
     override def kind : String = "job"
 
@@ -362,18 +388,7 @@ final case class Job(
         require(args != null)
 
         val jobArgs = arguments(args)
-        val jobExecutor = new JobExecutor(executor, this, jobArgs, force)
-        jobExecutor.execute(phase) { (executor,target,force) =>
-            Try {
-                target.execute(executor, phase)
-            } match {
-                case Success(_) =>
-                    logger.info(s"Successfully finished phase '$phase' of execution of job '${identifier}'")
-                    Status.SUCCESS
-                case Failure(_) =>
-                    logger.error(s"Execution of phase '$phase' of job '${identifier}' failed")
-                    Status.FAILED
-            }
-        }
+        val jobRunner = new Runner(executor, new NullStateStore)
+        jobRunner.executeJob(this, Seq(phase), jobArgs, force)
     }
 }

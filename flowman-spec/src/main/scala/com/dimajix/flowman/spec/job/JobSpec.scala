@@ -26,6 +26,7 @@ import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.FieldType
@@ -67,6 +68,7 @@ class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="targets") private var targets: Seq[String] = Seq()
     @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
+    @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq()
 
     override def instantiate(context: Context): Job = {
         require(context != null)
@@ -77,7 +79,8 @@ class JobSpec extends NamedSpec[Job] {
             parameters.map(_.instantiate(context)),
             splitSettings(environment).toMap,
             targets.map(context.evaluate).map(TargetIdentifier.parse),
-            metrics
+            metrics,
+            hooks
         )
 
         Job.merge(job, parents)

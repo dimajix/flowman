@@ -74,11 +74,9 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
             else
                 Lifecycle.ofPhase(phase)
 
-        val runner = session.runner
-        val executor = session.executor
-
         job.interpolate(args).forall { args =>
-            val result = runner.executeJob(executor, job, lifecycle, args, force)
+            val runner = session.runner
+            val result = runner.executeJob(job, lifecycle, args, force)
             result match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true

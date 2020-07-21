@@ -17,7 +17,6 @@ object Logging {
             val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
             PropertyConfigurator.configure(url)
             logger.debug(s"Loaded logging configuration from $url")
-            println("Loaded log4j")
         }
 
         // Adjust Spark logging level

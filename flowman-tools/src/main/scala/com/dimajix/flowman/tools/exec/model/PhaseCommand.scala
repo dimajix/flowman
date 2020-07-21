@@ -59,8 +59,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
             .build()
 
         val runner = session.runner
-        val executor = session.executor
-        val result = runner.executeJob(executor, job, Seq(phase))
+        val result = runner.executeJob(job, Seq(phase), force=force)
 
         result match {
             case Status.SUCCESS => true

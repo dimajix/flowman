@@ -32,9 +32,9 @@ object Environment {
 }
 
 
-class Environment(rawEnvironment:Map[String,Any]) {
-    protected final val templateEngine = Velocity.newEngine()
-    protected final val templateContext = new VelocityContext(Environment.rootContext)
+final class Environment(rawEnvironment:Map[String,Any]) {
+    private val templateEngine = Velocity.newEngine()
+    private val templateContext = new VelocityContext(Environment.rootContext)
 
     // Configure templating context
     rawEnvironment.foreach { case (key,value) =>

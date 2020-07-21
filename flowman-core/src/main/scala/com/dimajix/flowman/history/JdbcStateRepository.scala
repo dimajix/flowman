@@ -21,15 +21,17 @@ import java.time.ZoneId
 import java.util.Locale
 import java.util.Properties
 
-import scala.language.higherKinds
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.language.higherKinds
 
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.TargetToken
 
 
 private[history] object JdbcStateRepository {

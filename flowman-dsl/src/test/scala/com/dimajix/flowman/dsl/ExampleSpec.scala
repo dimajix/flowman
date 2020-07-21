@@ -29,6 +29,6 @@ class ExampleSpec extends FlatSpec with Matchers with LocalSparkSession {
 
         val job = context.getJob(JobIdentifier("test"))
 
-        runner.executeJob(executor, job, Lifecycle.ALL) should be (Status.SUCCESS)
+        runner.executeJob(job, Lifecycle.ALL) should be (Status.SUCCESS)
     })
 }

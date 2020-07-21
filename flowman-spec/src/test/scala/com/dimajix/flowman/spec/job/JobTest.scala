@@ -107,10 +107,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> false))
+        GrabEnvironmentTarget.environment should be (Map("job" -> "job", "p1" -> "v1", "p2" -> "v2", "p3" -> 7, "force" -> false))
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> false))
+        GrabEnvironmentTarget.environment should be (Map("job" -> "job", "p1" -> "v1", "p2" -> "vx", "p3" -> 7, "force" -> false))
     }
 
     it should "support overriding global parameters" in {
@@ -138,7 +138,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "2"), false) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "2", "force" -> false))
+        GrabEnvironmentTarget.environment should be (Map("job" -> "job", "p1" -> "2", "force" -> false))
     }
 
     it should "support typed parameters" in {
@@ -165,7 +165,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "2"), false) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> 2, "force" -> false))
+        GrabEnvironmentTarget.environment should be (Map("job" -> "job", "p1" -> 2, "force" -> false))
     }
 
     it should "fail on undefined parameters" in {
@@ -277,7 +277,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job should not be (null)
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))
+        GrabEnvironmentTarget.environment should be (Map("job" -> "job", "p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))
     }
 
     it should "support extending other jobs" in {
@@ -320,7 +320,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job.environment should be (Map("p2" -> "$p1", "p3" -> "xx${p2}yy"))
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
-        GrabEnvironmentTarget.environment should be (Map("p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))
+        GrabEnvironmentTarget.environment should be (Map("job" -> "job", "p1" -> "v1", "p2" -> "v1", "p3" -> "xxv1yy", "force" -> false))
     }
 
     it should "support metrics" in {
@@ -362,7 +362,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val job = context.getJob(JobIdentifier("main"))
         job.labels should be (Map("job_label" -> "xyz"))
 
-        session.runner.executeJob(executor, job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+        session.runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         verify(metricSink).addBoard(any(), any())
         verify(metricSink).commit(any())
         verify(metricSink).removeBoard(any())

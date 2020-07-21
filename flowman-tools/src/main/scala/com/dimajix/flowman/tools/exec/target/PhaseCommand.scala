@@ -64,8 +64,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
                 Lifecycle.ofPhase(phase)
 
         val runner = session.runner
-        val executor = session.executor
-        val result = runner.executeJob(executor, job, lifecycle, Map(), force)
+        val result = runner.executeJob(job, lifecycle, force=force)
         result match {
             case Status.SUCCESS => true
             case Status.SKIPPED => true

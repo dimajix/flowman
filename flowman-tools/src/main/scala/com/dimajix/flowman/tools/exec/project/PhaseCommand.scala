@@ -77,10 +77,9 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
         val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
-        val runner = session.runner
-        val executor = session.executor
         job.interpolate(args).forall { args =>
-            val result = runner.executeJob(executor, job, lifecycle, args, force)
+            val runner = session.runner
+            val result = runner.executeJob(job, lifecycle, args, force)
             result match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true

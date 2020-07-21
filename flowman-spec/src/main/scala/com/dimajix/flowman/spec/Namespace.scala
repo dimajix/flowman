@@ -23,6 +23,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.history.HistorySpec
+import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.metric.MetricSinkSpec
 import com.dimajix.flowman.spec.storage.StorageSpec
 
@@ -36,23 +37,25 @@ class NamespaceSpec {
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
     @JsonProperty(value="connections") private var connections: Map[String,ConnectionSpec] = Map()
     @JsonProperty(value="store") private var store: Option[StorageSpec] = None
-    @JsonProperty(value="catalog") private var catalog: Option[CatalogSpec] = None
+    @JsonProperty(value="catalog") private var catalogs: Seq[CatalogSpec] = Seq()
     @JsonProperty(value="history") private var history : Option[HistorySpec] = None
-    @JsonProperty(value="metrics") private var metrics : Option[MetricSinkSpec] = None
+    @JsonProperty(value="metrics") private var metrics : Seq[MetricSinkSpec] = Seq()
     @JsonProperty(value="plugins") private var plugins: Seq[String] = Seq()
+    @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq()
 
     def instantiate() : Namespace = {
         Namespace(
-            name,
-            splitSettings(config).toMap,
-            splitSettings(environment).toMap,
-            profiles.map { case(k,v) => k -> v.instantiate() },
-            connections,
-            store,
-            catalog,
-            history,
-            metrics,
-            plugins
+            name = name,
+            config = splitSettings(config).toMap,
+            environment = splitSettings(environment).toMap,
+            profiles = profiles.map { case(k,v) => k -> v.instantiate() },
+            connections = connections,
+            store = store,
+            catalogs = catalogs,
+            history = history,
+            metrics = metrics,
+            plugins = plugins,
+            hooks = hooks
         )
     }
 }

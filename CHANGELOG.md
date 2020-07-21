@@ -3,6 +3,7 @@
 * Fix AWS plugin for Hadoop 3.x
 * Improve setup of logging
 * Shade Velocity for better interoperability with Spark 3
+* Add new web hook facility in namespaces and jobs
 
 
 # Version 0.13.1 - 2020-07-14

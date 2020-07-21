@@ -20,7 +20,6 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.model.Namespace
-import com.dimajix.flowman.spec.history.NullHistorySpec
 
 
 class NamespaceTest extends FlatSpec with Matchers {

@@ -30,6 +30,8 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.model.Hook
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spi.UdfProvider
@@ -346,25 +348,28 @@ class Session private[execution](
         new RootExecutor(this)
     }
 
-    private lazy val _externalCatalog : Option[ExternalCatalog] = {
-        _namespace.flatMap(_.catalog).map(_.instantiate(rootContext))
+    private lazy val _catalog = {
+        val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))
+        new Catalog(spark, config, externalCatalogs)
     }
-    private lazy val _catalog = new Catalog(spark, config, _externalCatalog)
 
     private lazy val _projectStore : Store = {
         _namespace.flatMap(_.store).map(_.instantiate(rootContext)).getOrElse(new NullStore)
     }
 
     private lazy val _history = {
-        _namespace.flatMap(_.history).map(_.instantiate(rootContext)).getOrElse(new NullStateStore)
+        _namespace.flatMap(_.history)
+            .map(_.instantiate(rootContext))
+            .getOrElse(new NullStateStore())
     }
-    private lazy val _runner = {
-        _namespace.flatMap(_.history).map(_.instantiate(rootContext)).map(new MonitoredRunner(_)).getOrElse(new SimpleRunner)
+    private lazy val _hooks = {
+        _namespace.toSeq.flatMap(_.hooks.map(_.instantiate(rootContext)))
     }
-
     private lazy val metricSystem = {
         val system = new MetricSystem
-        _namespace.flatMap(_.metrics).map(_.instantiate(rootContext)).foreach(system.addSink)
+        _namespace.toSeq.flatMap(_.metrics)
+            .map(_.instantiate(rootContext))
+            .foreach(system.addSink)
         system
     }
 
@@ -394,11 +399,18 @@ class Session private[execution](
     def history : StateStore = _history
 
     /**
-      * Returns the appropriate runner
+     * Returns the list of all hooks
+     */
+    def hooks : Seq[Hook] = _hooks
+
+    /**
+      * Returns an appropriate runner for a specific job
       *
       * @return
       */
-    def runner : Runner = _runner
+    def runner : Runner = {
+        new Runner(executor, _history, _hooks)
+    }
 
     /**
       * Returns the Spark session tied to this Flowman session. The Spark session will either be created by the

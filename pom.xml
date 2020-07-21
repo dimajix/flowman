@@ -71,6 +71,7 @@
         <json4s.version>3.5.3</json4s.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>14.0.1</guava.version>
+        <snakeyaml.version>1.25</snakeyaml.version>
         <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <derby.version>10.12.1.1</derby.version>
@@ -517,7 +518,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.3.0</version>
+                    <version>4.3.1</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <args>
@@ -933,6 +934,13 @@
                 <groupId>com.databricks</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark-avro.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
                 <scope>compile</scope>
             </dependency>
 

@@ -36,7 +36,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
                             </sources>
                         </configuration>
                     </execution>

@@ -16,13 +16,23 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.TargetInstance
 
 
+object NullStateStore {
+    private case class DummyJobToken() extends JobToken
+    private case class DummyTargetToken() extends TargetToken
+}
+
+
 class NullStateStore extends StateStore {
+    import NullStateStore._
+
     /**
       * Returns the state of a batch
       * @param batch
@@ -35,7 +45,7 @@ class NullStateStore extends StateStore {
       * @param batch
       * @return
       */
-    override def startJob(batch:JobInstance, phase:Phase) : JobToken = null
+    override def startJob(batch:JobInstance, phase:Phase) : JobToken = DummyJobToken()
 
     /**
       * Sets the status of a job after it has been started
@@ -56,7 +66,7 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = null
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
 
     /**
       * Sets the status of a target after it has been started

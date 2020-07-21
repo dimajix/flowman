@@ -59,6 +59,11 @@ class InfoCommand extends Command {
             .sortBy(_._1)
             .foreach{ case(k,v) => println(s"    $k=$v") }
 
+        println("Spark Configuration:")
+        session.sparkConf.getAll
+            .sortBy(_._1)
+            .foreach{ case(k,v) => println(s"    $k=$v") }
+
         true
     }
 

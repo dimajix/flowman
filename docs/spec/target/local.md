@@ -1,5 +1,7 @@
 # Flowman Local Target
 
+The `local` target writes the output of a mpping into some local files.
+
 ## Fields
  * `kind` **(mandatory)** *(string)*: `local`
  * `mapping` **(mandatory)** *(string)*:

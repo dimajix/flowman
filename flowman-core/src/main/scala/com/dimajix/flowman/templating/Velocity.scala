@@ -48,6 +48,7 @@ object Velocity {
     addObject("Period", PeriodWrapper)
     addObject("System", SystemWrapper)
     addObject("String", StringWrapper)
+    addObject("URL", URLWrapper)
 
 
     /**

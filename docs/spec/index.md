@@ -34,6 +34,7 @@ Flowman has a couple of different main entities, which are documented seperately
 * [Jobs](job/index.md): Documentation of creating jobs
 * [Datasets](dataset/index.md): Documentation of using datasets
 * [Metrics](metric/index.md): Documentation of publishing metrics
+* [Hooks](hooks/index.md): Documentation of hooks
 
 
 ## Misc Documentation

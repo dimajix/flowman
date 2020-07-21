@@ -171,6 +171,10 @@ history:
   retries: 3
   timeout: 1000
 
+hooks:
+  - kind: web
+    jobSuccess: http://some-host.in.your.net/success&job=$URL.encode($job)&force=$force
+
 connections:
   flowman_state:
     driver: $System.getenv('FLOWMAN_HISTORY_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
@@ -199,6 +203,6 @@ store:
 
 
 ## Running in a Kerberized Environment
-
+Please have a look at [Kerberos](cookbook/kerberos.md) for detailed information.
 
 ## Deploying with Docker

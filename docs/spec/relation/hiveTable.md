@@ -1,5 +1,6 @@
-
 # Hive Table Relations
+
+The `hiveTable` relation is used for managing Hive tables.
 
 ## Examples
 
@@ -45,7 +46,7 @@ relations:
 ```
 
 ## Fields
- * `kind` **(mandatory)** *(string)*: `table` or `hiveTable`
+ * `kind` **(mandatory)** *(string)*: `hiveTable`
  
  * `schema` **(optional)** *(schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically

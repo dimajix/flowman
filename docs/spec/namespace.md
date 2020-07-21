@@ -14,6 +14,10 @@ history:
   retries: 3
   timeout: 1000
 
+hooks:
+  - kind: web
+    jobSuccess: http://some-host.in.your.net/success&job=$URL.encode($job)&force=$force
+
 connections:
   flowman_state:
     driver: $System.getenv('FLOWMAN_HISTORY_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
@@ -41,3 +45,16 @@ store:
 ```
 
 ## Fields
+
+* `history` **(optional)** *(type: history)*:
+
+* `store` **(optional)** *(type: store)*:
+
+* `connections` **(optional)** *(type: list:connection)*:
+
+* `hooks` **(optional)** *(type: list:hook)*:
+A list of hooks which will be called before and after each job and target is executed. Hooks provide some ways to
+notify external systems (or possibly plugins) about the current execution status of jobs and targets.
+
+* `plugins` **(optional)** *(type: list:string)*:
+List of plugins to be loaded as part of the namespace

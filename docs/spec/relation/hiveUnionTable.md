@@ -1,0 +1,1 @@
+# Hive Union Table

@@ -19,6 +19,9 @@ jobs:
     environment:
       - start_ts=$processing_date
       - end_ts=$Date.parse($processing_date).plusDays(1)
+    hooks:
+      - kind: web
+        jobSuccess: http://0.0.0.0/success&startdate=$URL.encode($start_ts)&enddate=$URL.encode($end_ts)&period=$processing_duration&force=$force
     targets:
       - some_hive_table
       - some_files
@@ -29,14 +32,16 @@ jobs:
 A textual description of the job
 
 * `environment` **(optional)** *(type: list:string)*:
-A list of `key=value` pairs for defining or overriding environment variables which can be
-accessed in expressions. You can also access the job parameters in the environment definition
-for deriving new values.
+A list of `key=value` pairs for defining or overriding environment variables which can be accessed in expressions. 
+You can also access the job parameters in the environment definition for deriving new values.
  
 * `parameters` **(optional)** *(type: list:parameter)*:
-A list of job parameters. Values for job parameters have to be specified for each job
-execution, be it either directly via the command line or via a `call` task as part of a
-different job in the same project.
+A list of job parameters. Values for job parameters have to be specified for each job execution, be it either directly 
+via the command line or via a `call` task as part of a different job in the same project.
+ 
+* `hooks` **(optional)** *(type: list:hook)*:
+A list of hooks which will be called before and after each job and target is executed. Hooks provide some ways to
+notify external systems (or possibly plugins) about the current execution status of jobs and targets.
  
 
 ## Metrics

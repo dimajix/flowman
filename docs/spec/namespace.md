@@ -39,6 +39,14 @@ plugins:
   - flowman-kafka
   - flowman-mariadb
 
+metrics:
+  kind: prometheus
+  url: $System.getenv('URL_PROMETHEUS_PUSHGW', '')
+  labels:
+    job: flowman-aggregation
+    instance: default
+    namespace: ${namespace}
+
 store:
   kind: file
   location: $System.getenv('FLOWMAN_HOME')/examples
@@ -51,6 +59,9 @@ store:
 * `store` **(optional)** *(type: store)*:
 
 * `connections` **(optional)** *(type: list:connection)*:
+
+* `metrics` **(optional)** *(type: list:metric-sink)*:
+A list of metric sinks, where job metrics should be published to.
 
 * `hooks` **(optional)** *(type: list:hook)*:
 A list of hooks which will be called before and after each job and target is executed. Hooks provide some ways to

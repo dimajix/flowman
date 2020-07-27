@@ -20,11 +20,14 @@ import java.io.FileNotFoundException
 import java.io.StringWriter
 
 import scala.math.Ordering
+import scala.util.Try
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.hadoop.fs.Path
+import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
@@ -269,21 +272,23 @@ case class FileCollector(
 
 
     private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
-        val isDirectory = try fs.getFileStatus(path).isDirectory catch { case _:FileNotFoundException => false }
-        if (isDirectory) {
-          logger.debug(s"Collecting files in directory '$path'")
-          // If path is a directory, simply list all files
-          //fs.listStatus(path).sorted.map(_.getPath).toSeq
-          Seq(path)
+        def isGlobPath(pattern: Path): Boolean = {
+            pattern.toString.exists("{}[]*?\\".toSet.contains)
+        }
+        def globPath(pattern: Path): Seq[Path] = {
+            Option(fs.globStatus(pattern)).map { statuses =>
+                statuses.map(_.getPath.makeQualified(fs.getUri, fs.getWorkingDirectory)).toSeq
+            }.getOrElse(Seq.empty[Path])
+        }
+
+        if (isGlobPath(path)) {
+            globPath(path)
         }
         else {
-          // Otherwise assume a file pattern and try to glob all files
-          logger.debug(s"Collecting file(s) using glob pattern '$path'")
-          val files = fs.globStatus(path)
-          if (files != null)
-            files.sorted.map(_.getPath).toSeq
-          else
-            Seq()
+            if (fs.exists(path))
+                Seq(path)
+            else
+                Seq()
         }
     }
 

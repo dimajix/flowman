@@ -72,7 +72,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .path(new Path(workingDirectory, "data/2016/02/01"))
             .build()
         val files = collector.collect()
-        files.size should be (1)
+
         files should be (Seq(new Path(workingDirectory, "data/2016/02/01")))
     }
 
@@ -82,7 +82,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .path(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
         val files = collector.collect()
-        files.size should be (5)
+
         files should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
@@ -140,7 +140,6 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (4)
         files should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
@@ -162,7 +161,6 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (1)
         files should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
@@ -181,7 +179,6 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (1)
         files should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
@@ -200,9 +197,10 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (2)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/04")
-        files(1).toString should be(workingDirectory.toString + "/data/2016/01/05")
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/04"),
+            new Path(workingDirectory, "data/2016/01/05")
+        ))
     }
 
     it should "collect all files in given daily range (5)" in {
@@ -218,9 +216,10 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (2)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/04")
-        files(1).toString should be(workingDirectory.toString + "/data/2016/01/05")
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/04"),
+            new Path(workingDirectory, "data/2016/01/05")
+        ))
     }
 
     it should "collect all files in given hourly range (1)" in {
@@ -236,8 +235,9 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (1)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/05/01.seq")
+        ))
     }
 
     it should "collect all files in given hourly range (2)" in {
@@ -253,10 +253,11 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (3)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/03/01.seq")
-        files(1).toString should be(workingDirectory.toString + "/data/2016/01/03/02.seq")
-        files(2).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/03/01.seq"),
+            new Path(workingDirectory, "data/2016/01/03/02.seq"),
+            new Path(workingDirectory, "data/2016/01/05/01.seq")
+        ))
     }
 
     it should "collect all files in given hourly range (3)" in {
@@ -272,11 +273,12 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.size should be (4)
-        files(0).toString should be(workingDirectory.toString + "/data/2016/01/03/01.seq")
-        files(1).toString should be(workingDirectory.toString + "/data/2016/01/03/02.seq")
-        files(2).toString should be(workingDirectory.toString + "/data/2016/01/05/01.seq")
-        files(3).toString should be(workingDirectory.toString + "/data/2016/01/05/02.seq")
+        files should be (Seq(
+            new Path(workingDirectory, "data/2016/01/03/01.seq"),
+            new Path(workingDirectory, "data/2016/01/03/02.seq"),
+            new Path(workingDirectory, "data/2016/01/05/01.seq"),
+            new Path(workingDirectory, "data/2016/01/05/02.seq")
+        ))
     }
 
     it should "collect unixtimestamps as well (1)" in {

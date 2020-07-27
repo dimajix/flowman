@@ -282,7 +282,10 @@ case class FileRelation(
         require(partitions != null)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
+        if (resolvedPartitions.size > 2)
+            resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
+        else
+            resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
     private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {

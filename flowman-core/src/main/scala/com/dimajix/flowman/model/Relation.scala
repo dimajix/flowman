@@ -30,6 +30,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -176,11 +177,22 @@ trait Relation extends Instance {
     def writeStream(executor:Executor, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
-      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
+      * the relation itself, not to the data or a specific partition.
       * @param executor
       * @return
       */
-    def exists(executor:Executor) : Boolean
+    def exists(executor:Executor) : Trilean
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     * @param executor
+     * @param partition
+     * @return
+     */
+    def exists(executor:Executor, partition:Map[String,SingleValue] = Map()) : Trilean
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The

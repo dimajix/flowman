@@ -20,6 +20,7 @@ import java.io.File
 import java.nio.file.FileSystem
 import java.util.NoSuchElementException
 
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.spark.features
 
 
@@ -55,6 +56,11 @@ object FlowmanConf {
         .doc("Directory containing Flowman plugins")
         .fileConf
         .createOptional
+
+    val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
+        .doc("Default output mode of targets")
+        .stringConf
+        .createWithDefault(OutputMode.OVERWRITE.toString)
 }
 
 

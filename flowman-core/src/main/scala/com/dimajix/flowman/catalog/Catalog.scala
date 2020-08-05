@@ -297,8 +297,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       */
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
-        require(partition != null && partition.nonEmpty)
-        catalog.listPartitions(table, Some(partition.mapValues(_.toString).toMap)).nonEmpty
+        require(partition != null)
+        catalog.listPartitions(table, Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)).nonEmpty
     }
 
     /**

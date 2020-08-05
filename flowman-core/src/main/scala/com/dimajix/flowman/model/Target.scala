@@ -16,10 +16,11 @@
 
 package com.dimajix.flowman.model
 
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.model.Dataset.Properties
 
 /**
   *
@@ -132,6 +133,15 @@ trait Target extends Instance {
     def requires(phase:Phase) : Set[ResourceIdentifier]
 
     /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     * @param executor
+     * @param phase
+     * @return
+     */
+    def dirty(executor: Executor, phase: Phase) : Trilean
+
+    /**
       * Executes a specific phase of this target
       * @param executor
       * @param phase
@@ -197,8 +207,21 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * @return
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = Set()
+
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = Unknown
+
     /**
      * Executes a specific phase of this target
+ *
      * @param executor
      * @param phase
      */

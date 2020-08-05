@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -41,7 +44,7 @@ case class GetFileTarget(
      * Returns all phases which are implemented by this target in the execute method
      * @return
      */
-    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
 
     /**
      * Returns a list of physical resources produced by this target
@@ -64,6 +67,29 @@ case class GetFileTarget(
         phase match {
             case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
             case _ => Set()
+        }
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.BUILD =>
+                val fs = executor.fs
+                val dst = fs.local(target)
+                !dst.exists()
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE|Phase.DESTROY =>
+                val fs = executor.fs
+                val dst = fs.local(target)
+                dst.exists()
+            case _ => No
         }
     }
 

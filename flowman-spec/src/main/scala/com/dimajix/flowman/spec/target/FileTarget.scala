@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -95,6 +98,33 @@ case class FileTarget(
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
+        }
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.CREATE =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                !fs.getFileStatus(location).isDirectory
+            case Phase.BUILD =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                !fs.exists(location) || fs.listStatus(location).isEmpty
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                fs.listStatus(location).nonEmpty
+            case Phase.DESTROY =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                fs.exists(location)
+            case _ => No
         }
     }
 

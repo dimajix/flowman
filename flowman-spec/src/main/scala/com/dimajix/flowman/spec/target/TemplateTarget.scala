@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -83,6 +84,18 @@ class TemplateTarget(
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = {
         targetInstance.requires(phase)
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        targetInstance.dirty(executor, phase)
     }
 
     /**

@@ -2,7 +2,8 @@
 # Extend Mapping
 
 The `extend` mapping will add new columns derived from the existing ones (or with constant
-values) to a mapping. All incoming columns will be kept.
+values) to a mapping. All incoming columns will be kept. If a specified column name matches an existing incoming
+column name, then the column simply will be replaced with the new definition
 
 ## Example
 ```

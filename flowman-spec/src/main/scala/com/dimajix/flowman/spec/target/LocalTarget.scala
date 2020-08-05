@@ -28,6 +28,9 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.StringType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -92,6 +95,27 @@ case class LocalTarget(
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
+        }
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.BUILD =>
+                val file = executor.fs.local(path)
+                !file.exists()
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE|Phase.DESTROY =>
+                val file = executor.fs.local(path)
+                file.exists()
+            case _ => No
         }
     }
 

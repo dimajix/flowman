@@ -18,6 +18,7 @@ package com.dimajix.flowman.model
 
 import org.apache.spark.sql.DataFrame
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -77,7 +78,7 @@ trait Dataset extends Instance {
       * @param executor
       * @return
       */
-    def exists(executor: Executor) : Boolean
+    def exists(executor: Executor) : Trilean
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present

@@ -54,8 +54,8 @@ object OutputMode {
             case "overwrite" | "complete" => OutputMode.OVERWRITE
             case "append" => OutputMode.APPEND
             case "update" => OutputMode.UPDATE
-            case "ignore" => OutputMode.IGNORE_IF_EXISTS
-            case "error" | "errorifexists" | "default" => OutputMode.ERROR_IF_EXISTS
+            case "ignore" | "ignore_if_exists" | "ignoreifexists" => OutputMode.IGNORE_IF_EXISTS
+            case "error" | "error_if_exists" | "errorifexists" | "default" => OutputMode.ERROR_IF_EXISTS
             case _ => throw new IllegalArgumentException(s"Unknown save mode: $mode. " +
                 "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
         }

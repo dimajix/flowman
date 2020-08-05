@@ -32,6 +32,9 @@ import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Unknown
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -118,6 +121,8 @@ case class HiveTableRelation(
         require(executor != null)
         require(df != null)
         require(partition != null)
+
+        requireAllPartitionKeys(partition)
 
         val schema = PartitionSchema(partitions)
         val partitionSpec = schema.spec(partition)
@@ -238,6 +243,8 @@ case class HiveTableRelation(
         require(executor != null)
         require(partitions != null)
 
+        requireValidPartitionKeys(partitions)
+
         val catalog = executor.catalog
         // When no partitions are specified, this implies that the whole table is to be truncated
         if (partitions.nonEmpty) {
@@ -253,6 +260,38 @@ case class HiveTableRelation(
         }
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        requireValidPartitionKeys(partition)
+
+        val catalog = executor.catalog
+        if (partitions.nonEmpty) {
+            val schema = PartitionSchema(partitions)
+            val partitionSpec = schema.spec(partition)
+            catalog.tableExists(tableIdentifier) &&
+                catalog.partitionExists(tableIdentifier, partitionSpec)
+        }
+        else {
+            // Since we do not know for an unpartitioned table if it contains data, we simply return "Unknown"
+            if (catalog.tableExists(tableIdentifier))
+                Unknown
+            else
+                No
+        }
+    }
+
     /**
       * Creates a Hive table by executing the appropriate DDL
       *
@@ -261,7 +300,7 @@ case class HiveTableRelation(
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)
 
-        if (!ifNotExists || !exists(executor)) {
+        if (!ifNotExists || exists(executor) == No) {
             val sparkSchema = StructType(fields.map(_.sparkField))
             logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 

@@ -19,16 +19,18 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
-import com.dimajix.flowman.metric.CounterAccumulatorMetricBundle
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
-import com.dimajix.flowman.metric.SingletonMetricBundle
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
@@ -40,7 +42,7 @@ import com.dimajix.spark.sql.functions.count_records
 
 
 object RelationTarget {
-    def apply(context: Context, relation: RelationIdentifier) = {
+    def apply(context: Context, relation: RelationIdentifier) : RelationTarget = {
         new RelationTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
@@ -97,7 +99,7 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD if (mapping.nonEmpty) => rel.provides ++ rel.resources(partition)
+            case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources(partition)
             case Phase.BUILD => rel.provides
             case _ => Set()
         }
@@ -112,21 +114,56 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD if (mapping.nonEmpty) => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
+            case Phase.BUILD if mapping.nonEmpty => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
             case Phase.BUILD => rel.requires
             case _ => Set()
         }
     }
 
+
     /**
-      * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
-      * @param executor
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        val partition = this.partition.mapValues(v => SingleValue(v))
+        val rel = context.getRelation(relation)
+
+        phase match {
+            case Phase.CREATE =>
+                // Since an existing relation might need a migration, we return "unknown"
+                if (rel.exists(executor) == Yes)
+                    Unknown
+                else
+                    Yes
+            case Phase.BUILD =>
+                if (mode == OutputMode.APPEND) {
+                    Yes
+                } else {
+                    !rel.exists(executor, partition)
+                }
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE =>
+                rel.exists(executor, partition)
+            case Phase.DESTROY =>
+                rel.exists(executor)
+        }
+    }
+
+    /**
+      * Creates the empty containing (Hive table, SQL table, etc) for holding the data
+     *
+     * @param executor
       */
     override def create(executor: Executor) : Unit = {
         require(executor != null)
 
         val rel = context.getRelation(relation)
-        if (rel.exists(executor)) {
+        if (rel.exists(executor) == Yes) {
             logger.info(s"Migrating existing relation '$relation'")
             rel.migrate(executor)
         }
@@ -180,8 +217,9 @@ case class RelationTarget(
     override def verify(executor: Executor) : Unit = {
         require(executor != null)
 
+        val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
-        if (!rel.exists(executor)) {
+        if (rel.exists(executor, partition) == No) {
             logger.error(s"Verification of target '$identifier' failed - relation '$relation' does not exist")
             throw new VerificationFailedException(identifier)
         }

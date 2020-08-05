@@ -181,6 +181,6 @@ class WebHookTest extends FlatSpec with Matchers {
             .build()
 
         val runner = session.runner
-        runner.executeJob(job, Seq(Phase.CREATE), Map("arg1" -> "some_arg")) should be (Status.SUCCESS)
+        runner.executeJob(job, Seq(Phase.CREATE), Map("arg1" -> "some_arg"), force=true) should be (Status.SUCCESS)
     }
 }

@@ -19,6 +19,8 @@ package com.dimajix.flowman.spec.dataset
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -61,7 +63,7 @@ case class MappingDataset(
       * @param executor
       * @return
       */
-    override def exists(executor: Executor): Boolean = true
+    override def exists(executor: Executor): Trilean = Yes
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present

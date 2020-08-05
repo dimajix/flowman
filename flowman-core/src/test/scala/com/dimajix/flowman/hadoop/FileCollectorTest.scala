@@ -103,24 +103,24 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
 
         val files1 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01", "day" -> "03"))))
-        files1.sortBy(_.toString) should be (Seq(
+        files1.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03")
         ))
 
         val files2 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01"))))
-        files2.sortBy(_.toString) should be (Seq(
+        files2.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05")
         ))
 
         val files3 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016", "day" -> "01"))))
-        files3.sortBy(_.toString) should be (Seq(
+        files3.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/02/01")
         ))
 
         val files4 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016"))))
-        files4.sortBy(_.toString) should be (Seq(
+        files4.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05"),
@@ -142,7 +142,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05"),
@@ -163,7 +163,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
     }
@@ -181,7 +181,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
     }
@@ -199,7 +199,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05")
         ))
@@ -218,7 +218,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05")
         ))
@@ -237,7 +237,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/05/01.seq")
         ))
     }
@@ -255,7 +255,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03/01.seq"),
             new Path(workingDirectory, "data/2016/01/03/02.seq"),
             new Path(workingDirectory, "data/2016/01/05/01.seq")
@@ -275,7 +275,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03/01.seq"),
             new Path(workingDirectory, "data/2016/01/03/02.seq"),
             new Path(workingDirectory, "data/2016/01/05/01.seq"),
@@ -296,7 +296,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2017/06/19/1497830400.i-02255f88.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f88.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497832200.i-02255f88.rtb-imp.log"),
@@ -319,7 +319,7 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
             .build()
         val files = collector.collect(partitions)
 
-        files.sortBy(_.toString) should be (Seq(
+        files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f88.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497832200.i-02255f88.rtb-imp.log")
         ))
@@ -339,6 +339,6 @@ class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
         val files = collector.collect(partitions)
 
         files.size should be (1)
-        files(0).toString should be(workingDirectory.toString + "/data/2017/06/19/1497831300.i-02255f88.rtb-imp.log")
+        files.head.toString should be(workingDirectory.toString + "/data/2017/06/19/1497831300.i-02255f88.rtb-imp.log")
     }
 }

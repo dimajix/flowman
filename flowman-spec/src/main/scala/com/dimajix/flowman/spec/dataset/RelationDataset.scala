@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.dataset
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -68,9 +69,9 @@ case class RelationDataset(
       * @param executor
       * @return
       */
-    override def exists(executor: Executor): Boolean = {
+    override def exists(executor: Executor): Trilean = {
         val instance = context.getRelation(relation)
-        instance.exists(executor)
+        instance.exists(executor, partition)
     }
 
     /**

@@ -21,6 +21,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -89,7 +90,21 @@ case class HiveViewRelation(
     }
 
     /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean =  {
+        exists(executor)
+    }
+
+    /**
      * This method will physically create the corresponding Hive view
+     *
      * @param executor
      */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {

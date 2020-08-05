@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -39,6 +41,24 @@ case class DeleteFileTarget(
      * @return
      */
     override def phases : Set[Phase] = Set(Phase.BUILD)
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.BUILD =>
+                val fs = executor.fs
+                val file = fs.file(path)
+                file.exists()
+            case _ => No
+        }
+    }
 
     /**
      * Build the "count" target by printing the number of records onto the console

@@ -29,6 +29,7 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -176,12 +177,46 @@ case class FileRelation(
             .save(outputPath.toString)
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        requireValidPartitionKeys(partition)
+
+        def checkPartition(path:Path) = {
+            val success = new Path(path, "_SUCCESS")
+            val fs = success.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+            fs.exists(success)
+        }
+
+        if (this.partitions.nonEmpty) {
+            val partitionSpec = PartitionSchema(partitions).spec(partition)
+            collector.collect(partitionSpec).exists(checkPartition)
+        }
+        else {
+            val partitionSpec = PartitionSchema(partitions).spec(partition)
+            val outputPath = collector.resolve(partitionSpec)
+            checkPartition(outputPath)
+        }
+    }
+
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+     *
+     * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
@@ -225,23 +260,24 @@ case class FileRelation(
         require(executor != null)
         require(partitions != null)
 
-        if (this.partitions.nonEmpty && partitions.nonEmpty)
-            cleanPartitionedFiles(partitions)
-        else
-            cleanUnpartitionedFiles()
-    }
-
-    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
-        require(partitions != null)
-
         requireValidPartitionKeys(partitions)
 
-        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector.delete(resolvedPartitions)
+        if (this.partitions.nonEmpty) {
+            truncatePartitionedFiles(partitions)
+        }
+        else {
+            truncateUnpartitionedFiles()
+        }
     }
 
-    private def cleanUnpartitionedFiles() : Unit = {
-        collector.delete()
+    private def truncatePartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
+        require(partitions != null)
+
+        collector.delete(resolvePartitions(partitions))
+    }
+
+    private def truncateUnpartitionedFiles() : Unit = {
+        collector.truncate()
     }
 
     /**
@@ -281,7 +317,7 @@ case class FileRelation(
     private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
-        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+        val resolvedPartitions = resolvePartitions(partitions)
         if (resolvedPartitions.size > 2)
             resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
         else
@@ -290,6 +326,10 @@ case class FileRelation(
 
     private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
         fn(PartitionSpec(), collector.collect())
+    }
+
+    private def resolvePartitions(partitions:Map[String,FieldValue]) : Iterable[PartitionSpec] = {
+        PartitionSchema(this.partitions).interpolate(partitions)
     }
 }
 

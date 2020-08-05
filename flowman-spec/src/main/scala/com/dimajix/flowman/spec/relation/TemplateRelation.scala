@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -136,8 +137,26 @@ case class TemplateRelation(
       */
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
+        require(partitions != null)
 
         relationInstance.truncate(executor, partitions)
+    }
+
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        relationInstance.exists(executor, partition)
     }
 
     /**
@@ -146,7 +165,7 @@ case class TemplateRelation(
       * @param executor
       * @return
       */
-    override def exists(executor: Executor): Boolean = {
+    override def exists(executor: Executor): Trilean = {
         require(executor != null)
 
         relationInstance.exists(executor)

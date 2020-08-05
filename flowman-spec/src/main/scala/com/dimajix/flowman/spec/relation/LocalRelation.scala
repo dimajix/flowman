@@ -27,6 +27,7 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -182,7 +183,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(executor != null)
         require(partitions != null)
 
-        if (this.partitions != null && partitions.nonEmpty)
+        if (this.partitions.nonEmpty)
             cleanPartitionedFiles(partitions)
         else
             cleanUnpartitionedFiles()
@@ -198,7 +199,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     }
 
     private def cleanUnpartitionedFiles() : Unit = {
-        collector.delete()
+        collector.truncate()
     }
 
     /**
@@ -206,10 +207,39 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         new File(localDirectory).exists()
+    }
+
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        requireValidPartitionKeys(partition)
+
+        if(this.partitions.isEmpty) {
+            val outputPath  = collector.resolve()
+            val file = new File(outputPath.toUri)
+            file.exists()
+        }
+        else {
+            val partitionSpec = PartitionSchema(partitions).spec(partition)
+            collector.map(partitionSpec) { (fs,path) =>
+                Option(fs.globStatus(path)).exists(_.nonEmpty)
+            }
+        }
     }
 
     /**

@@ -20,14 +20,11 @@ import java.io.FileNotFoundException
 import java.io.StringWriter
 
 import scala.math.Ordering
-import scala.util.Try
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
@@ -131,6 +128,9 @@ case class FileCollector(
     private lazy val templateEngine = Velocity.newEngine()
     private lazy val templateContext = Velocity.newContext()
 
+    def resolve() : Path = {
+        resolve(Seq())
+    }
     def resolve(partition:PartitionSpec) : Path = {
         resolve(partition.toSeq)
     }
@@ -157,7 +157,7 @@ case class FileCollector(
       * @param partitions
       * @return
       */
-    def collect(partitions:Iterable[PartitionSpec]) : Seq[Path] = {
+    def collect(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
         requirePathAndPattern()
 
         logger.debug(s"Collecting files in location ${path} with pattern '${pattern.get}'")
@@ -205,17 +205,27 @@ case class FileCollector(
     }
 
     /**
+     * Deletes files from the configured directory. Does not perform partition resolution
+     *
+     * @return
+     */
+    def truncate() : Unit = {
+        logger.info(s"Deleting files in location ${path}, for all partitions ignoring any pattern")
+        foreach(truncatePath _)
+    }
+
+    /**
       * FlatMaps all partitions using the given function
       * @param partitions
       * @param fn
       * @tparam T
       * @return
       */
-    def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Seq[T] = {
+    def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Iterable[T] = {
         requirePathAndPattern()
 
         val fs = path.getFileSystem(hadoopConf)
-        partitions.flatMap(p => fn(fs, resolve(p))).toSeq
+        partitions.flatMap(p => fn(fs, resolve(p)))
     }
 
     /**
@@ -225,11 +235,11 @@ case class FileCollector(
       * @tparam T
       * @return
       */
-    def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Seq[T] = {
+    def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Iterable[T] = {
         requirePathAndPattern()
 
         val fs = path.getFileSystem(hadoopConf)
-        partitions.map(p => fn(fs, resolve(p))).toSeq
+        partitions.map(p => fn(fs, resolve(p)))
     }
 
     def map[T](partition:PartitionSpec)(fn:(HadoopFileSystem,Path) => T) : T = {
@@ -243,8 +253,7 @@ case class FileCollector(
         requirePath()
 
         val fs = path.getFileSystem(hadoopConf)
-        val curPath:Path = if (pattern.exists(_.nonEmpty)) new Path(path, pattern.get) else path
-        fn(fs,curPath)
+        fn(fs,path)
     }
 
     def foreach(partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Unit) : Unit = {
@@ -255,16 +264,28 @@ case class FileCollector(
         map(fn)
     }
 
-    private def deletePath(fs:HadoopFileSystem, path:Path) : Unit = {
+    private def truncatePath(fs:HadoopFileSystem, path:Path) : Unit = {
         val isDirectory = try fs.getFileStatus(path).isDirectory catch { case _:FileNotFoundException => false }
 
         if (isDirectory) {
+            logger.info(s"Truncating directory '$path'")
+            val files = try fs.listStatus(path) catch { case _:FileNotFoundException => null }
+            if (files != null)
+                files.foreach(f => fs.delete(f.getPath, true))
+        }
+        else {
+            deletePath(fs, path)
+        }
+    }
+
+    private def deletePath(fs:HadoopFileSystem, path:Path) : Unit = {
+        if (!isGlobPath(path)) {
           logger.info(s"Deleting directory '$path'")
           fs.delete(path, true)
         }
         else {
           logger.info(s"Deleting file(s) '$path'")
-          val files = fs.globStatus(path)
+          val files = try fs.globStatus(path) catch { case _:FileNotFoundException => null }
           if (files != null)
             files.foreach(f => fs.delete(f.getPath, true))
         }
@@ -272,17 +293,8 @@ case class FileCollector(
 
 
     private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
-        def isGlobPath(pattern: Path): Boolean = {
-            pattern.toString.exists("{}[]*?\\".toSet.contains)
-        }
-        def globPath(pattern: Path): Seq[Path] = {
-            Option(fs.globStatus(pattern)).map { statuses =>
-                statuses.map(_.getPath.makeQualified(fs.getUri, fs.getWorkingDirectory)).toSeq
-            }.getOrElse(Seq.empty[Path])
-        }
-
         if (isGlobPath(path)) {
-            globPath(path)
+            globPath(fs, path)
         }
         else {
             if (fs.exists(path))
@@ -290,6 +302,15 @@ case class FileCollector(
             else
                 Seq()
         }
+    }
+
+    private def isGlobPath(pattern: Path): Boolean = {
+        pattern.toString.exists("{}[]*?\\".toSet.contains)
+    }
+    private def globPath(fs:HadoopFileSystem, pattern: Path): Seq[Path] = {
+        Option(fs.globStatus(pattern)).map { statuses =>
+            statuses.map(_.getPath.makeQualified(fs.getUri, fs.getWorkingDirectory)).toSeq
+        }.getOrElse(Seq.empty[Path])
     }
 
     private def requirePathAndPattern() : Unit = {

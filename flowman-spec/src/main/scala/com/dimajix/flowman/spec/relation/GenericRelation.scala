@@ -24,6 +24,8 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -106,10 +108,23 @@ case class GenericRelation(
      * @param executor
      * @return
      */
-    override def exists(executor:Executor) : Boolean = true
+    override def exists(executor:Executor) : Trilean = Unknown
+
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
 
     /**
      * This method will create the given directory as specified in "location"
+     *
      * @param executor
      */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {}

@@ -34,6 +34,9 @@ object MySQLDialect extends BaseDialect {
 
 class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     override def firstRow(table: TableIdentifier, condition:String) : String = {
-        s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
+        if (condition.isEmpty)
+            s"SELECT * FROM ${dialect.quote(table)} FETCH FIRST ROW ONLY"
+        else
+            s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
     }
 }

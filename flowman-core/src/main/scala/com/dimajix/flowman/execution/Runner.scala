@@ -23,6 +23,7 @@ import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
 import com.dimajix.flowman.execution.Runner.RunnerJobToken
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetState
@@ -205,7 +206,11 @@ class Runner(
         recordTarget(instance, phase, jobToken) {
             // First checkJob if execution is really required
             if (present && !force) {
-                logger.info("Everything up to date, skipping execution")
+                logger.info(s"Target ${target.identifier} up to date for phase $phase according to state store, skipping execution")
+                Status.SKIPPED
+            }
+            else if (!force && target.dirty(executor, phase) == No) {
+                logger.info(s"Target ${target.identifier } not dirty in phase $phase, skipping execution")
                 Status.SKIPPED
             }
             else {

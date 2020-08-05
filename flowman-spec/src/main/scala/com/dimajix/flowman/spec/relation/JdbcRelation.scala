@@ -31,6 +31,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -238,7 +239,7 @@ case class JdbcRelation(
       * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         withConnection{ (con,options) =>
@@ -246,9 +247,33 @@ case class JdbcRelation(
         }
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        withConnection{ (con,options) =>
+            val dialect = SqlDialects.get(options.url)
+            val condition = partitionCondition(dialect, partition)
+
+            JdbcUtils.tableExists(con, tableIdentifier, options) &&
+                !JdbcUtils.emptyResult(con, tableIdentifier, condition, options)
+        }
+    }
+
     /**
       * This method will physically create the corresponding relation in the target JDBC database.
-      * @param executor
+     *
+     * @param executor
       */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)

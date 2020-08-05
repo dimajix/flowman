@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -98,23 +101,44 @@ class ProvidedRelation(
         throw new UnsupportedOperationException(s"Truncating provided table '$table' not supported in relation '$identifier'")
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        executor.spark.catalog.tableExists(table)
+    }
+
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+     *
+     * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         executor.spark.catalog.tableExists(table)
     }
 
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
-        if (!ifNotExists)
+        if (!ifNotExists && exists(executor) == No)
             throw new UnsupportedOperationException(s"Cannot create provided table '$table' in relation '$identifier'")
     }
 
-    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {}
+    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
+        if (!ifExists && exists(executor) == Yes)
+            throw new UnsupportedOperationException(s"Cannot destroy provided table '$table' in relation '$identifier'")
+    }
 
     override def migrate(executor: Executor): Unit = {}
 }

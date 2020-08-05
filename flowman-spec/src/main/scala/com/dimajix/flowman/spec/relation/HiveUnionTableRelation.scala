@@ -25,6 +25,10 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Executor
@@ -119,7 +123,7 @@ case class HiveUnionTableRelation(
     )
 
     private def viewRelationFromSql(sql:String) : HiveViewRelation = {
-        new HiveViewRelation(
+        HiveViewRelation(
             instanceProperties,
             viewDatabase,
             view,
@@ -207,6 +211,8 @@ case class HiveUnionTableRelation(
     override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
         require(executor != null)
 
+        requireAllPartitionKeys(partition)
+
         val catalog = executor.catalog
         val partitionSchema = PartitionSchema(this.partitions)
         val partitionSpec = partitionSchema.spec(partition)
@@ -227,7 +233,7 @@ case class HiveUnionTableRelation(
 
         // 3. Drop  partition from all other tables
         allTables.filter(_ != table).foreach { table =>
-            catalog.dropPartition(table, partitionSchema.spec(partition), ignoreIfNotExists=true)
+            catalog.dropPartition(table, partitionSpec, ignoreIfNotExists=true)
         }
 
         // 4. Write to that table
@@ -243,6 +249,7 @@ case class HiveUnionTableRelation(
       */
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
+        require(partitions != null)
 
         logger.info(s"Truncating Hive union relation '$identifier' partition $partitions")
 
@@ -253,13 +260,48 @@ case class HiveUnionTableRelation(
             }
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        requireAllPartitionKeys(partition)
+
+        val catalog = executor.catalog
+
+        if (partition.isEmpty) {
+            if (catalog.tableExists(viewIdentifier))
+                Unknown
+            else
+                No
+        }
+        else {
+            val partitionSchema = PartitionSchema(this.partitions)
+            val partitionSpec = partitionSchema.spec(partition)
+
+            catalog.tableExists(viewIdentifier) &&
+                listTables(executor).exists { table =>
+                    catalog.partitionExists(table, partitionSpec)
+                }
+        }
+    }
+
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
       *
       * @param executor
       * @return
       */
-    override def exists(executor: Executor): Boolean = {
+    override def exists(executor: Executor): Trilean = {
         require(executor != null)
 
         val catalog = executor.catalog
@@ -275,7 +317,7 @@ case class HiveUnionTableRelation(
     override def create(executor: Executor, ifNotExists: Boolean): Unit = {
         require(executor != null)
 
-        if (!ifNotExists || !exists(executor)) {
+        if (!ifNotExists || exists(executor) == No) {
             logger.info(s"Creating Hive union relation '$identifier'")
             // Create first table using current schema
             val hiveTableRelation = tableRelation(1)
@@ -299,7 +341,7 @@ case class HiveUnionTableRelation(
     override def destroy(executor: Executor, ifExists: Boolean): Unit = {
         require(executor != null)
 
-        if (!ifExists || exists(executor)) {
+        if (!ifExists || exists(executor) == Yes) {
             val catalog = executor.catalog
 
             // Destroy view

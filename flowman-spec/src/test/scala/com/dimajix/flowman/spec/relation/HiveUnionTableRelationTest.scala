@@ -32,6 +32,9 @@ import org.apache.spark.sql.types.TimestampType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Unknown
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Module
@@ -84,7 +87,11 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
                 Nil)
 
         // == Create ===================================================================
+        relation.exists(executor) should be (No)
+        relation.exists(executor, Map()) should be (No)
         relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.exists(executor, Map()) should be (Unknown)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
 
@@ -137,12 +144,21 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         ))
         val df = spark.createDataFrame(rdd, table.schema)
         relation.write(executor, df, Map())
+        relation.exists(executor) should be (Yes)
+        relation.exists(executor, Map()) should be (Unknown)
 
         // == Read ===================================================================
         checkAnswer(relation.read(executor, None), df.collect())
 
+        // == Truncate ===================================================================
+        relation.truncate(executor)
+        relation.exists(executor) should be (Yes)
+        relation.exists(executor, Map()) should be (Unknown)
+
         // == Destroy ===================================================================
         relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.exists(executor, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
 
@@ -271,7 +287,12 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
             Nil)
 
         // == Create ===================================================================
+        relation.exists(executor) should be (No)
+        relation.exists(executor, Map("partition_col" -> SingleValue("x"))) should be (No)
         relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.exists(executor, Map("partition_col" -> SingleValue("x"))) should be (No)
+
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
@@ -327,6 +348,9 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         ))
         val df = spark.createDataFrame(rdd, table.dataSchema)
         relation.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
+        relation.exists(executor) should be (Yes)
+        relation.exists(executor, Map("partition_col" -> SingleValue("part_1"))) should be (Yes)
+        relation.exists(executor, Map("partition_col" -> SingleValue("part_2"))) should be (No)
 
         // == Read ===================================================================
         val rows = Seq(
@@ -336,8 +360,15 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         checkAnswer(relation.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows)
         checkAnswer(relation.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), Seq())
 
+        // == Truncate ===================================================================
+        relation.truncate(executor, Map("partition_col" -> SingleValue("part_1")))
+        relation.exists(executor) should be (Yes)
+        relation.exists(executor, Map("partition_col" -> SingleValue("part_1"))) should be (No)
+
         // == Destroy ===================================================================
         relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.exists(executor, Map("partition_col" -> SingleValue("part_1"))) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
     })

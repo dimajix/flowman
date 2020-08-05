@@ -18,6 +18,9 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -46,6 +49,20 @@ case class BlackholeTarget(
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
+        }
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase) : Trilean = {
+        phase match {
+            case Phase.BUILD => Yes
+            case _ => No
         }
     }
 

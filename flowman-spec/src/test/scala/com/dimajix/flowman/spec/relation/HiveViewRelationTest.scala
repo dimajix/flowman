@@ -81,15 +81,15 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
     relation.resources() should be (Set())
 
     relation.exists(executor) should be (No)
-    relation.exists(executor, Map()) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     relation.create(executor)
     relation.exists(executor) should be (Yes)
-    relation.exists(executor, Map()) should be (Yes)
+    relation.loaded(executor, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
     relation.destroy(executor)
     relation.exists(executor) should be (No)
-    relation.exists(executor, Map()) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
     context.getRelation(RelationIdentifier("t0")).destroy(executor)
@@ -168,17 +168,17 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
     relation.resources() should be (Set())
 
     relation.exists(executor) should be (No)
-    relation.exists(executor, Map()) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     relation.create(executor)
     relation.exists(executor) should be (Yes)
-    relation.exists(executor, Map()) should be (Yes)
+    relation.loaded(executor, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
     //session.catalog.getTable(TableIdentifier("v0", Some("default"))).viewText.foreach(println)
 
     relation.destroy(executor)
     relation.exists(executor) should be (No)
-    relation.exists(executor, Map()) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
     context.getRelation(RelationIdentifier("t0")).destroy(executor)

@@ -71,7 +71,7 @@ case class RelationDataset(
       */
     override def exists(executor: Executor): Trilean = {
         val instance = context.getRelation(relation)
-        instance.exists(executor, partition)
+        instance.loaded(executor, partition)
     }
 
     /**

@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.spec.relation
 
+import java.io.FileNotFoundException
 import java.util.Locale
 
+import scala.util.Try
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
@@ -40,6 +44,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.IncompatibleSchemaException
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -270,7 +275,7 @@ case class HiveTableRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
         require(executor != null)
         require(partition != null)
 
@@ -285,10 +290,14 @@ case class HiveTableRelation(
         }
         else {
             // Since we do not know for an unpartitioned table if it contains data, we simply return "Unknown"
-            if (catalog.tableExists(tableIdentifier))
-                Unknown
-            else
+            if (catalog.tableExists(tableIdentifier)) {
+                val location = catalog.getTableLocation(tableIdentifier)
+                val fs = location.getFileSystem(executor.hadoopConf)
+                FileUtils.isValidData(fs, location)
+            }
+            else {
                 No
+            }
         }
     }
 

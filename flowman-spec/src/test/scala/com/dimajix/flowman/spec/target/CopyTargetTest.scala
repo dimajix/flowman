@@ -22,6 +22,8 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
@@ -115,12 +117,9 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val target = context.getTarget(TargetIdentifier("main"))
         target should not be (null)
-        target.execute(executor, Phase.BUILD)
-        targetFilename.exists() should be (true)
-        targetFilename.isFile() should be (true)
 
         target.provides(Phase.CREATE) should be(Set())
-        target.provides(Phase.BUILD) should be(Set(ResourceIdentifier.ofLocal(new File(tempDir, "/copy-relation-output.csv"))))
+        target.provides(Phase.BUILD) should be(Set(ResourceIdentifier.ofLocal(new File(tempDir, "copy-relation-output.csv"))))
         target.provides(Phase.VERIFY) should be(Set())
         target.provides(Phase.TRUNCATE) should be(Set())
         target.provides(Phase.DESTROY) should be(Set())
@@ -130,5 +129,27 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         target.requires(Phase.VERIFY) should be(Set())
         target.requires(Phase.TRUNCATE) should be(Set())
         target.requires(Phase.DESTROY) should be(Set())
+
+        // == BUILD ===================================================================
+        target.dirty(executor, Phase.BUILD) should be (Yes)
+        target.execute(executor, Phase.BUILD)
+        target.dirty(executor, Phase.BUILD) should be (No)
+        targetFilename.exists() should be (true)
+        targetFilename.isFile() should be (true)
+
+        // == VERIFY ===================================================================
+        target.dirty(executor, Phase.VERIFY) should be (Yes)
+        target.execute(executor, Phase.VERIFY)
+        target.dirty(executor, Phase.VERIFY) should be (Yes)
+
+        // == TRUNCATE ===================================================================
+        target.dirty(executor, Phase.TRUNCATE) should be (Yes)
+        target.execute(executor, Phase.TRUNCATE)
+        target.dirty(executor, Phase.TRUNCATE) should be (No)
+
+        // == DESTROY ===================================================================
+        target.dirty(executor, Phase.DESTROY) should be (No)
+        target.execute(executor, Phase.DESTROY)
+        target.dirty(executor, Phase.DESTROY) should be (No)
     }
 }

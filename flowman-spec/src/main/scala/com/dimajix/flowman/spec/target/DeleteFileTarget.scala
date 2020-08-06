@@ -22,9 +22,11 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Target
 
@@ -40,7 +42,7 @@ case class DeleteFileTarget(
      * Returns all phases which are implemented by this target in the execute method
      * @return
      */
-    override def phases : Set[Phase] = Set(Phase.BUILD)
+    override def phases : Set[Phase] = Set(Phase.BUILD, Phase.VERIFY)
 
     /**
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
@@ -55,7 +57,8 @@ case class DeleteFileTarget(
             case Phase.BUILD =>
                 val fs = executor.fs
                 val file = fs.file(path)
-                file.exists()
+                !file.exists()
+            case Phase.VERIFY => Yes
             case _ => No
         }
     }
@@ -70,6 +73,21 @@ case class DeleteFileTarget(
         val file = fs.file(path)
         logger.info(s"Deleting remote file '$file' (recursive=$recursive)")
         file.delete(recursive)
+    }
+
+    /**
+     * Performs a verification of the build step or possibly other checks.
+     *
+     * @param executor
+     */
+    override def verify(executor: Executor) : Unit = {
+        require(executor != null)
+
+        val file = executor.fs.file(path)
+        if (file.exists()) {
+            logger.error(s"Verification of target '$identifier' failed - location '$path' exists")
+            throw new VerificationFailedException(identifier)
+        }
     }
 }
 

@@ -178,7 +178,9 @@ trait Relation extends Instance {
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
-      * the relation itself, not to the data or a specific partition.
+      * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
+     *  [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
+ *
       * @param executor
       * @return
       */
@@ -192,7 +194,7 @@ trait Relation extends Instance {
      * @param partition
      * @return
      */
-    def exists(executor:Executor, partition:Map[String,SingleValue] = Map()) : Trilean
+    def loaded(executor:Executor, partition:Map[String,SingleValue] = Map()) : Trilean
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The

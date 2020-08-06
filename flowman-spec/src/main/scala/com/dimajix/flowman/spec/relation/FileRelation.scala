@@ -35,6 +35,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -187,16 +188,15 @@ case class FileRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
         require(executor != null)
         require(partition != null)
 
         requireValidPartitionKeys(partition)
 
         def checkPartition(path:Path) = {
-            val success = new Path(path, "_SUCCESS")
-            val fs = success.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
-            fs.exists(success)
+            val fs = path.getFileSystem(executor.hadoopConf)
+            FileUtils.isValidData(fs, path)
         }
 
         if (this.partitions.nonEmpty) {

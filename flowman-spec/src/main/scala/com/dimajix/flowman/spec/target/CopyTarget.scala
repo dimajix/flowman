@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -94,6 +95,8 @@ case class CopyTarget(
     override def dirty(executor: Executor, phase: Phase): Trilean = {
         phase match {
             case Phase.BUILD => !target.exists(executor)
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE|Phase.DESTROY => target.exists(executor)
             case _ => No
         }
     }

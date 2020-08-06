@@ -216,7 +216,7 @@ case class KafkaRelation(
      * Verify if the corresponding physical backend of this relation already exists
      * @param executor
      */
-    override def exists(executor: Executor, partition:Map[String,SingleValue]): Trilean = Unknown
+    override def loaded(executor: Executor, partition:Map[String,SingleValue]): Trilean = Unknown
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The

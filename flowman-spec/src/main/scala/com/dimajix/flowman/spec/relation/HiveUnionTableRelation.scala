@@ -270,15 +270,15 @@ case class HiveUnionTableRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
         require(executor != null)
         require(partition != null)
 
-        requireAllPartitionKeys(partition)
+        requireValidPartitionKeys(partition)
 
         val catalog = executor.catalog
 
-        if (partition.isEmpty) {
+        if (this.partitions.isEmpty) {
             if (catalog.tableExists(viewIdentifier))
                 Unknown
             else

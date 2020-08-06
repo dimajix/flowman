@@ -72,10 +72,10 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
         relation.exists(executor) should be (No)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         relation.create(executor)
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         outputPath.toFile.exists() should be (true)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
 
@@ -89,20 +89,20 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
         outputPath.resolve("data.csv").toFile.exists() should be (true)
 
         // ===== Truncate =============================================================================================
         relation.truncate(executor)
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         outputPath.toFile.exists() should be (true)
 
         // ===== Destroy =============================================================================================
         relation.destroy(executor)
         relation.exists(executor) should be (No)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         outputPath.toFile.exists() should be (false)
     }
 
@@ -137,10 +137,10 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         // ===== Create =============================================================================================
         relation.exists(executor) should be (No)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         relation.create(executor)
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         new File(tempDir, "csv/test").exists() should be (true)
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
 
@@ -154,13 +154,13 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
         relation.write(executor, df, Map(), OutputMode.OVERWRITE)
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         // ===== Destroy =============================================================================================
         relation.destroy(executor)
         relation.exists(executor) should be (No)
-        relation.exists(executor, Map()) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
@@ -375,11 +375,11 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         // ===== Truncate =============================================================================================
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (Yes)
-        relation.exists(executor, Map("p2" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (Yes)
         relation.truncate(executor, Map("p2" -> SingleValue("1")))
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map("p2" -> SingleValue("1"))) should be (No)
+        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
         val df5 = relation.read(executor, None, Map())
         df5.as[String].collect().sorted should be (Seq(
             ("p1=1/p2=2/121.txt"),
@@ -390,20 +390,20 @@ class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with 
 
         relation.truncate(executor, Map("p2" -> SingleValue("1")))
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (Yes)
-        relation.exists(executor, Map("p2" -> SingleValue("1"))) should be (No)
-        relation.exists(executor, Map("p2" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
+        relation.loaded(executor, Map("p2" -> SingleValue("2"))) should be (Yes)
 
         relation.truncate(executor, Map())
         relation.exists(executor) should be (Yes)
-        relation.exists(executor, Map()) should be (No)
-        relation.exists(executor, Map("p2" -> SingleValue("1"))) should be (No)
-        relation.exists(executor, Map("p2" -> SingleValue("2"))) should be (No)
+        relation.loaded(executor, Map()) should be (No)
+        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
+        relation.loaded(executor, Map("p2" -> SingleValue("2"))) should be (No)
 
         // ===== Destroy =============================================================================================
         relation.destroy(executor)
         relation.exists(executor) should be (No)
-        relation.exists(executor, Map()) should be (No)
-        relation.exists(executor, Map("p2" -> SingleValue("2"))) should be (No)
+        relation.loaded(executor, Map()) should be (No)
+        relation.loaded(executor, Map("p2" -> SingleValue("2"))) should be (No)
     }
 }

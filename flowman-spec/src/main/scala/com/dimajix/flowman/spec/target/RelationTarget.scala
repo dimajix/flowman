@@ -144,11 +144,11 @@ case class RelationTarget(
                 if (mode == OutputMode.APPEND) {
                     Yes
                 } else {
-                    !rel.exists(executor, partition)
+                    !rel.loaded(executor, partition)
                 }
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
-                rel.exists(executor, partition)
+                rel.loaded(executor, partition)
             case Phase.DESTROY =>
                 rel.exists(executor)
         }
@@ -219,7 +219,7 @@ case class RelationTarget(
 
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
-        if (rel.exists(executor, partition) == No) {
+        if (rel.loaded(executor, partition) == No) {
             logger.error(s"Verification of target '$identifier' failed - relation '$relation' does not exist")
             throw new VerificationFailedException(identifier)
         }

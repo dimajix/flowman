@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -83,6 +84,11 @@ case class CopyFileTarget(
                 val fs = executor.fs
                 val dst = fs.file(target)
                 !dst.exists()
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE|Phase.DESTROY =>
+                val fs = executor.fs
+                val dst = fs.file(target)
+                dst.exists()
             case _ => No
         }
     }

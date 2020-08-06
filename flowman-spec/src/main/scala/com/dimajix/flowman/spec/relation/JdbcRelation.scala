@@ -257,7 +257,7 @@ case class JdbcRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
         require(executor != null)
         require(partition != null)
 

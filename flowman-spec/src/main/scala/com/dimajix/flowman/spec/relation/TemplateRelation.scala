@@ -152,11 +152,11 @@ case class TemplateRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
         require(executor != null)
         require(partition != null)
 
-        relationInstance.exists(executor, partition)
+        relationInstance.loaded(executor, partition)
     }
 
     /**

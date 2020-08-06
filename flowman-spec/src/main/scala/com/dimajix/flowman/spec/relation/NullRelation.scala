@@ -117,7 +117,7 @@ case class NullRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage

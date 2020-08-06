@@ -120,7 +120,7 @@ case class GenericRelation(
      * @param partition
      * @return
      */
-    override def exists(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
 
     /**
      * This method will create the given directory as specified in "location"

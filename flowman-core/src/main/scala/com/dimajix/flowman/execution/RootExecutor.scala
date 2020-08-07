@@ -20,12 +20,19 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class RootExecutor(session:Session) extends CachingExecutor(null, true) {
+class RootExecutor(session:Session) extends CachingExecutor(None, true) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    def flowmanConf : FlowmanConf = session.flowmanConf
 
     /**
      * Returns the MetricRegistry of this executor

@@ -57,6 +57,11 @@ object FlowmanConf {
         .fileConf
         .createOptional
 
+    val EXECUTION_TARGET_FORCE_DIRTY = buildConf("flowman.execution.target.forceDirty")
+        .doc("Consider all targets as being 'dirty' without checking")
+        .booleanConf
+        .createWithDefault(false)
+
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")
         .stringConf

@@ -19,18 +19,29 @@ package com.dimajix.flowman.execution
 import java.nio.file.Files
 import java.nio.file.Path
 
+import scala.collection.immutable.Stream.Empty.force
+import scala.util.Random
+
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.isA
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY
 import com.dimajix.flowman.history.JdbcStateStore
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
@@ -201,6 +212,73 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
         runner.executeJob(job, Seq(Phase.CREATE)) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.CREATE), force=false) should be (Status.SKIPPED)
         runner.executeJob(job, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
+    }
+
+    it should "correctly handle non-dirty targets" in {
+        def genTarget(name:String, dirty:Trilean) : Context => Target = (ctx:Context) => {
+            val instance = TargetInstance("default", "default", name)
+            val target = stub[Target]
+            (target.before _).when().returns(Seq())
+            (target.after _).when().returns(Seq())
+            (target.phases _).when().returns(Lifecycle.ALL.toSet)
+            (target.metadata _).when().returns(Metadata(name=name, kind="target", category="target"))
+            (target.requires _).when(*).returns(Set())
+            (target.provides _).when(*).returns(Set())
+            (target.identifier _).when().returns(TargetIdentifier(name))
+            (target.instance _).when().returns(instance)
+            (target.dirty _).when(*, Phase.CREATE).returns(dirty)
+            target
+        }
+        def genJob(session:Session, target:String) : Job = {
+            Job.builder(session.getContext(session.project.get))
+                .setName("job-" + Random.nextLong())
+                .addTarget(TargetIdentifier(target))
+                .build()
+        }
+
+        val db = tempDir.resolve("mydb")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val ns = Namespace(
+            name = "default",
+            history = Some(JdbcStateStore(connection))
+        )
+        val project = Project(
+            name = "default",
+            targets = Map(
+                "dirty0" -> genTarget("dirty0", Yes),
+                "clean0" -> genTarget("clean0", No),
+                "dirty1" -> genTarget("dirty1", Yes),
+                "clean1" -> genTarget("clean1", No)
+            )
+        )
+
+        {
+            val session = Session.builder()
+                .withNamespace(ns)
+                .withProject(project)
+                .build()
+            val runner = session.runner
+            runner.executeJob(genJob(session, "clean0"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "clean0"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
+            runner.executeJob(genJob(session, "clean0"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "dirty0"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
+            runner.executeJob(genJob(session, "dirty0"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "dirty0"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
+        }
+        {
+            val session = Session.builder()
+                .withNamespace(ns)
+                .withConfig(EXECUTION_TARGET_FORCE_DIRTY.key, "true")
+                .withProject(project)
+                .build()
+            val runner = session.runner
+            runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
+            runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
+            runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
+            runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
+        }
     }
 
     it should "catch exceptions" in {

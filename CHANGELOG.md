@@ -4,6 +4,8 @@
 * Improve setup of logging
 * Shade Velocity for better interoperability with Spark 3
 * Add new web hook facility in namespaces and jobs
+* Existing targets will not be overwritten anymore by default. Either use the `--force` command line option, or set 
+the configuration property `flowman.execution.target.forceDirty` to `true` for the old behaviour.
 
 
 # Version 0.13.1 - 2020-07-14

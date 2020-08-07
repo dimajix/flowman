@@ -45,7 +45,7 @@ and contents of each section are explained below
 
 ### `config` Section
 
-The `config` section contains a list of Spark configuration properties, for example
+The `config` section contains a list of Hadoop, Spark or Flowman configuration properties, for example
 
 ```
 config:
@@ -64,6 +64,7 @@ evaluated in the order they are specified within a single file.
 All Spark config properties are passed to Spark when the Spark session is created. As you can 
 also see, you can use [*expression evaluation*](expressions.md) in the values. It is not possible to use 
 expressions for the keys 
+
 
 ### `environment` Section
 

@@ -27,6 +27,7 @@ and schema information) in a single place managed by a single program.
 
 ### Installation
 * [Flowman Installation](installation.md): Installation Guide
+* [Configuration](config.md): Configuration settings
 
 
 ### CLI Documentation

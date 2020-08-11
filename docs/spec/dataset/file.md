@@ -1,4 +1,4 @@
-# Flowman File Dataset
+# File Dataset
 
 The *file dataset* can be used for reading data from a shared file system
 

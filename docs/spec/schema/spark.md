@@ -1,4 +1,4 @@
-# Flowman Spark Schema
+# Spark Schema
 
 The *Spark schema* refers to a schema produced by Apache Spark.
 

@@ -1,4 +1,4 @@
-# Flowman Mapping Dataset
+# Mapping Dataset
 
 A *mapping dataset* represents the records as produced by a named mapping. Note that this dataset only supports read
 operations, since mapping cannot perform any write operations

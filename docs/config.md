@@ -14,3 +14,10 @@ specification (see [module documentation](spec/module.md)) or in the naamespace 
 - `flowman.plugin.directory` *(type: string)*
 - `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)*
 - `flowman.default.target.outputMode` *(type: string)* *(default:OVERWRITE)*
+Possible values are 
+  - *`OVERWRITE`*: Will overwrite existing data. Only supported in batch output.
+  - *`APPEND`*: Will append new records to existing data
+  - *`UPDATE`*: Will update existing data. Only supported in streaming output.
+  - *`IGNORE_IF_EXISTS`*: Silently skips the output if it already exists.
+  - *`ERROR_IF_EXISTS`*: Throws an error if the output already exists
+    

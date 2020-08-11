@@ -4,7 +4,7 @@ The `project` mapping performs a *projection* of an input mapping onto a specifi
 This corresponds to a simple SQL `SELECT` with a series of simple column names.
 
 ## Example
-```
+```yaml
 mappings:
   partial_facts:
     kind: project
@@ -34,6 +34,15 @@ Cache mode for the results of this mapping. Supported values are
 Specifies the name of the input mapping to be filtered.
 
 * `columns` **(mandatory)** *(type: list:string)*:
+Specifies the list of columns to be present in the output. The list can either be simply a list of column names or
+they can be more complex column descriptors
+```yaml
+columns:
+ - name: name_of_output_column
+   column: name_of_incoming_column
+   type: string
+```
+You can also mix both column types in a single `project` mapping.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
 An optional SQL filter expression that is applied *after* projection.

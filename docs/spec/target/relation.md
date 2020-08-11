@@ -13,6 +13,8 @@ targets:
     input: stations-mapping
     target: stations-relation
     mode: overwrite
+    parallelism: 32
+    rebalance: true
     partition:
       processing_date: "${processing_date}"
 ```

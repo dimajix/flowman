@@ -26,15 +26,15 @@ executed as specified on the command line (more on that in [Flowman CLI](../cli/
 
 Flowman has a couple of different main entities, which are documented seperately:
 
-* [Mappings](mapping/index.md): Documentation of available data transformations
-* [Relations](relation/index.md): Documentation of available data sources and sinks
-* [Targets](target/index.md): Documentation of available build targets
-* [Schema](schema/index.md): Documentation of available schema descriptions
-* [Connections](connection/index.md): Documentation of connection specifications
-* [Jobs](job/index.md): Documentation of creating jobs
-* [Datasets](dataset/index.md): Documentation of using datasets
-* [Metrics](metric/index.md): Documentation of publishing metrics
-* [Hooks](hooks/index.md): Documentation of hooks
+* [Mappings](mapping/index.md): Data transformations
+* [Relations](relation/index.md): Data sources and sinks
+* [Targets](target/index.md): Build targets
+* [Schema](schema/index.md): Schema descriptions
+* [Connections](connection/index.md): Connection specifications
+* [Jobs](job/index.md): Build jobs
+* [Datasets](dataset/index.md): Datasets
+* [Metrics](metric/index.md): Publishing metrics
+* [Hooks](hooks/index.md): Execution hooks
 
 
 ## Misc Documentation

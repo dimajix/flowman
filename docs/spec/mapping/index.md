@@ -3,15 +3,15 @@
 Flowman uses the notion of `mappings` in order to specify the data flow and all data 
 transformations. A mapping somewhat corresponds to a temporary view in the SQL world: You 
 give a name to a mapping and specify its logic. Afterwards it is available for subsequent
-operations like `SELECT`. Liek a temporary view, a mapping itself does not persist any data
-and is only valid within a single run of flowman.
+operations like `SELECT`. Like a temporary view, a mapping itself does not persist any data
+and is only valid within a single run of Flowman.
 
 In contrast to a SQL view, there are different types of mappings, each performing different
 operations. Most mappings require other mappings as their input. The most notably exception
 is a `read` mapping, which reads data from a relation (and therefore doesn't have another
 mapping as its input).
 
-Mappings are instantiated lazily by flowman, i.e. the temporary view is created just when it
+Mappings are instantiated lazily by Flowman, i.e. the temporary view is created just when it
 is needed for calculating the desired end result. For example when writing to a sink, Flowman
 automatically determines and recursively resolves all required upstream mappings to provide the
 final result to be written. You do not need to explicitly specify any execution order of 

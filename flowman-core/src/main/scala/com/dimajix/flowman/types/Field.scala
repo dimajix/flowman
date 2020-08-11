@@ -58,7 +58,7 @@ object Field {
   */
 class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
-    @JsonProperty(value="type", required = false) private var _type: FieldType = _
+    @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
     @JsonProperty(value="nullable", required = true) private var _nullable: Boolean = true
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
     @JsonProperty(value="default", required = false) private var _default: Option[String] = None

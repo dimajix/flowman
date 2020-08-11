@@ -2,6 +2,22 @@
 
 ## Example
 ```
+relations:
+  csv_export:
+    kind: file
+    format: "csv"
+    location: "${export_dir}"
+    pattern: "${export_pattern}"
+    options:
+      delimiter: ","
+      quote: "\""
+      escape: "\\"
+      header: "true"
+      compression: "gzip"
+    partitions:
+      - name: datetime
+        type: timestamp
+        granularity: "P1D"
 ```
 
 ## Fields

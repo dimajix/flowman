@@ -5,7 +5,7 @@ still be useful for managing the lifecycle, i.e. for creating, migrating and des
 automatically generate the SQL from other mappings. 
 
 ## Example
-```
+```yaml
 mappings:
   transaction_latest:
     kind: latest

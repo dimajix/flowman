@@ -6,7 +6,7 @@ useful for some test scenarios but probably is not worth much in a real producti
 
 ## Example
 
-```
+```yaml
 targets:
   blackhole:
     kind: blackhole

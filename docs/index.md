@@ -80,4 +80,5 @@ More detail on all these items is described in the following sections:
    spec/metric/index
    spec/hooks/index
    cookbook/index
+   config
 ```

@@ -5,7 +5,7 @@ or other supported types.
 
 ## Example
 
-```
+```yaml
 targets:
   stations:
     kind: copy

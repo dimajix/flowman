@@ -207,7 +207,7 @@ case class FileTarget(
 
 
 class FileTargetSpec extends TargetSpec {
-    @JsonProperty(value = "input", required=true) private var input:String = _
+    @JsonProperty(value="mapping", required=true) private var mapping:String = _
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="format", required=false) private var format:String = "csv"
     @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
@@ -218,7 +218,7 @@ class FileTargetSpec extends TargetSpec {
     override def instantiate(context: Context): FileTarget = {
         FileTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             new Path(context.evaluate(location)),
             context.evaluate(format),
             context.evaluate(options),

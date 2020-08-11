@@ -1,4 +1,4 @@
-# Flowman Target Template
+# Template Target
 
 ## Example
 

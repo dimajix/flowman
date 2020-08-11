@@ -1,4 +1,4 @@
-# Flowman Relation Template
+# Template Relation
 
 ## Example
 

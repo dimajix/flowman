@@ -32,9 +32,8 @@ targets:
 jobs:
     ...
 ```
-Each top level entry may appear at most once in every file, but multiple files can have the 
-same top level entries. This again helps to split up the whole specifications into multiple
-files in order to help organizing your data flow.
+Each top level entry may appear at most once in every file, but multiple files can have the same top level entries. 
+This again helps to split up the whole specifications into multiple files in order to help organizing your data flow.
 
 
 ## Module Sections
@@ -58,27 +57,29 @@ config:
   - spark.hadoop.fs.s3a.proxy.password=
 ```
 
-As you can see, each property has to be specified as `key=value`. Configuration properties are 
-evaluated in the order they are specified within a single file. 
+As you can see, each property has to be specified as `key=value`. Configuration properties are evaluated in the order 
+they are specified within a single file. 
 
-All Spark config properties are passed to Spark when the Spark session is created. As you can 
-also see, you can use [*expression evaluation*](expressions.md) in the values. It is not possible to use 
-expressions for the keys 
+All Spark config properties are passed to Spark when the Spark session is created. As you can also see, you can use 
+[*expression evaluation*](expressions.md) in the values. It is not possible to use expressions for the keys. 
 
 
 ### `environment` Section
 
-The `environment` section contains key-value-pairs which can be accessed via [*expression
-evaluation*](expressions.md) in almost any value definition in the specification files. A
-typical `environment`section may look as follows
+The `environment` section contains key-value-pairs which can be accessed via [*expression evaluation*](expressions.md) 
+in almost any value definition in the specification files. A typical `environment`section may look as follows
 ```
 environment:
   - start_year=2007
   - end_year=2014
   - export_location=hdfs://export/weather-data
 ```
-All values specified in the environment can be overriden either by [profiles](profiles.md) or
-by explicitly setting them as property definitions on the [command line](../cli/flowexec.md)
+All values specified in the environment can be overriden either by [profiles](profiles.md) or by explicitly setting 
+them as property definitions on the [command line](../cli/flowexec.md).
+
+Note the difference between `environment` and `config`. While the first provides user defined variables to be used
+as placeholders in the specification, all entries in `config` impact the execution and are used either directly by
+Flowman or by its underlying libraries like Hadoop or Spark.
 
 
 ### `profiles` Section

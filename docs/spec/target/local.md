@@ -1,4 +1,4 @@
-# Flowman Local Target
+# Local Target
 
 The `local` target writes the output of a mpping into some local files.
 

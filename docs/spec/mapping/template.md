@@ -1,4 +1,4 @@
-# Flowman Template Mapping
+# Template Mapping
 
 A `template` mapping allows to (re-)instantiate another mapping with some environment variables set to different values.
 This allows to create macro-like mappings, which then can be instantiated via the `template` mapping.

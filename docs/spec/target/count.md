@@ -1,4 +1,4 @@
-# Flowman Count Target
+# Count Target
 
 ## Example
 ```

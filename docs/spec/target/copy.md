@@ -1,6 +1,6 @@
-# Flowman Copy Target
+# Copy Target
 
-The copy target can be used to copy contents of one data set to another. A dataset can be 'file', 'mapping', 'relation'
+The `copy` target can be used to copy contents of one data set to another. A dataset can be 'file', 'mapping', 'relation'
 or other supported types.
 
 ## Example

@@ -59,10 +59,20 @@ class InfoCommand extends Command {
             .sortBy(_._1)
             .foreach{ case(k,v) => println(s"    $k=$v") }
 
+        println("Flowman Configuration:")
+        session.flowmanConf.getAll
+            .sortBy(_._1)
+            .foreach{ case(k,v) => println(s"    $k=$v") }
+
         println("Spark Configuration:")
         session.sparkConf.getAll
             .sortBy(_._1)
             .foreach{ case(k,v) => println(s"    $k=$v") }
+
+        println("Hadoop Configuration:")
+        session.hadoopConf.asScala.toList
+            .sortBy(_.getKey)
+            .foreach(kv => println(s"    ${kv.getKey}=${kv.getValue}"))
 
         true
     }

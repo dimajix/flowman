@@ -1,4 +1,4 @@
-# Flowman File Target
+# File Target
 
 A target for writing files into a shared filesystem like HDFS or S3. In most cases you should prefer using a 
 [File Relation](../relation/file.md) together with a [Relation Target](relation.md) instead of using a file target.

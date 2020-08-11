@@ -117,6 +117,11 @@ class FlowmanConf(settings:Map[String,String]) {
         settings.getOrElse(key, defaultValue)
     }
 
+    /** Get all parameters as a list of pairs */
+    def getAll: Array[(String, String)] = {
+        settings.toArray
+    }
+
     /**
      * Return the value of configuration property for the given key. If the key is not set
      * yet, return `defaultValue`. This is useful when `defaultValue` in ConfigEntry is not the

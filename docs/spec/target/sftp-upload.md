@@ -1,6 +1,5 @@
-
-# SFTP Upload Task
-The SFTP upload task is used for uploading data which resides either on the local machine or
+# SFTP Upload Target
+The SFTP upload target is used for uploading data which resides either on the local machine or
 in a Hadoop compatible filesystem (HDFS, S3, ...) to an external SFTP server.
 
 ## Example

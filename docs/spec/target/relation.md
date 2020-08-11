@@ -1,4 +1,4 @@
-# Flowman Relation Target
+# Relation Target
 
 The `relation` target operation probably is the most important and common output operation. It 
 writes the result of a mapping to a relation. The relation then is responsible for specifying

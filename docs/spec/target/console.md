@@ -1,6 +1,6 @@
-# Flowman Console Target
+# Console Target
 
-The *console* target will simply display some records on stdout.
+The `console` target will simply display some records on stdout.
 
 ## Example
 ```yaml

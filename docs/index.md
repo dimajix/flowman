@@ -65,7 +65,6 @@ More detail on all these items is described in the following sections:
    :maxdepth: 1
    :glob:
 
-   introduction
    installation
    lifecycle
    cli/index

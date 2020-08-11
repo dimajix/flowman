@@ -37,7 +37,11 @@ Flowman has a couple of different main entities, which are documented seperately
 * [Hooks](hooks/index.md): Execution hooks
 
 
-## Misc Documentation
-* [Fields](fields.md)
-* [Expressions](expressions.md)
+## Sub Pages
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
+   *
+```

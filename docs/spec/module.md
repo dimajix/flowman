@@ -1,4 +1,4 @@
-# Flowman Module
+# Modules
 
 Flowman YAML specifications can be split up into an arbitrary number of files. From a project
 perspective these files form *modules*, and the collection of all modules create a *project*.
@@ -7,7 +7,7 @@ Modules (either as individual files or as directories) are specified in the
 [project main file](project.md)
 
 Each module supports the following top level entries:
-```
+```yaml
 config:
     ...
     
@@ -46,7 +46,7 @@ and contents of each section are explained below
 
 The `config` section contains a list of Hadoop, Spark or Flowman configuration properties, for example
 
-```
+```yaml
 config:
   - spark.hadoop.fs.s3a.endpoint=s3.eu-central-1.amazonaws.com
   - spark.hadoop.fs.s3a.access.key=$System.getenv('AWS_ACCESS_KEY_ID')
@@ -68,7 +68,7 @@ All Spark config properties are passed to Spark when the Spark session is create
 
 The `environment` section contains key-value-pairs which can be accessed via [*expression evaluation*](expressions.md) 
 in almost any value definition in the specification files. A typical `environment`section may look as follows
-```
+```yaml
 environment:
   - start_year=2007
   - end_year=2014
@@ -90,7 +90,7 @@ TBD.
 ### `relations` Section
 
 The `relations` section simply contains a map of named relations. For example
-```
+```yaml
 relations:
   measurements-raw:
     kind: file
@@ -118,7 +118,7 @@ The list and syntax of available relations is described in detail in the
 
 Similar to `relations` the `connections` section contains a map of named connections. For
 example
-```
+```yaml
 connections:
   my-sftp-server:
     kind: sftp
@@ -139,7 +139,7 @@ documentation.
 
 Again the `mappings` section contains named mappings which describe the data flow and any
 data transformation. For example
-```
+```yaml
 mappings:
   measurements-raw:
     kind: read-relation
@@ -161,7 +161,7 @@ output.
 
 The `targets` section contains a map of named output operations like writing to files, 
 relations or simply dumping the contents of a mapping on the console. For example
-```
+```yaml
 targets:
   measurements-dump:
     kind: dump
@@ -181,7 +181,7 @@ they are used to build complex processing pipelines which may also require addit
 actions like uploading files via SFTP.
 
 A typical job specification may look as follows:
-```
+```yaml
 jobs:
   main:
     description: "Main job"

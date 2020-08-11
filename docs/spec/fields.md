@@ -4,7 +4,7 @@ In various places, Flowman makes use of data type definitions. These are used fo
 data sources and sinks like CSV files but they are also used for describing external tables like Hive 
 
 ## Specifying Fields
-```
+```yaml
 name: id
 type: String
 nullable: false
@@ -17,7 +17,7 @@ format:
 ## Specifying Partition Columns
 In addition to normal schema definitions for CSV files, Flowman also supports the definition of partition columns used
 for organizing all data in different directories (like in Hive, but also raw files on HDFS or S3)
-```
+```yaml
 name: insert_date
 type: date
 granularity: P1D
@@ -31,12 +31,12 @@ example when reading in data from a partitioned source (for example a nested dir
 Flowman needs to now which partition(s) to read. This is also done by specifying values for the types defines above.
 
 ### Single Values
-```
+```yaml
 variable: value
 ```
 
 ### Array Values
-```
+```yaml
 variable: 
  - value_1
  - value_2
@@ -44,7 +44,7 @@ variable:
 
 
 ### Range Values
-```
+```yaml
 variable:
   start: 1 
   end: 10

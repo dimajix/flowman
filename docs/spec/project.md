@@ -10,7 +10,7 @@ the directory is given on the command line.
 
 A typical `project.yml` file looks as follows:
 
-```
+```yaml
 name: "example-project"
 version: "1.0"
 description: "My first example project"

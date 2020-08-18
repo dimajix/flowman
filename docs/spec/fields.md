@@ -18,10 +18,16 @@ format:
 In addition to normal schema definitions for CSV files, Flowman also supports the definition of partition columns used
 for organizing all data in different directories (like in Hive, but also raw files on HDFS or S3)
 ```yaml
-name: insert_date
-type: date
-granularity: P1D
-description: "This is the date of insertion"
+relations:
+  input_data:
+    kind: files
+    location: "${adcount_logdir}"
+    pattern: "${insert_date.format('yyyy/MM/dd')}/*.log"
+    partitions:
+      - name: insert_date
+        type: date
+        granularity: P1D
+        description: "This is the date of insertion"
 ```
 
 ## Specifying Values
@@ -31,22 +37,40 @@ example when reading in data from a partitioned source (for example a nested dir
 Flowman needs to now which partition(s) to read. This is also done by specifying values for the types defines above.
 
 ### Single Values
+The simplest case is to specify a single value.
 ```yaml
-variable: value
+mappings:
+  input_data_raw:
+    kind: read
+    relation: "input_data"
+    partitions:
+      insert_date: "$start_dt"
 ```
 
 ### Array Values
+It is also possible to specify an explicit list of values. Flowman will insert all these values one after the other
+into the variable.
 ```yaml
-variable: 
- - value_1
- - value_2
+mappings:
+  input_data_raw:
+    kind: read
+    relation: "input_data"
+    partitions:
+      insert_date:
+        - "${LocalDate.parse($start_dt)"
+        - "${LocalDate.addDays($end_dt, 1)}"
 ```
 
 
 ### Range Values
 ```yaml
-variable:
-  start: 1 
-  end: 10
-  step: 3 
+mappings:
+  input_data_raw:
+    kind: read
+    relation: "input_data"
+    partitions:
+      insert_date:
+        start: "${LocalDate.addDays($start_dt, -3)"
+        end: "${LocalDate.addDays($end_dt, 7)}"
+        step: "P1D"
 ```

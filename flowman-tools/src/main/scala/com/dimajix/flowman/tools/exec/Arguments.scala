@@ -49,6 +49,8 @@ class Arguments(args:Array[String]) {
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false
+    @Option(name = "--spark-master", usage = "set the master for Spark", metaVar = "<spark_master>")
+    var sparkMaster: String = ""
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark application name", metaVar = "<spark_application_name>")

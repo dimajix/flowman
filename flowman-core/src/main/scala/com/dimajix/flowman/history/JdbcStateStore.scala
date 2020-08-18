@@ -42,8 +42,8 @@ object JdbcStateStore {
     case class Connection(
         url:String,
         driver:String,
-        user:String = "",
-        password:String = "",
+        user:Option[String] = None,
+        password:Option[String] = None,
         properties: Map[String,String] = Map()
     )
 }
@@ -249,12 +249,14 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         // Get Connection
         val derbyPattern = """.*\.derby\..*""".r
         val h2Pattern = """.*\.h2\..*""".r
+        val mariadbPattern = """.*\.mariadb\..*""".r
         val mysqlPattern = """.*\.mysql\..*""".r
         val postgresqlPattern = """.*\.postgresql\..*""".r
         val profile = connection.driver match {
             case derbyPattern() => DerbyProfile
             case h2Pattern() => H2Profile
             case mysqlPattern() => MySQLProfile
+            case mariadbPattern() => MySQLProfile
             case postgresqlPattern() => PostgresProfile
             case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }

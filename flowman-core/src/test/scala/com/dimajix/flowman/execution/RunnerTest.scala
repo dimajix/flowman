@@ -147,7 +147,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
 
     "The JdbcStateStore" should "work with empty jobs" in {
         val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))
@@ -168,7 +168,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
 
     it should "be used in a Session" in {
         val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))
@@ -189,7 +189,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
 
     it should "work with non-empty jobs" in {
         val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))
@@ -237,7 +237,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
         }
 
         val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))
@@ -283,7 +283,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
 
     it should "catch exceptions" in {
         val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))
@@ -303,7 +303,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
 
     it should "support parameters in targets" in {
         val db = tempDir.resolve("mydb")
-        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", "org.apache.derby.jdbc.EmbeddedDriver", "", "")
+        val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))

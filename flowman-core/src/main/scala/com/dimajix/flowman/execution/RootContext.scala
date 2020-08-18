@@ -83,7 +83,7 @@ class RootContext private[execution](
     fullEnv:Map[String,(Any, Int)],
     fullConfig:Map[String,(String, Int)],
     nonNamespaceConnections:Map[String, Template[Connection]]
-) extends AbstractContext(null, fullEnv, fullConfig) {
+) extends AbstractContext(fullEnv, fullConfig) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _fs = FileSystem(hadoopConf)
 

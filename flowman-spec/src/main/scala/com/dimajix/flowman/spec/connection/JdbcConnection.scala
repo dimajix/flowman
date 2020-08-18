@@ -25,10 +25,10 @@ import com.dimajix.flowman.model.Connection
 
 case class JdbcConnection(
     instanceProperties:Connection.Properties,
-    driver:String,
     url:String,
-    username:String,
-    password:String,
+    driver:String,
+    username:Option[String] = None,
+    password:Option[String] = None,
     properties:Map[String,String] = Map()
 ) extends BaseConnection {
 }
@@ -47,20 +47,20 @@ object JdbcConnectionSpec {
       */
     def apply(driver:String, url:String, username:String, password:String, properties:Map[String,String] = Map()) : JdbcConnectionSpec = {
         val con = new JdbcConnectionSpec()
-        con.driver = driver
         con.url = url
-        con.username = username
-        con.password = password
+        con.driver = driver
+        con.username = Some(username)
+        con.password = Some(password)
         con.properties = properties
         con
     }
 }
 
 class JdbcConnectionSpec extends ConnectionSpec  {
-    @JsonProperty(value="driver", required=true) private var driver:String = ""
     @JsonProperty(value="url", required=true) private var url:String = ""
-    @JsonProperty(value="username", required=false) private var username:String = _
-    @JsonProperty(value="password", required=false) private var password:String = _
+    @JsonProperty(value="driver", required=true) private var driver:String = ""
+    @JsonProperty(value="username", required=false) private var username:Option[String] = None
+    @JsonProperty(value="password", required=false) private var password:Option[String] = None
     @JsonProperty(value="properties", required=false) private var properties:Map[String,String] = Map()
 
     /**
@@ -71,10 +71,10 @@ class JdbcConnectionSpec extends ConnectionSpec  {
     override def instantiate(context: Context): JdbcConnection = {
         JdbcConnection(
             instanceProperties(context),
-            context.evaluate(driver),
             context.evaluate(url),
-            context.evaluate(username),
-            context.evaluate(password),
+            context.evaluate(driver),
+            username.map(context.evaluate),
+            password.map(context.evaluate),
             context.evaluate(properties)
         )
     }

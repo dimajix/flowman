@@ -43,6 +43,8 @@ class Arguments(args:Array[String]) {
     var info: Boolean = false
     @Option(name = "--force", usage = "force execution even if targets already exist")
     var force: Boolean = false
+    @Option(name = "--spark-master", usage = "set the master for Spark", metaVar = "<spark_master>")
+    var sparkMaster: String = ""
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark job name", metaVar = "<job_name>")

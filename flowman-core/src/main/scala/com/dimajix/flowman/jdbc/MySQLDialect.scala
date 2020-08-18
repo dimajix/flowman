@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 object MySQLDialect extends BaseDialect {
     private object Statements extends MySQLStatements(this)
 
-    override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql")
+    override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql") || url.startsWith("jdbc:mariadb")
 
     override def quoteIdentifier(colName: String): String = {
         s"`$colName`"

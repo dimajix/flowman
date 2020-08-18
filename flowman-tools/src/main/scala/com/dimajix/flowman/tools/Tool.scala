@@ -89,6 +89,7 @@ class Tool {
     }
 
     def createSession(
+         sparkMaster:String,
          sparkName:String,
          project:Option[Project]=None,
          additionalEnvironment:Map[String,String] = Map(),
@@ -112,6 +113,9 @@ class Tool {
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
             .withJars(plugins.jars.map(_.toString))
+
+        if (sparkMaster.nonEmpty)
+            builder.withSparkMaster(sparkMaster)
 
         if (disableSpark)
             builder.disableSpark()

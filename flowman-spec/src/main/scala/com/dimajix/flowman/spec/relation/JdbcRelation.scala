@@ -218,13 +218,13 @@ case class JdbcRelation(
             throw new UnsupportedOperationException(s"Cannot clean JDBC relation $identifier which is defined by an SQL query")
 
         if (partitions.isEmpty) {
-            logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $tableIdentifier")
+            logger.info(s"Cleaning JDBC relation $name, this will truncate JDBC table $tableIdentifier")
             withConnection { (con, options) =>
                 JdbcUtils.truncateTable(con, tableIdentifier, options)
             }
         }
         else {
-            logger.info(s"Cleaning partitions of jdbc relation $name, this will clean jdbc table $tableIdentifier")
+            logger.info(s"Cleaning partitions of JDBC relation $name, this will partially truncate JDBC table $tableIdentifier")
             withStatement { (statement, options) =>
                 val dialect = SqlDialects.get(options.url)
                 val condition = partitionCondition(dialect, partitions)
@@ -281,7 +281,7 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Creating jdbc relation '$identifier', this will create jdbc table '$tableIdentifier'")
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table '$tableIdentifier'")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 if (this.schema.isEmpty)
@@ -308,7 +308,7 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot destroy JDBC relation $identifier which is defined by an SQL query")
 
-        logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
+        logger.info(s"Destroying jdbc relation $name, this will drop JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 JdbcUtils.dropTable(con, tableIdentifier, options)
@@ -337,9 +337,9 @@ case class JdbcRelation(
     private def createProperties() = {
         val connection = jdbcConnection
         val props = new Properties()
-        Option(connection.username).foreach(props.setProperty("user", _))
-        Option(connection.password).foreach(props.setProperty("password", _))
         props.setProperty("driver", connection.driver)
+        connection.username.foreach(props.setProperty("user", _))
+        connection.password.foreach(props.setProperty("password", _))
 
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         properties.foreach(kv => props.setProperty(kv._1, kv._2))
@@ -352,9 +352,9 @@ case class JdbcRelation(
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
         val connection = jdbcConnection
         val props = scala.collection.mutable.Map[String,String]()
-        Option(connection.username).foreach(props.update("user", _))
-        Option(connection.password).foreach(props.update("password", _))
         props.update("driver", connection.driver)
+        connection.username.foreach(props.update("user", _))
+        connection.password.foreach(props.update("password", _))
 
         val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)
@@ -401,7 +401,7 @@ case class JdbcRelation(
 
 
 class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
-    @JsonProperty(value = "connection", required = true) private var _connection: String = _
+    @JsonProperty(value = "connection", required = true) private var connection: String = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
@@ -417,7 +417,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             instanceProperties(context),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
-            ConnectionIdentifier.parse(context.evaluate(_connection)),
+            ConnectionIdentifier.parse(context.evaluate(connection)),
             context.evaluate(properties),
             database.map(context.evaluate).filter(_.nonEmpty),
             table.map(context.evaluate).filter(_.nonEmpty),

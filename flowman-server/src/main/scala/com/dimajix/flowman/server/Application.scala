@@ -39,6 +39,7 @@ object Application {
 class Application extends Tool {
     def run() : Boolean = {
         val session = createSession(
+            sparkMaster = "",
             sparkName = "flowman-server",
             disableSpark = true
         )

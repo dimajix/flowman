@@ -81,7 +81,7 @@ class ProjectContext private[execution](
    fullEnv:Map[String,(Any, Int)],
    fullConfig:Map[String,(String, Int)],
    nonProjectConnections:Map[String, Template[Connection]]
-) extends AbstractContext(parent, fullEnv, fullConfig) {
+) extends AbstractContext(fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()

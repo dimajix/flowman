@@ -83,13 +83,13 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     private lazy val db = {
         val url = connection.url
+        val driver = connection.driver
         val user = connection.user
         val password = connection.password
-        val driver = connection.driver
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
-        Database.forURL(url, user=user, password=password, prop=props, driver=driver)
+        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props)
     }
 
     val jobRuns = TableQuery[JobRuns]

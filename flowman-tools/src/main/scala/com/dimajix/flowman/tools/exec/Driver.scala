@@ -73,7 +73,9 @@ class Driver(options:Arguments) extends Tool {
         // Create Flowman Session, which also includes a Spark Session
         val config = splitSettings(options.config)
         val environment = splitSettings(options.environment)
-        val session = createSession(options.sparkName,
+        val session = createSession(
+            options.sparkMaster,
+            options.sparkName,
             project = Some(project),
             additionalConfigs = config.toMap,
             additionalEnvironment = environment.toMap,

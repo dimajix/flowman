@@ -95,8 +95,8 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-beanutils.version>1.9.2</commons-beanutils.version>
         <commons-logging.version>1.1.3</commons-logging.version>
-        <httpclient.version>4.5.2</httpclient.version>
-        <httpcore.version>4.4.4</httpcore.version>
+        <httpclient.version>4.5.6</httpclient.version>
+        <httpcore.version>4.4.10</httpcore.version>
         <netty.version>3.9.9.Final</netty.version>
         <netty-all.version>4.1.47.Final</netty-all.version>
         <!-- Language versions -->
@@ -145,6 +145,8 @@
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
+                <httpclient.version>4.5.4</httpclient.version>
+                <httpcore.version>4.4.7</httpcore.version>
                 <commons-lang.version>2.6</commons-lang.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
@@ -186,6 +188,8 @@
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.9.10</jackson.version>
                 <jackson.databind.version>2.9.10.1</jackson.databind.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.10</httpcore.version>
                 <commons-lang.version>2.6</commons-lang.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
@@ -222,6 +226,8 @@
                 <json4s.version>3.2.11</json4s.version>
                 <guava.version>12.0</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
+                <httpclient.version>4.5.4</httpclient.version>
+                <httpcore.version>4.4.7</httpcore.version>
             </properties>
         </profile>
         <profile>
@@ -240,6 +246,8 @@
                 <json4s.version>3.5.3</json4s.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.10</httpcore.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
             </properties>
@@ -260,6 +268,8 @@
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <kafka.version>2.4.1</kafka.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.10</httpcore.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
             </properties>

@@ -124,7 +124,7 @@ case class JdbcRelation(
 
         val tableDf =
             if (query.nonEmpty) {
-                logger.info(s"Reading data from JDBC source '$identifier' using connection '${connection}' using partition values $partitions")
+                logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
                 reader.format("jdbc")
                     .option("query", query.get)
                     .option("url", url)
@@ -132,7 +132,7 @@ case class JdbcRelation(
                     .load()
             }
             else {
-                logger.info(s"Reading data from JDBC table '$tableIdentifier' using connection '${connection}' using partition values $partitions")
+                logger.info(s"Reading data from JDBC table $tableIdentifier using connection '$connection' using partition values $partitions")
                 reader.jdbc(url, tableIdentifier.unquotedString, props)
             }
 
@@ -154,9 +154,9 @@ case class JdbcRelation(
         require(partition != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot write into JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection} with mode '$mode'")
+        logger.info(s"Writing data to JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' with mode '$mode'")
 
         // Get Connection
         val (url,props) = createProperties()
@@ -199,7 +199,7 @@ case class JdbcRelation(
                     else {
                         throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
                     }
-                case _ => throw new IllegalArgumentException(s"Unknown save mode: $mode. " +
+                case _ => throw new IllegalArgumentException(s"Unknown save mode: '$mode'. " +
                     "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
             }
         }
@@ -215,16 +215,16 @@ case class JdbcRelation(
         require(partitions != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot clean JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot clean JDBC relation '$identifier' which is defined by an SQL query")
 
         if (partitions.isEmpty) {
-            logger.info(s"Cleaning JDBC relation $name, this will truncate JDBC table $tableIdentifier")
+            logger.info(s"Cleaning JDBC relation '$identifier', this will truncate JDBC table $tableIdentifier")
             withConnection { (con, options) =>
                 JdbcUtils.truncateTable(con, tableIdentifier, options)
             }
         }
         else {
-            logger.info(s"Cleaning partitions of JDBC relation $name, this will partially truncate JDBC table $tableIdentifier")
+            logger.info(s"Cleaning partitions of JDBC relation '$identifier', this will partially truncate JDBC table $tableIdentifier")
             withStatement { (statement, options) =>
                 val dialect = SqlDialects.get(options.url)
                 val condition = partitionCondition(dialect, partitions)
@@ -281,7 +281,7 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table '$tableIdentifier'")
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 if (this.schema.isEmpty)
@@ -306,9 +306,9 @@ case class JdbcRelation(
         require(executor != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot destroy JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot destroy JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Destroying jdbc relation $name, this will drop JDBC table $tableIdentifier")
+        logger.info(s"Destroying JDBC relation '$identifier', this will drop JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 JdbcUtils.dropTable(con, tableIdentifier, options)

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.hook
 
+import java.net.URL
+
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -124,6 +126,22 @@ case class WebHook(
         urlTemplate.foreach { v =>
             val url = context.environment.evaluate(v, args)
             try {
+                val niceUrl = {
+                    val u = new URL(url)
+                    val result = new StringBuffer()
+                    result.append(u.getProtocol)
+                    result.append(":")
+                    if (u.getAuthority != null && u.getAuthority.length > 0) {
+                        result.append("//")
+                        result.append(u.getAuthority)
+                    }
+
+                    if (u.getPath != null) {
+                        result.append(u.getPath)
+                    }
+                    result
+                }
+                logger.info(s"Invoking external web-hook: $niceUrl with extra args $args")
                 val httpClient = HttpClients.createDefault()
                 val httpGet = new HttpGet(url)
                 httpClient.execute(httpGet)

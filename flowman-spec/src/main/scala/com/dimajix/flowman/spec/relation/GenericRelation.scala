@@ -29,6 +29,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -83,6 +84,8 @@ case class GenericRelation(
         require(schema != null)
         require(partitions != null)
 
+        logger.info(s"Reading generic relation '$identifier'")
+
         val data = reader(executor).load()
         SchemaUtils.applySchema(data, schema)
     }
@@ -97,6 +100,8 @@ case class GenericRelation(
         require(executor != null)
         require(df != null)
         require(partition != null)
+
+        logger.info(s"Writing generic relation '$identifier' with mode '$mode'")
 
         writer(executor, df)
             .mode(mode.batchMode)

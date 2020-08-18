@@ -170,7 +170,7 @@ case class FileRelation(
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
 
-        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format'")
+        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode''")
 
         this.writer(executor, df)
             .format(format)

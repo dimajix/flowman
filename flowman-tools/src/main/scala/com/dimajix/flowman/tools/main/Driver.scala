@@ -29,6 +29,8 @@ import com.dimajix.flowman.tools.Tool
 
 object Driver {
     def main(args: Array[String]) : Unit = {
+        Logging.init()
+
         Try {
             run(args:_*)
         }
@@ -51,7 +53,7 @@ object Driver {
             true
         }
         else {
-            Logging.setup(Option(options.sparkLogging))
+            Logging.setSparkLogging(options.sparkLogging)
 
             val driver = new Driver(options)
             driver.run()

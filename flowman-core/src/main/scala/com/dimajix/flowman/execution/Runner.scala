@@ -165,14 +165,14 @@ class Runner(
                         case Success(status@Status.SUCCESS) =>
                             logger.info(s"Successfully finished phase $phase of job '${job.identifier}'")
                             status
+                        case Success(status@Status.SKIPPED) =>
+                            logger.info(s"Execution of phase $phase of job '${job.identifier}' skipped")
+                            status
                         case Success(status@Status.FAILED) =>
                             logger.error(s"Execution of phase $phase of job '${job.identifier}' failed")
                             status
                         case Success(status@Status.ABORTED) =>
                             logger.error(s"Execution of phase $phase of job '${job.identifier}' aborted")
-                            status
-                        case Success(status@Status.SKIPPED) =>
-                            logger.error(s"Execution of phase $phase of job '${job.identifier}' skipped")
                             status
                         case Success(status@Status.RUNNING) =>
                             logger.error(s"Execution of phase $phase of job '${job.identifier}' already running")

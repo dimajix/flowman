@@ -184,7 +184,7 @@ case class RelationTarget(
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
-            logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition")
+            logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition with mode '$mode'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
             val dfOut = if (rebalance)

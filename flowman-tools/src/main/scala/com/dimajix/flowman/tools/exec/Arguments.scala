@@ -90,15 +90,6 @@ class Arguments(args:Array[String]) {
 
     private def parseArgs(args: Array[String]) {
         val parser: CmdLineParser = new CmdLineParser(this)
-        try {
-            parser.parseArgument(args.toList.asJava)
-        }
-        catch {
-            case e: CmdLineException => {
-                e.getParser.printUsage(System.err)
-                System.err.println
-                throw e
-            }
-        }
+        parser.parseArgument(args.toList.asJava)
     }
 }

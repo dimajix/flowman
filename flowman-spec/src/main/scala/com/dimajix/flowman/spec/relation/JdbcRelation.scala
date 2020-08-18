@@ -156,7 +156,7 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot write into JDBC relation $identifier which is defined by an SQL query")
 
-        logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection}")
+        logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection} with mode '$mode'")
 
         // Get Connection
         val (url,props) = createProperties()
@@ -344,8 +344,6 @@ case class JdbcRelation(
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         properties.foreach(kv => props.setProperty(kv._1, kv._2))
 
-        logger.info("Connecting to jdbc source at {}", connection.url)
-
         (jdbcConnection.url,props)
     }
 
@@ -355,6 +353,8 @@ case class JdbcRelation(
         props.update("driver", connection.driver)
         connection.username.foreach(props.update("user", _))
         connection.password.foreach(props.update("password", _))
+
+        logger.info("Connecting to jdbc source at {}", connection.url)
 
         val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)

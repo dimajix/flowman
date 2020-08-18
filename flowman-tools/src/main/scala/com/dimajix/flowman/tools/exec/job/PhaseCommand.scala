@@ -41,7 +41,7 @@ import com.dimajix.flowman.types.FieldValue
 sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     private val logger = LoggerFactory.getLogger(getClass)
 
-    @Argument(index=0, required=false, usage = "specifies job to run", metaVar = "<job>")
+    @Argument(index=0, required=true, usage = "specifies job to run", metaVar = "<job>")
     var job: String = ""
     @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
     var args: Array[String] = Array()

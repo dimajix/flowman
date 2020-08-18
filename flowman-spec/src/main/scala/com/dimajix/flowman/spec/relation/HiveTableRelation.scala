@@ -154,7 +154,7 @@ case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} using Hive insert")
+        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(executor, df)
@@ -209,7 +209,7 @@ case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} using direct write")
+        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using direct write")
 
         if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")

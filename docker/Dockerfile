@@ -14,7 +14,7 @@ COPY libexec/ /opt/docker/libexec/
 # Copy and install Repository
 COPY flowman-dist-${project.version}-bin.tar.gz /tmp/repo/
 COPY conf/ /tmp/repo/conf
-RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist-${project.version}-bin.tar.gz && \
+RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist-${project.version}-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}-bin.tar.gz && \
     ln -s /opt/flowman* /opt/flowman && \
     cp -a /tmp/repo/conf/* /opt/flowman/conf && \
     chown -R root:root /opt/flowman* && \

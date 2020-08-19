@@ -134,7 +134,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-${project.version}-${hadoop.vendor}-spark${spark-api.version}-hadoop${hadoop-api.version}</finalName>
+                            <finalName>${project.artifactId}-${project.version}-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</finalName>
                             <descriptors>
                                 <descriptor>src/main/assembly/assembly.xml</descriptor>
                             </descriptors>

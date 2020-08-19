@@ -50,6 +50,7 @@
     </distributionManagement>
 
     <properties>
+        <hadoop.dist>oss</hadoop.dist>
         <hadoop.version>2.8.5</hadoop.version>
         <hadoop-api.version>2.8</hadoop-api.version>
         <hive.version>2.3.3</hive.version>
@@ -130,6 +131,7 @@
                 </repository>
             </repositories>
             <properties>
+                <hadoop.dist>cdh5</hadoop.dist>
                 <cdh.version>cdh5.15.1</cdh.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
@@ -173,6 +175,7 @@
                 </repository>
             </repositories>
             <properties>
+                <hadoop.dist>cdh6</hadoop.dist>
                 <cdh.version>cdh6.3.3</cdh.version>
                 <spark.version>2.4.0-cdh6.3.3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
@@ -235,7 +238,7 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
-                <spark.version>2.4.5</spark.version>
+                <spark.version>2.4.6</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>

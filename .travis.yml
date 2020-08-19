@@ -8,6 +8,11 @@ cache:
 services:
   - docker
 
+deploy:
+  provider: releases
+  file: flowman-dist/target/flowman-dist-*-bin.tar.gz*
+  overwrite: true
+
 jobs:
   include:
     - name: Default Build

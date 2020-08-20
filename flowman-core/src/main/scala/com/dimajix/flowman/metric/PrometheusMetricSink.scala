@@ -58,7 +58,8 @@ extends AbstractMetricSink {
         val payload = board.selections.map { selection =>
             val name = selection.name
             val metrics = selection.metrics.map { metric =>
-                val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
+                val allLabels = board.labels ++ metric.labels
+                val labels = allLabels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
                 metric match {
                     case gauge:GaugeMetric => s"$name$labels ${gauge.value}"
                     case _ => ""

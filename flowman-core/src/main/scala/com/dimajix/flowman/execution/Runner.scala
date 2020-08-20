@@ -180,7 +180,7 @@ class Runner(
                         case Success(status) =>
                             logger.error(s"Execution of phase $phase of job '${job.identifier}' in unknown state. Assuming failure")
                             status
-                        case Failure(e) =>
+                        case Failure(NonFatal(e)) =>
                             logger.error(s"Caught exception while executing phase $phase of job '${job.identifier}'", e)
                             Status.FAILED
                     }
@@ -225,7 +225,7 @@ class Runner(
                     case Success(_) =>
                         logger.info(s"Successfully finished phase $phase for target '${target.identifier}'")
                         Status.SUCCESS
-                    case Failure(e) =>
+                    case Failure(NonFatal(e)) =>
                         logger.error(s"Caught exception while executing phase $phase for target '${target.identifier}'", e)
                         Status.FAILED
                 }
@@ -380,6 +380,9 @@ class Runner(
         var result:Status = Status.UNKNOWN
         try {
             result = fn
+        }
+        catch {
+            case NonFatal(_) => result = Status.FAILED
         }
         finally {
             // Unpublish metrics

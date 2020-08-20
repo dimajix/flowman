@@ -55,7 +55,6 @@ class SelectorSpec extends Spec[Selector] {
 }
 
 
-
 class MetricBoardSpec extends Spec[MetricBoard] {
     @JsonProperty(value = "labels", required = false) private var labels: Map[String, String] = Map()
     @JsonProperty(value = "metrics", required = false) private var metrics: Seq[MetricSpec] = Seq()

@@ -38,13 +38,18 @@ final case class MetricBoard(
      * Returns all Metrics matching the selections of the board
      * @param catalog
      */
-    def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = selections.flatMap(_.metrics)
+    def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = selections.flatMap(_.metrics).map(relabelMetric)
 
     /**
      * Returns all MetricBundles matching the selections of the board
      * @param catalog
      */
     def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = selections.flatMap(_.bundles)
+
+    private def relabelMetric(metric:Metric) = metric match {
+        case gauge:GaugeMetric => FixedGaugeMetric(gauge.name, labels ++ gauge.labels, gauge.value)
+        case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
+    }
 }
 
 
@@ -68,7 +73,7 @@ final case class MetricSelection(name:String, selector:Selector, relabel:Map[Str
     def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = catalog.findBundle(selector)
 
     private def relabelMetric(metric:Metric) = metric match {
-        case gauge:GaugeMetric => new FixedGaugeMetric(name, relabel(gauge.labels), gauge.value)
+        case gauge:GaugeMetric => FixedGaugeMetric(name, relabel(gauge.labels), gauge.value)
         case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
     }
 }

@@ -23,10 +23,11 @@ class ConsoleMetricSink extends AbstractMetricSink {
         board.selections.foreach{ selection =>
             val name = selection.name
             selection.metrics.foreach { metric =>
-                val labels = metric.labels.map(kv => kv._1 + "=" + kv._2)
+                val allLabels = board.labels ++ metric.labels
+                val labels = allLabels.map(kv => kv._1 + "=" + kv._2)
                 metric match {
-                    case gauge: GaugeMetric => println(s"MetricFamily($name) GaugeMetric(${labels.mkString(",")})=${gauge.value}")
-                    case _: Metric => println(s"MetricFamily($name) Metric(${labels.mkString})=???")
+                    case gauge: GaugeMetric => println(s"MetricSelection($name) GaugeMetric(${labels.mkString(",")})=${gauge.value}")
+                    case _: Metric => println(s"MetricSelection($name) Metric(${labels.mkString})=???")
                 }
             }
         }

@@ -82,6 +82,7 @@ object Velocity {
       */
     def newEngine() : VelocityEngine = {
         val ve = new VelocityEngine()
+        ve.setProperty(RuntimeConstants.VM_ARGUMENTS_STRICT, "true")
         ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "true")
         ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT_ESCAPE, "true")
         ve.init()

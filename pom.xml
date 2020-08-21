@@ -595,7 +595,7 @@
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
                         <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
-                        <createDependencyReducedPom>true</createDependencyReducedPom>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
                         <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
                         <shadeSourcesContent>true</shadeSourcesContent>
                         <createSourcesJar>true</createSourcesJar>
@@ -1433,13 +1433,6 @@
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.re2j</groupId>
-                <artifactId>re2j</artifactId>
-                <version>1.1</version>
                 <scope>compile</scope>
             </dependency>
         </dependencies>

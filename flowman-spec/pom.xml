@@ -119,14 +119,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- explicitly include some indirect dependencies, since they will get lost via shading -->
-        <dependency>
-            <groupId>com.damnhandy</groupId>
-            <artifactId>handy-uri-templates</artifactId>
-            <version>2.1.6</version>
-            <scope>compile</scope>
-        </dependency>
-
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>

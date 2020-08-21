@@ -64,42 +64,35 @@
                 <artifactId>scalatest-maven-plugin</artifactId>
             </plugin>
             <plugin>
+                <!-- Explicitly include source plugin before shade plugin -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
-                            <artifactSet>
-                                <includes>
-                                    <include>org.apache.velocity:velocity-engine-core</include>
-                                </includes>
-                            </artifactSet>
-                            <filters>
-                                <filter>
-                                    <artifact>org.apache.velocity:velocity-engine-core</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*</exclude>
-                                        <exclude>org/apache/velocity/runtime/defaults/*</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <relocations>
-                                <relocation>
-                                    <pattern>org.apache.velocity</pattern>
-                                    <shadedPattern>com.dimajix.shaded.velocity</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
-                    </execution>
-                </executions>
+                <configuration>
+                    <artifactSet>
+                        <includes>
+                            <include>org.apache.velocity:velocity-engine-core</include>
+                        </includes>
+                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <artifact>org.apache.velocity:velocity-engine-core</artifact>
+                            <excludes>
+                                <exclude>META-INF/*</exclude>
+                                <exclude>org/apache/velocity/runtime/defaults/*</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.apache.velocity</pattern>
+                            <shadedPattern>com.dimajix.shaded.velocity</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
             </plugin>
             <plugin>
                 <!-- Explicitly include flatten plugin after shade plugin -->

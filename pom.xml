@@ -594,9 +594,9 @@
                     <version>3.2.4</version>
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
-                        <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
+                        <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
                         <createDependencyReducedPom>true</createDependencyReducedPom>
-                        <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                        <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
                         <shadeSourcesContent>true</shadeSourcesContent>
                         <createSourcesJar>true</createSourcesJar>
                     </configuration>
@@ -738,30 +738,12 @@
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${project.version}</version>
-                <!-- Manually exclude shaded artifacts -->
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.velocity</groupId>
-                        <artifactId>velocity-engine-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spec</artifactId>
                 <version>${project.version}</version>
-                <!-- Manually exclude shaded artifacts -->
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.json</groupId>
-                        <artifactId>json</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.github.everit-org.json-schema</groupId>
-                        <artifactId>org.everit.json.schema</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>

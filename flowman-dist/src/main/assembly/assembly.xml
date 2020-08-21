@@ -64,6 +64,12 @@
                 <include>com.dimajix.flowman:flowman-tools</include>
                 <include>com.dimajix.flowman:flowman-server</include>
             </includes>
+            <excludes>
+                <!-- Manually exclude shaded artifacts -->
+                <exclude>org.json:json</exclude>
+                <exclude>com.github.everit-org.json-schema:org.everit.json.schema</exclude>
+                <exclude>org.apache.velocity:velocity-engine-core</exclude>
+            </excludes>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>

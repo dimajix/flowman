@@ -49,7 +49,8 @@ class DeferredFileCommitProtocol(
         // Now remove all empty directories
         directoriesToBeDeleted.foreach { case(fs,path) =>
             try {
-                if (fs.listStatus(path).isEmpty) {
+                // See https://issues.apache.org/jira/browse/HADOOP-17217 for details
+                while(fs.exists(path) && fs.listStatus(path).isEmpty) {
                     fs.delete(path, false)
                 }
             }

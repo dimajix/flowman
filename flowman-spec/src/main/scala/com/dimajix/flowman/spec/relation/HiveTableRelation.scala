@@ -223,9 +223,8 @@ case class HiveTableRelation(
         }
 
         logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
-        this.writer(executor, df)
+        this.writer(executor, df, mode.batchMode)
             .format(format)
-            .mode(mode.batchMode)
             .save(outputPath.toString)
 
         // Finally add Hive partition

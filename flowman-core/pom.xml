@@ -105,7 +105,7 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-spark-sources</artifactId>
+            <artifactId>flowman-spark-extensions</artifactId>
         </dependency>
 
         <dependency>

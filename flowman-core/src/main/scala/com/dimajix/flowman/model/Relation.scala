@@ -23,6 +23,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.DataStreamReader
 import org.apache.spark.sql.streaming.DataStreamWriter
@@ -291,9 +292,11 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        val outputDf = applyOutputSchema(executor, df)
-        outputDf.write.options(options)
+    protected def writer(executor: Executor, df:DataFrame, saveMode:SaveMode) : DataFrameWriter[Row] = {
+        applyOutputSchema(executor, df)
+            .write
+            .options(options)
+            .mode(saveMode)
     }
 
     /**

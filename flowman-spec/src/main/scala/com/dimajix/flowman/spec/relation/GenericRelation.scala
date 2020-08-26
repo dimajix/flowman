@@ -21,6 +21,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -103,8 +104,7 @@ case class GenericRelation(
 
         logger.info(s"Writing generic relation '$identifier' with mode '$mode'")
 
-        writer(executor, df)
-            .mode(mode.batchMode)
+        writer(executor, df, mode.batchMode)
             .save()
     }
 
@@ -178,10 +178,9 @@ case class GenericRelation(
      * @param executor
      * @return
      */
-    protected override def writer(executor:Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        applyOutputSchema(executor, df).write
+    protected override def writer(executor:Executor, df:DataFrame, saveMode: SaveMode) : DataFrameWriter[Row] = {
+        super.writer(executor, df, saveMode)
             .format(format)
-            .options(options)
     }
 }
 

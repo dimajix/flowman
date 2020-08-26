@@ -62,7 +62,7 @@ class Runner(
       * @param phases
       * @return
       */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), force:Boolean=false) : Status = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), force:Boolean=false, keepGoing:Boolean=false) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)
@@ -72,7 +72,7 @@ class Runner(
         withJobContext(job, args, force) { (jobContext, arguments) =>
             withExecutor(job) { executor =>
                 Status.ofAll(phases) { phase =>
-                    executeJobPhase(executor, jobContext, job, phase, arguments, force)
+                    executeJobPhase(executor, jobContext, job, phase, arguments, force, keepGoing)
                 }
             }
         }
@@ -144,7 +144,7 @@ class Runner(
         paramNames.diff(argNames).foreach(p => throw new IllegalArgumentException(s"Required parameter '$p' not specified for job '${job.identifier}'"))
     }
 
-    private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], force:Boolean) : Status = {
+    private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], force:Boolean, keepGoing:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
             val desc = job.description.map("(" + _ + ")").getOrElse("")
             val args = if (arguments.nonEmpty) s"with arguments ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
@@ -158,7 +158,7 @@ class Runner(
                 recordJob(instance, phase, allHooks) { token =>
                     Try {
                         withWallTime(executor.metrics, job.metadata, phase) {
-                            executeJobTargets(executor, context, job, phase, token, force)
+                            executeJobTargets(executor, context, job, phase, token, force, keepGoing)
                         }
                     }
                     match {
@@ -242,7 +242,7 @@ class Runner(
      * @param token
      * @return
      */
-    private def executeJobTargets(executor:Executor, context:Context, job:Job, phase:Phase, token:RunnerJobToken, force:Boolean) : Status = {
+    private def executeJobTargets(executor:Executor, context:Context, job:Job, phase:Phase, token:RunnerJobToken, force:Boolean, keepGoing:Boolean) : Status = {
         require(phase != null)
 
         // First determine ordering before filtering active targets, since their might be some transitive dependencies
@@ -256,7 +256,7 @@ class Runner(
 
         logger.info(s"Executing phase $phase with sequence: ${activeTargets.map(_.identifier).mkString(", ")}")
 
-        Status.ofAll(activeTargets) { target =>
+        Status.ofAll(activeTargets, keepGoing) { target =>
             executeTargetPhase(executor, target, phase, token, force)
         }
     }

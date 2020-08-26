@@ -147,9 +147,8 @@ case class KafkaRelation(
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Writing to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.writer(executor, df)
+        this.writer(executor, df, mode.batchMode)
             .format("kafka")
-            .mode(mode.batchMode)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .save()

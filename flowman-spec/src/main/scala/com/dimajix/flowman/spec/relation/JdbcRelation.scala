@@ -167,14 +167,13 @@ case class JdbcRelation(
 
         if (partition.isEmpty) {
             // Write partition into DataBase
-            this.writer(executor, dfExt)
+            this.writer(executor, dfExt, mode.batchMode)
                 .mode(mode.batchMode)
                 .jdbc(url, tableIdentifier.unquotedString, props)
         }
         else {
             def writePartition(): Unit = {
-                this.writer(executor, dfExt)
-                    .mode(SaveMode.Append)
+                this.writer(executor, dfExt, SaveMode.Append)
                     .jdbc(url, tableIdentifier.unquotedString, props)
             }
 

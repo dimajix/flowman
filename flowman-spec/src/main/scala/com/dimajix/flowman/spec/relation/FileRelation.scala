@@ -172,9 +172,8 @@ case class FileRelation(
 
         logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
 
-        this.writer(executor, df)
+        this.writer(executor, df, mode.batchMode)
             .format(format)
-            .mode(mode.batchMode)
             .save(outputPath.toString)
     }
 

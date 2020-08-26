@@ -335,7 +335,7 @@
 
     <modules>
         <module>flowman-spark-testing</module>
-        <module>flowman-spark-sources</module>
+        <module>flowman-spark-extensions</module>
         <module>flowman-core</module>
         <module>flowman-spec</module>
         <module>flowman-dsl</module>
@@ -730,7 +730,7 @@
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-spark-sources</artifactId>
+                <artifactId>flowman-spark-extensions</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

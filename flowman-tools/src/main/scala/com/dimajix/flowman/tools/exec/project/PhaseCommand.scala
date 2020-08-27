@@ -45,6 +45,8 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     var args: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
+    var keepGoing: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
@@ -79,7 +81,7 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
 
         job.interpolate(args).forall { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, force)
+            val result = runner.executeJob(job, lifecycle, args, force, keepGoing)
             result match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true

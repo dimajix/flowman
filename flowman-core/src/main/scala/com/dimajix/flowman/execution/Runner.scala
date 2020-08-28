@@ -34,6 +34,7 @@ import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 
@@ -86,7 +87,7 @@ class Runner(
 
         val rootContext = RootContext.builder(job.context)
             .withEnvironment("force", force)
-            .withEnvironment("job", job.name)
+            .withEnvironment("job", JobWrapper(job))
             .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
             .build()

@@ -30,6 +30,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
@@ -51,17 +52,7 @@ object ProjectContext {
         }
 
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : ProjectContext = {
-            case object ProjectWrapper {
-                def getBasedir() : FileWrapper = FileWrapper(project.basedir.getOrElse(File.empty))
-                def getFilename() : FileWrapper = FileWrapper(project.filename.getOrElse(File.empty))
-                def getName() : String = project.name
-                def getVersion() : String = project.version.getOrElse("")
-
-                override def toString: String = project.name
-            }
-
-            val fullEnv = env + ("project" -> ((ProjectWrapper, SettingLevel.SCOPE_OVERRIDE.level)))
-            new ProjectContext(parent, project, fullEnv, config, connections)
+            new ProjectContext(parent, project, env, config, connections)
         }
     }
 
@@ -76,12 +67,15 @@ object ProjectContext {
   * @param _project
   */
 class ProjectContext private[execution](
-   parent:Context,
-   _project:Project,
-   fullEnv:Map[String,(Any, Int)],
-   fullConfig:Map[String,(String, Int)],
-   nonProjectConnections:Map[String, Template[Connection]]
-) extends AbstractContext(fullEnv, fullConfig) {
+    parent:Context,
+    _project:Project,
+    _env:Map[String,(Any, Int)],
+    _config:Map[String,(String, Int)],
+    nonProjectConnections:Map[String, Template[Connection]]
+) extends AbstractContext(
+    _env + ("project" -> ((ProjectWrapper(_project), SettingLevel.SCOPE_OVERRIDE.level))),
+    _config)
+{
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()

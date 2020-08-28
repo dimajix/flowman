@@ -16,12 +16,17 @@
 
 package com.dimajix.flowman.metric
 
+import com.dimajix.flowman.execution.Context
+
+
 /**
  * A MetricBoard is a collection of multiple MetricBundles to be published together to one or multiple MetricSinks
+ *
  * @param labels
  * @param selections
  */
 final case class MetricBoard(
+    context:Context,
     labels:Map[String,String],
     selections:Seq[MetricSelection]
 ) {
@@ -30,25 +35,30 @@ final case class MetricBoard(
      * @param catalog
      */
     def reset(catalog:MetricCatalog) : Unit = {
-        metrics(catalog).foreach(_.reset())
-        bundles(catalog).foreach(_.reset())
+        rawMetrics(catalog).foreach(_.reset())
+        rawBundles(catalog).foreach(_.reset())
     }
 
-    /**
-     * Returns all Metrics matching the selections of the board
-     * @param catalog
-     */
-    def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = selections.flatMap(_.metrics).map(relabelMetric)
+    def rawMetrics(implicit catalog:MetricCatalog) : Seq[Metric] = selections.flatMap(_.metrics)
+    def rawBundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = selections.flatMap(_.bundles)
 
     /**
-     * Returns all MetricBundles matching the selections of the board
+     * Returns all Metrics matching the selections of the board. All labels will be evaluated. Note that the returned
+     * metrics are not the original ones, but static copies with applied relabeling.
      * @param catalog
      */
-    def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = selections.flatMap(_.bundles)
+    def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = {
+        val env = context.environment
 
-    private def relabelMetric(metric:Metric) = metric match {
-        case gauge:GaugeMetric => FixedGaugeMetric(gauge.name, labels ++ gauge.labels, gauge.value)
-        case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
+        selections.flatMap { sel =>
+            // Relabeling should happen has late as possible, since some values might be dynamic
+            def relabel(metric:Metric) : Metric = metric match {
+                case gauge:GaugeMetric => FixedGaugeMetric(sel.name, env.evaluate(labels ++ sel.labels, gauge.labels), gauge.value)
+                case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
+            }
+
+            sel.metrics.map(relabel)
+        }
     }
 }
 
@@ -56,14 +66,13 @@ final case class MetricBoard(
 /**
  * A MetricSelection represents a possibly dynamic set of Metrics to be published inside a MetricBoard
  */
-final case class MetricSelection(name:String, selector:Selector, relabel:Map[String,String] => Map[String,String] = identity) {
+final case class MetricSelection(name:String, selector:Selector, labels:Map[String,String]) {
     /**
      * Returns all metrics identified by this selection. This operation may be expensive, since the set of metrics may be
      * dynamic and change over time
      * @return
      */
     def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = catalog.findMetric(selector)
-        .map(relabelMetric)
 
     /**
      * Returns all bundles identified by this selection. This operation may be expensive, since the set of metrics may be
@@ -71,18 +80,10 @@ final case class MetricSelection(name:String, selector:Selector, relabel:Map[Str
      * @return
      */
     def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = catalog.findBundle(selector)
-
-    private def relabelMetric(metric:Metric) = metric match {
-        case gauge:GaugeMetric => FixedGaugeMetric(name, relabel(gauge.labels), gauge.value)
-        case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
-    }
 }
 
 
 final case class Selector(
     name:Option[String] = None,
     labels:Map[String,String] = Map()
-) {
-    require(name != null)
-    require(labels != null)
-}
+)

@@ -31,12 +31,10 @@ class MetricSpec extends Spec[MetricSelection] {
     @JsonProperty(value = "selector", required = true) var selector:SelectorSpec = _
 
     def instantiate(context:Context) : MetricSelection = {
-        def relabel(metrticLabels:Map[String,String]) = context.evaluate(labels, metrticLabels)
-
         MetricSelection(
             context.evaluate(name),
             selector.instantiate(context),
-            relabel
+            labels
         )
     }
 }
@@ -61,7 +59,8 @@ class MetricBoardSpec extends Spec[MetricBoard] {
 
     def instantiate(context: Context): MetricBoard = {
         MetricBoard(
-            context.evaluate(labels),
+            context,
+            labels,
             metrics.map(_.instantiate(context))
         )
     }

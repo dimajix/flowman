@@ -19,25 +19,35 @@ package com.dimajix.flowman.metric
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Session
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
 class MetricBoardTest extends FlatSpec with Matchers {
     "A MetricBoard" should "return relabelled metrics" in  {
-        implicit val registry = new MetricSystem
+        val session = Session.builder()
+            .withEnvironment("env_var", "env_value")
+            .build()
+
+        implicit val registry = session.metrics
+        val context = session.context
+
         val accumulator1 = new CounterAccumulator()
         accumulator1.add(Map("a" -> 1l, "b" -> 2l))
         registry.addBundle(CounterAccumulatorMetricBundle("some_metric", Map("raw_label" -> "raw_value"), accumulator1, "sublabel"))
         val selections = Seq(
             MetricSelection(
                 "m1",
-                Selector(Some("some_metric"), Map("raw_label" -> "raw_value", "sublabel" -> "a"))
+                Selector(Some("some_metric"),
+                    Map("raw_label" -> "raw_value", "sublabel" -> "a")
+                ),
+                Map("rl" -> "$raw_label", "sl" -> "$sublabel", "ev" -> "$env_var")
             )
         )
-        val board = MetricBoard(Map("board_label" -> "board1"), selections)
+        val board = MetricBoard(context, Map("board_label" -> "board1"), selections)
 
         board.metrics should be (
-            Seq(FixedGaugeMetric("m1", Map("board_label" -> "board1", "raw_label" -> "raw_value", "sublabel" -> "a"), 1l))
+            Seq(FixedGaugeMetric("m1", Map("board_label" -> "board1", "rl" -> "raw_value", "sl" -> "a", "ev" -> "env_value"), 1l))
         )
     }
 }

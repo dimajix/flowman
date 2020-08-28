@@ -38,8 +38,10 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
@@ -102,9 +104,10 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
                 "param" -> "lala",
                 "global_env" -> "global",
                 "job_env" -> "job",
-                "job" -> "my_job",
+                "job" -> JobWrapper(job),
                 "force" -> false,
-                "phase" -> "build"
+                "phase" -> "build",
+                "namespace" -> NamespaceWrapper(None)
             ))
         }
     }

@@ -55,15 +55,12 @@ extends AbstractMetricSink {
         */
 
         implicit val catalog = this.catalog(board)
-        val payload = board.selections.map { selection =>
-            val name = selection.name
-            val metrics = selection.metrics.map { metric =>
-                val allLabels = board.labels ++ metric.labels
-                val labels = allLabels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
-                metric match {
-                    case gauge:GaugeMetric => s"$name$labels ${gauge.value}"
-                    case _ => ""
-                }
+        val payload = board.metrics.map { metric =>
+            val name = metric.name
+            val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
+            val metrics = metric match {
+                case gauge:GaugeMetric => s"$name$labels ${gauge.value}"
+                case _ => ""
             }
             s"# TYPE $name gauge" + metrics.mkString("\n","\n","\n")
         }.mkString("\n")

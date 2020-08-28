@@ -20,15 +20,12 @@ package com.dimajix.flowman.metric
 class ConsoleMetricSink extends AbstractMetricSink {
     override def commit(board:MetricBoard): Unit = {
         implicit val catalog = this.catalog(board)
-        board.selections.foreach{ selection =>
-            val name = selection.name
-            selection.metrics.foreach { metric =>
-                val allLabels = board.labels ++ metric.labels
-                val labels = allLabels.map(kv => kv._1 + "=" + kv._2)
-                metric match {
-                    case gauge: GaugeMetric => println(s"MetricSelection($name) GaugeMetric(${labels.mkString(",")})=${gauge.value}")
-                    case _: Metric => println(s"MetricSelection($name) Metric(${labels.mkString})=???")
-                }
+        board.metrics.foreach{ metric =>
+            val name = metric.name
+            val labels = metric.labels.map(kv => kv._1 + "=" + kv._2)
+            metric match {
+                case gauge: GaugeMetric => println(s"MetricSelection($name) GaugeMetric(${labels.mkString(",")})=${gauge.value}")
+                case _: Metric => println(s"MetricSelection($name) Metric(${labels.mkString})=???")
             }
         }
     }

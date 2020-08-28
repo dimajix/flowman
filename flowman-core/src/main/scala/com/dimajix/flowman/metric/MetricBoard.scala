@@ -36,8 +36,8 @@ final case class MetricBoard(
      * @param catalog
      */
     def reset(catalog:MetricCatalog) : Unit = {
-        rawMetrics(catalog).foreach(_.reset())
         rawBundles(catalog).foreach(_.reset())
+        rawMetrics(catalog).foreach(_.reset())
     }
 
     def rawMetrics(implicit catalog:MetricCatalog) : Seq[Metric] = selections.flatMap(_.metrics)

@@ -43,6 +43,6 @@ final case class CounterAccumulatorMetricBundle(override val name:String, overri
 
         override def labels: Map[String, String] = metricLabels
 
-        override def reset(): Unit = ???
+        override def reset(): Unit = counters.remove(label)
     }
 }

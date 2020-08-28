@@ -19,6 +19,7 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 import com.dimajix.common.IdentityHashSet
+import com.dimajix.flowman.execution.Status
 
 trait MetricCatalog {
     /**
@@ -128,10 +129,10 @@ class MetricSystem extends MetricCatalog {
       * Commits a previously registered MetricBoard in all registered metric sinks
       * @param board
       */
-    def commitBoard(board:MetricBoard) : Unit = {
+    def commitBoard(board:MetricBoard, status:Status) : Unit = {
         if (!metricBoards.contains(board))
             throw new IllegalArgumentException("MetricBoard not registered")
-        metricSinks.foreach(_.commit(board))
+        metricSinks.foreach(_.commit(board, status))
     }
 
     /**

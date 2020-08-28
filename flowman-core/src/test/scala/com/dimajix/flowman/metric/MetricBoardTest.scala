@@ -20,6 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
@@ -29,7 +30,7 @@ class MetricBoardTest extends FlatSpec with Matchers {
             .withEnvironment("env_var", "env_value")
             .build()
 
-        implicit val registry = session.metrics
+        val registry = session.metrics
         val context = session.context
 
         val accumulator1 = new CounterAccumulator()
@@ -44,10 +45,10 @@ class MetricBoardTest extends FlatSpec with Matchers {
                 Map("rl" -> "$raw_label", "sl" -> "$sublabel", "ev" -> "$env_var")
             )
         )
-        val board = MetricBoard(context, Map("board_label" -> "board1"), selections)
+        val board = MetricBoard(context, Map("board_label" -> "board1", "status" -> "$status"), selections)
 
-        board.metrics should be (
-            Seq(FixedGaugeMetric("m1", Map("board_label" -> "board1", "rl" -> "raw_value", "sl" -> "a", "ev" -> "env_value"), 1l))
+        board.metrics(registry, Status.RUNNING) should be (
+            Seq(FixedGaugeMetric("m1", Map("board_label" -> "board1", "rl" -> "raw_value", "sl" -> "a", "ev" -> "env_value", "status" -> "running"), 1l))
         )
     }
 }

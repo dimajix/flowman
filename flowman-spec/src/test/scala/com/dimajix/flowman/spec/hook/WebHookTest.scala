@@ -37,14 +37,14 @@ import com.dimajix.flowman.types.StringType
 
 
 class WebHookTest extends FlatSpec with Matchers {
-    "The WebHookStateStore" should "provide a working job API" in {
+    "The WebHook" should "provide a working job API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
             .build()
         val hook = WebHook(
             Hook.Properties(session.context),
-            jobStart = Some("http://0.0.0.0/$env/$name/$arg1"),
-            jobFinish = Some("http://0.0.0.0/$env/$name/$arg1")
+            jobStart = Some("http://0.0.0.0/$env/$job/$arg1"),
+            jobFinish = Some("http://0.0.0.0/$env/$job/$arg1/$status")
         )
 
         val job = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
@@ -59,8 +59,8 @@ class WebHookTest extends FlatSpec with Matchers {
             .build()
         val hook = new WebHook(
             Hook.Properties(session.context),
-            targetStart = Some("http://0.0.0.0/$env/$name/$arg1"),
-            targetFinish = Some("http://0.0.0.0/$env/$name/$arg1")
+            targetStart = Some("http://0.0.0.0/$env/$target/$arg1"),
+            targetFinish = Some("http://0.0.0.0/$env/$target/$arg1/$status")
         )
 
         val target = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
@@ -89,7 +89,7 @@ class WebHookTest extends FlatSpec with Matchers {
         val session = Session.builder()
                 .withNamespace(ns)
                 .build()
-        val hook = session.hooks.head.asInstanceOf[WebHook]
+        val hook = session.hooks.head.instantiate(session.context).asInstanceOf[WebHook]
         hook.jobStart should be (Some("job_start/$job/$target"))
         hook.jobFinish should be (Some("job_finish/$job/$target"))
         hook.jobSuccess should be (Some("job_success/$job/$target"))

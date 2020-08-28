@@ -137,6 +137,8 @@ final class Environment(rawEnvironment:Map[String,Any]) {
       */
     def toSeq : Seq[(String,Any)] = toMap.toSeq
 
+    def keys : Set[String] = rawEnvironment.keySet
+
     def contains(key:String) : Boolean = rawEnvironment.contains(key)
 
     def apply(key:String) : String = get(key) match {

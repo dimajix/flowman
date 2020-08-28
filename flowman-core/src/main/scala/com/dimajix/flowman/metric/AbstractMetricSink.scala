@@ -49,14 +49,6 @@ abstract class AbstractMetricSink extends MetricSink {
       */
     override def boards : Seq[MetricBoard] = metricBoards.keys.toSeq
 
-    /**
-      * Returns all metrics of all bundles currently registered to this sink
-      * @return
-      */
-    override def metrics : Seq[Metric] = {
-        metricBoards.toSeq.flatMap{ case (board,catalog) => board.metrics(catalog) }
-    }
-
     protected def catalog(board:MetricBoard) : MetricCatalog = {
         metricBoards.getOrElse(board, throw new IllegalArgumentException("Board not registered"))
     }

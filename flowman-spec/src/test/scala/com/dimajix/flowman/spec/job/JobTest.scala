@@ -412,7 +412,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         session.runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         verify(metricSink).addBoard(any(), any())
-        verify(metricSink).commit(any())
+        verify(metricSink).commit(any(), any())
         verify(metricSink).removeBoard(any())
     }
 }

@@ -37,6 +37,7 @@ import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.Template
 
 
 object Runner {
@@ -45,10 +46,10 @@ object Runner {
 }
 
 
-class Runner(
+final class Runner(
     parentExecutor:Executor,
     stateStore: StateStore,
-    hooks: Seq[Hook]=Seq()
+    hooks: Seq[Template[Hook]]=Seq()
 ) {
     require(parentExecutor != null)
     require(stateStore != null)
@@ -153,9 +154,10 @@ class Runner(
             context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"Environment (phase=$phase) $k=$v") }
 
             val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
-            val allHooks = hooks ++ job.hooks.map(_.instantiate(context))
+            val allHooks = (hooks ++ job.hooks).map(_.instantiate(context))
+            val allMetrics = job.metrics.map(_.instantiate(context))
 
-            withMetrics(executor.metrics, job.metrics.map(_.instantiate(context))) {
+            withMetrics(executor.metrics, allMetrics) {
                 recordJob(instance, phase, allHooks) { token =>
                     Try {
                         withWallTime(executor.metrics, job.metadata, phase) {
@@ -296,8 +298,7 @@ class Runner(
         }
 
         val tokens = startJob()
-        val shutdownHook = new Thread() { override def run() : Unit = finishJob(tokens, Status.FAILED) }
-        withShutdownHook(shutdownHook) {
+        withShutdownHook(finishJob(tokens, Status.FAILED)) {
             val status = fn(RunnerJobToken(tokens))
             finishJob(tokens, status)
             status
@@ -330,8 +331,7 @@ class Runner(
         }
 
         val tokens = startTarget()
-        val shutdownHook = new Thread() { override def run() : Unit = finishTarget(tokens, Status.FAILED) }
-        withShutdownHook(shutdownHook) {
+        withShutdownHook(finishTarget(tokens, Status.FAILED)) {
             val status = fn
             finishTarget(tokens, status)
             status
@@ -363,7 +363,8 @@ class Runner(
         }
     }
 
-    private def withShutdownHook[T](shutdownHook:Thread)(block: => T) : T = {
+    private def withShutdownHook[T](hook: => Unit)(block: => T) : T = {
+        val shutdownHook = new Thread() { override def run() : Unit = hook }
         Runtime.getRuntime.addShutdownHook(shutdownHook)
         val result = block
         Runtime.getRuntime.removeShutdownHook(shutdownHook)
@@ -378,24 +379,26 @@ class Runner(
         }
 
         // Run original function
-        var result:Status = Status.UNKNOWN
+        var status:Status = Status.UNKNOWN
         try {
-            result = fn
+            status = fn
         }
         catch {
-            case NonFatal(_) => result = Status.FAILED
+            case NonFatal(ex) =>
+                status = Status.FAILED
+                throw ex
         }
         finally {
             // Unpublish metrics
             metrics.foreach { metrics =>
                 // Do not publish metrics for skipped jobs
-                if (result != Status.SKIPPED) {
-                    metricSystem.commitBoard(metrics)
+                if (status != Status.SKIPPED) {
+                    metricSystem.commitBoard(metrics, status)
                 }
                 metricSystem.removeBoard(metrics)
             }
         }
 
-        result
+        status
     }
 }

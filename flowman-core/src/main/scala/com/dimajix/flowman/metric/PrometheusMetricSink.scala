@@ -29,6 +29,8 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Status
+
 
 class PrometheusMetricSink(
     url:String,
@@ -37,7 +39,7 @@ class PrometheusMetricSink(
 extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
 
-    override def commit(board:MetricBoard) : Unit = {
+    override def commit(board:MetricBoard, status:Status) : Unit = {
         val labels = Seq(
             "job" -> this.labels.getOrElse("job","flowman"),
             "instance" -> this.labels.getOrElse("instance", "default")
@@ -53,9 +55,7 @@ extends AbstractMetricSink {
           # HELP another_metric Just an example.
           another_metric 2398.283
         */
-
-        implicit val catalog = this.catalog(board)
-        val payload = board.metrics.map { metric =>
+        val payload = board.metrics(catalog(board), status).map { metric =>
             val name = metric.name
             val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
             val metrics = metric match {

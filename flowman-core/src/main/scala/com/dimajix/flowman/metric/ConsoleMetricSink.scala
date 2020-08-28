@@ -16,11 +16,12 @@
 
 package com.dimajix.flowman.metric
 
+import com.dimajix.flowman.execution.Status
+
 
 class ConsoleMetricSink extends AbstractMetricSink {
-    override def commit(board:MetricBoard): Unit = {
-        implicit val catalog = this.catalog(board)
-        board.metrics.foreach{ metric =>
+    override def commit(board:MetricBoard, status:Status): Unit = {
+        board.metrics(catalog(board), status).foreach{ metric =>
             val name = metric.name
             val labels = metric.labels.map(kv => kv._1 + "=" + kv._2)
             metric match {

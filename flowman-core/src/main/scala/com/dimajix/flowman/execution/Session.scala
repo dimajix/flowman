@@ -34,6 +34,7 @@ import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
@@ -363,7 +364,7 @@ class Session private[execution](
             .getOrElse(new NullStateStore())
     }
     private lazy val _hooks = {
-        _namespace.toSeq.flatMap(_.hooks.map(_.instantiate(rootContext)))
+        _namespace.toSeq.flatMap(_.hooks)
     }
     private lazy val metricSystem = {
         val system = new MetricSystem
@@ -401,7 +402,7 @@ class Session private[execution](
     /**
      * Returns the list of all hooks
      */
-    def hooks : Seq[Hook] = _hooks
+    def hooks : Seq[Template[Hook]] = _hooks
 
     /**
       * Returns an appropriate runner for a specific job

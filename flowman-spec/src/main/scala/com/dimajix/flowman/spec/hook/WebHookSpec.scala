@@ -67,7 +67,7 @@ case class WebHook(
      * @return
      */
     override def startJob(job: JobInstance, phase: Phase): JobToken = {
-        val env = job.asMap
+        val env = job.asMap -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)
     }
@@ -79,8 +79,7 @@ case class WebHook(
      * @param status
      */
     override def finishJob(token: JobToken, status: Status): Unit = {
-        val myToken = token.asInstanceOf[DummyJobToken]
-        val env = myToken.env ++ Map("status" -> status.toString)
+        val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status.toString)
         invoke(jobFinish, env)
 
         status match {
@@ -98,7 +97,7 @@ case class WebHook(
      * @return
      */
     override def startTarget(target: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken =  {
-        val env = parent.map(_.asInstanceOf[DummyJobToken].env).getOrElse(Map()) ++ target.asMap
+        val env = parent.map(_.asInstanceOf[DummyJobToken].env).getOrElse(Map()) ++ target.asMap -- context.environment.keys
         invoke(targetStart, env)
         DummyTargetToken(env)
     }
@@ -110,8 +109,7 @@ case class WebHook(
      * @param status
      */
     override def finishTarget(token: TargetToken, status: Status): Unit = {
-        val myToken = token.asInstanceOf[DummyTargetToken]
-        val env = myToken.env ++ Map("status" -> status.toString)
+        val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status.toString)
         invoke(targetFinish, env)
 
         status match {

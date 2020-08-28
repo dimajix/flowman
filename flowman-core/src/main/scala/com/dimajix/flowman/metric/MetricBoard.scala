@@ -17,6 +17,7 @@
 package com.dimajix.flowman.metric
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Status
 
 
 /**
@@ -47,17 +48,17 @@ final case class MetricBoard(
      * metrics are not the original ones, but static copies with applied relabeling.
      * @param catalog
      */
-    def metrics(implicit catalog:MetricCatalog) : Seq[Metric] = {
+    def metrics(catalog:MetricCatalog, status:Status) : Seq[Metric] = {
         val env = context.environment
 
         selections.flatMap { sel =>
             // Relabeling should happen has late as possible, since some values might be dynamic
             def relabel(metric:Metric) : Metric = metric match {
-                case gauge:GaugeMetric => FixedGaugeMetric(sel.name, env.evaluate(labels ++ sel.labels, gauge.labels), gauge.value)
+                case gauge:GaugeMetric => FixedGaugeMetric(sel.name, env.evaluate(labels ++ sel.labels, gauge.labels + ("status" -> status.toString)), gauge.value)
                 case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
             }
 
-            sel.metrics.map(relabel)
+            sel.metrics(catalog).map(relabel)
         }
     }
 }

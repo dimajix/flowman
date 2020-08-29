@@ -20,24 +20,26 @@ import java.util
 
 import scala.collection.JavaConverters._
 
-import jline.console.completer.Completer
+import org.jline.reader.Candidate
+import org.jline.reader.Completer
+import org.jline.reader.LineReader
+import org.jline.reader.ParsedLine
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
+import org.kohsuke.args4j.Option
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
-import org.kohsuke.args4j.Option
-
+import scala.collection.JavaConverters._
 
 class CommandCompleter extends Completer {
-    override def complete(buffer: String, cursor: Int, candidates: util.List[CharSequence]): Int = {
+    override def complete(reader: LineReader, line: ParsedLine, candidates: util.List[Candidate]): Unit = {
         val cmd = new ParsedCommand
         val parser = new CmdLineParser(cmd)
-        val parts = buffer.split(' ')
-        val current = parts.lastOption.getOrElse("")
+        val parts = line.words()
+        val current = line.word()
         try {
-            parser.parseArgument(parts.toList.asJava)
-            buffer.length
+            parser.parseArgument(parts)
         }
         catch {
             case e: CmdLineException =>
@@ -57,9 +59,7 @@ class CommandCompleter extends Completer {
                             Seq()
                     }
                 }
-                commands.filter(_.startsWith(current)).foreach(candidates.add)
-                //parts.dropRight(1).mkString(" ").length
-                buffer.length
+                commands.filter(_.startsWith(current)).foreach(c => candidates.add(new Candidate(c)))
         }
     }
 }

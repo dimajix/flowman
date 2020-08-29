@@ -51,7 +51,7 @@ abstract class Command {
 
     def execute(project:Project, session: Session) : Boolean = {
         if (help) {
-            printHelp()
+            printHelp(System.out)
             true
         }
         else {

@@ -49,7 +49,7 @@ abstract class NestedCommand extends Command {
 
     override def execute(project:Project, session: Session) : Boolean = {
         if (help || command == null) {
-            printHelp()
+            printHelp(System.out)
             true
         }
         else {

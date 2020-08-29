@@ -60,6 +60,7 @@ class Arguments(args:Array[String]) {
         new SubCommand(name="info",impl=classOf[InfoCommand]),
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),
+        new SubCommand(name="relation",impl=classOf[ModelCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])

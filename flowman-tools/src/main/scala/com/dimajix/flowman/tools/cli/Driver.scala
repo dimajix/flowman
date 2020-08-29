@@ -20,11 +20,12 @@ import scala.collection.JavaConverters._
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
-import jline.TerminalFactory
-import jline.UnixTerminal
-import jline.console.ConsoleReader
 import org.apache.hadoop.fs.Path
+import org.jline.reader.LineReader
+import org.jline.reader.LineReaderBuilder
+import org.jline.terminal.TerminalBuilder
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 
@@ -93,23 +94,50 @@ class Driver(options:Arguments) extends Tool {
             profiles = options.profiles
         )
 
-        val terminal = TerminalFactory.get()
-        val console = new ConsoleReader(System.in, System.out, terminal)
-        console.setPrompt("flowman> ")
-        console.addCompleter(new CommandCompleter)
+        val terminal = TerminalBuilder.builder()
+            .build()
+        val console = LineReaderBuilder.builder()
+            .appName("Flowman")
+            .option(LineReader.Option.CASE_INSENSITIVE, false)
+            .option(LineReader.Option.AUTO_MENU, true)
+            .option(LineReader.Option.AUTO_LIST, true)
+            .option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+            .terminal(terminal)
+            .completer(new CommandCompleter)
+            .build()
+        val writer = terminal.writer()
+
+        //console.setAutosuggestion(LineReader.SuggestionType.COMPLETER)
 
         // REPL-loop
         while (true) {
-            val line = console.readLine()
             val cmd = new ParsedCommand
-            val parser = new CmdLineParser(cmd)
             try {
-                parser.parseArgument(line.split(' ').toList.asJava)
-                cmd.command.execute(project, session)
+                System.err.flush()
+                System.out.flush()
+                console.readLine("flowman> ")
+                val line = console.getParsedLine
+                if (line.words().asScala.exists(_.trim.nonEmpty)) {
+                    val parser = new CmdLineParser(cmd)
+                    parser.parseArgument(line.words())
+                }
             } catch {
                 case e: CmdLineException =>
-                    console.println(e.getMessage)
-                    e.getParser.printUsage(console.getOutput, null)
+                    writer.println("Syntax error: " + e.getMessage)
+                    e.getParser.printUsage(writer, null)
+                case NonFatal(e) =>
+                    writer.println("Error parsing command: " + e.getMessage)
+            }
+
+            try {
+                if (cmd.command != null) {
+                    cmd.command.execute(project, session)
+                }
+            }
+            catch {
+                case NonFatal(e) =>
+                    writer.println("Error executing command: " + e.getMessage)
+                    e.printStackTrace(writer)
             }
         }
 

@@ -28,7 +28,7 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 
 
 class JobCommand extends NestedCommand {
-    @Argument(required=true,index=0,metaVar="subcommand",usage="the subcommand to run",handler=classOf[SubCommandHandler])
+    @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="create",impl=classOf[CreateCommand]),
@@ -38,9 +38,4 @@ class JobCommand extends NestedCommand {
         new SubCommand(name="destroy",impl=classOf[DestroyCommand])
     ))
     override var command:Command = _
-
-    override def execute(project:Project, session: Session) : Boolean = {
-        super.execute(project, session)
-        command.execute(project, session)
-    }
 }

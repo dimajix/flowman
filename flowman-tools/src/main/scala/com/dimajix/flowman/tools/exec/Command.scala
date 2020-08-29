@@ -52,9 +52,10 @@ abstract class Command {
     def execute(project:Project, session: Session) : Boolean = {
         if (help) {
             printHelp()
-            System.exit(0)
+            true
         }
-
-        true
+        else {
+            false
+        }
     }
 }

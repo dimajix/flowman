@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec
+package com.dimajix.flowman.tools.cli
 
 import java.io.PrintStream
 
@@ -55,34 +55,18 @@ class Arguments(args:Array[String]) {
     @Option(name = "--spark-name", usage = "set the Spark application name", metaVar = "<spark_application_name>")
     var sparkName: String = "flowman"
 
-    @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=classOf[SubCommandHandler])
-    @SubCommands(Array(
-        new SubCommand(name="info",impl=classOf[InfoCommand]),
-        new SubCommand(name="job",impl=classOf[JobCommand]),
-        new SubCommand(name="model",impl=classOf[ModelCommand]),
-        new SubCommand(name="mapping",impl=classOf[MappingCommand]),
-        new SubCommand(name="target",impl=classOf[TargetCommand]),
-        new SubCommand(name="project",impl=classOf[ProjectCommand])
-    ))
-    var command:Command = _
-
     /**
       * Returns true if a help message is requested
       * @return
       */
-    def help : Boolean = _help || command == null || command.help
+    def help : Boolean = _help
 
     /**
       * Prints a context-aware help message
       */
     def printHelp(out:PrintStream = System.err) : Unit = {
-        if (command != null) {
-            command.printHelp(out)
-        }
-        else {
-            new CmdLineParser(this).printUsage(out)
-            out.println
-        }
+        new CmdLineParser(this).printUsage(out)
+        out.println
     }
 
     parseArgs(args)

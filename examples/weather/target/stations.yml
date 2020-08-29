@@ -1,19 +1,19 @@
 targets:
   stations-relation-file:
     kind: relation
-    input: stations
+    mapping: stations
     relation: stations-file
     mode: overwrite
 
   stations-relation-local:
     kind: relation
-    input: stations
+    mapping: stations
     relation: stations-local
     mode: overwrite
 
   stations-local:
     kind: local
-    input: stations
+    mapping: stations
     filename: /tmp/stations.csv
     header: true
 

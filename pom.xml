@@ -929,6 +929,10 @@
                         <groupId>org.apache.velocity</groupId>
                         <artifactId>velocity</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>jline</groupId>
+                        <artifactId>jline</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 

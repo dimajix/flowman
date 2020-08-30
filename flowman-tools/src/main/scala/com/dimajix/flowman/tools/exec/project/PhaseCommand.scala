@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec.project
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -57,11 +58,8 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
             context.getJob(JobIdentifier(job))
         }
         match {
-            case Failure(_:NoSuchJobException) =>
-                logger.error(s"Cannot find job '$job'")
-                false
-            case Failure(_) =>
-                logger.error(s"Error instantiating job '$job'")
+            case Failure(NonFatal(e)) =>
+                logger.error(s"Error instantiating job '$job': ${e.getMessage()}")
                 false
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))

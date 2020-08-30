@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.cli
+package com.dimajix.flowman.tools.shell
 
 import java.util
 
@@ -46,7 +46,6 @@ class CommandCompleter extends Completer {
                 val parser = e.getParser
                 val args = parser.getArguments.asScala
                 val opts = parser.getOptions.asScala
-                val SCH = classOf[SubCommandHandler]
                 val commands = (args ++ opts).flatMap { opt =>
                     opt.setter.asAnnotatedElement.getAnnotations.flatMap {
                         case cmd: SubCommands =>

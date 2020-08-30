@@ -18,6 +18,7 @@ package com.dimajix.flowman.tools.exec.info
 
 import scala.collection.JavaConverters._
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.ToolConfig
@@ -25,12 +26,7 @@ import com.dimajix.flowman.tools.exec.Command
 
 
 class InfoCommand extends Command {
-    override def execute(project:Project, session: Session): Boolean = {
-        super.execute(project, session)
-
-        // Create project specific executor
-        val context = session.getContext(project)
-
+    override def execute(session: Session, project:Project, context:Context): Boolean = {
         println(s"Flowman home directory: ${ToolConfig.homeDirectory.getOrElse("")}")
         println(s"Flowman config directory: ${ToolConfig.confDirectory.getOrElse("")}")
         println(s"Flowman plugin directory: ${ToolConfig.pluginDirectory.getOrElse("")}")
@@ -76,5 +72,4 @@ class InfoCommand extends Command {
 
         true
     }
-
 }

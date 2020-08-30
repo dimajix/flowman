@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.cli
+package com.dimajix.flowman.tools.shell
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -31,10 +31,10 @@ import org.kohsuke.args4j.CmdLineParser
 
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Logging
-import com.dimajix.flowman.tools.Tool
+import com.dimajix.flowman.tools.StatefulTool
 
 
-object Driver {
+object Shell {
     def main(args: Array[String]) : Unit = {
         Logging.init()
 
@@ -67,33 +67,30 @@ object Driver {
         else {
             Logging.setSparkLogging(options.sparkLogging)
 
-            val driver = new Driver(options)
-            driver.run()
+            _instance = new Shell(options)
+            _instance.loadProject(new Path(options.projectFile))
+            _instance.run()
         }
     }
+
+    var _instance:Shell = _
+    def instance:Shell = _instance
 }
 
 
-class Driver(options:Arguments) extends Tool {
+
+class Shell(args:Arguments) extends StatefulTool(
+    config = splitSettings(args.config).toMap,
+    environment = splitSettings(args.environment).toMap,
+    args.profiles.toSeq,
+    args.sparkMaster,
+    args.sparkName
+) {
     /**
      * Main method for running this command
      * @return
      */
     def run() : Boolean = {
-        val project = loadProject(new Path(options.projectFile))
-
-        // Create Flowman Session, which also includes a Spark Session
-        val config = splitSettings(options.config)
-        val environment = splitSettings(options.environment)
-        val session = createSession(
-            options.sparkMaster,
-            options.sparkName,
-            project = Some(project),
-            additionalConfigs = config.toMap,
-            additionalEnvironment = environment.toMap,
-            profiles = options.profiles
-        )
-
         val terminal = TerminalBuilder.builder()
             .build()
         val console = LineReaderBuilder.builder()
@@ -115,7 +112,8 @@ class Driver(options:Arguments) extends Tool {
             try {
                 System.err.flush()
                 System.out.flush()
-                console.readLine("flowman> ")
+                val prompt = "flowman:" + project.name + job.map("/" + _.name).getOrElse("") + "> "
+                console.readLine(prompt)
                 val line = console.getParsedLine
                 if (line.words().asScala.exists(_.trim.nonEmpty)) {
                     val parser = new CmdLineParser(cmd)
@@ -130,8 +128,14 @@ class Driver(options:Arguments) extends Tool {
             }
 
             try {
-                if (cmd.command != null) {
-                    cmd.command.execute(project, session)
+                val command = cmd.command
+                if (command != null) {
+                    if (command.help) {
+                        command.printHelp(System.out)
+                    }
+                    else {
+                        command.execute(session, project, context)
+                    }
                 }
             }
             catch {

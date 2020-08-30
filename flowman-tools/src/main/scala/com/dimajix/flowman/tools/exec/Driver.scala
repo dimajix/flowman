@@ -74,20 +74,28 @@ class Driver(options:Arguments) extends Tool {
       * @return
       */
     def run() : Boolean = {
-        val project = loadProject(new Path(options.projectFile))
-
-        // Create Flowman Session, which also includes a Spark Session
-        val config = splitSettings(options.config)
-        val environment = splitSettings(options.environment)
-        val session = createSession(
-            options.sparkMaster,
-            options.sparkName,
-            project = Some(project),
-            additionalConfigs = config.toMap,
-            additionalEnvironment = environment.toMap,
-            profiles = options.profiles
-        )
-
-        options.command.execute(project, session)
+        val command = options.command
+        if (command.help) {
+            command.printHelp(System.out)
+            true
+        }
+        else {
+            // Create Flowman Session, which also includes a Spark Session
+            val project = loadProject(new Path(options.projectFile))
+            val config = splitSettings(options.config)
+            val environment = splitSettings(options.environment)
+            val session = createSession(
+                options.sparkMaster,
+                options.sparkName,
+                project = Some(project),
+                additionalConfigs = config.toMap,
+                additionalEnvironment = environment.toMap,
+                profiles = options.profiles
+            )
+            val context = session.getContext(project)
+            val result = options.command.execute(session, project, context)
+            session.shutdown()
+            result
+        }
     }
 }

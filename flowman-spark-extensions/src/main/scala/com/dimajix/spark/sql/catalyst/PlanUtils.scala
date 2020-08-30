@@ -16,12 +16,8 @@
 
 package com.dimajix.spark.sql.catalyst
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -32,6 +28,8 @@ import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.catalyst.rules.RuleExecutor
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.ByteType
+import org.apache.spark.sql.types.CharType
+import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
@@ -40,6 +38,8 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.TimestampType
+import org.apache.spark.sql.types.VarcharType
 
 
 object PlanUtils {
@@ -69,8 +69,16 @@ object PlanUtils {
                             Literal(false, BooleanType)
                         case DoubleType =>
                             Literal(0.0, DoubleType)
+                        case DateType =>
+                            Literal(0, DateType)
+                        case TimestampType =>
+                            Literal(0l, TimestampType)
                         case dt:DecimalType =>
                             Literal(BigDecimal(0), dt)
+                        case c:CharType =>
+                            Literal("", c)
+                        case c:VarcharType =>
+                            Literal("", c)
                         case StringType=>
                             Literal("", StringType)
                     }

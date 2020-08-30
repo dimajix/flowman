@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec.mapping
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.Argument
@@ -60,7 +61,7 @@ class SaveCommand extends ActionCommand {
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case Failure(e) =>
+            case Failure(NonFatal(e)) =>
                 logger.error(s"Caught exception while save mapping '$mapping'", e)
                 false
         }

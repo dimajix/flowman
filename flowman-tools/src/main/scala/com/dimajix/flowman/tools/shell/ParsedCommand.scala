@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.cli
+package com.dimajix.flowman.tools.shell
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
+import com.dimajix.flowman.tools.shell.job.JobCommand
+import com.dimajix.flowman.tools.shell.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.info.InfoCommand
-import com.dimajix.flowman.tools.exec.job.JobCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
-import com.dimajix.flowman.tools.exec.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
 
 
 class ParsedCommand {
     @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
+        new SubCommand(name="exit",impl=classOf[ExitCommand]),
+        new SubCommand(name="quit",impl=classOf[ExitCommand]),
         new SubCommand(name="info",impl=classOf[InfoCommand]),
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),

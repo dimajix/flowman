@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.cli
+package com.dimajix.flowman.tools.shell
 
 import scala.collection.JavaConverters._
 

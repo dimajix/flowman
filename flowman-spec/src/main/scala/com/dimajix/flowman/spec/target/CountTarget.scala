@@ -85,7 +85,7 @@ case class CountTarget(
         val mapping = context.getMapping(this.mapping.mapping)
         val dfIn = executor.instantiate(mapping, this.mapping.output)
         val count = dfIn.count()
-        System.out.println(s"Mapping '$mapping' contains $count records")
+        System.out.println(s"Mapping '${this.mapping}' contains $count records")
     }
 }
 

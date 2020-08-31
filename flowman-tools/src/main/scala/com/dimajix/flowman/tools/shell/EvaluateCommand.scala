@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,35 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.shell.job
+package com.dimajix.flowman.tools.shell
 
 import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
+import org.kohsuke.args4j.spi.RestOfArgumentsHandler
+import org.kohsuke.args4j.spi.StopOptionHandler
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.Command
-import com.dimajix.flowman.tools.shell.Shell
 
 
-class EnterCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[EnterCommand])
+class EvaluateCommand extends Command {
+    private val logger = LoggerFactory.getLogger(classOf[EvaluateCommand])
 
-    @Argument(index=0, required=true, usage = "name of job to enter", metaVar = "<job>")
-    var job: String = ""
-    @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
-    var args: Array[String] = Array()
+    @Argument(index=0, required=true, usage = "expression to evaluate", metaVar = "<expr>", handler=classOf[RestOfArgumentsHandler])
+    var args: String = ""
 
     override def execute(session: Session, project:Project, context:Context): Boolean = {
         try {
-            val job = context.getJob(JobIdentifier(this.job))
-            val args = splitSettings(this.args).toMap
-            Shell.instance.enterJob(job, args)
+            println(context.evaluate(args))
             true
         }
         catch {
             case NonFatal(e) =>
-                logger.error(s"Error entering job '$job': ${e.getMessage}")
+                logger.error(s"Error: ${e.getMessage}")
                 false
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,63 +14,57 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.info
-
-import scala.collection.JavaConverters._
+package com.dimajix.flowman.tools.shell.project
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.ToolConfig
 import com.dimajix.flowman.tools.exec.Command
 
 
 class InfoCommand extends Command {
     override def execute(session: Session, project:Project, context:Context): Boolean = {
-        println(s"Flowman home directory: ${ToolConfig.homeDirectory.getOrElse("")}")
-        println(s"Flowman config directory: ${ToolConfig.confDirectory.getOrElse("")}")
-        println(s"Flowman plugin directory: ${ToolConfig.pluginDirectory.getOrElse("")}")
-
-        println("Namespace:")
-        session.namespace.foreach { ns =>
-            println(s"    name: ${ns.name}")
-            println(s"    plugins: ${ns.plugins.mkString(",")}")
-        }
-
         println("Project:")
         println(s"    name: ${project.name}")
         println(s"    version: ${project.version.getOrElse("")}")
         println(s"    description: ${project.description.getOrElse("")}")
         println(s"    basedir: ${project.basedir.getOrElse("")}")
         println(s"    filename: ${project.filename.map(_.toString).getOrElse("")}")
-
         println("Environment:")
-        context.environment
+        project.environment
             .toSeq
             .sortBy(_._1)
             .foreach{ case(k,v) => println(s"    $k=$v") }
-
         println("Configuration:")
-        context.config
+        project.config
             .toSeq
             .sortBy(_._1)
             .foreach{ case(k,v) => println(s"    $k=$v") }
-
-        println("Flowman Configuration:")
-        session.flowmanConf.getAll
+        println("Profiles:")
+        project.profiles
+            .toSeq
             .sortBy(_._1)
-            .foreach{ case(k,v) => println(s"    $k=$v") }
-
-        println("Spark Configuration:")
-        session.sparkConf.getAll
+            .foreach{ p => println(s"    ${p._1}") }
+        println("Mappings:")
+        project.mappings
+            .toSeq
             .sortBy(_._1)
-            .foreach{ case(k,v) => println(s"    $k=$v") }
-
-        println("Hadoop Configuration:")
-        session.hadoopConf.asScala.toList
-            .sortBy(_.getKey)
-            .foreach(kv => println(s"    ${kv.getKey}=${kv.getValue}"))
-
+            .foreach{ p => println(s"    ${p._1}") }
+        println("Relations:")
+        project.relations
+            .toSeq
+            .sortBy(_._1)
+            .foreach{ p => println(s"    ${p._1}") }
+        println("Jobs:")
+        project.jobs
+            .toSeq
+            .sortBy(_._1)
+            .foreach{ p => println(s"    ${p._1}") }
+        println("Targets:")
+        project.targets
+            .toSeq
+            .sortBy(_._1)
+            .foreach{ p => println(s"    ${p._1}") }
         true
     }
 }

@@ -39,6 +39,7 @@ class ProjectCommand extends NestedCommand {
         new SubCommand(name="verify",impl=classOf[VerifyCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),
         new SubCommand(name="destroy",impl=classOf[DestroyCommand]),
+        new SubCommand(name="info",impl=classOf[InfoCommand]),
         new SubCommand(name="load",impl=classOf[LoadCommand]),
         new SubCommand(name="reload",impl=classOf[ReloadCommand])
     ))

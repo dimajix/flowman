@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,29 +25,36 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.Command
-import com.dimajix.flowman.tools.shell.Shell
 
 
-class EnterCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[EnterCommand])
+class InfoCommand extends Command {
+    private val logger = LoggerFactory.getLogger(classOf[InfoCommand])
 
     @Argument(index=0, required=true, usage = "name of job to enter", metaVar = "<job>")
     var job: String = ""
-    @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
-    var args: Array[String] = Array()
 
     override def execute(session: Session, project:Project, context:Context): Boolean = {
         try {
             val job = context.getJob(JobIdentifier(this.job))
-            val args = splitSettings(this.args).toMap
-            Shell.instance.enterJob(job, args)
+            println(s"Name: ${job.name}")
+            println("Targets:")
+            job.targets
+                .foreach{ p => println(s"    $p") }
+            println("Parameters:")
+            job.parameters
+                .sortBy(_.name)
+                .foreach{ p => println(s"    ${p.name} : ${p.ftype}") }
+            println("Environment:")
+            job.environment
+                .toSeq
+                .sortBy(_._1)
+                .foreach{ case(k,v) => println(s"    $k=$v") }
             true
         }
         catch {
             case NonFatal(e) =>
-                logger.error(s"Error entering job '$job': ${e.getMessage}")
+                logger.error(s"Error '$job': ${e.getMessage}")
                 false
         }
     }

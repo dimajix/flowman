@@ -54,34 +54,7 @@ object PlanUtils {
                     Literal(null, field.dataType)
                 }
                 else {
-                    field.dataType match {
-                        case ByteType =>
-                            Literal(0.toByte, ByteType)
-                        case ShortType =>
-                            Literal(0.toShort, ShortType)
-                        case IntegerType=>
-                            Literal(0, IntegerType)
-                        case LongType =>
-                            Literal(0L, LongType)
-                        case FloatType =>
-                            Literal(0f, FloatType)
-                        case BooleanType =>
-                            Literal(false, BooleanType)
-                        case DoubleType =>
-                            Literal(0.0, DoubleType)
-                        case DateType =>
-                            Literal(0, DateType)
-                        case TimestampType =>
-                            Literal(0l, TimestampType)
-                        case dt:DecimalType =>
-                            Literal(BigDecimal(0), dt)
-                        case c:CharType =>
-                            Literal("", c)
-                        case c:VarcharType =>
-                            Literal("", c)
-                        case StringType=>
-                            Literal("", StringType)
-                    }
+                    Literal.default(field.dataType)
                 }
             Alias(literal, field.name)(explicitMetadata = Option(field.metadata))
         }

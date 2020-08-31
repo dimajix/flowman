@@ -105,8 +105,6 @@ class Shell(args:Arguments) extends StatefulTool(
             .build()
         val writer = terminal.writer()
 
-        //console.setAutosuggestion(LineReader.SuggestionType.COMPLETER)
-
         // REPL-loop
         while (true) {
             val cmd = new ParsedCommand

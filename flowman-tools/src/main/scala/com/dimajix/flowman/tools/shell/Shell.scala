@@ -115,10 +115,10 @@ class Shell(args:Arguments) extends StatefulTool(
                 System.out.flush()
                 val prompt = "flowman:" + project.name + job.map("/" + _.name).getOrElse("") + "> "
                 console.readLine(prompt)
-                val line = console.getParsedLine
-                if (line.words().asScala.exists(_.trim.nonEmpty)) {
+                val args = console.getParsedLine.words().asScala.filter(_.trim.nonEmpty)
+                if (args.nonEmpty) {
                     val parser = new CmdLineParser(cmd)
-                    parser.parseArgument(line.words())
+                    parser.parseArgument(args.asJava)
                 }
             } catch {
                 case e: CmdLineException =>

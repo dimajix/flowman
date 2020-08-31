@@ -41,7 +41,7 @@ class ShowCommand extends ActionCommand {
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 10
     @Argument(index=0, usage="specifies the mapping to show", metaVar="<mapping>", required=true)
-    var mapping: String = ""
+    var mapping: String = _
     @Argument(index=1, usage="specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
     var columns: String = ""
 
@@ -60,7 +60,7 @@ class ShowCommand extends ActionCommand {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
             case Failure(NonFatal(e)) =>
-                logger.error(s"Caught exception while dumping mapping '$mapping", e)
+                logger.error(s"Caught exception while dumping mapping '$mapping'", e)
                 false
         }
     }

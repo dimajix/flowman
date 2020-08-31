@@ -25,6 +25,7 @@ import scala.util.control.NonFatal
 import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
+import org.jline.reader.impl.DefaultParser
 import org.jline.terminal.TerminalBuilder
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser

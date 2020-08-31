@@ -18,6 +18,7 @@ package com.dimajix.flowman.tools.shell
 
 import scala.collection.JavaConverters._
 
+import org.jline.reader.Candidate
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -25,10 +26,10 @@ import org.scalatest.Matchers
 class CommandCompleterTest extends FlatSpec with Matchers {
     "The CommandCompleter" should "work" in {
         val completer = new CommandCompleter()
-        val candidates = new java.util.LinkedList[CharSequence]()
+        val candidates = new java.util.LinkedList[Candidate]()
 
         candidates.clear()
-        //completer.complete("map", 3, candidates) should be (3)
+        //completer.complete(null, "map", candidates) should be (3)
         //candidates.asScala should be (Seq("mapping"))
 
         candidates.clear()

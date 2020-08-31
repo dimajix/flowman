@@ -36,10 +36,16 @@ class CommandCompleter extends Completer {
     override def complete(reader: LineReader, line: ParsedLine, candidates: util.List[Candidate]): Unit = {
         val cmd = new ParsedCommand
         val parser = new CmdLineParser(cmd)
-        val parts = line.words()
+        val words = line.words().asScala
+            .filter(_.trim.nonEmpty)
+        val parts = if (words.isEmpty) Seq("") else words
         val current = line.word()
+
+        //println(s"parts: ${parts.asScala.mkString(",")}")
+        //println(s"word: '$current'")
+
         try {
-            parser.parseArgument(parts)
+            parser.parseArgument(parts.asJava)
         }
         catch {
             case e: CmdLineException =>
@@ -48,12 +54,20 @@ class CommandCompleter extends Completer {
                 val opts = parser.getOptions.asScala
                 val commands = (args ++ opts).flatMap { opt =>
                     opt.setter.asAnnotatedElement.getAnnotations.flatMap {
-                        case cmd: SubCommands =>
-                            cmd.value().map(_.name())
+                        case s: SubCommands =>
+                            s.value().map(_.name())
                         case o:Option =>
                             Seq(o.name()) ++ o.aliases()
-                        case a:Argument =>
-                            Seq(a.metaVar())
+                        case a:Argument if a.metaVar() == "<mapping>" =>
+                            Shell.instance.project.mappings.keys.toList.sorted
+                        case a:Argument if a.metaVar() == "<job>" =>
+                            Shell.instance.project.jobs.keys.toList.sorted
+                        case a:Argument if a.metaVar() == "<target>" =>
+                            Shell.instance.project.targets.keys.toList.sorted
+                        case a:Argument if a.metaVar() == "<relation>" =>
+                            Shell.instance.project.relations.keys.toList.sorted
+                        case a:Argument if opt.option.handler() != classOf[SubCommandHandler] =>
+                            Seq(a.metaVar()).filter(_.nonEmpty)
                         case _ =>
                             Seq()
                     }

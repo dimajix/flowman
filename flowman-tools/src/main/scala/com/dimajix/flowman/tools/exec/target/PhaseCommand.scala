@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.tools.exec.target
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
@@ -34,41 +38,36 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class PhaseCommand(phase:Phase) extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[PhaseCommand])
 
-    @Argument(usage = "specifies target(s) to execute", metaVar = "<target>")
+    @Argument(required = true, usage = "specifies target(s) to execute", metaVar = "<target>")
     var targets: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of all targets in case of errors")
+    var keepGoing: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
-        logger.info("Cleaning outputs {}", if (targets != null) targets.mkString(",") else "all")
-
-        val toRun =
-            if (targets.nonEmpty)
-                targets.toSeq
-            else
-                project.targets.keys.toSeq
-
-        val job = Job.builder(context)
-            .setName("cli-execute-targets")
-            .setDescription("Execute targets via CLI")
-            .setTargets(toRun.map(TargetIdentifier.parse))
-            .build()
-
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)
             else
                 Lifecycle.ofPhase(phase)
 
-        val runner = session.runner
-        val result = runner.executeJob(job, lifecycle, force=force)
-        result match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ => false
+        Try {
+            val allTargets = targets.flatMap(_.split(",")).map { t =>
+                context.getTarget(TargetIdentifier(t))
+            }
+            val runner = session.runner
+            runner.executeTargets(allTargets, lifecycle, force = force, keepGoing = keepGoing)
+        } match {
+            case Success(Status.SUCCESS) => true
+            case Success(Status.SKIPPED) => true
+            case Success(_) => false
+            case Failure(e) =>
+                logger.error(e.getMessage)
+                false
         }
     }
 }

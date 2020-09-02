@@ -9,6 +9,7 @@ the configuration property `flowman.execution.target.forceDirty` to `true` for t
 * Add new command line option `--keep-going`
 * Implement new `com.dimajix.spark.io.DeferredFileCommitProtocol` which can be used by setting the Spark configuration
 parameter `spark.sql.sources.commitProtocolClass`
+* Add new `flowshell` application
 
 
 # Version 0.13.1 - 2020-07-14

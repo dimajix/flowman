@@ -36,6 +36,7 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 
@@ -80,6 +81,44 @@ final class Runner(
         }
     }
 
+    /**
+     * Executes a single target using the given executor and a map of parameters. The Runner may decide not to
+     * execute a specific target, because some information may indicate that the job has already been successfully
+     * run in the past. This behaviour can be overriden with the force flag
+     * @param targets
+     * @param phases
+     * @return
+     */
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false) : Status = {
+        if (targets.nonEmpty) {
+            val context = targets.head.context
+            val job = Job.builder(context)
+                .setName("execute-target")
+                .setTargets(targets.map(_.identifier))
+                .build()
+
+            withJobContext(job, force) { context =>
+                withExecutor(job) { executor =>
+                    Status.ofAll(phases) { phase =>
+                        executeJobPhase(executor, context, job, phase, Map(), force, keepGoing)
+                    }
+                }
+            }
+        }
+        else {
+            Status.SUCCESS
+        }
+   }
+
+    /**
+     * Provides a context for the given job
+     * @param job
+     * @param args
+     * @param force
+     * @param fn
+     * @tparam T
+     * @return
+     */
     def withJobContext[T](job:Job, args:Map[String,Any]=Map(), force:Boolean=false)(fn:(Context,Map[String,Any]) => T) : T = {
         val arguments : Map[String,Any] = job.parameters.flatMap(p => p.default.map(d => p.name -> d)).toMap ++ args
         arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
@@ -99,7 +138,15 @@ final class Runner(
         fn(jobContext, arguments)
     }
 
-    /**
+    def withJobContext[T](job:Job, force:Boolean)(fn:Context => T) : T = {
+        val context = ScopeContext.builder(job.context)
+            .withEnvironment("force", force)
+            .withEnvironment("job", JobWrapper(job))
+            .build()
+        fn(context)
+    }
+
+        /**
      * Creates an code environment containing a [[Context]] for the specified phase
      * @param phase
      * @param fn
@@ -193,8 +240,8 @@ final class Runner(
     }
 
     /**
-      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
-      * execute a specific job, because some information may indicate that the job has already been successfully
+      * Executes a single target using the given executor and a map of parameters. The Runner may decide not to
+      * execute a specific target, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overriden with the force flag
       * @param target
       * @param phase
@@ -266,18 +313,18 @@ final class Runner(
 
     /**
      * Monitors the job execution by invoking all hooks and the state store
-     * @param target
+     * @param job
      * @param phase
      * @param hooks
      * @param fn
      * @return
      */
-    private def recordJob(target:JobInstance, phase:Phase, hooks:Seq[Hook])(fn: RunnerJobToken => Status) : Status = {
+    private def recordJob(job:JobInstance, phase:Phase, hooks:Seq[Hook])(fn: RunnerJobToken => Status) : Status = {
         def startJob() : Seq[(JobListener, JobToken)] = {
-            Seq((stateStore, stateStore.startJob(target, phase))) ++
+            Seq((stateStore, stateStore.startJob(job, phase))) ++
             hooks.flatMap { hook =>
                 try {
-                    Some((hook, hook.startJob(target, phase)))
+                    Some((hook, hook.startJob(job, phase)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn("Execution listener threw exception on startJob.", ex)

@@ -36,11 +36,11 @@ import com.dimajix.flowman.tools.exec.Command
 class SqlCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[SqlCommand])
 
-    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)
+    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 100
-    @Option(name="-c", aliases=Array("--csv"), usage="Dump as csv", metaVar="<csv>", required = false)
+    @Option(name="-c", aliases=Array("--csv"), usage="Dump as CSV instead of ASCII table", metaVar="<csv>", required = false)
     var csv: Boolean = false
-    @Argument(index = 0, required = true, usage = "expression to evaluate", metaVar = "<expr>", handler = classOf[RestOfArgumentsHandler])
+    @Argument(index = 0, required = true, usage = "SQL statement to execute", metaVar = "<sql>", handler = classOf[RestOfArgumentsHandler])
     var statement: Array[String] = Array()
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {

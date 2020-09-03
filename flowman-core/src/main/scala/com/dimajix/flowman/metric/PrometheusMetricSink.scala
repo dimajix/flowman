@@ -55,14 +55,17 @@ extends AbstractMetricSink {
           # HELP another_metric Just an example.
           another_metric 2398.283
         */
-        val payload = board.metrics(catalog(board), status).map { metric =>
+        val metrics = board.metrics(catalog(board), status).flatMap { metric =>
             val name = metric.name
-            val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
-            val metrics = metric match {
-                case gauge:GaugeMetric => s"$name$labels ${gauge.value}"
-                case _ => ""
+            val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{", ",", "}")
+            metric match {
+                case gauge: GaugeMetric => Some(name -> s"$name$labels ${gauge.value}")
+                case _ => None
             }
-            s"# TYPE $name gauge" + metrics.mkString("\n","\n","\n")
+        }
+        val payload = metrics.groupBy(_._1).map { case (name,values) =>
+            s"# TYPE $name gauge" + values.map(_._2).mkString("\n","\n","\n")
+
         }.mkString("\n")
 
         logger.debug(s"Sending $payload")

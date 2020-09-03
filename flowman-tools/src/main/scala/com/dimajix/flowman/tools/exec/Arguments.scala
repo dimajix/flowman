@@ -31,6 +31,7 @@ import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.job.JobCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
+import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
 
@@ -62,6 +63,7 @@ class Arguments(args:Array[String]) {
         new SubCommand(name="model",impl=classOf[ModelCommand]),
         new SubCommand(name="relation",impl=classOf[ModelCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
+        new SubCommand(name="namespace",impl=classOf[NamespaceCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))

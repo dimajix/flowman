@@ -27,6 +27,7 @@ import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
+import com.dimajix.flowman.tools.exec.sql.SqlCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
 
 
@@ -36,6 +37,7 @@ class ParsedCommand {
         new SubCommand(name="exit",impl=classOf[ExitCommand]),
         new SubCommand(name="quit",impl=classOf[ExitCommand]),
         new SubCommand(name="info",impl=classOf[InfoCommand]),
+        new SubCommand(name="sql",impl=classOf[SqlCommand]),
         new SubCommand(name="eval",impl=classOf[EvaluateCommand]),
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),

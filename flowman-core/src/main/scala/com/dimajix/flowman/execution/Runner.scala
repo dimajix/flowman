@@ -36,10 +36,9 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
-
+import com.dimajix.flowman.util.withShutdownHook
 
 object Runner {
     private final case class RunnerJobToken(tokens:Seq[(JobListener, JobToken)]) extends JobToken
@@ -408,14 +407,6 @@ final class Runner(
             case Some(state:TargetState) => checkState(state)
             case _ => false
         }
-    }
-
-    private def withShutdownHook[T](hook: => Unit)(block: => T) : T = {
-        val shutdownHook = new Thread() { override def run() : Unit = hook }
-        Runtime.getRuntime.addShutdownHook(shutdownHook)
-        val result = block
-        Runtime.getRuntime.removeShutdownHook(shutdownHook)
-        result
     }
 
     private def withMetrics(metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => Status) : Status = {

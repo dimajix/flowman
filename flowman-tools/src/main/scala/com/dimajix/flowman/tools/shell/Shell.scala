@@ -16,16 +16,20 @@
 
 package com.dimajix.flowman.tools.shell
 
+import java.io.File
+
 import scala.collection.JavaConverters._
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
+import dev.dirs.ProjectDirectories
 import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.impl.DefaultParser
+import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.TerminalBuilder
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
@@ -33,6 +37,7 @@ import org.kohsuke.args4j.CmdLineParser
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.StatefulTool
+import com.dimajix.flowman.util.withShutdownHook
 
 
 object Shell {
@@ -87,6 +92,9 @@ class Shell(args:Arguments) extends StatefulTool(
     args.sparkMaster,
     args.sparkName
 ) {
+    val historyFile = new File(
+        ProjectDirectories.from("com", "dimajix", "Flowman").dataDir,
+        "shell-history")
     /**
      * Main method for running this command
      * @return
@@ -100,10 +108,15 @@ class Shell(args:Arguments) extends StatefulTool(
             .option(LineReader.Option.AUTO_MENU, true)
             .option(LineReader.Option.AUTO_LIST, true)
             .option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+            .variable(LineReader.HISTORY_FILE, historyFile.toString)
             .terminal(terminal)
             .completer(new CommandCompleter)
+            .history(new DefaultHistory)
             .build()
         val writer = terminal.writer()
+
+        console.getHistory.load()
+        Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
 
         // REPL-loop
         while (true) {

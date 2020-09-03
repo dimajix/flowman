@@ -20,7 +20,6 @@ import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.RestOfArgumentsHandler
-import org.kohsuke.args4j.spi.StopOptionHandler
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -33,11 +32,11 @@ class EvaluateCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[EvaluateCommand])
 
     @Argument(index=0, required=true, usage = "expression to evaluate", metaVar = "<expr>", handler=classOf[RestOfArgumentsHandler])
-    var args: String = ""
+    var args: Array[String] = Array()
 
     override def execute(session: Session, project:Project, context:Context): Boolean = {
         try {
-            println(context.evaluate(args))
+            println(context.evaluate(args.mkString(" ")))
             true
         }
         catch {

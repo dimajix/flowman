@@ -69,6 +69,14 @@ The Maven project also contains preconfigured profiles for Cloudera.
 Part of the build also is a Docker image. Since you might not want to use it, because you are using different base
 images, you can skip the building of the Docker image via `-Ddockerfile.skip`
 
+## Building Documentation
+
+Flowman also contains Markdown documentation which is processed by Sphinx to generate the online HTML documentation.
+
+    cd docs
+    make html
+    
+
 # Releasing
 
 ## Releasing

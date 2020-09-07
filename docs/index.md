@@ -69,15 +69,6 @@ More detail on all these items is described in the following sections:
    lifecycle
    cli/index
    spec/index
-   spec/relation/index
-   spec/mapping/index
-   spec/target/index
-   spec/job/index
-   spec/dataset/index
-   spec/schema/index
-   spec/connection/index
-   spec/metric/index
-   spec/hooks/index
    cookbook/index
    config
 ```

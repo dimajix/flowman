@@ -16,25 +16,35 @@ readability. These YAML files are read in by Flowman executables and data flows 
 executed as specified on the command line (more on that in [Flowman CLI](../cli/flowexec.md))
 
 ## Project Documentation
-* [Project](project.md)
-* [Module](module.md)
-* [Profiles](profiles.md)
-* [Namespace](namespace.md)
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+
+   namespace
+   project
+   module
+```
 
 
 ## Entity Documentation
 
 Flowman has a couple of different main entities, which are documented seperately:
 
-* [Mappings](mapping/index.md): Data transformations
-* [Relations](relation/index.md): Data sources and sinks
-* [Targets](target/index.md): Build targets
-* [Schema](schema/index.md): Schema descriptions
-* [Connections](connection/index.md): Connection specifications
-* [Jobs](job/index.md): Build jobs
-* [Datasets](dataset/index.md): Datasets
-* [Metrics](metric/index.md): Publishing metrics
-* [Hooks](hooks/index.md): Execution hooks
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   mapping/index
+   relation/index
+   target/index
+   job/index
+   dataset/index
+   schema/index
+   connection/index
+   metric/index
+   hooks/index
+```
 
 
 ## Sub Pages
@@ -43,5 +53,7 @@ Flowman has a couple of different main entities, which are documented seperately
    :maxdepth: 1
    :glob:
 
-   *
+   expressions
+   fields
+   profiles
 ```

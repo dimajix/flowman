@@ -206,3 +206,5 @@ store:
 Please have a look at [Kerberos](cookbook/kerberos.md) for detailed information.
 
 ## Deploying with Docker
+It is also possible to run Flowman inside Docker. This simply requires a Docker image with a working Spark and
+Hadoop installation such that Flowman can be installed inside the image just as it is installed locally.

@@ -40,10 +40,11 @@ extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
 
     override def commit(board:MetricBoard, status:Status) : Unit = {
-        val labels = Seq(
+        val rawLabels = Seq(
             "job" -> this.labels.getOrElse("job","flowman"),
             "instance" -> this.labels.getOrElse("instance", "default")
         ) ++ (this.labels - "job" - "instance").toSeq
+        val labels = rawLabels.map(l => l._1 -> board.context.evaluate(l._2, Map("status" -> status.toString)))
         val path = labels.map(kv => kv._1 + "/" + kv._2).mkString("/")
         val url = new URI(this.url).resolve("/metrics/" + path)
         logger.info(s"Publishing all metrics to Prometheus at $url")

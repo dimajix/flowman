@@ -195,7 +195,7 @@ final class Runner(
     private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], force:Boolean, keepGoing:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
             val desc = job.description.map("(" + _ + ")").getOrElse("")
-            val args = if (arguments.nonEmpty) s"with arguments ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
+            val args = if (arguments.nonEmpty) s" with arguments ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
             logger.info(s"Running phase $phase of job '${job.identifier}' $desc $args")
             context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"Environment (phase=$phase) $k=$v") }
 
@@ -212,25 +212,25 @@ final class Runner(
                     }
                     match {
                         case Success(status@Status.SUCCESS) =>
-                            logger.info(s"Successfully finished phase $phase of job '${job.identifier}'")
+                            logger.info(s"Successfully finished phase $phase of job '${job.identifier}'$args")
                             status
                         case Success(status@Status.SKIPPED) =>
-                            logger.info(s"Execution of phase $phase of job '${job.identifier}' skipped")
+                            logger.info(s"Execution of phase $phase of job '${job.identifier}'$args skipped")
                             status
                         case Success(status@Status.FAILED) =>
-                            logger.error(s"Execution of phase $phase of job '${job.identifier}' failed")
+                            logger.error(s"Execution of phase $phase of job '${job.identifier}'$args failed")
                             status
                         case Success(status@Status.ABORTED) =>
-                            logger.error(s"Execution of phase $phase of job '${job.identifier}' aborted")
+                            logger.error(s"Execution of phase $phase of job '${job.identifier}'$args aborted")
                             status
                         case Success(status@Status.RUNNING) =>
-                            logger.error(s"Execution of phase $phase of job '${job.identifier}' already running")
+                            logger.error(s"Execution of phase $phase of job '${job.identifier}'$args already running")
                             status
                         case Success(status) =>
-                            logger.error(s"Execution of phase $phase of job '${job.identifier}' in unknown state. Assuming failure")
+                            logger.error(s"Execution of phase $phase of job '${job.identifier}'$args in unknown state. Assuming failure")
                             status
                         case Failure(NonFatal(e)) =>
-                            logger.error(s"Caught exception while executing phase $phase of job '${job.identifier}'", e)
+                            logger.error(s"Caught exception while executing phase $phase of job '${job.identifier}'$args", e)
                             Status.FAILED
                     }
                 }

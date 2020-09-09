@@ -292,7 +292,7 @@ case class HiveTableRelation(
             if (catalog.tableExists(tableIdentifier)) {
                 val location = catalog.getTableLocation(tableIdentifier)
                 val fs = location.getFileSystem(executor.hadoopConf)
-                FileUtils.isValidData(fs, location)
+                FileUtils.isValidHiveData(fs, location)
             }
             else {
                 No

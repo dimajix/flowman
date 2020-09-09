@@ -23,22 +23,21 @@ import org.apache.hadoop.fs.Path
 
 object FileUtils {
     /**
-     * Returns true if the path refers to a successfully written Hadoop job. This is the case if either the location
-     * refers to an existing file or if the location refers to a directory which contains a "_SUCCESS" file.
+     * Returns true if the path refers to a successfully written Hadoop/Spark job. This is the case if either the
+     * location refers to an existing file or if the location refers to a directory which contains a "_SUCCESS" file.
      * @param fs
      * @param location
      * @return
      */
-    def isValidData(fs:org.apache.hadoop.fs.FileSystem, location:Path): Boolean = {
+    def isValidFileData(fs:org.apache.hadoop.fs.FileSystem, location:Path): Boolean = {
         try {
             val status = fs.getFileStatus(location)
             if (status.isFile) {
                 true
             }
             else {
-                fs.listStatus(location).nonEmpty
-                //val success = new Path(location, "_SUCCESS")
-                //fs.getFileStatus(success).isFile
+                val success = new Path(location, "_SUCCESS")
+                fs.getFileStatus(success).isFile
             }
         }
         catch {
@@ -47,12 +46,35 @@ object FileUtils {
    }
 
     /**
+     * Returns true if the path refers to a successfully written Hadoop/Spark job. This is the case if either the
+     * location refers to an existing file or if the location refers to a directory. Note that Hive tables do not
+     * neccessarily contain "_SUCCESS" files
+     * @param fs
+     * @param location
+     * @return
+     */
+    def isValidHiveData(fs:org.apache.hadoop.fs.FileSystem, location:Path): Boolean = {
+        try {
+            val status = fs.getFileStatus(location)
+            if (status.isFile) {
+                true
+            }
+            else {
+                fs.listStatus(location).nonEmpty
+            }
+        }
+        catch {
+            case _: FileNotFoundException => false
+        }
+    }
+
+    /**
      * Returns true if the path refers to a successfully written Hadoop job. This is the case if either the location
      * refers to an existing file or if the location refers to a directory which contains a "_SUCCESS" file.
      * @param file
      * @return
      */
     def isValidData(file:File) : Boolean = {
-        isValidData(file.fs, file.path)
+        isValidFileData(file.fs, file.path)
     }
 }

@@ -195,7 +195,7 @@ case class FileRelation(
 
         def checkPartition(path:Path) = {
             val fs = path.getFileSystem(executor.hadoopConf)
-            FileUtils.isValidData(fs, path)
+            FileUtils.isValidFileData(fs, path)
         }
 
         if (this.partitions.nonEmpty) {

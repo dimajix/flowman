@@ -19,7 +19,7 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 
-class FixedGaugeMetricBundle(override val name:String, override val labels:Map[String,String], metricKey: String) extends MetricBundle {
+final case class FixedGaugeMetricBundle(override val name:String, override val labels:Map[String,String], metricKey: String) extends MetricBundle {
     private val gauges = mutable.Map[String, FixedGaugeMetric]()
 
     /**

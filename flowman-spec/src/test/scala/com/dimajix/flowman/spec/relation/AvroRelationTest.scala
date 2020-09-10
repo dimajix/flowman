@@ -20,6 +20,8 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
@@ -69,11 +71,22 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             .schema(StructType(relation.schema.get.fields.map(_.sparkField)))
             .json(spark.createDataset(jsons))
 
-        //df.printSchema()
-        //df.show()
-
+        // == Create ===================================================================
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+
+        // == Write ===================================================================
         relation.write(executor, df)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+
+        // == Destroy ===================================================================
+        relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
     })
 
     "Avro files" should "be writeable" in {
@@ -118,7 +131,21 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         df.printSchema()
         df.show()
 
+        // == Create ===================================================================
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+
+        // == Write ===================================================================
         relation.write(executor, df)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+
+        // == Destroy ===================================================================
+        relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
     }
 }

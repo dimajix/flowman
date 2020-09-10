@@ -94,7 +94,7 @@ class ScopeContext(
     scopeTargets:Map[String,Template[Target]] = Map(),
     scopeConnections:Map[String,Template[Connection]] = Map(),
     scopeJobs:Map[String,Template[Job]] = Map()
-) extends AbstractContext(parent, fullEnv, fullConfig) {
+) extends AbstractContext(fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()

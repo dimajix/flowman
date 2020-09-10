@@ -22,9 +22,8 @@ import org.apache.spark.storage.StorageLevel
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
-import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.StructType
-import com.dimajix.spark.sql.catalyst.PlanUtils
+import com.dimajix.spark.sql.DataFrameUtils
 
 
 object Mapping {
@@ -221,7 +220,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
 
         // Create dummy data frames
         val replacements = input.map { case (name,schema) =>
-            name -> PlanUtils.singleRow(executor.spark, schema.sparkType)
+            name -> DataFrameUtils.singleRow(executor.spark, schema.sparkType)
         }
 
         // Execute mapping

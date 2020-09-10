@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 object MySQLDialect extends BaseDialect {
     private object Statements extends MySQLStatements(this)
 
-    override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql")
+    override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql") || url.startsWith("jdbc:mariadb")
 
     override def quoteIdentifier(colName: String): String = {
         s"`$colName`"
@@ -34,6 +34,9 @@ object MySQLDialect extends BaseDialect {
 
 class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     override def firstRow(table: TableIdentifier, condition:String) : String = {
-        s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
+        if (condition.isEmpty)
+            s"SELECT * FROM ${dialect.quote(table)} FETCH FIRST ROW ONLY"
+        else
+            s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
     }
 }

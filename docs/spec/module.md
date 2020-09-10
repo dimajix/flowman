@@ -1,4 +1,4 @@
-# Flowman Module
+# Modules
 
 Flowman YAML specifications can be split up into an arbitrary number of files. From a project
 perspective these files form *modules*, and the collection of all modules create a *project*.
@@ -7,7 +7,7 @@ Modules (either as individual files or as directories) are specified in the
 [project main file](project.md)
 
 Each module supports the following top level entries:
-```
+```yaml
 config:
     ...
     
@@ -32,9 +32,8 @@ targets:
 jobs:
     ...
 ```
-Each top level entry may appear at most once in every file, but multiple files can have the 
-same top level entries. This again helps to split up the whole specifications into multiple
-files in order to help organizing your data flow.
+Each top level entry may appear at most once in every file, but multiple files can have the same top level entries. 
+This again helps to split up the whole specifications into multiple files in order to help organizing your data flow.
 
 
 ## Module Sections
@@ -45,9 +44,9 @@ and contents of each section are explained below
 
 ### `config` Section
 
-The `config` section contains a list of Spark configuration properties, for example
+The `config` section contains a list of Hadoop, Spark or Flowman configuration properties, for example
 
-```
+```yaml
 config:
   - spark.hadoop.fs.s3a.endpoint=s3.eu-central-1.amazonaws.com
   - spark.hadoop.fs.s3a.access.key=$System.getenv('AWS_ACCESS_KEY_ID')
@@ -58,26 +57,29 @@ config:
   - spark.hadoop.fs.s3a.proxy.password=
 ```
 
-As you can see, each property has to be specified as `key=value`. Configuration properties are 
-evaluated in the order they are specified within a single file. 
+As you can see, each property has to be specified as `key=value`. Configuration properties are evaluated in the order 
+they are specified within a single file. 
 
-All Spark config properties are passed to Spark when the Spark session is created. As you can 
-also see, you can use [*expression evaluation*](expressions.md) in the values. It is not possible to use 
-expressions for the keys 
+All Spark config properties are passed to Spark when the Spark session is created. As you can also see, you can use 
+[*expression evaluation*](expressions.md) in the values. It is not possible to use expressions for the keys. 
+
 
 ### `environment` Section
 
-The `environment` section contains key-value-pairs which can be accessed via [*expression
-evaluation*](expressions.md) in almost any value definition in the specification files. A
-typical `environment`section may look as follows
-```
+The `environment` section contains key-value-pairs which can be accessed via [*expression evaluation*](expressions.md) 
+in almost any value definition in the specification files. A typical `environment`section may look as follows
+```yaml
 environment:
   - start_year=2007
   - end_year=2014
   - export_location=hdfs://export/weather-data
 ```
-All values specified in the environment can be overriden either by [profiles](profiles.md) or
-by explicitly setting them as property definitions on the [command line](../cli/flowexec.md)
+All values specified in the environment can be overriden either by [profiles](profiles.md) or by explicitly setting 
+them as property definitions on the [command line](../cli/flowexec.md).
+
+Note the difference between `environment` and `config`. While the first provides user defined variables to be used
+as placeholders in the specification, all entries in `config` impact the execution and are used either directly by
+Flowman or by its underlying libraries like Hadoop or Spark.
 
 
 ### `profiles` Section
@@ -88,7 +90,7 @@ TBD.
 ### `relations` Section
 
 The `relations` section simply contains a map of named relations. For example
-```
+```yaml
 relations:
   measurements-raw:
     kind: file
@@ -116,7 +118,7 @@ The list and syntax of available relations is described in detail in the
 
 Similar to `relations` the `connections` section contains a map of named connections. For
 example
-```
+```yaml
 connections:
   my-sftp-server:
     kind: sftp
@@ -137,7 +139,7 @@ documentation.
 
 Again the `mappings` section contains named mappings which describe the data flow and any
 data transformation. For example
-```
+```yaml
 mappings:
   measurements-raw:
     kind: read-relation
@@ -159,7 +161,7 @@ output.
 
 The `targets` section contains a map of named output operations like writing to files, 
 relations or simply dumping the contents of a mapping on the console. For example
-```
+```yaml
 targets:
   measurements-dump:
     kind: dump
@@ -179,7 +181,7 @@ they are used to build complex processing pipelines which may also require addit
 actions like uploading files via SFTP.
 
 A typical job specification may look as follows:
-```
+```yaml
 jobs:
   main:
     description: "Main job"

@@ -40,7 +40,6 @@ class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
     }
 
     "The JdbcStateStoreSpec" should "throw an exception on missing connection" in {
-        val db = tempDir.resolve("mydb")
         val spec =
             """
               |kind: jdbc

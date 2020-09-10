@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec.model
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -54,9 +55,8 @@ class ShowCommand extends ActionCommand {
             case Success(_) =>
                 logger.info("Successfully finished dumping relation")
                 true
-            case Failure(e) =>
-                logger.error("Caught exception while dumping relation: {}", e.getMessage)
-                logger.error(e.getStackTrace.mkString("\n    at "))
+            case Failure(NonFatal(e)) =>
+                logger.error(s"Caught exception while dumping relation '$relation'", e)
                 false
         }
     }

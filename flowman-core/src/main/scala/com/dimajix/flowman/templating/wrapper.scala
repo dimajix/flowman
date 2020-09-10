@@ -17,6 +17,8 @@
 package com.dimajix.flowman.templating
 
 import java.io.StringWriter
+import java.net.URLDecoder
+import java.net.URLEncoder
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -49,6 +51,15 @@ case class RecursiveValue(engine:VelocityEngine, context:VelocityContext, value:
         val output = new StringWriter()
         engine.evaluate(context, output, "RecursiveValue", value)
         output.toString
+    }
+}
+
+object URLWrapper {
+    def encode(str:String) : String = {
+        return URLEncoder.encode(str, "UTF-8")
+    }
+    def decode(str:String) : String = {
+        return URLDecoder.decode(str, "UTF-8")
     }
 }
 

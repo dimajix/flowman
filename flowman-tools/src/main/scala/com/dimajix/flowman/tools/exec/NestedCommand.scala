@@ -20,6 +20,7 @@ import java.io.PrintStream
 
 import org.kohsuke.args4j.CmdLineParser
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 
@@ -31,7 +32,7 @@ abstract class NestedCommand extends Command {
       * Returns true if a help message is requested
       * @return
       */
-    override def help : Boolean = _help || (command != null && command.help)
+    override def help : Boolean = _help || command == null || (command != null && command.help)
 
     /**
       * Prints a context-aware help message
@@ -47,12 +48,7 @@ abstract class NestedCommand extends Command {
     }
 
 
-    override def execute(project:Project, session: Session) : Boolean = {
-        if (help || command == null) {
-            printHelp()
-            System.exit(1)
-        }
-
-        true
+    override def execute(session: Session, project:Project, context:Context) : Boolean = {
+        command.execute(session, project, context)
     }
 }

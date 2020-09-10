@@ -20,6 +20,8 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -78,10 +80,16 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
     ))
     relation.resources() should be (Set())
 
+    relation.exists(executor) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     relation.create(executor)
+    relation.exists(executor) should be (Yes)
+    relation.loaded(executor, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
     relation.destroy(executor)
+    relation.exists(executor) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
     context.getRelation(RelationIdentifier("t0")).destroy(executor)
@@ -149,22 +157,28 @@ class HiveViewRelationTest extends FlatSpec with Matchers with LocalSparkSession
       Some(MappingOutputIdentifier("union"))
     )
 
-      relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-      relation.requires should be (Set(
-          ResourceIdentifier.ofHiveDatabase("default"),
-          ResourceIdentifier.ofHiveTable("t0", Some("default")),
-          ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
-          ResourceIdentifier.ofHiveTable("t1", Some("default")),
-          ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
-      ))
-      relation.resources() should be (Set())
+    relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+    relation.requires should be (Set(
+      ResourceIdentifier.ofHiveDatabase("default"),
+      ResourceIdentifier.ofHiveTable("t0", Some("default")),
+      ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
+      ResourceIdentifier.ofHiveTable("t1", Some("default")),
+      ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
+    ))
+    relation.resources() should be (Set())
 
-      relation.create(executor)
+    relation.exists(executor) should be (No)
+    relation.loaded(executor, Map()) should be (No)
+    relation.create(executor)
+    relation.exists(executor) should be (Yes)
+    relation.loaded(executor, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
     //session.catalog.getTable(TableIdentifier("v0", Some("default"))).viewText.foreach(println)
 
     relation.destroy(executor)
+    relation.exists(executor) should be (No)
+    relation.loaded(executor, Map()) should be (No)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
     context.getRelation(RelationIdentifier("t0")).destroy(executor)

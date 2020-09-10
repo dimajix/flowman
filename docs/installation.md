@@ -13,6 +13,12 @@ components present on your system:
 
 Note that Flowman can be built for different Hadoop and Spark versions, and the major and minor version of the build
 needs to match the ones of your platform
+
+
+## Building Flowman
+
+Currently there is no prebuilt and downloadable version of Flowman available. Therefore you have to 
+[build Flowman](building.md) yourself. A task which is not difficult for someone who has basic experience with Maven.
  
 
 ## Local Installation
@@ -171,6 +177,10 @@ history:
   retries: 3
   timeout: 1000
 
+hooks:
+  - kind: web
+    jobSuccess: http://some-host.in.your.net/success&job=$URL.encode($job)&force=$force
+
 connections:
   flowman_state:
     driver: $System.getenv('FLOWMAN_HISTORY_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
@@ -199,6 +209,8 @@ store:
 
 
 ## Running in a Kerberized Environment
-
+Please have a look at [Kerberos](cookbook/kerberos.md) for detailed information.
 
 ## Deploying with Docker
+It is also possible to run Flowman inside Docker. This simply requires a Docker image with a working Spark and
+Hadoop installation such that Flowman can be installed inside the image just as it is installed locally.

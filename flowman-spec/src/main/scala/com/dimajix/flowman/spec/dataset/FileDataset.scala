@@ -25,6 +25,7 @@ import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -68,7 +69,7 @@ case class FileDataset(
       * @param executor
       * @return
       */
-    override def exists(executor: Executor): Boolean = {
+    override def exists(executor: Executor): Trilean = {
         val file = executor.fs.file(location)
         file.exists()
     }

@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec.model
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -54,7 +55,7 @@ class ExportSchemaCommand extends ActionCommand {
             case Success(_) =>
                 logger.info("Successfully saved schema")
                 true
-            case Failure(e) =>
+            case Failure(NonFatal(e)) =>
                 logger.error(s"Caught exception while save the schema of model '$relation'", e)
                 false
         }

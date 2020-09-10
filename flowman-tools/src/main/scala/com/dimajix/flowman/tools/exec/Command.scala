@@ -21,6 +21,7 @@ import java.io.PrintStream
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 
@@ -49,12 +50,5 @@ abstract class Command {
         out.println
     }
 
-    def execute(project:Project, session: Session) : Boolean = {
-        if (help) {
-            printHelp()
-            System.exit(1)
-        }
-
-        true
-    }
+    def execute(session: Session, project:Project, context:Context) : Boolean
 }

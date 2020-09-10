@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec.mapping
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -37,11 +38,11 @@ import com.dimajix.flowman.tools.exec.ActionCommand
 class ShowCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ShowCommand])
 
-    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required = false)
+    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 10
-    @Argument(index=0, usage="specifies the mapping to show", metaVar="<mapping>", required=true)
-    var mapping: String = ""
-    @Argument(index=1, usage="specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
+    @Argument(index=0, usage="Specifies the mapping to show", metaVar="<mapping>", required=true)
+    var mapping: String = _
+    @Argument(index=1, usage="Specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
     var columns: String = ""
 
 
@@ -58,8 +59,8 @@ class ShowCommand extends ActionCommand {
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case Failure(e) =>
-                logger.error(s"Caught exception while dumping mapping '$mapping", e)
+            case Failure(NonFatal(e)) =>
+                logger.error(s"Caught exception while dumping mapping '$mapping'", e)
                 false
         }
     }

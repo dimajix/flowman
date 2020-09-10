@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
@@ -58,15 +59,7 @@ object RootContext {
         }
 
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : RootContext = {
-            class NamespaceWrapper(namespace:Namespace) {
-                def getName() : String = namespace.name
-                override def toString: String = namespace.name
-            }
-
-            val fullEnv = env ++
-                namespace.map(ns => "namespace" -> (new NamespaceWrapper(ns) -> SettingLevel.SCOPE_OVERRIDE.level)).toMap
-
-            new RootContext(namespace, projectResolver, profiles, fullEnv, config, connections)
+            new RootContext(namespace, projectResolver, profiles, env, config, connections)
         }
     }
 
@@ -80,10 +73,13 @@ class RootContext private[execution](
     _namespace:Option[Namespace],
     projectResolver:Option[String => Option[Project]],
     profiles:Seq[String],
-    fullEnv:Map[String,(Any, Int)],
-    fullConfig:Map[String,(String, Int)],
+    _env:Map[String,(Any, Int)],
+    _config:Map[String,(String, Int)],
     nonNamespaceConnections:Map[String, Template[Connection]]
-) extends AbstractContext(null, fullEnv, fullConfig) {
+) extends AbstractContext(
+    _env + ("namespace" -> (NamespaceWrapper(_namespace) -> SettingLevel.SCOPE_OVERRIDE.level)),
+    _config
+) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _fs = FileSystem(hadoopConf)
 

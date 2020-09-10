@@ -10,7 +10,7 @@ the directory is given on the command line.
 
 A typical `project.yml` file looks as follows:
 
-```
+```yaml
 name: "example-project"
 version: "1.0"
 description: "My first example project"
@@ -47,7 +47,34 @@ file itself.
 
 ## Proposed Directory Layout
 
-It is best practice to use a directory structure as follows:
+It is best practice to use a directory structure. Depending on the project, two slightly different approaches have
+turned out to be useful: Either separating models and mappings or putting them together.
 ```
-
+root
+ ├── config
+ │   ├── environment.yml
+ │   ├── connections.yml
+ │   └── profiles.yml
+ ├── job
+ │   ├── job.yml
+ │   ├── target-1.yml
+ │   │   ...
+ │   └── target-n.yml
+ ├── schema
+ │   ├── schema-1.yml
+ │   │   ...
+ │   └── schema-n.yml
+ ├── macros
+ │   ├── macro-1.yml
+ │   │   ...
+ │   └── macro-n.yml
+ ├── relation
+ │   ├── relation-1.yml
+ │   │   ...
+ │   └── relation-n.yml
+ ├── mapping
+ │   ├── mapping-1.yml
+ │   │   ...
+ │   └── mapping-n.yml
+ └── project.yml
 ```

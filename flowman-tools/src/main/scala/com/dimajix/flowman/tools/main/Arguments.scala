@@ -18,15 +18,12 @@ package com.dimajix.flowman.tools.main
 
 import java.io.PrintStream
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
-import org.kohsuke.args4j.spi.SubCommand
-import org.kohsuke.args4j.spi.SubCommandHandler
-import org.kohsuke.args4j.spi.SubCommands
 
 
 class Arguments(args:Array[String]) {
@@ -46,6 +43,8 @@ class Arguments(args:Array[String]) {
     var info: Boolean = false
     @Option(name = "--force", usage = "force execution even if targets already exist")
     var force: Boolean = false
+    @Option(name = "--spark-master", usage = "set the master for Spark", metaVar = "<spark_master>")
+    var sparkMaster: String = ""
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark job name", metaVar = "<job_name>")
@@ -75,7 +74,7 @@ class Arguments(args:Array[String]) {
     private def parseArgs(args: Array[String]) {
         val parser: CmdLineParser = new CmdLineParser(this)
         try {
-            parser.parseArgument(args.toList)
+            parser.parseArgument(args.toList.asJava)
         }
         catch {
             case e: CmdLineException => {

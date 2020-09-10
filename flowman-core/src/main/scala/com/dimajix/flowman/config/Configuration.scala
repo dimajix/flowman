@@ -95,4 +95,8 @@ class Configuration(userSettings:Map[String,String]) {
             sparkConf.contains(key)
         }
     }
+
+    def toMap : Map[String,String] = allSettings
+
+    def toSeq : Seq[(String,String)] = allSettings.toSeq
 }

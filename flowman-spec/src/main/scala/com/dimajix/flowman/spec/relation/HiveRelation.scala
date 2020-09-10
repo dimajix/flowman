@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.types.StructType
 import org.slf4j.Logger
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
@@ -62,7 +63,7 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
       * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         val catalog = executor.catalog

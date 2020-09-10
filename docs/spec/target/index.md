@@ -6,6 +6,18 @@ in source code files which get compiles or otherwise processed with additional t
 
 Each target supports at least some [build phases](../../lifecycle.md)
 
+## Common Fields
+
+All Targets support the following common fields:
+
+* `kind` **(mandatory)** *(type: string)*: The kind of the target
+
+* `before` **(optional)** *(type: list:string)*: List of targets that can only be executed after this target
+
+* `after` **(optional)** *(type: list:string)*: List of targets that need to be executed before this target
+
+* `labels` **(optional)** *(type: map)*: Optional list of labels.
+
 
 ## Target Types
 Flowman supports different target types, each used for a different kind of a physical entity or build recipe.

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.metric
 
+import com.dimajix.flowman.execution.Status
+
 
 abstract class MetricSink {
     /**
@@ -39,14 +41,8 @@ abstract class MetricSink {
     def boards : Seq[MetricBoard]
 
     /**
-      * Returns all metrics of all bundles currently registered to this sink
-      * @return
-      */
-    def metrics : Seq[Metric]
-
-    /**
       * Commits all metrics of a previously registered board. This may be required for some sink for example the
       * PrometheusSink which uses the Prometheus push gateway.
       */
-    def commit(board:MetricBoard) : Unit
+    def commit(board:MetricBoard, status:Status) : Unit
 }

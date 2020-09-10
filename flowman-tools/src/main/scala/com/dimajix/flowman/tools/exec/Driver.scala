@@ -21,14 +21,17 @@ import scala.util.Success
 import scala.util.Try
 
 import org.apache.hadoop.fs.Path
+import org.kohsuke.args4j.CmdLineException
 
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
 
 
 object Driver {
     def main(args: Array[String]) : Unit = {
+        Logging.init()
+
         Try {
             run(args:_*)
         }
@@ -37,8 +40,13 @@ object Driver {
                 System.exit(0)
             case Success (false) =>
                 System.exit(1)
+            case Failure(ex:CmdLineException) =>
+                System.err.println(ex.getMessage)
+                ex.getParser.printUsage(System.err)
+                System.err.println
+                System.exit(1)
             case Failure(exception) =>
-                System.err.println(exception.getMessage)
+                exception.printStackTrace(System.err)
                 System.exit(1)
         }
     }
@@ -51,6 +59,8 @@ object Driver {
             true
         }
         else {
+            Logging.setSparkLogging(options.sparkLogging)
+
             val driver = new Driver(options)
             driver.run()
         }
@@ -64,20 +74,28 @@ class Driver(options:Arguments) extends Tool {
       * @return
       */
     def run() : Boolean = {
-        setupLogging(Option(options.sparkLogging))
-
-        val project = loadProject(new Path(options.projectFile))
-
-        // Create Flowman Session, which also includes a Spark Session
-        val config = splitSettings(options.config)
-        val environment = splitSettings(options.environment)
-        val session = createSession(options.sparkName,
-            project = Some(project),
-            additionalConfigs = config.toMap,
-            additionalEnvironment = environment.toMap,
-            profiles = options.profiles
-        )
-
-        options.command.execute(project, session)
+        val command = options.command
+        if (command.help) {
+            command.printHelp(System.out)
+            true
+        }
+        else {
+            // Create Flowman Session, which also includes a Spark Session
+            val project = loadProject(new Path(options.projectFile))
+            val config = splitSettings(options.config)
+            val environment = splitSettings(options.environment)
+            val session = createSession(
+                options.sparkMaster,
+                options.sparkName,
+                project = Some(project),
+                additionalConfigs = config.toMap,
+                additionalEnvironment = environment.toMap,
+                profiles = options.profiles
+            )
+            val context = session.getContext(project)
+            val result = options.command.execute(session, project, context)
+            session.shutdown()
+            result
+        }
     }
 }

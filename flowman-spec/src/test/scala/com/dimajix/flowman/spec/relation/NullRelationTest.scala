@@ -22,21 +22,41 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Unknown
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Relation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class NullRelationTest extends FlatSpec with Matchers with LocalSparkSession {
-    "The NullRelation" should "provide an empty DataFrame" in {
+    "The NullRelation" should "support the full lifecycle" in {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.executor
 
-        val relation = new NullRelation(Relation.Properties(session.context))
+        val relation = NullRelation(Relation.Properties(session.context))
         val schema = StructType(
             StructField("lala", StringType) :: Nil
         )
+
+        // == Create ===================================================================
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Unknown)
+        relation.create(executor)
+
+        // == Read ===================================================================
         val df = relation.read(executor, Some(schema))
         df should not be (null)
+
+        // == Truncate ===================================================================
+        relation.truncate(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Unknown)
+
+        // == Destroy ===================================================================
+        relation.destroy(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Unknown)
     }
 }

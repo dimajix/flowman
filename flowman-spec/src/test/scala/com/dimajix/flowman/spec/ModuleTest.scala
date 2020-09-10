@@ -88,7 +88,7 @@ class ModuleTest extends FlatSpec with Matchers with LocalSparkSession {
         job.name should be ("default")
         job.category should be ("job")
         job.kind should be ("job")
-        runner.executeJob(executor, job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
+        runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
     it should "set the names of all jobs" in {

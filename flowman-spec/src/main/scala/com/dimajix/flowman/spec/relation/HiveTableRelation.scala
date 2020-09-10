@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.spec.relation
 
+import java.io.FileNotFoundException
 import java.util.Locale
 
+import scala.util.Try
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
@@ -32,11 +36,15 @@ import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Unknown
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.IncompatibleSchemaException
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -119,6 +127,8 @@ case class HiveTableRelation(
         require(df != null)
         require(partition != null)
 
+        requireAllPartitionKeys(partition)
+
         val schema = PartitionSchema(partitions)
         val partitionSpec = schema.spec(partition)
 
@@ -144,7 +154,7 @@ case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} using Hive insert")
+        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(executor, df)
@@ -199,7 +209,7 @@ case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} using direct write")
+        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using direct write")
 
         if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -213,9 +223,8 @@ case class HiveTableRelation(
         }
 
         logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
-        this.writer(executor, df)
+        this.writer(executor, df, mode.batchMode)
             .format(format)
-            .mode(mode.batchMode)
             .save(outputPath.toString)
 
         // Finally add Hive partition
@@ -238,6 +247,8 @@ case class HiveTableRelation(
         require(executor != null)
         require(partitions != null)
 
+        requireValidPartitionKeys(partitions)
+
         val catalog = executor.catalog
         // When no partitions are specified, this implies that the whole table is to be truncated
         if (partitions.nonEmpty) {
@@ -253,6 +264,42 @@ case class HiveTableRelation(
         }
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        requireValidPartitionKeys(partition)
+
+        val catalog = executor.catalog
+        if (partitions.nonEmpty) {
+            val schema = PartitionSchema(partitions)
+            val partitionSpec = schema.spec(partition)
+            catalog.tableExists(tableIdentifier) &&
+                catalog.partitionExists(tableIdentifier, partitionSpec)
+        }
+        else {
+            // Since we do not know for an unpartitioned table if it contains data, we simply return "Unknown"
+            if (catalog.tableExists(tableIdentifier)) {
+                val location = catalog.getTableLocation(tableIdentifier)
+                val fs = location.getFileSystem(executor.hadoopConf)
+                FileUtils.isValidHiveData(fs, location)
+            }
+            else {
+                No
+            }
+        }
+    }
+
     /**
       * Creates a Hive table by executing the appropriate DDL
       *
@@ -261,7 +308,7 @@ case class HiveTableRelation(
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)
 
-        if (!ifNotExists || !exists(executor)) {
+        if (!ifNotExists || exists(executor) == No) {
             val sparkSchema = StructType(fields.map(_.sparkField))
             logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 

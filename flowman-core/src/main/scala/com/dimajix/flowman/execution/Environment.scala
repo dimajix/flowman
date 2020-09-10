@@ -32,9 +32,9 @@ object Environment {
 }
 
 
-class Environment(rawEnvironment:Map[String,Any]) {
-    protected final val templateEngine = Velocity.newEngine()
-    protected final val templateContext = new VelocityContext(Environment.rootContext)
+final class Environment(rawEnvironment:Map[String,Any]) {
+    private val templateEngine = Velocity.newEngine()
+    private val templateContext = Velocity.newContext(Environment.rootContext)
 
     // Configure templating context
     rawEnvironment.foreach { case (key,value) =>
@@ -136,6 +136,8 @@ class Environment(rawEnvironment:Map[String,Any]) {
       * @return
       */
     def toSeq : Seq[(String,Any)] = toMap.toSeq
+
+    def keys : Set[String] = rawEnvironment.keySet
 
     def contains(key:String) : Boolean = rawEnvironment.contains(key)
 

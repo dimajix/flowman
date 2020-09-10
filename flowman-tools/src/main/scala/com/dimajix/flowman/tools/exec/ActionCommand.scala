@@ -22,18 +22,8 @@ import com.dimajix.flowman.model.Project
 
 
 abstract class ActionCommand extends Command {
-    override def execute(project:Project, session: Session): Boolean = {
-        super.execute(project, session)
-
-        // Create project specific executor
-        val context = session.getContext(project)
-        val executor = session.executor
-        val result = executeInternal(session, context, project)
-
-        // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured
-        executor.cleanup()
-
-        result
+    override def execute(session: Session, project:Project, context:Context): Boolean = {
+        executeInternal(session, context, project)
     }
 
     protected def executeInternal(session: Session, context:Context, project: Project) : Boolean

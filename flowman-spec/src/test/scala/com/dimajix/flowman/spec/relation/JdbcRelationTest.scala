@@ -28,6 +28,8 @@ import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -106,7 +108,13 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
         }
 
+        // == Create ===================================================================
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+
         withDatabase(driver, url) { statement =>
             val result = statement.executeQuery("SELECT * FROM lala_001")
             val meta = result.getMetaData
@@ -117,8 +125,12 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         relation.read(executor, None).count() should be (0)
 
+        // == Write ===================================================================
         // Write records
         relation.write(executor, df, mode=OutputMode.OVERWRITE)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+
         relation.read(executor, None).count() should be (2)
 
         // Append records
@@ -136,13 +148,19 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         relation.write(executor, df, mode=OutputMode.IGNORE_IF_EXISTS)
         relation.read(executor, None).count() should be (0)
 
-
         // Try write records
         an[Exception] shouldBe thrownBy(relation.write(executor, df, mode=OutputMode.ERROR_IF_EXISTS))
         relation.read(executor, None).count() should be (0)
 
+        // == Truncate ===================================================================
+        relation.truncate(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
 
+        // == Destroy ===================================================================
         relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
         }
@@ -196,7 +214,13 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
         }
 
+        // == Create ===================================================================
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
         relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+
         withDatabase(driver, url) { statement =>
             val result = statement.executeQuery("SELECT * FROM lala_001")
             val meta = result.getMetaData
@@ -208,8 +232,12 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         relation.read(executor, None).count() should be (0)
 
-        // Write records
+        // == Write ===================================================================
         relation.write(executor, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("1")))
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map("p_col" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
+
         relation.read(executor, None).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
@@ -251,8 +279,13 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
         an[Exception] shouldBe thrownBy(relation.write(executor, df, mode=OutputMode.ERROR_IF_EXISTS))
         relation.read(executor, None).count() should be (8)
 
-        // Clean table
+        // == Truncate ===================================================================
         relation.truncate(executor, Map("p_col" -> SingleValue("2")))
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+        relation.loaded(executor, Map("p_col" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
+
         relation.read(executor, None).count() should be (6)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
@@ -261,12 +294,20 @@ class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         // Clean table
         relation.truncate(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+        relation.loaded(executor, Map("p_col" -> SingleValue("1"))) should be (No)
+        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.read(executor, None).count() should be (0)
         relation.read(executor, None, Map("p_col" -> SingleValue("1"))).count() should be (0)
         relation.read(executor, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
         relation.read(executor, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
+        // == Destroy ===================================================================
         relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
+        relation.loaded(executor, Map("p_col" -> SingleValue("1"))) should be (No)
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
         }

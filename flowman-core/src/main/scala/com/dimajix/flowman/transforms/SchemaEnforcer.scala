@@ -28,7 +28,7 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.spark.functions.nullable_struct
+import com.dimajix.spark.sql.functions.nullable_struct
 import com.dimajix.flowman.util.SchemaUtils
 
 

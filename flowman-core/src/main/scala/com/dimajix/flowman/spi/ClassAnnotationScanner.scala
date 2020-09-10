@@ -20,8 +20,10 @@ import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import io.github.classgraph.ClassGraph
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.plugin.Plugin
 import com.dimajix.flowman.plugin.PluginListener
@@ -33,10 +35,13 @@ trait ClassAnnotationHandler {
     def register(clazz:Class[_]) : Unit
 }
 
+
+class ClassAnnotationScanner
 /**
  * Helper class for loading extension points, either via Services or via class annotations
  */
 object ClassAnnotationScanner {
+    private val logger = LoggerFactory.getLogger(classOf[ClassAnnotationScanner])
     private val IGNORED_PACKAGES = Array(
         "java",
         "javax",
@@ -95,7 +100,14 @@ object ClassAnnotationScanner {
                     .foreach { handler =>
                         scanResult.getClassesWithAnnotation(handler.annotation.getName)
                             .asScala
-                            .foreach(ci => handler.register(ci.loadClass()))
+                            .foreach { ci =>
+                                try {
+                                    handler.register(ci.loadClass())
+                                }
+                                catch {
+                                    case NonFatal(ex) => logger.warn(ex.getMessage)
+                                }
+                            }
                     }
 
                 _loaders.add(cl)

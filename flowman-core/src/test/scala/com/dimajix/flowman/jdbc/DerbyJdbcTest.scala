@@ -41,7 +41,7 @@ class DerbyJdbcTest extends FlatSpec with Matchers with LocalTempDir {
     }
 
     "A Derby Table" should "be creatable" in {
-        val options = new JDBCOptions(url, "table_001", Map())
+        val options = new JDBCOptions(url, "table_001", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
         val conn = JdbcUtils.createConnection(options)
         val table = TableDefinition(
             TableIdentifier("table_001"),

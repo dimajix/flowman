@@ -24,17 +24,18 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-abstract class CachingExecutor(parent:Executor, isolated:Boolean) extends Executor {
+abstract class CachingExecutor(parent:Option[Executor], isolated:Boolean) extends Executor {
     protected val logger:Logger
 
     private val frameCache:IdentityHashMap[Mapping,Map[String,DataFrame]] = {
         parent match {
-            case ce:CachingExecutor if !isolated =>
+            case Some(ce:CachingExecutor) if !isolated =>
                 ce.frameCache
             case _ =>
                 IdentityHashMap[Mapping,Map[String,DataFrame]]()
@@ -43,7 +44,7 @@ abstract class CachingExecutor(parent:Executor, isolated:Boolean) extends Execut
 
     private val schemaCache:mutable.Map[MappingOutputIdentifier, StructType] = {
         parent match {
-            case ce:CachingExecutor if !isolated =>
+            case Some(ce:CachingExecutor) if !isolated =>
                 ce.schemaCache
             case _ =>
                 mutable.Map[MappingOutputIdentifier, StructType]()

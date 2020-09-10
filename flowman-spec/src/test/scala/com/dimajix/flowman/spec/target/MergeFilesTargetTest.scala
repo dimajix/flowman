@@ -21,6 +21,8 @@ import java.nio.charset.Charset
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Target
@@ -53,7 +55,11 @@ class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
             source.path,
             dest.path
         )
+
+        // == BUILD ===================================================================
+        target.dirty(executor, Phase.BUILD) should be (Yes)
         target.execute(executor, Phase.BUILD)
+        target.dirty(executor, Phase.BUILD) should be (No)
 
         dest.exists() should be (true)
         dest.isFile() should be (true)
@@ -65,6 +71,21 @@ class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
         in.close()
 
         new String(buffer, "UTF-8") should be ("This is a testThe second line")
+
+        // == VERIFY ===================================================================
+        target.dirty(executor, Phase.VERIFY) should be (Yes)
+        target.execute(executor, Phase.VERIFY)
+        target.dirty(executor, Phase.VERIFY) should be (Yes)
+
+        // == TRUNCATE ===================================================================
+        target.dirty(executor, Phase.TRUNCATE) should be (Yes)
+        target.execute(executor, Phase.TRUNCATE)
+        target.dirty(executor, Phase.TRUNCATE) should be (No)
+
+        // == DESTROY ===================================================================
+        target.dirty(executor, Phase.DESTROY) should be (No)
+        target.execute(executor, Phase.DESTROY)
+        target.dirty(executor, Phase.DESTROY) should be (No)
     }
 
     it should "support delimiters" in {

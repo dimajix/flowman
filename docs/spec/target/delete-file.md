@@ -1,4 +1,4 @@
-# Flowman DeleteFile Target
+# DeleteFile Target
 
 ## Fields
 

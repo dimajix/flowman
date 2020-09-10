@@ -20,6 +20,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -96,18 +98,34 @@ case class NullRelation(
     override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         require(executor != null)
         require(partition != null)
+
+        // Force materialization of all records
+        df.count()
     }
 
     override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
         require(executor != null)
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
+
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+     *
+     * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = true
+    override def exists(executor:Executor) : Trilean = true
 
     override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
         require(executor != null)

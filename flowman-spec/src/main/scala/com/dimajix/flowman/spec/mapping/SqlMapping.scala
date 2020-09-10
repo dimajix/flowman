@@ -35,9 +35,9 @@ import com.dimajix.spark.sql.SqlParser
 
 case class SqlMapping(
      instanceProperties:Mapping.Properties,
-     sql:Option[String],
-     file:Option[Path],
-     url:Option[URL]
+     sql:Option[String] = None,
+     file:Option[Path] = None,
+     url:Option[URL] = None
 )
 extends BaseMapping {
     /**

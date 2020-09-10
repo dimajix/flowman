@@ -21,12 +21,16 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -81,6 +85,8 @@ case class GenericRelation(
         require(schema != null)
         require(partitions != null)
 
+        logger.info(s"Reading generic relation '$identifier'")
+
         val data = reader(executor).load()
         SchemaUtils.applySchema(data, schema)
     }
@@ -96,8 +102,9 @@ case class GenericRelation(
         require(df != null)
         require(partition != null)
 
-        writer(executor, df)
-            .mode(mode.batchMode)
+        logger.info(s"Writing generic relation '$identifier' with mode '$mode'")
+
+        writer(executor, df, mode.batchMode)
             .save()
     }
 
@@ -106,10 +113,23 @@ case class GenericRelation(
      * @param executor
      * @return
      */
-    override def exists(executor:Executor) : Boolean = true
+    override def exists(executor:Executor) : Trilean = Unknown
+
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
 
     /**
      * This method will create the given directory as specified in "location"
+     *
      * @param executor
      */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {}
@@ -158,10 +178,9 @@ case class GenericRelation(
      * @param executor
      * @return
      */
-    protected override def writer(executor:Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        applyOutputSchema(executor, df).write
+    protected override def writer(executor:Executor, df:DataFrame, saveMode: SaveMode) : DataFrameWriter[Row] = {
+        super.writer(executor, df, saveMode)
             .format(format)
-            .options(options)
     }
 }
 

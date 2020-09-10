@@ -28,12 +28,12 @@ object ToolConfig {
     def confDirectory : Option[File] = Option(System.getenv("FLOWMAN_CONF_DIR"))
         .filter(_.nonEmpty)
         .map(new File(_))
-        .orElse(homeDirectory.map(new File(_ , "/conf")))
+        .orElse(homeDirectory.map(new File(_ , "conf")))
         .filter(_.isDirectory)
 
     def pluginDirectory : Option[File] = Option(System.getenv("FLOWMAN_PLUGIN_DIR"))
         .filter(_.nonEmpty)
         .map(new File(_))
-        .orElse(homeDirectory.map(new File(_, "/plugins")))
+        .orElse(homeDirectory.map(new File(_, "plugins")))
         .filter(_.isDirectory)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution.JobListener
+import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.TargetInstance
 
 
-abstract class JobToken
 
-abstract class TargetToken
-
-
-abstract class StateStore {
+abstract class StateStore extends JobListener {
     /**
       * Returns the state of a job, or None if no information is available
       * @param job
@@ -40,14 +39,14 @@ abstract class StateStore {
       * @param job
       * @return
       */
-    def startJob(job:JobInstance, phase:Phase) : JobToken
+    override def startJob(job:JobInstance, phase:Phase) : JobToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    def finishJob(token:JobToken, status:Status) : Unit
+    override def finishJob(token:JobToken, status:Status) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -61,14 +60,14 @@ abstract class StateStore {
       * @param target
       * @return
       */
-    def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
+    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    def finishTarget(token:TargetToken, status:Status) : Unit
+    override def finishTarget(token:TargetToken, status:Status) : Unit
 
     /**
       * Returns a list of job matching the query criteria

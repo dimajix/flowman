@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -74,7 +75,7 @@ case class StreamTarget(
         require(executor != null)
 
         val rel = context.getRelation(relation)
-        if (rel.exists(executor)) {
+        if (rel.exists(executor) == Yes) {
             logger.info(s"Migrating existing relation '$relation'")
             rel.migrate(executor)
         }

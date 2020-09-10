@@ -24,7 +24,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.{types => stypes}
 
-import com.dimajix.spark.functions.nullable_struct
+import com.dimajix.spark.sql.functions.nullable_struct
 
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.DecimalType

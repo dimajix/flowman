@@ -17,7 +17,7 @@
 package com.dimajix.flowman.metric
 
 
-class SingletonMetricBundle(metric: Metric) extends MetricBundle {
+final case class SingletonMetricBundle(metric: Metric) extends MetricBundle {
     /**
       * Returns the name of the metric as the bundles name
       * @return

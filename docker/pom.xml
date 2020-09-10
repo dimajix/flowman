@@ -10,11 +10,12 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.13.1</version>
+        <version>0.14.0</version>
         <relativePath>..</relativePath>
     </parent>
 
     <properties>
+        <dist.tag>${project.version}-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</dist.tag>
         <docker.base-image.repository>dimajix/spark</docker.base-image.repository>
         <docker.base-image.version>${spark.version}</docker.base-image.version>
     </properties>
@@ -52,7 +53,7 @@
                                 <resource>
                                     <directory>../flowman-dist/target</directory>
                                     <includes>
-                                        <include>flowman-dist-${project.version}-bin.tar.gz</include>
+                                        <include>flowman-dist-${dist.tag}-bin.tar.gz</include>
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>
@@ -94,8 +95,11 @@
                     <repository>dimajix/flowman</repository>
                     <contextDirectory>target/build</contextDirectory>
                     <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
-                    <tag>${project.version}</tag>
+                    <tag>${dist.tag}</tag>
                     <pullNewerImage>false</pullNewerImage>
+                    <buildArgs>
+                        <DIST_FILE>flowman-dist-${dist.tag}-bin.tar.gz</DIST_FILE>
+                    </buildArgs>
                 </configuration>
             </plugin>
         </plugins>

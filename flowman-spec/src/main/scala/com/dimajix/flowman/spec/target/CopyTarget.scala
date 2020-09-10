@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -82,6 +85,23 @@ case class CopyTarget(
     }
 
     /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.BUILD => !target.exists(executor)
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE|Phase.DESTROY => target.exists(executor)
+            case _ => No
+        }
+    }
+
+    /**
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
@@ -115,7 +135,7 @@ case class CopyTarget(
     override protected def verify(executor: Executor): Unit = {
         require(executor != null)
 
-        if (!target.exists(executor)) {
+        if (target.exists(executor) == No) {
             throw new VerificationFailedException(identifier)
         }
 

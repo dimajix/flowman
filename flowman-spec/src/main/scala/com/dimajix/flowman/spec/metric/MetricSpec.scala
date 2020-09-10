@@ -31,12 +31,10 @@ class MetricSpec extends Spec[MetricSelection] {
     @JsonProperty(value = "selector", required = true) var selector:SelectorSpec = _
 
     def instantiate(context:Context) : MetricSelection = {
-        def relabel(metrticLabels:Map[String,String]) = context.evaluate(labels, metrticLabels)
-
         MetricSelection(
             context.evaluate(name),
             selector.instantiate(context),
-            relabel
+            labels
         )
     }
 }
@@ -55,14 +53,14 @@ class SelectorSpec extends Spec[Selector] {
 }
 
 
-
 class MetricBoardSpec extends Spec[MetricBoard] {
     @JsonProperty(value = "labels", required = false) private var labels: Map[String, String] = Map()
     @JsonProperty(value = "metrics", required = false) private var metrics: Seq[MetricSpec] = Seq()
 
     def instantiate(context: Context): MetricBoard = {
         MetricBoard(
-            context.evaluate(labels),
+            context,
+            labels,
             metrics.map(_.instantiate(context))
         )
     }

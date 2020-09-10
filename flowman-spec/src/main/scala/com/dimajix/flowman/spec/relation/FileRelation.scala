@@ -29,11 +29,13 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -51,11 +53,11 @@ import com.dimajix.flowman.util.UtcTimestamp
 
 case class FileRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Option[Schema],
-    override val partitions: Seq[PartitionField],
+    override val schema:Option[Schema] = None,
+    override val partitions: Seq[PartitionField] = Seq(),
     location:Path,
-    pattern:Option[String],
-    format:String
+    pattern:Option[String] = None,
+    format:String = "csv"
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
@@ -168,20 +170,52 @@ case class FileRelation(
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
 
-        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format'")
+        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
 
-        this.writer(executor, df)
+        this.writer(executor, df, mode.batchMode)
             .format(format)
-            .mode(mode.batchMode)
             .save(outputPath.toString)
+    }
+
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        requireValidPartitionKeys(partition)
+
+        def checkPartition(path:Path) = {
+            val fs = path.getFileSystem(executor.hadoopConf)
+            FileUtils.isValidFileData(fs, path)
+        }
+
+        if (this.partitions.nonEmpty) {
+            val partitionSpec = PartitionSchema(partitions).spec(partition)
+            collector.collect(partitionSpec).exists(checkPartition)
+        }
+        else {
+            val partitionSpec = PartitionSchema(partitions).spec(partition)
+            val outputPath = collector.resolve(partitionSpec)
+            checkPartition(outputPath)
+        }
     }
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+     *
+     * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
@@ -225,23 +259,24 @@ case class FileRelation(
         require(executor != null)
         require(partitions != null)
 
-        if (this.partitions.nonEmpty && partitions.nonEmpty)
-            cleanPartitionedFiles(partitions)
-        else
-            cleanUnpartitionedFiles()
-    }
-
-    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
-        require(partitions != null)
-
         requireValidPartitionKeys(partitions)
 
-        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        collector.delete(resolvedPartitions)
+        if (this.partitions.nonEmpty) {
+            truncatePartitionedFiles(partitions)
+        }
+        else {
+            truncateUnpartitionedFiles()
+        }
     }
 
-    private def cleanUnpartitionedFiles() : Unit = {
-        collector.delete()
+    private def truncatePartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
+        require(partitions != null)
+
+        collector.delete(resolvePartitions(partitions))
+    }
+
+    private def truncateUnpartitionedFiles() : Unit = {
+        collector.truncate()
     }
 
     /**
@@ -281,12 +316,19 @@ case class FileRelation(
     private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
-        val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
+        val resolvedPartitions = resolvePartitions(partitions)
+        if (resolvedPartitions.size > 2)
+            resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
+        else
+            resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
     }
 
     private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
         fn(PartitionSpec(), collector.collect())
+    }
+
+    private def resolvePartitions(partitions:Map[String,FieldValue]) : Iterable[PartitionSpec] = {
+        PartitionSchema(this.partitions).interpolate(partitions)
     }
 }
 

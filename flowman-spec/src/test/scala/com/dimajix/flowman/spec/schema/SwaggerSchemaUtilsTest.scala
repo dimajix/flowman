@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DecimalType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
@@ -29,6 +30,7 @@ import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.types.VarcharType
 
 
@@ -121,6 +123,29 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
             Field("tag", StructType(Seq(
                 Field("some_int", IntegerType)
             )))
+        ))
+    }
+
+    it should "support timestamps and dates" in {
+        val spec =
+            """
+              |swagger: "2.0"
+              |definitions:
+              |  SomeObject:
+              |    type: object
+              |    properties:
+              |      ts:
+              |        type: string
+              |        format: date-time
+              |      dt:
+              |        type: string
+              |        format: date
+              |""".stripMargin
+
+        val fields = SwaggerSchemaUtils.fromSwagger(spec, Some("SomeObject"), false)
+        fields should be (Seq(
+            Field("ts", TimestampType, format=Some("date-time")),
+            Field("dt", DateType, format=Some("date"))
         ))
     }
 

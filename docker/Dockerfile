@@ -1,6 +1,8 @@
 FROM ${docker.base-image.repository}:${docker.base-image.version}
 MAINTAINER k.kupferschmidt@dimajix.de
 
+ARG DIST_FILE
+
 USER root
 
 ENV FLOMAN_HOME=/opt/flowman
@@ -12,9 +14,9 @@ COPY libexec/ /opt/docker/libexec/
 
 
 # Copy and install Repository
-COPY flowman-dist-${project.version}-bin.tar.gz /tmp/repo/
+COPY $DIST_FILE /tmp/repo/flowman-dist.tar.gz
 COPY conf/ /tmp/repo/conf
-RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist-${project.version}-bin.tar.gz && \
+RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz && \
     ln -s /opt/flowman* /opt/flowman && \
     cp -a /tmp/repo/conf/* /opt/flowman/conf && \
     chown -R root:root /opt/flowman* && \

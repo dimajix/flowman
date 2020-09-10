@@ -22,6 +22,7 @@ import org.apache.spark.sql.SparkSession.getDefaultSession
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
@@ -30,6 +31,12 @@ class AnalyzingExecutor(context: Context) extends CachingExecutor(null, true) {
     override protected val logger = LoggerFactory.getLogger(classOf[AnalyzingExecutor])
 
     private lazy val _metricSystem = new MetricSystem
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    def flowmanConf : FlowmanConf = context.flowmanConf
 
     /**
      * Returns the MetricRegistry of this executor

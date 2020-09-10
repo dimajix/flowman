@@ -1,4 +1,4 @@
-# Flowman Swagger Schema
+# Swagger Schema
 
 The *Swagger schema* refers to a schema in the Swagger format.
 

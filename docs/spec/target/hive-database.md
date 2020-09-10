@@ -1,4 +1,4 @@
-# FLowman Hive Database Target
+# Hive Database Target
 
 The *Hive database target* is used for managing a Hive database. In many cases, an empty Hive database will be provided
 by the operations team to you, then this target is not needed. If this is not the case, you can also manage the

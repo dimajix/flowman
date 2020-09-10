@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.13.1</version>
+        <version>0.14.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -26,32 +26,37 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <artifactSet>
-                                <includes>
-                                    <include>org.json:json</include>
-                                    <include>com.github.everit-org.json-schema:org.everit.json.schema</include>
-                                </includes>
-                            </artifactSet>
-                            <relocations>
-                                <relocation>
-                                    <pattern>org.json</pattern>
-                                    <shadedPattern>com.dimajix.flowman.shade.json</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.everit.json</pattern>
-                                    <shadedPattern>com.dimajix.flowman.shade.everit</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
-                    </execution>
-                </executions>
+                <configuration>
+                    <artifactSet>
+                        <includes>
+                            <include>org.json:json</include>
+                            <include>com.github.everit-org.json-schema:org.everit.json.schema</include>
+                        </includes>
+                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.json</pattern>
+                            <shadedPattern>com.dimajix.shaded.json</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.everit.json</pattern>
+                            <shadedPattern>com.dimajix.shaded.everit</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- Explicitly include flatten plugin after shade plugin -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
@@ -83,11 +88,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
         </dependency>
@@ -99,9 +99,17 @@
         </dependency>
 
         <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20190722</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.github.everit-org.json-schema</groupId>
             <artifactId>org.everit.json.schema</artifactId>
             <version>1.12.1</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -109,19 +117,6 @@
             <artifactId>swagger-parser</artifactId>
             <version>1.0.49</version>
             <scope>compile</scope>
-        </dependency>
-
-        <!-- explicitly include some indirect dependencies, since they will get lost via shading -->
-        <dependency>
-            <groupId>com.damnhandy</groupId>
-            <artifactId>handy-uri-templates</artifactId>
-            <version>2.1.6</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
         </dependency>
 
         <dependency>

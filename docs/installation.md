@@ -13,6 +13,12 @@ components present on your system:
 
 Note that Flowman can be built for different Hadoop and Spark versions, and the major and minor version of the build
 needs to match the ones of your platform
+
+
+## Building Flowman
+
+Currently there is no prebuilt and downloadable version of Flowman available. Therefore you have to 
+[build Flowman](building.md) yourself. A task which is not difficult for someone who has basic experience with Maven.
  
 
 ## Local Installation

@@ -1,4 +1,7 @@
-# Version 0.14.0
+# Version 0.14.1
+
+
+# Version 0.14.0 - 2020-09-10
 
 * Fix AWS plugin for Hadoop 3.x
 * Improve setup of logging

@@ -1,4 +1,4 @@
-# Flowman CopyFile Target
+# CopyFile Target
 
 ## Fields
 

@@ -1,4 +1,4 @@
-# Flowman Avro Schema
+# Avro Schema
 The *Avro schema* refers to a schema conforming to the Avro standard
 
 ## Example

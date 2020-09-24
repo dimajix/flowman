@@ -21,7 +21,7 @@ import scala.collection.mutable
 import com.dimajix.common.IdentityHashSet
 
 
-class MultiMetricBundle(override val name:String, override val labels:Map[String,String]) extends MetricBundle {
+final case class MultiMetricBundle(override val name:String, override val labels:Map[String,String]) extends MetricBundle {
     private val bundleMetrics : mutable.Set[Metric] = IdentityHashSet()
 
     def addMetric(metric:Metric) : Unit = {
@@ -32,7 +32,7 @@ class MultiMetricBundle(override val name:String, override val labels:Map[String
         bundleMetrics.remove(metric)
     }
 
-    def getOrCreateMetric[T <: Metric](query:Selector, creator: => T) : T = {
+    def getOrCreateMetric[T <: Metric](query:Selector)(creator: => T) : T = {
         bundleMetrics.find(metric => query.name.forall(_ == metric.name) && metric.labels == query.labels)
             .map(_.asInstanceOf[T])
             .getOrElse{

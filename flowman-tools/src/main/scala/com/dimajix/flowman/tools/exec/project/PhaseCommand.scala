@@ -19,6 +19,7 @@ package com.dimajix.flowman.tools.exec.project
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -45,6 +46,8 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     var args: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
+    var keepGoing: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
@@ -55,11 +58,8 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
             context.getJob(JobIdentifier(job))
         }
         match {
-            case Failure(_:NoSuchJobException) =>
-                logger.error(s"Cannot find job '$job'")
-                false
-            case Failure(_) =>
-                logger.error(s"Error instantiating job '$job'")
+            case Failure(NonFatal(e)) =>
+                logger.error(s"Error instantiating job '$job': ${e.getMessage()}")
                 false
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))
@@ -77,10 +77,9 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
         val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
-        val runner = session.runner
-        val executor = session.executor
         job.interpolate(args).forall { args =>
-            val result = runner.executeJob(executor, job, lifecycle, args, force)
+            val runner = session.runner
+            val result = runner.executeJob(job, lifecycle, args, force, keepGoing)
             result match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true

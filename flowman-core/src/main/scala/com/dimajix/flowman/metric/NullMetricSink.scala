@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.metric
 
+import com.dimajix.flowman.execution.Status
+
+
 class NullMetricSink extends AbstractMetricSink {
-    override def commit(board:MetricBoard) : Unit = {}
+    override def commit(board:MetricBoard, status:Status) : Unit = {}
 }

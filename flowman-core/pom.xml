@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.13.1-SNAPSHOT</version>
+        <version>0.14.1-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -63,13 +63,49 @@
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <!-- Explicitly include source plugin before shade plugin -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <artifactSet>
+                        <includes>
+                            <include>org.apache.velocity:velocity-engine-core</include>
+                        </includes>
+                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <artifact>org.apache.velocity:velocity-engine-core</artifact>
+                            <excludes>
+                                <exclude>META-INF/*</exclude>
+                                <exclude>org/apache/velocity/runtime/defaults/*</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.apache.velocity</pattern>
+                            <shadedPattern>com.dimajix.shaded.velocity</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- Explicitly include flatten plugin after shade plugin -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-spark-sources</artifactId>
+            <artifactId>flowman-spark-extensions</artifactId>
         </dependency>
 
         <dependency>
@@ -125,6 +161,8 @@
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-engine-core</artifactId>
+            <version>2.2</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -149,11 +187,6 @@
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.re2j</groupId>
-            <artifactId>re2j</artifactId>
         </dependency>
 
         <dependency>

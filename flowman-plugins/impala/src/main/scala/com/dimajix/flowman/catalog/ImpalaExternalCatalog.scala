@@ -31,7 +31,7 @@ import com.dimajix.flowman.jdbc.HiveDialect
 
 
 object ImpalaExternalCatalog {
-    val IMPALA_DEFAULT_DRIVER = "com.cloudera.impala.jdbc41.Driver"
+    val IMPALA_DEFAULT_DRIVER = "com.cloudera.impala.jdbc.Driver"
     val IMPALA_DEFAULT_PORT = 21050
 
     case class Connection(
@@ -39,8 +39,8 @@ object ImpalaExternalCatalog {
          host:String = "",
          port:Int = IMPALA_DEFAULT_PORT,
          driver:String = IMPALA_DEFAULT_DRIVER,
-         user:String = "",
-         password:String = "",
+         user:Option[String] = None,
+         password:Option[String] = None,
          properties: Map[String,String] = Map(),
          timeout: Int = 3000,
          retries: Int = 3
@@ -191,8 +191,8 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
         Class.forName(driver)
 
         val properties = new Properties()
-        Option(options.user).foreach(properties.setProperty("user", _))
-        Option(options.password).foreach(properties.setProperty("password", _))
+        options.user.foreach(properties.setProperty("user", _))
+        options.password.foreach(properties.setProperty("password", _))
         options.properties.foreach(kv => properties.setProperty(kv._1, kv._2))
         () => {
             DriverManager.getConnection(url, properties)

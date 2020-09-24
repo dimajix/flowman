@@ -136,7 +136,10 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     }
 
     override def firstRow(table: TableIdentifier, condition:String) : String = {
-        s"SELECT * FROM ${dialect.quote(table)} WHERE $condition LIMIT 1"
+        if (condition.isEmpty)
+            s"SELECT * FROM ${dialect.quote(table)} LIMIT 1"
+        else
+            s"SELECT * FROM ${dialect.quote(table)} WHERE $condition LIMIT 1"
     }
 }
 

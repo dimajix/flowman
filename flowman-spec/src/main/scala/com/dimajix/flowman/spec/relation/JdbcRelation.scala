@@ -31,6 +31,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -123,7 +124,7 @@ case class JdbcRelation(
 
         val tableDf =
             if (query.nonEmpty) {
-                logger.info(s"Reading data from JDBC source '$identifier' using connection '${connection}' using partition values $partitions")
+                logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
                 reader.format("jdbc")
                     .option("query", query.get)
                     .option("url", url)
@@ -131,7 +132,7 @@ case class JdbcRelation(
                     .load()
             }
             else {
-                logger.info(s"Reading data from JDBC table '$tableIdentifier' using connection '${connection}' using partition values $partitions")
+                logger.info(s"Reading data from JDBC table $tableIdentifier using connection '$connection' using partition values $partitions")
                 reader.jdbc(url, tableIdentifier.unquotedString, props)
             }
 
@@ -153,9 +154,9 @@ case class JdbcRelation(
         require(partition != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot write into JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Writing data to JDBC source $tableIdentifier in database ${connection}")
+        logger.info(s"Writing data to JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' with mode '$mode'")
 
         // Get Connection
         val (url,props) = createProperties()
@@ -166,14 +167,13 @@ case class JdbcRelation(
 
         if (partition.isEmpty) {
             // Write partition into DataBase
-            this.writer(executor, dfExt)
+            this.writer(executor, dfExt, mode.batchMode)
                 .mode(mode.batchMode)
                 .jdbc(url, tableIdentifier.unquotedString, props)
         }
         else {
             def writePartition(): Unit = {
-                this.writer(executor, dfExt)
-                    .mode(SaveMode.Append)
+                this.writer(executor, dfExt, SaveMode.Append)
                     .jdbc(url, tableIdentifier.unquotedString, props)
             }
 
@@ -198,7 +198,7 @@ case class JdbcRelation(
                     else {
                         throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
                     }
-                case _ => throw new IllegalArgumentException(s"Unknown save mode: $mode. " +
+                case _ => throw new IllegalArgumentException(s"Unknown save mode: '$mode'. " +
                     "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
             }
         }
@@ -214,16 +214,16 @@ case class JdbcRelation(
         require(partitions != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot clean JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot clean JDBC relation '$identifier' which is defined by an SQL query")
 
         if (partitions.isEmpty) {
-            logger.info(s"Cleaning jdbc relation $name, this will clean jdbc table $tableIdentifier")
+            logger.info(s"Cleaning JDBC relation '$identifier', this will truncate JDBC table $tableIdentifier")
             withConnection { (con, options) =>
                 JdbcUtils.truncateTable(con, tableIdentifier, options)
             }
         }
         else {
-            logger.info(s"Cleaning partitions of jdbc relation $name, this will clean jdbc table $tableIdentifier")
+            logger.info(s"Cleaning partitions of JDBC relation '$identifier', this will partially truncate JDBC table $tableIdentifier")
             withStatement { (statement, options) =>
                 val dialect = SqlDialects.get(options.url)
                 val condition = partitionCondition(dialect, partitions)
@@ -238,7 +238,7 @@ case class JdbcRelation(
       * @param executor
       * @return
       */
-    override def exists(executor:Executor) : Boolean = {
+    override def exists(executor:Executor) : Trilean = {
         require(executor != null)
 
         withConnection{ (con,options) =>
@@ -246,9 +246,33 @@ case class JdbcRelation(
         }
     }
 
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     *
+     * @param executor
+     * @param partition
+     * @return
+     */
+    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
+        require(executor != null)
+        require(partition != null)
+
+        withConnection{ (con,options) =>
+            val dialect = SqlDialects.get(options.url)
+            val condition = partitionCondition(dialect, partition)
+
+            JdbcUtils.tableExists(con, tableIdentifier, options) &&
+                !JdbcUtils.emptyResult(con, tableIdentifier, condition, options)
+        }
+    }
+
     /**
       * This method will physically create the corresponding relation in the target JDBC database.
-      * @param executor
+     *
+     * @param executor
       */
     override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
         require(executor != null)
@@ -256,7 +280,7 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Creating jdbc relation '$identifier', this will create jdbc table '$tableIdentifier'")
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 if (this.schema.isEmpty)
@@ -281,9 +305,9 @@ case class JdbcRelation(
         require(executor != null)
 
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot destroy JDBC relation $identifier which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot destroy JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Destroying jdbc relation $name, this will drop jdbc table $tableIdentifier")
+        logger.info(s"Destroying JDBC relation '$identifier', this will drop JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 JdbcUtils.dropTable(con, tableIdentifier, options)
@@ -312,14 +336,12 @@ case class JdbcRelation(
     private def createProperties() = {
         val connection = jdbcConnection
         val props = new Properties()
-        Option(connection.username).foreach(props.setProperty("user", _))
-        Option(connection.password).foreach(props.setProperty("password", _))
         props.setProperty("driver", connection.driver)
+        connection.username.foreach(props.setProperty("user", _))
+        connection.password.foreach(props.setProperty("password", _))
 
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         properties.foreach(kv => props.setProperty(kv._1, kv._2))
-
-        logger.info("Connecting to jdbc source at {}", connection.url)
 
         (jdbcConnection.url,props)
     }
@@ -327,9 +349,11 @@ case class JdbcRelation(
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
         val connection = jdbcConnection
         val props = scala.collection.mutable.Map[String,String]()
-        Option(connection.username).foreach(props.update("user", _))
-        Option(connection.password).foreach(props.update("password", _))
         props.update("driver", connection.driver)
+        connection.username.foreach(props.update("user", _))
+        connection.password.foreach(props.update("password", _))
+
+        logger.info("Connecting to jdbc source at {}", connection.url)
 
         val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
         val conn = JdbcUtils.createConnection(options)
@@ -376,7 +400,7 @@ case class JdbcRelation(
 
 
 class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
-    @JsonProperty(value = "connection", required = true) private var _connection: String = _
+    @JsonProperty(value = "connection", required = true) private var connection: String = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
@@ -392,7 +416,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             instanceProperties(context),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
-            ConnectionIdentifier.parse(context.evaluate(_connection)),
+            ConnectionIdentifier.parse(context.evaluate(connection)),
             context.evaluate(properties),
             database.map(context.evaluate).filter(_.nonEmpty),
             table.map(context.evaluate).filter(_.nonEmpty),

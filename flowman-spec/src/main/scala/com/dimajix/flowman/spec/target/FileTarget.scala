@@ -20,11 +20,15 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -95,6 +99,33 @@ case class FileTarget(
         phase match {
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
+        }
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.CREATE =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                !fs.getFileStatus(location).isDirectory
+            case Phase.BUILD =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                !FileUtils.isValidFileData(fs, location)
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                fs.listStatus(location).nonEmpty
+            case Phase.DESTROY =>
+                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                fs.exists(location)
+            case _ => No
         }
     }
 
@@ -177,7 +208,7 @@ case class FileTarget(
 
 
 class FileTargetSpec extends TargetSpec {
-    @JsonProperty(value = "input", required=true) private var input:String = _
+    @JsonProperty(value="mapping", required=true) private var mapping:String = _
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="format", required=false) private var format:String = "csv"
     @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
@@ -188,7 +219,7 @@ class FileTargetSpec extends TargetSpec {
     override def instantiate(context: Context): FileTarget = {
         FileTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             new Path(context.evaluate(location)),
             context.evaluate(format),
             context.evaluate(options),

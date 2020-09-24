@@ -19,6 +19,8 @@ package com.dimajix.flowman.spec.target
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -50,7 +52,14 @@ class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
         spark.emptyDataFrame.createOrReplaceTempView("some_table")
 
         val output = context.getTarget(TargetIdentifier("out"))
+
+        // == BUILD ===================================================================
+        output.dirty(executor, Phase.BUILD) should be (Yes)
         output.execute(executor, Phase.BUILD)
+        output.dirty(executor, Phase.BUILD) should be (Yes)
+
+        // == TRUNCATE ===================================================================
+        output.dirty(executor, Phase.TRUNCATE) should be (No)
         output.execute(executor, Phase.TRUNCATE)
     }
 }

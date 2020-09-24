@@ -28,7 +28,7 @@ class ListCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ListCommand])
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
-        project.mappings.keys.foreach(println)
+        project.mappings.keys.toList.sorted.foreach(println)
         true
     }
 }

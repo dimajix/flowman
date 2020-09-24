@@ -19,6 +19,9 @@ jobs:
     environment:
       - start_ts=$processing_date
       - end_ts=$Date.parse($processing_date).plusDays(1)
+    hooks:
+      - kind: web
+        jobSuccess: http://0.0.0.0/success&startdate=$URL.encode($start_ts)&enddate=$URL.encode($end_ts)&period=$processing_duration&force=$force
     targets:
       - some_hive_table
       - some_files
@@ -28,16 +31,29 @@ jobs:
 * `description` **(optional)** *(type: string)*: 
 A textual description of the job
 
+* `extends` **(optional)** *(type: list:string)*:
+A list of other job names, which should be extended by this job. All environment variables, parameters, build targets,
+hooks and metrics will be inherited from the parent jobs. This helps to split up a big job into smaller ones or to
+reuse some configuration in slightly different but related jobs.
+
+* `targets` **(optional)** *(type: list:string)*:
+A list of names of all targets that should be built as part of this job.
+ 
 * `environment` **(optional)** *(type: list:string)*:
-A list of `key=value` pairs for defining or overriding environment variables which can be
-accessed in expressions. You can also access the job parameters in the environment definition
-for deriving new values.
+A list of `key=value` pairs for defining or overriding environment variables which can be accessed in expressions. 
+You can also access the job parameters in the environment definition for deriving new values.
  
 * `parameters` **(optional)** *(type: list:parameter)*:
-A list of job parameters. Values for job parameters have to be specified for each job
-execution, be it either directly via the command line or via a `call` task as part of a
-different job in the same project.
+A list of job parameters. Values for job parameters have to be specified for each job execution, be it either directly 
+via the command line or via setting an environment vatiable in a derived job.
  
+* `hooks` **(optional)** *(type: list:hook)*:
+A list of [hooks](../hooks/index.md) which will be called before and after each job and target is executed. Hooks provide some ways to
+notify external systems (or possibly plugins) about the current execution status of jobs and targets.
+ 
+* `metrics` **(optional)** *(type: list:hook)*:
+A list of metrics that should be published after job execution. See below for more details.
+
 
 ## Metrics
 
@@ -73,6 +89,17 @@ after the Job is finished. This way it is ensured that all mappings which rely o
 parameter values, are reevaluated when the same Job is run mutliple times within a project.
 
 
-## Metrics
+## Publishing Metrics
 
-Each job can define a set of metrics to be published
+Each job can define a set of metrics to be published. The job only contains the logical definition of metrics,
+the type and endpoint of the receiver of the metrics is defined in the [namespace](../namespace.md).
+
+
+## Sub Pages
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   *
+```

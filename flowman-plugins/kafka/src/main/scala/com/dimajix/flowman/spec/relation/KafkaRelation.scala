@@ -26,6 +26,8 @@ import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -145,9 +147,8 @@ case class KafkaRelation(
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Writing to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.writer(executor, df)
+        this.writer(executor, df, mode.batchMode)
             .format("kafka")
-            .mode(mode.batchMode)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .save()
@@ -208,7 +209,13 @@ case class KafkaRelation(
       * Verify if the corresponding physical backend of this relation already exists
       * @param executor
       */
-    override def exists(executor: Executor): Boolean = ???
+    override def exists(executor: Executor): Trilean = Unknown
+
+    /**
+     * Verify if the corresponding physical backend of this relation already exists
+     * @param executor
+     */
+    override def loaded(executor: Executor, partition:Map[String,SingleValue]): Trilean = Unknown
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The

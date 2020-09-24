@@ -3,11 +3,17 @@
 The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
 is installed on the build machine.
 
-# Main Artifacts
+## Build with Maven
 
-The main artifacts will be a Docker image 'dimajix/flowman' and additionally a tar.gz file containing a
-runnable version of Flowman for direct installation in cases where Docker is not available or when you
-want to run Flowman in a complex environment with Kerberos.
+Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
+
+    mvn clean install
+
+## Main Artifacts
+
+The main artifacts will be a Docker image 'dimajix/flowman' and additionally a tar.gz file containing a runnable 
+version of Flowman for direct installation in cases where Docker is not available or when you want to run Flowman 
+in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
 
 
 # Custom Builds
@@ -54,13 +60,61 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * CDH-5.15
+* CDH-6.3
 
+With these profiles it is easy to build Flowman to match your environment. 
+
+## Building for Open Source Hadoop and Spark
+
+Spark 2.3 and Hadoop 2.6:
+
+    mvn clean install -Pspark-2.3 -Phadoop-2.6
+    
+Spark 2.3 and Hadoop 2.7:
+    
+    mvn clean install -Pspark-2.3 -Phadoop-2.7
+
+Spark 2.3 and Hadoop 2.8:
+
+    mvn clean install -Pspark-2.3 -Phadoop-2.8
+
+Spark 2.3 and Hadoop 2.9:
+
+    mvn clean install -Pspark-2.3 -Phadoop-2.9
+
+Spark 2.4 and Hadoop 2.6:
+
+    mvn clean install -Pspark-2.4 -Phadoop-2.6
+    
+Spark 2.4 and Hadoop 2.7:
+
+    mvn clean install -Pspark-2.4 -Phadoop-2.7
+
+Spark 2.4 and Hadoop 2.8:
+
+    mvn clean install -Pspark-2.4 -Phadoop-2.8
+
+Spark 2.4 and Hadoop 2.9:
+
+    mvn clean install -Pspark-2.4 -Phadoop-2.9
+
+Spark 3.0 and Hadoop 3.1
+
+    mvn clean install -Pspark-3.0 -Phadoop-3.1
+
+Spark 3.0 and Hadoop 3.2
+
+    mvn clean install -Pspark-3.0 -Phadoop-3.2
 
 ## Building for Cloudera
 
 The Maven project also contains preconfigured profiles for Cloudera.
 
-    mvn install -Pspark-2.3 -PCDH-5.15 -DskipTests
+    mvn clean install -Pspark-2.3 -PCDH-5.15 -DskipTests
+    
+Or for Cloudera 6.3 
+
+    mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
 
 
 ## Skipping Docker Image
@@ -68,47 +122,9 @@ The Maven project also contains preconfigured profiles for Cloudera.
 Part of the build also is a Docker image. Since you might not want to use it, because you are using different base
 images, you can skip the building of the Docker image via `-Ddockerfile.skip`
 
-# Releasing
+## Building Documentation
 
-## Releasing
+Flowman also contains Markdown documentation which is processed by Sphinx to generate the online HTML documentation.
 
-When making a release, the gitflow maven plugin should be used for managing versions
-
-    mvn gitflow:release
-
-## Deploying to Central Repository
-
-Both snapshot and release versions can be deployed to Sonatype, which in turn is mirrored by the Maven Central
-Repository.
-
-    mvn deploy -Dgpg.skip=false
-    
-The deployment has to be committed via     
-    
-    mvn nexus-staging:close -DstagingRepositoryId=comdimajixflowman-1001
-    
-Or the staging data can be removed via
-
-    mvn nexus-staging:drop    
-
-## Deploying to Custom Repository
-
-You can also deploy to a different repository by setting the following properties
-* `deployment.repository.id` - contains the ID of the repository. This should match any entry in your settings.xml for authentication
-* `deployment.repository.snapshot-id` - contains the ID of the repository. This should match any entry in your settings.xml for authentication
-* `deployment.repository.server` - the url of the server as used by the nexus-staging-maven-plugin
-* `deployment.repository.url` - the url of the default release repsotiory
-* `deployment.repository.snapshot-url` - the url of the snapshot repository
-
-Per default, Flowman uses the staging mechanism provided by the nexus-staging-maven-plugin. This this is not what you
-want, you can simply disable the Plugin via `skipTests` 
-
-With these settings you can deploy to a different (local) repository, for example
-
-    mvn deploy \
-        -Pspark-2.3 \
-        -PCDH-5.15 \
-        -Ddeployment.repository.snapshot-url=https://nexus-snapshots.my-company.net/repository/snapshots \
-        -Ddeployment.repository.snapshot-id=nexus-snapshots \
-        -DskipStaging \
-        -DskipTests
+    cd docs
+    make html

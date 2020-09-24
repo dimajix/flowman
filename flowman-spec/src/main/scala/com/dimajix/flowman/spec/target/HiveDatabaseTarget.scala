@@ -19,6 +19,9 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -49,6 +52,22 @@ case class HiveDatabaseTarget(
         phase match {
             case Phase.CREATE | Phase.DESTROY => Set(ResourceIdentifier.ofHiveDatabase(database))
             case _ => Set()
+        }
+    }
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase) : Trilean = {
+        phase match {
+            case Phase.CREATE => !executor.catalog.databaseExists(database)
+            case Phase.VERIFY => Yes
+            case Phase.DESTROY => executor.catalog.databaseExists(database)
+            case _ => No
         }
     }
 

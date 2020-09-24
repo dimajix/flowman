@@ -28,6 +28,9 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.StringType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -46,7 +49,7 @@ import com.dimajix.flowman.model.TargetInstance
 case class LocalTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier,
-    filename:String,
+    path:String,
     encoding:String,
     header:Boolean,
     newline:String,
@@ -66,7 +69,7 @@ case class LocalTarget(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
-            Map("filename" -> filename)
+            Map("path" -> path)
         )
     }
 
@@ -81,7 +84,7 @@ case class LocalTarget(
       * @return
       */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofLocal(new Path(filename))
+        ResourceIdentifier.ofLocal(new Path(path))
     )
 
     /**
@@ -96,19 +99,40 @@ case class LocalTarget(
     }
 
     /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.BUILD =>
+                val file = executor.fs.local(path)
+                !file.exists()
+            case Phase.VERIFY => Yes
+            case Phase.TRUNCATE|Phase.DESTROY =>
+                val file = executor.fs.local(path)
+                file.exists()
+            case _ => No
+        }
+    }
+
+    /**
       * Build the target by writing a file to the local file system of the driver
       *
       * @param executor
       */
     override def build(executor:Executor) : Unit = {
-        logger.info(s"Writing mapping '${this.mapping}' to local file '$filename'")
+        logger.info(s"Writing mapping '${this.mapping}' to local file '$path'")
 
         val mapping = context.getMapping(this.mapping.mapping)
         val dfIn = executor.instantiate(mapping, this.mapping.output)
         val cols = if (columns.nonEmpty) columns else dfIn.columns.toSeq
         val dfOut = dfIn.select(cols.map(c => dfIn(c).cast(StringType)):_*)
 
-        val outputFile = new File(filename)
+        val outputFile = new File(path)
         outputFile.getParentFile.mkdirs()
         outputFile.createNewFile
         val outputStream = new FileOutputStream(outputFile)
@@ -143,9 +167,9 @@ case class LocalTarget(
     override def verify(executor: Executor) : Unit = {
         require(executor != null)
 
-        val file = executor.fs.local(filename)
+        val file = executor.fs.local(path)
         if (!file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - local file '$filename' does not exist")
+            logger.error(s"Verification of target '$identifier' failed - local file '$path' does not exist")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -158,9 +182,9 @@ case class LocalTarget(
     override def truncate(executor: Executor): Unit = {
         require(executor != null)
 
-        val outputFile = new File(filename)
+        val outputFile = new File(path)
         if (outputFile.exists()) {
-            logger.info(s"Cleaning local file '$filename'")
+            logger.info(s"Cleaning local file '$path'")
             outputFile.delete()
         }
     }

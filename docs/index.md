@@ -27,6 +27,7 @@ and schema information) in a single place managed by a single program.
 
 ### Installation
 * [Flowman Installation](installation.md): Installation Guide
+* [Configuration](config.md): Configuration settings
 
 
 ### CLI Documentation
@@ -64,17 +65,11 @@ More detail on all these items is described in the following sections:
    :maxdepth: 1
    :glob:
 
-   introduction
+   building
    installation
    lifecycle
+   cli/index
    spec/index
-   spec/relation/index
-   spec/mapping/index
-   spec/target/index
-   spec/job/index
-   spec/dataset/index
-   spec/schema/index
-   spec/connection/index
-   spec/metric/index
    cookbook/index
+   config
 ```

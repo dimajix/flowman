@@ -25,24 +25,6 @@ import com.dimajix.flowman.model.Metadata
 
 
 package object metric {
-    def withMetrics[T](metricSystem:MetricSystem, metrics:MetricBoard)(fn: => T) : T = {
-        // Publish metrics
-        metrics.reset(metricSystem)
-        metricSystem.addBoard(metrics)
-
-        // Run original function
-        val result = try {
-            fn
-        }
-        finally {
-            // Unpublish metrics
-            metricSystem.commitBoard(metrics)
-            metricSystem.removeBoard(metrics)
-        }
-
-        result
-    }
-
     def withWallTime[T](registry: MetricSystem, metadata : Metadata, phase:Phase)(fn: => T) : T = {
         // Create and register bundle
         val metricName = metadata.category + "_runtime"
@@ -53,11 +35,11 @@ package object metric {
             "project" -> metadata.project.getOrElse(""),
             "phase" -> phase.toString
         )
-        val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels), new MultiMetricBundle(metricName, bundleLabels))
+        val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels))(MultiMetricBundle(metricName, bundleLabels))
 
         // Create and register metric
         val metricLabels = bundleLabels ++ Map("name" -> metadata.name) ++ metadata.labels
-        val metric = bundle.getOrCreateMetric(Selector(Some(metricName), metricLabels), new WallTimeMetric(metricName, metricLabels))
+        val metric = bundle.getOrCreateMetric(Selector(Some(metricName), metricLabels))(WallTimeMetric(metricName, metricLabels))
         metric.reset()
 
         // Execute function itself, and catch any exception

@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.13.1-SNAPSHOT</version>
+        <version>0.14.1-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -134,7 +134,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <finalName>${project.artifactId}-${project.version}-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</finalName>
                             <descriptors>
                                 <descriptor>src/main/assembly/assembly.xml</descriptor>
                             </descriptors>

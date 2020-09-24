@@ -36,7 +36,7 @@ object Namespace {
     private lazy val loader = ServiceLoader.load(classOf[NamespaceReader]).iterator().asScala.toSeq
     private lazy val defaultNamespace = Namespace(
         name = "default",
-        metrics = Some(Template.of(new ConsoleMetricSink()))
+        metrics = Seq(Template.of(new ConsoleMetricSink()))
     )
 
     class Reader {
@@ -90,10 +90,11 @@ final case class Namespace(
     profiles:Map[String,Profile] = Map(),
     connections:Map[String,Template[Connection]] = Map(),
     store:Option[Template[Store]] = None,
-    catalog:Option[Template[ExternalCatalog]] = None,
+    catalogs:Seq[Template[ExternalCatalog]] = Seq(),
     history:Option[Template[StateStore]] = None,
-    metrics:Option[Template[MetricSink]] = None,
-    plugins:Seq[String] = Seq()
+    metrics:Seq[Template[MetricSink]] = Seq(),
+    plugins:Seq[String] = Seq(),
+    hooks:Seq[Template[Hook]] = Seq()
 ){
 }
 

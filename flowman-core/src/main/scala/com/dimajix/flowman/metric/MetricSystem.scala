@@ -19,6 +19,7 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 import com.dimajix.common.IdentityHashSet
+import com.dimajix.flowman.execution.Status
 
 trait MetricCatalog {
     /**
@@ -57,6 +58,14 @@ class MetricSystem extends MetricCatalog {
     private val metricSinks : mutable.Set[MetricSink] = IdentityHashSet()
 
     /**
+     * Registers an individual metric. It will be wrapped into a bundle.
+     * @param metric
+     */
+    def addMetric(metric:Metric) : Unit = {
+        metricBundles.add(SingletonMetricBundle(metric))
+    }
+
+    /**
       * Registers a new MetricBundle
       * @param bundle
       */
@@ -72,7 +81,7 @@ class MetricSystem extends MetricCatalog {
         metricBundles.remove(bundle)
     }
 
-    def getOrCreateBundle[T <: MetricBundle](query:Selector, creator: => T) : T = {
+    def getOrCreateBundle[T <: MetricBundle](query:Selector)(creator: => T) : T = {
         metricBundles.find(bundle => query.name.forall(_ == bundle.name) && bundle.labels == query.labels)
             .map(_.asInstanceOf[T])
             .getOrElse{
@@ -120,10 +129,10 @@ class MetricSystem extends MetricCatalog {
       * Commits a previously registered MetricBoard in all registered metric sinks
       * @param board
       */
-    def commitBoard(board:MetricBoard) : Unit = {
+    def commitBoard(board:MetricBoard, status:Status) : Unit = {
         if (!metricBoards.contains(board))
             throw new IllegalArgumentException("MetricBoard not registered")
-        metricSinks.foreach(_.commit(board))
+        metricSinks.foreach(_.commit(board, status))
     }
 
     /**

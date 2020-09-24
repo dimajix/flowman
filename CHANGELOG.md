@@ -1,7 +1,27 @@
-# Version 0.13.1
+# Version 0.14.1
+
+
+# Version 0.14.0 - 2020-09-10
+
+* Fix AWS plugin for Hadoop 3.x
+* Improve setup of logging
+* Shade Velocity for better interoperability with Spark 3
+* Add new web hook facility in namespaces and jobs
+* Existing targets will not be overwritten anymore by default. Either use the `--force` command line option, or set 
+the configuration property `flowman.execution.target.forceDirty` to `true` for the old behaviour.
+* Add new command line option `--keep-going`
+* Implement new `com.dimajix.spark.io.DeferredFileCommitProtocol` which can be used by setting the Spark configuration
+parameter `spark.sql.sources.commitProtocolClass`
+* Add new `flowshell` application
+
+
+# Version 0.13.1 - 2020-07-14
 
 * Code improvements
 * Do not implicitly set SPARK_MASTER in configuration
+* Add support for CDH6
+* Add support for Spark 3.0
+* Improve support for Hadoop 3.x
 
 
 # Version 0.13.0 - 2020-04-21

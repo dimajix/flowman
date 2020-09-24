@@ -1,8 +1,7 @@
-
-# SSH Connections
+# SSH Connection
 
 ## Example
-```
+```yaml
 connections:
   sftp-server:
     kind: sftp

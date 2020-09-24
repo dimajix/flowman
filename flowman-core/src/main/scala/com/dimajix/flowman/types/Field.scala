@@ -58,7 +58,7 @@ object Field {
   */
 class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
-    @JsonProperty(value="type", required = false) private var _type: FieldType = _
+    @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
     @JsonProperty(value="nullable", required = true) private var _nullable: Boolean = true
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
     @JsonProperty(value="default", required = false) private var _default: Option[String] = None
@@ -142,7 +142,12 @@ class Field {
         StructField(name, sparkType, nullable, metadata.build())
     }
 
-    override def toString: String = s"Field($name, $ftype, $nullable)"
+    override def toString: String = {
+        val format = this.format.map(", format=" + _).getOrElse("")
+        val default = this.default.map(", default=" + _).getOrElse("")
+        val size = this.size.map(", size=" + _).getOrElse("")
+        s"Field($name, $ftype, $nullable$format$size$default})"
+    }
 
 
     def canEqual(other: Any): Boolean = other.isInstanceOf[Field]

@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.13.1-SNAPSHOT</version>
+        <version>0.14.1-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -17,13 +17,13 @@
         <plugin.name>flowman-impala</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <impala.jdbc.version>2.5.42</impala.jdbc.version>
+        <impala.jdbc.version>2.6.17.1020</impala.jdbc.version>
     </properties>
 
     <repositories>
         <repository>
-            <id>odysseus</id>
-            <url>http://repo.odysseusinc.com/artifactory/community-libs-release-local/</url>
+            <id>cloudera-ext</id>
+            <url>https://repository.cloudera.com/artifactory/ext-release-local/</url>
         </repository>
     </repositories>
 
@@ -130,8 +130,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.cloudera</groupId>
-            <artifactId>ImpalaJDBC41</artifactId>
+            <groupId>Impala</groupId>
+            <artifactId>ImpalaJDBC42</artifactId>
             <version>${impala.jdbc.version}</version>
         </dependency>
 

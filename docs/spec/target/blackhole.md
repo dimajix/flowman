@@ -1,4 +1,4 @@
-# Flowman Blackhole Target
+# Blackhole Target
 
 A *blackhole target* simply materializes all records of a mapping, but immediately discards them. This can be 
 useful for some test scenarios but probably is not worth much in a real production environment.
@@ -6,7 +6,7 @@ useful for some test scenarios but probably is not worth much in a real producti
 
 ## Example
 
-```
+```yaml
 targets:
   blackhole:
     kind: blackhole

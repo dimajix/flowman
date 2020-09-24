@@ -21,6 +21,8 @@ import java.nio.file.Paths
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -58,13 +60,29 @@ class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
         data.createOrReplaceTempView("some_table")
         val output = context.getTarget(TargetIdentifier("out"))
 
+        // == BUILD ===================================================================
         outputPath.toFile.exists() should be (false)
+        output.dirty(executor, Phase.BUILD) should be (Yes)
         output.execute(executor, Phase.BUILD)
+        output.dirty(executor, Phase.BUILD) should be (No)
         outputPath.toFile.exists() should be (true)
 
+        // == VERIFY ===================================================================
+        output.dirty(executor, Phase.VERIFY) should be (Yes)
+        output.execute(executor, Phase.VERIFY)
+        output.dirty(executor, Phase.VERIFY) should be (Yes)
+
+        // == TRUNCATE ===================================================================
         outputPath.toFile.exists() should be (true)
+        output.dirty(executor, Phase.TRUNCATE) should be (Yes)
         output.execute(executor, Phase.TRUNCATE)
+        output.dirty(executor, Phase.TRUNCATE) should be (No)
         outputPath.toFile.exists() should be (false)
+
+        // == DESTROY ===================================================================
+        output.dirty(executor, Phase.DESTROY) should be (No)
+        output.execute(executor, Phase.DESTROY)
+        output.dirty(executor, Phase.DESTROY) should be (No)
     }
 
 }

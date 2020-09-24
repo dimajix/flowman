@@ -20,14 +20,27 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.metric.GaugeMetric
+import com.dimajix.flowman.metric.Selector
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.spec.mapping.ProvidedMapping
+import com.dimajix.flowman.spec.relation.FileRelation
+import com.dimajix.flowman.spec.relation.NullRelation
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RelationTargetTest extends FlatSpec with Matchers {
+class RelationTargetTest extends FlatSpec with Matchers with LocalSparkSession {
     "The RelationTarget" should "work" in {
         val spec =
             s"""
@@ -66,5 +79,52 @@ class RelationTargetTest extends FlatSpec with Matchers {
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set())
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+    }
+
+    it should "count the number of records" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val data = Seq(("v1", 12), ("v2", 23)).toDF()
+        data.createOrReplaceTempView("some_table")
+
+        val relationGen = (context:Context) => NullRelation(
+            Relation.Properties(context)
+        )
+        val mappingGen = (context:Context) => ProvidedMapping(
+            Mapping.Properties(context),
+            "some_table"
+        )
+        val targetGen = (context:Context) => RelationTarget(
+            Target.Properties(context),
+            MappingOutputIdentifier("mapping"),
+            RelationIdentifier("relation")
+        )
+        val project = Project(
+            name = "test",
+            targets = Map("target" -> targetGen),
+            relations = Map("relation" -> relationGen),
+            mappings = Map("mapping" -> mappingGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
+        val executor = session.executor
+        val context = session.getContext(project)
+
+        val target = context.getTarget(TargetIdentifier("target"))
+        target.execute(executor, Phase.BUILD)
+
+        val metric = executor.metrics
+            .findMetric(Selector(Some("target_records"), target.metadata.asMap))
+            .head
+            .asInstanceOf[GaugeMetric]
+
+        metric.value should be (2)
+
+        target.execute(executor, Phase.BUILD)
+        metric.value should be (4)
     }
 }

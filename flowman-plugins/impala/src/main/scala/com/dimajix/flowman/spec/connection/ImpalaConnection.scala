@@ -27,8 +27,8 @@ import com.dimajix.flowman.model.Connection
 
 case class ImpalaConnection(
     instanceProperties:Connection.Properties,
-    username:String,
-    password:String,
+    username:Option[String],
+    password:Option[String],
     properties:Map[String,String],
     driver:String,
     host:String,
@@ -40,8 +40,8 @@ case class ImpalaConnection(
 
 @ConnectionType(kind = "impala")
 class ImpalaConnectionSpec extends ConnectionSpec {
-    @JsonProperty(value="username", required=false) private var username:String = _
-    @JsonProperty(value="password", required=false) private var password:String = _
+    @JsonProperty(value="username", required=false) private var username:Option[String] = None
+    @JsonProperty(value="password", required=false) private var password:Option[String] = None
     @JsonProperty(value="properties", required=false) private var properties:Map[String,String] = Map()
     @JsonProperty(value="driver", required=false) private var driver:String = ImpalaExternalCatalog.IMPALA_DEFAULT_DRIVER
     @JsonProperty(value="host", required=false) private var host:String = "localhost"
@@ -57,8 +57,8 @@ class ImpalaConnectionSpec extends ConnectionSpec {
     override def instantiate(context: Context): Connection = {
         ImpalaConnection(
             instanceProperties(context),
-            context.evaluate(username),
-            context.evaluate(password),
+            username.map(context.evaluate),
+            password.map(context.evaluate),
             context.evaluate(properties),
             context.evaluate(driver),
             context.evaluate(host),

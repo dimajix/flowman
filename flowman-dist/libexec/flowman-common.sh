@@ -16,6 +16,7 @@ fi
 # Set basic Spark options
 : ${SPARK_EXECUTOR_CORES:="4"}
 : ${SPARK_EXECUTOR_MEMORY:="8G"}
+: ${SPARK_DRIVER_CORES:="1"}
 : ${SPARK_DRIVER_MEMORY:="2G"}
 
 : ${SPARK_SUBMIT:=$SPARK_HOME/bin/spark-submit}
@@ -75,6 +76,7 @@ spark_submit() {
     $SPARK_SUBMIT \
       --executor-cores $SPARK_EXECUTOR_CORES \
       --executor-memory $SPARK_EXECUTOR_MEMORY \
+      --driver-cores $SPARK_DRIVER_CORES \
       --driver-memory $SPARK_DRIVER_MEMORY \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.executor.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \

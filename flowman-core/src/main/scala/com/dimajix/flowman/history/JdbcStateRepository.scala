@@ -21,15 +21,17 @@ import java.time.ZoneId
 import java.util.Locale
 import java.util.Properties
 
-import scala.language.higherKinds
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.language.higherKinds
 
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.TargetToken
 
 
 private[history] object JdbcStateRepository {
@@ -81,13 +83,13 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     private lazy val db = {
         val url = connection.url
+        val driver = connection.driver
         val user = connection.user
         val password = connection.password
-        val driver = connection.driver
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
-        Database.forURL(url, user=user, password=password, prop=props, driver=driver)
+        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props)
     }
 
     val jobRuns = TableQuery[JobRuns]

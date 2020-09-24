@@ -18,6 +18,9 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -58,6 +61,20 @@ case class CountTarget(
     }
 
     /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase) : Trilean = {
+        phase match {
+            case Phase.BUILD => Yes
+            case _ => No
+        }
+    }
+
+    /**
       * Build the "count" target by printing the number of records onto the console
       *
       * @param executor
@@ -68,7 +85,7 @@ case class CountTarget(
         val mapping = context.getMapping(this.mapping.mapping)
         val dfIn = executor.instantiate(mapping, this.mapping.output)
         val count = dfIn.count()
-        System.out.println(s"Mapping '$mapping' contains $count records")
+        System.out.println(s"Mapping '${this.mapping}' contains $count records")
     }
 }
 

@@ -24,13 +24,13 @@ import com.dimajix.flowman.metric.PrometheusMetricSink
 
 
 class PrometheusMetricSinkSpec extends MetricSinkSpec {
-    @JsonProperty(value = "url", required = true) private var url:String = _
-    @JsonProperty(value = "labels", required = false) var labels:Map[String,String] = Map()
+    @JsonProperty(value = "url", required = true) private var url:String = ""
+    @JsonProperty(value = "labels", required = false) private var labels:Map[String,String] = Map()
 
     override def instantiate(context: Context): MetricSink = {
         new PrometheusMetricSink(
             context.evaluate(url),
-            context.evaluate(labels)
+            labels
         )
     }
 }

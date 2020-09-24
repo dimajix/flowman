@@ -40,8 +40,7 @@ object GlobPattern {
 }
 
 
-case class GlobPattern(val globPattern: String) {
-
+case class GlobPattern(globPattern: String) {
     private var _hasWildcard = false
     private val _compiled = {
         val BACKSLASH = '\\'

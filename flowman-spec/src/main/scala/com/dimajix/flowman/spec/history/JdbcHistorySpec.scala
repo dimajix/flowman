@@ -28,23 +28,23 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 object JdbcHistorySpec {
     def apply(connection:String, retries:Int=3, timeout:Int=1000) : JdbcHistorySpec = {
         val runner = new JdbcHistorySpec
-        runner._connection = connection
-        runner._retries = retries.toString
-        runner._timeout = timeout.toString
+        runner.connection = connection
+        runner.retries = retries.toString
+        runner.timeout = timeout.toString
         runner
     }
 }
 
 
 class JdbcHistorySpec extends HistorySpec {
-    @JsonProperty(value="connection", required=true) private var _connection:String = ""
-    @JsonProperty(value="retries", required=false) private var _retries:String = "3"
-    @JsonProperty(value="timeout", required=false) private var _timeout:String = "1000"
+    @JsonProperty(value="connection", required=true) private var connection:String = ""
+    @JsonProperty(value="retries", required=false) private var retries:String = "3"
+    @JsonProperty(value="timeout", required=false) private var timeout:String = "1000"
 
     override def instantiate(context: Context): StateStore = {
-        val conId = ConnectionIdentifier.parse(context.evaluate(_connection))
-        val retries = context.evaluate(_retries).toInt
-        val timeout = context.evaluate(_timeout).toInt
+        val conId = ConnectionIdentifier.parse(context.evaluate(this.connection))
+        val retries = context.evaluate(this.retries).toInt
+        val timeout = context.evaluate(this.timeout).toInt
 
         val con = context.getConnection(conId).asInstanceOf[JdbcConnection]
         val connection = JdbcStateStore.Connection(

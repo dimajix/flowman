@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.metric
 
-class FixedGaugeMetric(override val name:String, override val labels:Map[String,String], override val value:Double) extends GaugeMetric {
+final case class FixedGaugeMetric(override val name:String, override val labels:Map[String,String], override val value:Double) extends GaugeMetric {
     /**
       * Resets this metric
       */

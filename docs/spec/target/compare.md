@@ -1,4 +1,4 @@
-# Flowman Compare Target
+# Compare Target
 
 The *compare target* performs a comparison of all records of two [datasets](../dataset/index.md) in the verification
 phase. If some records do not match or are missing, the processing will stop. This way the compare target can be

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.13.1-SNAPSHOT</version>
+    <version>0.14.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -50,11 +50,12 @@
     </distributionManagement>
 
     <properties>
+        <hadoop.dist>oss</hadoop.dist>
         <hadoop.version>2.8.5</hadoop.version>
         <hadoop-api.version>2.8</hadoop-api.version>
         <hive.version>2.3.3</hive.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.5</spark.version>
+        <spark.version>2.4.6</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
         <azure.version>2.2.0</azure.version>
@@ -67,7 +68,6 @@
         <jackson.databind.version>2.6.7.3</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <paranamer.version>2.8</paranamer.version>
-        <json.version>20190722</json.version>
         <json4s.version>3.5.3</json4s.version>
         <json-smart.version>1.1.1</json-smart.version>
         <guava.version>14.0.1</guava.version>
@@ -94,8 +94,9 @@
         <commons-text.version>1.6</commons-text.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-beanutils.version>1.9.2</commons-beanutils.version>
-        <httpclient.version>4.5.2</httpclient.version>
-        <httpcore.version>4.4.4</httpcore.version>
+        <commons-logging.version>1.1.3</commons-logging.version>
+        <httpclient.version>4.5.6</httpclient.version>
+        <httpcore.version>4.4.10</httpcore.version>
         <netty.version>3.9.9.Final</netty.version>
         <netty-all.version>4.1.47.Final</netty-all.version>
         <!-- Language versions -->
@@ -129,6 +130,7 @@
                 </repository>
             </repositories>
             <properties>
+                <hadoop.dist>cdh5</hadoop.dist>
                 <cdh.version>cdh5.15.1</cdh.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
@@ -144,10 +146,58 @@
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
+                <httpclient.version>4.5.4</httpclient.version>
+                <httpcore.version>4.4.7</httpcore.version>
                 <commons-lang.version>2.6</commons-lang.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <slf4j.version>1.7.5</slf4j.version>
+                <scala.api_version>2.11</scala.api_version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>jetty-sslengine</artifactId>
+                        <version>6.1.26.cloudera.4</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
+        <profile>
+            <id>CDH-6.3</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <hadoop.dist>cdh6</hadoop.dist>
+                <cdh.version>cdh6.3.3</cdh.version>
+                <spark.version>2.4.0-cdh6.3.3</spark.version>
+                <spark-hive.scope>provided</spark-hive.scope>
+                <spark-api.version>2.4</spark-api.version>
+                <hadoop.version>3.0.0-${cdh.version}</hadoop.version>
+                <hadoop-api.version>3.0</hadoop-api.version>
+                <hive.version>2.1.1-${cdh.version}</hive.version>
+                <hbase.version>2.1.0-${cdh.version}</hbase.version>
+                <kafka.version>2.2.1-${cdh.version}</kafka.version>
+                <avro.version>1.8.2-${cdh.version}</avro.version>
+                <guava.version>14.0.1</guava.version>
+                <json4s.version>3.5.3</json4s.version>
+                <netty-all.version>4.1.42.Final</netty-all.version>
+                <jackson.version>2.9.10</jackson.version>
+                <jackson.databind.version>2.9.10.1</jackson.databind.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.10</httpcore.version>
+                <commons-lang.version>2.6</commons-lang.version>
+                <commons-lang3.version>3.7</commons-lang3.version>
+                <commons-math3.version>3.4.1</commons-math3.version>
+                <commons-collections.version>3.2.1</commons-collections.version>
+                <slf4j.version>1.7.25</slf4j.version>
+                <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
             </properties>
             <dependencyManagement>
@@ -178,6 +228,8 @@
                 <json4s.version>3.2.11</json4s.version>
                 <guava.version>12.0</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
+                <httpclient.version>4.5.4</httpclient.version>
+                <httpcore.version>4.4.7</httpcore.version>
             </properties>
         </profile>
         <profile>
@@ -185,7 +237,7 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
-                <spark.version>2.4.5</spark.version>
+                <spark.version>2.4.6</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
@@ -196,6 +248,8 @@
                 <json4s.version>3.5.3</json4s.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.10</httpcore.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
             </properties>
@@ -216,6 +270,8 @@
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <kafka.version>2.4.1</kafka.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.10</httpcore.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
             </properties>
@@ -226,6 +282,8 @@
             <properties>
                 <hadoop.version>2.6.5</hadoop.version>
                 <hadoop-api.version>2.6</hadoop-api.version>
+                <commons-beanutils.version>1.9.2</commons-beanutils.version>
+                <commons-codec.version>1.10</commons-codec.version>
             </properties>
         </profile>
         <profile>
@@ -233,6 +291,8 @@
             <properties>
                 <hadoop.version>2.7.7</hadoop.version>
                 <hadoop-api.version>2.7</hadoop-api.version>
+                <commons-beanutils.version>1.9.2</commons-beanutils.version>
+                <commons-codec.version>1.10</commons-codec.version>
             </properties>
         </profile>
         <profile>
@@ -240,6 +300,8 @@
             <properties>
                 <hadoop.version>2.8.5</hadoop.version>
                 <hadoop-api.version>2.8</hadoop-api.version>
+                <commons-beanutils.version>1.9.2</commons-beanutils.version>
+                <commons-codec.version>1.10</commons-codec.version>
             </properties>
         </profile>
         <profile>
@@ -247,6 +309,8 @@
             <properties>
                 <hadoop.version>2.9.2</hadoop.version>
                 <hadoop-api.version>2.9</hadoop-api.version>
+                <commons-beanutils.version>1.9.2</commons-beanutils.version>
+                <commons-codec.version>1.10</commons-codec.version>
             </properties>
         </profile>
         <profile>
@@ -267,29 +331,11 @@
                 <commons-codec.version>1.11</commons-codec.version>
             </properties>
         </profile>
-        <profile>
-            <id>hbase-1.2</id>
-            <properties>
-                <hbase.version>1.2.6.1</hbase.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>hbase-1.3</id>
-            <properties>
-                <hbase.version>1.3.2.1</hbase.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>hbase-1.4</id>
-            <properties>
-                <hbase.version>1.4.5</hbase.version>
-            </properties>
-        </profile>
     </profiles>
 
     <modules>
         <module>flowman-spark-testing</module>
-        <module>flowman-spark-sources</module>
+        <module>flowman-spark-extensions</module>
         <module>flowman-core</module>
         <module>flowman-spec</module>
         <module>flowman-dsl</module>
@@ -337,50 +383,16 @@
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <failOnError>false</failOnError>
-                </configuration>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.1.0</version>
-                <executions>
-                    <execution>
-                        <id>flatten</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>flatten</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>flatten.clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <flattenMode>ossrh</flattenMode>
-                    <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
-                </configuration>
             </plugin>
             <plugin>
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
@@ -440,8 +452,17 @@
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.1.0</version>
+                    <configuration>
+                        <failOnError>false</failOnError>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.7.0</version>
+                    <version>3.8.1</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
@@ -450,17 +471,17 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>1.6.0</version>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -468,23 +489,9 @@
                     <version>3.1.0</version>
                 </plugin>
                 <plugin>
-                    <inherited>true</inherited>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.2.0</version>
-                    <configuration>
-                        <tarLongFileMode>posix</tarLongFileMode>
-                        <archiverConfig>
-                            <fileMode>0644</fileMode>
-                            <directoryMode>0755</directoryMode>
-                            <defaultDirectoryMode>0755</defaultDirectoryMode>
-                        </archiverConfig>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.3.0</version>
+                    <version>4.3.1</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <args>
@@ -530,7 +537,7 @@
                 <plugin>
                     <groupId>org.scalatest</groupId>
                     <artifactId>scalatest-maven-plugin</artifactId>
-                    <version>1.0</version>
+                    <version>2.0.0</version>
                     <configuration>
                         <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                         <junitxml>.</junitxml>
@@ -555,7 +562,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.7.1</version>
+                    <version>3.9.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -565,8 +572,83 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.1.0</version>
+                    <configuration>
+                        <attach>true</attach>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.2.4</version>
+                    <configuration>
+                        <shadedArtifactAttached>false</shadedArtifactAttached>
+                        <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+                        <shadeSourcesContent>true</shadeSourcesContent>
+                        <createSourcesJar>true</createSourcesJar>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.3.0</version>
+                    <configuration>
+                        <tarLongFileMode>posix</tarLongFileMode>
+                        <archiverConfig>
+                            <fileMode>0644</fileMode>
+                            <directoryMode>0755</directoryMode>
+                            <defaultDirectoryMode>0755</defaultDirectoryMode>
+                        </archiverConfig>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>1.1.0</version>
+                    <configuration>
+                        <flattenMode>ossrh</flattenMode>
+                        <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
+                        <updatePomFile>true</updatePomFile>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>flatten</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>flatten</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>flatten.clean</id>
+                            <phase>clean</phase>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -596,6 +678,13 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>animal-sniffer-maven-plugin</artifactId>
                     <version>1.18</version>
+                    <configuration>
+                        <signature>
+                            <groupId>org.codehaus.mojo.signature</groupId>
+                            <artifactId>java18</artifactId>
+                            <version>1.0</version>
+                        </signature>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>check-java-version</id>
@@ -603,13 +692,6 @@
                             <goals>
                                 <goal>check</goal>
                             </goals>
-                            <configuration>
-                                <signature>
-                                    <groupId>org.codehaus.mojo.signature</groupId>
-                                    <artifactId>java18</artifactId>
-                                    <version>1.0</version>
-                                </signature>
-                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
@@ -626,7 +708,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.3.0</version>
+                <version>4.4.0</version>
                 <configuration>
                     <jvmArgs>
                         <jvmArg>-Xms64m</jvmArg>
@@ -648,7 +730,7 @@
 
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-spark-sources</artifactId>
+                <artifactId>flowman-spark-extensions</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -847,6 +929,10 @@
                         <groupId>org.apache.velocity</groupId>
                         <artifactId>velocity</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>jline</groupId>
+                        <artifactId>jline</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -900,6 +986,13 @@
                 <groupId>com.databricks</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark-avro.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -1192,13 +1285,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>${json.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-jackson_${scala.api_version}</artifactId>
                 <version>${json4s.version}</version>
@@ -1224,13 +1310,6 @@
                 <artifactId>json4s-scalap_${scala.api_version}</artifactId>
                 <version>${json4s.version}</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -1264,7 +1343,7 @@
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>1.1.1</version>
+                <version>${commons-logging.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1355,23 +1434,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.velocity</groupId>
-                <artifactId>velocity-engine-core</artifactId>
-                <version>2.1</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.re2j</groupId>
-                <artifactId>re2j</artifactId>
-                <version>1.1</version>
                 <scope>compile</scope>
             </dependency>
         </dependencies>

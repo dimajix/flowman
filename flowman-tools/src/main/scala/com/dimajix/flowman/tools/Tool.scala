@@ -36,7 +36,7 @@ import com.dimajix.flowman.tools.exec.Driver
 
 
 class Tool {
-    private val logger = LoggerFactory.getLogger(classOf[Driver])
+    private val logger = LoggerFactory.getLogger(classOf[Tool])
 
     // First create PluginManager
     val plugins:PluginManager = createPluginManager()
@@ -89,6 +89,7 @@ class Tool {
     }
 
     def createSession(
+         sparkMaster:String,
          sparkName:String,
          project:Option[Project]=None,
          additionalEnvironment:Map[String,String] = Map(),
@@ -113,29 +114,12 @@ class Tool {
             .withProfiles(profiles)
             .withJars(plugins.jars.map(_.toString))
 
+        if (sparkMaster.nonEmpty)
+            builder.withSparkMaster(sparkMaster)
+
         if (disableSpark)
             builder.disableSpark()
 
         builder.build()
-    }
-
-    def setupLogging(sparkLogging:Option[String]) : Unit = {
-        val log4j = System.getProperty("log4j.configuration")
-        if (log4j == null || log4j.isEmpty) {
-            val loader = Thread.currentThread.getContextClassLoader
-            val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
-            PropertyConfigurator.configure(url)
-            logger.debug(s"Loaded logging configuration from $url")
-        }
-
-        // Adjust Spark logging level
-        sparkLogging.foreach { level =>
-            logger.debug(s"Setting Spark log level to ${level}")
-            val upperCased = level.toUpperCase(Locale.ENGLISH)
-            val l = org.apache.log4j.Level.toLevel(upperCased)
-            org.apache.log4j.Logger.getLogger("org").setLevel(l)
-            org.apache.log4j.Logger.getLogger("akka").setLevel(l)
-            org.apache.log4j.Logger.getLogger("hive").setLevel(l)
-        }
     }
 }

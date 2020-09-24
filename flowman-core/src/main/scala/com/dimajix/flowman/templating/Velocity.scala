@@ -17,17 +17,21 @@
 package com.dimajix.flowman.templating
 
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.apache.velocity.runtime.RuntimeConstants
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 import com.dimajix.flowman.spi.ClassAnnotationScanner
 
 
+class Velocity
 object Velocity {
+    private val log = LoggerFactory.getLogger(classOf[Velocity])
     private val classes = mutable.Map[String,Class[_]]()
     private val objects = mutable.Map[String,AnyRef]()
 
@@ -48,6 +52,7 @@ object Velocity {
     addObject("Period", PeriodWrapper)
     addObject("System", SystemWrapper)
     addObject("String", StringWrapper)
+    addObject("URL", URLWrapper)
 
 
     /**
@@ -61,8 +66,19 @@ object Velocity {
         val context = new VelocityContext()
 
         // Add instances of all custom classses
-        classes.foreach { case (name, cls) => context.put(name, cls.newInstance()) }
-        objects.foreach { case (name, obj) => context.put(name, obj) }
+        classes.foreach { case (name, cls) =>
+            try {
+                context.put(name, cls.newInstance())
+            }
+            catch {
+                case NonFatal(e) =>
+                    log.warn(s"Could not add '$name' of class ${cls.getCanonicalName} to velocity context.", e)
+            }
+        }
+        // Add all objects
+        objects.foreach { case (name, obj) =>
+            context.put(name, obj)
+        }
 
         context
     }
@@ -81,6 +97,7 @@ object Velocity {
       */
     def newEngine() : VelocityEngine = {
         val ve = new VelocityEngine()
+        ve.setProperty(RuntimeConstants.VM_ARGUMENTS_STRICT, "true")
         ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "true")
         ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT_ESCAPE, "true")
         ve.init()

@@ -33,6 +33,9 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IOUtils
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
@@ -106,6 +109,22 @@ case class SftpUploadTarget(
         phase match {
             case Phase.BUILD => Set(ResourceIdentifier.ofFile(source))
             case _ => Set()
+        }
+    }
+
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param executor
+     * @param phase
+     * @return
+     */
+    override def dirty(executor: Executor, phase: Phase): Trilean = {
+        phase match {
+            case Phase.BUILD => Unknown
+            case _ => No
         }
     }
 

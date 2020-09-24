@@ -22,6 +22,7 @@ import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Mapping
@@ -49,6 +50,12 @@ abstract class Executor {
       * @return
       */
     def spark: SparkSession
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    def flowmanConf : FlowmanConf
 
     /**
       * Returns the Spark configuration

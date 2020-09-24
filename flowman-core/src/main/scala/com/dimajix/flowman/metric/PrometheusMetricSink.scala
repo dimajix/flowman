@@ -19,6 +19,8 @@ package com.dimajix.flowman.metric
 import java.io.IOException
 import java.net.URI
 
+import scala.util.control.NonFatal
+
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpResponseException
 import org.apache.http.client.ResponseHandler
@@ -26,6 +28,8 @@ import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.execution.Status
 
 
 class PrometheusMetricSink(
@@ -35,11 +39,12 @@ class PrometheusMetricSink(
 extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
 
-    override def commit(board:MetricBoard) : Unit = {
-        val labels = Seq(
+    override def commit(board:MetricBoard, status:Status) : Unit = {
+        val rawLabels = Seq(
             "job" -> this.labels.getOrElse("job","flowman"),
             "instance" -> this.labels.getOrElse("instance", "default")
         ) ++ (this.labels - "job" - "instance").toSeq
+        val labels = rawLabels.map(l => l._1 -> board.context.evaluate(l._2, Map("status" -> status.toString)))
         val path = labels.map(kv => kv._1 + "/" + kv._2).mkString("/")
         val url = new URI(this.url).resolve("/metrics/" + path)
         logger.info(s"Publishing all metrics to Prometheus at $url")
@@ -51,18 +56,17 @@ extends AbstractMetricSink {
           # HELP another_metric Just an example.
           another_metric 2398.283
         */
-
-        implicit val catalog = this.catalog(board)
-        val payload = board.selections.map { selection =>
-            val name = selection.name
-            val metrics = selection.metrics.map { metric =>
-                val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{",",","}")
-                metric match {
-                    case gauge:GaugeMetric => s"$name$labels ${gauge.value}"
-                    case _ => ""
-                }
+        val metrics = board.metrics(catalog(board), status).flatMap { metric =>
+            val name = metric.name
+            val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{", ",", "}")
+            metric match {
+                case gauge: GaugeMetric => Some(name -> s"$name$labels ${gauge.value}")
+                case _ => None
             }
-            s"# TYPE $name gauge" + metrics.mkString("\n","\n","\n")
+        }
+        val payload = metrics.groupBy(_._1).map { case (name,values) =>
+            s"# TYPE $name gauge" + values.map(_._2).mkString("\n","\n","\n")
+
         }.mkString("\n")
 
         logger.debug(s"Sending $payload")
@@ -82,6 +86,10 @@ extends AbstractMetricSink {
             val httpPost = new HttpPut(url)
             httpPost.setEntity(new StringEntity(payload))
             httpClient.execute(httpPost, handler)
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.warn(s"Cannot publishing metrics to Prometheus at $url", ex)
         }
         finally {
             httpClient.close()

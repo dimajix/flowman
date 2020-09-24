@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.13.1-SNAPSHOT</version>
+        <version>0.14.1-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -50,6 +50,24 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-terminal</artifactId>
+            <version>3.16.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-reader</artifactId>
+            <version>3.16.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.dirs</groupId>
+            <artifactId>directories</artifactId>
+            <version>20</version>
         </dependency>
 
         <dependency>

@@ -23,6 +23,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.DataStreamReader
 import org.apache.spark.sql.streaming.DataStreamWriter
@@ -30,6 +31,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -176,11 +178,24 @@ trait Relation extends Instance {
     def writeStream(executor:Executor, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
-      * Returns true if the relation already exists, otherwise it needs to be created prior usage
+      * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
+      * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
+     *  [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
+ *
       * @param executor
       * @return
       */
-    def exists(executor:Executor) : Boolean
+    def exists(executor:Executor) : Trilean
+
+    /**
+     * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
+     * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
+     * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
+     * @param executor
+     * @param partition
+     * @return
+     */
+    def loaded(executor:Executor, partition:Map[String,SingleValue] = Map()) : Trilean
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
@@ -277,9 +292,11 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def writer(executor: Executor, df:DataFrame) : DataFrameWriter[Row] = {
-        val outputDf = applyOutputSchema(executor, df)
-        outputDf.write.options(options)
+    protected def writer(executor: Executor, df:DataFrame, saveMode:SaveMode) : DataFrameWriter[Row] = {
+        applyOutputSchema(executor, df)
+            .write
+            .options(options)
+            .mode(saveMode)
     }
 
     /**

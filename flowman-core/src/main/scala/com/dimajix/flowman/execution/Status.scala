@@ -52,12 +52,12 @@ object Status {
       * @tparam T
       * @return
       */
-    def ofAll[T](seq: Iterable[T])(fn:T => Status) : Status = {
+    def ofAll[T](seq: Iterable[T], keepGoing:Boolean=false)(fn:T => Status) : Status = {
         val iter = seq.iterator
         var error = false
         var skipped = true
         val empty = !iter.hasNext
-        while (iter.hasNext && !error) {
+        while (iter.hasNext && (!error || keepGoing)) {
             val item = iter.next()
             val status = fn(item)
             error |= (status != Status.SUCCESS && status != Status.SKIPPED)

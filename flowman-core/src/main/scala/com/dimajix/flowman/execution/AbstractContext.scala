@@ -219,7 +219,6 @@ object AbstractContext {
 
 
 abstract class AbstractContext(
-    parent:Context,
     override val rawEnvironment:Map[String,(Any, Int)],
     override val rawConfig:Map[String,(String, Int)]
 ) extends Context {

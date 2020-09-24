@@ -99,7 +99,7 @@ object Project {
         private def loadModules(project: Project, directory: File): Project = {
             val module = project.modules
                 .map(f => Module.read.file(directory / f))
-                .reduce((l, r) => l.merge(r))
+                .foldLeft(Module())((l, r) => l.merge(r))
 
             project.copy(
                 environment = module.environment,

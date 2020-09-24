@@ -17,13 +17,13 @@
 package com.dimajix.flowman.model
 
 final case class Metadata(
-    namespace: Option[String],
-    project: Option[String],
+    namespace: Option[String] = None,
+    project: Option[String] = None,
     name: String,
-    version: Option[String],
+    version: Option[String] = None,
     category: String,
     kind: String,
-    labels: Map[String,String]
+    labels: Map[String,String] = Map()
 ) {
     def asMap : Map[String,String] = {
         Map(

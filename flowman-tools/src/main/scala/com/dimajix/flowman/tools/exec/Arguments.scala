@@ -18,21 +18,22 @@ package com.dimajix.flowman.tools.exec
 
 import java.io.PrintStream
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.kohsuke.args4j.Argument
-import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
 import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
+import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.job.JobCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
-import com.dimajix.flowman.tools.exec.target.TargetCommand
+import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.project.ProjectCommand
+import com.dimajix.flowman.tools.exec.target.TargetCommand
 
 
 class Arguments(args:Array[String]) {
@@ -48,16 +49,21 @@ class Arguments(args:Array[String]) {
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false
+    @Option(name = "--spark-master", usage = "set the master for Spark", metaVar = "<spark_master>")
+    var sparkMaster: String = ""
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark application name", metaVar = "<spark_application_name>")
     var sparkName: String = "flowman"
 
-    @Argument(required=false,index=0,metaVar="group",usage="the object to work with",handler=classOf[SubCommandHandler])
+    @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
+        new SubCommand(name="info",impl=classOf[InfoCommand]),
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),
+        new SubCommand(name="relation",impl=classOf[ModelCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
+        new SubCommand(name="namespace",impl=classOf[NamespaceCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))
@@ -86,15 +92,6 @@ class Arguments(args:Array[String]) {
 
     private def parseArgs(args: Array[String]) {
         val parser: CmdLineParser = new CmdLineParser(this)
-        try {
-            parser.parseArgument(args.toList)
-        }
-        catch {
-            case e: CmdLineException => {
-                e.getParser.printUsage(System.err)
-                System.err.println
-                throw e
-            }
-        }
+        parser.parseArgument(args.toList.asJava)
     }
 }

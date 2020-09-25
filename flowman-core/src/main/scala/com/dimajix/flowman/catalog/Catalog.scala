@@ -454,26 +454,22 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val dropPartitions = flaggedPartitions.filter(_._2).map(_._1)
         // Convert to Spark partitions
         val sparkPartitions = dropPartitions.map(_.mapValues(_.toString).toMap)
+        // Convert to external catalog partitions which can be reused in the last step
+        val catalogPartitions = sparkPartitions.map(catalog.getPartition(table, _)).filter(_ != null)
 
         logger.info(s"Dropping partitions ${dropPartitions.map(_.spec).mkString(",")} from Hive table $table")
-        sparkPartitions.foreach { partition =>
-            val p = catalog.getPartition(table, partition)
-            if (p != null) {
-                val location = new Path(p.location)
-                deleteLocation(location)
-            }
+        catalogPartitions.foreach { partition =>
+            val location = new Path(partition.location)
+            deleteLocation(location)
         }
 
         // Note that "purge" is not supported with Hive < 1.2
-        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge=false, retainData=false)
+        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge = false, retainData = false)
         cmd.run(spark)
 
         externalCatalogs.foreach { ec =>
             val catalogTable = catalog.getTableMetadata(table)
-            sparkPartitions.foreach { partition =>
-                val catalogPartition = catalog.getPartition(table, partition)
-                ec.dropPartition(catalogTable, catalogPartition)
-            }
+            catalogPartitions.foreach(ec.dropPartition(catalogTable, _))
         }
     }
 

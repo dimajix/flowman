@@ -1,6 +1,7 @@
-# Version 0.14.1
+# Version 0.14.1 - 2020-09-28
 
 * Fix dropping of partitions which could cause issues on CDH6 
+
 
 # Version 0.14.0 - 2020-09-10
 

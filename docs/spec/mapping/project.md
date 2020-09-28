@@ -1,4 +1,3 @@
-
 # Project Mapping
 The `project` mapping performs a *projection* of an input mapping onto a specific set of columns.
 This corresponds to a simple SQL `SELECT` with a series of simple column names.

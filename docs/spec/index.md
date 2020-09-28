@@ -15,7 +15,11 @@ All specification files are written as declarations in YAML syntax, which provid
 readability. These YAML files are read in by Flowman executables and data flows are 
 executed as specified on the command line (more on that in [Flowman CLI](../cli/flowexec.md))
 
-## Project Documentation
+
+# Entity Documentation
+
+Flowman has a couple of different main entities, which are documented seperately:
+
 ```eval_rst
 .. toctree::
    :maxdepth: 1
@@ -23,17 +27,6 @@ executed as specified on the command line (more on that in [Flowman CLI](../cli/
    namespace
    project
    module
-```
-
-
-## Entity Documentation
-
-Flowman has a couple of different main entities, which are documented seperately:
-
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-   :glob:
 
    mapping/index
    relation/index
@@ -47,7 +40,7 @@ Flowman has a couple of different main entities, which are documented seperately
 ```
 
 
-## Sub Pages
+## Misc Topics
 ```eval_rst
 .. toctree::
    :maxdepth: 1

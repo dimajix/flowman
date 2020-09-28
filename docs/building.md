@@ -20,9 +20,9 @@ version of Flowman for direct installation in cases where Docker is not availabl
 in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
 
 
-# Custom Builds
+## Custom Builds
 
-## Build on Windows
+### Build on Windows
 
 Although you can normally build Flowman on Windows, you will need the Hadoop WinUtils installed. You can download
 the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto your 
@@ -39,7 +39,7 @@ You might also want to skip unittests (the HBase plugin is currently failing und
     mvn clean install -DskipTests    
 
 
-## Build for Custom Spark / Hadoop Version
+### Build for Custom Spark / Hadoop Version
 
 Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and Hadoop (2.8.5). 
 But of course you can also build for a different version by either using a profile
@@ -68,7 +68,7 @@ using the correct version. The following profiles are available:
 
 With these profiles it is easy to build Flowman to match your environment. 
 
-## Building for Open Source Hadoop and Spark
+### Building for Open Source Hadoop and Spark
 
 Spark 2.3 and Hadoop 2.6:
 
@@ -110,7 +110,7 @@ Spark 3.0 and Hadoop 3.2
 
     mvn clean install -Pspark-3.0 -Phadoop-3.2
 
-## Building for Cloudera
+### Building for Cloudera
 
 The Maven project also contains preconfigured profiles for Cloudera.
 

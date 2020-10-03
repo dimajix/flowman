@@ -6,4 +6,4 @@ derby.log
 dependency-reduced-pom.xml
 metastore_db/
 /target/
-
+release/

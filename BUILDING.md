@@ -32,7 +32,10 @@ value "core.autocrlf" to "input"
     
 You might also want to skip unittests (the HBase plugin is currently failing under windows)
 
-    mvn clean install -DskipTests    
+    mvn clean install -DskipTests
+    
+It may well be the case that some unittests fail on Windows - don't panic, we focus on Linux systems and ensure that
+the `master` branch really builds clean with all unittests passing on Linux.
 
 
 ## Build for Custom Spark / Hadoop Version
@@ -40,7 +43,7 @@ You might also want to skip unittests (the HBase plugin is currently failing und
 Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and Hadoop (2.8.5). 
 But of course you can also build for a different version by either using a profile
     
-    mvn install -Pspark2.2 -Phadoop2.7 -DskipTests
+    mvn install -Pspark2.3 -Phadoop2.7 -DskipTests
     
 This will always select the latest bugfix version within the minor version. You can also specify versions explicitly 
 as follows:    

@@ -1,3 +1,9 @@
+# Version 0.14.2
+
+* Upgrade to Spark 2.4.7 and Spark 3.0.1
+* Clean up dependencies
+
+
 # Version 0.14.1 - 2020-09-28
 
 * Fix dropping of partitions which could cause issues on CDH6 

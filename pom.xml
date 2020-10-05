@@ -364,7 +364,7 @@
         <module>flowman-ui</module>
         <module>flowman-server</module>
         <module>flowman-dist</module>
-        <module>docker</module>
+        <!--<module>docker</module>-->
     </modules>
 
     <repositories>

@@ -2,6 +2,7 @@
 
 * Upgrade to Spark 2.4.7 and Spark 3.0.1
 * Clean up dependencies
+* Disable build of Docker image
 
 
 # Version 0.14.1 - 2020-09-28

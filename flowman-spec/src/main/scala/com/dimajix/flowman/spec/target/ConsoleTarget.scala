@@ -55,10 +55,10 @@ object ConsoleTarget {
             columns
         )
     }
-    def apply(context: Context, relation: RelationIdentifier, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+    def apply(context: Context, relation: RelationIdentifier, limit:Int, columns:Seq[String], partitions:Map[String,SingleValue]=Map()) : ConsoleTarget = {
         new ConsoleTarget(
             Target.Properties(context),
-            RelationDataset(context, relation, Map[String,SingleValue]()),
+            RelationDataset(context, relation, partitions),
             limit,
             true,
             columns

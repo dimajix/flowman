@@ -1,5 +1,10 @@
 jobs:
   main:
-    extends:
-      - dump-year
-      - write-all
+    parameters:
+      - name: year
+        type: Integer
+        default: 2013
+    targets:
+      - measurements
+      - stations
+      - aggregates

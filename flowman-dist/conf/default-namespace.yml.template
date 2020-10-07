@@ -25,10 +25,10 @@ config:
 plugins:
   - flowman-example
   - flowman-aws
-  - flowman-azure
-  - flowman-kafka
-  - flowman-mariadb
-  - flowman-mysql
+  #- flowman-azure
+  #- flowman-kafka
+  #- flowman-mariadb
+  #- flowman-mysql
 
 store:
   kind: file

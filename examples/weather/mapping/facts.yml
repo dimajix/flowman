@@ -1,0 +1,20 @@
+mappings:
+  measurements-joined:
+    # Join together measurements and stations
+    kind: join
+    mode: left
+    inputs:
+      - measurements
+      - stations
+    columns:
+      - usaf
+      - wban
+
+  facts:
+    # Replace invalid values with NULLs
+    kind: extend
+    input: measurements-joined
+    columns:
+      wind_direction: "CASE WHEN wind_direction_qual=1 THEN wind_direction END"
+      wind_speed: "CASE WHEN wind_speed_qual=1 THEN wind_speed END"
+      air_temperature: "CASE WHEN air_temperature_qual=1 THEN air_temperature END"

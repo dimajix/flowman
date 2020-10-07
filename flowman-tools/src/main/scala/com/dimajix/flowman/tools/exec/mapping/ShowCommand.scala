@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,22 +32,23 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.ConsoleTarget
+import com.dimajix.flowman.tools.ParserUtils
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
 class ShowCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ShowCommand])
 
-    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required = false)
-    var limit: Int = 10
     @Argument(index=0, usage="Specifies the mapping to show", metaVar="<mapping>", required=true)
     var mapping: String = _
     @Argument(index=1, usage="Specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
     var columns: String = ""
+    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required = false)
+    var limit: Int = 10
 
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
-        val columns = this.columns.split(",").filter(_.nonEmpty)
+        val columns = ParserUtils.parseDelimitedList(this.columns)
         val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns)
 
         Try {

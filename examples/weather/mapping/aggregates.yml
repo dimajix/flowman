@@ -1,0 +1,13 @@
+mappings:
+  aggregates:
+    kind: aggregate
+    input: facts
+    dimensions:
+      - country
+    aggregations:
+      min_wind_speed: "MIN(wind_speed)"
+      max_wind_speed: "MAX(wind_speed)"
+      avg_wind_speed: "AVG(wind_speed)"
+      min_temperature: "MIN(air_temperature)"
+      max_temperature: "MAX(air_temperature)"
+      avg_temperature: "AVG(air_temperature)"

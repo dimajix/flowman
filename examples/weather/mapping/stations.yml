@@ -1,4 +1,4 @@
 mappings:
   stations:
-    kind: readRelation
+    kind: read
     relation: stations-raw

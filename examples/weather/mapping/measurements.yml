@@ -1,11 +1,9 @@
 mappings:
   measurements-raw:
-    kind: readRelation
+    kind: read
     relation: measurements-raw
     partitions:
-      year:
-        start: $start_year
-        end: $end_year
+      year: $year
     columns:
       raw_data: String
 

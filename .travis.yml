@@ -53,20 +53,20 @@ jobs:
 
     - name: Hadoop 2.9 with Spark 3.0
       jdk: openjdk8
-      script: mvn clean install -Phadoop-2.9 -Pspark-3.0 -Ddockerfile.skip
+      script: mvn clean install -Phadoop-2.9 -Pspark-3.0
 
     - name: Hadoop 3.1 with Spark 3.0
       jdk: openjdk8
-      script: mvn clean install -Phadoop-3.1 -Pspark-3.0 -Ddockerfile.skip
+      script: mvn clean install -Phadoop-3.1 -Pspark-3.0
 
     - name: Hadoop 3.2 with Spark 3.0
       jdk: openjdk8
-      script: mvn clean install -Phadoop-3.2 -Pspark-3.0 -Ddockerfile.skip
+      script: mvn clean install -Phadoop-3.2 -Pspark-3.0
 
     - name: CDH 5.15
       jdk: openjdk8
-      script: mvn clean install -PCDH-5.15 -Ddockerfile.skip
+      script: mvn clean install -PCDH-5.15
 
     - name: CDH 6.3
       jdk: openjdk8
-      script: mvn clean install -PCDH-6.3 -Ddockerfile.skip
+      script: mvn clean install -PCDH-6.3

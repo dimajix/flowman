@@ -1,13 +1,8 @@
 relations:
-  stations-file:
+  stations:
     kind: file
-    format: csv
-    location: "file:///tmp/weather-file/isd-state/"
-    options:
-      sep: ","
-      encoding: "UTF-8"
-      quote: "\""
-      header: "true"
+    format: parquet
+    location: "$basedir/stations/"
     schema:
       kind: embedded
       fields:

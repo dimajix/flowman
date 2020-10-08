@@ -34,6 +34,14 @@
 #
 #SPARK_MASTER=
 
+# Resource configuration. This probably should be overridden either in the application or via the corresponding
+# Spark config variables in an "environment" section.
+#
+SPARK_EXECUTOR_CORES="4"
+SPARK_EXECUTOR_MEMORY="8G"
+SPARK_DRIVER_CORES="2"
+SPARK_DRIVER_MEMORY="3G"
+
 # Specify additional Spark options to be passed to spark-submit
 #
 #SPARK_OPTS=

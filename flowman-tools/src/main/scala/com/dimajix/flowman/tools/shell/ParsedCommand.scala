@@ -30,6 +30,7 @@ import com.dimajix.flowman.tools.exec.model.ModelCommand
 import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.sql.SqlCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
+import com.dimajix.flowman.tools.shell.history.HistoryCommand
 
 
 class ParsedCommand {
@@ -40,6 +41,7 @@ class ParsedCommand {
         new SubCommand(name="info",impl=classOf[InfoCommand]),
         new SubCommand(name="sql",impl=classOf[SqlCommand]),
         new SubCommand(name="eval",impl=classOf[EvaluateCommand]),
+        new SubCommand(name="history",impl=classOf[HistoryCommand]),
         new SubCommand(name="job",impl=classOf[JobCommand]),
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
         new SubCommand(name="model",impl=classOf[ModelCommand]),

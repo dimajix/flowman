@@ -35,13 +35,13 @@ import com.dimajix.flowman.execution.Status
   * @param partitions
   */
 case class TargetQuery(
-    namespace:Option[String],
-    project:Option[String],
-    name:Option[String],
-    status:Option[Status],
-    phase:Option[Phase],
-    jobName:Option[String],
-    jobId:Option[String],
+    namespace:Option[String] = None,
+    project:Option[String] = None,
+    name:Option[String] = None,
+    status:Option[Status] = None,
+    phase:Option[Phase] = None,
+    jobName:Option[String] = None,
+    jobId:Option[String] = None,
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     partitions:Map[String,String] = Map()

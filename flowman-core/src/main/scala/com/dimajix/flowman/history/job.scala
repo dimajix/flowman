@@ -33,11 +33,11 @@ import com.dimajix.flowman.execution.Status
   * @param args
   */
 case class JobQuery(
-    namespace:Option[String],
-    project:Option[String],
-    name:Option[String],
-    status:Option[Status],
-    phase:Option[Phase],
+    namespace:Option[String] = None,
+    project:Option[String] = None,
+    name:Option[String] = None,
+    status:Option[Status] = None,
+    phase:Option[Phase] = None,
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     args:Map[String,String] = Map()

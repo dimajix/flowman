@@ -1,2 +1,4 @@
+# The system configuration loads plugin before namespaces are instantiated. The Impala plugin may already be required
+# within a namespace to define an external catalog, therefore it needs to be loaded in advance.
 plugins:
   - flowman-impala

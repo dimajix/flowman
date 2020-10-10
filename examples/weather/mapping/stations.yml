@@ -1,4 +1,10 @@
 mappings:
-  stations:
+  # This mapping refers to the "raw" relation and reads in data from the source in S3
+  stations-raw:
     kind: read
     relation: stations-raw
+
+  # This mapping refers to the Parquet relation and reads in data from the local file system
+  stations:
+    kind: read
+    relation: stations

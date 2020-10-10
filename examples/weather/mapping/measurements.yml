@@ -1,4 +1,5 @@
 mappings:
+  # This mapping refers to the "raw" relation and reads in data from the source in S3
   measurements-raw:
     kind: read
     relation: measurements-raw
@@ -7,7 +8,7 @@ mappings:
     columns:
       raw_data: String
 
-  measurements:
+  measurements-extracted:
     kind: select
     input: measurements-raw
     columns:
@@ -23,3 +24,11 @@ mappings:
       wind_speed_qual: "SUBSTR(raw_data,70,1)"
       air_temperature: "CAST(SUBSTR(raw_data,88,5) AS FLOAT)/10"
       air_temperature_qual: "SUBSTR(raw_data,93,1)"
+
+
+  # This mapping refers to the processed data stored as Parquet on the local filesystem
+  measurements:
+    kind: read
+    relation: measurements
+    partitions:
+      year: $year

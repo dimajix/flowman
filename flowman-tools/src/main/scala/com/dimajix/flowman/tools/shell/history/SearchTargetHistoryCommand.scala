@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.tools.ConsoleUtils
 import com.dimajix.flowman.tools.exec.Command
 
 
@@ -39,6 +40,8 @@ class SearchTargetHistoryCommand extends Command {
     var status:String = ""
     @Option(name = "-p", aliases=Array("--phase"), usage = "execution phase (CREATE, BUILD, VERIFY, TRUNCATE, DESTROY)", metaVar = "<phase>")
     var phase:String = ""
+    @Option(name = "-n", aliases=Array("--limit"), usage = "maximum number of results", metaVar = "<limit>")
+    var limit:Int = 100
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val query = TargetQuery(
@@ -49,9 +52,8 @@ class SearchTargetHistoryCommand extends Command {
             status = Some(status).filter(_.nonEmpty).map(Status.ofString),
             phase = Some(phase).filter(_.nonEmpty).map(Phase.ofString)
         )
-        val targets = session.history.findTargets(query, Seq(TargetOrder.BY_DATETIME), 100, 0)
-
-        targets.foreach(println)
+        val targets = session.history.findTargets(query, Seq(TargetOrder.BY_DATETIME), limit, 0)
+        ConsoleUtils.showTable(targets, Seq("id", "jobId", "namespace", "project", "target", "partitions", "phase", "status", "start_dt", "end_dt"))
         true
     }
 }

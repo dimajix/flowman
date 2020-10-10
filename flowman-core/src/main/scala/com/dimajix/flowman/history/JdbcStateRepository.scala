@@ -126,7 +126,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def batch_id = column[Option[Long]]("batch_id")
+        def job_id = column[Option[Long]]("job_id")
         def namespace = column[String]("namespace")
         def project = column[String]("project")
         def target = column[String]("target")
@@ -137,9 +137,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def status = column[String]("status")
 
         def idx = index("TARGET_RUN_IDX", (namespace, project, target, phase, partitions_hash, status), unique = false)
-        def batch = foreignKey("TARGET_RUN_BATCH_RUN_FK", batch_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (id, batch_id, namespace, project, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
+        def * = (id, job_id, namespace, project, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
     }
 
     class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
@@ -331,5 +331,54 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(argsQuery), Duration.Inf)
 
         runResult
+    }
+
+    def findTarget(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
+        def mapOrderColumn(order:TargetOrder) : TargetRuns => Rep[_] = {
+            order match {
+                case TargetOrder.BY_DATETIME => t => t.start_ts
+                case TargetOrder.BY_ID => t => t.id
+                case TargetOrder.BY_NAME => t => t.target
+                case TargetOrder.BY_PHASE => t => t.phase
+                case TargetOrder.BY_STATUS => t => t.status
+            }
+        }
+        def mapOrderDirection(order:TargetOrder) : slick.ast.Ordering = {
+            if (order.isAscending)
+                slick.ast.Ordering(slick.ast.Ordering.Asc)
+            else
+                slick.ast.Ordering(slick.ast.Ordering.Desc)
+        }
+
+        val q = query.partitions.foldLeft(targetRuns.map(identity))((q, kv) => q
+            .join(targetPartitions).on(_.id === _.target_id)
+            .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
+            .map(xy => xy._1)
+        )
+            .optionalFilter(query.namespace)(_.namespace === _)
+            .optionalFilter(query.project)(_.project === _)
+            .optionalFilter(query.name)(_.target === _)
+            .optionalFilter(query.status)(_.status === _.toString)
+            .optionalFilter(query.phase)(_.phase === _.toString)
+            .optionalFilter2(query.jobId)((e,v) => e.job_id === v.toLong)
+            .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
+            .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
+            .drop(offset)
+            .take(limit)
+            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
+
+        Await.result(db.run(q.result), Duration.Inf)
+            .map(state => TargetState(
+                state.id.toString,
+                state.job_id.map(_.toString),
+                state.namespace,
+                state.project,
+                state.target,
+                Map(),
+                Phase.ofString(state.phase),
+                Status.ofString(state.status),
+                Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+            ))
     }
 }

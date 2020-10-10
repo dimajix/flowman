@@ -26,6 +26,7 @@ import com.dimajix.flowman.history.JobOrder
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.tools.ConsoleUtils
 import com.dimajix.flowman.tools.exec.Command
 
 
@@ -40,6 +41,8 @@ class SearchJobHistoryCommand extends Command {
     var phase:String = ""
     @Option(name = "-a", aliases=Array("--arg"), usage = "job argument (key=value)", metaVar = "<phase>")
     var args:Array[String] = Array()
+    @Option(name = "-n", aliases=Array("--limit"), usage = "maximum number of results", metaVar = "<limit>")
+    var limit:Int = 100
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val query = JobQuery(
@@ -50,9 +53,8 @@ class SearchJobHistoryCommand extends Command {
             phase = Some(phase).filter(_.nonEmpty).map(Phase.ofString),
             args = splitSettings(this.args).toMap
         )
-        val jobs = session.history.findJobs(query, Seq(JobOrder.BY_DATETIME), 100, 0)
-
-        jobs.foreach(println)
+        val jobs = session.history.findJobs(query, Seq(JobOrder.BY_DATETIME), limit, 0)
+        ConsoleUtils.showTable(jobs, Seq("id", "namespace", "project", "job", "phase", "args", "status", "start_dt", "end_dt"))
         true
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ case class JobState(
     id:String,
     namespace:String,
     project:String,
-    bundle:String,
-    phase: Phase,
+    job:String,
+    phase:Phase,
     args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,

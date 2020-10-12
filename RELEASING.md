@@ -1,5 +1,12 @@
 # Releasing
 
+## Preparation
+
+Before performing a release, please make sure
+* `CHANGELOG.md` is up to date
+* The version is correct in `docs/conf.py`
+* You have built the latest development version
+
 ## Releasing
 
 When making a release, the gitflow maven plugin should be used for managing versions

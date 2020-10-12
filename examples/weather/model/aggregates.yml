@@ -1,0 +1,27 @@
+relations:
+  aggregates:
+    kind: file
+    format: parquet
+    location: "$basedir/aggregates/"
+    pattern: "${year}"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    schema:
+      kind: embedded
+      fields:
+        - name: country
+          type: STRING
+        - name: min_wind_speed
+          type: FLOAT
+        - name: max_wind_speed
+          type: FLOAT
+        - name: avg_wind_speed
+          type: FLOAT
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT

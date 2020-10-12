@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.target.RelationTargetSpec
+import com.dimajix.flowman.tools.ParserUtils
 import com.dimajix.flowman.tools.exec.ActionCommand
 
 
@@ -39,6 +40,8 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
     var relations: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
+    var partition: String = ""
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info(s"Executing phase '$phase' for relations {}", if (relations != null) relations.mkString(",") else "all")
@@ -48,13 +51,14 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
                 relations.toSeq
             else
                 project.relations.keys.toSeq
+        val partition = ParserUtils.parseDelimitedKeyValues(this.partition)
 
         val jobContext = ScopeContext.builder(context)
-            .withTargets(toRun.map(rel => (rel,  RelationTargetSpec(rel, rel))).toMap)
+            .withTargets(toRun.map(rel => (rel,  RelationTargetSpec(rel, rel, partition))).toMap)
             .build()
         val job = Job.builder(jobContext)
-            .setName("cli-create-relations")
-            .setDescription("Create relations via CLI")
+            .setName("cli-modify-relations")
+            .setDescription("Modify relations via CLI")
             .setTargets(toRun.map(t => TargetIdentifier(t)))
             .build()
 

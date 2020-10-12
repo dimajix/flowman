@@ -60,7 +60,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @return
       */
     override def getJobState(job: JobInstance): Option[JobState] = {
-        val run =  JobRun(
+        val run = JobRun(
             0,
             Option(job.namespace).getOrElse(""),
             Option(job.project).getOrElse(""),
@@ -191,7 +191,11 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param offset
       * @return
       */
-    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
+        withSession { repository =>
+            repository.findJob(query, order, limit, offset)
+        }
+    }
 
     /**
       * Returns a list of job matching the query criteria
@@ -200,7 +204,11 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param offset
       * @return
       */
-    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
+    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
+        withSession { repository =>
+            repository.findTarget(query, order, limit, offset)
+        }
+    }
 
     private def hashArgs(job:JobInstance) : String = {
          hashMap(job.args)

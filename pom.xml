@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.14.1</version>
+    <version>0.14.2</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -55,7 +55,7 @@
         <hadoop-api.version>2.8</hadoop-api.version>
         <hive.version>2.3.3</hive.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.6</spark.version>
+        <spark.version>2.4.7</spark.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <spark-api.version>2.4</spark-api.version>
         <azure.version>2.2.0</azure.version>
@@ -78,9 +78,11 @@
         <log4j.version>1.2.17</log4j.version>
         <slf4j.version>1.7.16</slf4j.version>
         <protobuf.version>2.5.0</protobuf.version>
+        <dropwizard.version>3.1.5</dropwizard.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <commons-codec.version>1.10</commons-codec.version>
+        <commons-compress.version>1.8.1</commons-compress.version>
         <commons-digester.version>1.8.1</commons-digester.version>
         <commons-io.version>2.4</commons-io.version>
         <commons-pool.version>1.5.4</commons-pool.version>
@@ -148,9 +150,11 @@
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <httpclient.version>4.5.4</httpclient.version>
                 <httpcore.version>4.4.7</httpcore.version>
+                <dropwizard.version>3.1.5</dropwizard.version>
                 <commons-lang.version>2.6</commons-lang.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
+                <commons-compress.version>1.4.1</commons-compress.version>
                 <slf4j.version>1.7.5</slf4j.version>
                 <scala.api_version>2.11</scala.api_version>
             </properties>
@@ -192,10 +196,12 @@
                 <jackson.databind.version>2.9.10.1</jackson.databind.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
+                <dropwizard.version>3.1.5</dropwizard.version>
                 <commons-lang.version>2.6</commons-lang.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
+                <commons-compress.version>1.19</commons-compress.version>
                 <slf4j.version>1.7.25</slf4j.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
@@ -230,6 +236,8 @@
                 <slf4j.version>1.7.16</slf4j.version>
                 <httpclient.version>4.5.4</httpclient.version>
                 <httpcore.version>4.4.7</httpcore.version>
+                <dropwizard.version>3.1.5</dropwizard.version>
+                <commons-compress.version>1.4.1</commons-compress.version>
             </properties>
         </profile>
         <profile>
@@ -237,7 +245,7 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
-                <spark.version>2.4.6</spark.version>
+                <spark.version>2.4.7</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
@@ -250,8 +258,10 @@
                 <slf4j.version>1.7.16</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
+                <dropwizard.version>3.1.5</dropwizard.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
+                <commons-compress.version>1.8.1</commons-compress.version>
             </properties>
         </profile>
         <profile>
@@ -259,7 +269,7 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.0.0</spark.version>
+                <spark.version>3.0.1</spark.version>
                 <spark-api.version>3.0</spark-api.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.10.0</jackson.version>
@@ -272,8 +282,10 @@
                 <kafka.version>2.4.1</kafka.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
+                <dropwizard.version>4.1.1</dropwizard.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
+                <commons-compress.version>1.8.1</commons-compress.version>
             </properties>
         </profile>
 
@@ -352,7 +364,7 @@
         <module>flowman-ui</module>
         <module>flowman-server</module>
         <module>flowman-dist</module>
-        <module>docker</module>
+        <!--<module>docker</module>-->
     </modules>
 
     <repositories>
@@ -1096,6 +1108,7 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -1171,7 +1184,7 @@
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro</artifactId>
                 <version>${avro.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -1282,6 +1295,7 @@
                 <groupId>com.thoughtworks.paranamer</groupId>
                 <artifactId>paranamer</artifactId>
                 <version>${paranamer.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -1309,6 +1323,41 @@
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-scalap_${scala.api_version}</artifactId>
                 <version>${json4s.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${dropwizard.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-json</artifactId>
+                <version>${dropwizard.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jvm</artifactId>
+                <version>${dropwizard.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jmx</artifactId>
+                <version>${dropwizard.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-graphite</artifactId>
+                <version>${dropwizard.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1392,6 +1441,14 @@
                 <groupId>commons-digester</groupId>
                 <artifactId>commons-digester</artifactId>
                 <version>${commons-digester.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-compress</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

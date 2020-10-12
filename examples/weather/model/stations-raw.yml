@@ -2,7 +2,7 @@ relations:
   stations-raw:
     kind: file
     format: csv
-    location: "s3a://dimajix-training/data/weather/isd-state/"
+    location: "s3a://dimajix-training/data/weather/isd-history/"
     options:
       sep: ","
       encoding: "UTF-8"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ import com.dimajix.flowman.execution.Status
   * @param args
   */
 case class JobQuery(
-    namespace:Option[String],
-    project:Option[String],
-    name:Option[String],
-    status:Option[Status],
-    phase:Option[Phase],
+    namespace:Option[String] = None,
+    project:Option[String] = None,
+    name:Option[String] = None,
+    status:Option[Status] = None,
+    phase:Option[Phase] = None,
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     args:Map[String,String] = Map()
@@ -48,8 +48,8 @@ case class JobState(
     id:String,
     namespace:String,
     project:String,
-    bundle:String,
-    phase: Phase,
+    job:String,
+    phase:Phase,
     args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,

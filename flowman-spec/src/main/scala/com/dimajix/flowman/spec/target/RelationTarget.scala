@@ -255,10 +255,11 @@ case class RelationTarget(
 
 
 object RelationTargetSpec {
-    def apply(name:String, relation:String) : RelationTargetSpec = {
+    def apply(name:String, relation:String, partition:Map[String,String]=Map()) : RelationTargetSpec = {
         val spec = new RelationTargetSpec
         spec.name = name
         spec.relation = relation
+        spec.partition = partition
         spec
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
+import com.sun.xml.internal.ws.wsdl.parser.ParserUtil
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
@@ -31,23 +32,27 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spec.target.ConsoleTarget
+import com.dimajix.flowman.tools.ParserUtils
 import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.types.SingleValue
 
 
 class ShowCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[ShowCommand])
 
-    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximimum number of rows to print", metaVar="<limit>", required=false)
-    var limit: Int = 10
     @Argument(index=0, usage="specifies the relation to show", metaVar="<relation>", required=true)
     var relation: String = ""
     @Argument(index=1, usage = "specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
     var columns: String = ""
-
+    @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required=false)
+    var limit: Int = 10
+    @Option(name="-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
+    var partition: String = ""
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
-        val columns = this.columns.split(",").filter(_.nonEmpty)
-        val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns)
+        val columns = ParserUtils.parseDelimitedList(this.columns)
+        val partition = ParserUtils.parseDelimitedKeyValues(this.partition).map { case(k,v) => (k,SingleValue(v)) }
+        val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns, partition)
 
         Try {
             task.execute(session.executor, Phase.BUILD)

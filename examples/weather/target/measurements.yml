@@ -1,7 +1,7 @@
 targets:
-  measurements-dump:
-    kind: console
-    input:
-      kind: mapping
-      mapping: measurements
-    limit: 100
+  measurements:
+    kind: relation
+    mapping: measurements-extracted
+    relation: measurements
+    partition:
+      year: $year

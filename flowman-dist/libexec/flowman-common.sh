@@ -14,15 +14,11 @@ if [ -f $HADOOP_HOME/etc/hadoop/hadoop-env.sh ]; then
 fi
 
 # Set basic Spark options
-: ${SPARK_EXECUTOR_CORES:="4"}
-: ${SPARK_EXECUTOR_MEMORY:="8G"}
-: ${SPARK_DRIVER_CORES:="1"}
-: ${SPARK_DRIVER_MEMORY:="2G"}
-
 : ${SPARK_SUBMIT:=$SPARK_HOME/bin/spark-submit}
 : ${SPARK_OPTS:=""}
 : ${SPARK_DRIVER_JAVA_OPTS:="-server"}
 : ${SPARK_EXECUTOR_JAVA_OPTS:="-server"}
+
 
 # Build Spark dist classpath
 if [ "$SPARK_DIST_CLASSPATH" = "" ]; then
@@ -54,19 +50,27 @@ if [ "$SPARK_DIST_CLASSPATH" = "" ]; then
 fi
 
 
-# Add Kerberos authentication
+# Add Optional settings to SPARK_OPTS
 if [ "$KRB_PRINCIPAL" != "" ]; then
     SPARK_OPTS="--principal $KRB_PRINCIPAL --keytab $KRB_KEYTAB $SPARK_OPTS"
 fi
-
-# Add YARN queue
 if [ "$YARN_QUEUE" != "" ]; then
     SPARK_OPTS="--queue $YARN_QUEUE $SPARK_OPTS"
 fi
-
-# Set Spark master
 if [ "$SPARK_MASTER" != "" ]; then
     SPARK_OPTS="--master $SPARK_MASTER $SPARK_OPTS"
+fi
+if [ "$SPARK_EXECUTOR_CORES" != "" ]; then
+    SPARK_OPTS="--executor-cores $SPARK_EXECUTOR_CORES $SPARK_OPTS"
+fi
+if [ "$SPARK_EXECUTOR_MEMORY" != "" ]; then
+    SPARK_OPTS="--executor-memory $SPARK_EXECUTOR_MEMORY $SPARK_OPTS"
+fi
+if [ "$SPARK_DRIVER_CORES" != "" ]; then
+    SPARK_OPTS="--driver-cores $SPARK_DRIVER_CORES $SPARK_OPTS"
+fi
+if [ "$SPARK_DRIVER_MEMORY" != "" ]; then
+    SPARK_OPTS="--driver-memory $SPARK_DRIVER_MEMORY $SPARK_OPTS"
 fi
 
 
@@ -74,10 +78,6 @@ spark_submit() {
     LIB_JARS=$(ls $FLOWMAN_HOME/lib/*.jar | awk -vORS=, '{ print $1 }' | sed 's/,$/\n/')
 
     $SPARK_SUBMIT \
-      --executor-cores $SPARK_EXECUTOR_CORES \
-      --executor-memory $SPARK_EXECUTOR_MEMORY \
-      --driver-cores $SPARK_DRIVER_CORES \
-      --driver-memory $SPARK_DRIVER_MEMORY \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.executor.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
       --class $2 \

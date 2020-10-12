@@ -34,6 +34,8 @@ class SearchTargetHistoryCommand extends Command {
     var project:String = ""
     @Option(name = "-j", aliases=Array("--job"), usage = "name of job", metaVar = "<job>")
     var job:String = ""
+    @Option(name = "-J", aliases=Array("--job-id"), usage = "id of job run", metaVar = "<job_id>")
+    var jobId:String = ""
     @Option(name = "-t", aliases=Array("--target"), usage = "name of job", metaVar = "<target>")
     var target:String = ""
     @Option(name = "-s", aliases=Array("--status"), usage = "status of job (UNKNOWN, RUNNING, SUCCESS, FAILED, ABORTED, SKIPPED)", metaVar = "<status>")
@@ -48,6 +50,7 @@ class SearchTargetHistoryCommand extends Command {
             namespace = session.namespace.map(_.name),
             project = Some(this.project).filter(_.nonEmpty).orElse(Some(project.name)),
             jobName = Some(job).filter(_.nonEmpty),
+            jobId = Some(jobId).filter(_.nonEmpty),
             name = Some(target).filter(_.nonEmpty),
             status = Some(status).filter(_.nonEmpty).map(Status.ofString),
             phase = Some(phase).filter(_.nonEmpty).map(Phase.ofString)

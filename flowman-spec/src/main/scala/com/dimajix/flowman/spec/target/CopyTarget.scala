@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
@@ -49,8 +52,9 @@ case class CopyTarget(
     source:Dataset,
     target:Dataset,
     schema:Option[CopyTarget.Schema] = None,
+    mode:OutputMode = OutputMode.OVERWRITE,
     parallelism:Int = 16,
-    mode:OutputMode = OutputMode.OVERWRITE
+    rebalance: Boolean = false
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[CopyTarget])
 
@@ -112,7 +116,14 @@ case class CopyTarget(
 
         logger.info(s"Copying dataset ${source.name} to ${target.name}")
 
-        val data = source.read(executor, None).coalesce(parallelism)
+        val dfIn = source.read(executor, None)
+        val data =
+            if (parallelism <= 0)
+                dfIn
+            else if (rebalance)
+                dfIn.repartition(parallelism)
+            else
+                dfIn.coalesce(parallelism)
         val conformed = target.describe(executor).map { schema =>
             val xfs = SchemaEnforcer(schema.sparkType)
             xfs.transform(data)
@@ -203,17 +214,20 @@ class CopyTargetSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: DatasetSpec = _
     @JsonProperty(value = "target", required = true) private var target: DatasetSpec = _
     @JsonProperty(value = "schema", required = false) private var schema: Option[CopyTargetSpec.Schema] = None
-    @JsonProperty(value = "parallelism", required = false) private var parallelism: String = "16"
-    @JsonProperty(value = "mode", required = false) private var mode: String = "overwrite"
+    @JsonProperty(value = "mode", required = false) private var mode: Option[String] = None
+    @JsonProperty(value = "parallelism", required = false) private var parallelism: Option[String] = None
+    @JsonProperty(value = "rebalance", required=false) private var rebalance:Option[String] = None
 
     override def instantiate(context: Context): CopyTarget = {
+        val conf = context.flowmanConf
         CopyTarget(
             instanceProperties(context),
             source.instantiate(context),
             target.instantiate(context),
             schema.map(_.instantiate(context)),
-            context.evaluate(parallelism).toInt,
-            OutputMode.ofString(context.evaluate(mode))
+            OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
+            context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )
     }
 }

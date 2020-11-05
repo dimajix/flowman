@@ -23,9 +23,13 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.hadoop.FileUtils
@@ -38,15 +42,16 @@ import com.dimajix.flowman.model.TargetInstance
 
 object FileTarget {
     def apply(context: Context, mapping:MappingOutputIdentifier, location:Path, format:String, options:Map[String,String]) = {
+        val conf = context.flowmanConf
         new FileTarget(
             Target.Properties(context),
             mapping,
             location,
             format,
             options,
-            "overwrite",
-            16,
-            false
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
     }
 }
@@ -56,9 +61,9 @@ case class FileTarget(
     location:Path,
     format:String,
     options:Map[String,String],
-    mode: String,
+    mode:OutputMode,
     parallelism: Int,
-    rebalance: Boolean
+    rebalance: Boolean = false
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[FileTarget])
 
@@ -150,16 +155,20 @@ case class FileTarget(
 
         val mapping = context.getMapping(this.mapping.mapping)
         val dfIn = executor.instantiate(mapping, this.mapping.output)
-        val table = if (rebalance)
-            dfIn.repartition(parallelism)
-        else
-            dfIn.coalesce(parallelism)
+        val table = {
+            if (parallelism <= 0)
+                dfIn
+            else if (rebalance)
+                dfIn.repartition(parallelism)
+            else
+                dfIn.coalesce(parallelism)
+        }
 
         logger.info(s"Writing mapping '$mapping' to directory '$location'")
         table.write
             .options(options)
             .format(format)
-            .mode(mode)
+            .mode(mode.batchMode)
             .save(location.toString)
     }
 
@@ -211,21 +220,22 @@ class FileTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = _
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="format", required=false) private var format:String = "csv"
-    @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
+    @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
     @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
-    @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
-    @JsonProperty(value="rebalance", required=false) private var rebalance:String = "false"
+    @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
+    @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
     override def instantiate(context: Context): FileTarget = {
+        val conf = context.flowmanConf
         FileTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             new Path(context.evaluate(location)),
             context.evaluate(format),
             context.evaluate(options),
-            context.evaluate(mode),
-            context.evaluate(parallelism).toInt,
-            context.evaluate(rebalance).toBoolean
+            OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
+            context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )
     }
 }

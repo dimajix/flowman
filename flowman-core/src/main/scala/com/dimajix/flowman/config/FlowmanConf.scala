@@ -66,6 +66,14 @@ object FlowmanConf {
         .doc("Default output mode of targets")
         .stringConf
         .createWithDefault(OutputMode.OVERWRITE.toString)
+    val DEFAULT_TARGET_REBALANCE = buildConf("floman.default.target.rebalance")
+        .doc("Rebalances all outputs before writing")
+        .booleanConf
+        .createWithDefault(false)
+    val DEFAULT_TARGET_PARALLELISM = buildConf("floman.default.target.parallelism")
+        .doc("Uses the specified number of partitions for writing targets. -1 disables")
+        .intConf
+        .createWithDefault(16)
 }
 
 

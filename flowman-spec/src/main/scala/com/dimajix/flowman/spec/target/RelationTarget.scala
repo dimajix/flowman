@@ -23,6 +23,9 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MappingUtils
@@ -43,14 +46,15 @@ import com.dimajix.spark.sql.functions.count_records
 
 object RelationTarget {
     def apply(context: Context, relation: RelationIdentifier) : RelationTarget = {
+        val conf = context.flowmanConf
         new RelationTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
             relation,
-            OutputMode.OVERWRITE,
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
-            16,
-            false
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
     }
 }
@@ -187,10 +191,13 @@ case class RelationTarget(
             logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition with mode '$mode'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
-            val dfOut = if (rebalance)
-                dfIn.repartition(parallelism)
-            else
-                dfIn.coalesce(parallelism)
+            val dfOut =
+                if (parallelism <= 0)
+                    dfIn
+                else if (rebalance)
+                    dfIn.repartition(parallelism)
+                else
+                    dfIn.coalesce(parallelism)
 
             // Setup metric for counting number of records
             val counter = executor.metrics.findMetric(Selector(Some("target_records"), metadata.asMap))
@@ -266,20 +273,21 @@ object RelationTargetSpec {
 class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:String = _
-    @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
+    @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
-    @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
-    @JsonProperty(value="rebalance", required=false) private var rebalance:String = "false"
+    @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
+    @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
     override def instantiate(context: Context): RelationTarget = {
+        val conf = context.flowmanConf
         RelationTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             RelationIdentifier.parse(context.evaluate(relation)),
-            OutputMode.ofString(context.evaluate(mode)),
+            OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
-            context.evaluate(parallelism).toInt,
-            context.evaluate(rebalance).toBoolean
+            context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )
     }
 }

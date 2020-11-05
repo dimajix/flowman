@@ -32,8 +32,9 @@ case class CopyTarget(
     source:Template[Dataset],
     target:Template[Dataset],
     schema:Option[CopyTarget.Schema] = None,
+    mode:OutputMode = OutputMode.OVERWRITE,
     parallelism:Int = 16,
-    mode:OutputMode = OutputMode.OVERWRITE
+    rebalance:Boolean = false
 ) extends TargetGen {
     override def apply(props: Target.Properties): com.dimajix.flowman.spec.target.CopyTarget = {
         val context = props.context
@@ -42,8 +43,9 @@ case class CopyTarget(
             source.instantiate(context),
             target.instantiate(context),
             schema,
+            mode,
             parallelism,
-            mode
+            rebalance
         )
     }
 }

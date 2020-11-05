@@ -30,10 +30,20 @@ When enabled (i.e. set to `true`), then Flowman will treat all targets as being 
 the existence of targets to decide if a rebuild is required.
 
 - `flowman.default.target.outputMode` *(type: string)* *(default:OVERWRITE)*
-Possible values are 
+Sets the default target output mode. Possible values are 
   - *`OVERWRITE`*: Will overwrite existing data. Only supported in batch output.
   - *`APPEND`*: Will append new records to existing data
   - *`UPDATE`*: Will update existing data. Only supported in streaming output.
   - *`IGNORE_IF_EXISTS`*: Silently skips the output if it already exists.
   - *`ERROR_IF_EXISTS`*: Throws an error if the output already exists
+Note that you can still explicitly specify a different output mode in each target.
     
+- `floman.default.target.rebalance` *(type: boolean)* *(default:false)*
+If set to `true`, Flowman will try to write a similar records per each output file. Rebelancing might be an expensive
+operation since it will invoke a Spark network shuffle. Note that you can still explicitly use different settings per
+target. 
+
+- `floman.default.target.parallelism` *(type: int)* *(default:16)*
+Sets the default number of output files per target. If set to zero or a negative value, the number of output files is 
+implicitly determined by the number of internal Spark partitions, i.e. no explicit change will be performed. Note that 
+you can still explicitly use different settings per target. 

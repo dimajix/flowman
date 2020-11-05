@@ -1,4 +1,9 @@
-# Version 0.14.2
+# Version 0.14.3
+* New configuration variable `floman.default.target.rebalance`
+* New configuration variable `floman.default.target.parallelism`
+
+
+# Version 0.14.2 - 2020-10-12
 
 * Upgrade to Spark 2.4.7 and Spark 3.0.1
 * Clean up dependencies

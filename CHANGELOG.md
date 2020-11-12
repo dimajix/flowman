@@ -1,6 +1,8 @@
 # Version 0.14.3
 * New configuration variable `floman.default.target.rebalance`
 * New configuration variable `floman.default.target.parallelism`
+* Changed behaviour: The `mergeFile` target now does not assume any more that the `target` is local. If you already
+  use `mergeFiles` with a local file, you need to prefix the target file name with `file://`.
 
 
 # Version 0.14.2 - 2020-10-12

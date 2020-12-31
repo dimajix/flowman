@@ -21,7 +21,6 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
-import com.sun.xml.internal.ws.wsdl.parser.ParserUtil
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory

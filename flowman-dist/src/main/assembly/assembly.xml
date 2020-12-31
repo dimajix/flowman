@@ -10,49 +10,24 @@
     <baseDirectory>flowman-${project.version}</baseDirectory>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/conf/</directory>
-            <outputDirectory>conf</outputDirectory>
+            <directory>${project.basedir}/target/</directory>
+            <outputDirectory></outputDirectory>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
             <includes>
-                <include>**/*</include>
+                <include>conf/**/*</include>
+                <include>examples/**/*</include>
+                <include>plugins/**/*</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/bin/</directory>
-            <outputDirectory>bin</outputDirectory>
+            <directory>${project.basedir}/target/</directory>
+            <outputDirectory></outputDirectory>
             <fileMode>0755</fileMode>
             <directoryMode>0755</directoryMode>
             <includes>
-                <include>**/*</include>
-            </includes>
-            <filtered>true</filtered>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/libexec/</directory>
-            <outputDirectory>libexec</outputDirectory>
-            <fileMode>0755</fileMode>
-            <directoryMode>0755</directoryMode>
-            <includes>
-                <include>**/*</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/target/examples/</directory>
-            <outputDirectory>examples</outputDirectory>
-            <fileMode>0644</fileMode>
-            <directoryMode>0755</directoryMode>
-            <includes>
-                <include>**/*</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/target/plugins</directory>
-            <outputDirectory>plugins</outputDirectory>
-            <fileMode>0644</fileMode>
-            <directoryMode>0755</directoryMode>
-            <includes>
-                <include>**/*</include>
+                <include>bin/**/*</include>
+                <include>libexec/**/*</include>
             </includes>
         </fileSet>
     </fileSets>

@@ -173,7 +173,7 @@
         <dependency>
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick_${scala.api_version}</artifactId>
-            <version>3.2.3</version>
+            <version>3.3.3</version>
             <scope>compile</scope>
         </dependency>
 

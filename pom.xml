@@ -83,7 +83,7 @@
         <commons-lang.version>2.6</commons-lang.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <commons-codec.version>1.10</commons-codec.version>
-        <commons-compress.version>1.8.1</commons-compress.version>
+        <commons-compress.version>1.19</commons-compress.version>
         <commons-digester.version>1.8.1</commons-digester.version>
         <commons-io.version>2.4</commons-io.version>
         <commons-pool.version>1.5.4</commons-pool.version>

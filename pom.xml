@@ -65,7 +65,7 @@
         <ivy.version>2.4.0</ivy.version>
         <kafka.version>2.0.0</kafka.version>
         <jackson.version>2.6.7</jackson.version>
-        <jackson.databind.version>2.6.7.3</jackson.databind.version>
+        <jackson.databind.version>2.9.10.7</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <paranamer.version>2.8</paranamer.version>
         <json4s.version>3.5.3</json4s.version>

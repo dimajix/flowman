@@ -60,7 +60,6 @@
         <spark-api.version>2.4</spark-api.version>
         <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
-        <joda.version>2.9.4</joda.version>
         <avro.version>1.8.2</avro.version>
         <ivy.version>2.4.0</ivy.version>
         <kafka.version>2.0.0</kafka.version>
@@ -102,6 +101,8 @@
         <httpcore.version>4.4.10</httpcore.version>
         <netty.version>3.9.9.Final</netty.version>
         <netty-all.version>4.1.47.Final</netty-all.version>
+        <!-- Flowman version -->
+        <flowman.version>${project.version}</flowman.version>
         <!-- Language versions -->
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -352,7 +353,6 @@
         <module>flowman-core</module>
         <module>flowman-spec</module>
         <module>flowman-dsl</module>
-        <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
@@ -365,6 +365,7 @@
         <module>flowman-ui</module>
         <module>flowman-server</module>
         <module>flowman-dist</module>
+        <module>flowman-parent</module>
         <!--<module>docker</module>-->
     </modules>
 
@@ -504,7 +505,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.3.1</version>
+                    <version>4.4.0</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <args>
@@ -791,11 +792,6 @@
                 <artifactId>flowman-plugin-azure</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-plugin-example</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <!--
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
@@ -817,6 +813,13 @@
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mariadb</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-dist</artifactId>
+                <version>${project.version}</version>
+                <type>tar.gz</type>
+                <classifier>bin</classifier>
             </dependency>
 
             <dependency>
@@ -1128,13 +1131,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>joda-time</groupId>
-                <artifactId>joda-time</artifactId>
-                <version>${joda.version}</version>
                 <scope>provided</scope>
             </dependency>
 

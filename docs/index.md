@@ -29,6 +29,10 @@ and schema information) in a single place managed by a single program.
 
 ## Where to go from here
 
+## Quickstart
+A small [quickstart guide](quickstart.md) will lead you through a simple example.
+
+
 ### Installation
 * [Flowman Installation](installation.md): Installation Guide
 * [Configuration](config.md): Configuration settings

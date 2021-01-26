@@ -4,6 +4,7 @@
 * Changed behaviour: The `mergeFile` target now does not assume any more that the `target` is local. If you already
   use `mergeFiles` with a local file, you need to prefix the target file name with `file://`.
 * Remove example-plugin
+* Add quickstart guide  
 * Add new "flowman-parent" BOM for projects using Flowman
 
 

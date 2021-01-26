@@ -15,7 +15,7 @@ Note that Flowman can be built for different Hadoop and Spark versions, and the 
 needs to match the ones of your platform
 
 
-## Downloading Flowman
+# Downloading Flowman
 
 Currently since version 0.14.1, prebuilt releases are provided on [GitHub](https://github.com/dimajix/flowman/releases).
 This probably is the simplest way to grab a working Flowman package. Note that for each release, there are different
@@ -34,7 +34,6 @@ https://github.com/dimajix/flowman/releases/download/0.14.1/flowman-dist-0.14.1-
 ```
 
 
-
 ## Building Flowman
 
 As an alternative to downloading a pre-built distribution of Flowman, you might also want to 
@@ -42,7 +41,7 @@ As an alternative to downloading a pre-built distribution of Flowman, you might 
  has basic  experience with Maven.
 
 
-## Local Installation
+# Local Installation
 
 Flowman is distributed as a `tar.gz` file, which simply needs to be extracted at some location on your computer or 
 server. This can be done via
@@ -87,7 +86,7 @@ tar xvzf flowman-dist-X.Y.Z-bin.tar.gz
 * The `examples` directory contains some example projects 
 
 
-## Configuration
+# Configuration
 
 You probably need to perform some basic global configuration of Flowman. The relevant files are stored in the `conf`
 directory.

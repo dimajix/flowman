@@ -73,6 +73,7 @@ More detail on all these items is described in the following sections:
    :maxdepth: 1
    :glob:
 
+   quickstart
    building
    installation
    lifecycle

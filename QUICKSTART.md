@@ -1,3 +1,5 @@
+# Flowman Quickstart Guide
+
 # 1. Installation
 
 In order to run the example, you need to have valid access credentials to AWS, since we will be using some data

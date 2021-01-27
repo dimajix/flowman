@@ -1,9 +1,9 @@
-# 1. Installation
+# Flowman Quickstart Guide
 
 In order to run the example, you need to have valid access credentials to AWS, since we will be using some data
 stored in S3.
 
-## 1.1 Install Spark
+## 1. Install Spark
 
 Although Flowman directly builds upon the power of Apache Spark, it does not provide a working Hadoop or Spark 
 environment — and there is a good reason for that: In many environments (specifically in companies using Hadoop 
@@ -28,7 +28,7 @@ ln -snf spark-3.0.1-bin-hadoop3.2 spark
 
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
 
-## 1.2 Install Flowman
+## 2. Install Flowman
 
 You find prebuilt Flowman packages on the corresponding release page on GitHub. For this quickstart, we chose 
 `flowman-dist-0.14.2-oss-spark3.0-hadoop3.2-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
@@ -65,7 +65,7 @@ export AWS_SECRET_ACCESS_KEY=<your aws secret key>
 That’s all we need to run the Flowman example.
 
 
-# 2. Flowman Shell
+## 3. Flowman Shell
 
 The example data is stored in a S3 bucket provided by myself. In order to access the data, you need to provide valid 
 AWS credentials in your environment:
@@ -75,7 +75,7 @@ $ export AWS_ACCESS_KEY_ID=<your aws access key>
 $ export AWS_SECRET_ACCESS_KEY=<your aws secret key>
 ```
 
-## 2.1 Start interactive Flowman shell
+### Start interactive Flowman shell
 
 We start Flowman by running the interactive Flowman shell. While this is not the tool that would be used in automatic
 batch processing ( flowexec is the right tool for that scenario), it gives us a good idea how ETL projects in Flowman
@@ -86,7 +86,7 @@ cd flowman
 bin/flowshell -f examples/weather
 ```
 
-## 2.2 Inspecting Relations
+### Inspecting Relations
 
 Now we can inspect some of the relations defined in the project. First we list all relations 
 ```
@@ -100,7 +100,7 @@ flowman:weather> relation show stations-raw
 flowman:weather> relation show measurements-raw -p year=2011
 ```
 
-## 2.3 Running a Job
+### Running a Job
 
 Now we want to execute the projects main job. Again the job is parametrized by year, so we need to specify the year
 that we'd like to process.
@@ -108,7 +108,7 @@ that we'd like to process.
 flowman:weather> job build main year=2011
 ```
 
-## 2.4 Inspecting Mappings
+### Inspecting Mappings
 
 Now we'd like to inspect some of the mappings which have been used during job execution. Since some mappings depend
 on job-specific variables, we need to create a *job context*, which can be done by `job enter <job-name> <job-args>`
@@ -129,7 +129,7 @@ flowman:weather/main> job leave
 ```
 
 
-## 2.5 Inspect Results
+### Inspecting Results
 
 The job execution has written its results into some relations again. We can now inspect them again
 ```
@@ -138,7 +138,7 @@ flowman:weather> relation show measurements
 flowman:weather> relation show aggregates -p year=2011
 ```
 
-## 2.6 History
+### History
 
 Flowman also provides an execution history. In the trivial deployment, this information is stored locally in a
 Derby database, but other databases like MySQL, MariaDB etc are also supported.
@@ -147,14 +147,14 @@ flowman:weather> history job search
 flowman:weather> history target search -J 1
 ```
 
-## 2.7 Quitting
+### Quitting
 
 Finally we quit the Flowman shell via the `quit` command.
 ```
 flowman:weather> quit
 ```
 
-# 3. Flowman Execution
+## 4. Flowman Batch Execution
 
 So far we have only used the Flowman shell for interactive work with projects. Actually, the shell was developed as a
 second step to help analyzing problems and debugging data flows. The primary command for working with Flowman projects 
@@ -168,7 +168,7 @@ For example for running the “build” lifecycle of the weather project for the
 bin/flowexec -f examples/weather job build main year=2014
 ```
 
-# 4. Closing
+## 5. Congratulations!
 
 A very special *Thank You!* goes to all of you who try to follow the example hands-on on your local machine. If you have 
 problems with following the example, please leave me a note — it’s always difficult to streamline such a process, and 

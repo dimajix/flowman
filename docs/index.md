@@ -64,6 +64,7 @@ More detail on all these items is described in the following sections:
 ### Cookbooks
 
 * [Testing](cookbook/testing.md) How to implement tests in Flowman
+* [Kerberos](cookbook/kerberos.md) How to use Flowman in Kerberized environments
 
 
 ## Table of Contents

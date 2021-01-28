@@ -459,6 +459,11 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.scoverage</groupId>
+                <artifactId>scoverage-maven-plugin</artifactId>
+                <version>1.4.1</version>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -729,6 +734,18 @@
                         <jvmArg>-Xmx1024m</jvmArg>
                     </jvmArgs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.scoverage</groupId>
+                <artifactId>scoverage-maven-plugin</artifactId>
+                <version>1.4.1</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report> <!-- select only one report from: report, integration-report and report-only reporters -->
+                        </reports>
+                    </reportSet>
+                </reportSets>
             </plugin>
         </plugins>
     </reporting>

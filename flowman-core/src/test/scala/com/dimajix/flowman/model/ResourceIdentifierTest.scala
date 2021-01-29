@@ -130,10 +130,13 @@ class ResourceIdentifierTest extends FlatSpec with Matchers {
         id.category should be ("file")
         id.name should be ("/path/?/with/wildcard")
         id.partition should be (Map())
+
+        ResourceIdentifier.ofFile(new Path("file:/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
     }
 
     it should "support local files" in {
         ResourceIdentifier.ofLocal(new Path("/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+        ResourceIdentifier.ofLocal(new Path("file:/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
         ResourceIdentifier.ofLocal(new File("/path/?/with/wildcard")) should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
     }
 

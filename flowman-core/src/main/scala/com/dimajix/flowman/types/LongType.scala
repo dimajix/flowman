@@ -22,5 +22,6 @@ import org.apache.spark.sql.types.DataType
 case object LongType extends IntegralType[Long] {
     protected def parseRaw(value:String) : Long = value.toLong
 
+    override def sqlType: String = "bigint"
     override def sparkType : DataType = org.apache.spark.sql.types.LongType
 }

@@ -19,9 +19,16 @@ package com.dimajix.flowman.types
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.util.ObjectMapper
+
 
 class ShortTypeTest extends FlatSpec with Matchers {
-    "A ShortType" should "parse strings" in {
+    "A ShortType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("short") should be(ShortType)
+        ObjectMapper.parse[FieldType]("smallint") should be(ShortType)
+    }
+
+    it should "parse strings" in {
         ShortType.parse("12") should be (12)
     }
 
@@ -81,8 +88,13 @@ class ShortTypeTest extends FlatSpec with Matchers {
         result2.toSeq should be (Seq(12,14))
     }
 
+    it should "provide the correct Spark type" in {
+        ShortType.sparkType should be (org.apache.spark.sql.types.ShortType)
+    }
+
     it should "provide the correct SQL type" in {
-        val ftype = ShortType
-        ftype.sqlType should be ("short")
+        ShortType.sqlType should be ("smallint")
+        ShortType.typeName should be ("short")
+        ShortType.sparkType.sql should be ("SMALLINT")
     }
 }

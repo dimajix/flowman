@@ -16,21 +16,19 @@
 
 package com.dimajix.flowman.types
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.util.ObjectMapper
+
 
 class IntegerTypeTest extends FlatSpec with Matchers {
-    lazy val mapper = {
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
-        mapper
+    "A IntegerType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("int") should be(IntegerType)
+        ObjectMapper.parse[FieldType]("integer") should be(IntegerType)
     }
 
-    "A IntegerType" should "parse strings" in {
+    it should "parse strings" in {
         IntegerType.parse("12") should be (12)
     }
 
@@ -99,23 +97,13 @@ class IntegerTypeTest extends FlatSpec with Matchers {
         result3.toSeq should be (Seq(16,20))
     }
 
-    "A int type" should "be deserializable" in {
-        val spec = "int"
-
-        val result = mapper.readValue(spec, classOf[FieldType])
-        result should be (IntegerType)
-        result.sparkType should be (org.apache.spark.sql.types.IntegerType)
-    }
-    it should "be deserializable in long form" in {
-        val spec = "integer"
-
-        val result = mapper.readValue(spec, classOf[FieldType])
-        result should be (IntegerType)
-        result.sparkType should be (org.apache.spark.sql.types.IntegerType)
+    it should "provide the correct Spark type" in {
+        IntegerType.sparkType should be (org.apache.spark.sql.types.IntegerType)
     }
 
     it should "provide the correct SQL type" in {
-        val ftype = IntegerType
-        ftype.sqlType should be ("integer")
+        IntegerType.sqlType should be ("integer")
+        IntegerType.sparkType.sql should be ("INT")
+        IntegerType.typeName should be ("integer")
     }
 }

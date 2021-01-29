@@ -22,5 +22,6 @@ import org.apache.spark.sql.types.DataType
 case object ShortType extends IntegralType[Short] {
     protected def parseRaw(value:String) : Short = value.toShort
 
+    override def sqlType: String = "smallint"
     override def sparkType : DataType = org.apache.spark.sql.types.ShortType
 }

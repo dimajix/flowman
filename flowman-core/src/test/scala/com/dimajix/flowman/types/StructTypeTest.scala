@@ -24,6 +24,7 @@ class StructTypeTest extends FlatSpec with Matchers {
     "A StructType" should "provide the correct SQL type (1)" in {
         val ftype = StructType(Seq())
         ftype.sqlType should be ("struct<>")
+        ftype.sparkType should be (org.apache.spark.sql.types.StructType(Seq()))
     }
 
     it should "provide the correct SQL type (2)" in {

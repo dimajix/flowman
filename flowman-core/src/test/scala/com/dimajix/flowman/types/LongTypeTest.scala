@@ -19,9 +19,16 @@ package com.dimajix.flowman.types
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.util.ObjectMapper
+
 
 class LongTypeTest extends FlatSpec with Matchers {
-    "A LongType" should "parse strings" in {
+    "A LongType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("long") should be(LongType)
+        ObjectMapper.parse[FieldType]("bigint") should be(LongType)
+    }
+
+    it should "parse strings" in {
         LongType.parse("12") should be (12)
     }
 
@@ -81,8 +88,13 @@ class LongTypeTest extends FlatSpec with Matchers {
         result2.toSeq should be (Seq(12,16))
     }
 
+    it should "provide the correct Spark type" in {
+        LongType.sparkType should be (org.apache.spark.sql.types.LongType)
+    }
+
     it should "provide the correct SQL type" in {
-        val ftype = LongType
-        ftype.sqlType should be ("long")
+        LongType.sqlType should be ("bigint")
+        LongType.typeName should be ("long")
+        LongType.sparkType.sql should be ("BIGINT")
     }
 }

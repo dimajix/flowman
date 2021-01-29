@@ -70,8 +70,12 @@ class DoubleTypeTest  extends FlatSpec with Matchers {
         result2.toSeq should be (Seq(12.0,16.0))
     }
 
+    it should "provide the correct Spark type" in {
+        DoubleType.sparkType should be (org.apache.spark.sql.types.DoubleType)
+    }
+
     it should "provide the correct SQL type" in {
-        val ftype = DoubleType
-        ftype.sqlType should be ("double")
+        DoubleType.sqlType should be ("double")
+        DoubleType.sparkType.sql should be ("DOUBLE")
     }
 }

@@ -19,9 +19,15 @@ package com.dimajix.flowman.types
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
+import com.dimajix.flowman.util.ObjectMapper
+
 
 class StringTypeTest extends FlatSpec with Matchers {
-    "A StringType" should "parse strings" in {
+    "A StringType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("string") should be(StringType)
+    }
+
+    it should "parse strings" in {
         StringType.parse("lala") should be ("lala")
     }
 
@@ -35,9 +41,13 @@ class StringTypeTest extends FlatSpec with Matchers {
         result(1) should be ("27")
     }
 
+    it should "provide the correct Spark type" in {
+        StringType.sparkType should be (org.apache.spark.sql.types.StringType)
+    }
+
     it should "provide the correct SQL type" in {
-        val ftype = StringType
-        ftype.sqlType should be ("string")
+        StringType.sqlType should be ("string")
+        StringType.sparkType.sql should be ("STRING")
     }
 
 }

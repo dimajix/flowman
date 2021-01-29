@@ -24,20 +24,20 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.sql.local.implicits._
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
+class CsvRelationTest extends FlatSpec with Matchers with LocalSparkSession {
     "The csv relation" should "support writing CSV files" in {
         val df = spark.createDataFrame(Seq((1,"lala", 1.2),(2,"lolo", 2.3)))
         df.writeLocal
             .format("csv")
             .option("encoding", "UTF-8")
+            .option("header", true)
             .save(new File(tempDir, "lala.csv"), SaveMode.Overwrite)
     }
 
@@ -51,6 +51,7 @@ class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with Lo
                 Nil
             ))
             .option("encoding", "UTF-8")
+            .option("header", true)
             .load(new File(tempDir, "lala.csv"))
         val result = df
         result.count() should be (2)

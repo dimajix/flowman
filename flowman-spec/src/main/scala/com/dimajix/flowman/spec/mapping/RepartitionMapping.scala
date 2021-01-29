@@ -33,7 +33,7 @@ case class RepartitionMapping(
     input:MappingOutputIdentifier,
     columns:Seq[String],
     partitions:Int,
-    sort:Boolean
+    sort:Boolean=false
 ) extends BaseMapping {
     /**
      * Returns the dependencies of this mapping, which is exactly one input table

@@ -34,6 +34,7 @@ package com.dimajix.util
 
 import java.sql.Date
 import java.sql.Timestamp
+import java.util.TimeZone
 
 import scala.annotation.tailrec
 
@@ -64,5 +65,9 @@ object DateTimeUtils {
 
     def millisToDays(millisUtc: Long): Int = {
         org.apache.spark.sql.catalyst.util.DateTimeUtils.millisToDays(millisUtc)
+    }
+
+    def millisToDays(millisUtc: Long, timeZone: TimeZone): Int = {
+        org.apache.spark.sql.catalyst.util.DateTimeUtils.millisToDays(millisUtc, timeZone)
     }
 }

@@ -18,6 +18,9 @@ package com.dimajix.util
 
 import java.sql.{Date => SqlDate}
 import java.sql.Timestamp
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.Date
 import java.util.TimeZone
 
@@ -31,7 +34,7 @@ class DateTimeUtilsTest extends FlatSpec with Matchers {
         DateTimeUtils.stringToTime("2020-02-03") should be (SqlDate.valueOf("2020-02-03"))
         DateTimeUtils.stringToTime("2020-02-03 23:11:20") should be (Timestamp.valueOf("2020-02-03 23:11:20"))
         //DateTimeUtils.stringToTime("2000-01-01T22:33GMT+01:00")
-        DateTimeUtils.stringToTime("2020-02-03T22:33:11GMT+01:00") should be (new Date(120,1,3, 22, 33, 11))
+        DateTimeUtils.stringToTime("2020-02-03T22:33:11GMT+05:00") should be (Date.from(Instant.from(ZonedDateTime.of(2020,2,3,22,33,11,0,ZoneId.of("GMT+05:00")))))
         //DateTimeUtils.stringToTime("2000-01-01T22:33")
         DateTimeUtils.stringToTime("2020-02-03T22:33:11") should be (Timestamp.valueOf("2020-02-03 22:33:11"))
     }

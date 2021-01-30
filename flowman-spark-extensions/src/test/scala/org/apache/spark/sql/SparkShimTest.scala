@@ -16,11 +16,11 @@
 
 package org.apache.spark.sql
 
-import org.apache.spark.unsafe.types.CalendarInterval
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
+import com.dimajix.util.DateTimeUtils
 
 
 class SparkShimTest extends FlatSpec with Matchers with LocalSparkSession{
@@ -30,8 +30,8 @@ class SparkShimTest extends FlatSpec with Matchers with LocalSparkSession{
     }
 
     it should "parse CalendarIntervals" in {
-        SparkShim.parseCalendarInterval("interval 2 hours") should be (new CalendarInterval(0, 2*CalendarInterval.MICROS_PER_HOUR))
-        SparkShim.parseCalendarInterval("interval 1 day") should be (new CalendarInterval(0, CalendarInterval.MICROS_PER_DAY))
+        SparkShim.parseCalendarInterval("interval 2 hours") should be(SparkShim.calendarInterval(0, 0, 2 * DateTimeUtils.MICROS_PER_HOUR))
+        SparkShim.parseCalendarInterval("interval 1 day") should be(SparkShim.calendarInterval(0, 1))
     }
 
     it should "support static configs" in {

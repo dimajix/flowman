@@ -39,9 +39,28 @@ import java.util.TimeZone
 import scala.annotation.tailrec
 
 import javax.xml.bind.DatatypeConverter
+import org.apache.spark.sql.SparkShim
 
 
 object DateTimeUtils {
+    final val SECONDS_PER_MINUTE = 60L
+    final val SECONDS_PER_HOUR = 60 * 60L
+    final val SECONDS_PER_DAY = SECONDS_PER_HOUR * 24L
+
+    final val MILLIS_PER_SECOND = 1000L
+    final val MILLIS_PER_MINUTE = 1000L * 60L
+    final val MILLIS_PER_HOUR = SECONDS_PER_HOUR * 1000L
+    final val MILLIS_PER_DAY = SECONDS_PER_DAY * 1000L
+
+    final val MICROS_PER_MILLIS = 1000L
+    final val MICROS_PER_SECOND = MICROS_PER_MILLIS * MILLIS_PER_SECOND
+    final val MICROS_PER_MINUTE = MICROS_PER_MILLIS * MILLIS_PER_MINUTE
+    final val MICROS_PER_HOUR = MICROS_PER_MILLIS * MILLIS_PER_HOUR
+    final val MICROS_PER_DAY = MICROS_PER_SECOND * SECONDS_PER_DAY
+
+    final val NANOS_PER_SECOND = MICROS_PER_SECOND * 1000L
+    final val NANOS_PER_MICROS = 1000L
+
     @tailrec
     def stringToTime(s: String): java.util.Date = {
         val indexOfGMT = s.indexOf("GMT")
@@ -68,6 +87,6 @@ object DateTimeUtils {
     }
 
     def millisToDays(millisUtc: Long, timeZone: TimeZone): Int = {
-        org.apache.spark.sql.catalyst.util.DateTimeUtils.millisToDays(millisUtc, timeZone)
+        SparkShim.millisToDays(millisUtc, timeZone)
     }
 }

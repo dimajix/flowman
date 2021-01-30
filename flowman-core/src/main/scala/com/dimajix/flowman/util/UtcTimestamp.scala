@@ -98,7 +98,7 @@ object UtcTimestamp {
   * which uses local date time
   * @param dt
   */
-class UtcTimestamp(dt:LocalDateTime) {
+case class UtcTimestamp(dt:LocalDateTime) {
     import UtcTimestamp.formatter
 
     def this(msecs:Long) = {

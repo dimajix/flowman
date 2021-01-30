@@ -24,7 +24,6 @@ import java.time.ZonedDateTime
 import java.util.Date
 import java.util.TimeZone
 
-import org.apache.spark.unsafe.types.CalendarInterval
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -43,12 +42,12 @@ class DateTimeUtilsTest extends FlatSpec with Matchers {
         val utc = TimeZone.getTimeZone("UTC")
 
         DateTimeUtils.millisToDays(0, utc) should be (0)
-        DateTimeUtils.millisToDays(CalendarInterval.MICROS_PER_DAY/1000, utc) should be (1)
-        DateTimeUtils.millisToDays(CalendarInterval.MICROS_PER_DAY/1000 - 1, utc) should be (0)
-        DateTimeUtils.millisToDays(CalendarInterval.MICROS_PER_DAY/1000 + 1, utc) should be (1)
+        DateTimeUtils.millisToDays(DateTimeUtils.MILLIS_PER_DAY, utc) should be (1)
+        DateTimeUtils.millisToDays(DateTimeUtils.MILLIS_PER_DAY - 1, utc) should be (0)
+        DateTimeUtils.millisToDays(DateTimeUtils.MILLIS_PER_DAY + 1, utc) should be (1)
 
-        DateTimeUtils.millisToDays(-CalendarInterval.MICROS_PER_DAY/1000, utc) should be (-1)
-        DateTimeUtils.millisToDays(-CalendarInterval.MICROS_PER_DAY/1000 - 1, utc) should be (-2)
-        DateTimeUtils.millisToDays(-CalendarInterval.MICROS_PER_DAY/1000 + 1, utc) should be (-1)
+        DateTimeUtils.millisToDays(-DateTimeUtils.MILLIS_PER_DAY, utc) should be (-1)
+        DateTimeUtils.millisToDays(-DateTimeUtils.MILLIS_PER_DAY - 1, utc) should be (-2)
+        DateTimeUtils.millisToDays(-DateTimeUtils.MILLIS_PER_DAY + 1, utc) should be (-1)
     }
 }

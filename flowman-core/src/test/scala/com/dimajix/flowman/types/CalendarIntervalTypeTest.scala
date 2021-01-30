@@ -21,6 +21,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
+import com.dimajix.spark.SPARK_VERSION_MAJOR
 import com.dimajix.util.DateTimeUtils
 
 
@@ -40,6 +41,9 @@ class CalendarIntervalTypeTest extends FlatSpec with Matchers {
     it should "provide the correct SQL type" in {
         CalendarIntervalType.sqlType should be ("calendarinterval")
         CalendarIntervalType.typeName should be ("calendarinterval")
-        CalendarIntervalType.sparkType.sql should be ("CALENDARINTERVAL")
+        if (SPARK_VERSION_MAJOR <= 2)
+            CalendarIntervalType.sparkType.sql should be ("CALENDARINTERVAL")
+        else
+            CalendarIntervalType.sparkType.sql should be ("INTERVAL")
     }
 }

@@ -279,6 +279,10 @@ final case class Job(
       * @return
       */
     def instance(args:Map[String,String]) : JobInstance = {
+        val pargs = parameters.map(_.name).toSet
+        if (args.keySet != pargs)
+            throw new IllegalArgumentException(s"Argument mismatch for job '$identifier', expected: ${pargs.mkString(",")} received: ${args.keySet.mkString(",")}")
+
         JobInstance(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
@@ -317,7 +321,7 @@ final case class Job(
     def interpolate(args:Map[String,FieldValue]) : Iterable[Map[String,Any]] = {
         def interpolate(args:Iterable[Map[String,Any]], param:Parameter, values:FieldValue) : Iterable[Map[String,Any]] = {
             val vals = try {
-                param.ftype.interpolate(values, param.granularity)
+                param.interpolate(values)
             }
             catch {
                 case NonFatal(ex) => throw new IllegalArgumentException(s"Cannot interpolate parameter '${param.name}' of job '$name' with values '$values'", ex)

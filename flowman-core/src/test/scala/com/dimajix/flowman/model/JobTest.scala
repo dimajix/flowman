@@ -29,6 +29,62 @@ import com.dimajix.flowman.types.StringType
 
 
 class JobTest extends FlatSpec with Matchers with MockitoSugar {
+    "Job.Builder" should "work" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .setProperties(Job.Properties(context, "some_job"))
+            .setDescription("Some job")
+            .setParameters(Seq(Job.Parameter("p1", IntegerType)))
+            .addParameter(Job.Parameter("p2", IntegerType))
+            .addParameter("p3", StringType)
+            .setEnvironment(Map("env1" -> "eval_1"))
+            .addEnvironment("env2", "eval_2")
+            .build()
+
+        job.name should be ("some_job")
+        job.description should be (Some("Some job"))
+        job.parameters should be (Seq(
+            Job.Parameter("p1", IntegerType),
+            Job.Parameter("p2", IntegerType),
+            Job.Parameter("p3", StringType)
+        ))
+        job.environment should be (Map(
+            "env1" -> "eval_1",
+            "env2" -> "eval_2"
+        ))
+
+        val instance = job.instance(Map("p1" -> "val1", "p2" -> "val2", "p3" -> "val3"))
+        instance.job should be ("some_job")
+        instance.namespace should be ("")
+        instance.project should be ("")
+        instance.args should be(Map("p1" -> "val1", "p2" -> "val2", "p3" -> "val3"))
+        instance.asMap should be (Map(
+            "job" -> "some_job",
+            "name" -> "some_job",
+            "namespace" -> "",
+            "project" -> "",
+            "p1" -> "val1", "p2" -> "val2", "p3" -> "val3"
+        ))
+    }
+
+    "Job.arguments" should "parse arguments" in {
+        val session = Session.builder().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        job.arguments(Map(
+            "p1" -> "17",
+            "p2" -> "lala"
+        )) should be (Map(
+            "p1" -> 17,
+            "p2" -> "lala"
+        ))
+    }
+
     "Job.parseArguments" should "parse arguments" in {
         val session = Session.builder().build()
         val context = session.context
@@ -37,14 +93,14 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
             .addParameter("p2", StringType)
             .build()
 
-        val arguments = job.parseArguments(Map(
+        job.parseArguments(Map(
             "p1:start" -> "17",
             "p1:end" -> "27",
             "p2" -> "lala"
+        )) should be (Map(
+            "p1" -> RangeValue("17", "27"),
+            "p2" -> SingleValue("lala")
         ))
-
-        arguments("p1") should be (RangeValue("17", "27"))
-        arguments("p2") should be (SingleValue("lala"))
     }
 
     it should "throw an exception for unknown parameters" in {
@@ -68,12 +124,10 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
             .addParameter("p2", StringType)
             .build()
 
-        val args = job.interpolate(Map(
+        job.interpolate(Map(
             "p1"-> RangeValue("2", "8"),
             "p2" -> ArrayValue("x", "y", "z")
-        ))
-
-        args.toSet should be (Set(
+        )).toSet should be (Set(
             Map("p1" -> 2, "p2" -> "x"),
             Map("p1" -> 4, "p2" -> "x"),
             Map("p1" -> 6, "p2" -> "x"),
@@ -128,6 +182,40 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
             "p1"-> RangeValue("7", "8")
         )).toSet  should be (Set(
             Map("p1" -> 6)
+        ))
+    }
+
+    "Job.merge" should "correctly merge Jobs" in {
+        val session = Session.builder().build()
+        val context = session.context
+
+        val job = Job.builder(context)
+            .setProperties(Job.Properties(context, "some_job"))
+            .setDescription("Some job")
+            .setParameters(Seq(Job.Parameter("p1", IntegerType)))
+            .addParameter("p3", StringType)
+            .setEnvironment(Map("env1" -> "eval_1", "env2" -> "eval_2", "p2" -> "17"))
+            .build()
+        val parent = Job.builder(context)
+            .setProperties(Job.Properties(context, "parent_job"))
+            .setDescription("Some parent job")
+            .setParameters(Seq(Job.Parameter("p1", IntegerType), Job.Parameter("p2", IntegerType), Job.Parameter("p4", IntegerType)))
+            .setEnvironment(Map("env1" -> "parent_val_1", "env4" -> "parent_val_4"))
+            .build()
+
+        val result = Job.merge(job, Seq(parent))
+        result.name should be ("some_job")
+        result.description should be (Some("Some job"))
+        result.parameters should be (Seq(
+            Job.Parameter("p1", IntegerType),
+            Job.Parameter("p4", IntegerType),
+            Job.Parameter("p3", StringType)
+        ))
+        result.environment should be (Map(
+            "env1" -> "eval_1",
+            "env2" -> "eval_2",
+            "env4" -> "parent_val_4",
+            "p2" -> "17"
         ))
     }
 }

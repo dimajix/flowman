@@ -19,7 +19,6 @@ package com.dimajix
 
 package object spark {
     final val SPARK_VERSION = org.apache.spark.SPARK_VERSION
-    final val SPARK_VERSION_SHORT = org.apache.spark.SPARK_VERSION_SHORT
     final val SPARK_VERSION_MAJOR = majorMinor(SPARK_VERSION)._1
     final val SPARK_VERSION_MINOR = majorMinor(SPARK_VERSION)._2
 

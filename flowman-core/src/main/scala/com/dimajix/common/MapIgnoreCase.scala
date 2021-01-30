@@ -32,6 +32,12 @@ object MapIgnoreCase {
     def apply[T](seq:Seq[(String,T)]) : MapIgnoreCase[T] = {
         new MapIgnoreCase[T](seq.map(kv => kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))).toMap)
     }
+    def apply[T](head:(String,T)) : MapIgnoreCase[T] = {
+        apply(Seq(head))
+    }
+    def apply[T](head:(String,T), tail:(String,T)*) : MapIgnoreCase[T] = {
+        apply(head +: tail.toSeq)
+    }
 }
 
 

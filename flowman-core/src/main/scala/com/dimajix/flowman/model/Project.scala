@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spi.ProjectReader
 
 
 object Project {
@@ -144,12 +145,4 @@ final case class Project(
 )
 
 
-abstract class ProjectReader {
-    def name : String
-    def format : String
 
-    def supports(format:String) : Boolean = this.format == format
-
-    def file(file: File) : Project
-    def string(text: String): Project
-}

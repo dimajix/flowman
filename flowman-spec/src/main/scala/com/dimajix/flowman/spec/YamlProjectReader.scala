@@ -18,7 +18,7 @@ package com.dimajix.flowman.spec
 
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.ProjectReader
+import com.dimajix.flowman.spi.ProjectReader
 
 
 class YamlProjectReader extends ProjectReader {

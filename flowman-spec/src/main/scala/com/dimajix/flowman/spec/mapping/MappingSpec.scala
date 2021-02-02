@@ -23,10 +23,10 @@ import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.annotation.MappingType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

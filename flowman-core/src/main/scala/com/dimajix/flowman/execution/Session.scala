@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.execution
 
+import java.util.ServiceLoader
+
+import scala.collection.JavaConverters._
+
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -23,7 +27,6 @@ import org.apache.spark.sql.SparkShim
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
@@ -31,10 +34,10 @@ import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Hook
-import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
@@ -42,6 +45,8 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
 object Session {
+    private lazy val logFilters = ServiceLoader.load(classOf[LogFilter]).iterator().asScala.toSeq
+
     class Builder {
         private var sparkSession: SparkConf => SparkSession = (_ => null)
         private var sparkMaster:Option[String] = None
@@ -302,7 +307,10 @@ class Session private[execution](
         sparkJars.foreach(spark.sparkContext.addJar)
 
         // Log all config properties
-        spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
+        spark.conf.getAll.toSeq.sortBy(_._1).foreach { keyValue =>
+            Session.logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
+                .foreach { case (key,value) => logger.info("Config: {} = {}", key: Any, value: Any) }
+        }
 
         // Copy all Spark configs over to SparkConf inside the Context
         sparkConf.setAll(spark.conf.getAll)

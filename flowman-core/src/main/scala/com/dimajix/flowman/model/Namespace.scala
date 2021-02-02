@@ -29,6 +29,7 @@ import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.ConsoleMetricSink
 import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.spi.NamespaceReader
 import com.dimajix.flowman.storage.Store
 
 
@@ -99,13 +100,4 @@ final case class Namespace(
 }
 
 
-abstract class NamespaceReader {
-    def name : String
-    def format : String
 
-    def supports(format:String) : Boolean = this.format == format
-
-    def file(file: File) : Namespace
-    def stream(stream: InputStream) : Namespace
-    def string(text: String): Namespace
-}

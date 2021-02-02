@@ -21,10 +21,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.ConnectionType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.annotation.ConnectionType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

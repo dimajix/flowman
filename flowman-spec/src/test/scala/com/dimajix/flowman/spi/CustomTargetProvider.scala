@@ -19,8 +19,8 @@ package com.dimajix.flowman.spi
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.target.NullTargetSpec
 
 

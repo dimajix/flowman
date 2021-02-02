@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.annotation;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.dimajix.flowman.spi
 
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface MetricSinkType {
-    /**
-     * Specifies the kind of the metric sink.
-     * @return
-     */
-    String kind();
+trait ClassAnnotationHandler {
+    def annotation: Class[_]
+
+    def register(clazz: Class[_]): Unit
 }

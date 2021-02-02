@@ -1,4 +1,4 @@
-# Version 0.14.3
+# Version 0.15.0
 * New configuration variable `floman.default.target.rebalance`
 * New configuration variable `floman.default.target.parallelism`
 * Changed behaviour: The `mergeFile` target now does not assume any more that the `target` is local. If you already
@@ -6,6 +6,9 @@
 * Remove example-plugin
 * Add quickstart guide  
 * Add new "flowman-parent" BOM for projects using Flowman
+* Move `com.dimajix.flowman.annotations` package to `com.dimajix.flowman.spec.annotations`
+* Add new log redaction
+* Integrate Scala scode coverage analysis
 
 
 # Version 0.14.2 - 2020-10-12

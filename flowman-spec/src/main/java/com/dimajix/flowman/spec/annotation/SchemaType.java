@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.annotation;
+package com.dimajix.flowman.spec.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,13 +23,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a hook to be used as part of a Namespace or job.
+ * This annotation marks a specific class as a Schema to be used in a data flow spec. The specific Schema itself has
+ * to derive from the Schema class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface HookType {
+public @interface SchemaType {
     /**
-     * Specifies the kind of the hook which is used in namespace specifications.
+     * Specifies the kind of the schema which is used in data flow specifications.
      * @return
      */
     String kind();

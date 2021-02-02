@@ -19,12 +19,12 @@ package com.dimajix.flowman.spec.target
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.annotation.TargetType
 
 
 case class AnnotatedTarget(instanceProperties:Target.Properties) extends BaseTarget {

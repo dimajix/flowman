@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.annotation;
+package com.dimajix.flowman.spec.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,14 +23,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a Store to be used as part of a Namespace. The specific Store itself has
- * to derive from the Store class
+ * This annotation marks a specific class as a Relation to be used in a data flow spec. The specific Relation itself has
+ * to derive from the Relation class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface StoreType {
+public @interface RelationType {
     /**
-     * Specifies the kind of the store which is used in namespace specifications.
+     * Specifies the kind of the relation which is used in data flow specifications.
      * @return
      */
     String kind();

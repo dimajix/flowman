@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.annotation;
+package com.dimajix.flowman.spec.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,15 +22,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 
-/**
- * This annotation marks a specific class as a Schema to be used in a data flow spec. The specific Schema itself has
- * to derive from the Schema class
- */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface SchemaType {
+public @interface CatalogType {
     /**
-     * Specifies the kind of the schema which is used in data flow specifications.
+     * Specifies the kind of the catalog which is used in namespace specifications.
      * @return
      */
     String kind();

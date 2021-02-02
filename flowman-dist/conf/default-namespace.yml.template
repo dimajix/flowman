@@ -34,7 +34,6 @@ config:
 
 # This section enables plugins. You may want to remove plugins which are of no use for you.
 plugins:
-  - flowman-example
   - flowman-aws
   - flowman-azure
   - flowman-kafka

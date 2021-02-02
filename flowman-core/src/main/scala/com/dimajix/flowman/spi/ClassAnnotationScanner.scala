@@ -29,11 +29,7 @@ import com.dimajix.flowman.plugin.Plugin
 import com.dimajix.flowman.plugin.PluginListener
 
 
-trait ClassAnnotationHandler {
-    def annotation : Class[_]
 
-    def register(clazz:Class[_]) : Unit
-}
 
 
 class ClassAnnotationScanner

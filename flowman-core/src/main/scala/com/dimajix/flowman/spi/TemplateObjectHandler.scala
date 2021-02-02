@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.annotation;
+package com.dimajix.flowman.spi
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.dimajix.flowman.annotation.TemplateObject
+import com.dimajix.flowman.templating.Velocity
 
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface CatalogType {
-    /**
-     * Specifies the kind of the catalog which is used in namespace specifications.
-     * @return
-     */
-    String kind();
+class TemplateObjectHandler extends ClassAnnotationHandler {
+    override def annotation: Class[_] = classOf[TemplateObject]
+
+    override def register(clazz: Class[_]): Unit = Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz)
 }

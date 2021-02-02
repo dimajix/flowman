@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.annotation;
+package com.dimajix.flowman.spec.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,14 +23,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a Mapping to be used in a data flow spec. The specific Mapping itself has
- * to derive from the Mapping class
+ * This annotation marks a specific class as a history store to be used as part of a Namespace. The specific
+ * history store itself has to derive from the StateStoreSpec class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface MappingType {
+public @interface HistoryType {
     /**
-     * Specifies the kind of the mapping which is used in data flow specifications.
+     * Specifies the kind of the state which is used in namespace specifications.
      * @return
      */
     String kind();

@@ -20,7 +20,7 @@ import java.io.File
 import java.io.InputStream
 
 import com.dimajix.flowman.model.Namespace
-import com.dimajix.flowman.model.NamespaceReader
+import com.dimajix.flowman.spi.NamespaceReader
 
 
 class YamlNamespaceReader extends NamespaceReader {

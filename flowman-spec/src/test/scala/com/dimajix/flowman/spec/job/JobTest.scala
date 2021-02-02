@@ -22,7 +22,6 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
-import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.Phase
@@ -38,6 +37,7 @@ import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.types.StringType
 

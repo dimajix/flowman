@@ -20,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

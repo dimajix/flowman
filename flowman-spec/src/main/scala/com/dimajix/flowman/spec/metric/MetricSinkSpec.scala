@@ -20,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.MetricSinkType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.annotation.MetricSinkType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

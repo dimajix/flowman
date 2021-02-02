@@ -22,11 +22,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.TargetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.model
 
-import java.io.InputStream
 import java.net.URL
 import java.util.ServiceLoader
 
@@ -25,6 +24,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spi.ModuleReader
 
 
 object Module {
@@ -149,13 +149,4 @@ final case class Module(
 }
 
 
-abstract class ModuleReader {
-    def name : String
-    def format : String
 
-    def supports(format:String) : Boolean = this.format == format
-
-    def file(file: File) : Module
-    def stream(stream: InputStream) : Module
-    def string(text: String): Module
-}

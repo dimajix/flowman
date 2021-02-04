@@ -16,15 +16,38 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.LocalDateTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
+import spray.json.DeserializationException
+import spray.json.JsString
+import spray.json.JsValue
+import spray.json.JsonFormat
 import spray.json.RootJsonFormat
 
 
-trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport{
+trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
+    implicit object ZonedDateTimeFormat extends JsonFormat[ZonedDateTime] {
+        final val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        def write(value:ZonedDateTime) : JsString = {
+            JsString(value.format(formatter))
+        }
+        def read(value:JsValue) : ZonedDateTime = {
+            value match {
+                case JsString(dt) => ZonedDateTime.parse(dt, formatter)
+                case _ => throw DeserializationException("Not a boolean")
+            }
+        }
+    }
+
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
     implicit val projectFormat: RootJsonFormat[Project] = jsonFormat8(Project)
     implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job)
+    implicit val jobStateFormat: RootJsonFormat[JobState] = jsonFormat9(JobState)
+    implicit val targetStateFormat: RootJsonFormat[TargetState] = jsonFormat0(TargetState)
 }
 
 

@@ -10,6 +10,7 @@
         </h1>
         <p>Project Version: {{ version }}</p>
         <p>Project Description: {{ description }}</p>
+        <p>Basedir: {{ basedir }}</p>
         <p>Jobs: {{ jobs }}</p>
         <p>Targets: {{ jobs }}</p>
       </v-flex>
@@ -28,6 +29,7 @@
       name: "",
       version: "",
       description: null,
+      basedir: null,
       jobs: [],
       targets: []
     }),
@@ -39,6 +41,7 @@
             this.name = response.name
             this.version = response.version
             this.description = response.description
+            this.basedir = response.basedir
             this.jobs = response.jobs
             this.targets = response.targets
           })

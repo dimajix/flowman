@@ -39,6 +39,8 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
+import com.dimajix.flowman.server.model.Job
+import com.dimajix.flowman.server.model.Project
 import com.dimajix.flowman.storage.Store
 
 
@@ -97,7 +99,7 @@ class ProjectService(store:Store) {
     @Path("/")
     @ApiOperation(value = "Retrieve a list of all projects", nickname = "getProjects", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Project information", response = classOf[Seq[model.Project]])
+        new ApiResponse(code = 200, message = "Project information", response = classOf[Seq[String]])
     ))
     def listProjects(): server.Route = {
         val result = store.listProjects()

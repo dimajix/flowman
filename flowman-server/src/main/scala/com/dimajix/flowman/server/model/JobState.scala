@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.ZonedDateTime
 
-case class Project(
-    name:String,
-    version:Option[String],
-    description: Option[String],
-    environment: Map[String,String],
-    config: Map[String,String],
-    profiles: Seq[String],
-    connections: Seq[String],
-    basedir: Option[String]
+
+case class JobState(
+    id:String,
+    namespace:String,
+    project:String,
+    job:String,
+    phase:String,
+    args:Map[String,String],
+    status:String,
+    startDateTime:Option[ZonedDateTime] = None,
+    endDateTime:Option[ZonedDateTime] = None
 ) {
 }

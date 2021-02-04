@@ -34,7 +34,7 @@ import com.dimajix.flowman.execution.Status
   * @param to
   * @param partitions
   */
-case class TargetQuery(
+final case class TargetQuery(
     namespace:Option[String] = None,
     project:Option[String] = None,
     name:Option[String] = None,
@@ -48,7 +48,7 @@ case class TargetQuery(
 )
 
 
-case class TargetState(
+final case class TargetState(
     id:String,
     jobId:Option[String],
     namespace:String,
@@ -62,17 +62,27 @@ case class TargetState(
 )
 
 
-sealed case class TargetOrder (isAscending:Boolean=true) {
-    def asc() : TargetOrder  = copy(true)
-    def desc() : TargetOrder  = copy(false)
+sealed case class TargetOrderColumn()
+object TargetOrderColumn {
+    object BY_DATETIME extends TargetOrderColumn
+    object BY_NAME extends TargetOrderColumn
+    object BY_ID extends TargetOrderColumn
+    object BY_STATUS extends TargetOrderColumn
+    object BY_PHASE extends TargetOrderColumn
+    object BY_PARENT_NAME extends TargetOrderColumn
+    object BY_PARENT_ID extends TargetOrderColumn
 }
 
 object TargetOrder {
-    object BY_DATETIME extends TargetOrder
-    object BY_NAME extends TargetOrder
-    object BY_ID extends TargetOrder
-    object BY_STATUS extends TargetOrder
-    object BY_PHASE extends TargetOrder
-    object BY_PARENT_NAME extends TargetOrder
-    object BY_PARENT_ID extends TargetOrder
+    final val BY_DATETIME = TargetOrder(TargetOrderColumn.BY_DATETIME)
+    final val BY_NAME = TargetOrder(TargetOrderColumn.BY_NAME)
+    final val BY_ID = TargetOrder(TargetOrderColumn.BY_ID)
+    final val BY_STATUS = TargetOrder(TargetOrderColumn.BY_STATUS)
+    final val BY_PHASE = TargetOrder(TargetOrderColumn.BY_PHASE)
+    final val BY_PARENT_NAME = TargetOrder(TargetOrderColumn.BY_PARENT_NAME)
+    final val BY_PARENT_ID = TargetOrder(TargetOrderColumn.BY_PARENT_ID)
+}
+final case class TargetOrder(column:TargetOrderColumn, isAscending:Boolean=true) {
+    def asc() : TargetOrder  = copy(isAscending=true)
+    def desc() : TargetOrder  = copy(isAscending=false)
 }

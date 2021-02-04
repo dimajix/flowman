@@ -23,14 +23,14 @@ import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 
-import com.dimajix.flowman.model.Namespace
-import com.dimajix.flowman.server.model
+import com.dimajix.flowman.model
 import com.dimajix.flowman.server.model.Converter
+import com.dimajix.flowman.server.model.Namespace
 
 
 @Api(value = "/namespace", produces = "application/json", consumes = "application/json")
 @Path("/namespace")
-class NamespaceService(ns:Namespace) {
+class NamespaceService(ns:model.Namespace) {
     import akka.http.scaladsl.server.Directives._
     import com.dimajix.flowman.server.model.JsonSupport._
 
@@ -42,7 +42,7 @@ class NamespaceService(ns:Namespace) {
 
     @ApiOperation(value = "Return information on the current namespace", nickname = "getNamespace", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about namespace", response = classOf[model.Namespace])
+        new ApiResponse(code = 200, message = "Information about namespace", response = classOf[Namespace])
     ))
     def info() : server.Route = {
         get {

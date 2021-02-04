@@ -32,7 +32,7 @@ import com.dimajix.flowman.execution.Status
   * @param to
   * @param args
   */
-case class JobQuery(
+final case class JobQuery(
     namespace:Option[String] = None,
     project:Option[String] = None,
     name:Option[String] = None,
@@ -44,7 +44,7 @@ case class JobQuery(
 )
 
 
-case class JobState(
+final case class JobState(
     id:String,
     namespace:String,
     project:String,
@@ -56,16 +56,23 @@ case class JobState(
     endDateTime:Option[ZonedDateTime] = None
 )
 
-
-sealed case class JobOrder(isAscending:Boolean=true) {
-    def asc() : JobOrder = copy(true)
-    def desc() : JobOrder = copy(false)
+sealed case class JobOrderColumn()
+object JobOrderColumn {
+    object BY_DATETIME extends JobOrderColumn
+    object BY_NAME extends JobOrderColumn
+    object BY_ID extends JobOrderColumn
+    object BY_STATUS extends JobOrderColumn
+    object BY_PHASE extends JobOrderColumn
 }
 
 object JobOrder {
-    object BY_DATETIME extends JobOrder
-    object BY_NAME extends JobOrder
-    object BY_ID extends JobOrder
-    object BY_STATUS extends JobOrder
-    object BY_PHASE extends JobOrder
+    final val BY_DATETIME = JobOrder(JobOrderColumn.BY_DATETIME)
+    final val BY_NAME = JobOrder(JobOrderColumn.BY_NAME)
+    final val BY_ID = JobOrder(JobOrderColumn.BY_ID)
+    final val BY_STATUS = JobOrder(JobOrderColumn.BY_STATUS)
+    final val BY_PHASE = JobOrder(JobOrderColumn.BY_PHASE)
+}
+final case class JobOrder(column:JobOrderColumn, isAscending:Boolean=true) {
+    def asc() : JobOrder  = copy(isAscending=true)
+    def desc() : JobOrder  = copy(isAscending=false)
 }

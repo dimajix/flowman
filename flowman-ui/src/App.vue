@@ -3,9 +3,7 @@
     <main-navigation-drawer/>
 
     <v-main>
-      <v-content>
-        <router-view></router-view>
-      </v-content>
+      <router-view></router-view>
     </v-main>
 
     <template>

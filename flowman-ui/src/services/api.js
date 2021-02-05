@@ -4,6 +4,11 @@ export default {
   install(Vue) {
 
     const api = {
+      getNamespace() {
+        return axios.get('/api/namespace')
+          .then(response => response.data)
+      },
+
       listProjects() {
         return axios.get('/api/project')
           .then(response => response.data)
@@ -11,6 +16,26 @@ export default {
 
       getProject(name) {
         return axios.get('/api/project/' + name)
+          .then(response => response.data)
+      },
+
+      listJobs(project) {
+        return axios.get('/api/project/' + project + '/job')
+          .then(response => response.data)
+      },
+
+      getJob(project, job) {
+        return axios.get('/api/project/' + project + '/job/' + job)
+          .then(response => response.data)
+      },
+
+      listTargets(project) {
+        return axios.get('/api/project/' + project + '/target')
+          .then(response => response.data)
+      },
+
+      getTarget(project, target) {
+        return axios.get('/api/project/' + project + '/target/' + target)
           .then(response => response.data)
       },
 

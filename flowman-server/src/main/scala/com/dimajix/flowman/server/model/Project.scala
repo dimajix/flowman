@@ -25,6 +25,8 @@ case class Project(
     config: Map[String,String],
     profiles: Seq[String],
     connections: Seq[String],
-    basedir: Option[String]
+    basedir: Option[String],
+    jobs: Seq[String],
+    targets: Seq[String]
 ) {
 }

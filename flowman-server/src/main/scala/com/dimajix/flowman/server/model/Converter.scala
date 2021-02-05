@@ -41,7 +41,9 @@ object Converter {
             project.config,
             project.profiles.keys.toSeq,
             project.connections.keys.toSeq,
-            project.basedir.map(_.toString)
+            project.basedir.map(_.toString),
+            project.jobs.keys.toSeq,
+            project.targets.keys.toSeq
         )
     }
 

@@ -71,6 +71,17 @@ object Converter {
     }
 
     def ofSpec(state:history.TargetState) : TargetState = {
-        TargetState()
+        TargetState(
+            state.id,
+            state.jobId,
+            state.namespace,
+            state.project,
+            state.target,
+            state.partitions,
+            state.phase.toString,
+            state.status.toString,
+            state.startDateTime,
+            state.endDateTime
+        )
     }
 }

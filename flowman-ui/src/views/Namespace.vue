@@ -1,34 +1,76 @@
 <template>
   <v-container>
-    <v-card>
-      <v-card-title>Namespace {{name}}</v-card-title>
-      <p>Profiles: {{ profiles }}</p>
-      <p>Plugins: {{ plugins }}</p>
-    </v-card>
+    <v-row>
+      <v-col>
+        <v-card>
+          <v-card-title>Namespace "{{ name }}"</v-card-title>
+          <v-card-text>
+          <v-divider class="my-2"></v-divider>
+          <v-item-group>
+            <v-subheader>Profiles</v-subheader>
+            <v-chip-group
+              active-class="primary--text"
+              column
+            >
+              <v-chip
+                v-for="p in profiles "
+                :key="p"
+              >
+                {{ p }}
+              </v-chip>
+            </v-chip-group>
+          </v-item-group>
 
-    <v-card>
-      <v-card-title>Environment</v-card-title>
-      <v-data-table
-        dense
-        :headers="keyValueHeaders"
-        :items="environment"
-        :items-per-page="10"
-        item-key="name"
-        class="elevation-1"
-      ></v-data-table>
-    </v-card>
+          <v-divider class="my-2"></v-divider>
+          <v-item-group>
+            <v-subheader>Plugins</v-subheader>
+            <v-chip-group
+              active-class="primary--text"
+              column
+            >
+              <v-chip
+                v-for="p in plugins"
+                :key="p"
+              >
+                {{ p }}
+              </v-chip>
+            </v-chip-group>
+          </v-item-group>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
+        <v-card>
+          <v-card-title>Environment</v-card-title>
+          <v-data-table
+            dense
+            :headers="keyValueHeaders"
+            :items="environment"
+            :items-per-page="10"
+            item-key="name"
+            class="elevation-1"
+          ></v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
 
-    <v-card>
-      <v-card-title>Configs</v-card-title>
-      <v-data-table
-        dense
-        :headers="keyValueHeaders"
-        :items="config"
-        :items-per-page="10"
-        item-key="name"
-        class="elevation-1"
-      ></v-data-table>
-    </v-card>
+    <v-row>
+      <v-col>
+        <v-card>
+          <v-card-title>Configs</v-card-title>
+          <v-data-table
+            dense
+            :headers="keyValueHeaders"
+            :items="config"
+            :items-per-page="10"
+            item-key="name"
+            class="elevation-1"
+          ></v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 

@@ -1,12 +1,12 @@
 <template>
   <v-container>
     <v-card>
-      <v-card-title>{{title}}</v-card-title>
+      <v-card-title>Job History</v-card-title>
       <v-data-table
         dense
         :headers="headers"
         :items="jobs"
-        :items-per-page="5"
+        :items-per-page="25"
         :loading="loading"
         item-key="id"
         class="elevation-1"
@@ -24,7 +24,6 @@
 
     data: () => ({
       jobs: [],
-      title: "Job History",
       loading: false,
       headers: [
         { text: 'Run ID', value: 'id' },

@@ -16,7 +16,19 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.ZonedDateTime
 
-case class TargetState() {
 
+case class TargetState(
+    id:String,
+    jobId:Option[String],
+    namespace:String,
+    project:String,
+    target:String,
+    partitions:Map[String,String],
+    phase:String,
+    status:String,
+    startDateTime:Option[ZonedDateTime] = None,
+    endDateTime:Option[ZonedDateTime] = None
+) {
 }

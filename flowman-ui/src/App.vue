@@ -1,9 +1,18 @@
 <template>
-  <v-app dark>
+  <v-app>
+    <v-app-bar app color="primary">
+      <v-app-bar-title>Flowman</v-app-bar-title>
+    </v-app-bar>
     <main-navigation-drawer/>
 
     <v-main>
-      <router-view></router-view>
+      <v-container class="fill-height" fluid>
+        <v-row class="fill-height">
+          <v-col>
+            <router-view></router-view>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-main>
 
     <template>

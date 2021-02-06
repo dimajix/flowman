@@ -19,11 +19,8 @@ package com.dimajix.flowman.execution
 import java.nio.file.Files
 import java.nio.file.Path
 
-import scala.collection.immutable.Stream.Empty.force
 import scala.util.Random
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.isA
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
@@ -43,7 +40,6 @@ import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
@@ -148,6 +144,50 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.FAILED)
     }
 
+    it should "only execute specified targets" in {
+        def genTarget(name:String, toBeExecuted:Boolean) : Context => Target = (ctx:Context) => {
+            val instance = TargetInstance("default", "default", name)
+            val target = mock[Target]
+            (target.name _).expects().anyNumberOfTimes().returns(name)
+            (target.before _).expects().anyNumberOfTimes().returns(Seq())
+            (target.after _).expects().anyNumberOfTimes().returns(Seq())
+            (target.phases _).expects().anyNumberOfTimes().returns(Lifecycle.ALL.toSet)
+            (target.metadata _).expects().anyNumberOfTimes().returns(Metadata(name=name, kind="target", category="target"))
+            (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
+            (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
+            (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier(name))
+            (target.instance _).expects().anyNumberOfTimes().returns(instance)
+            (target.dirty _).expects(*, Phase.CREATE).anyNumberOfTimes().returns(Yes)
+            if (toBeExecuted)
+                (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+            else
+                (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+
+            target
+        }
+        def genJob(session:Session, project:Project) : Job = {
+            Job.builder(session.getContext(session.project.get))
+                .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
+                .build()
+        }
+        def genProject(targets:Map[String, Boolean]) : Project = {
+            Project(
+                name = "default",
+                targets = targets.map { case(name,toBeExecuted) => name -> Template.of(genTarget(name, toBeExecuted)) }
+            )
+        }
+
+        {
+            val project = genProject(Map("a" -> true, "ax" -> true, "b" -> false))
+            val session = Session.builder()
+                .withProject(project)
+                .build()
+            val job = genJob(session, project)
+            val runner = session.runner
+            runner.executeJob(job, Seq(Phase.CREATE), targets=Seq("a.*".r)) should be(Status.SUCCESS)
+        }
+    }
+
     "The JdbcStateStore" should "work with empty jobs" in {
         val db = tempDir.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
@@ -221,6 +261,7 @@ class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndA
         def genTarget(name:String, dirty:Trilean) : Context => Target = (ctx:Context) => {
             val instance = TargetInstance("default", "default", name)
             val target = stub[Target]
+            (target.name _).when().returns(name)
             (target.before _).when().returns(Seq())
             (target.after _).when().returns(Seq())
             (target.phases _).when().returns(Lifecycle.ALL.toSet)

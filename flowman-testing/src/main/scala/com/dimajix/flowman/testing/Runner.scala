@@ -207,7 +207,7 @@ class Runner private(
         val context = session.getContext(project)
         val job = context.getJob(JobIdentifier(jobName))
         val runner = session.runner
-        val result = runner.executeJob(job, phases, args, true)
+        val result = runner.executeJob(job, phases, args, force=true)
 
         result match {
             case Status.SUCCESS => true

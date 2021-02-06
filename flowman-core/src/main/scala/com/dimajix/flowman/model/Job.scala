@@ -17,6 +17,7 @@
 package com.dimajix.flowman.model
 
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
 
 import org.slf4j.LoggerFactory
 
@@ -386,13 +387,13 @@ final case class Job(
       * @param force
       * @return
       */
-    def execute(executor:Executor, phase:Phase, args:Map[String,String], force:Boolean=false) : Status = {
+    def execute(executor:Executor, phase:Phase, args:Map[String,String], targets:Seq[Regex]=Seq(".*".r), force:Boolean=false) : Status = {
         require(args != null)
         require(phase != null)
         require(args != null)
 
         val jobArgs = arguments(args)
         val jobRunner = new Runner(executor, new NullStateStore)
-        jobRunner.executeJob(this, Seq(phase), jobArgs, force)
+        jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force)
     }
 }

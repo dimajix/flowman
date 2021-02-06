@@ -3,6 +3,7 @@
 * New configuration variable `floman.default.target.parallelism`
 * Changed behaviour: The `mergeFile` target now does not assume any more that the `target` is local. If you already
   use `mergeFiles` with a local file, you need to prefix the target file name with `file://`.
+* Add new `-t` argument for selectively building a subset of targets
 * Remove example-plugin
 * Add quickstart guide  
 * Add new "flowman-parent" BOM for projects using Flowman

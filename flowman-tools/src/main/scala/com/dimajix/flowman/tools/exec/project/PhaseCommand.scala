@@ -44,6 +44,8 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
 
     @Argument(index=0, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
     var args: Array[String] = Array()
+    @Option(name = "-t", aliases=Array("--target"), usage = "only process specific targets, as specified by a regex", metaVar = "<target>")
+    var targets: Array[String] = Array(".*")
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
     @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
@@ -79,7 +81,7 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
 
         job.interpolate(args).forall { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, force, keepGoing)
+            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing)
             result match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true

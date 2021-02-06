@@ -156,7 +156,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val job = project.jobs("job").instantiate(context)
         job should not be (null)
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "2"), false) shouldBe (Status.SUCCESS)
+        job.execute(executor, Phase.BUILD, Map("p1" -> "2"), force=false) shouldBe (Status.SUCCESS)
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
@@ -189,7 +189,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val job = project.jobs("job").instantiate(context)
         job should not be (null)
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "2"), false) shouldBe (Status.SUCCESS)
+        job.execute(executor, Phase.BUILD, Map("p1" -> "2"), force=false) shouldBe (Status.SUCCESS)
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
@@ -307,7 +307,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val job = project.jobs("job").instantiate(context)
         job should not be (null)
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), force=false) shouldBe (Status.SUCCESS)
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
@@ -358,7 +358,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         job.parameters should be (Seq(Job.Parameter("p1", StringType)))
         job.environment should be (Map("p2" -> "$p1", "p3" -> "xx${p2}yy"))
 
-        job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), false) shouldBe (Status.SUCCESS)
+        job.execute(executor, Phase.BUILD, Map("p1" -> "v1"), force=false) shouldBe (Status.SUCCESS)
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),

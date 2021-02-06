@@ -20,6 +20,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
 
 import org.slf4j.LoggerFactory
 
@@ -64,7 +65,7 @@ final class Runner(
       * @param phases
       * @return
       */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), force:Boolean=false, keepGoing:Boolean=false) : Status = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)
@@ -74,7 +75,7 @@ final class Runner(
         withJobContext(job, args, force) { (jobContext, arguments) =>
             withExecutor(job) { executor =>
                 Status.ofAll(phases) { phase =>
-                    executeJobPhase(executor, jobContext, job, phase, arguments, force, keepGoing)
+                    executeJobPhase(executor, jobContext, job, phase, arguments, targets, force, keepGoing)
                 }
             }
         }
@@ -99,7 +100,7 @@ final class Runner(
             withJobContext(job, force) { context =>
                 withExecutor(job) { executor =>
                     Status.ofAll(phases) { phase =>
-                        executeJobPhase(executor, context, job, phase, Map(), force, keepGoing)
+                        executeJobPhase(executor, context, job, phase, Map(), Seq(".*".r), force, keepGoing)
                     }
                 }
             }
@@ -192,7 +193,7 @@ final class Runner(
         paramNames.diff(argNames).foreach(p => throw new IllegalArgumentException(s"Required parameter '$p' not specified for job '${job.identifier}'"))
     }
 
-    private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], force:Boolean, keepGoing:Boolean) : Status = {
+    private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], targets:Seq[Regex], force:Boolean, keepGoing:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
             val desc = job.description.map("(" + _ + ")").getOrElse("")
             val args = if (arguments.nonEmpty) s" with arguments ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
@@ -207,7 +208,7 @@ final class Runner(
                 recordJob(instance, phase, allHooks) { token =>
                     Try {
                         withWallTime(executor.metrics, job.metadata, phase) {
-                            executeJobTargets(executor, context, job, phase, token, force, keepGoing)
+                            executeJobTargets(executor, context, job, phase, targets, token, force, keepGoing)
                         }
                     }
                     match {
@@ -291,19 +292,23 @@ final class Runner(
      * @param token
      * @return
      */
-    private def executeJobTargets(executor:Executor, context:Context, job:Job, phase:Phase, token:RunnerJobToken, force:Boolean, keepGoing:Boolean) : Status = {
+    private def executeJobTargets(executor:Executor, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean) : Status = {
         require(phase != null)
 
         // First determine ordering before filtering active targets, since their might be some transitive dependencies
         // in place. For example accessing a VIEW which does not require a BUILD but accesses other resources
-        val targets = job.targets.map(t => context.getTarget(t))
+        val jobTargets = job.targets.map(t => context.getTarget(t))
         val orderedTargets = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => TargetOrdering.sort(targets, phase).reverse
-            case _ => TargetOrdering.sort(targets, phase)
+            case Phase.DESTROY | Phase.TRUNCATE => TargetOrdering.sort(jobTargets, phase).reverse
+            case _ => TargetOrdering.sort(jobTargets, phase)
         }
-        val activeTargets = orderedTargets.filter(_.phases.contains(phase))
 
-        logger.info(s"Executing phase '$phase' with sequence: ${activeTargets.map(_.identifier).mkString(", ")}")
+        // Filter targets by phase then by optional target name patterns
+        val activeTargets = orderedTargets
+            .filter(_.phases.contains(phase))
+            .filter(ot => targets.exists(_.unapplySeq(ot.name).nonEmpty))
+
+        logger.info(s"Executing phase '$phase' with target sequence: ${activeTargets.map(_.identifier).mkString(", ")}")
 
         Status.ofAll(activeTargets, keepGoing) { target =>
             executeTargetPhase(executor, target, phase, token, force)

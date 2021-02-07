@@ -10,6 +10,7 @@
 * Move `com.dimajix.flowman.annotations` package to `com.dimajix.flowman.spec.annotations`
 * Add new log redaction
 * Integrate Scala scode coverage analysis
+* `assemble` will fail when trying to use non-existing columns
 
 
 # Version 0.14.2 - 2020-10-12

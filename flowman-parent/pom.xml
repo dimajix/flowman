@@ -51,73 +51,73 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spec</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-dsl</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-server</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-aws</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-azure</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-kafka</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-impala</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mariadb</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-dist</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <type>tar.gz</type>
                 <classifier>bin</classifier>
                 <scope>provided</scope>
@@ -125,13 +125,13 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-testing</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-testing</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>test</scope>
             </dependency>
 

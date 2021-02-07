@@ -13,7 +13,7 @@
     },
     {
       "name": "date",
-      "type": "string"
+      "type": { "type": "int", "logicalType": "date" }
     },
     {
       "name": "time",

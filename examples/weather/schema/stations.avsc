@@ -41,11 +41,11 @@
         },
         {
             "name": "date_begin",
-            "type": [ "string", "null" ]
+            "type": [ { "type": "int", "logicalType": "date" }, "null" ]
         },
         {
             "name": "date_end",
-            "type": [ "string", "null" ]
+            "type": [ { "type": "int", "logicalType": "date" }, "null" ]
         }
     ]
 }

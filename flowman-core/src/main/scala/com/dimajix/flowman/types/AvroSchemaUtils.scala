@@ -41,9 +41,13 @@ import org.codehaus.jackson.node.IntNode
 import org.codehaus.jackson.node.LongNode
 import org.codehaus.jackson.node.NullNode
 import org.codehaus.jackson.node.TextNode
+import org.slf4j.LoggerFactory
 
 
+class AvroSchemaUtils
 object AvroSchemaUtils {
+    private val logger = LoggerFactory.getLogger(classOf[AvroSchemaUtils])
+
     /**
       * Convert a list of Flowman fields to an Avro (record) schema. Note that this logic should be compatible
       * to the Spark-Avro implementation!
@@ -92,7 +96,7 @@ object AvroSchemaUtils {
 
             //case DurationType =>
             case TimestampType => ASchema.create(LONG)
-            case DateType => ASchema.create(LONG)
+            case DateType => ASchema.create(INT)
             case DecimalType(p,s) => ASchema.create(STRING)
             case _ => throw new IllegalArgumentException(s"Type $ftype not supported in Avro schema")
         }
@@ -142,13 +146,27 @@ object AvroSchemaUtils {
     }
     private def fromAvroType(schema: ASchema, forceNullable:Boolean): (FieldType,Boolean) = {
         schema.getType match {
-            case INT => (IntegerType, forceNullable)
+            case INT =>
+                Option(schema.getLogicalType).map(_.getName) match {
+                    case Some("date") => (DateType, forceNullable)
+                    case None => (IntegerType, forceNullable)
+                    case Some(lt) =>
+                        logger.warn(s"Avro logical type '$lt' of type 'INT' not supported - simply using INT")
+                        (IntegerType, forceNullable)
+                }
             case STRING => (StringType, forceNullable)
             case BOOLEAN => (BooleanType, forceNullable)
             case BYTES => (BinaryType, forceNullable)
             case DOUBLE => (DoubleType, forceNullable)
             case FLOAT => (FloatType, forceNullable)
-            case LONG => (LongType, forceNullable)
+            case LONG =>
+                Option(schema.getLogicalType).map(_.getName) match {
+                    case Some("timestamp-millis") => (TimestampType, forceNullable)
+                    case None => (LongType, forceNullable)
+                    case Some(lt) =>
+                        logger.warn(s"Avro logical type '$lt' of type 'LONG' not supported - simply using LONG")
+                        (LongType, forceNullable)
+                }
             case FIXED => (BinaryType, forceNullable)
             case ENUM => (StringType, forceNullable)
 

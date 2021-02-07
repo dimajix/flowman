@@ -89,7 +89,9 @@ object SwaggerSchemaUtils {
       * @return
       */
     def fromSwagger(swagger:Swagger, entity:Option[String], nullable:Boolean) : Seq[Field] = {
-        val model = entity.filter(_.nonEmpty).map(e => swagger.getDefinitions().get(e)).getOrElse(swagger.getDefinitions().values().asScala.head)
+        val model = entity.filter(_.nonEmpty)
+            .map(e => swagger.getDefinitions().get(e))
+            .getOrElse(swagger.getDefinitions().values().asScala.head)
         fromSwagger(model, nullable)
     }
 

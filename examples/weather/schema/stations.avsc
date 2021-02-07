@@ -1,0 +1,51 @@
+{
+    "type": "record",
+    "namespace": "",
+    "name": "stations",
+    "fields": [
+        {
+            "type": "string",
+            "name": "usaf"
+        },
+        {
+            "type": "string",
+            "name": "wban"
+        },
+        {
+            "type": "string",
+            "name": "name"
+        },
+        {
+            "type": "string",
+            "name": "country"
+        },
+        {
+            "type": "string",
+            "name": "state"
+        },
+        {
+            "type": "string",
+            "name": "icao"
+        },
+        {
+            "type": "float",
+            "name": "latitude"
+        },
+        {
+            "type": "float",
+            "name": "longitude"
+        },
+        {
+            "type": "float",
+            "name": "elevation"
+        },
+        {
+            "type": "string",
+            "name": "date_begin"
+        },
+        {
+            "type": "string",
+            "name": "date_end"
+        }
+    ]
+}

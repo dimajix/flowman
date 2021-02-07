@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.schema
 
 import java.net.URL
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
@@ -35,7 +36,8 @@ case class AvroSchema(
     instanceProperties:Schema.Properties,
     override val file: Option[Path],
     override val url: Option[URL],
-    override val spec: Option[String]
+    override val spec: Option[String],
+    nullable: Boolean
 ) extends ExternalSchema {
     protected override val logger = LoggerFactory.getLogger(classOf[ExternalSchema])
 
@@ -47,7 +49,7 @@ case class AvroSchema(
         val spec = loadSchemaSpec
         val avroSchema = new org.apache.avro.Schema.Parser().parse(spec)
         CachedSchema(
-            AvroSchemaUtils.fromAvro(avroSchema),
+            AvroSchemaUtils.fromAvro(avroSchema, nullable),
             Option(avroSchema.getDoc)
         )
     }
@@ -56,6 +58,8 @@ case class AvroSchema(
 
 
 class AvroSchemaSpec extends ExternalSchemaSpec {
+    @JsonProperty(value="nullable", required=false) private var nullable: String = "false"
+
     /**
       * Creates the instance of the specified Schema with all variable interpolation being performed
       * @param context
@@ -66,7 +70,8 @@ class AvroSchemaSpec extends ExternalSchemaSpec {
             Schema.Properties(context),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
-            context.evaluate(spec)
+            context.evaluate(spec),
+            context.evaluate(nullable).toBoolean
         )
     }
 }

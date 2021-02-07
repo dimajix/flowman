@@ -129,60 +129,60 @@ object AvroSchemaUtils {
       * @param schema
       * @return
       */
-    def fromAvro(schema: ASchema) : Seq[Field] = {
+    def fromAvro(schema: ASchema, forceNullable:Boolean=false) : Seq[Field] = {
         if (schema.getType != RECORD)
             throw new UnsupportedOperationException("Unexpected Avro top level type")
 
-        schema.getFields.asScala.map(AvroSchemaUtils.fromAvro)
+        schema.getFields.asScala.map(f => AvroSchemaUtils.fromAvro(f, forceNullable))
     }
 
-    def fromAvro(field: AField) : Field = {
-        val (ftype,nullable) = fromAvroType(field.schema())
+    def fromAvro(field: AField, forceNullable:Boolean) : Field = {
+        val (ftype,nullable) = fromAvroType(field.schema(), forceNullable)
         Field(field.name(), ftype, nullable, Option(field.doc()))
     }
-    private def fromAvroType(schema: ASchema): (FieldType,Boolean) = {
+    private def fromAvroType(schema: ASchema, forceNullable:Boolean): (FieldType,Boolean) = {
         schema.getType match {
-            case INT => (IntegerType, false)
-            case STRING => (StringType, false)
-            case BOOLEAN => (BooleanType, false)
-            case BYTES => (BinaryType, false)
-            case DOUBLE => (DoubleType, false)
-            case FLOAT => (FloatType, false)
-            case LONG => (LongType, false)
-            case FIXED => (BinaryType, false)
-            case ENUM => (StringType, false)
+            case INT => (IntegerType, forceNullable)
+            case STRING => (StringType, forceNullable)
+            case BOOLEAN => (BooleanType, forceNullable)
+            case BYTES => (BinaryType, forceNullable)
+            case DOUBLE => (DoubleType, forceNullable)
+            case FLOAT => (FloatType, forceNullable)
+            case LONG => (LongType, forceNullable)
+            case FIXED => (BinaryType, forceNullable)
+            case ENUM => (StringType, forceNullable)
 
             case RECORD =>
                 val fields = schema.getFields.asScala.map { f =>
-                    val (schemaType,nullable) = fromAvroType(f.schema())
+                    val (schemaType,nullable) = fromAvroType(f.schema(), forceNullable)
                     Field(f.name, schemaType, nullable, Option(f.doc()))
                 }
-                (StructType(fields), false)
+                (StructType(fields), forceNullable)
 
             case ARRAY =>
-                val (schemaType, nullable) = fromAvroType(schema.getElementType)
-                (ArrayType(schemaType, nullable), false)
+                val (schemaType, nullable) = fromAvroType(schema.getElementType, forceNullable)
+                (ArrayType(schemaType, nullable), forceNullable)
 
             case MAP =>
-                val (schemaType, nullable) = fromAvroType(schema.getValueType)
-                (MapType(StringType, schemaType, nullable), false)
+                val (schemaType, nullable) = fromAvroType(schema.getValueType, forceNullable)
+                (MapType(StringType, schemaType, nullable), forceNullable)
 
             case UNION =>
                 if (schema.getTypes.asScala.exists(_.getType == NULL)) {
                     // In case of a union with null, eliminate it and make a recursive call
                     val remainingUnionTypes = schema.getTypes.asScala.filterNot(_.getType == NULL)
                     if (remainingUnionTypes.size == 1) {
-                        (fromAvroType(remainingUnionTypes.head)._1, true)
+                        (fromAvroType(remainingUnionTypes.head, forceNullable)._1, true)
                     } else {
-                        (fromAvroType(ASchema.createUnion(remainingUnionTypes.asJava))._1, true)
+                        (fromAvroType(ASchema.createUnion(remainingUnionTypes.asJava), forceNullable)._1, true)
                     }
                 } else schema.getTypes.asScala.map(_.getType) match {
                     case Seq(t1) =>
-                        fromAvroType(schema.getTypes.get(0))
+                        fromAvroType(schema.getTypes.get(0), forceNullable)
                     case Seq(t1, t2) if Set(t1, t2) == Set(INT, LONG) =>
-                        (LongType, false)
+                        (LongType, forceNullable)
                     case Seq(t1, t2) if Set(t1, t2) == Set(FLOAT, DOUBLE) =>
-                        (DoubleType, false)
+                        (DoubleType, forceNullable)
                     case other => throw new UnsupportedOperationException(
                         s"This mix of union types is not supported: $other")
                 }

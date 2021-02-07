@@ -18,6 +18,8 @@ package com.dimajix.flowman.transforms.schema
 
 import java.util.Locale
 
+import com.dimajix.flowman.transforms.NoSuchColumnException
+
 
 object Path {
     val empty = Path(Seq())
@@ -313,9 +315,18 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
       */
     override def transform(fn:Node[T] => Node[T]) : Node[T] = fn(this)
 
-    override def drop(path:Path) : LeafNode[T] = this
+    override def drop(path:Path) : LeafNode[T] = {
+        require(path.segments.nonEmpty)
+        throw new NoSuchColumnException(path.toString)
+    }
 
-    override def keep(paths:Seq[Path]) : LeafNode[T] = this
+    override def keep(paths:Seq[Path]) : LeafNode[T] = {
+        paths.foreach { path =>
+            if (path.nonEmpty)
+                throw new NoSuchColumnException(path.toString)
+        }
+        this
+    }
 }
 
 
@@ -462,7 +473,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
       * @return
       */
     override def drop(path:Path) : StructNode[T] = {
-        require(path.segments.nonEmpty)
+        require(path.nonEmpty)
         val segments = path.segments
         val head = segments.head.toLowerCase(Locale.ROOT)
         val tail = segments.tail
@@ -489,24 +500,29 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
       * @return
       */
     override def keep(paths:Seq[Path]) : StructNode[T] = {
-        if (paths.exists(p => p.segments.isEmpty || p.segments.head == "*")) {
-            // Special case: One path was empty, which implies we keep everything
+        require(paths.forall(_.nonEmpty))
+        if (paths.exists(_.segments.head == "*")) {
+            // Special case: One path includes everything, which implies we keep everything
             this
         }
         else {
             val ht = paths.foldLeft(Map[String,Seq[Path]]()) { (map, path) =>
                 val head = path.segments.head
                 if (contains(head)) {
-                    val tail = Path(path.segments.tail)
+                    val tail = path.tail
                     val paths = map.get(head).map(_ :+ tail).getOrElse(Seq(tail))
                     map.updated(head, paths)
                 }
                 else {
-                    map
+                    throw new NoSuchColumnException(head)
                 }
             }
             val newChildren = ht.map { case (head, tails) =>
-                get(head).get.keep(tails)
+                val child = get(head).get
+                if (tails.exists(p => p.isEmpty || p.segments.head == "*"))
+                    child
+                else
+                    child.keep(tails)
             }
             replaceChildren(newChildren.filter(_.nonEmpty).toSeq)
         }

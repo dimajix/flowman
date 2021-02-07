@@ -4,48 +4,48 @@
     "name": "stations",
     "fields": [
         {
-            "type": "string",
-            "name": "usaf"
+            "name": "usaf",
+            "type": "string"
         },
         {
-            "type": "string",
-            "name": "wban"
+            "name": "wban",
+            "type": "string"
         },
         {
-            "type": "string",
-            "name": "name"
+            "name": "name",
+            "type": [ "string", "null" ]
         },
         {
-            "type": "string",
-            "name": "country"
+            "name": "country",
+            "type": [ "string", "null" ]
         },
         {
-            "type": "string",
-            "name": "state"
+            "name": "state",
+            "type": [ "string", "null" ]
         },
         {
-            "type": "string",
-            "name": "icao"
+            "name": "icao",
+            "type": [ "string", "null" ]
         },
         {
-            "type": "float",
-            "name": "latitude"
+            "name": "latitude",
+            "type": [ "float", "null" ]
         },
         {
-            "type": "float",
-            "name": "longitude"
+            "name": "longitude",
+            "type": [ "float", "null" ]
         },
         {
-            "type": "float",
-            "name": "elevation"
+            "name": "elevation",
+            "type": [ "float", "null" ]
         },
         {
-            "type": "string",
-            "name": "date_begin"
+            "name": "date_begin",
+            "type": [ "string", "null" ]
         },
         {
-            "type": "string",
-            "name": "date_end"
+            "name": "date_end",
+            "type": [ "string", "null" ]
         }
     ]
 }

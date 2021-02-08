@@ -147,7 +147,7 @@ object AvroSchemaUtils {
     private def fromAvroType(schema: ASchema, forceNullable:Boolean): (FieldType,Boolean) = {
         schema.getType match {
             case INT =>
-                Option(schema.getLogicalType).map(_.getName) match {
+                Option(schema.getProp("logicalType")) match {
                     case Some("date") => (DateType, forceNullable)
                     case None => (IntegerType, forceNullable)
                     case Some(lt) =>
@@ -160,7 +160,7 @@ object AvroSchemaUtils {
             case DOUBLE => (DoubleType, forceNullable)
             case FLOAT => (FloatType, forceNullable)
             case LONG =>
-                Option(schema.getLogicalType).map(_.getName) match {
+                Option(schema.getProp("logicalType")) match {
                     case Some("timestamp-millis") => (TimestampType, forceNullable)
                     case None => (LongType, forceNullable)
                     case Some(lt) =>

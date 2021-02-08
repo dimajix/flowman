@@ -24,17 +24,17 @@ cache:
 build-default:
   stage: build
   script: 'mvn ${MAVEN_CLI_OPTS} clean package'
+  except:
+    - pushes
   artifacts:
     name: "flowman-dist-default"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-# List additional build variants - those will not be executed on pushes
+# List additional build variants (some of them will be built on pushes)
 build-hadoop2.6-spark2.3:
   stage: build
-  except:
-    - pushes
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.3'
   artifacts:
     name: "flowman-dist-hadoop2.6-spark2.3"
@@ -55,8 +55,6 @@ build-hadoop2.6-spark2.4:
 
 build-hadoop2.9-spark2.4:
   stage: build
-  except:
-    - pushes
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.9 -Pspark-2.4'
   artifacts:
     name: "flowman-dist-hadoop2.9-spark2.4"
@@ -99,8 +97,6 @@ build-hadoop3.1-spark3.0:
 
 build-hadoop3.2-spark3.0:
   stage: build
-  except:
-    - pushes
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.2 -Pspark-3.0'
   artifacts:
     name: "flowman-dist-hadoop3.2-spark3.0"

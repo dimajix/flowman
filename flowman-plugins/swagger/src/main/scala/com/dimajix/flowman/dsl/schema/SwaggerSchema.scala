@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ case class SwaggerSchema(
     entity: Option[String] = None,
     nullable: Boolean = false
 )
-extends SchemaGen {
-    override def instantiate(context:Context) : schema.SwaggerSchema = {
+    extends SchemaGen {
+    override def instantiate(context: Context): schema.SwaggerSchema = {
         schema.SwaggerSchema(
             Schema.Properties(context),
             file,

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 
 
@@ -57,7 +58,7 @@ case class SwaggerSchema(
 }
 
 
-
+@SchemaType(kind="swagger")
 class SwaggerSchemaSpec extends ExternalSchemaSpec {
     @JsonProperty(value="entity", required=false) private var entity: Option[String] = None
     @JsonProperty(value="nullable", required=false) private var nullable: String = "false"

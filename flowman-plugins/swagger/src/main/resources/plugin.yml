@@ -1,0 +1,7 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ -swagger-parser-1.0.49.jar

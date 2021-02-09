@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BooleanType
@@ -137,7 +138,7 @@ case class JsonSchema(
 }
 
 
-
+@SchemaType(kind="json")
 class JsonSchemaSpec extends ExternalSchemaSpec {
     /**
       * Creates the instance of the specified Schema with all variable interpolation being performed

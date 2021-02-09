@@ -41,8 +41,6 @@
             </includes>
             <excludes>
                 <!-- Manually exclude shaded artifacts -->
-                <exclude>org.json:json</exclude>
-                <exclude>com.github.everit-org.json-schema:org.everit.json.schema</exclude>
                 <exclude>org.apache.velocity:velocity-engine-core</exclude>
             </excludes>
             <outputDirectory>lib</outputDirectory>

@@ -116,6 +116,18 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-swagger</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-json</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-dist</artifactId>
                 <version>${flowman.version}</version>
                 <type>tar.gz</type>

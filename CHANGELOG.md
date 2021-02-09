@@ -11,6 +11,7 @@
 * Add new log redaction
 * Integrate Scala scode coverage analysis
 * `assemble` will fail when trying to use non-existing columns
+* Move `swagger` and `json` schema support into separate plugins
 
 
 # Version 0.14.2 - 2020-10-12

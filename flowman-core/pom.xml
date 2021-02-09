@@ -14,6 +14,22 @@
     </parent>
 
     <profiles>
+        <!-- Default profile if nothing else is specified -->
+        <profile>
+            <id>default</id>
+            <activation>
+                <!-- This setting ensures that we have at least one Avro library enabled per default -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-avro_${scala.api_version}</artifactId>
+                    <version>${spark.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <!-- First come the Hadoop distributon profiles -->
         <profile>
             <id>CDH-5.15</id>
@@ -39,10 +55,6 @@
         </profile>
         <profile>
             <id>spark-2.4</id>
-            <activation>
-                <!-- This setting ensures that we have at least one Avro library enabled per default -->
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.spark</groupId>

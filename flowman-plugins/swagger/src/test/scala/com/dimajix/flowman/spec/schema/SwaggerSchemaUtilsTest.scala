@@ -232,6 +232,7 @@ class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
               |    allOf:
               |      -
               |        type: object
+              |        description: Some Pet object primary properties
               |        required:
               |          - name
               |        properties:

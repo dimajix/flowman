@@ -162,7 +162,8 @@ object SwaggerSchemaUtils {
                 obj.set("type", TextNode.valueOf("object"))
                 obj.withArray("required").addAll(required.asJava)
                 properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue): AnyRef)
-                desc.foreach(d => obj.set("description", d))
+                // Use ObjectNode.replace instead of ObjectNode.set since set has changed its signature in newer Jackson versions
+                desc.foreach(d => obj.replace("description", d))
 
             case obj: ObjectNode if obj.get("items") != null =>
                 replaceAllOf(obj.get("items"))

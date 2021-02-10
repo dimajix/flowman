@@ -23,7 +23,7 @@ cache:
 # Build site and reports
 build-site:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -DskipTests && mvn ${MAVEN_CLI_OPTS} site'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests && mvn ${MAVEN_CLI_OPTS} site'
   artifacts:
     name: "flowman-site"
     paths:

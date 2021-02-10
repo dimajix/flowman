@@ -1,5 +1,6 @@
 stages:
   - build
+  - site
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -18,6 +19,34 @@ cache:
   paths:
     - .m2/repository
     - .npm
+
+
+# Build site
+  stage: site
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -DskipTests && mvn ${MAVEN_CLI_OPTS} site'
+  artifacts:
+    name: "flowman-site"
+    paths:
+      - flowman-core/target/site
+      - flowman-dist/target/site
+      - flowman-dsl/target/site
+      - flowman-parent/target/site
+      - flowman-plugins/aws/target/site
+      - flowman-plugins/azure/target/site
+      - flowman-plugins/impala/target/site
+      - flowman-plugins/json/target/site
+      - flowman-plugins/kafka/target/site
+      - flowman-plugins/mariadb/target/site
+      - flowman-plugins/mysql/target/site
+      - flowman-plugins/swagger/target/site
+      - flowman-server/target/site
+      - flowman-spark-extensions/target/site
+      - flowman-spark-testing/target/site
+      - flowman-spark-spec/target/site
+      - flowman-spark-testing/target/site
+      - flowman-spark-tools/target/site
+      - flowman-spark-ui/target/site
+    expire_in: 5 days
 
 
 # Default build variant

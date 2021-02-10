@@ -40,10 +40,24 @@
                             </sources>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>add-site-source</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
+
 
     <dependencies>
         <dependency>

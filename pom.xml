@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
-    <url>http://flowman.io</url>
+    <url>https://flowman.io</url>
     <inceptionYear>2018</inceptionYear>
 
     <licenses>
@@ -474,9 +474,14 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.scoverage</groupId>
-                <artifactId>scoverage-maven-plugin</artifactId>
-                <version>1.4.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.9.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.1.1</version>
             </plugin>
         </plugins>
 
@@ -591,11 +596,6 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.9.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -754,6 +754,9 @@
                 <groupId>org.scoverage</groupId>
                 <artifactId>scoverage-maven-plugin</artifactId>
                 <version>1.4.1</version>
+                <configuration>
+                    <aggregate>false</aggregate>
+                </configuration>
                 <reportSets>
                     <reportSet>
                         <reports>

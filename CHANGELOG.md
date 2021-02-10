@@ -12,6 +12,7 @@
 * Integrate Scala scode coverage analysis
 * `assemble` will fail when trying to use non-existing columns
 * Move `swagger` and `json` schema support into separate plugins
+* Change default build to Spark 3.0 and Hadoop 3.2
 
 
 # Version 0.14.2 - 2020-10-12

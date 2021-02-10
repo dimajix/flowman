@@ -17,6 +17,9 @@
         <plugin.name>flowman-azure</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
+
+        <!-- Dependency versions -->
+        <azure.version>2.2.0</azure.version>
     </properties>
 
     <profiles>

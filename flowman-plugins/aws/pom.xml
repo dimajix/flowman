@@ -17,7 +17,9 @@
         <plugin.name>flowman-aws</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <aws.version>1.10.6</aws.version>
+
+        <!-- Dependency versions -->
+        <aws.version>1.11.375</aws.version>
     </properties>
 
     <profiles>
@@ -28,22 +30,12 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <aws.version>1.10.6</aws.version>
+                <aws.version>1.11.375</aws.version>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-java-sdk-core</artifactId>
-                    <version>${aws.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-java-sdk-kms</artifactId>
-                    <version>${aws.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-java-sdk-s3</artifactId>
+                    <artifactId>aws-java-sdk-bundle</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>

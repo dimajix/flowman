@@ -497,16 +497,6 @@
                     </configuration>
                 </plugin>
                 <plugin>
-                    <inherited>true</inherited>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
-                    <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>3.2.0</version>
@@ -526,12 +516,34 @@
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.1.0</version>
                 </plugin>
+                <!-- Disable Java Compiler -->
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-compile</id>
+                            <phase>none</phase>
+                        </execution>
+                        <execution>
+                            <id>test-testCompile</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
                     <version>4.4.0</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
+                        <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
                         <args>
                             <arg>-unchecked</arg>
                             <arg>-deprecation</arg>

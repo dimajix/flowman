@@ -23,7 +23,6 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <targetPath>${project.build.outputDirectory}</targetPath>
                 <filtering>true</filtering>
             </resource>
         </resources>

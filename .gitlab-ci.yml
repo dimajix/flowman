@@ -27,25 +27,9 @@ cache:
   artifacts:
     name: "flowman-site"
     paths:
-      - flowman-core/target/site
-      - flowman-dist/target/site
-      - flowman-dsl/target/site
-      - flowman-parent/target/site
-      - flowman-plugins/aws/target/site
-      - flowman-plugins/azure/target/site
-      - flowman-plugins/impala/target/site
-      - flowman-plugins/json/target/site
-      - flowman-plugins/kafka/target/site
-      - flowman-plugins/mariadb/target/site
-      - flowman-plugins/mysql/target/site
-      - flowman-plugins/swagger/target/site
-      - flowman-server/target/site
-      - flowman-spark-extensions/target/site
-      - flowman-spark-testing/target/site
-      - flowman-spark-spec/target/site
-      - flowman-spark-testing/target/site
-      - flowman-spark-tools/target/site
-      - flowman-spark-ui/target/site
+      - target/site
+      - flowman-*/target/site
+      - flowman-plugins/*/target/site
     expire_in: 5 days
 
 

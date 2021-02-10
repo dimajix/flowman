@@ -21,7 +21,8 @@ cache:
     - .npm
 
 
-# Build site
+# Build site and reports
+build-site:
   stage: site
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -DskipTests && mvn ${MAVEN_CLI_OPTS} site'
   artifacts:

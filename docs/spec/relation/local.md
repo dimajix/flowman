@@ -1,4 +1,3 @@
-
 # Local Relations
 In addition to working with file relations backed up by Hadoop compatible file systems (HDFS,
 S3, ...), Flowman also supports the local file system as backend for working with files. The
@@ -6,15 +5,27 @@ implementation is independant of the normal Apache Spark data sources, therefore
 limited set of file formats are supported.
 
 ## Example
-```
+```yaml
+relations:
+  local:
+    kind: local
+    location: $outputPath
+    pattern: data.csv
+    format: csv
+    schema:
+      kind: inline
+      fields:
+        - name: str_col
+          type: string
+        - name: int_col
+          type: integer
 ```
 
 ## Fields
  * `kind` **(mandatory)** *(string)*: `local`
  
  * `schema` **(optional)** *(schema)* *(default: empty)*: 
- Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
- try to infer the schema.
+ Explicitly specifies the schema of the local relation.
  
  * `description` **(optional)** *(string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.

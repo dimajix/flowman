@@ -4,7 +4,7 @@ example you can replace all date columns by timestamp columns (this is required 
 you can transform column names from camel case to snake case to better match SQL.
 
 ## Example
-```
+```yaml
 mappings:
   partial_facts:
     kind: conform

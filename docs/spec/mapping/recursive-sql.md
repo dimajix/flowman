@@ -1,4 +1,3 @@
-
 # Recursive SQL Mapping
 The `recursiveSql` mapping allows to execute recursive SQL transformation which contains Spark SQL code.
 

@@ -6,7 +6,7 @@ automatically by Flowman by examining the artifacts being generated and required
 
 
 ## Example
-```
+```yaml
 jobs:
   main:
     description: "Processes all outputs"

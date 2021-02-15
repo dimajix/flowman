@@ -1,12 +1,29 @@
-
 # JDBC Relations
 
 ## Example
+
+```yaml
+# First specify a connection. This can be used by multiple JDBC relations
+connections:
+  frontend:
+    driver: "$frontend_db_driver"
+    url: "$frontend_db_url"
+    username: "$frontend_db_username"
+    password: "$frontend_db_password"
+
+relations:
+  frontend_users:
+    kind: jdbc
+    # Specify the name of the connection to use
+    connection: frontend
+    # Specify the table
+    table: "users"
 ```
-```
+
 
 ## Fields
  * `kind` **(mandatory)** *(type: string)*: `jdbc`
+   
  * `schema` **(optional)** *(type: schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
  try to infer the schema.

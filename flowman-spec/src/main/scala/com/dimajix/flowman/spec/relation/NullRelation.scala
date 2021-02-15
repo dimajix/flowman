@@ -78,7 +78,7 @@ case class NullRelation(
         require(schema != null)
         require(partitions != null)
 
-        if (inputSchema == null && schema.isEmpty)
+        if (inputSchema.isEmpty && schema.isEmpty)
             throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
 
         // Add partitions values as columns

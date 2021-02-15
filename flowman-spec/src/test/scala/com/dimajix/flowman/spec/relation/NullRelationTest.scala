@@ -47,7 +47,7 @@ class NullRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         // == Read ===================================================================
         val df = relation.read(executor, Some(schema))
-        df should not be (null)
+        df.count() should be (0)
 
         // == Truncate ===================================================================
         relation.truncate(executor)

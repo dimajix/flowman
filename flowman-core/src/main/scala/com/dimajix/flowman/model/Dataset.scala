@@ -103,7 +103,8 @@ trait Dataset extends Instance {
     def write(executor:Executor, df:DataFrame, mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
-      * Returns the schema as produced by this dataset, relative to the given input schema
+      * Returns the schema of this dataset that is either returned by [[read]] operations or that is expected
+      * by [[write]] operations. If the schema is dynamic or cannot be inferred, [[None]] is returned.
       * @return
       */
     def describe(executor:Executor) : Option[StructType]

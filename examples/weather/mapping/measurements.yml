@@ -8,6 +8,7 @@ mappings:
     columns:
       raw_data: String
 
+  # Extract multiple columns from the raw measurements data using SQL SUBSTR functions
   measurements-extracted:
     kind: select
     input: measurements-raw

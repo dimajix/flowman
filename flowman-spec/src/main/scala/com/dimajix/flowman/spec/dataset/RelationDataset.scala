@@ -108,11 +108,12 @@ case class RelationDataset(
     }
 
     /**
-      * Returns the schema as produced by this dataset, relative to the given input schema
+      * Returns the schema as produced by this dataset. The schema will not include any partition columns
       *
       * @return
       */
     override def describe(executor:Executor) : Option[StructType] = {
+        // TODO: Should we include partition columns?
         val instance = context.getRelation(relation)
         instance.schema.map(s => StructType(s.fields))
     }

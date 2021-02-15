@@ -16,11 +16,8 @@
 
 package com.dimajix.flowman.spec.dataset
 
-import java.io.File
-
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.scalamock.scalatest.MockFactory
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -31,7 +28,6 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ResourceIdentifier

@@ -54,6 +54,14 @@ relations:
 
 ## Description
 
+When using `local` relations as data sinks in a [`relation` target](../target/relation.md), then Flowman will manage the
+whole lifecycle of the directory for you. This means that
+* The directory specified in `location` will be created during `create` phase
+* The directory specified in `location` will be populated with records or partitioning subdirectories will be added
+  during `build` phase
+* The directory specified in `location` will be truncated or individual partitions will be dropped during `clean` phase
+* The directory specified in `location` tables will be removed during `destroy` phase
+
 ## Supported File Format
 
 ### CSV

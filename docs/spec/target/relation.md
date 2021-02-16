@@ -6,7 +6,7 @@ the physical location or connection, the format and so on.
 
 ## Example
 
-```
+```yaml
 targets:
   stations:
     kind: relation
@@ -55,7 +55,9 @@ Flowman config variable `floman.default.target.rebalance`.
 ## Description
 
 The `relation` target will write the output of a mapping specified via the `mapping` field into the relation specified
-in `relation`. 
+in `relation`. If the `mapping` field is not specified, then Flowman will only perform actions for creating and removing
+the relation during the `CREATE`, `TRUNCATE` and `DESTROY` phase. In this case, the `BUILD` phase is a no-op for this
+target.
 
 
 ## Supported Phases

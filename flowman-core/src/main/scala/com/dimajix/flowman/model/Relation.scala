@@ -44,7 +44,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 object Relation {
     object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
+        def apply(context: Context, name:String = "", options:Map[String,String]=Map()) : Properties = {
             Properties(
                 context,
                 context.namespace,
@@ -53,7 +53,7 @@ object Relation {
                 "",
                 Map(),
                 None,
-                Map()
+                options
             )
         }
     }

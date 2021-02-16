@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.transforms.CaseFormat
@@ -43,8 +44,12 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
 
         val project = Module.read.string(spec).toProject("project")
         val mapping = project.mappings("my_structure")
-
         mapping shouldBe an[FlattenMappingSpec]
+
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+        val instance = context.getMapping(MappingIdentifier("my_structure"))
+        instance shouldBe an[FlattenMapping]
     }
 
     it should "flatten nested structures" in {

@@ -93,3 +93,14 @@ Name of the Hive database where the tables should be created in
  Specifies additional properties of the Hive table. This setting is only used
  when Flowman is used to create the Hive table and is ignored otherwise. This corresponds
  to the `TBLPROPERTIES` in a `CREATE TABLE` statement.
+
+
+## Description
+
+When using Hive union tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
+whole lifecycle for you. This means that
+* Hive tables will be created and migrated during `create` phase
+* Hive tables will be populated with records and partitions will be added during `build` phase
+* Hive tables will be truncated or individual partitions will be dropped during `clean` phase
+* Hive tables will be removed during `destroy` phase
+

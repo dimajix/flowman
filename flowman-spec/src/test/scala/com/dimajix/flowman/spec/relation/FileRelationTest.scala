@@ -22,6 +22,7 @@ import java.io.PrintWriter
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
 
+import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -46,12 +47,13 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
     "The FileRelation" should "be parseable" in {
+        val inputPath = Resources.getResource("data/data_1.csv")
         val spec =
-            """
+            s"""
               |relations:
               |  t0:
               |    kind: file
-              |    location: test/data/data_1.csv
+              |    location: ${inputPath}
               |    format: csv
               |    schema:
               |      kind: embedded
@@ -75,7 +77,7 @@ class FileRelationTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.format should be ("csv")
-        fileRelation.location should be (new Path("test/data/data_1.csv"))
+        fileRelation.location should be (new Path(inputPath.toURI))
 
         val df = relation.read(executor, None)
         df.schema should be (StructType(

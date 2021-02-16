@@ -124,3 +124,11 @@ relations:
 
 
 ## Description
+
+When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
+whole lifecycle for you. This means that
+* Hive tables will be created and migrated during `create` phase
+* Hive tables will be populated with records and partitions will be added during `build` phase
+* Hive tables will be truncated or individual partitions will be dropped during `clean` phase
+* Hive tables will be removed during `destroy` phase
+

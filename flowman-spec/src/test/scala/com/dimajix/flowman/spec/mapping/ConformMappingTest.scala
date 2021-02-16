@@ -29,6 +29,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.transforms.CaseFormat
@@ -85,6 +86,11 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = project.mappings("my_structure")
 
         mapping shouldBe an[ConformMappingSpec]
+
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+        val instance = context.getMapping(MappingIdentifier("my_structure"))
+        instance shouldBe an[ConformMapping]
     }
 
     it should "support changing types in DataFrames" in {

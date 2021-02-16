@@ -14,7 +14,7 @@
 * `--spark-name <application_name>` Sets the Spark application name
 
 
-# Commands
+## Commands
 
 All commands within the Flowman Shell mimic the commands of [flowexec](flowexec.md). The main difference to multiple
 invocations of `flowexec` is the fact that the project is loaded only once and some additional commands are provided.

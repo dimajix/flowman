@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
@@ -40,6 +41,11 @@ class AliasMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = project.mappings("my_alias")
 
         mapping shouldBe an[AliasMappingSpec]
+
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+        val instance = context.getMapping(MappingIdentifier("my_alias"))
+        instance shouldBe an[AliasMapping]
     }
 
     it should "support different outputs" in {

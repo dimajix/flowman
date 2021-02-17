@@ -55,7 +55,8 @@ case class LocalRelation(
     override val partitions: Seq[PartitionField],
     location:Path,
     pattern:Option[String],
-    format:String
+    format:String = "csv",
+    options:Map[String,String] = Map()
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
@@ -337,6 +338,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
     @JsonProperty(value="location", required=true) private var location: String = "/"
     @JsonProperty(value="format", required=true) private var format: String = "csv"
+    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value="pattern", required=false) private var pattern: Option[String] = None
 
     /**
@@ -351,7 +353,8 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
             partitions.map(_.instantiate(context)),
             makePath(context.evaluate(location)),
             pattern,
-            context.evaluate(format)
+            context.evaluate(format),
+            context.evaluate(options)
         )
     }
 

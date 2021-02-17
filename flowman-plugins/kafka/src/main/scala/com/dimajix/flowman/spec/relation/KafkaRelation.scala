@@ -53,7 +53,8 @@ case class KafkaRelation(
     hosts:Seq[String],
     topics:Seq[String],
     startOffset:String="earliest",
-    endOffset:String="latest"
+    endOffset:String="latest",
+    options:Map[String,String]=Map()
 ) extends BaseRelation {
     private val logger = LoggerFactory.getLogger(classOf[KafkaRelation])
 
@@ -120,8 +121,7 @@ case class KafkaRelation(
         val topics = this.topics.mkString(",")
         logger.info(s"Reading Kafka topics '$topics' at hosts '$hosts'")
 
-        val reader = this.reader(executor)
-            .format("kafka")
+        val reader = this.reader(executor, "kafka", options)
             .option("subscribe", topics)
             .option("kafka.bootstrap.servers", hosts)
             .option("startingOffsets", startOffset)
@@ -147,8 +147,7 @@ case class KafkaRelation(
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Writing to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.writer(executor, df, mode.batchMode)
-            .format("kafka")
+        this.writer(executor, df, "kafka", options, mode.batchMode)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .save()
@@ -198,8 +197,7 @@ case class KafkaRelation(
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.streamWriter(executor, df, mode.streamMode, checkpointLocation)
-           .format("kafka")
+        this.streamWriter(executor, df, "kafka", options, mode.streamMode, checkpointLocation)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .start()
@@ -273,6 +271,7 @@ class KafkaRelationSpec extends RelationSpec {
     @JsonProperty(value = "topics", required = false) private var topics: Seq[String] = Seq()
     @JsonProperty(value = "startOffset", required = false) private var startOffset: String = "earliest"
     @JsonProperty(value = "endOffset", required = false) private var endOffset: String = "latest"
+    @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
 
     override def instantiate(context: Context): Relation = {
         KafkaRelation(
@@ -280,7 +279,8 @@ class KafkaRelationSpec extends RelationSpec {
             hosts.map(context.evaluate),
             topics.map(context.evaluate),
             context.evaluate(startOffset),
-            context.evaluate(endOffset)
+            context.evaluate(endOffset),
+            context.evaluate(options)
         )
     }
 }

@@ -71,7 +71,8 @@ case class HiveTableRelation(
     override val table: String,
     external: Boolean = false,
     location: Option[Path] = None,
-    format: String = "parquet",
+    format: Option[String] = None,
+    options: Map[String,String] = Map(),
     rowFormat: Option[String] = None,
     inputFormat: Option[String] = None,
     outputFormat: Option[String] = None,
@@ -185,10 +186,13 @@ case class HiveTableRelation(
             catalog.refreshPartition(tableIdentifier, partitionSpec)
         }
         else {
-            outputDf.write
+            // Create and configure writer
+            val writer = outputDf.write
                 .mode(mode.batchMode)
                 .options(options)
-                .insertInto(tableIdentifier.unquotedString)
+            format.foreach(writer.format)
+
+            writer.insertInto(tableIdentifier.unquotedString)
 
             catalog.refreshTable(tableIdentifier)
         }
@@ -217,14 +221,14 @@ case class HiveTableRelation(
         val outputPath = partitionSpec.path(location.get, partitions.map(_.name))
 
         // Perform Hive => Spark format mapping
-        val format = this.format.toLowerCase(Locale.ROOT) match {
-            case "avro" => "com.databricks.spark.avro"
-            case _ => this.format
+        val format = this.format.map(_.toLowerCase(Locale.ROOT)) match {
+            case Some("avro") => "com.databricks.spark.avro"
+            case Some(f) => f
+            case None => throw new IllegalArgumentException("Require 'format' for directly writing to Hive tables")
         }
 
         logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
-        this.writer(executor, df, mode.batchMode)
-            .format(format)
+        this.writer(executor, df, format, options, mode.batchMode)
             .save(outputPath.toString)
 
         // Finally add Hive partition
@@ -323,8 +327,8 @@ case class HiveTableRelation(
             }
 
             val defaultStorage = HiveSerDe.getDefaultStorage(executor.spark.sessionState.conf)
-            val fileStorage: CatalogStorageFormat = if (format != null && format.nonEmpty) {
-                HiveSerDe.sourceToSerDe(format) match {
+            val fileStorage: CatalogStorageFormat = if (format.exists(_.nonEmpty)) {
+                HiveSerDe.sourceToSerDe(format.get) match {
                     case Some(s) =>
                         CatalogStorageFormat.empty.copy(
                             inputFormat = s.inputFormat,
@@ -466,7 +470,8 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
     @JsonProperty(value = "table", required = true) private var table: String = ""
     @JsonProperty(value = "external", required = false) private var external: String = "false"
     @JsonProperty(value = "location", required = false) private var location: Option[String] = None
-    @JsonProperty(value = "format", required = false) private var format: String = _
+    @JsonProperty(value = "format", required = false) private var format: Option[String] = None
+    @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value = "rowFormat", required = false) private var rowFormat: Option[String] = None
     @JsonProperty(value = "inputFormat", required = false) private var inputFormat: Option[String] = None
     @JsonProperty(value = "outputFormat", required = false) private var outputFormat: Option[String] = None
@@ -489,6 +494,7 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(external).toBoolean,
             context.evaluate(location).map(p => new Path(context.evaluate(p))),
             context.evaluate(format),
+            context.evaluate(options),
             context.evaluate(rowFormat),
             context.evaluate(inputFormat),
             context.evaluate(outputFormat),

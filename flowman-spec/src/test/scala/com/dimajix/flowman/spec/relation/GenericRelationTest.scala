@@ -82,11 +82,11 @@ class GenericRelationTest extends FlatSpec with Matchers with LocalSparkSession 
         )
         val relation = GenericRelation(
             Relation.Properties(
-                session.context,
-                options = Map("path" -> Resources.getResource("data/data_1.csv").toString)
+                session.context
             ),
             Some(schema),
-            "csv"
+            "csv",
+            Map("path" -> Resources.getResource("data/data_1.csv").toString)
         )
 
         // Verify schema

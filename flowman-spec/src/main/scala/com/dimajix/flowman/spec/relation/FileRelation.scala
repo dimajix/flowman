@@ -57,7 +57,8 @@ case class FileRelation(
     override val partitions: Seq[PartitionField] = Seq(),
     location:Path,
     pattern:Option[String] = None,
-    format:String = "csv"
+    format:String = "csv",
+    options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
@@ -133,8 +134,7 @@ case class FileRelation(
             logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
             val pathNames = paths.map(_.toString)
-            val reader = this.reader(executor)
-                .format(format)
+            val reader = this.reader(executor, format, options)
 
             // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
             // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
@@ -172,8 +172,7 @@ case class FileRelation(
 
         logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
 
-        this.writer(executor, df, mode.batchMode)
-            .format(format)
+        this.writer(executor, df, format, options, mode.batchMode)
             .save(outputPath.toString)
     }
 
@@ -338,6 +337,7 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
     @JsonProperty(value="location", required = true) private var location: String = "/"
     @JsonProperty(value="format", required = true) private var format: String = "csv"
     @JsonProperty(value="pattern", required = false) private var pattern: Option[String] = None
+    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -351,7 +351,8 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),
             pattern,
-            context.evaluate(format)
+            context.evaluate(format),
+            context.evaluate(options)
         )
     }
 }

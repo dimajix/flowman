@@ -68,6 +68,10 @@ Name of the Hive database where the tables should be created in
  when Flowman is used to create the Hive table and is ignored otherwise. This corresponds
  to the `FORMAT` in a `CREATE TABLE` statement.
 
+* `options` **(optional)** *(map:string)* *(default: empty)*:
+  All key-value pairs specified in *options* are directly passed to Apache spark for reading
+  and/or writing to this relation.
+
  * `rowFormat` **(optional)** *(string)* *(default: empty)*:
  Specifies the row format of the files stored in this Hive table. This setting is only used
  when Flowman is used to create the Hive table and is ignored otherwise. This corresponds

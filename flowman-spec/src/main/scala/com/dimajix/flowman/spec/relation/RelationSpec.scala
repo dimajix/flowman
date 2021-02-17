@@ -58,7 +58,6 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
-    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     override def instantiate(context:Context) : Relation
 
@@ -76,8 +75,7 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             name,
             kind,
             context.evaluate(labels),
-            description.map(context.evaluate),
-            context.evaluate(options)
+            description.map(context.evaluate)
         )
     }
 }

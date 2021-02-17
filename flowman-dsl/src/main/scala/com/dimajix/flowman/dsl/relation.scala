@@ -33,13 +33,6 @@ class RelationWrapperFunctions(wrapper:Wrapper[Relation, Relation.Properties]) {
         override def props: Context => Relation.Properties = ctx =>
             wrapper.props(ctx).copy(description = Some(desc))
     }
-    def option(kv:(String,String)): RelationWrapper = new RelationWrapper {
-        override def gen: Relation.Properties => Relation = wrapper.gen
-        override def props: Context => Relation.Properties = ctx => {
-            val props = wrapper.props(ctx)
-            props.copy(options = props.options + kv)
-        }
-    }
 }
 
 case class RelationGenHolder(r:RelationGen) extends RelationWrapper {

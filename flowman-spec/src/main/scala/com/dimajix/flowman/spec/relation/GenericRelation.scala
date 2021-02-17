@@ -44,7 +44,8 @@ import com.dimajix.flowman.util.SchemaUtils
 case class GenericRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema],
-    format:String
+    format:String,
+    options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
@@ -87,7 +88,7 @@ case class GenericRelation(
 
         logger.info(s"Reading generic relation '$identifier'")
 
-        val data = reader(executor).load()
+        val data = reader(executor, format, options).load()
         SchemaUtils.applySchema(data, schema)
     }
 
@@ -104,7 +105,7 @@ case class GenericRelation(
 
         logger.info(s"Writing generic relation '$identifier' with mode '$mode'")
 
-        writer(executor, df, mode.batchMode)
+        writer(executor, df, format, options, mode.batchMode)
             .save()
     }
 
@@ -154,40 +155,13 @@ case class GenericRelation(
      * @param executor
      */
     override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {}
-
-    /**
-     * Creates a DataFrameReader with bells and whistles configured from the specification
-     *
-     * @param executor
-     * @return
-     */
-    protected override def reader(executor:Executor) : DataFrameReader = {
-        val reader = executor.spark.read
-            .format(format)
-            .options(options)
-
-        // Apply explicit schema, and load dataFrame
-        inputSchema.foreach(s => reader.schema(s))
-
-        reader
-    }
-
-    /**
-     * Creates a DataFrameReader with bells and whistles configured from the specification
-     *
-     * @param executor
-     * @return
-     */
-    protected override def writer(executor:Executor, df:DataFrame, saveMode: SaveMode) : DataFrameWriter[Row] = {
-        super.writer(executor, df, saveMode)
-            .format(format)
-    }
 }
 
 
 
 class GenericRelationSpec extends RelationSpec with SchemaRelationSpec {
     @JsonProperty(value="format", required = true) private var format: String = "csv"
+    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     /**
      * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -198,7 +172,8 @@ class GenericRelationSpec extends RelationSpec with SchemaRelationSpec {
         GenericRelation(
             instanceProperties(context),
             schema.map(_.instantiate(context)),
-            context.evaluate(format)
+            context.evaluate(format),
+            context.evaluate(options)
         )
     }
 }

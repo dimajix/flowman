@@ -1,5 +1,9 @@
 # JDBC Relations
 
+The JDBC relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate JDBC
+driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
+
+
 ## Example
 
 ```yaml
@@ -31,10 +35,6 @@ relations:
  * `description` **(optional)** *(type: string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
  
- * `options` **(optional)** *(type: map:string)* *(default: empty)*:
- All key-value pairs specified in *options* are directly passed to Apache spark for reading
- and/or writing to this relation.
-
  * `connection` **(mandatory)** *(type: string)*:
  The *connection* field specifies the name of a [Connection](../connection/index.md)
  object which has to be defined elsewhere.

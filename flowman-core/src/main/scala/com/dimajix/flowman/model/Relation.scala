@@ -44,7 +44,7 @@ import com.dimajix.flowman.util.SchemaUtils
 
 object Relation {
     object Properties {
-        def apply(context: Context, name:String = "", options:Map[String,String]=Map()) : Properties = {
+        def apply(context: Context, name:String = "") : Properties = {
             Properties(
                 context,
                 context.namespace,
@@ -52,8 +52,7 @@ object Relation {
                 name,
                 "",
                 Map(),
-                None,
-                options
+                None
             )
         }
     }
@@ -64,8 +63,7 @@ object Relation {
         name:String,
         kind:String,
         labels:Map[String,String],
-        description:Option[String],
-        options:Map[String,String]
+        description:Option[String]
     )
     extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
@@ -251,20 +249,14 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     override def partitions : Seq[PartitionField] = Seq()
 
     /**
-     * Returns a map of all options. There is no specific usage for options, that depends on the
-     * specific implementation
-     * @return
-     */
-    def options : Map[String,String] = instanceProperties.options
-
-    /**
-     * Creates a DataFrameReader which is already configured with options and the schema is also
-     * already included
+     * Creates a DataFrameReader which is already configured with the schema
      * @param executor
      * @return
      */
-    protected def reader(executor:Executor) : DataFrameReader = {
-        val reader = executor.spark.read.options(options)
+    protected def reader(executor:Executor, format:String, options:Map[String,String]) : DataFrameReader = {
+        val reader = executor.spark.read
+            .format(format)
+            .options(options)
 
         inputSchema.foreach(s => reader.schema(s))
 
@@ -272,13 +264,14 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     }
 
     /**
-     * Creates a DataStreamReader which is already configured with options and the schema is also
-     * already included
+     * Creates a DataStreamReader which is already configured
      * @param executor
      * @return
      */
-    protected def streamReader(executor: Executor) : DataStreamReader = {
-        val reader = executor.spark.readStream.options(options)
+    protected def streamReader(executor: Executor, format:String, options:Map[String,String]) : DataStreamReader = {
+        val reader = executor.spark.readStream
+            .format(format)
+            .options(options)
 
         inputSchema.foreach(s => reader.schema(s))
 
@@ -292,9 +285,10 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def writer(executor: Executor, df:DataFrame, saveMode:SaveMode) : DataFrameWriter[Row] = {
+    protected def writer(executor: Executor, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode) : DataFrameWriter[Row] = {
         applyOutputSchema(executor, df)
             .write
+            .format(format)
             .options(options)
             .mode(saveMode)
     }
@@ -306,9 +300,10 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def streamWriter(executor: Executor, df:DataFrame, outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
+    protected def streamWriter(executor: Executor, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
         val outputDf = applyOutputSchema(executor, df)
         outputDf.writeStream
+            .format(format)
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
             .outputMode(outputMode)

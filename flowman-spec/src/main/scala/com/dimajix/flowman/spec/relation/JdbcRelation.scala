@@ -120,12 +120,13 @@ case class JdbcRelation(
         val (url,props) = createProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
-        val reader = executor.spark.read.options(options)
+        val reader = executor.spark.read
 
         val tableDf =
             if (query.nonEmpty) {
                 logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
                 reader.format("jdbc")
+                    .options(properties)
                     .option("query", query.get)
                     .option("url", url)
                     .options(props.asScala)
@@ -167,13 +168,13 @@ case class JdbcRelation(
 
         if (partition.isEmpty) {
             // Write partition into DataBase
-            this.writer(executor, dfExt, mode.batchMode)
+            this.writer(executor, dfExt, "jdbc", Map(), mode.batchMode)
                 .mode(mode.batchMode)
                 .jdbc(url, tableIdentifier.unquotedString, props)
         }
         else {
             def writePartition(): Unit = {
-                this.writer(executor, dfExt, SaveMode.Append)
+                this.writer(executor, dfExt, "jdbc", Map(), SaveMode.Append)
                     .jdbc(url, tableIdentifier.unquotedString, props)
             }
 

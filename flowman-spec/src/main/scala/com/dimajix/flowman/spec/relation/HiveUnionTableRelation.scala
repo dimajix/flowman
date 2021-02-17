@@ -73,7 +73,8 @@ case class HiveUnionTableRelation(
     viewDatabase: Option[String] = None,
     view: String,
     external: Boolean = false,
-    format: String = "parquet",
+    format: Option[String] = None,
+    options: Map[String,String] = Map(),
     rowFormat: Option[String] = None,
     inputFormat: Option[String] = None,
     outputFormat: Option[String] = None,
@@ -114,6 +115,7 @@ case class HiveUnionTableRelation(
         external,
         location,
         format,
+        options,
         rowFormat,
         inputFormat,
         outputFormat,
@@ -394,7 +396,7 @@ case class HiveUnionTableRelation(
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
                     val newSchema = StructType(targetSchema.fields ++ missingFields)
-                    logger.info(s"Migrating Hive Untion Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
+                    logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
                     catalog.addTableColumns(id, missingFields)
                 }
 
@@ -403,7 +405,7 @@ case class HiveUnionTableRelation(
                 //  3.2 Create new table
                 val tableSet = allTables.toSet
                 val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
-                logger.info(s"Migrating Hive Untion Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
+                logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
                 val hiveTableRelation = tableRelation(version)
                 hiveTableRelation.create(executor, false)
         }
@@ -424,7 +426,8 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
     @JsonProperty(value = "viewDatabase", required = false) private var viewDatabase: Option[String] = None
     @JsonProperty(value = "view", required = true) private var view: String = ""
     @JsonProperty(value = "external", required = false) private var external: String = "false"
-    @JsonProperty(value = "format", required = false) private var format: String = _
+    @JsonProperty(value = "format", required = false) private var format: Option[String] = None
+    @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value = "rowFormat", required = false) private var rowFormat: Option[String] = None
     @JsonProperty(value = "inputFormat", required = false) private var inputFormat: Option[String] = None
     @JsonProperty(value = "outputFormat", required = false) private var outputFormat: Option[String] = None
@@ -448,6 +451,7 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
             context.evaluate(view),
             context.evaluate(external).toBoolean,
             context.evaluate(format),
+            context.evaluate(options),
             context.evaluate(rowFormat),
             context.evaluate(inputFormat),
             context.evaluate(outputFormat),

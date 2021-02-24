@@ -84,7 +84,7 @@
         <commons-codec.version>1.11</commons-codec.version>
 
         <!-- Default Spark version (3.0) -->
-        <spark.version>3.0.1</spark.version>
+        <spark.version>3.0.2</spark.version>
         <spark-api.version>3.0</spark-api.version>
         <spark-hive.scope>compile</spark-hive.scope>
         <netty-all.version>4.1.47.Final</netty-all.version>
@@ -100,8 +100,9 @@
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.12</httpcore.version>
         <dropwizard.version>4.1.1</dropwizard.version>
+        <snappy.version>1.1.8.2</snappy.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-compress.version>1.8.1</commons-compress.version>
+        <commons-compress.version>1.20</commons-compress.version>
         <commons-lang3.version>3.9</commons-lang3.version>
 
         <!-- Flowman version -->
@@ -155,6 +156,7 @@
                 <guava.version>12.0.1</guava.version>
                 <json4s.version>3.2.11</json4s.version>
                 <json-smart.version>1.1.1</json-smart.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
@@ -202,6 +204,7 @@
                 <guava.version>14.0.1</guava.version>
                 <json4s.version>3.5.3</json4s.version>
                 <json-smart.version>1.1.1</json-smart.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.9.10</jackson.version>
                 <jackson.databind.version>2.9.10.1</jackson.databind.version>
@@ -234,6 +237,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <spark.version>2.3.3</spark.version>
                 <spark-api.version>2.3</spark-api.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.17.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
@@ -259,6 +263,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <spark.version>2.4.7</spark.version>
                 <spark-api.version>2.4</spark-api.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.3</jackson.databind.version>
@@ -282,8 +287,9 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.0.1</spark.version>
+                <spark.version>3.0.2</spark.version>
                 <spark-api.version>3.0</spark-api.version>
+                <snappy.version>1.1.8.2</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.10.0</jackson.version>
                 <jackson.databind.version>2.10.0</jackson.databind.version>
@@ -298,7 +304,7 @@
                 <httpcore.version>4.4.12</httpcore.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
-                <commons-compress.version>1.8.1</commons-compress.version>
+                <commons-compress.version>1.20</commons-compress.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
             </properties>
         </profile>
@@ -1044,7 +1050,7 @@
             <dependency>
                 <groupId>org.xerial.snappy</groupId>
                 <artifactId>snappy-java</artifactId>
-                <version>1.1.7.3</version>
+                <version>${snappy.version}</version>
                 <scope>provided</scope>
             </dependency>
 

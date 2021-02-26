@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
 import java.util.Locale
 
 import scala.util.Failure
@@ -208,52 +211,52 @@ final class Runner(
 
     private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], targets:Seq[Regex], force:Boolean, keepGoing:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
-            val title = s"$phase job '${job.identifier}' args ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+            val title = s"$phase job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
             logger.info("")
             logger.info(separator)
             logger.info(s"  $title")
             logger.info(separator)
-            logger.info("")
 
-            context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"Environment (phase=$phase) $k=$v") }
+            context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"Environment $k=$v") }
+            logger.info("")
 
             val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
             val allHooks = (hooks ++ job.hooks).map(_.instantiate(context))
             val allMetrics = job.metrics.map(_.instantiate(context))
 
             withMetrics(executor.metrics, allMetrics) {
-                recordJob(instance, phase, allHooks) { token =>
+                val startTime = Instant.now()
+                val status = recordJob(instance, phase, allHooks) { token =>
                     try {
                         withWallTime(executor.metrics, job.metadata, phase) {
                             executeJobTargets(executor, context, job, phase, targets, token, force, keepGoing)
                         }
                     }
                     catch {
-                        case NonFatal(_) => Status.FAILED
+                        case NonFatal(ex) =>
+                            logger.error(s"Caught exception during $title:", ex)
+                            Status.FAILED
                     }
                 }
-                match {
-                    case status@(Status.SUCCESS|Status.SKIPPED) =>
-                        logger.info(separator)
-                        logger.info(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
-                        logger.info(separator)
-                        status
-                    case status@(Status.ABORTED|Status.FAILED) =>
-                        logger.error(separator)
-                        logger.error(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
-                        logger.error(separator)
-                        status
-                    case status@Status.RUNNING =>
-                        logger.error(separator)
-                        logger.error(s"ALREADY RUNNING $title")
-                        logger.error(separator)
-                        status
+                val endTime = Instant.now()
+                val duration = Duration.between(startTime, endTime)
+
+                val msg = status match {
+                    case Status.SUCCESS|Status.SKIPPED|Status.ABORTED|Status.FAILED =>
+                        s"${status.toString.toUpperCase(Locale.ROOT)} $title"
+                    case Status.RUNNING =>
+                        s"ALREADY RUNNING $title"
                     case status =>
-                        logger.error(separator)
-                        logger.error(s"UNKNOWN STATE '$status' in $title. Assuming failure")
-                        logger.error(separator)
-                        status
+                        s"UNKNOWN STATE '$status' in $title. Assuming failure"
                 }
+
+                logger.info(separator)
+                logger.info(msg)
+                logger.info(separator)
+                logger.info(s"Total time: ${duration.toMillis / 1000.0} s")
+                logger.info(s"Finished at: ${endTime.atZone(ZoneId.systemDefault())}")
+                logger.info(separator)
+                status
             }
         }
     }
@@ -334,7 +337,7 @@ final class Runner(
             .filter(ot => targets.exists(_.unapplySeq(ot.name).nonEmpty))
 
         logger.info("")
-        logger.info(s"Target order phase for $phase:")
+        logger.info(s"Target order for $phase:")
         activeTargets.foreach(t => logger.info("  " + t.identifier))
         logger.info("")
 

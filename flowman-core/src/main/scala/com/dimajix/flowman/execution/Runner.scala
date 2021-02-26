@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.util.Locale
+
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -57,6 +59,17 @@ final class Runner(
     require(hooks != null)
 
     private val logger = LoggerFactory.getLogger(classOf[Runner])
+    private val separator = (0 to 79).map(_ => "-").mkString
+    private def centerPad(s:String) : String = {
+        val l = (77 - (s.length + 1)) / 2
+        if (l > 3) {
+            val sep = (0 to l).map(_ => '-').mkString
+            sep + " " + s + " " + sep
+        }
+        else {
+            "--- " + s + " ---"
+        }
+    }
 
     /**
       * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
@@ -195,9 +208,13 @@ final class Runner(
 
     private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], targets:Seq[Regex], force:Boolean, keepGoing:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
-            val desc = job.description.map("(" + _ + ")").getOrElse("")
-            val args = if (arguments.nonEmpty) s" with arguments ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}" else ""
-            logger.info(s"Running phase '$phase' of job '${job.identifier}' $desc $args")
+            val title = s"$phase job '${job.identifier}' args ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+            logger.info("")
+            logger.info(separator)
+            logger.info(s"  $title")
+            logger.info(separator)
+            logger.info("")
+
             context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"Environment (phase=$phase) $k=$v") }
 
             val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
@@ -206,34 +223,36 @@ final class Runner(
 
             withMetrics(executor.metrics, allMetrics) {
                 recordJob(instance, phase, allHooks) { token =>
-                    Try {
+                    try {
                         withWallTime(executor.metrics, job.metadata, phase) {
                             executeJobTargets(executor, context, job, phase, targets, token, force, keepGoing)
                         }
                     }
-                    match {
-                        case Success(status@Status.SUCCESS) =>
-                            logger.info(s"Successfully finished phase '$phase' of job '${job.identifier}'$args")
-                            status
-                        case Success(status@Status.SKIPPED) =>
-                            logger.info(s"Execution of phase '$phase' of job '${job.identifier}'$args skipped")
-                            status
-                        case Success(status@Status.FAILED) =>
-                            logger.error(s"Execution of phase '$phase' of job '${job.identifier}'$args failed")
-                            status
-                        case Success(status@Status.ABORTED) =>
-                            logger.error(s"Execution of phase '$phase' of job '${job.identifier}'$args aborted")
-                            status
-                        case Success(status@Status.RUNNING) =>
-                            logger.error(s"Execution of phase '$phase' of job '${job.identifier}'$args already running")
-                            status
-                        case Success(status) =>
-                            logger.error(s"Execution of phase '$phase' of job '${job.identifier}'$args in unknown state. Assuming failure")
-                            status
-                        case Failure(NonFatal(e)) =>
-                            logger.error(s"Caught exception while executing phase '$phase' of job '${job.identifier}'$args", e)
-                            Status.FAILED
+                    catch {
+                        case NonFatal(_) => Status.FAILED
                     }
+                }
+                match {
+                    case status@(Status.SUCCESS|Status.SKIPPED) =>
+                        logger.info(separator)
+                        logger.info(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+                        logger.info(separator)
+                        status
+                    case status@(Status.ABORTED|Status.FAILED) =>
+                        logger.error(separator)
+                        logger.error(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+                        logger.error(separator)
+                        status
+                    case status@Status.RUNNING =>
+                        logger.error(separator)
+                        logger.error(s"ALREADY RUNNING $title")
+                        logger.error(separator)
+                        status
+                    case status =>
+                        logger.error(separator)
+                        logger.error(s"UNKNOWN STATE '$status' in $title. Assuming failure")
+                        logger.error(separator)
+                        status
                 }
             }
         }
@@ -255,18 +274,22 @@ final class Runner(
         val canSkip = !force && checkTarget(instance, phase)
 
         recordTarget(instance, phase, jobToken) {
+            logger.info("")
+            logger.info(centerPad(s"$phase target '${target.identifier}'"))
+
             // First checkJob if execution is really required
             if (canSkip) {
                 logger.info(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution")
+                logger.info("")
                 Status.SKIPPED
             }
             else if (!forceDirty && target.dirty(executor, phase) == No) {
                 logger.info(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution")
+                logger.info("")
                 Status.SKIPPED
             }
             else {
                 Try {
-                    logger.info(s"Running phase '$phase' of target '${target.identifier}'")
                     withWallTime(executor.metrics, target.metadata, phase) {
                         target.execute(executor, phase)
                     }
@@ -274,9 +297,11 @@ final class Runner(
                 match {
                     case Success(_) =>
                         logger.info(s"Successfully finished phase '$phase' for target '${target.identifier}'")
+                        logger.info("")
                         Status.SUCCESS
                     case Failure(NonFatal(e)) =>
                         logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
+                        logger.info("")
                         Status.FAILED
                 }
             }
@@ -308,7 +333,10 @@ final class Runner(
             .filter(_.phases.contains(phase))
             .filter(ot => targets.exists(_.unapplySeq(ot.name).nonEmpty))
 
-        logger.info(s"Executing phase '$phase' with target sequence: ${activeTargets.map(_.identifier).mkString(", ")}")
+        logger.info("")
+        logger.info(s"Target order phase for $phase:")
+        activeTargets.foreach(t => logger.info("  " + t.identifier))
+        logger.info("")
 
         Status.ofAll(activeTargets, keepGoing) { target =>
             executeTargetPhase(executor, target, phase, token, force)

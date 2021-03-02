@@ -42,12 +42,12 @@ abstract class CachingExecutor(parent:Option[Executor], isolated:Boolean) extend
         }
     }
 
-    private val schemaCache:mutable.Map[MappingOutputIdentifier, StructType] = {
+    private val schemaCache:IdentityHashMap[Mapping, mutable.Map[String,StructType]] = {
         parent match {
             case Some(ce:CachingExecutor) if !isolated =>
                 ce.schemaCache
             case _ =>
-                mutable.Map[MappingOutputIdentifier, StructType]()
+                IdentityHashMap[Mapping, mutable.Map[String,StructType]]()
         }
     }
 
@@ -70,17 +70,17 @@ abstract class CachingExecutor(parent:Option[Executor], isolated:Boolean) extend
      * @return
      */
     override def describe(mapping:Mapping, output:String) : StructType = {
-        val oid = MappingOutputIdentifier(mapping.identifier, output)
-        schemaCache.getOrElseUpdate(oid, {
-            if (!mapping.outputs.contains(output))
-                throw new NoSuchMappingOutputException(oid)
-            val context = mapping.context
-            val deps = mapping.inputs
-                .map(id => id -> describe(context.getMapping(id.mapping), id.output))
-                .toMap
+        schemaCache.getOrElseUpdate(mapping, mutable.Map())
+            .getOrElseUpdate(output, {
+                if (!mapping.outputs.contains(output))
+                    throw new NoSuchMappingOutputException(mapping.identifier, output)
+                val context = mapping.context
+                val deps = mapping.inputs
+                    .map(id => id -> describe(context.getMapping(id.mapping), id.output))
+                    .toMap
 
-            mapping.describe(this, deps, output)
-        })
+                mapping.describe(this, deps, output)
+            })
     }
 
     /**

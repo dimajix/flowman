@@ -16,10 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import java.util.ServiceLoader
-
-import scala.collection.JavaConverters._
-
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -38,6 +34,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spi.LogFilter
+import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
@@ -45,8 +42,6 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
 object Session {
-    private lazy val logFilters = ServiceLoader.load(classOf[LogFilter]).iterator().asScala.toSeq
-
     class Builder {
         private var sparkSession: SparkConf => SparkSession = (_ => null)
         private var sparkMaster:Option[String] = None
@@ -271,15 +266,15 @@ class Session private[execution](
 
         Option(_sparkSession)
             .flatMap(builder => Option(builder(sparkConf)))
-            .map { injectedSession =>
+            .map { spark =>
                 logger.info("Creating Spark session using provided builder")
                 // Set all session properties that can be changed in an existing session
                 sparkConf.getAll.foreach { case (key, value) =>
                     if (!SparkShim.isStaticConf(key)) {
-                        injectedSession.conf.set(key, value)
+                        spark.conf.set(key, value)
                     }
                 }
-                injectedSession
+                spark
             }
             .getOrElse {
                 logger.info("Creating new Spark session")
@@ -289,6 +284,9 @@ class Session private[execution](
                     logger.info("Enabling Spark Hive support")
                     sessionBuilder.enableHiveSupport()
                 }
+                // Apply all session extensions to builder
+                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder))
+                // Create Spark session
                 sessionBuilder.getOrCreate()
             }
     }
@@ -303,20 +301,24 @@ class Session private[execution](
         // Register additional planning strategies
         ExtraStrategies.register(spark)
 
+        // Apply all session extensions
+        SparkExtension.extensions.foreach(_.register(spark))
+
+        // Register special UDFs
+        UdfProvider.providers.foreach(_.register(spark.udf))
+
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)
 
         // Log all config properties
+        val logFilters = LogFilter.filters
         spark.conf.getAll.toSeq.sortBy(_._1).foreach { keyValue =>
-            Session.logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
+            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
                 .foreach { case (key,value) => logger.info("Config: {} = {}", key: Any, value: Any) }
         }
 
         // Copy all Spark configs over to SparkConf inside the Context
         sparkConf.setAll(spark.conf.getAll)
-
-        // Register special UDFs
-        UdfProvider.providers.foreach(_.register(spark.udf))
 
         spark
     }

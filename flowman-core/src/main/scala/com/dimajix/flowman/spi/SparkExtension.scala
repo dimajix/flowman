@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,31 @@
 package com.dimajix.flowman.spi
 
 import java.util.ServiceLoader
+
 import scala.collection.JavaConverters._
 
+import org.apache.spark.sql.SparkSession
 
-object LogFilter {
-    def filters : Seq[LogFilter] = {
-        val loader = ServiceLoader.load(classOf[LogFilter])
+
+object SparkExtension {
+    def extensions : Seq[SparkExtension] = {
+        val loader = ServiceLoader.load(classOf[SparkExtension])
         loader.iterator().asScala.toSeq
     }
 }
 
-abstract class LogFilter {
+abstract class SparkExtension {
     /**
-     * This method gets called for every config key/value. The method can either return a redacted key/value, which
-     * then get logged instead of the original key/value. Or the method may return None, which means that no log
-     * is to be produced at all.
-     * @param key
-     * @param value
+     * Hook for extending a Spark session before it is built
+     * @param builder
      * @return
      */
-    def filterConfig(key:String, value:String) : Option[(String,String)]
+    def register(builder:SparkSession.Builder) : SparkSession.Builder
+
+    /**
+     * Hook for extending an existing Spark session
+     * @param session
+     * @return
+     */
+    def register(session:SparkSession) : SparkSession
 }

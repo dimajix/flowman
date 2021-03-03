@@ -30,7 +30,7 @@ import scala.util.matching.Regex
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
-import com.dimajix.flowman.config.FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Runner.RunnerJobToken
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetState
@@ -53,11 +53,11 @@ object Runner {
 
 
 final class Runner(
-    parentExecutor:Executor,
+    parentExecution:Execution,
     stateStore: StateStore,
     hooks: Seq[Template[Hook]]=Seq()
 ) {
-    require(parentExecutor != null)
+    require(parentExecution != null)
     require(stateStore != null)
     require(hooks != null)
 
@@ -75,7 +75,7 @@ final class Runner(
     }
 
     /**
-      * Executes a single job using the given executor and a map of parameters. The Runner may decide not to
+      * Executes a single job using the given execution and a map of parameters. The Runner may decide not to
       * execute a specific job, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overridden with the force flag
       * @param phases
@@ -89,16 +89,16 @@ final class Runner(
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
 
         withJobContext(job, args, force) { (jobContext, arguments) =>
-            withExecutor(job) { executor =>
+            withExecution(job) { execution =>
                 Status.ofAll(phases) { phase =>
-                    executeJobPhase(executor, jobContext, job, phase, arguments, targets, force, keepGoing)
+                    executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing)
                 }
             }
         }
     }
 
     /**
-     * Executes a single target using the given executor and a map of parameters. The Runner may decide not to
+     * Executes a single target using the given execution and a map of parameters. The Runner may decide not to
      * execute a specific target, because some information may indicate that the job has already been successfully
      * run in the past. This behaviour can be overriden with the force flag
      * @param targets
@@ -114,9 +114,9 @@ final class Runner(
                 .build()
 
             withJobContext(job, force) { context =>
-                withExecutor(job) { executor =>
+                withExecution(job) { execution =>
                     Status.ofAll(phases) { phase =>
-                        executeJobPhase(executor, context, job, phase, Map(), Seq(".*".r), force, keepGoing)
+                        executeJobPhase(execution, context, job, phase, Map(), Seq(".*".r), force, keepGoing)
                     }
                 }
             }
@@ -191,12 +191,12 @@ final class Runner(
         }
     }
 
-    def withExecutor[T](job:Job)(fn:Executor => T) : T = {
+    def withExecution[T](job:Job)(fn:Execution => T) : T = {
         val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
-        val executor : Executor = if (isolated) new ScopedExecutor(parentExecutor) else parentExecutor
-        val result = fn(executor)
+        val execution : Execution = if (isolated) new ScopedExecution(parentExecution) else parentExecution
+        val result = fn(execution)
         if (isolated) {
-            executor.cleanup()
+            execution.cleanup()
         }
         result
     }
@@ -209,7 +209,7 @@ final class Runner(
         paramNames.diff(argNames).foreach(p => throw new IllegalArgumentException(s"Required parameter '$p' not specified for job '${job.identifier}'"))
     }
 
-    private def executeJobPhase(executor: Executor, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], targets:Seq[Regex], force:Boolean, keepGoing:Boolean) : Status = {
+    private def executeJobPhase(execution: Execution, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], targets:Seq[Regex], force:Boolean, keepGoing:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
             val title = s"$phase job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
             logger.info("")
@@ -224,12 +224,12 @@ final class Runner(
             val allHooks = (hooks ++ job.hooks).map(_.instantiate(context))
             val allMetrics = job.metrics.map(_.instantiate(context))
 
-            withMetrics(executor.metrics, allMetrics) {
+            withMetrics(execution.metrics, allMetrics) {
                 val startTime = Instant.now()
                 val status = recordJob(instance, phase, allHooks) { token =>
                     try {
-                        withWallTime(executor.metrics, job.metadata, phase) {
-                            executeJobTargets(executor, context, job, phase, targets, token, force, keepGoing)
+                        withWallTime(execution.metrics, job.metadata, phase) {
+                            executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing)
                         }
                     }
                     catch {
@@ -262,18 +262,18 @@ final class Runner(
     }
 
     /**
-      * Executes a single target using the given executor and a map of parameters. The Runner may decide not to
+      * Executes a single target using the given execution and a map of parameters. The Runner may decide not to
       * execute a specific target, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overriden with the force flag
       * @param target
       * @param phase
       * @return
       */
-    private def executeTargetPhase(executor: Executor, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean) : Status = {
+    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean) : Status = {
         // Create target instance for state server
         val instance = target.instance
 
-        val forceDirty = force || executor.flowmanConf.getConf(EXECUTION_TARGET_FORCE_DIRTY)
+        val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
         val canSkip = !force && checkTarget(instance, phase)
 
         recordTarget(instance, phase, jobToken) {
@@ -286,15 +286,15 @@ final class Runner(
                 logger.info("")
                 Status.SKIPPED
             }
-            else if (!forceDirty && target.dirty(executor, phase) == No) {
+            else if (!forceDirty && target.dirty(execution, phase) == No) {
                 logger.info(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution")
                 logger.info("")
                 Status.SKIPPED
             }
             else {
                 Try {
-                    withWallTime(executor.metrics, target.metadata, phase) {
-                        target.execute(executor, phase)
+                    withWallTime(execution.metrics, target.metadata, phase) {
+                        target.execute(execution, phase)
                     }
                 }
                 match {
@@ -320,29 +320,20 @@ final class Runner(
      * @param token
      * @return
      */
-    private def executeJobTargets(executor:Executor, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean) : Status = {
+    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean) : Status = {
         require(phase != null)
 
-        // First determine ordering before filtering active targets, since their might be some transitive dependencies
-        // in place. For example accessing a VIEW which does not require a BUILD but accesses other resources
         val jobTargets = job.targets.map(t => context.getTarget(t))
-        val orderedTargets = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => TargetOrdering.sort(jobTargets, phase).reverse
-            case _ => TargetOrdering.sort(jobTargets, phase)
-        }
 
-        // Filter targets by phase then by optional target name patterns
-        val activeTargets = orderedTargets
-            .filter(_.phases.contains(phase))
-            .filter(ot => targets.exists(_.unapplySeq(ot.name).nonEmpty))
+        val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
+        val ctor = clazz.getDeclaredConstructor()
+        val executor = ctor.newInstance()
 
-        logger.info("")
-        logger.info(s"Target order for $phase:")
-        activeTargets.foreach(t => logger.info("  " + t.identifier))
-        logger.info("")
+        def targetFilter(target:Target) : Boolean =
+            target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
 
-        Status.ofAll(activeTargets, keepGoing) { target =>
-            executeTargetPhase(executor, target, phase, token, force)
+        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
+            executeTargetPhase(execution, target, phase, token, force)
         }
     }
 

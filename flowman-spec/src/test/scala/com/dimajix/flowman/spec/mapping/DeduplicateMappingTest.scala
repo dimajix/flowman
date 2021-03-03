@@ -65,7 +65,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         import sparkSession.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DeduplicateMapping(
@@ -99,7 +99,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         import sparkSession.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DeduplicateMapping(
@@ -131,7 +131,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ).toDS)
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DeduplicateMapping(

@@ -29,7 +29,7 @@ class ProvidedRelationTest extends FlatSpec with Matchers with LocalSparkSession
         project.mappings.keys should contain("dummy")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         executor.spark.emptyDataFrame.createOrReplaceTempView("my_table")

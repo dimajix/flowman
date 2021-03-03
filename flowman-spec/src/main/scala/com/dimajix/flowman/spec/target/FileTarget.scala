@@ -27,7 +27,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
@@ -111,30 +111,30 @@ case class FileTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.CREATE =>
-                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
                 !fs.getFileStatus(location).isDirectory
             case Phase.BUILD =>
-                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
                 !FileUtils.isValidFileData(fs, location)
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
-                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
                 fs.listStatus(location).nonEmpty
             case Phase.DESTROY =>
-                val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+                val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
                 fs.exists(location)
             case _ => No
         }
     }
 
-    override def create(executor: Executor) : Unit = {
+    override def create(executor: Execution) : Unit = {
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
@@ -150,7 +150,7 @@ case class FileTarget(
       *
       * @param executor
       */
-    override def build(executor: Executor): Unit = {
+    override def build(executor: Execution): Unit = {
         require(executor != null)
 
         val mapping = context.getMapping(this.mapping.mapping)
@@ -177,7 +177,7 @@ case class FileTarget(
       *
       * @param executor
       */
-    override def verify(executor: Executor) : Unit = {
+    override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
         val file = executor.fs.file(location)
@@ -192,7 +192,7 @@ case class FileTarget(
       *
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
@@ -203,7 +203,7 @@ case class FileTarget(
         }
     }
 
-    override def destroy(executor: Executor) : Unit = {
+    override def destroy(executor: Execution) : Unit = {
         require(executor != null)
 
         val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)

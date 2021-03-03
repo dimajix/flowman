@@ -14,6 +14,8 @@
 * Move `swagger` and `json` schema support into separate plugins
 * Change default build to Spark 3.0 and Hadoop 3.2
 * Update Spark to 3.0.2
+* Rename class `Executor` to `Execution` - watch your plugins!
+* Implement new configurable `Executor` class for executing build targets.
 
 
 # Version 0.14.2 - 2020-10-12

@@ -23,7 +23,7 @@ import org.scalatest.Matchers
 
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.BaseMapping
@@ -46,8 +46,8 @@ object MappingDatasetTest {
         protected override def instanceProperties: Mapping.Properties = Mapping.Properties(context, name)
 
         override def inputs: Seq[MappingOutputIdentifier] = Seq()
-        override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = Map("main" ->  executor.spark.emptyDataFrame)
-        override def describe(executor: Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = Map("main"-> new StructType())
+        override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = Map("main" ->  execution.spark.emptyDataFrame)
+        override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = Map("main"-> new StructType())
     }
 
     case class DummyMappingSpec(
@@ -70,7 +70,7 @@ class MappingDatasetTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder.withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val dataset = MappingDataset(
             context,

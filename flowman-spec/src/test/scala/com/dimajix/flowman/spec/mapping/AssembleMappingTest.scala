@@ -151,7 +151,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "transform DataFrames correctly" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -200,7 +200,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "provide a correct output schema" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -247,7 +247,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support explodes of complex types with rename" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -276,7 +276,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "throw an exception on missing fields in 'keep'" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -298,7 +298,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support explodes of complex types without rename" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -327,7 +327,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support explodes of simple types" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -351,7 +351,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "throw exceptions on explodes of non-existing paths" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -366,7 +366,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support rename operations" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -392,7 +392,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "not throw an exception on renames of non-existing fields" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),

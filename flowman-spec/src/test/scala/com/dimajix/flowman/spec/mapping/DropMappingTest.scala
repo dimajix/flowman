@@ -63,7 +63,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )
         val inputDf = records.toDF
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = DropMapping(
             Mapping.Properties(session.context),
@@ -91,7 +91,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )
         val inputDf = records.toDF
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = DropMapping(
             Mapping.Properties(session.context),

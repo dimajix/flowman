@@ -23,7 +23,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -68,13 +68,13 @@ case class NullRelation(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema
       * @param partitions
       * @return
       */
-    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        require(executor != null)
+    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
@@ -84,27 +84,27 @@ case class NullRelation(
         // Add partitions values as columns
         val fullSchema = inputSchema.map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
         val readSchema = schema.orElse(fullSchema).get
-        val rdd = executor.spark.sparkContext.emptyRDD[Row]
-        executor.spark.createDataFrame(rdd, readSchema)
+        val rdd = execution.spark.sparkContext.emptyRDD[Row]
+        execution.spark.createDataFrame(rdd, readSchema)
     }
 
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df
       * @param partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
-        require(executor != null)
+    override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
+        require(execution != null)
         require(partition != null)
 
         // Force materialization of all records
         df.count()
     }
 
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        require(execution != null)
     }
 
 
@@ -113,28 +113,28 @@ case class NullRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = Unknown
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
      *
-     * @param executor
+     * @param execution
       * @return
       */
-    override def exists(executor:Executor) : Trilean = true
+    override def exists(execution:Execution) : Trilean = true
 
-    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
-        require(executor != null)
+    override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
+        require(execution != null)
     }
-    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
+        require(execution != null)
     }
-    override def migrate(executor: Executor): Unit = {
-        require(executor != null)
+    override def migrate(execution: Execution): Unit = {
+        require(execution != null)
     }
 }
 

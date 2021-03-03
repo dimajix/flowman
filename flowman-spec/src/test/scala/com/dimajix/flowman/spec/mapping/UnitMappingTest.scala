@@ -75,7 +75,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("instance_0"))
         instance0.inputs should be (Seq())
@@ -115,7 +115,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val unit = context.getMapping(MappingIdentifier("macro"))
         unit.inputs should be (Seq(MappingOutputIdentifier("outside")))
@@ -148,7 +148,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("alias"))
         instance0.inputs should be (Seq(MappingOutputIdentifier("macro:input")))

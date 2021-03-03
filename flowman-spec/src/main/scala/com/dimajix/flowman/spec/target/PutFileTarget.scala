@@ -24,7 +24,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -74,24 +74,24 @@ case class PutFileTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.BUILD =>
-                val dst = executor.fs.file(target)
+                val dst = execution.fs.file(target)
                 !dst.exists()
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE|Phase.DESTROY =>
-                val dst = executor.fs.file(target)
+                val dst = execution.fs.file(target)
                 dst.exists()
             case _ => No
         }
     }
 
-    override protected def build(executor:Executor) : Unit = {
+    override protected def build(executor:Execution) : Unit = {
         val fs = executor.fs
         val src = fs.local(source)
         val dst = fs.file(target)
@@ -104,7 +104,7 @@ case class PutFileTarget(
       *
       * @param executor
       */
-    override protected def verify(executor: Executor): Unit = {
+    override protected def verify(executor: Execution): Unit = {
         require(executor != null)
 
         val file = executor.fs.file(target)
@@ -119,7 +119,7 @@ case class PutFileTarget(
       *
       * @param executor
       */
-    override protected def truncate(executor: Executor): Unit = {
+    override protected def truncate(executor: Execution): Unit = {
         require(executor != null)
 
         val outputFile = executor.fs.file(target)
@@ -135,7 +135,7 @@ case class PutFileTarget(
       *
       * @param executor
       */
-    override protected def destroy(executor: Executor): Unit = {
+    override protected def destroy(executor: Execution): Unit = {
         truncate(executor)
     }
 }

@@ -39,7 +39,7 @@ object MappingUtilsTest {
         override val requires: Set[ResourceIdentifier]
     ) extends BaseMapping {
         protected override def instanceProperties: Mapping.Properties = Mapping.Properties(context, name)
-        override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = ???
+        override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = ???
     }
 
     case class DummyMappingSpec(

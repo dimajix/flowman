@@ -32,7 +32,7 @@ import com.dimajix.spark.testing.LocalTempDir
 class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
     "A MergeFilesTask" should "work" in {
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
         val fs = session.fs
 
@@ -90,7 +90,7 @@ class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
 
     it should "support delimiters" in {
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
         val fs = session.fs
 

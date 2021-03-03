@@ -51,7 +51,7 @@ class TransitiveChildrenMappingTest extends FlatSpec with Matchers with LocalSpa
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val inputDf = Seq(
             (Some(1),Some(2)),

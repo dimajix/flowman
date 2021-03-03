@@ -89,7 +89,7 @@ class SessionTest extends FlatSpec with Matchers {
 
         session.spark should not equal(newSession.spark)
         session.context should not equal(newSession.context)
-        session.executor should not equal(newSession.executor)
+        session.execution should not equal(newSession.execution)
         session.runner should not equal(newSession.runner)
     }
 

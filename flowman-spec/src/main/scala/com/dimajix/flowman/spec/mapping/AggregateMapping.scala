@@ -22,7 +22,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -39,11 +39,11 @@ case class AggregateMapping(
     /**
       * Creates an instance of the aggregated table.
       *
-      * @param executor
+      * @param execution
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+    override def execute(execution:Execution, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         val df = tables(input)
         val dims = dimensions.map(col)
         val expressions = aggregations.map(kv => expr(kv._2).as(kv._1))

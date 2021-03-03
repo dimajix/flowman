@@ -22,7 +22,7 @@ import scala.util.matching.Regex
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Status
@@ -315,7 +315,7 @@ final case class Job(
 
     /**
       * Performs interpolation of given arguments as FieldValues. This will return an Iterable of argument maps each
-      * of them to be used by a job executor.
+      * of them to be used by a job execution.
       * @param args
       * @return
       */
@@ -387,7 +387,7 @@ final case class Job(
       * @param force
       * @return
       */
-    def execute(executor:Executor, phase:Phase, args:Map[String,String], targets:Seq[Regex]=Seq(".*".r), force:Boolean=false) : Status = {
+    def execute(executor:Execution, phase:Phase, args:Map[String,String], targets:Seq[Regex]=Seq(".*".r), force:Boolean=false) : Status = {
         require(args != null)
         require(phase != null)
         require(args != null)

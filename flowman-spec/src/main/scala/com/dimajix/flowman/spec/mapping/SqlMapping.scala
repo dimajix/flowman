@@ -26,7 +26,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -43,20 +43,20 @@ extends BaseMapping {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
         // Register all input DataFrames as temp views
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
         // Execute query
-        val result = executor.spark.sql(statement)
+        val result = execution.spark.sql(statement)
         // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-        input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
+        input.foreach(kv => execution.spark.sessionState.catalog.dropTempView(kv._1.name))
 
         Map("main" -> result)
     }

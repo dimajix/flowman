@@ -104,7 +104,7 @@ class RootContext private[execution](
     override def root : RootContext = this
 
     /**
-      * Returns a fully qualified mapping from a project belonging to the namespace of this executor
+      * Returns a fully qualified mapping from a project belonging to the namespace of this execution
       *
       * @param identifier
       * @return
@@ -118,7 +118,7 @@ class RootContext private[execution](
         child.getMapping(MappingIdentifier(identifier.name, None))
     }
     /**
-      * Returns a fully qualified relation from a project belonging to the namespace of this executor
+      * Returns a fully qualified relation from a project belonging to the namespace of this execution
       *
       * @param identifier
       * @return
@@ -133,7 +133,7 @@ class RootContext private[execution](
     }
 
     /**
-      * Returns a fully qualified target from a project belonging to the namespace of this executor
+      * Returns a fully qualified target from a project belonging to the namespace of this execution
       *
       * @param identifier
       * @return
@@ -148,7 +148,7 @@ class RootContext private[execution](
     }
 
     /**
-      * Returns a fully qualified connection from a project belonging to the namespace of this executor
+      * Returns a fully qualified connection from a project belonging to the namespace of this execution
       *
       * @param identifier
       * @return
@@ -174,7 +174,7 @@ class RootContext private[execution](
     }
 
     /**
-      * Returns a fully qualified job from a project belonging to the namespace of this executor
+      * Returns a fully qualified job from a project belonging to the namespace of this execution
       *
       * @param identifier
       * @return

@@ -64,13 +64,13 @@ class StatefulTool(
     def enterJob(job: Job, args:Map[String,String]): Unit = {
         val jargs = job.arguments(args)
         _context = _session.runner.withJobContext(job,jargs) { (context,args) => context }
-        _session.executor.cleanup()
+        _session.execution.cleanup()
         _job = Some(job)
     }
 
     def leaveJob(): Unit = {
         _context = _session.getContext(project)
-        _session.executor.cleanup()
+        _session.execution.cleanup()
         _job = None
     }
 

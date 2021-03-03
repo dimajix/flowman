@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.functions.expr
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -46,12 +46,12 @@ case class ExtendMapping(
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param deps
       * @return
       */
-    override def execute(executor:Executor, deps:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, deps:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(deps != null)
 
         val allColumns = this.columns

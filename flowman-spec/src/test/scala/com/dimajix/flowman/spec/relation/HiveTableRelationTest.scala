@@ -74,7 +74,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -155,7 +155,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -211,7 +211,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -276,7 +276,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -337,7 +337,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -383,7 +383,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -430,7 +430,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -480,7 +480,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -528,7 +528,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -577,7 +577,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -627,7 +627,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -703,7 +703,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -778,7 +778,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -884,7 +884,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -981,7 +981,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -1117,7 +1117,7 @@ class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSessio
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))

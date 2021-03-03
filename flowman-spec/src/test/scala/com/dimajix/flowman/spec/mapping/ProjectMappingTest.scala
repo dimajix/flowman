@@ -42,7 +42,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ProjectMapping(
             Mapping.Properties(session.context),
@@ -82,7 +82,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         project.mappings.size should be (1)
         project.mappings.contains("t0") should be (false)
@@ -123,7 +123,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val df = spark.createDataFrame(Seq(
             ("col1", 12),
@@ -148,7 +148,7 @@ class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val spec =
             """

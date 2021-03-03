@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Dataset
@@ -69,7 +69,7 @@ case class FileDataset(
       * @param executor
       * @return
       */
-    override def exists(executor: Executor): Trilean = {
+    override def exists(executor: Execution): Trilean = {
         val file = executor.fs.file(location)
         file.exists()
     }
@@ -79,7 +79,7 @@ case class FileDataset(
       *
       * @param executor
       */
-    override def clean(executor: Executor): Unit = {
+    override def clean(executor: Execution): Unit = {
         require(executor != null)
 
         val file = executor.fs.file(location)
@@ -96,7 +96,7 @@ case class FileDataset(
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(executor: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
         require(executor != null)
 
         val baseReader = executor.spark.read
@@ -125,7 +125,7 @@ case class FileDataset(
       * @param executor
       * @param df - dataframe to write
       */
-    override def write(executor: Executor, df: DataFrame, mode: OutputMode) : Unit = {
+    override def write(executor: Execution, df: DataFrame, mode: OutputMode) : Unit = {
         val outputDf = SchemaUtils.applySchema(df, schema.map(_.sparkSchema))
 
         outputDf.write
@@ -140,7 +140,7 @@ case class FileDataset(
       *
       * @return
       */
-    override def describe(executor:Executor) : Option[StructType] = {
+    override def describe(executor:Execution) : Option[StructType] = {
         schema.map(s => StructType(s.fields))
     }
 }

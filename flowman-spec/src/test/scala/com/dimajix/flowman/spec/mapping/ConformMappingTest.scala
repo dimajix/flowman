@@ -95,7 +95,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "support changing types in DataFrames" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
@@ -128,7 +128,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "throw an error for arrays" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
@@ -143,7 +143,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "support renaming fields" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),
@@ -174,7 +174,7 @@ class ConformMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "support flattening nested structures" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ConformMapping(
             Mapping.Properties(session.context),

@@ -19,7 +19,7 @@ package com.dimajix.flowman.model
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 
 /**
@@ -135,18 +135,18 @@ trait Target extends Instance {
     /**
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    def dirty(executor: Executor, phase: Phase) : Trilean
+    def dirty(execution: Execution, phase: Phase) : Trilean
 
     /**
       * Executes a specific phase of this target
-      * @param executor
+      * @param execution
       * @param phase
       */
-    def execute(executor: Executor, phase: Phase) : Unit
+    def execute(execution: Execution, phase: Phase) : Unit
 }
 
 
@@ -213,25 +213,25 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = Unknown
+    override def dirty(execution: Execution, phase: Phase): Trilean = Unknown
 
     /**
      * Executes a specific phase of this target
  *
-     * @param executor
+     * @param execution
      * @param phase
      */
-    override def execute(executor: Executor, phase: Phase) : Unit = {
+    override def execute(execution: Execution, phase: Phase) : Unit = {
         phase match {
-            case Phase.CREATE => create(executor)
-            case Phase.BUILD => build(executor)
-            case Phase.VERIFY => verify(executor)
-            case Phase.TRUNCATE => truncate(executor)
-            case Phase.DESTROY => destroy(executor)
+            case Phase.CREATE => create(execution)
+            case Phase.BUILD => build(execution)
+            case Phase.VERIFY => verify(execution)
+            case Phase.TRUNCATE => truncate(execution)
+            case Phase.DESTROY => destroy(execution)
         }
     }
 
@@ -240,7 +240,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * will not provide the data itself, it will only create the container
      * @param executor
      */
-    protected def create(executor:Executor) : Unit = {}
+    protected def create(executor:Execution) : Unit = {}
 
     /**
      * Abstract method which will perform the output operation. All required tables need to be
@@ -248,26 +248,26 @@ abstract class BaseTarget extends AbstractInstance with Target {
      *
      * @param executor
      */
-    protected def build(executor:Executor) : Unit = {}
+    protected def build(executor:Execution) : Unit = {}
 
     /**
      * Performs a verification of the build step or possibly other checks.
      *
      * @param executor
      */
-    protected def verify(executor: Executor) : Unit = {}
+    protected def verify(executor: Execution) : Unit = {}
 
     /**
      * Deletes data of a specific target
      *
      * @param executor
      */
-    protected def truncate(executor:Executor) : Unit = {}
+    protected def truncate(executor:Execution) : Unit = {}
 
     /**
      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
      * the table definition
      * @param executor
      */
-    protected def destroy(executor:Executor) : Unit = {}
+    protected def destroy(executor:Execution) : Unit = {}
 }

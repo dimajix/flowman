@@ -24,7 +24,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
@@ -72,32 +72,32 @@ class ProvidedRelation(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema
       * @param partitions
       * @return
       */
-    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        require(executor != null)
+    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
-        val df = executor.spark.table(table)
+        val df = execution.spark.table(table)
         SchemaUtils.applySchema(df, schema)
     }
 
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df
       * @param partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
+    override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         throw new UnsupportedOperationException(s"Writing into provided table '$table' not supported in relation '$identifier'")
     }
 
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
         throw new UnsupportedOperationException(s"Truncating provided table '$table' not supported in relation '$identifier'")
     }
 
@@ -107,40 +107,40 @@ class ProvidedRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
-        executor.spark.catalog.tableExists(table)
+        execution.spark.catalog.tableExists(table)
     }
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
      *
-     * @param executor
+     * @param execution
       * @return
       */
-    override def exists(executor:Executor) : Trilean = {
-        require(executor != null)
+    override def exists(execution:Execution) : Trilean = {
+        require(execution != null)
 
-        executor.spark.catalog.tableExists(table)
+        execution.spark.catalog.tableExists(table)
     }
 
-    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
-        if (!ifNotExists && exists(executor) == No)
+    override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
+        if (!ifNotExists && exists(execution) == No)
             throw new UnsupportedOperationException(s"Cannot create provided table '$table' in relation '$identifier'")
     }
 
-    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
-        if (!ifExists && exists(executor) == Yes)
+    override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
+        if (!ifExists && exists(execution) == Yes)
             throw new UnsupportedOperationException(s"Cannot destroy provided table '$table' in relation '$identifier'")
     }
 
-    override def migrate(executor: Executor): Unit = {}
+    override def migrate(execution: Execution): Unit = {}
 }
 
 

@@ -45,7 +45,7 @@ class DescribeCommand extends ActionCommand {
         Try {
             val identifier = MappingOutputIdentifier(this.mapping)
             val mapping = context.getMapping(identifier.mapping)
-            val executor = session.executor
+            val executor = session.execution
 
             if (useSpark) {
                 val df = executor.instantiate(mapping, identifier.output)

@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
@@ -76,45 +76,45 @@ case class GenericRelation(
     /**
      * Reads data from the relation, possibly from specific partitions
      *
-     * @param executor
+     * @param execution
      * @param schema - the schema to read. If none is specified, all available columns will be read
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        require(executor != null)
+    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading generic relation '$identifier'")
 
-        val data = reader(executor, format, options).load()
+        val data = reader(execution, format, options).load()
         SchemaUtils.applySchema(data, schema)
     }
 
     /**
      * Writes data into the relation, possibly into a specific partition
-     * @param executor
+     * @param execution
      * @param df - dataframe to write
      * @param partition - destination partition
      */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
-        require(executor != null)
+    override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
         logger.info(s"Writing generic relation '$identifier' with mode '$mode'")
 
-        writer(executor, df, format, options, mode.batchMode)
+        writer(execution, df, format, options, mode.batchMode)
             .save()
     }
 
     /**
      * Returns true if the relation already exists, otherwise it needs to be created prior usage
-     * @param executor
+     * @param execution
      * @return
      */
-    override def exists(executor:Executor) : Trilean = Unknown
+    override def exists(execution:Execution) : Trilean = Unknown
 
 
     /**
@@ -122,39 +122,39 @@ case class GenericRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = Unknown
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = Unknown
 
     /**
      * This method will create the given directory as specified in "location"
      *
-     * @param executor
+     * @param execution
      */
-    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {}
+    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {}
 
     /**
      * This will update any existing relation to the specified metadata. Actually for this file based target, the
      * command will precisely do nothing.
      *
-     * @param executor
+     * @param execution
      */
-    override def migrate(executor:Executor) : Unit = {}
+    override def migrate(execution:Execution) : Unit = {}
 
     /**
      * Removes one or more partitions.
-     * @param executor
+     * @param execution
      * @param partitions
      */
-    override def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {}
+    override def truncate(execution:Execution, partitions:Map[String,FieldValue] = Map()) : Unit = {}
 
     /**
      * This method will remove the given directory as specified in "location"
-     * @param executor
+     * @param execution
      */
-    override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {}
+    override def destroy(execution:Execution, ifExists:Boolean) : Unit =  {}
 }
 
 

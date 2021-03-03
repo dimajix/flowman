@@ -53,7 +53,7 @@ class SaveCommand extends ActionCommand {
         val task = FileTarget(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
         Try {
-            task.execute(session.executor, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info(s"Successfully saved mapping '$mapping' to '$location'")

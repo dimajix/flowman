@@ -77,7 +77,7 @@ fi
 spark_submit() {
     $SPARK_SUBMIT \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
-      --conf spark.executor.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
+      --conf spark.execution.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
       --class $3 \
       $SPARK_OPTS \
       --jars $2 \

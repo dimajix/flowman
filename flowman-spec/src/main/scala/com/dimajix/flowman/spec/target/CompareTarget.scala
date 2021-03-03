@@ -24,7 +24,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -64,11 +64,11 @@ case class CompareTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.VERIFY => Yes
             case _ => No
@@ -80,7 +80,7 @@ case class CompareTarget(
       *
       * @param executor
       */
-    override protected def verify(executor: Executor): Unit = {
+    override protected def verify(executor: Execution): Unit = {
         logger.info(s"Comparing actual dataset '${actual.name}' with expected dataset '${expected.name}'")
         val expectedDf = expected.read(executor, None)
         val actualDf = try {

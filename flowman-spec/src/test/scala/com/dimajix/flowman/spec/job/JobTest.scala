@@ -23,7 +23,7 @@ import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -51,7 +51,7 @@ case class GrabEnvironmentTarget(instanceProperties:Target.Properties) extends B
       *
       * @param executor
       */
-    override def build(executor: Executor): Unit = {
+    override def build(executor: Execution): Unit = {
         GrabEnvironmentTarget.environment = context.environment.toMap
     }
 }
@@ -103,7 +103,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withProject(project).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val job = project.jobs("job").instantiate(context)
@@ -150,7 +150,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withProject(project).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val job = project.jobs("job").instantiate(context)
@@ -183,7 +183,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withProject(project).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val job = project.jobs("job").instantiate(context)
@@ -210,7 +210,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val module = Module.read.string(spec)
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
@@ -231,7 +231,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val module = Module.read.string(spec)
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
@@ -250,7 +250,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val module = Module.read.string(spec)
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
@@ -301,7 +301,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withProject(project).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val job = project.jobs("job").instantiate(context)
@@ -349,7 +349,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withProject(project).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val job = project.jobs("job").instantiate(context)
@@ -400,7 +400,7 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
 
         val project  = Module.read.string(spec).toProject("default")
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val metricSystem = executor.metrics

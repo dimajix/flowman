@@ -30,7 +30,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
     "The UpdateMapping" should "merge in updates" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
@@ -64,7 +64,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "reorder columns correctly" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
@@ -99,7 +99,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "add missing columns from updates" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),
@@ -133,7 +133,7 @@ class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "remove entries with duplicate keys" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = UpdateMapping(
             Mapping.Properties(session.context),

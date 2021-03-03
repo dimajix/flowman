@@ -84,7 +84,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import org.apache.spark.sql.functions._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()
@@ -111,7 +111,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import org.apache.spark.sql.functions._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()
@@ -138,7 +138,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import org.apache.spark.sql.functions._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()
@@ -164,7 +164,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
 
     it should "support stream reading" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()

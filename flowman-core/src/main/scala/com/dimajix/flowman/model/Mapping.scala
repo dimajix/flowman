@@ -20,7 +20,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameUtils
@@ -124,25 +124,25 @@ trait Mapping extends Instance {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
+    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
+    def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
+    def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
 }
 
 
@@ -214,17 +214,17 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * @param input
      * @return
      */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         // Create dummy data frames
         val replacements = input.map { case (name,schema) =>
-            name -> DataFrameUtils.singleRow(executor.spark, schema.sparkType)
+            name -> DataFrameUtils.singleRow(execution.spark, schema.sparkType)
         }
 
         // Execute mapping
-        val results = execute(executor, replacements)
+        val results = execute(execution, replacements)
 
         // Extract schemas
         results.map { case (name,df) => name -> StructType.of(df.schema)}
@@ -236,11 +236,11 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * @param input
      * @return
      */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
+        require(execution != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        describe(executor, input)(output)
+        describe(execution, input)(output)
     }
 }

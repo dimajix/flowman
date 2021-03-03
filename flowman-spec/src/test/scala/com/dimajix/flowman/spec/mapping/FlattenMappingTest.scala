@@ -68,7 +68,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val inputRecords = Seq(inputJson.replace("\n",""))
         val inputDs = spark.createDataset(inputRecords)

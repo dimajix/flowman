@@ -59,7 +59,7 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = RecursiveSqlMapping(
             Mapping.Properties(context),
@@ -107,7 +107,7 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = RecursiveSqlMapping(
             Mapping.Properties(context),

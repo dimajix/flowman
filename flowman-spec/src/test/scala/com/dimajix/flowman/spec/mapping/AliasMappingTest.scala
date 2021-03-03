@@ -50,7 +50,7 @@ class AliasMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "support different outputs" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AliasMapping(
             Mapping.Properties(session.context),

@@ -48,7 +48,7 @@ class ExplainCommand extends ActionCommand {
         Try {
             val id = MappingOutputIdentifier(mapping)
             val instance = context.getMapping(id.mapping)
-            val executor = session.executor
+            val executor = session.execution
             val table = executor.instantiate(instance, id.output)
             table.explain(extended)
         } match {

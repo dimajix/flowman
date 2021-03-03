@@ -17,8 +17,6 @@
 package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.SparkSession.getActiveSession
-import org.apache.spark.sql.SparkSession.getDefaultSession
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
@@ -27,30 +25,26 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class AnalyzingExecutor(context: Context) extends CachingExecutor(null, true) {
-    override protected val logger = LoggerFactory.getLogger(classOf[AnalyzingExecutor])
-
-    private lazy val _metricSystem = new MetricSystem
+class ScopedExecution(parent:Execution) extends CachingExecution(Some(parent), true) {
+    override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecution])
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */
-    def flowmanConf : FlowmanConf = context.flowmanConf
+    def flowmanConf : FlowmanConf = parent.flowmanConf
 
     /**
-     * Returns the MetricRegistry of this executor
-     *
+     * Returns the MetricRegistry of this execution
      * @return
      */
-    override def metrics: MetricSystem = _metricSystem
+    override def metrics : MetricSystem = parent.metrics
 
     /**
      * Returns the FileSystem as configured in Hadoop
-     *
      * @return
      */
-    override def fs: FileSystem = context.fs
+    override def fs : FileSystem = parent.fs
 
     /**
      * Returns (or lazily creates) a SparkSession of this Executor. The SparkSession will be derived from the global
@@ -58,20 +52,17 @@ class AnalyzingExecutor(context: Context) extends CachingExecutor(null, true) {
      *
      * @return
      */
-    override def spark: SparkSession = getActiveSession.getOrElse(getDefaultSession.getOrElse(
-        throw new IllegalStateException("No active or default Spark session found")))
+    override def spark: SparkSession = parent.spark
 
     /**
      * Returns true if a SparkSession is already available
-     *
      * @return
      */
-    override def sparkRunning: Boolean = true
+    override def sparkRunning: Boolean = parent.sparkRunning
 
     /**
      * Returns the table catalog used for managing table instances
-     *
      * @return
      */
-    override def catalog: Catalog = ???
+    override def catalog: Catalog = parent.catalog
 }

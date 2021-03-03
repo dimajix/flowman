@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
@@ -76,15 +76,15 @@ case class TemplateMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
-        val result = mappingInstance.execute(executor, input)
+        val result = mappingInstance.execute(execution, input)
 
         // Apply optional filter
         result.map { case(name,df) => name -> filter.map(df.filter).getOrElse(df) }
@@ -95,11 +95,11 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
-        mappingInstance.describe(executor, input)
+        mappingInstance.describe(execution, input)
     }
 
     /**
@@ -108,12 +108,12 @@ case class TemplateMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
-        require(executor != null)
+    override def describe(execution:Execution, input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
+        require(execution != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        mappingInstance.describe(executor, input, output)
+        mappingInstance.describe(execution, input, output)
     }
 }
 

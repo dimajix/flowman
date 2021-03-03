@@ -36,7 +36,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val xfs = ExtendMapping(
             Mapping.Properties(session.context),
@@ -61,7 +61,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val xfs = ExtendMapping(
             Mapping.Properties(session.context),
@@ -95,7 +95,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         ))
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val xfs = ExtendMapping(
             Mapping.Properties(session.context),
@@ -119,7 +119,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "detect dependency cycles" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val xfs = ExtendMapping(
             Mapping.Properties(session.context),
@@ -156,7 +156,7 @@ class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         project.mappings.size should be (2)

@@ -20,7 +20,9 @@ import java.io.File
 import java.nio.file.FileSystem
 import java.util.NoSuchElementException
 
+import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.SimpleExecutor
 import com.dimajix.spark.features
 
 
@@ -61,6 +63,10 @@ object FlowmanConf {
         .doc("Consider all targets as being 'dirty' without checking")
         .booleanConf
         .createWithDefault(false)
+    val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.execution.class")
+        .doc("Class name for executing targets")
+        .classConf(classOf[Executor])
+        .createWithDefault(classOf[SimpleExecutor])
 
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")

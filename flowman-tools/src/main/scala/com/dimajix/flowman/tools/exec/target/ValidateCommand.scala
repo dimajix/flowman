@@ -49,7 +49,7 @@ class ValidateCommand extends ActionCommand {
                         .map(t => context.getTarget(TargetIdentifier(t)))
 
             //val tables = targets.flatMap(_).map(mid => context.getMapping(mid.mapping))
-            //tables.forall(table => executor.instantiate(table) != null)
+            //tables.forall(table => execution.instantiate(table) != null)
             true
         } match {
             case Success(true) =>

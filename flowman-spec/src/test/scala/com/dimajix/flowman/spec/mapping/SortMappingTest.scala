@@ -65,7 +65,7 @@ class SortMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val spark = this.spark
         import spark.implicits._
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val input = spark.range(10).repartition(10)
             .toDF()

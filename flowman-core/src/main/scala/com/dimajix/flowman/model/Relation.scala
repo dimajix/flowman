@@ -33,7 +33,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.Field
@@ -137,83 +137,83 @@ trait Relation extends Instance {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
+    def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
       * Removes one or more partitions.
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit
+    def truncate(execution:Execution, partitions:Map[String,FieldValue] = Map()) : Unit
 
     /**
       * Reads data from a streaming source
-      * @param executor
+      * @param execution
       * @param schema
       * @return
       */
-    def readStream(executor:Executor, schema:Option[StructType]) : DataFrame = ???
+    def readStream(execution:Execution, schema:Option[StructType]) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink
-      * @param executor
+      * @param execution
       * @param df
       * @return
       */
-    def writeStream(executor:Executor, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
+    def writeStream(execution:Execution, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
       * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
      *  [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
  *
-      * @param executor
+      * @param execution
       * @return
       */
-    def exists(executor:Executor) : Trilean
+    def exists(execution:Execution) : Trilean
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    def loaded(executor:Executor, partition:Map[String,SingleValue] = Map()) : Trilean
+    def loaded(execution:Execution, partition:Map[String,SingleValue] = Map()) : Trilean
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
-      * @param executor
+      * @param execution
       */
-    def create(executor:Executor, ifNotExists:Boolean=false) : Unit
+    def create(execution:Execution, ifNotExists:Boolean=false) : Unit
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
-      * @param executor
+      * @param execution
       */
-    def destroy(executor:Executor, ifExists:Boolean=false) : Unit
+    def destroy(execution:Execution, ifExists:Boolean=false) : Unit
 
     /**
       * This will update any existing relation to the specified metadata.
-      * @param executor
+      * @param execution
       */
-    def migrate(executor:Executor) : Unit
+    def migrate(execution:Execution) : Unit
 }
 
 
@@ -250,11 +250,11 @@ abstract class BaseRelation extends AbstractInstance with Relation {
 
     /**
      * Creates a DataFrameReader which is already configured with the schema
-     * @param executor
+     * @param execution
      * @return
      */
-    protected def reader(executor:Executor, format:String, options:Map[String,String]) : DataFrameReader = {
-        val reader = executor.spark.read
+    protected def reader(execution:Execution, format:String, options:Map[String,String]) : DataFrameReader = {
+        val reader = execution.spark.read
             .format(format)
             .options(options)
 
@@ -265,11 +265,11 @@ abstract class BaseRelation extends AbstractInstance with Relation {
 
     /**
      * Creates a DataStreamReader which is already configured
-     * @param executor
+     * @param execution
      * @return
      */
-    protected def streamReader(executor: Executor, format:String, options:Map[String,String]) : DataStreamReader = {
-        val reader = executor.spark.readStream
+    protected def streamReader(execution: Execution, format:String, options:Map[String,String]) : DataStreamReader = {
+        val reader = execution.spark.readStream
             .format(format)
             .options(options)
 
@@ -281,12 +281,12 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     /**
      * Ceates a DataFrameWriter which is already configured with any options. Moreover
      * the desired schema of the relation is also applied to the DataFrame
-     * @param executor
+     * @param execution
      * @param df
      * @return
      */
-    protected def writer(executor: Executor, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode) : DataFrameWriter[Row] = {
-        applyOutputSchema(executor, df)
+    protected def writer(execution: Execution, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode) : DataFrameWriter[Row] = {
+        applyOutputSchema(execution, df)
             .write
             .format(format)
             .options(options)
@@ -296,12 +296,12 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     /**
      * Ceates a DataStreamWriter which is already configured with any options. Moreover
      * the desired schema of the relation is also applied to the DataFrame
-     * @param executor
+     * @param execution
      * @param df
      * @return
      */
-    protected def streamWriter(executor: Executor, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        val outputDf = applyOutputSchema(executor, df)
+    protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
+        val outputDf = applyOutputSchema(execution, df)
         outputDf.writeStream
             .format(format)
             .options(options)
@@ -330,7 +330,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def applyOutputSchema(executor:Executor, df:DataFrame) : DataFrame = {
+    protected def applyOutputSchema(execution:Execution, df:DataFrame) : DataFrame = {
         SchemaUtils.applySchema(df, outputSchema)
     }
 }

@@ -33,7 +33,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 class NullRelationTest extends FlatSpec with Matchers with LocalSparkSession {
     "The NullRelation" should "support the full lifecycle" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val relation = NullRelation(Relation.Properties(session.context))
         val schema = StructType(

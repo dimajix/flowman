@@ -58,7 +58,7 @@ class DistinctMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         import sparkSession.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DistinctMapping(
@@ -90,7 +90,7 @@ class DistinctMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         val inputSchema = StructType.of(input.schema)
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DistinctMapping(

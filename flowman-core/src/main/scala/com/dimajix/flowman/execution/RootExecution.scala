@@ -25,8 +25,8 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class RootExecutor(session:Session) extends CachingExecutor(None, true) {
-    override protected val logger = LoggerFactory.getLogger(classOf[RootExecutor])
+class RootExecution(session:Session) extends CachingExecution(None, true) {
+    override protected val logger = LoggerFactory.getLogger(classOf[RootExecution])
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
@@ -35,7 +35,7 @@ class RootExecutor(session:Session) extends CachingExecutor(None, true) {
     def flowmanConf : FlowmanConf = session.flowmanConf
 
     /**
-     * Returns the MetricRegistry of this executor
+     * Returns the MetricRegistry of this execution
      * @return
      */
     override def metrics : MetricSystem = session.metrics

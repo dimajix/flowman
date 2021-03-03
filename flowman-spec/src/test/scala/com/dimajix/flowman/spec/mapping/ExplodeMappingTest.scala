@@ -94,7 +94,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "work" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),
@@ -133,7 +133,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "select specified columns" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),
@@ -170,7 +170,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "support renaming columns" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),
@@ -208,7 +208,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "explode simple arrays" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),

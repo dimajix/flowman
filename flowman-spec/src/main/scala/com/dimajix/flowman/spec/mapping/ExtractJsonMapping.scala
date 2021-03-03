@@ -24,7 +24,7 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StringType
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -68,15 +68,15 @@ case class ExtractJsonMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param deps
       * @return
       */
-    override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution: Execution, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(execution != null)
         require(deps != null)
 
-        val spark = executor.spark
+        val spark = execution.spark
         val corruptedColumn = "_flowman_corrupted_column"
         val sparkSchema = Option(schema).map(schema => schema.sparkSchema.add(corruptedColumn, StringType)).orNull
         val table = deps(this.input)
@@ -119,8 +119,8 @@ case class ExtractJsonMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
+        require(execution != null)
         require(input != null)
 
         val mainSchema = ftypes.StructType(if (schema != null) schema.fields else Seq())

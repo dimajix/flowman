@@ -111,7 +111,7 @@ class RelationTargetTest extends FlatSpec with Matchers with LocalSparkSession {
             .withSparkSession(spark)
             .withProject(project)
             .build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val target = context.getTarget(TargetIdentifier("target"))

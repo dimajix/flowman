@@ -64,7 +64,7 @@ class RepartitionMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
     it should "work" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val input = spark.range(100).repartition(10).toDF()
         val inputSchema = StructType.of(input.schema)
@@ -86,7 +86,7 @@ class RepartitionMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
     it should "support sorting" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val input = spark.range(100).repartition(10).toDF()
         val inputSchema = StructType.of(input.schema)
@@ -108,7 +108,7 @@ class RepartitionMappingTest extends FlatSpec with Matchers with LocalSparkSessi
 
     it should "support explicit columns" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val input = spark.range(100).repartition(10).toDF().withColumn("id2", col("id")*2)
         val inputSchema = StructType.of(input.schema)

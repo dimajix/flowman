@@ -27,7 +27,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
@@ -129,18 +129,18 @@ case class RelationTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
 
         phase match {
             case Phase.CREATE =>
                 // Since an existing relation might need a migration, we return "unknown"
-                if (rel.exists(executor) == Yes)
+                if (rel.exists(execution) == Yes)
                     Unknown
                 else
                     Yes
@@ -148,13 +148,13 @@ case class RelationTarget(
                 if (mode == OutputMode.APPEND) {
                     Yes
                 } else {
-                    !rel.loaded(executor, partition)
+                    !rel.loaded(execution, partition)
                 }
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
-                rel.loaded(executor, partition)
+                rel.loaded(execution, partition)
             case Phase.DESTROY =>
-                rel.exists(executor)
+                rel.exists(execution)
         }
     }
 
@@ -163,7 +163,7 @@ case class RelationTarget(
      *
      * @param executor
       */
-    override def create(executor: Executor) : Unit = {
+    override def create(executor: Execution) : Unit = {
         require(executor != null)
 
         val rel = context.getRelation(relation)
@@ -182,7 +182,7 @@ case class RelationTarget(
       *
       * @param executor
       */
-    override def build(executor:Executor) : Unit = {
+    override def build(executor:Execution) : Unit = {
         require(executor != null)
 
         if (mapping.nonEmpty) {
@@ -221,7 +221,7 @@ case class RelationTarget(
       *
       * @param executor
       */
-    override def verify(executor: Executor) : Unit = {
+    override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
         val partition = this.partition.mapValues(v => SingleValue(v))
@@ -236,7 +236,7 @@ case class RelationTarget(
       * Cleans the target. This will remove any data in the target for the current partition
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
         val partition = this.partition.mapValues(v => SingleValue(v))
@@ -250,7 +250,7 @@ case class RelationTarget(
       * Destroys both the logical relation and the physical data
       * @param executor
       */
-    override def destroy(executor: Executor) : Unit = {
+    override def destroy(executor: Execution) : Unit = {
         require(executor != null)
 
         logger.info(s"Destroying relation '$relation'")

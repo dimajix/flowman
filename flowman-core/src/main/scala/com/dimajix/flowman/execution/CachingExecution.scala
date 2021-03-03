@@ -30,12 +30,12 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-abstract class CachingExecutor(parent:Option[Executor], isolated:Boolean) extends Executor {
+abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends Execution {
     protected val logger:Logger
 
     private val frameCache:IdentityHashMap[Mapping,Map[String,DataFrame]] = {
         parent match {
-            case Some(ce:CachingExecutor) if !isolated =>
+            case Some(ce:CachingExecution) if !isolated =>
                 ce.frameCache
             case _ =>
                 IdentityHashMap[Mapping,Map[String,DataFrame]]()
@@ -44,7 +44,7 @@ abstract class CachingExecutor(parent:Option[Executor], isolated:Boolean) extend
 
     private val schemaCache:IdentityHashMap[Mapping, mutable.Map[String,StructType]] = {
         parent match {
-            case Some(ce:CachingExecutor) if !isolated =>
+            case Some(ce:CachingExecution) if !isolated =>
                 ce.schemaCache
             case _ =>
                 IdentityHashMap[Mapping, mutable.Map[String,StructType]]()

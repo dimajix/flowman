@@ -22,7 +22,7 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.model.BaseRelation
@@ -101,45 +101,45 @@ case class TemplateRelation(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
-        require(executor != null)
+    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
-        relationInstance.read(executor, schema, partitions)
+        relationInstance.read(execution, schema, partitions)
     }
 
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
-        require(executor != null)
+    override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
-        relationInstance.write(executor, df, partition, mode)
+        relationInstance.write(execution, df, partition, mode)
     }
 
     /**
       * Removes one or more partitions.
       *
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        require(execution != null)
         require(partitions != null)
 
-        relationInstance.truncate(executor, partitions)
+        relationInstance.truncate(execution, partitions)
     }
 
 
@@ -148,62 +148,62 @@ case class TemplateRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
-        relationInstance.loaded(executor, partition)
+        relationInstance.loaded(execution, partition)
     }
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
       *
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor: Executor): Trilean = {
-        require(executor != null)
+    override def exists(execution: Execution): Trilean = {
+        require(execution != null)
 
-        relationInstance.exists(executor)
+        relationInstance.exists(execution)
     }
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       *
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Executor, ifNotExists: Boolean): Unit = {
-        require(executor != null)
+    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
+        require(execution != null)
 
-        relationInstance.create(executor, ifNotExists)
+        relationInstance.create(execution, ifNotExists)
     }
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Executor, ifExists: Boolean): Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+        require(execution != null)
 
-        relationInstance.destroy(executor, ifExists)
+        relationInstance.destroy(execution, ifExists)
     }
 
     /**
       * This will update any existing relation to the specified metadata.
       *
-      * @param executor
+      * @param execution
       */
-    override def migrate(executor: Executor): Unit = {
-        require(executor != null)
+    override def migrate(execution: Execution): Unit = {
+        require(execution != null)
 
-        relationInstance.migrate(executor)
+        relationInstance.migrate(execution)
     }
 }
 

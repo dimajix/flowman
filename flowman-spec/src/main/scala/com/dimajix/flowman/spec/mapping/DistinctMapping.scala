@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -44,12 +44,12 @@ case class DistinctMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param tables
       * @return
       */
-    override def execute(executor: Executor, tables: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution: Execution, tables: Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
         val df = tables(input)
@@ -66,8 +66,8 @@ case class DistinctMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         val result = input(this.input)

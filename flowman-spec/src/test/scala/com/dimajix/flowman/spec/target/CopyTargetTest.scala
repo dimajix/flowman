@@ -109,7 +109,7 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val targetFilename = new File(tempDir, "copy-relation-output.csv")

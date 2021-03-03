@@ -20,7 +20,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.Connection.Properties
 import com.dimajix.flowman.types.StructType
@@ -78,13 +78,13 @@ trait Dataset extends Instance {
       * @param executor
       * @return
       */
-    def exists(executor: Executor) : Trilean
+    def exists(executor: Execution) : Trilean
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present
       * @param executor
       */
-    def clean(executor: Executor) : Unit
+    def clean(executor: Execution) : Unit
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -93,19 +93,19 @@ trait Dataset extends Instance {
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    def read(executor:Executor, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame
+    def read(executor:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
       * @param executor
       * @param df - dataframe to write
       */
-    def write(executor:Executor, df:DataFrame, mode:OutputMode = OutputMode.OVERWRITE) : Unit
+    def write(executor:Execution, df:DataFrame, mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
       * Returns the schema of this dataset that is either returned by [[read]] operations or that is expected
       * by [[write]] operations. If the schema is dynamic or cannot be inferred, [[None]] is returned.
       * @return
       */
-    def describe(executor:Executor) : Option[StructType]
+    def describe(executor:Execution) : Option[StructType]
 }

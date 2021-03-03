@@ -41,7 +41,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.IncompatibleSchemaException
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileUtils
@@ -119,12 +119,12 @@ case class HiveTableRelation(
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode:OutputMode = OutputMode.OVERWRITE): Unit = {
-        require(executor != null)
+    override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode:OutputMode = OutputMode.OVERWRITE): Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
@@ -134,9 +134,9 @@ case class HiveTableRelation(
         val partitionSpec = schema.spec(partition)
 
         if (writer == "hive")
-            writeHive(executor, df, partitionSpec, mode)
+            writeHive(execution, df, partitionSpec, mode)
         else if (writer == "spark")
-            writeSpark(executor, df, partitionSpec, mode)
+            writeSpark(execution, df, partitionSpec, mode)
         else
             throw new IllegalArgumentException("Hive relations only support write modes 'hive' and 'spark'")
     }
@@ -149,7 +149,7 @@ case class HiveTableRelation(
       * @param partitionSpec
       * @param mode
       */
-    private def writeHive(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
+    private def writeHive(executor: Execution, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
         require(executor != null)
         require(df != null)
         require(partitionSpec != null)
@@ -207,7 +207,7 @@ case class HiveTableRelation(
       * @param partitionSpec
       * @param mode
       */
-    private def writeSpark(executor: Executor, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
+    private def writeSpark(executor: Execution, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
         require(executor != null)
         require(df != null)
         require(partitionSpec != null)
@@ -244,16 +244,16 @@ case class HiveTableRelation(
     /**
       * Cleans either individual partitions (for partitioned tables) or truncates a whole table
       *
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        require(execution != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         // When no partitions are specified, this implies that the whole table is to be truncated
         if (partitions.nonEmpty) {
             val partitionSchema = PartitionSchema(this.partitions)
@@ -274,17 +274,17 @@ case class HiveTableRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
         requireValidPartitionKeys(partition)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         if (partitions.nonEmpty) {
             val schema = PartitionSchema(partitions)
             val partitionSpec = schema.spec(partition)
@@ -295,7 +295,7 @@ case class HiveTableRelation(
             // Since we do not know for an unpartitioned table if it contains data, we simply return "Unknown"
             if (catalog.tableExists(tableIdentifier)) {
                 val location = catalog.getTableLocation(tableIdentifier)
-                val fs = location.getFileSystem(executor.hadoopConf)
+                val fs = location.getFileSystem(execution.hadoopConf)
                 FileUtils.isValidHiveData(fs, location)
             }
             else {
@@ -307,12 +307,12 @@ case class HiveTableRelation(
     /**
       * Creates a Hive table by executing the appropriate DDL
       *
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Executor, ifNotExists:Boolean=false): Unit = {
-        require(executor != null)
+    override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
+        require(execution != null)
 
-        if (!ifNotExists || exists(executor) == No) {
+        if (!ifNotExists || exists(execution) == No) {
             val sparkSchema = StructType(fields.map(_.sparkField))
             logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 
@@ -323,10 +323,10 @@ case class HiveTableRelation(
                 logger.info(s"Storing Avro schema at location $avroSchemaUrl")
                 new SchemaWriter(schema.toSeq.flatMap(_.fields))
                     .format("avro")
-                    .save(executor.fs.file(avroSchemaUrl))
+                    .save(execution.fs.file(avroSchemaUrl))
             }
 
-            val defaultStorage = HiveSerDe.getDefaultStorage(executor.spark.sessionState.conf)
+            val defaultStorage = HiveSerDe.getDefaultStorage(execution.spark.sessionState.conf)
             val fileStorage: CatalogStorageFormat = if (format.exists(_.nonEmpty)) {
                 HiveSerDe.sourceToSerDe(format.get) match {
                     case Some(s) =>
@@ -377,7 +377,7 @@ case class HiveTableRelation(
             )
 
             // Create table
-            val catalog = executor.catalog
+            val catalog = execution.catalog
             catalog.createTable(catalogTable, false)
         }
     }
@@ -385,12 +385,12 @@ case class HiveTableRelation(
     /**
       * Destroys the Hive table by executing an appropriate DROP statement
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Executor, ifExists:Boolean): Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution, ifExists:Boolean): Unit = {
+        require(execution != null)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
             logger.info(s"Destroying Hive table relation '$identifier' by dropping table $tableIdentifier")
             catalog.dropTable(tableIdentifier)
@@ -399,18 +399,18 @@ case class HiveTableRelation(
 
     /**
       * Performs migration of a Hive table by adding new columns
-      * @param executor
+      * @param execution
       */
-    override def migrate(executor: Executor): Unit = {
-        require(executor != null)
+    override def migrate(execution: Execution): Unit = {
+        require(execution != null)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         if (catalog.tableExists(tableIdentifier)) {
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
                 logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
                 catalog.dropTable(tableIdentifier, false)
-                create(executor, false)
+                create(execution, false)
             }
             else {
                 val sourceSchema = schema.get.sparkSchema
@@ -444,8 +444,8 @@ case class HiveTableRelation(
       * @param df
       * @return
       */
-    override protected def applyOutputSchema(executor:Executor, df: DataFrame) : DataFrame = {
-        val outputSchema = Some(executor.catalog.getTable(tableIdentifier).dataSchema)
+    override protected def applyOutputSchema(execution:Execution, df: DataFrame) : DataFrame = {
+        val outputSchema = Some(execution.catalog.getTable(tableIdentifier).dataSchema)
         val mixedCaseDf = SchemaUtils.applySchema(df, outputSchema)
         if (needsLowerCaseSchema) {
             val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)

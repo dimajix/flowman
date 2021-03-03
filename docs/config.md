@@ -28,6 +28,10 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
 - `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)*
 When enabled (i.e. set to `true`), then Flowman will treat all targets as being dirty. Otherwise Flowman will check
 the existence of targets to decide if a rebuild is required.
+  
+- `flowman.execution.executor.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleExecutor`)*
+Configure the executor to use. The default `SimpleExecutor` will process all targets in the correct order
+sequentially.
 
 - `flowman.default.target.outputMode` *(type: string)* *(default:OVERWRITE)*
 Sets the default target output mode. Possible values are 

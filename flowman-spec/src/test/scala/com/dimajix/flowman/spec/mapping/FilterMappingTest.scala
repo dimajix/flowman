@@ -57,7 +57,7 @@ class FilterMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "work" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val input = spark.range(100).toDF()
         val inputSchema = StructType.of(input.schema)

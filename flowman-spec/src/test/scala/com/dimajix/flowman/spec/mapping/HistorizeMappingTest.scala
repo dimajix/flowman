@@ -42,7 +42,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -100,7 +100,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12}"""
@@ -149,7 +149,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"version_major":1, "version_minor":1, "ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -232,7 +232,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         val session = Session.builder().withSparkSession(spark).build()
         val project = Module.read.string(spec).toProject("default")
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = context.getMapping(MappingIdentifier("history"))
         val  df = executor.instantiate(mapping, "main")

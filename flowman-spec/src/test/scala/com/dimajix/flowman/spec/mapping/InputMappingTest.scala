@@ -49,7 +49,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -89,7 +89,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -134,7 +134,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -176,7 +176,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -222,7 +222,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))

@@ -18,7 +18,7 @@ package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-import com.dimajix.flowman.execution.AnalyzingExecutor
+import com.dimajix.flowman.execution.AnalyzingExecution
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -38,7 +38,7 @@ case class MappingSchema (
     mapping: MappingOutputIdentifier
 ) extends AbstractInstance with Schema {
     private lazy val cachedFields = {
-        val executor = new AnalyzingExecutor(context)
+        val executor = new AnalyzingExecution(context)
         val instance = context.getMapping(mapping.mapping)
         executor.describe(instance, mapping.output).fields
     }

@@ -70,7 +70,7 @@ class GenericRelationTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "read data" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val schema = EmbeddedSchema(
             Schema.Properties(session.context),

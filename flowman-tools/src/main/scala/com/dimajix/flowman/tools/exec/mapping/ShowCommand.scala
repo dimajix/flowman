@@ -52,7 +52,7 @@ class ShowCommand extends ActionCommand {
         val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns)
 
         Try {
-            task.execute(session.executor, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping mapping")

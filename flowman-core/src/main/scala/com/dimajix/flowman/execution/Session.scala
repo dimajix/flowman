@@ -355,8 +355,8 @@ class Session private[execution](
         }
     }
 
-    private lazy val rootExecutor : RootExecutor = {
-        new RootExecutor(this)
+    private lazy val rootExecution : RootExecution = {
+        new RootExecution(this)
     }
 
     private lazy val _catalog = {
@@ -420,7 +420,7 @@ class Session private[execution](
       * @return
       */
     def runner : Runner = {
-        new Runner(executor, _history, _hooks)
+        new Runner(execution, _history, _hooks)
     }
 
     /**
@@ -474,12 +474,11 @@ class Session private[execution](
     def context : Context = rootContext
 
     /**
-      * Returns the root executor of this session. Every project has its own derived executor, which should
-      * be used instead if working with a project
-      *
+      * Returns the root execution of this session. You might want to wrap it up into a [[ScopedExecution]] to
+      * isolate resources.
       * @return
       */
-    def executor : Executor = rootExecutor
+    def execution : Execution = rootExecution
 
     /**
       * Either returns an existing or creates a new project specific context

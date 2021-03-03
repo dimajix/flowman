@@ -54,7 +54,7 @@ class ShowCommand extends ActionCommand {
         val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns, partition)
 
         Try {
-            task.execute(session.executor, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info("Successfully finished dumping relation")

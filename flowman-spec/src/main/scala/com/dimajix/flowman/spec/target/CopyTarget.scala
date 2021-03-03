@@ -27,7 +27,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
@@ -92,15 +92,15 @@ case class CopyTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
-            case Phase.BUILD => !target.exists(executor)
+            case Phase.BUILD => !target.exists(execution)
             case Phase.VERIFY => Yes
-            case Phase.TRUNCATE|Phase.DESTROY => target.exists(executor)
+            case Phase.TRUNCATE|Phase.DESTROY => target.exists(execution)
             case _ => No
         }
     }
@@ -111,7 +111,7 @@ case class CopyTarget(
       *
       * @param executor
       */
-    override protected def build(executor: Executor): Unit = {
+    override protected def build(executor: Execution): Unit = {
         require(executor != null)
 
         logger.info(s"Copying dataset ${source.name} to ${target.name}")
@@ -143,7 +143,7 @@ case class CopyTarget(
       *
       * @param executor
       */
-    override protected def verify(executor: Executor): Unit = {
+    override protected def verify(executor: Execution): Unit = {
         require(executor != null)
 
         if (target.exists(executor) == No) {
@@ -164,7 +164,7 @@ case class CopyTarget(
       *
       * @param executor
       */
-    override protected def truncate(executor: Executor): Unit = {
+    override protected def truncate(executor: Execution): Unit = {
         require(executor != null)
 
         target.clean(executor)
@@ -184,7 +184,7 @@ case class CopyTarget(
       *
       * @param executor
       */
-    override def destroy(executor: Executor): Unit = {
+    override def destroy(executor: Execution): Unit = {
         schema.foreach { spec =>
             val outputFile = executor.fs.file(spec.file)
             if (outputFile.exists()) {

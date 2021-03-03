@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
@@ -107,13 +107,13 @@ case class KafkaRelation(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
-        require(executor != null)
+    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
@@ -121,7 +121,7 @@ case class KafkaRelation(
         val topics = this.topics.mkString(",")
         logger.info(s"Reading Kafka topics '$topics' at hosts '$hosts'")
 
-        val reader = this.reader(executor, "kafka", options)
+        val reader = this.reader(execution, "kafka", options)
             .option("subscribe", topics)
             .option("kafka.bootstrap.servers", hosts)
             .option("startingOffsets", startOffset)
@@ -134,12 +134,12 @@ case class KafkaRelation(
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
-        require(executor != null)
+    override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
@@ -147,32 +147,32 @@ case class KafkaRelation(
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Writing to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.writer(executor, df, "kafka", options, mode.batchMode)
+        this.writer(execution, df, "kafka", options, mode.batchMode)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .save()
     }
 
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
         throw new UnsupportedOperationException("Cleaning Kafka topics is not supported")
     }
 
     /**
       * Reads data from a streaming source
       *
-      * @param executor
+      * @param execution
       * @param schema
       * @return
       */
-    override def readStream(executor: Executor, schema: Option[StructType]): DataFrame = {
-        require(executor != null)
+    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+        require(execution != null)
         require(schema != null)
 
         val hosts = this.hosts.mkString(",")
         val topics = this.topics.mkString(",")
         logger.info(s"Streaming from Kafka topics '$topics' at hosts '$hosts'")
 
-        val reader = executor.spark.readStream.options(options)
+        val reader = execution.spark.readStream.options(options)
             .format("kafka")
             .option("subscribe", topics)
             .option("kafka.bootstrap.servers", hosts)
@@ -185,19 +185,19 @@ case class KafkaRelation(
     /**
       * Writes data to a streaming sink
       *
-      * @param executor
+      * @param execution
       * @param df
       * @return
       */
-    override def writeStream(executor: Executor, df: DataFrame, mode: OutputMode, checkpointLocation: Path): StreamingQuery = {
-        require(executor != null)
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, checkpointLocation: Path): StreamingQuery = {
+        require(execution != null)
         require(df != null)
 
         val hosts = this.hosts.mkString(",")
         val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.streamWriter(executor, df, "kafka", options, mode.streamMode, checkpointLocation)
+        this.streamWriter(execution, df, "kafka", options, mode.streamMode, checkpointLocation)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .start()
@@ -205,38 +205,38 @@ case class KafkaRelation(
 
     /**
       * Verify if the corresponding physical backend of this relation already exists
-      * @param executor
+      * @param execution
       */
-    override def exists(executor: Executor): Trilean = Unknown
+    override def exists(execution: Execution): Trilean = Unknown
 
     /**
      * Verify if the corresponding physical backend of this relation already exists
-     * @param executor
+     * @param execution
      */
-    override def loaded(executor: Executor, partition:Map[String,SingleValue]): Trilean = Unknown
+    override def loaded(execution: Execution, partition:Map[String,SingleValue]): Trilean = Unknown
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       *
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Executor, ignoreIfExsists: Boolean): Unit = ???
+    override def create(execution: Execution, ignoreIfExsists: Boolean): Unit = ???
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Executor, ignoreIfNotExists:Boolean): Unit = ???
+    override def destroy(execution: Execution, ignoreIfNotExists:Boolean): Unit = ???
 
     /**
       * This will update any existing relation to the specified metadata.
       *
-      * @param executor
+      * @param execution
       */
-    override def migrate(executor: Executor): Unit = ???
+    override def migrate(execution: Execution): Unit = ???
 
     /**
       * Returns empty schema, so we read in all columns from Kafka

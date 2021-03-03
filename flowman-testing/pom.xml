@@ -39,6 +39,12 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-scalatest-compat</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
         </dependency>
 

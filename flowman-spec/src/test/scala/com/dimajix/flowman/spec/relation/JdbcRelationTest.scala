@@ -25,8 +25,8 @@ import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
@@ -38,7 +38,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class JdbcRelationTest extends FlatSpec with Matchers with LocalSparkSession {
+class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     def withDatabase[T](driverClass:String, url:String)(fn:(Statement) => T) : T = {
         DriverRegistry.register(driverClass)
         val driver: Driver = DriverManager.getDrivers.asScala.collectFirst {

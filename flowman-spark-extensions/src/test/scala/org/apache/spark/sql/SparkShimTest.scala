@@ -16,14 +16,14 @@
 
 package org.apache.spark.sql
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.util.DateTimeUtils
 
 
-class SparkShimTest extends FlatSpec with Matchers with LocalSparkSession{
+class SparkShimTest extends AnyFlatSpec with Matchers with LocalSparkSession{
     "The SparkShim" should "return a new Hadoop configuration" in {
         val conf = SparkShim.getHadoopConf(spark.sparkContext.getConf)
         conf should not be (null)

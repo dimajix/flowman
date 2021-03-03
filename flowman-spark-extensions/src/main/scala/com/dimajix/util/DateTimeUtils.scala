@@ -60,6 +60,7 @@ object DateTimeUtils {
 
     final val NANOS_PER_SECOND = MICROS_PER_SECOND * 1000L
     final val NANOS_PER_MICROS = 1000L
+    final val NANOS_PER_MILLIS = NANOS_PER_MICROS * 1000L
 
     @tailrec
     def stringToTime(s: String): java.util.Date = {
@@ -83,7 +84,7 @@ object DateTimeUtils {
     }
 
     def millisToDays(millisUtc: Long): Int = {
-        org.apache.spark.sql.catalyst.util.DateTimeUtils.millisToDays(millisUtc)
+        millisToDays(millisUtc, TimeZone.getDefault())
     }
 
     def millisToDays(millisUtc: Long, timeZone: TimeZone): Int = {

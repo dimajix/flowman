@@ -17,13 +17,13 @@
 package com.dimajix.flowman.testing
 
 import com.google.common.io.Resources
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 
 
-class ResourcesTestSpec extends FlatSpec with Matchers {
+class ResourcesTestSpec extends AnyFlatSpec with Matchers {
     "Projects as resources" should "be testable" in {
         val runner = Runner.builder
             .withProfile("test")

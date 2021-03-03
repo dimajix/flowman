@@ -23,8 +23,8 @@ import scala.util.Random
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -47,7 +47,7 @@ import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.types.StringType
 
 
-class RunnerTest extends FlatSpec with MockFactory with Matchers with BeforeAndAfter {
+class RunnerTest extends AnyFlatSpec with MockFactory with Matchers with BeforeAndAfter {
     object NullTarget {
         def apply(name:String, partition: Map[String,String] = Map()) : Context => NullTarget = {
             ctx:Context => NullTarget(Target.Properties(ctx, name), ctx.evaluate(partition))

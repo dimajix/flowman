@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.model
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class NamespaceTest extends FlatSpec with Matchers {
+class NamespaceTest extends AnyFlatSpec with Matchers {
     "A Namespace" should "provide a default Namespace" in {
         val ns = Namespace.read.default()
         ns should not be (null)

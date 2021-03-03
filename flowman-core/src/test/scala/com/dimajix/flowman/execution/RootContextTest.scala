@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.execution
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class RootContextTest extends FlatSpec with Matchers {
+class RootContextTest extends AnyFlatSpec with Matchers {
     "The RootContext" should "provide access to some system variables" in {
         val session = Session.builder()
             .build()

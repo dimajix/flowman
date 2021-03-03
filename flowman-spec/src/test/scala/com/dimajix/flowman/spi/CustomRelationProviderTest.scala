@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spi
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.annotation.RelationType
@@ -29,7 +29,7 @@ class CustomRelationSpec extends NullRelationSpec {
 }
 
 
-class CustomRelationProviderTest extends FlatSpec with Matchers {
+class CustomRelationProviderTest extends AnyFlatSpec with Matchers {
     "A plugin" should "be used if present" in {
         val spec =
             """

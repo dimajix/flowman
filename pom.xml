@@ -61,6 +61,7 @@
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>
         <re2j.version>1.1</re2j.version>
+        <scalamock.version>5.1.0</scalamock.version>
         <protobuf.version>2.5.0</protobuf.version>
         <commons-cli.version>1.2</commons-cli.version>
         <commons-compiler.version>3.0.9</commons-compiler.version>
@@ -84,6 +85,10 @@
         <commons-codec.version>1.11</commons-codec.version>
 
         <!-- Default Spark version (3.0) -->
+        <scala.version>2.12.10</scala.version>
+        <scala.api_version>2.12</scala.api_version>
+        <scalatest.version>3.0.8</scalatest.version>
+        <scalatest-api.version>3.0</scalatest-api.version>
         <spark.version>3.0.2</spark.version>
         <spark-api.version>3.0</spark-api.version>
         <spark-hive.scope>compile</spark-hive.scope>
@@ -91,12 +96,13 @@
         <jackson.version>2.10.0</jackson.version>
         <jackson.databind.version>2.10.0</jackson.databind.version>
         <paranamer.version>2.8</paranamer.version>
+        <kafka.version>2.4.1</kafka.version>
+        <zookeeper.version>3.4.14</zookeeper.version>
         <avro.version>1.8.2</avro.version>
         <json4s.version>3.6.6</json4s.version>
         <json-smart.version>2.3</json-smart.version>
         <guava.version>14.0.1</guava.version>
         <slf4j.version>1.7.30</slf4j.version>
-        <kafka.version>2.4.1</kafka.version>
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.12</httpcore.version>
         <dropwizard.version>4.1.1</dropwizard.version>
@@ -112,8 +118,6 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <scala.version>2.12.10</scala.version>
-        <scala.api_version>2.12</scala.api_version>
 
         <!-- Set this to false for releases -->
         <gpg.skip>true</gpg.skip>
@@ -144,6 +148,10 @@
             <properties>
                 <hadoop.dist>cdh5</hadoop.dist>
                 <cdh.version>cdh5.15.1</cdh.version>
+                <scala.version>2.11.12</scala.version>
+                <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.3</spark-api.version>
@@ -152,6 +160,7 @@
                 <hive.version>1.1.0-${cdh.version}</hive.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
+                <zookeeper.version>3.4.5-${cdh.version}</zookeeper.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
                 <guava.version>12.0.1</guava.version>
                 <json4s.version>3.2.11</json4s.version>
@@ -167,8 +176,6 @@
                 <commons-compress.version>1.4.1</commons-compress.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
                 <slf4j.version>1.7.5</slf4j.version>
-                <scala.version>2.11.12</scala.version>
-                <scala.api_version>2.11</scala.api_version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -192,6 +199,10 @@
             <properties>
                 <hadoop.dist>cdh6</hadoop.dist>
                 <cdh.version>cdh6.3.3</cdh.version>
+                <scala.version>2.11.12</scala.version>
+                <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.4.0-cdh6.3.3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.4</spark-api.version>
@@ -200,6 +211,7 @@
                 <hive.version>2.1.1-${cdh.version}</hive.version>
                 <hbase.version>2.1.0-${cdh.version}</hbase.version>
                 <kafka.version>2.2.1-${cdh.version}</kafka.version>
+                <zookeeper.version>3.4.5-${cdh.version}</zookeeper.version>
                 <avro.version>1.8.2-${cdh.version}</avro.version>
                 <guava.version>14.0.1</guava.version>
                 <json4s.version>3.5.3</json4s.version>
@@ -215,8 +227,6 @@
                 <commons-compress.version>1.19</commons-compress.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
                 <slf4j.version>1.7.25</slf4j.version>
-                <scala.version>2.11.12</scala.version>
-                <scala.api_version>2.11</scala.api_version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -235,6 +245,8 @@
             <properties>
                 <scala.version>2.11.8</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.3.3</spark.version>
                 <spark-api.version>2.3</spark-api.version>
                 <snappy.version>1.1.7.3</snappy.version>
@@ -244,6 +256,7 @@
                 <paranamer.version>2.6</paranamer.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
+                <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.2.11</json4s.version>
                 <json-smart.version>1.1.1</json-smart.version>
                 <guava.version>12.0</guava.version>
@@ -261,6 +274,8 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.4.7</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <snappy.version>1.1.7.3</snappy.version>
@@ -270,6 +285,7 @@
                 <paranamer.version>2.8</paranamer.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
+                <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.5.3</json4s.version>
                 <json-smart.version>1.1.1</json-smart.version>
                 <guava.version>14.0.1</guava.version>
@@ -287,6 +303,8 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>3.0.2</spark.version>
                 <spark-api.version>3.0</spark-api.version>
                 <snappy.version>1.1.8.2</snappy.version>
@@ -294,12 +312,42 @@
                 <jackson.version>2.10.0</jackson.version>
                 <jackson.databind.version>2.10.0</jackson.databind.version>
                 <paranamer.version>2.8</paranamer.version>
+                <kafka.version>2.4.1</kafka.version>
+                <zookeeper.version>3.4.14</zookeeper.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.6.6</json4s.version>
                 <json-smart.version>2.3</json-smart.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.30</slf4j.version>
-                <kafka.version>2.4.1</kafka.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.12</httpcore.version>
+                <dropwizard.version>4.1.1</dropwizard.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compress.version>1.20</commons-compress.version>
+                <commons-lang3.version>3.9</commons-lang3.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.1</id>
+            <properties>
+                <scala.version>2.12.10</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <scalatest.version>3.2.5</scalatest.version>
+                <scalatest-api.version>3.2</scalatest-api.version>
+                <spark.version>3.1.1</spark.version>
+                <spark-api.version>3.1</spark-api.version>
+                <snappy.version>1.1.8.2</snappy.version>
+                <netty-all.version>4.1.51.Final</netty-all.version>
+                <jackson.version>2.10.0</jackson.version>
+                <jackson.databind.version>2.10.0</jackson.databind.version>
+                <paranamer.version>2.8</paranamer.version>
+                <kafka.version>2.6.0</kafka.version>
+                <zookeeper.version>3.5.7</zookeeper.version>
+                <avro.version>1.8.2</avro.version>
+                <json4s.version>3.7.0-M5</json4s.version>
+                <json-smart.version>2.3</json-smart.version>
+                <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
@@ -366,6 +414,7 @@
     </profiles>
 
     <modules>
+        <module>flowman-scalatest-compat</module>
         <module>flowman-spark-testing</module>
         <module>flowman-spark-extensions</module>
         <module>flowman-core</module>
@@ -790,6 +839,12 @@
         <dependencies>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-scalatest-compat</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-testing</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
@@ -903,40 +958,6 @@
                 <artifactId>scala-xml_${scala.api_version}</artifactId>
                 <version>1.2.0</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest_${scala.api_version}</artifactId>
-                <version>3.0.8</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>3.1.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.scalamock</groupId>
-                <artifactId>scalamock_${scala.api_version}</artifactId>
-                <version>4.4.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>5.5.2</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>5.5.2</version>
-                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -1065,6 +1086,13 @@
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>1.1.0.Final</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1554,6 +1582,34 @@
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <!-- Test Dependencies -->
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_${scala.api_version}</artifactId>
+                <version>${scalatest.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.scalamock</groupId>
+                <artifactId>scalamock_${scala.api_version}</artifactId>
+                <version>${scalamock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>5.5.2</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>5.5.2</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

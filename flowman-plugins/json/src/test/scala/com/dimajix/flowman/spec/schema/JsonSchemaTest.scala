@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
@@ -26,7 +26,8 @@ import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
 
-class JsonSchemaTest extends FlatSpec with Matchers {
+
+class JsonSchemaTest extends AnyFlatSpec with Matchers {
     "An JsonSchema" should "be declarable inline" in {
         val spec =
             """

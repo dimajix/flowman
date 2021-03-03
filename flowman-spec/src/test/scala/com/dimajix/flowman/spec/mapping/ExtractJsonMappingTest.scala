@@ -23,18 +23,18 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ExtractJsonMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The ExtractJsonMapping" should "be parseable" in {
         val spec =
             """

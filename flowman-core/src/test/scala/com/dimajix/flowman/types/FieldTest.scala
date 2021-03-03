@@ -17,14 +17,14 @@
 package com.dimajix.flowman.types
 
 import org.apache.spark.sql.types.MetadataBuilder
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class FieldTest extends FlatSpec with Matchers {
+class FieldTest extends AnyFlatSpec with Matchers {
     "A Field" should "be nullable per default" in {
         val spec =
             """

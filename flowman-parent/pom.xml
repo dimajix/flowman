@@ -135,6 +135,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-scalatest-compat</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-testing</artifactId>
                 <version>${flowman.version}</version>
                 <scope>test</scope>
@@ -538,6 +544,20 @@
                 <artifactId>re2j</artifactId>
                 <version>${re2j.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_${scala.api_version}</artifactId>
+                <version>${scalatest.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.scalamock</groupId>
+                <artifactId>scalamock_${scala.api_version}</artifactId>
+                <version>${scalamock.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

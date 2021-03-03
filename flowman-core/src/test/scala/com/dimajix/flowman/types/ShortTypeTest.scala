@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class ShortTypeTest extends FlatSpec with Matchers {
+class ShortTypeTest extends AnyFlatSpec with Matchers {
     "A ShortType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("short") should be(ShortType)
         ObjectMapper.parse[FieldType]("smallint") should be(ShortType)

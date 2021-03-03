@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.config
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.SimpleExecutor
 
 
-class FlowmanConfTest extends FlatSpec with Matchers {
+class FlowmanConfTest extends AnyFlatSpec with Matchers {
     "The FlowmanConf" should "work with ints" in {
         val conf = new FlowmanConf(Map("some_int" -> "32"))
         conf.getConf(FlowmanConf.DEFAULT_TARGET_PARALLELISM) should be (16)

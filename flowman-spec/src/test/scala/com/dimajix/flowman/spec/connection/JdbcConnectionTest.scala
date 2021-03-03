@@ -16,14 +16,14 @@
 
 package com.dimajix.flowman.spec.connection
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class JdbcConnectionTest extends FlatSpec with Matchers {
+class JdbcConnectionTest extends AnyFlatSpec with Matchers {
     "A JdbcConnction" should "be parseable" in {
         val spec =
             """

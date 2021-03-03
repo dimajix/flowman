@@ -18,11 +18,11 @@ package com.dimajix.flowman.execution
 
 import java.util.NoSuchElementException
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class EnvironmentTest extends FlatSpec with Matchers {
+class EnvironmentTest extends AnyFlatSpec with Matchers {
     "The Environment" should "provide access to some system variables" in {
         val environment = new Environment(Map())
 

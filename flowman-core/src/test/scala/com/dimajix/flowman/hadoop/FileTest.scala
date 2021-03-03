@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.hadoop
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class FileTest extends FlatSpec with Matchers with LocalSparkSession {
+class FileTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A local File" should "be useable with simple strings" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)

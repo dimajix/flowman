@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.execution
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class OutputModeTest extends FlatSpec with Matchers {
+class OutputModeTest extends AnyFlatSpec with Matchers {
     "The OutputMode" should "parse correctly" in {
         OutputMode.ofString("OVERWRITE") should be (OutputMode.OVERWRITE)
         OutputMode.ofString("overwrite") should be (OutputMode.OVERWRITE)

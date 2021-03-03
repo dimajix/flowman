@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.types._
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -28,7 +28,7 @@ import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class TransitiveChildrenMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class TransitiveChildrenMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A TransitiveMapping" should "be parseable" in {
         val spec =
           """

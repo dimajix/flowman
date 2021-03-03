@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.CharType
@@ -34,7 +34,7 @@ import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.types.VarcharType
 
 
-class SwaggerSchemaUtilsTest extends FlatSpec with Matchers  {
+class SwaggerSchemaUtilsTest extends AnyFlatSpec with Matchers  {
     "A Swagger Schema" should "be deserializable" in {
         val spec =
             """

@@ -19,11 +19,11 @@ package com.dimajix.flowman.model
 import java.io.File
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ResourceIdentifierTest extends FlatSpec with Matchers {
+class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
     "A ResourceIdentifier" should "support basic methods" in {
         val id = ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz"))
         id.category should be ("hiveTablePartition")

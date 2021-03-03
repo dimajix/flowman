@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.history
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -25,7 +25,7 @@ import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.TargetInstance
 
 
-class NullStateStoreTest extends FlatSpec with Matchers {
+class NullStateStoreTest extends AnyFlatSpec with Matchers {
     "The NullStateStore" should "support batches" in {
         val batch = JobInstance(
             "default",

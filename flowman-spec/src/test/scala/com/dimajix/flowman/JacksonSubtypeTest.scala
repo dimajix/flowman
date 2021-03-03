@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -23,11 +24,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
 @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
@@ -49,7 +49,7 @@ class FooWrapper {
 
 
 
-class JacksonSubtypeTest extends FlatSpec with Matchers {
+class JacksonSubtypeTest extends AnyFlatSpec with Matchers {
     private val WRAPPED_ANNOTATED_FOO ="""{"foo": {"type":"annotated"}}"""
     private val WRAPPED_REGISTERED_FOO ="""{"foo": {"type":"registered"}}"""
     private val ANNOTATED_FOO = "{\"type\": \"annotated\"}"

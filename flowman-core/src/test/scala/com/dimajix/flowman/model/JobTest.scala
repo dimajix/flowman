@@ -16,9 +16,9 @@
 
 package com.dimajix.flowman.model
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.types.ArrayValue
@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 
 
-class JobTest extends FlatSpec with Matchers with MockitoSugar {
+class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     "Job.Builder" should "work" in {
         val session = Session.builder().build()
         val context = session.context

@@ -16,19 +16,19 @@
 
 package com.dimajix.util
 
-import java.sql.{Date => SqlDate}
 import java.sql.Timestamp
+import java.sql.{Date => SqlDate}
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
 import java.util.TimeZone
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class DateTimeUtilsTest extends FlatSpec with Matchers {
+class DateTimeUtilsTest extends AnyFlatSpec with Matchers {
     "DateTimeUtils" should "correct parse date and time" in {
         DateTimeUtils.stringToTime("2020-02-03") should be (SqlDate.valueOf("2020-02-03"))
         DateTimeUtils.stringToTime("2020-02-03 23:11:20") should be (Timestamp.valueOf("2020-02-03 23:11:20"))

@@ -19,8 +19,8 @@ package com.dimajix.flowman.spec.mapping
 import scala.collection.mutable
 
 import org.apache.spark.sql.Row
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -32,11 +32,12 @@ import com.dimajix.flowman.spec.mapping.RankMappingTest.Record
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
+
 object RankMappingTest {
     case class Record(ts:(String,Long), id:(String,Int), data:String)
 }
 
-class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The RankMapping" should "extract the latest version" in {
         val spark = this.spark
         import spark.implicits._

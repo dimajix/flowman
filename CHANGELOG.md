@@ -16,6 +16,8 @@
 * Update Spark to 3.0.2
 * Rename class `Executor` to `Execution` - watch your plugins!
 * Implement new configurable `Executor` class for executing build targets.
+* Add build profile for Spark 3.1.x
+* Update ScalaTest to 3.2.5 - watch your unittests for changed ScalaTest API!
 
 
 # Version 0.14.2 - 2020-10-12

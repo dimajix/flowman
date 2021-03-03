@@ -24,14 +24,14 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.sql.local.implicits._
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class CsvRelationTest extends FlatSpec with Matchers with LocalSparkSession {
+class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The csv relation" should "support writing CSV files" in {
         val df = spark.createDataFrame(Seq((1,"lala", 1.2),(2,"lolo", 2.3)))
         df.writeLocal

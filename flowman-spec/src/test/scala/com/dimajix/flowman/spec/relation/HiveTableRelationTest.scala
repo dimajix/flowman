@@ -29,11 +29,10 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
-import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -48,7 +47,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
 
-class HiveTableRelationTest extends FlatSpec with Matchers with LocalSparkSession with QueryTest {
+class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
     "The HiveTableRelation" should "support create" in {
         val spec =
             """

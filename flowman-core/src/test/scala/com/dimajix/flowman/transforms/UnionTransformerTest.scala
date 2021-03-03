@@ -21,8 +21,8 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
@@ -34,7 +34,7 @@ object UnionTransformerTest {
     case class Class3(col0:Double, col1:Int)
 }
 
-class UnionTransformerTest extends FlatSpec with Matchers with LocalSparkSession {
+class UnionTransformerTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     import com.dimajix.flowman.transforms.UnionTransformerTest._
 
     "The UnionTransformer" should "work" in {

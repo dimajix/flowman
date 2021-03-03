@@ -18,8 +18,8 @@ package com.dimajix.flowman.execution
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.MappingUtilsTest.DummyMappingSpec
 import com.dimajix.flowman.model.BaseMapping
@@ -51,7 +51,7 @@ object MappingUtilsTest {
     }
 }
 
-class MappingUtilsTest extends FlatSpec with Matchers {
+class MappingUtilsTest extends AnyFlatSpec with Matchers {
     "The MappingUtils" should "collect all requirements of a mapping" in {
         val project = Project(
             "test",

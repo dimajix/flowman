@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.Row
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -34,7 +34,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ProjectMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The ProjectMapping" should "work" in {
         val df = spark.createDataFrame(Seq(
             ("col1", 12),

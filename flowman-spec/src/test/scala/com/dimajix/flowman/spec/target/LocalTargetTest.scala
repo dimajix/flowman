@@ -18,8 +18,8 @@ package com.dimajix.flowman.spec.target
 
 import java.nio.file.Paths
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class LocalTargetTest extends FlatSpec with Matchers with LocalSparkSession {
+class LocalTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A LocalTarget" should "be buildable" in {
         val spark = this.spark
         val outputPath = Paths.get(tempDir.toString, "local-target", "data.csv")

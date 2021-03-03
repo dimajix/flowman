@@ -16,14 +16,14 @@
 
 package com.dimajix.flowman.spec.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class EmbeddedSchemaTest extends FlatSpec with Matchers {
+class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
     "An EmbeddedSchema" should "be parseable with explicit type" in {
         val spec =
             """

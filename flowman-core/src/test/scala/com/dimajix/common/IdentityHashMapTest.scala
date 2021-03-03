@@ -16,8 +16,8 @@
 
 package com.dimajix.common
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.IdentityHashMapTest.SomeClass
 
@@ -25,7 +25,7 @@ object IdentityHashMapTest {
     case class SomeClass(value:Int)
 }
 
-class IdentityHashMapTest extends FlatSpec with Matchers {
+class IdentityHashMapTest extends AnyFlatSpec with Matchers {
     "The IdentityHashMap" should "work" in {
         val map = IdentityHashMap[SomeClass,String]()
 

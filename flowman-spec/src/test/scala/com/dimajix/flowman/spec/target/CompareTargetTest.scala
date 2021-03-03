@@ -18,21 +18,21 @@ package com.dimajix.flowman.spec.target
 
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.VerificationFailedException
-import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.model.Dataset
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.dataset.FileDataset
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class CompareTargetTest extends FlatSpec with Matchers with LocalSparkSession {
+class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The CompareTarget" should "be parseable from YAML" in {
         val basedir = new Path(Resources.getResource(".").toURI)
         val spec =

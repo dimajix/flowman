@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.target
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
@@ -35,12 +35,11 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.mapping.ProvidedMapping
-import com.dimajix.flowman.spec.relation.FileRelation
 import com.dimajix.flowman.spec.relation.NullRelation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RelationTargetTest extends FlatSpec with Matchers with LocalSparkSession {
+class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The RelationTarget" should "work" in {
         val spec =
             s"""

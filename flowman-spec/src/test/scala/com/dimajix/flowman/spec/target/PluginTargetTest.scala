@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
@@ -37,7 +37,7 @@ class AnnotatedTargetSpec extends TargetSpec {
 
 
 
-class PluginTargetTest extends FlatSpec with Matchers  {
+class PluginTargetTest extends AnyFlatSpec with Matchers  {
     "A plugin" should "be used if present" in {
         val session = Session.builder().build()
         val spec =

@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class ByteTypeTest extends FlatSpec with Matchers {
+class ByteTypeTest extends AnyFlatSpec with Matchers {
     "A ByteType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("byte") should be(ByteType)
         ObjectMapper.parse[FieldType]("tinyint") should be(ByteType)

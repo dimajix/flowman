@@ -19,14 +19,14 @@ package com.dimajix.flowman.spec
 import com.google.common.io.Resources
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Project
 
 
-class ProjectTest extends FlatSpec with Matchers {
+class ProjectTest extends AnyFlatSpec with Matchers {
     "A Project" should "be parseable from a string" in {
         val spec =
             """

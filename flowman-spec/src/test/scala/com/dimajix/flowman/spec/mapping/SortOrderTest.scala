@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class SortOrderTest extends FlatSpec with Matchers {
+class SortOrderTest extends AnyFlatSpec with Matchers {
     "The SortOrder" should "be parsable" in {
         SortOrder.of("desc") should be (SortOrder(Descending, NullsLast))
         SortOrder.of(" desc ") should be (SortOrder(Descending, NullsLast))

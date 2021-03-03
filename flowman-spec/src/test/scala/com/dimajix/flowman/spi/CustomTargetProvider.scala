@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spi
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.annotation.TargetType
@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.target.NullTargetSpec
 class CustomTargetSpec extends NullTargetSpec {
 }
 
-class CustomTargetProvider extends FlatSpec with Matchers {
+class CustomTargetProvider extends AnyFlatSpec with Matchers {
     "A plugin" should "be used if present" in {
         val spec =
             """

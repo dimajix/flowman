@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class LongTypeTest extends FlatSpec with Matchers {
+class LongTypeTest extends AnyFlatSpec with Matchers {
     "A LongType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("long") should be(LongType)
         ObjectMapper.parse[FieldType]("bigint") should be(LongType)

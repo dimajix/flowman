@@ -17,14 +17,14 @@
 package com.dimajix.flowman.execution
 
 import org.apache.hadoop.conf.Configuration
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Project
 
 
-class ProjectContextTest extends FlatSpec with Matchers {
+class ProjectContextTest extends AnyFlatSpec with Matchers {
     "The ProjectContext" should "provide Project related vars" in {
         val project = Project(
             name = "my_project",

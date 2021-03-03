@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.Row
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class UpdateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The UpdateMapping" should "merge in updates" in {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution

@@ -16,16 +16,16 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 
 
-class TemplateMappingTest extends FlatSpec with Matchers {
+class TemplateMappingTest extends AnyFlatSpec with Matchers {
     "A TemplateMapping" should "work" in {
         val spec =
             """

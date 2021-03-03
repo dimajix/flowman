@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.spec
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Namespace
 
 
-class NamespaceTest extends FlatSpec with Matchers {
+class NamespaceTest extends AnyFlatSpec with Matchers {
     "A Namespace" should "be creatable from a spec" in {
         val spec =
             """

@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class SchemaUtilsTest extends FlatSpec with Matchers {
+class SchemaUtilsTest extends AnyFlatSpec with Matchers {
     "SchemaUtils.merge" should "merge two fields" in {
         SchemaUtils.merge(
             Field("f1", IntegerType, true),

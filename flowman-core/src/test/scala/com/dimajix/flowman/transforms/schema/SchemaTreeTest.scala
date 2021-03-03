@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.transforms.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
@@ -27,7 +27,7 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
 
 
-class SchemaTreeTest extends FlatSpec with Matchers {
+class SchemaTreeTest extends AnyFlatSpec with Matchers {
     import com.dimajix.flowman.transforms.schema.SchemaTree.implicits._
 
     "The SchemaTree" should "create the same schema via round-trip" in {

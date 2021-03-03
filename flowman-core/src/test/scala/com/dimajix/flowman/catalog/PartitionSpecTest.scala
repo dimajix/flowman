@@ -17,11 +17,11 @@
 package com.dimajix.flowman.catalog
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class PartitionSpecTest extends FlatSpec with Matchers {
+class PartitionSpecTest extends AnyFlatSpec with Matchers {
     "The PartitionSpec" should "provide a Hive compatible path" in {
         val partitionSpec = PartitionSpec(Map(
             "p1" -> "lala",

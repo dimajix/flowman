@@ -15,11 +15,11 @@
  */
 package com.dimajix.common
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class MapIgnoreCaseTest extends FlatSpec with Matchers {
+class MapIgnoreCaseTest extends AnyFlatSpec with Matchers {
     "The MapIgnoreCase" should "work" in {
         val map = MapIgnoreCase(
             "a" -> 1,

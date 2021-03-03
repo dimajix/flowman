@@ -17,18 +17,18 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.Row
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ExtendMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The SqlExtend" should "work" in {
         val df = spark.createDataFrame(Seq(
             ("col1", 12),

@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.model
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.types.ArrayValue
@@ -27,7 +27,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 
 
-class PartitionSchemaTest extends FlatSpec with Matchers {
+class PartitionSchemaTest extends AnyFlatSpec with Matchers {
     "The PartitionSchema" should "provide partition column names" in {
         val partitionColumns = Seq(
             PartitionField("p1", StringType),

@@ -17,12 +17,11 @@
 package com.dimajix.flowman.spec.relation
 
 import com.google.common.io.Resources
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -34,7 +33,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class GenericRelationTest extends FlatSpec with Matchers with LocalSparkSession {
+class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The GenericRelation" should "be parseable" in {
         val spec =
             """

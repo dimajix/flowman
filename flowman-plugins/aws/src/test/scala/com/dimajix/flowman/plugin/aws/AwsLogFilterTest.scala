@@ -20,13 +20,13 @@ import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.spi.LogFilter
 
 
-class AwsLogFilterTest extends FlatSpec with Matchers {
+class AwsLogFilterTest extends AnyFlatSpec with Matchers {
     "The AwsLogFilter" should "be loadable via ServiceLoader" in {
         val logFilters = ServiceLoader.load(classOf[LogFilter]).iterator().asScala.toSeq
         logFilters.count(_.isInstanceOf[AwsLogFilter]) should be (1)

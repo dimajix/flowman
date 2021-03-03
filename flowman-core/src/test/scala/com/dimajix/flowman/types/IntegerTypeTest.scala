@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class IntegerTypeTest extends FlatSpec with Matchers {
+class IntegerTypeTest extends AnyFlatSpec with Matchers {
     "A IntegerType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("int") should be(IntegerType)
         ObjectMapper.parse[FieldType]("integer") should be(IntegerType)

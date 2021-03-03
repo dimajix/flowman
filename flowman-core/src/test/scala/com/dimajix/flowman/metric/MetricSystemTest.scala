@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.metric
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
-class MetricSystemTest extends FlatSpec with Matchers {
+class MetricSystemTest extends AnyFlatSpec with Matchers {
     "The MetricSystem" should "return all metrics" in {
         val registry = new MetricSystem
 

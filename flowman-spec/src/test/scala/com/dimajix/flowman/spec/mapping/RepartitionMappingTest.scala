@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.functions.col
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -29,7 +29,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RepartitionMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class RepartitionMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "An RepartitionMapping" should "be parseable" in {
         val spec =
             """

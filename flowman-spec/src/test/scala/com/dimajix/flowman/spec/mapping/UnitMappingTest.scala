@@ -17,17 +17,17 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private var inputDf0 : DataFrame = _
     private var inputDf1 : DataFrame = _
 

@@ -16,12 +16,13 @@
 
 package com.dimajix.flowman
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 
-class SparkSessionTest extends FlatSpec with Matchers with LocalSparkSession {
+
+class SparkSessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A SparkSession" should "have configurable properties" in {
         spark.conf.set("spark.sql.prop1", "p1")
         spark.conf.get("spark.sql.prop1") should be ("p1")

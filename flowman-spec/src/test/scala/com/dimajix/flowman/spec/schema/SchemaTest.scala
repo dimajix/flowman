@@ -19,13 +19,13 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 
 
-class SchemaTest extends FlatSpec with Matchers {
+class SchemaTest extends AnyFlatSpec with Matchers {
     lazy val mapper = {
         val mapper = new ObjectMapper(new YAMLFactory())
         mapper.registerModule(DefaultScalaModule)

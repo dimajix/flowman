@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.execution
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Module
 
 
-class SessionTest extends FlatSpec with Matchers {
+class SessionTest extends AnyFlatSpec with Matchers {
     "A Session" should "be buildable" in {
         val session = Session.builder()
             .build()

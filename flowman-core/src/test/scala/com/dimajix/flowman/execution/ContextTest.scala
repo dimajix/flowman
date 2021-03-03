@@ -17,11 +17,11 @@
 package com.dimajix.flowman.execution
 
 import org.apache.velocity.exception.MethodInvocationException
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ContextTest extends FlatSpec with Matchers {
+class ContextTest extends AnyFlatSpec with Matchers {
     "Evaluation" should "work (1)" in {
         val context = RootContext.builder()
                 .withEnvironment(Map("env_1" -> "value_1"), SettingLevel.NONE)

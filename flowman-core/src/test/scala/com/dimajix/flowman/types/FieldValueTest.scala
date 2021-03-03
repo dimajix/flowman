@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class FieldValueTest extends FlatSpec with Matchers {
+class FieldValueTest extends AnyFlatSpec with Matchers {
     "A String" should "be deserializable as a SingleValue" in {
         val spec ="some_string"
         val value = ObjectMapper.parse[FieldValue](spec)

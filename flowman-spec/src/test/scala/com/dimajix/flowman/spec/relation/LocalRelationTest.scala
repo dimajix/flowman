@@ -22,22 +22,21 @@ import java.nio.file.Paths
 
 import org.apache.hadoop.fs.Path
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
-import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class LocalRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
+class LocalRelationTest extends AnyFlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
     "The LocalRelation" should "be able to create local directories" in {
         val outputPath = Paths.get(tempDir.toString, "csv", "test")
         val spec =

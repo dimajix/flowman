@@ -21,14 +21,14 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class FlattenTransformerTest extends FlatSpec with Matchers with LocalSparkSession {
+class FlattenTransformerTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The FlattenTransformer" should "work with nested schemas" in {
         val inputJson =
             """

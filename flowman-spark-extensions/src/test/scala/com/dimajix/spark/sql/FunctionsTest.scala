@@ -16,14 +16,14 @@
 
 package com.dimajix.spark.sql
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.sql.execution.ExtraStrategies
-import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.sql.functions._
+import com.dimajix.spark.testing.LocalSparkSession
 
-class FunctionsTest extends FlatSpec with Matchers with LocalSparkSession {
+class FunctionsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "count_records" should "work" in {
         ExtraStrategies.register(spark)
         val df = spark.createDataFrame(Seq((1,2), (3,4)))

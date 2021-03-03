@@ -19,10 +19,9 @@ package com.dimajix.flowman.spec.relation
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.common.No
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
@@ -30,7 +29,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class NullRelationTest extends FlatSpec with Matchers with LocalSparkSession {
+class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The NullRelation" should "support the full lifecycle" in {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution

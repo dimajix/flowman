@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -28,7 +28,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RebalanceMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class RebalanceMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "An RebalanceMapping" should "be parseable" in {
         val spec =
             """

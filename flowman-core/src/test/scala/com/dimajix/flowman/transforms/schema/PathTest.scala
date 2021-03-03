@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.transforms.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class PathTest extends FlatSpec with Matchers {
+class PathTest extends AnyFlatSpec with Matchers {
     "A Path" should "be constructible from a string" in {
         val path = Path("root")
         path.segments.size should be (1)

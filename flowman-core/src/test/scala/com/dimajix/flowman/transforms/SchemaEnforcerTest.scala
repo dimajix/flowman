@@ -23,13 +23,13 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
+class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A conforming schema" should "be generated for simple cases" in {
         val inputSchema = StructType(Seq(
             StructField("col1", StringType),

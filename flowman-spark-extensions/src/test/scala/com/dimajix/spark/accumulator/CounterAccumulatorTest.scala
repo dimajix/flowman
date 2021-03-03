@@ -16,11 +16,11 @@
 
 package com.dimajix.spark.accumulator
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class CounterAccumulatorTest extends FlatSpec with Matchers {
+class CounterAccumulatorTest extends AnyFlatSpec with Matchers {
     "The CounterAccumulator" should "accumulate individual values" in {
         val accumulator = new CounterAccumulator()
         accumulator.get("a") should be (None)

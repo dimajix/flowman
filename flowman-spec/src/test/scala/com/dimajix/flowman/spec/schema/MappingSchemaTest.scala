@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -27,7 +27,7 @@ import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
 
 
-class MappingSchemaTest extends FlatSpec with Matchers {
+class MappingSchemaTest extends AnyFlatSpec with Matchers {
     "A MappingSchema" should "resolve the correct schema" in {
         val spec =
             """

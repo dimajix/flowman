@@ -25,11 +25,11 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ColumnTreeTest extends FlatSpec with Matchers {
+class ColumnTreeTest extends AnyFlatSpec with Matchers {
     import com.dimajix.flowman.transforms.schema.ColumnTree.implicits._
 
     "The ColumnTree" should "create the same schema via round-trip" in {

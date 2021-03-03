@@ -19,11 +19,11 @@ package com.dimajix.flowman.templating
 import java.io.StringWriter
 
 import org.apache.velocity.exception.MethodInvocationException
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class VelocityTest extends FlatSpec with Matchers {
+class VelocityTest extends AnyFlatSpec with Matchers {
     private val engine = Velocity.newEngine()
     private val context = Velocity.newContext()
 

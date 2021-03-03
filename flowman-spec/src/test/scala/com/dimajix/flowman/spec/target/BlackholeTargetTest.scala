@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class BlackholeTargetTest extends FlatSpec with Matchers with LocalSparkSession{
+class BlackholeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession{
     "A Blackhole Target" should "be buildable" in {
         val spark = this.spark
 

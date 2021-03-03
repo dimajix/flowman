@@ -17,13 +17,14 @@
 package com.dimajix.flowman.types
 
 import java.math.BigDecimal
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class DecimalTypeTest extends FlatSpec with Matchers {
+class DecimalTypeTest extends AnyFlatSpec with Matchers {
     "A decimal type" should "be deserializable" in {
         val spec =
             """

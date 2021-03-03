@@ -20,15 +20,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.NoSuchConnectionException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class JdbcStateStoreTest extends FlatSpec with Matchers with BeforeAndAfter {
+class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter {
     var tempDir:Path = _
 
     before {

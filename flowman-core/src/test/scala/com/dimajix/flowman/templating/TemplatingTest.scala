@@ -21,8 +21,8 @@ import java.sql.Date
 import java.time.LocalDate
 import java.time.Month
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.util.UtcTimestamp
@@ -36,7 +36,7 @@ object TemplatingTest {
 }
 
 
-class TemplatingTest extends FlatSpec with Matchers {
+class TemplatingTest extends AnyFlatSpec with Matchers {
     private val engine = Velocity.newEngine()
     private val context = Velocity.newContext()
 

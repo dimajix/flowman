@@ -16,15 +16,15 @@
 
 package com.dimajix.flowman.metric
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
-class MetricBoardTest extends FlatSpec with Matchers {
+class MetricBoardTest extends AnyFlatSpec with Matchers {
     "A MetricBoard" should "return relabelled metrics" in  {
         val session = Session.builder()
             .withEnvironment("env_var", "env_value")

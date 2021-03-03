@@ -18,8 +18,8 @@ package com.dimajix.flowman.spec.dataset
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
@@ -58,7 +58,7 @@ object MappingDatasetTest {
     }
 }
 
-class MappingDatasetTest extends FlatSpec with Matchers with LocalSparkSession {
+class MappingDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The MappingDataset" should "work" in {
         val project = Project(
             name="test",

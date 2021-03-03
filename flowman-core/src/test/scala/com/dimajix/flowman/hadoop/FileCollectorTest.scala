@@ -21,8 +21,8 @@ import java.time.Month
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.types.RangeValue
@@ -30,7 +30,7 @@ import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.util.UtcTimestamp
 
 
-class FileCollectorTest extends FlatSpec with Matchers with BeforeAndAfterAll {
+class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
     var hadoopConf:org.apache.hadoop.conf.Configuration = _
     var fileSystem: HadoopFileSystem = _
     var workingDirectory:Path = _

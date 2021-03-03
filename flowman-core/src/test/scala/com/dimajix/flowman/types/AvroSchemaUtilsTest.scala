@@ -19,11 +19,11 @@ package com.dimajix.flowman.types
 import scala.collection.JavaConverters._
 
 import org.apache.avro.Schema.Type._
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class AvroSchemaUtilsTest extends FlatSpec with Matchers {
+class AvroSchemaUtilsTest extends AnyFlatSpec with Matchers {
     "AvroSchemaUtils" should "convert a Flowman schema of primitives to an Avro schema" in {
         val schema = Seq(
             Field("str_field", StringType, false),

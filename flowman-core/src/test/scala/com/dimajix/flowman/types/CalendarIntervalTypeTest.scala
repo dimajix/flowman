@@ -17,15 +17,15 @@
 package com.dimajix.flowman.types
 
 import org.apache.spark.sql.SparkShim
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 import com.dimajix.spark.SPARK_VERSION_MAJOR
 import com.dimajix.util.DateTimeUtils
 
 
-class CalendarIntervalTypeTest extends FlatSpec with Matchers {
+class CalendarIntervalTypeTest extends AnyFlatSpec with Matchers {
     "A CalendarIntervalType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("calendarinterval") should be(CalendarIntervalType)
     }

@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.schema
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
@@ -25,7 +25,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StringType
 
 
-class UnionSchemaTest extends FlatSpec with Matchers {
+class UnionSchemaTest extends AnyFlatSpec with Matchers {
     "A UnionSchema" should "work" in {
         val spec =
             """

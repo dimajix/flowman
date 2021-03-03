@@ -18,15 +18,15 @@ package com.dimajix.flowman.spec.schema
 
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.StringType
 
 
-class AvroSchemaTest extends FlatSpec with Matchers {
+class AvroSchemaTest extends AnyFlatSpec with Matchers {
     "An AvroSchema" should "be declarable inline" in {
         val spec =
             """

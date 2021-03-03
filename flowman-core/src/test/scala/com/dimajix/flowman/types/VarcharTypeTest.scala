@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class VarcharTypeTest extends FlatSpec with Matchers {
+class VarcharTypeTest extends AnyFlatSpec with Matchers {
     "A varchar type" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("varchar(14)") should be (VarcharType(14))
     }

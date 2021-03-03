@@ -16,11 +16,9 @@
 
 package com.dimajix.flowman.spec.job
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.verify
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -40,6 +38,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.types.StringType
+
 
 object GrabEnvironmentTarget {
     var environment:Map[String,Any] = Map()
@@ -62,7 +61,7 @@ class GrabEnvironmentTargetSpec extends TargetSpec {
 }
 
 
-class JobTest extends FlatSpec with Matchers with MockitoSugar {
+class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     "A Job" should "be deseializable from" in {
         val spec =
             """
@@ -76,7 +75,6 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
             """.stripMargin
 
         val module = Module.read.string(spec)
-        val session = Session.builder().build()
 
         val job = module.jobs("job")
         job should not be (null)
@@ -404,15 +402,16 @@ class JobTest extends FlatSpec with Matchers with MockitoSugar {
         val context = session.getContext(project)
 
         val metricSystem = executor.metrics
-        val metricSink = mock[MetricSink]
+        val metricSink = stub[MetricSink]
+        (metricSink.addBoard _).when(*,*).returns(Unit)
+        (metricSink.commit _).when(*,*).returns(Unit)
+        (metricSink.removeBoard _).when(*).returns(Unit)
+
         metricSystem.addSink(metricSink)
 
         val job = context.getJob(JobIdentifier("main"))
         job.labels should be (Map("job_label" -> "xyz"))
 
         session.runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
-        verify(metricSink).addBoard(any(), any())
-        verify(metricSink).commit(any(), any())
-        verify(metricSink).removeBoard(any())
     }
 }

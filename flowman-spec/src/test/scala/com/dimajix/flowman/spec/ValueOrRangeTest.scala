@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
@@ -25,7 +25,7 @@ import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class ValueOrRangeTest extends FlatSpec with Matchers {
+class ValueOrRangeTest extends AnyFlatSpec with Matchers {
     "A FieldValue" should "be readable from a single value" in {
         val spec =
             """

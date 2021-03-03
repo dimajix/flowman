@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -25,7 +25,7 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ProvidedMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class ProvidedMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The ProvidedMapping" should "work" in {
         val spec =
             """

@@ -30,14 +30,14 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.VarcharType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
 
-class SchemaUtilsTest extends FlatSpec with Matchers with LocalSparkSession with QueryTest {
+class SchemaUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
     "SchemaUtils.toLowerCase" should "convert all names to lower case" in {
         val schema = StructType(
             StructField("Name", StringType) ::

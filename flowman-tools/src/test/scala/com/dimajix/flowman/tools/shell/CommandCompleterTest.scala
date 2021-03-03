@@ -16,14 +16,12 @@
 
 package com.dimajix.flowman.tools.shell
 
-import scala.collection.JavaConverters._
-
 import org.jline.reader.Candidate
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class CommandCompleterTest extends FlatSpec with Matchers {
+class CommandCompleterTest extends AnyFlatSpec with Matchers {
     "The CommandCompleter" should "work" in {
         val completer = new CommandCompleter()
         val candidates = new java.util.LinkedList[Candidate]()

@@ -113,7 +113,8 @@ case class ExtractJsonMapping(
 
         Map(
             "main" -> mainResult,
-            "error" -> errorResult
+            "error" -> errorResult,
+            "cache" -> result
         )
     }
 

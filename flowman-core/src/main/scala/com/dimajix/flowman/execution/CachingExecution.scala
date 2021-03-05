@@ -138,9 +138,14 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         else
             df1
 
-        // Optionally cache the DataFrame
-        if (cacheLevel != null && cacheLevel != StorageLevel.NONE)
-            df2.values.foreach(_.persist(cacheLevel))
+        // Optionally cache the DataFrames
+        if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
+            // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
+            if (df2.keySet.contains("cache"))
+                df2("cache").persist(cacheLevel)
+            else
+                df2.values.foreach(_.persist(cacheLevel))
+        }
 
         df2.foreach { case (name,df) =>
             logger.debug(s"Instantiated mapping '${mapping.identifier}' output '$name' with schema\n ${df.schema.treeString}")

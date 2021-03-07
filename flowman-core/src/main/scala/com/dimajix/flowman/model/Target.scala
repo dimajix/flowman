@@ -76,6 +76,7 @@ object Target {
         after: Seq[TargetIdentifier]
     ) extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : TargetIdentifier = TargetIdentifier(name, project.map(_.name))
     }
 }
 
@@ -159,7 +160,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Returns an identifier for this target
      * @return
      */
-    override def identifier : TargetIdentifier = TargetIdentifier(name, project.map(_.name))
+    override def identifier : TargetIdentifier = instanceProperties.identifier
 
     /**
      * Returns an instance representing this target with the context

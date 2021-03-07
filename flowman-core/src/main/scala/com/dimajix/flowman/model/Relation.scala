@@ -18,6 +18,14 @@ package com.dimajix.flowman.model
 
 import java.util.Locale
 
+import com.dimajix.common.Trilean
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.SchemaUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
@@ -30,16 +38,6 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 import org.apache.spark.sql.types.StructType
-
-import com.dimajix.common.Trilean
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.model.Dataset.Properties
-import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 
 
 object Relation {
@@ -67,6 +65,7 @@ object Relation {
     )
     extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : RelationIdentifier = RelationIdentifier(name, project.map(_.name))
     }
 }
 
@@ -228,7 +227,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * Returns an identifier for this relation
      * @return
      */
-    override def identifier : RelationIdentifier = RelationIdentifier(name, project.map(_.name))
+    override def identifier : RelationIdentifier = instanceProperties.identifier
 
     /**
      * Returns a description for the relation

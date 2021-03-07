@@ -54,6 +54,7 @@ object Mapping {
         cache:StorageLevel
     ) extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : MappingIdentifier = MappingIdentifier(name, project.map(_.name))
     }
 }
 
@@ -156,7 +157,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * Returns an identifier for this mapping
      * @return
      */
-    override def identifier : MappingIdentifier = MappingIdentifier(name, project.map(_.name))
+    override def identifier : MappingIdentifier = instanceProperties.identifier
 
     /**
      * This method should return true, if the resulting dataframe should be broadcast for map-side joins

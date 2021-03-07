@@ -115,7 +115,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p1" -> "v1",
             "p2" -> "v2",
             "p3" -> 7,
-            "force" -> false)
+            "force" -> false,
+            "dryRun" -> false)
         )
 
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1", "p2" -> "vx")) shouldBe (Status.SUCCESS)
@@ -126,7 +127,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p1" -> "v1",
             "p2" -> "vx",
             "p3" -> 7,
-            "force" -> false)
+            "force" -> false,
+            "dryRun" -> false)
         )
     }
 
@@ -160,7 +162,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "project" -> ProjectWrapper(project),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> "2",
-            "force" -> false)
+            "force" -> false,
+            "dryRun" -> false)
         )
     }
 
@@ -193,7 +196,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "project" -> ProjectWrapper(project),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> 2,
-            "force" -> false)
+            "force" -> false,
+            "dryRun" -> false)
         )
     }
 
@@ -313,7 +317,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p1" -> "v1",
             "p2" -> "v1",
             "p3" -> "xxv1yy",
-            "force" -> false)
+            "force" -> false,
+            "dryRun" -> false)
         )
     }
 
@@ -364,7 +369,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p1" -> "v1",
             "p2" -> "v1",
             "p3" -> "xxv1yy",
-            "force" -> false)
+            "force" -> false,
+            "dryRun" -> false)
         )
     }
 

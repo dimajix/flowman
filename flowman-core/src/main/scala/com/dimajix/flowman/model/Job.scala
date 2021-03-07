@@ -387,13 +387,13 @@ final case class Job(
       * @param force
       * @return
       */
-    def execute(executor:Execution, phase:Phase, args:Map[String,String], targets:Seq[Regex]=Seq(".*".r), force:Boolean=false) : Status = {
+    def execute(executor:Execution, phase:Phase, args:Map[String,String], targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, dryRun:Boolean=false) : Status = {
         require(args != null)
         require(phase != null)
         require(args != null)
 
         val jobArgs = arguments(args)
         val jobRunner = new Runner(executor, new NullStateStore)
-        jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force)
+        jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force, dryRun)
     }
 }

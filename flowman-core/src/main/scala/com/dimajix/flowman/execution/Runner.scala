@@ -81,17 +81,17 @@ final class Runner(
       * @param phases
       * @return
       */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false) : Status = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)
 
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
 
-        withJobContext(job, args, force) { (jobContext, arguments) =>
+        withJobContext(job, args, force, dryRun) { (jobContext, arguments) =>
             withExecution(job) { execution =>
                 Status.ofAll(phases) { phase =>
-                    executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing)
+                    executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing, dryRun)
                 }
             }
         }
@@ -105,7 +105,7 @@ final class Runner(
      * @param phases
      * @return
      */
-    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false) : Status = {
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
         if (targets.nonEmpty) {
             val context = targets.head.context
             val job = Job.builder(context)
@@ -113,10 +113,10 @@ final class Runner(
                 .setTargets(targets.map(_.identifier))
                 .build()
 
-            withJobContext(job, force) { context =>
+            withJobContext(job, force, dryRun) { context =>
                 withExecution(job) { execution =>
                     Status.ofAll(phases) { phase =>
-                        executeJobPhase(execution, context, job, phase, Map(), Seq(".*".r), force, keepGoing)
+                        executeJobPhase(execution, context, job, phase, Map(), Seq(".*".r), force, keepGoing, dryRun)
                     }
                 }
             }
@@ -135,7 +135,7 @@ final class Runner(
      * @tparam T
      * @return
      */
-    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), force:Boolean=false)(fn:(Context,Map[String,Any]) => T) : T = {
+    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), force:Boolean=false, dryRun:Boolean=false)(fn:(Context,Map[String,Any]) => T) : T = {
         val arguments : Map[String,Any] = job.parameters.flatMap(p => p.default.map(d => p.name -> d)).toMap ++ args
         arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
 
@@ -143,6 +143,7 @@ final class Runner(
 
         val rootContext = RootContext.builder(job.context)
             .withEnvironment("force", force)
+            .withEnvironment("dryRun", dryRun)
             .withEnvironment("job", JobWrapper(job))
             .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
@@ -154,9 +155,10 @@ final class Runner(
         fn(jobContext, arguments)
     }
 
-    def withJobContext[T](job:Job, force:Boolean)(fn:Context => T) : T = {
+    def withJobContext[T](job:Job, force:Boolean, dryRun:Boolean)(fn:Context => T) : T = {
         val context = ScopeContext.builder(job.context)
             .withEnvironment("force", force)
+            .withEnvironment("dryRun", dryRun)
             .withEnvironment("job", JobWrapper(job))
             .build()
         fn(context)
@@ -183,8 +185,8 @@ final class Runner(
      * @tparam T
      * @return
      */
-    def withEnvironment[T](job:Job, phase:Phase, args:Map[String,Any]=Map(), force:Boolean=false)(fn:Environment => T) : T = {
-        withJobContext(job, args, force) { (jobContext,_) =>
+    def withEnvironment[T](job:Job, phase:Phase, args:Map[String,Any]=Map(), force:Boolean=false, dryRun:Boolean=false)(fn:Environment => T) : T = {
+        withJobContext(job, args, force, dryRun) { (jobContext,_) =>
             withPhaseContext(jobContext, phase) { context =>
                 fn(context.environment)
             }
@@ -209,7 +211,15 @@ final class Runner(
         paramNames.diff(argNames).foreach(p => throw new IllegalArgumentException(s"Required parameter '$p' not specified for job '${job.identifier}'"))
     }
 
-    private def executeJobPhase(execution: Execution, jobContext:Context, job:Job, phase:Phase, arguments:Map[String,Any], targets:Seq[Regex], force:Boolean, keepGoing:Boolean) : Status = {
+    private def executeJobPhase(
+                   execution: Execution,
+                   jobContext:Context,
+                   job:Job, phase:Phase,
+                   arguments:Map[String,Any],
+                   targets:Seq[Regex],
+                   force:Boolean,
+                   keepGoing:Boolean,
+                   dryRun:Boolean) : Status = {
         withPhaseContext(jobContext, phase) { context =>
             val title = s"$phase job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
             logger.info("")
@@ -226,10 +236,10 @@ final class Runner(
 
             withMetrics(execution.metrics, allMetrics) {
                 val startTime = Instant.now()
-                val status = recordJob(instance, phase, allHooks) { token =>
+                val status = recordJob(instance, phase, allHooks, dryRun) { token =>
                     try {
                         withWallTime(execution.metrics, job.metadata, phase) {
-                            executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing)
+                            executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing, dryRun)
                         }
                     }
                     catch {
@@ -269,14 +279,14 @@ final class Runner(
       * @param phase
       * @return
       */
-    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean) : Status = {
+    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean, dryRun:Boolean) : Status = {
         // Create target instance for state server
         val instance = target.instance
 
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
         val canSkip = !force && checkTarget(instance, phase)
 
-        recordTarget(instance, phase, jobToken) {
+        recordTarget(instance, phase, jobToken, dryRun) {
             logger.info("")
             logger.info(centerPad(s"$phase target '${target.identifier}'"))
 
@@ -294,7 +304,9 @@ final class Runner(
             else {
                 Try {
                     withWallTime(execution.metrics, target.metadata, phase) {
-                        target.execute(execution, phase)
+                        if (!dryRun) {
+                            target.execute(execution, phase)
+                        }
                     }
                 }
                 match {
@@ -320,7 +332,7 @@ final class Runner(
      * @param token
      * @return
      */
-    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean) : Status = {
+    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Status = {
         require(phase != null)
 
         val jobTargets = job.targets.map(t => context.getTarget(t))
@@ -333,7 +345,7 @@ final class Runner(
             target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
 
         executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
-            executeTargetPhase(execution, target, phase, token, force)
+            executeTargetPhase(execution, target, phase, token, force, dryRun)
         }
     }
 
@@ -345,7 +357,7 @@ final class Runner(
      * @param fn
      * @return
      */
-    private def recordJob(job:JobInstance, phase:Phase, hooks:Seq[Hook])(fn: RunnerJobToken => Status) : Status = {
+    private def recordJob(job:JobInstance, phase:Phase, hooks:Seq[Hook], dryRun:Boolean)(fn: RunnerJobToken => Status) : Status = {
         def startJob() : Seq[(JobListener, JobToken)] = {
             Seq((stateStore, stateStore.startJob(job, phase))) ++
             hooks.flatMap { hook =>
@@ -370,15 +382,20 @@ final class Runner(
             }
         }
 
-        val tokens = startJob()
-        withShutdownHook(finishJob(tokens, Status.FAILED)) {
-            val status = fn(RunnerJobToken(tokens))
-            finishJob(tokens, status)
-            status
+        if (dryRun) {
+            fn(RunnerJobToken(Seq()))
+        }
+        else {
+            val tokens = startJob()
+            withShutdownHook(finishJob(tokens, Status.FAILED)) {
+                val status = fn(RunnerJobToken(tokens))
+                finishJob(tokens, status)
+                status
+            }
         }
     }
 
-    private def recordTarget(target:TargetInstance, phase:Phase, job:RunnerJobToken)(fn: => Status) : Status = {
+    private def recordTarget(target:TargetInstance, phase:Phase, job:RunnerJobToken, dryRun:Boolean)(fn: => Status) : Status = {
         def startTarget() : Seq[(JobListener, TargetToken)] = {
             job.tokens.flatMap { case(listener,jobToken) =>
                 try {
@@ -403,11 +420,16 @@ final class Runner(
             }
         }
 
-        val tokens = startTarget()
-        withShutdownHook(finishTarget(tokens, Status.FAILED)) {
-            val status = fn
-            finishTarget(tokens, status)
-            status
+        if (dryRun) {
+            fn
+        }
+        else {
+            val tokens = startTarget()
+            withShutdownHook(finishTarget(tokens, Status.FAILED)) {
+                val status = fn
+                finishTarget(tokens, status)
+                status
+            }
         }
     }
 

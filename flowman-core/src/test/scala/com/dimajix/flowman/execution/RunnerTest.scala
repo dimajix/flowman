@@ -102,6 +102,7 @@ class RunnerTest extends AnyFlatSpec with MockFactory with Matchers with BeforeA
                 "job_env" -> "job",
                 "job" -> JobWrapper(job),
                 "force" -> false,
+                "dryRun" -> false,
                 "phase" -> "build",
                 "namespace" -> NamespaceWrapper(None)
             ))
@@ -186,6 +187,41 @@ class RunnerTest extends AnyFlatSpec with MockFactory with Matchers with BeforeA
             val runner = session.runner
             runner.executeJob(job, Seq(Phase.CREATE), targets=Seq("a.*".r)) should be(Status.SUCCESS)
         }
+    }
+
+    it should "not execute targets in dryMode" in {
+        def genTarget(name:String) : Context => Target = (ctx:Context) => {
+            val instance = TargetInstance("default", "default", name)
+            val target = mock[Target]
+            (target.name _).expects().anyNumberOfTimes().returns(name)
+            (target.before _).expects().anyNumberOfTimes().returns(Seq())
+            (target.after _).expects().anyNumberOfTimes().returns(Seq())
+            (target.phases _).expects().anyNumberOfTimes().returns(Lifecycle.ALL.toSet)
+            (target.metadata _).expects().anyNumberOfTimes().returns(Metadata(name=name, kind="target", category="target"))
+            (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
+            (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
+            (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier(name))
+            (target.instance _).expects().anyNumberOfTimes().returns(instance)
+            (target.dirty _).expects(*, Phase.CREATE).anyNumberOfTimes().returns(Yes)
+            (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+
+            target
+        }
+
+        val project = Project(
+            name = "default",
+            targets = Map("a" -> Template.of(genTarget("a")))
+        )
+
+        val session = Session.builder()
+            .withProject(project)
+            .build()
+        val job = Job.builder(session.getContext(session.project.get))
+            .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
+            .build()
+
+        val runner = session.runner
+        runner.executeJob(job, Seq(Phase.CREATE), dryRun = true) should be(Status.SUCCESS)
     }
 
     "The JdbcStateStore" should "work with empty jobs" in {

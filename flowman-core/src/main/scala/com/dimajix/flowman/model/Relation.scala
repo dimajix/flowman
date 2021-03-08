@@ -37,7 +37,8 @@ import org.apache.spark.sql.streaming.DataStreamReader
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
-import org.apache.spark.sql.types.StructType
+
+import com.dimajix.flowman.types.StructType
 
 
 object Relation {
@@ -134,6 +135,14 @@ trait Relation extends Instance {
     def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    def describe(execution:Execution) : StructType
+
+        /**
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
@@ -141,7 +150,7 @@ trait Relation extends Instance {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -164,7 +173,7 @@ trait Relation extends Instance {
       * @param schema
       * @return
       */
-    def readStream(execution:Execution, schema:Option[StructType]) : DataFrame = ???
+    def readStream(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink
@@ -248,6 +257,24 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     override def partitions : Seq[PartitionField] = Seq()
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    override def describe(execution:Execution) : StructType = {
+        if (fields.nonEmpty) {
+            // Use given fields if relation contains valid list of fields
+            StructType(fields)
+        }
+        else {
+            // Otherwise let Spark infer the schema
+            val df = read(execution, None)
+            StructType.of(df.schema)
+        }
+    }
+
+    /**
      * Creates a DataFrameReader which is already configured with the schema
      * @param execution
      * @return
@@ -312,15 +339,15 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * Creates a Spark schema from the list of fields.
      * @return
      */
-    protected def inputSchema : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField)))
+    protected def inputSchema : Option[org.apache.spark.sql.types.StructType] = {
+        schema.map(s => org.apache.spark.sql.types.StructType(s.fields.map(_.sparkField)))
     }
 
     /**
      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
      * @return
      */
-    protected def outputSchema : Option[StructType] = {
+    protected def outputSchema : Option[org.apache.spark.sql.types.StructType] = {
         schema.map(s => s.sparkSchema)
     }
 

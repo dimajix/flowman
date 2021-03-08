@@ -66,23 +66,23 @@ case class FileDataset(
     /**
       * Returns true if the data represented by this Dataset actually exists
       *
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor: Execution): Trilean = {
-        val file = executor.fs.file(location)
+    override def exists(execution: Execution): Trilean = {
+        val file = execution.fs.file(location)
         file.exists()
     }
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present
       *
-      * @param executor
+      * @param execution
       */
-    override def clean(executor: Execution): Unit = {
-        require(executor != null)
+    override def clean(execution: Execution): Unit = {
+        require(execution != null)
 
-        val file = executor.fs.file(location)
+        val file = execution.fs.file(location)
         if (file.exists()) {
             logger.info(s"Deleting directory '$location' of dataset '$name")
             file.delete( true)
@@ -92,14 +92,14 @@ case class FileDataset(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(executor: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
-        require(executor != null)
+    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+        require(execution != null)
 
-        val baseReader = executor.spark.read
+        val baseReader = execution.spark.read
             .options(options)
             .format(format)
 
@@ -108,7 +108,7 @@ case class FileDataset(
         // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
         // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
         // underlying format implementation
-        val providingClass = DataSource.lookupDataSource(format, executor.spark.sessionState.conf)
+        val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
         val df = providingClass.newInstance() match {
             case _: RelationProvider => reader.load(location.toString)
             case _: SchemaRelationProvider => reader.load(location.toString)
@@ -122,10 +122,10 @@ case class FileDataset(
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       */
-    override def write(executor: Execution, df: DataFrame, mode: OutputMode) : Unit = {
+    override def write(execution: Execution, df: DataFrame, mode: OutputMode) : Unit = {
         val outputDf = SchemaUtils.applySchema(df, schema.map(_.sparkSchema))
 
         outputDf.write
@@ -140,7 +140,7 @@ case class FileDataset(
       *
       * @return
       */
-    override def describe(executor:Execution) : Option[StructType] = {
+    override def describe(execution:Execution) : Option[StructType] = {
         schema.map(s => StructType(s.fields))
     }
 }

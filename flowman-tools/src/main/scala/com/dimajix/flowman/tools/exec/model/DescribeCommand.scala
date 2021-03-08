@@ -50,7 +50,9 @@ class DescribeCommand extends ActionCommand {
                 df.printSchema()
             }
             else {
-                relation.schema.foreach(_.printTree())
+                val execution = session.execution
+                val schema = relation.describe(execution)
+                schema.printTree()
             }
         } match {
             case Success(_) =>

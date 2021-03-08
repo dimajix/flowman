@@ -45,9 +45,9 @@ class ShowCommand extends ActionCommand {
     var columns: String = ""
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required=false)
     var limit: Int = 10
-    @Option(name="-nh", aliases=Array("--no-header"), usage="Print header", metaVar="<no_header>", required = false)
+    @Option(name="-nh", aliases=Array("--no-header"), usage="Print header", required = false)
     var noHeader: Boolean = false
-    @Option(name="-c", aliases=Array("--csv"), usage="Print data as csv", metaVar="<csv>", required = false)
+    @Option(name="-c", aliases=Array("--csv"), usage="Print data as csv", required = false)
     var csv: Boolean = false
     @Option(name="-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
     var partition: String = ""

@@ -104,15 +104,7 @@ case class ReadRelationMapping(
         }
         else {
             val relation = context.getRelation(this.relation)
-            if (relation.fields.nonEmpty) {
-                // Use given fields if relation contains valid list of fields
-                StructType(relation.fields)
-            }
-            else {
-                // Otherwise let Spark infer the schema
-                val df = relation.read(execution, None)
-                StructType.of(df.schema)
-            }
+            relation.describe(execution)
         }
 
         Map("main" -> schema)

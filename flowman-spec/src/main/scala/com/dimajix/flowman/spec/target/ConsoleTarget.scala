@@ -34,33 +34,37 @@ import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.dataset.MappingDataset
 import com.dimajix.flowman.spec.dataset.RelationDataset
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.ConsoleUtils
 
 
 object ConsoleTarget {
-    def apply(context: Context, dataset: Dataset, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+    def apply(context: Context, dataset: Dataset, limit:Int, columns:Seq[String], header:Boolean, csv:Boolean) : ConsoleTarget = {
         new ConsoleTarget(
             Target.Properties(context),
             dataset,
             limit,
-            true,
+            header,
+            csv,
             columns
         )
     }
-    def apply(context: Context, output: MappingOutputIdentifier, limit:Int, columns:Seq[String]) : ConsoleTarget = {
+    def apply(context: Context, output: MappingOutputIdentifier, limit:Int, columns:Seq[String], header:Boolean, csv:Boolean) : ConsoleTarget = {
         new ConsoleTarget(
             Target.Properties(context),
             MappingDataset(context, output),
             limit,
-            true,
+            header,
+            csv,
             columns
         )
     }
-    def apply(context: Context, relation: RelationIdentifier, limit:Int, columns:Seq[String], partitions:Map[String,SingleValue]=Map()) : ConsoleTarget = {
+    def apply(context: Context, relation: RelationIdentifier, limit:Int, columns:Seq[String], partitions:Map[String,SingleValue]=Map(), header:Boolean, csv:Boolean) : ConsoleTarget = {
         new ConsoleTarget(
             Target.Properties(context),
             RelationDataset(context, relation, partitions),
             limit,
-            true,
+            header,
+            csv,
             columns
         )
     }
@@ -70,6 +74,7 @@ case class ConsoleTarget(
     dataset:Dataset,
     limit:Int,
     header:Boolean,
+    csv:Boolean,
     columns:Seq[String]
 ) extends BaseTarget {
     /**
@@ -117,11 +122,7 @@ case class ConsoleTarget(
         else
             dfIn
 
-        val result = dfOut.limit(limit).collect()
-        if (header) {
-            println(dfOut.columns.mkString(","))
-        }
-        result.foreach(record => println(record.mkString(",")))
+        ConsoleUtils.showDataFrame(dfOut, limit, csv)
     }
 }
 
@@ -131,6 +132,7 @@ class ConsoleTargetSpec extends TargetSpec {
     @JsonProperty(value="input", required=true) private var input:DatasetSpec = _
     @JsonProperty(value="limit", required=false) private var limit:String = "100"
     @JsonProperty(value="header", required=false) private var header:String = "true"
+    @JsonProperty(value="header", required=false) private var csv:String = "true"
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq()
 
     override def instantiate(context: Context): Target = {
@@ -139,6 +141,7 @@ class ConsoleTargetSpec extends TargetSpec {
             input.instantiate(context),
             context.evaluate(limit).toInt,
             context.evaluate(header).toBoolean,
+            context.evaluate(csv).toBoolean,
             columns.map(context.evaluate)
         )
     }

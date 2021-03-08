@@ -14,12 +14,41 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools
+package com.dimajix.flowman.util
 
+import java.io.OutputStreamWriter
+
+import com.univocity.parsers.csv.CsvWriter
+import com.univocity.parsers.csv.CsvWriterSettings
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.DataFrame
 
 
 object ConsoleUtils {
+    def showDataFrame(df:DataFrame, limit: Int = 100, csv:Boolean=false) : Unit = {
+        if (csv) {
+            val result = df.limit(limit).collect()
+            val writer = new OutputStreamWriter(Console.out)
+            try {
+                val csvWriter = new CsvWriter(writer, new CsvWriterSettings())
+                csvWriter.writeHeaders(df.columns: _*)
+                result.foreach { record =>
+                    val fields = record.toSeq.map {
+                        case null => null
+                        case f => f.toString
+                    }
+                    csvWriter.writeRow(fields: _*)
+                }
+            }
+            finally {
+                writer.flush()
+            }
+        }
+        else {
+            df.show(limit)
+        }
+    }
+
     def showTable(records:Seq[Product], columns:Seq[String]) : Unit = {
         println(showTableString(records, columns))
     }

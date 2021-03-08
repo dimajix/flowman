@@ -45,13 +45,17 @@ class ShowCommand extends ActionCommand {
     var columns: String = ""
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required=false)
     var limit: Int = 10
+    @Option(name="-nh", aliases=Array("--no-header"), usage="Print header", metaVar="<no_header>", required = false)
+    var noHeader: Boolean = false
+    @Option(name="-c", aliases=Array("--csv"), usage="Print data as csv", metaVar="<csv>", required = false)
+    var csv: Boolean = false
     @Option(name="-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
     var partition: String = ""
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         val columns = ParserUtils.parseDelimitedList(this.columns)
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition).map { case(k,v) => (k,SingleValue(v)) }
-        val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns, partition)
+        val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns, partition, !noHeader, csv)
 
         Try {
             task.execute(session.execution, Phase.BUILD)

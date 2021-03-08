@@ -45,11 +45,15 @@ class ShowCommand extends ActionCommand {
     var columns: String = ""
     @Option(name="-n", aliases=Array("--limit"), usage="Specifies maximum number of rows to print", metaVar="<limit>", required = false)
     var limit: Int = 10
+    @Option(name="-nh", aliases=Array("--no-header"), usage="Print header", metaVar="<no_header>", required = false)
+    var noHeader: Boolean = false
+    @Option(name="-c", aliases=Array("--csv"), usage="Print data as csv", metaVar="<csv>", required = false)
+    var csv: Boolean = false
 
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         val columns = ParserUtils.parseDelimitedList(this.columns)
-        val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns)
+        val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns, !noHeader, csv)
 
         Try {
             task.execute(session.execution, Phase.BUILD)

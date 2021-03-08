@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobState
+import com.dimajix.flowman.util.ConsoleUtils
 
 
 class ConsoleUtilsTest extends AnyFlatSpec with Matchers {

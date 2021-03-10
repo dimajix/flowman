@@ -36,7 +36,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class LocalRelationTest extends AnyFlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
+class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The LocalRelation" should "be able to create local directories" in {
         val outputPath = Paths.get(tempDir.toString, "csv", "test")
         val spec =

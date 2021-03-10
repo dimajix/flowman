@@ -9,10 +9,17 @@ write operations.
 relations:
   empty:
     kind: null
+    schema:
+      kind: embedded
+      fields:
+        - name: id
+          type: string
+        - name: amount
+          type: double
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(string)*: `null`
+* `kind` **(mandatory)** *(string)*: `null` or `empty`
 
 * `schema` **(optional)** *(schema)* *(default: empty)*:
   Explicitly specifies the schema of the null relation. 

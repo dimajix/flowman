@@ -58,7 +58,7 @@ abstract class Context {
     def namespace : Option[Namespace]
 
     /**
-      * Returns the project associated with this context. Can be null
+      * Returns the project associated with this context. Can be [[None]]
       * @return
       */
     def project : Option[Project]
@@ -135,7 +135,7 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getMapping(identifier: MappingIdentifier) : Mapping
+    def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true) : Mapping
 
     /**
       * Returns a specific named Relation. The RelationType can either be inside this Contexts project or in a different
@@ -144,7 +144,7 @@ abstract class Context {
       * @param identifier
       * @return
       */
-    def getRelation(identifier: RelationIdentifier): Relation
+    def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation
 
     /**
       * Returns a specific named Target. The TargetType can either be inside this Contexts project or in a different
@@ -163,6 +163,12 @@ abstract class Context {
       * @return
       */
     def getJob(identifier: JobIdentifier): Job
+
+    /**
+     * Returns the list of active profile names
+     * @return
+     */
+    def profiles : Set[String]
 
     /**
       * Returns all configuration options as a key-value map

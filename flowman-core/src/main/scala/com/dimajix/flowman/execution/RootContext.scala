@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.execution.ProjectContext.Builder
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
@@ -43,8 +44,10 @@ import com.dimajix.flowman.model.Template
 
 
 object RootContext {
-    class Builder private[RootContext](namespace:Option[Namespace], profiles:Seq[String], parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
+    class Builder private[RootContext](namespace:Option[Namespace], profiles:Set[String], parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
         private var projectResolver:Option[String => Option[Project]] = None
+        private var overrideMappings:Map[MappingIdentifier, Template[Mapping]] = Map()
+        private var overrideRelations:Map[RelationIdentifier, Template[Relation]] = Map()
 
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
 
@@ -58,24 +61,50 @@ object RootContext {
             this
         }
 
+        /**
+         * Add extra mappings, which potentially override existing project mappings
+         * @param mappings
+         * @return
+         */
+        def overrideMappings(mappings:Map[MappingIdentifier,Template[Mapping]]) : Builder = {
+            if (mappings.keySet.exists(_.project.isEmpty))
+                throw new IllegalArgumentException("MappingIdentifiers need to contain valid project for overriding")
+            overrideMappings = overrideMappings ++ mappings
+            this
+        }
+
+        /**
+         * Adds extra relations, which potentially override existing project relations
+         * @param relations
+         * @return
+         */
+        def overrideRelations(relations:Map[RelationIdentifier,Template[Relation]]) : Builder = {
+            if (relations.keySet.exists(_.project.isEmpty))
+                throw new IllegalArgumentException("RelationIdentifiers need to contain valid project for overriding")
+            overrideRelations = overrideRelations ++ relations
+            this
+        }
+
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : RootContext = {
-            new RootContext(namespace, projectResolver, profiles, env, config, connections)
+            new RootContext(namespace, projectResolver, profiles, env, config, connections, overrideMappings, overrideRelations)
         }
     }
 
-    def builder() = new Builder(None, Seq())
-    def builder(namespace:Option[Namespace], profiles:Seq[String]) = new Builder(namespace, profiles)
-    def builder(parent:Context) = new Builder(parent.namespace, Seq(), parent)
+    def builder() = new Builder(None, Set())
+    def builder(namespace:Option[Namespace], profiles:Set[String]) = new Builder(namespace, profiles)
+    def builder(parent:Context) = new Builder(parent.namespace, Set(), parent)
 }
 
 
-class RootContext private[execution](
+final class RootContext private[execution](
     _namespace:Option[Namespace],
     projectResolver:Option[String => Option[Project]],
-    profiles:Seq[String],
+    _profiles:Set[String],
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
-    nonNamespaceConnections:Map[String, Template[Connection]]
+    extraConnections:Map[String, Template[Connection]],
+    overrideMappings:Map[MappingIdentifier, Template[Mapping]],
+    overrideRelations:Map[RelationIdentifier, Template[Relation]]
 ) extends AbstractContext(
     _env + ("namespace" -> (NamespaceWrapper(_namespace) -> SettingLevel.SCOPE_OVERRIDE.level)),
     _config
@@ -98,10 +127,18 @@ class RootContext private[execution](
     override def project: Option[Project] = None
 
     /**
-      * Returns the root context in a hierarchy of connected contexts
+      * Returns the root context in a hierarchy of connected contexts. In the case of a [[RootContext]], the
+      * context itself is returned.
       * @return
       */
     override def root : RootContext = this
+
+    /**
+     * Returns the list of active profile names
+     *
+     * @return
+     */
+    override def profiles: Set[String] = _profiles
 
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this execution
@@ -109,27 +146,28 @@ class RootContext private[execution](
       * @param identifier
       * @return
       */
-    override def getMapping(identifier: MappingIdentifier): Mapping = {
+    override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
             throw new NoSuchMappingException(identifier)
         val child = getProjectContext(identifier.project.get)
-        child.getMapping(MappingIdentifier(identifier.name, None))
+        child.getMapping(identifier, allowOverrides)
     }
+
     /**
       * Returns a fully qualified relation from a project belonging to the namespace of this execution
       *
       * @param identifier
       * @return
       */
-    override def getRelation(identifier: RelationIdentifier): Relation = {
+    override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.isEmpty)
             throw new NoSuchRelationException(identifier)
         val child = getProjectContext(identifier.project.get)
-        child.getRelation(RelationIdentifier(identifier.name, None))
+        child.getRelation(identifier, allowOverrides)
     }
 
     /**
@@ -144,7 +182,7 @@ class RootContext private[execution](
         if (identifier.project.isEmpty)
             throw new NoSuchTargetException(identifier)
         val child = getProjectContext(identifier.project.get)
-        child.getTarget(TargetIdentifier(identifier.name, None))
+        child.getTarget(identifier)
     }
 
     /**
@@ -158,7 +196,7 @@ class RootContext private[execution](
 
         if (identifier.project.isEmpty) {
             connections.getOrElseUpdate(identifier.name,
-                nonNamespaceConnections.get(identifier.name)
+                extraConnections.get(identifier.name)
                     .orElse(
                         namespace
                             .flatMap(_.connections.get(identifier.name))
@@ -169,7 +207,7 @@ class RootContext private[execution](
         }
         else {
             val child = getProjectContext(identifier.project.get)
-            child.getConnection(ConnectionIdentifier(identifier.name, None))
+            child.getConnection(identifier)
         }
     }
 
@@ -185,7 +223,7 @@ class RootContext private[execution](
         if (identifier.project.isEmpty)
             throw new NoSuchJobException(identifier)
         val child = getProjectContext(identifier.project.get)
-        child.getJob(JobIdentifier(identifier.name, None))
+        child.getJob(identifier)
     }
 
     /**
@@ -211,8 +249,12 @@ class RootContext private[execution](
                 }
             }
 
+        // Apply overrides
+        builder.overrideMappings(overrideMappings.filter(_._1.project.contains(project.name)).map(kv => (kv._1.name, kv._2)))
+        builder.overrideRelations(overrideRelations.filter(_._1.project.contains(project.name)).map(kv => (kv._1.name, kv._2)))
+
         val context = builder.withEnvironment(project.environment)
-            .withConfig(project.config.toMap)
+            .withConfig(project.config)
             .build()
 
         _children.update(project.name, context)

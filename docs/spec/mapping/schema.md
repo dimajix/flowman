@@ -5,10 +5,10 @@ and also performs type conversions. This corresponds to a simple SQL `SELECT` wi
 `CAST` expressions.
 
 ## Example
-```
+```yaml
 mappings:
   partial_facts:
-    kind: conform
+    kind: schema
     input: facts
     columns:
       id: String
@@ -16,8 +16,23 @@ mappings:
       wind_speed: Float
 ```
 
+```yaml
+mappings:
+  partial_facts:
+    kind: schema
+    input: facts
+    schema:
+      kind: embedded
+      fields:
+        - name: id
+          type: string
+        - name: amount
+          type: double
+```
+
+
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `conform`
+* `kind` **(mandatory)** *(type: string)*: `schema`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.
@@ -37,7 +52,7 @@ Specifies the name of the input mapping to be filtered.
 * `columns` **(optional)** *(type: map:string)*:
 Specifies the list of column names (key) with their type (value)
 
-* `schema` **(optional)** *(type: string)*:
+* `schema` **(optional)** *(type: schema)*:
 As an alternative of specifying a list of columns you can also directly specify a schema.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:

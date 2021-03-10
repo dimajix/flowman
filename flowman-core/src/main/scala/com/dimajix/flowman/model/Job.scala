@@ -110,7 +110,7 @@ object Job {
         labels: Map[String, String],
         description:Option[String]
    ) extends Instance.Properties[Properties] {
-        override val kind : String = "batch"
+        override val kind : String = "job"
         override def withName(name: String): Properties = copy(name=name)
    }
 

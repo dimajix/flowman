@@ -43,18 +43,20 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
   */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
-    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
-    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
+    new JsonSubTypes.Type(name = "empty", value = classOf[NullRelationSpec]),
+    new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "generic", value = classOf[GenericRelationSpec]),
     new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveUnionTable", value = classOf[HiveUnionTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
-    new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
+    new JsonSubTypes.Type(name = "mock", value = classOf[MockRelationSpec]),
+    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
+    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
+    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None

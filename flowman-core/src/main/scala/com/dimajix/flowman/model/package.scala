@@ -23,10 +23,12 @@ package object model {
     type RelationIdentifier = Identifier[Relation]
     type TargetIdentifier = Identifier[Target]
     type JobIdentifier = Identifier[Job]
+    type TestIdentifier = Identifier[Test]
 
     object MappingIdentifier extends IdentifierFactory[Mapping]
     object ConnectionIdentifier extends IdentifierFactory[Connection]
     object RelationIdentifier extends IdentifierFactory[Relation]
     object TargetIdentifier extends IdentifierFactory[Target]
     object JobIdentifier extends IdentifierFactory[Job]
+    object TestIdentifier extends IdentifierFactory[Test]
 }

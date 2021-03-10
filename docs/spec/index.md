@@ -35,6 +35,7 @@ Flowman has a couple of different main entities, which are documented seperately
    dataset/index
    schema/index
    connection/index
+   test/index
    metric/index
    hooks/index
 ```

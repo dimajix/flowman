@@ -25,6 +25,7 @@ import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
@@ -103,6 +104,15 @@ abstract class Execution {
 
         val instances = instantiate(mapping)
         instances(output)
+    }
+
+    def assert(assertion:Assertion) : Boolean = {
+        val context = assertion.context
+        val inputs = assertion.inputs
+            .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
+            .toMap
+
+        assertion.execute(this, inputs)
     }
 
     /**

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Identifier
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Mapping
@@ -45,14 +46,36 @@ object ProjectContext {
         require(project != null)
 
         override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
+        private var overrideMappings:Map[String, Template[Mapping]] = Map()
+        private var overrideRelations:Map[String, Template[Relation]] = Map()
 
         override def withProfile(profile:Profile) : Builder = {
             withProfile(profile, SettingLevel.PROJECT_PROFILE)
             this
         }
 
+        /**
+         * Add extra mappings, which potentially override existing project mappings
+         * @param mappings
+         * @return
+         */
+        def overrideMappings(mappings:Map[String,Template[Mapping]]) : Builder = {
+            overrideMappings = overrideMappings ++ mappings
+            this
+        }
+
+        /**
+         * Adds extra relations, which potentially override existing project relations
+         * @param relations
+         * @return
+         */
+        def overrideRelations(relations:Map[String,Template[Relation]]) : Builder = {
+            overrideRelations = overrideRelations ++ relations
+            this
+        }
+
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : ProjectContext = {
-            new ProjectContext(parent, project, env, config, connections)
+            new ProjectContext(parent, project, env, config, connections, overrideMappings, overrideRelations)
         }
     }
 
@@ -66,18 +89,22 @@ object ProjectContext {
   * @param parent
   * @param _project
   */
-class ProjectContext private[execution](
+final class ProjectContext private[execution](
     parent:Context,
     _project:Project,
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
-    nonProjectConnections:Map[String, Template[Connection]]
+    extraConnections:Map[String, Template[Connection]],
+    overrideMappingTemplates:Map[String, Template[Mapping]],
+    overrideRelationTemplates:Map[String, Template[Relation]]
 ) extends AbstractContext(
     _env + ("project" -> ((ProjectWrapper(_project), SettingLevel.SCOPE_OVERRIDE.level))),
     _config)
 {
     private val mappings = mutable.Map[String,Mapping]()
+    private val overrideMappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
+    private val overrideRelations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
     private val jobs = mutable.Map[String,Job]()
@@ -88,6 +115,10 @@ class ProjectContext private[execution](
       */
     override def namespace : Option[Namespace] = parent.namespace
 
+    /**
+     * Returns the project associated with this context. Can be [[None]]
+     * @return
+     */
     override def project : Option[Project] = Some(_project)
 
     /**
@@ -97,26 +128,39 @@ class ProjectContext private[execution](
     override def root : RootContext = parent.root
 
     /**
+     * Returns the list of active profile names
+     *
+     * @return
+     */
+    override def profiles: Set[String] = parent.profiles
+
+    /**
       * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
-    override def getMapping(identifier: MappingIdentifier): Mapping = {
+    override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
+        def findOverride() = {
+            if (allowOverrides) {
+                findOrInstantiate(identifier, overrideMappingTemplates, overrideMappings)
+            }
+            else {
+                None
+            }
+        }
+        def find() = {
+            findOrInstantiate(identifier, _project.mappings, mappings)
+        }
+
         if (identifier.project.forall(_ == _project.name)) {
-            mappings.getOrElseUpdate(identifier.name,
-                _project.mappings
-                    .getOrElse(identifier.name,
-                        throw new NoSuchMappingException(identifier)
-                    )
-                    .instantiate(this)
-            )
+            findOverride().orElse(find()).getOrElse(throw new NoSuchMappingException(identifier))
         }
         else {
-            parent.getMapping(identifier)
+            parent.getMapping(identifier, allowOverrides)
         }
     }
 
@@ -127,20 +171,26 @@ class ProjectContext private[execution](
       * @param identifier
       * @return
       */
-    override def getRelation(identifier: RelationIdentifier): Relation = {
+    override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
+        def findOverride() = {
+            if (allowOverrides) {
+                findOrInstantiate(identifier, overrideRelationTemplates, overrideRelations)
+            }
+            else {
+                None
+            }
+        }
+        def find() = {
+            findOrInstantiate(identifier, _project.relations, relations)
+        }
+
         if (identifier.project.forall(_ == _project.name)) {
-            relations.getOrElseUpdate(identifier.name,
-                _project.relations
-                    .getOrElse(identifier.name,
-                        throw new NoSuchRelationException(identifier)
-                    )
-                    .instantiate(this)
-            )
+            findOverride().orElse(find()).getOrElse(throw new NoSuchRelationException(identifier))
         }
         else {
-            parent.getRelation(identifier)
+            parent.getRelation(identifier, allowOverrides)
         }
     }
 
@@ -177,29 +227,32 @@ class ProjectContext private[execution](
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.forall(_ == _project.name)) {
+        if (identifier.project.contains(_project.name)) {
+            // Case 1: Project identifier explicitly set. Only look inside project
             connections.getOrElseUpdate(identifier.name,
-                if (identifier.project.nonEmpty) {
-                    // Explicit project identifier specified, only look in project connections
-                    _project.connections
-                        .getOrElse(identifier.name,
-                            throw new NoSuchConnectionException(identifier)
-                        )
-                        .instantiate(this)
-                }
-                else {
-                    // No project specifier given, first look into non-project connections, then try project connections
-                    nonProjectConnections.getOrElse(identifier.name,
-                        _project.connections
-                            .getOrElse(identifier.name,
-                                throw new NoSuchConnectionException(identifier)
-                            )
+                extraConnections.getOrElse(identifier.name,
+                    _project.connections.getOrElse(identifier.name,
+                        throw new NoSuchConnectionException(identifier)
                     )
-                    .instantiate(this)
-                }
+                )
+                .instantiate(this)
+            )
+        }
+        else if (identifier.project.isEmpty) {
+            // Case 2: Project identifier not set. Look in project and in parent.
+            connections.getOrElse(identifier.name,
+                extraConnections.get(identifier.name)
+                    .orElse(_project.connections.get(identifier.name))
+                    .map { t =>
+                        val instance = t.instantiate(this)
+                        connections.update(identifier.name, instance)
+                        instance
+                    }
+                    .getOrElse(parent.getConnection(identifier))
             )
         }
         else {
+            // Case 3: Project identifier set to different project
             parent.getConnection(identifier)
         }
     }
@@ -227,4 +280,17 @@ class ProjectContext private[execution](
             parent.getJob(identifier)
         }
     }
+
+    private def findOrInstantiate[T](identifier:Identifier[T], templates:Map[String,Template[T]], cache:mutable.Map[String,T]) = {
+        val name = identifier.name
+        cache.get(name)
+            .orElse {
+                val m = templates
+                    .get(name)
+                    .map(_.instantiate(this))
+                m.foreach(m => cache.update(name, m))
+                m
+            }
+    }
+
 }

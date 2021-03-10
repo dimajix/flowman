@@ -1,0 +1,221 @@
+/*
+ * Copyright 2021 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.dimajix.flowman.spec.relation
+
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.common.No
+import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.RootContext
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.testing.LocalSparkSession
+
+
+class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession{
+    "A MockRelation" should "be parsable" in {
+        val spec =
+            """
+              |relations:
+              |  empty:
+              |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |
+              |  mock:
+              |    kind: mock
+              |    relation: empty
+              |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+
+        val mapping = context.getRelation(RelationIdentifier("mock")).asInstanceOf[MockRelation]
+        mapping shouldBe a[MockRelation]
+
+        mapping.category should be ("relation")
+        mapping.kind should be ("mock")
+        mapping.relation should be (RelationIdentifier("empty"))
+    }
+
+    it should "support create, write and destroy" in {
+        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelation = mock[Relation]
+        val mockRelationTemplate = mock[Template[Relation]]
+
+        val project = Project(
+            "my_project",
+            relations = Map(
+                "base" -> baseRelationTemplate,
+                "mock" -> mockRelationTemplate
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.getContext(project)
+        val executor = session.execution
+
+        val mockRelation = MockRelation(
+            Relation.Properties(context, "mock"),
+            RelationIdentifier("base")
+        )
+
+        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        val relation = context.getRelation(RelationIdentifier("mock"))
+        relation shouldBe a[MockRelation]
+        relation.category should be ("relation")
+
+        relation.requires should be (Set())
+        relation.provides should be (Set())
+        relation.resources(Map()) should be (Set())
+
+        // Initial state
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
+
+        // Create
+        relation.create(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+
+        // Write
+        relation.write(executor, spark.emptyDataFrame)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (Yes)
+
+        // Truncate
+        relation.truncate(executor)
+        relation.exists(executor) should be (Yes)
+        relation.loaded(executor, Map()) should be (No)
+
+        // Destroy
+        relation.destroy(executor)
+        relation.exists(executor) should be (No)
+        relation.loaded(executor, Map()) should be (No)
+    }
+
+    it should "read empty DataFrames" in {
+        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelation = mock[Relation]
+        val mockRelationTemplate = mock[Template[Relation]]
+
+        val project = Project(
+            "my_project",
+            relations = Map(
+                "base" -> baseRelationTemplate,
+                "mock" -> mockRelationTemplate
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.getContext(project)
+        val executor = session.execution
+
+        val mockRelation = MockRelation(
+            Relation.Properties(context, "mock"),
+            RelationIdentifier("base")
+        )
+        val schema = EmbeddedSchema(
+            Schema.Properties(context),
+            fields = Seq(
+                Field("str_col", StringType),
+                Field("int_col", IntegerType)
+            )
+        )
+
+        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        val relation = context.getRelation(RelationIdentifier("mock"))
+
+        (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
+        (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
+        relation.schema should be (Some(schema))
+
+        (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
+        relation.partitions should be (Seq())
+        relation.fields should be (schema.fields)
+
+        (baseRelation.describe _).expects(executor).anyNumberOfTimes().returns(new StructType(schema.fields))
+        relation.describe(executor) should be (new StructType(schema.fields))
+    }
+
+    it should "work nicely with overrides" in {
+        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelation = mock[Relation]
+        val mockRelationTemplate = mock[Template[Relation]]
+
+        val project = Project(
+            "my_project",
+            relations = Map(
+                "base" -> baseRelationTemplate,
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = RootContext.builder(session.context)
+            .overrideRelations(Map(
+                RelationIdentifier("base", "my_project") -> mockRelationTemplate
+            ))
+            .build()
+            .getProjectContext(project)
+        val executor = session.execution
+
+        val mockRelation = MockRelation(
+            Relation.Properties(context, "base"),
+            RelationIdentifier("base")
+        )
+        val schema = EmbeddedSchema(
+            Schema.Properties(context),
+            fields = Seq(
+                Field("str_col", StringType),
+                Field("int_col", IntegerType)
+            )
+        )
+
+        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        val relation = context.getRelation(RelationIdentifier("base"))
+
+        (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
+        (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
+        relation.schema should be (Some(schema))
+
+        (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
+        relation.partitions should be (Seq())
+        relation.fields should be (schema.fields)
+
+        (baseRelation.describe _).expects(executor).anyNumberOfTimes().returns(new StructType(schema.fields))
+        relation.describe(executor) should be (new StructType(schema.fields))
+
+    }
+}

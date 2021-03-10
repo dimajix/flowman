@@ -85,7 +85,7 @@ object ScopeContext {
 }
 
 
-class ScopeContext(
+final class ScopeContext(
     parent:Context,
     fullEnv:Map[String,(Any, Int)],
     fullConfig:Map[String,(String, Int)],
@@ -101,9 +101,31 @@ class ScopeContext(
     private val connections = mutable.Map[String,Connection]()
     private val jobs = mutable.Map[String,Job]()
 
+    /**
+     * Returns the namespace associated with this context. Can be null
+     * @return
+     */
     override def namespace: Option[Namespace] = parent.namespace
+
+    /**
+     * Returns the project associated with this context. Can be [[None]]
+     * @return
+     */
     override def project: Option[Project] = parent.project
+
+    /**
+     * Returns the root context in a hierarchy of connected contexts
+     * @return
+     */
     override def root: RootContext = parent.root
+
+    /**
+     * Returns the list of active profile names
+     *
+     * @return
+     */
+    override def profiles: Set[String] = parent.profiles
+
     override def getConnection(identifier: ConnectionIdentifier): Connection = {
         if (identifier.project.isEmpty) {
             connections.get(identifier.name) match {
@@ -121,7 +143,7 @@ class ScopeContext(
             parent.getConnection(identifier)
         }
     }
-    override def getMapping(identifier: MappingIdentifier): Mapping = {
+    override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         if (identifier.project.isEmpty) {
             mappings.get(identifier.name) match {
                 case Some(result) => result
@@ -130,15 +152,15 @@ class ScopeContext(
                         val result = spec.instantiate(this)
                         mappings.put(identifier.name, result)
                         result
-                    case None => parent.getMapping(identifier)
+                    case None => parent.getMapping(identifier, allowOverrides)
                 }
             }
         }
         else {
-            parent.getMapping(identifier)
+            parent.getMapping(identifier, allowOverrides)
         }
     }
-    override def getRelation(identifier: RelationIdentifier): Relation = {
+    override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         if (identifier.project.isEmpty) {
             relations.get(identifier.name) match {
                 case Some(result) => result
@@ -147,12 +169,12 @@ class ScopeContext(
                         val result = spec.instantiate(this)
                         relations.put(identifier.name, result)
                         result
-                    case None => parent.getRelation(identifier)
+                    case None => parent.getRelation(identifier, allowOverrides)
                 }
             }
         }
         else {
-            parent.getRelation(identifier)
+            parent.getRelation(identifier, allowOverrides)
         }
     }
     override def getTarget(identifier: TargetIdentifier): Target = {

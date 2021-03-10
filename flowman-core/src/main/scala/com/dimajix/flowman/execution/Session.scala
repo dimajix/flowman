@@ -163,7 +163,7 @@ object Session {
          * @param profiles
          * @return
          */
-        def withProfiles(profiles:Seq[String]) : Builder = {
+        def withProfiles(profiles:Iterable[String]) : Builder = {
             require(profiles != null)
             this.profiles = this.profiles ++ profiles
             this
@@ -174,7 +174,7 @@ object Session {
          * @param jars
          * @return
          */
-        def withJars(jars:Seq[String]) : Builder = {
+        def withJars(jars:Iterable[String]) : Builder = {
             require(jars != null)
             this.jars = this.jars ++ jars
             this
@@ -329,7 +329,7 @@ class Session private[execution](
             Some(store.loadProject(name))
         }
 
-        val builder = RootContext.builder(_namespace, _profiles.toSeq)
+        val builder = RootContext.builder(_namespace, _profiles)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
             .withProjectResolver(loadProject)
@@ -396,6 +396,13 @@ class Session private[execution](
      * @return
      */
     def project : Option[Project] = _project
+
+    /**
+     * Returns the list of active profile names
+     *
+     * @return
+     */
+    def profiles: Set[String] = _profiles
 
     /**
       * Returns the storage used to manage projects

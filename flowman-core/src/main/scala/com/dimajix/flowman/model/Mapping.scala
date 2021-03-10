@@ -123,7 +123,7 @@ trait Mapping extends Instance {
     def output(name:String = "main") : MappingOutputIdentifier
 
     /**
-      * Executes this MappingType and returns a corresponding DataFrame
+      * Executes this Mapping and returns a corresponding map of DataFrames per output
       *
       * @param execution
       * @param input

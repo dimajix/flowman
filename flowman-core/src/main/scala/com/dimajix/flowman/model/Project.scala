@@ -110,7 +110,8 @@ object Project {
                 relations = module.relations,
                 mappings = module.mappings,
                 targets = module.targets,
-                jobs = module.jobs
+                jobs = module.jobs,
+                tests = module.tests
             )
         }
 
@@ -141,8 +142,6 @@ final case class Project(
     connections : Map[String,Template[Connection]] = Map(),
     mappings : Map[String,Template[Mapping]] = Map(),
     targets : Map[String,Template[Target]] = Map(),
-    jobs : Map[String,Template[Job]] = Map()
+    jobs : Map[String,Template[Job]] = Map(),
+    tests : Map[String,Template[Test]] = Map()
 )
-
-
-

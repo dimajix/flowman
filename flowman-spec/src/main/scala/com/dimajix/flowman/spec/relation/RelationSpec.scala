@@ -83,7 +83,6 @@ abstract class RelationSpec extends NamedSpec[Relation] {
 }
 
 
-
 class RelationSpecAnnotationHandler extends ClassAnnotationHandler {
     override def annotation: Class[_] = classOf[RelationType]
 

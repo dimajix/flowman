@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.No
@@ -96,7 +95,7 @@ case class MockRelation(
         if (records.nonEmpty) {
             if (fullSchema.isEmpty)
                 throw new IllegalArgumentException("Cannot return provided records without schema information")
-            val df = DataFrameUtils.ofRows(execution.spark, records, fullSchema.get)
+            val df = DataFrameUtils.ofStringValues(execution.spark, records, fullSchema.get)
             SchemaUtils.applySchema(df, schema)
         }
         else {

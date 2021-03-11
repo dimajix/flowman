@@ -63,8 +63,8 @@ object Test {
         val allEnvironment = parentEnvironment ++ test.environment
 
         val allTargets = parentTargets ++ test.targets
-        val allRelationMocks = parents.foldLeft(Map[String,Template[Relation]]())((f,t) => f ++ t.relationOverrides) ++ test.relationOverrides
-        val allMappingMocks = parents.foldLeft(Map[String,Template[Mapping]]())((f,t) => f ++ t.mappingOverrides) ++ test.mappingOverrides
+        val allRelationMocks = parents.foldLeft(Map[String,Template[Relation]]())((f,t) => f ++ t.overrideRelations) ++ test.overrideRelations
+        val allMappingMocks = parents.foldLeft(Map[String,Template[Mapping]]())((f,t) => f ++ t.overrideMappings) ++ test.overrideMappings
         val allFixtures = parents.foldLeft(Map[String,Template[Target]]())((f,t) => f ++ t.fixtures) ++ test.fixtures
         val allAssertions = parents.foldLeft(Map[String,Template[Assertion]]())((f,t) => f ++ t.assertions) ++ test.assertions
 
@@ -86,8 +86,8 @@ final case class Test(
     environment:Map[String,String] = Map(),
     targets:Seq[TargetIdentifier] = Seq(),
 
-    relationOverrides:Map[String,Template[Relation]] = Map(),
-    mappingOverrides:Map[String,Template[Mapping]] = Map(),
+    overrideRelations:Map[String,Template[Relation]] = Map(),
+    overrideMappings:Map[String,Template[Mapping]] = Map(),
     fixtures:Map[String,Template[Target]] = Map(),
     assertions:Map[String,Template[Assertion]] = Map()
 ) extends AbstractInstance {

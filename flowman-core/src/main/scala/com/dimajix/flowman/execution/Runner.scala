@@ -432,22 +432,29 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                 }
             }
 
-            val steps = Seq(
-                // Create, Build and Verify all targets
-                () => Status.ofAll(Lifecycle.BUILD, keepGoing) { phase =>
-                    runPhase(phase)
-                },
-
-                // Execute all assertions
-                () => executeTestAssertions(execution, context, test, keepGoing, dryRun),
-
-                // Truncate and Destroy all targets
-                () => Status.ofAll(Lifecycle.DESTROY, keepGoing) { phase =>
-                    runPhase(phase)
+            // First create test environment via fixtures
+            val buildStatus = Status.ofAll(Lifecycle.BUILD, keepGoing) { phase =>
+                runPhase(phase)
+            }
+            // Now run tests if fixtures where successful
+            val testStatus =
+                if (buildStatus == Status.SUCCESS || keepGoing) {
+                    executeTestAssertions(execution, context, test, keepGoing, dryRun)
                 }
-            )
+                else {
+                    Status.SKIPPED
+                }
+            // Finally clean up
+            val destroyStatus = Status.ofAll(Lifecycle.DESTROY, true) { phase =>
+                runPhase(phase)
+            }
 
-            val status = Status.ofAll(steps, keepGoing)(step => step())
+            // Compute complete status - which is only SUCCESS if all steps have been executed successfully
+            val status =
+                if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
+                    Status.SUCCESS
+                else
+                    Status.FAILED
 
             execution.cleanup()
 
@@ -470,36 +477,29 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
         try {
             val startTime = Instant.now()
-            var succeeded = 0
-            var failed = 0
+            var sumExceptions = 0
 
-            test.assertions.map { case (name, assertion) =>
+            val results = test.assertions.map { case (name, assertion) =>
                 val instance = assertion.instantiate(context)
                 val description = instance.description.getOrElse(name)
-                logger.info(s"assert: $description")
+                logger.info(s" - assert: $description")
 
-                val status = try {
-                    if (dryRun) {
-                        succeeded += 1
-                        Status.SUCCESS
+                val status = if (!dryRun) {
+                    try {
+                        execution.assert(instance)
                     }
-                    else if (execution.assert(instance)) {
-                        succeeded += 1
-                        Status.SUCCESS
-                    }
-                    else {
-                        failed += 1
-                        Status.FAILED
+                    catch {
+                        case NonFatal(ex) =>
+                            // Pass on exception when keepGoing is false, so next assertions won't be executed
+                            sumExceptions = sumExceptions + 1
+                            if (!keepGoing)
+                                throw ex
+                            logger.error(s"Caught exception during $description:", ex)
+                            Seq()
                     }
                 }
-                catch {
-                    case NonFatal(ex) =>
-                        failed += 1
-                        // Pass on exception when keepGoing is false, so next assertions won't be executed
-                        if (!keepGoing)
-                            throw ex
-                        logger.error(s"Caught exception during $description:", ex)
-                        Status.FAILED
+                else {
+                    Seq()
                 }
 
                 // Remember test name, description and status for potential report
@@ -508,10 +508,13 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
             val endTime = Instant.now()
             val duration = Duration.between(startTime, endTime)
-            logger.info(s"$succeeded assertions passed, $failed assertions failed")
-            logger.info(s"Executed ${succeeded + failed} assertions in  ${duration.toMillis / 1000.0} s")
+            val sumSucceeded = results.map(_._3.count(_.valid)).sum
+            val sumFailed = results.map(_._3.count(!_.valid)).sum
 
-            if (failed > 0) Status.FAILED else Status.SUCCESS
+            logger.info(s"$sumSucceeded assertions passed, $sumFailed failed, $sumExceptions exceptions")
+            logger.info(s"Executed ${sumSucceeded + sumFailed} assertions in  ${duration.toMillis / 1000.0} s")
+
+            if (sumFailed + sumExceptions > 0) Status.FAILED else Status.SUCCESS
         }
         catch {
             // Catch all exceptions
@@ -586,9 +589,9 @@ final class Runner(
     }
 
     /**
-     * Executes an individual test
+     * Executes an individual test.
      * @param test
-     * @param keepGoing
+     * @param keepGoing - Continue running assertions even if unexpected exceptions are raised.
      * @param dryRun
      * @return
      */
@@ -667,8 +670,8 @@ final class Runner(
             .withEnvironment("dryRun", dryRun)
             //.withEnvironment("job", JobWrapper(job))
             .withEnvironment(test.environment, SettingLevel.JOB_OVERRIDE)
-            .overrideRelations(test.relationOverrides.map(kv => RelationIdentifier(kv._1, project) -> kv._2))
-            .overrideMappings(test.mappingOverrides.map(kv => MappingIdentifier(kv._1, project) -> kv._2))
+            .overrideRelations(test.overrideRelations.map(kv => RelationIdentifier(kv._1, project) -> kv._2))
+            .overrideMappings(test.overrideMappings.map(kv => MappingIdentifier(kv._1, project) -> kv._2))
             .build()
         val projectContext = if (test.context.project.nonEmpty)
             rootContext.getProjectContext(test.context.project.get)

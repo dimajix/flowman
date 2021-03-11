@@ -62,6 +62,8 @@ class CommandCompleter extends Completer {
                             Shell.instance.project.mappings.keys.toList.sorted
                         case a:Argument if a.metaVar() == "<job>" =>
                             Shell.instance.project.jobs.keys.toList.sorted
+                        case a:Argument if a.metaVar() == "<test>" =>
+                            Shell.instance.project.tests.keys.toList.sorted
                         case a:Argument if a.metaVar() == "<target>" =>
                             Shell.instance.project.targets.keys.toList.sorted
                         case a:Argument if a.metaVar() == "<relation>" =>

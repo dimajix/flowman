@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -38,7 +39,16 @@ object RelationDatasetTest {
 }
 
 class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
-    "The RelationDataset" should "work" in {
+    "The RelationDataset" should "be parsable" in {
+        val spec =
+            """
+              |kind: relation
+              |""".stripMargin
+        val ds = ObjectMapper.parse[DatasetSpec](spec)
+        ds shouldBe a[RelationDatasetSpec]
+    }
+
+    it should "work" in {
         val relation = mock[Relation]
         val relationSpec = mock[Template[Relation]]
         (relationSpec.instantiate _).expects(*).returns(relation)

@@ -34,6 +34,7 @@ package com.dimajix.util
 
 import java.sql.Date
 import java.sql.Timestamp
+import java.time.ZoneId
 import java.util.TimeZone
 
 import scala.annotation.tailrec
@@ -89,5 +90,10 @@ object DateTimeUtils {
 
     def millisToDays(millisUtc: Long, timeZone: TimeZone): Int = {
         SparkShim.millisToDays(millisUtc, timeZone)
+    }
+
+    def getZoneId(timeZoneId: String): ZoneId = ZoneId.of(timeZoneId, ZoneId.SHORT_IDS)
+    def getTimeZone(timeZoneId: String): TimeZone = {
+        TimeZone.getTimeZone(getZoneId(timeZoneId))
     }
 }

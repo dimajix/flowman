@@ -124,10 +124,10 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             fixtures = Map(
                 "fixture" -> fixtureTemplate
             ),
-            relationOverrides = Map(
+            overrideRelations = Map(
                 "rel" -> overrideRelationTemplate
             ),
-            mappingOverrides = Map(
+            overrideMappings = Map(
                 "map" -> overrideMappingTemplate
             ),
             assertions = Map(
@@ -169,7 +169,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion.description _).expects().anyNumberOfTimes().returns(None)
         (assertion.context _).expects().onCall(() => assertionContext)
         (assertion.inputs _).expects().returns(Seq(MappingOutputIdentifier("map", "main", None)))
-        (assertion.execute _).expects(*,*).returns(true)
+        (assertion.execute _).expects(*,*).returns(Seq())
 
         var overrideMappingContext:Context = null
         (overrideMappingTemplate.instantiate _).expects(*).onCall { ctx:Context =>

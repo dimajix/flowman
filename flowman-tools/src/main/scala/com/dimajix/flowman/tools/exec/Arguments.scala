@@ -34,6 +34,7 @@ import com.dimajix.flowman.tools.exec.model.ModelCommand
 import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
+import com.dimajix.flowman.tools.exec.test.TestCommand
 
 
 class Arguments(args:Array[String]) {
@@ -65,6 +66,7 @@ class Arguments(args:Array[String]) {
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
         new SubCommand(name="namespace",impl=classOf[NamespaceCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
+        new SubCommand(name="test",impl=classOf[TestCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))
     var command:Command = _

@@ -33,6 +33,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class CompareTarget(
@@ -94,72 +95,15 @@ case class CompareTarget(
         val xfs = SchemaEnforcer(expectedDf.schema)
         val conformedDf = xfs.transform(actualDf)
 
-        val expectedRows = expectedDf.collect().toSeq
-        val actualRows = conformedDf.collect().toSeq
-
-        if (prepareAnswer(expectedRows) != prepareAnswer(actualRows)) {
+        val diff = DataFrameUtils.diff(expectedDf, conformedDf)
+        if (diff.nonEmpty) {
             logger.error(s"Dataset '${actual.name}' does not equal the expected dataset '${expected.name}'")
-            logger.error(s"Difference between datasets: \n${genError(expectedRows, actualRows)}")
+            logger.error(s"Difference between datasets: \n${diff.get}")
             throw new VerificationFailedException(identifier)
         }
         else {
             logger.info(s"Dataset '${actual.name}' matches the expected dataset '${expected.name}'")
         }
-    }
-
-    private def prepareAnswer(answer: Seq[Row]): Seq[Row] = {
-        // Converts data to types that we can do equality comparison using Scala collections.
-        // For BigDecimal type, the Scala type has a better definition of equality test (similar to
-        // Java's java.math.BigDecimal.compareTo).
-        // For binary arrays, we convert it to Seq to avoid of calling java.util.Arrays.equals for
-        // equality test.
-        answer.map(prepareRow).sortBy(_.toString())
-    }
-
-    // We need to call prepareRow recursively to handle schemas with struct types.
-    private def prepareRow(row: Row): Row = {
-        Row.fromSeq(row.toSeq.map {
-            case null => null
-            case d: java.math.BigDecimal => BigDecimal(d)
-            // Convert array to Seq for easy equality checkJob.
-            case b: Array[_] => b.toSeq
-            case r: Row => prepareRow(r)
-            case o => o
-        })
-    }
-
-    private def sideBySide(left: Seq[String], right: Seq[String]): Seq[String] = {
-        val maxLeftSize = left.map(_.length).max
-        val leftPadded = left ++ Seq.fill(math.max(right.size - left.size, 0))("")
-        val rightPadded = right ++ Seq.fill(math.max(left.size - right.size, 0))("")
-
-        leftPadded.zip(rightPadded).map {
-            case (l, r) => (if (l == r) " " else "!") + l + (" " * ((maxLeftSize - l.length) + 3)) + r
-        }
-    }
-
-    private def genError(expectedAnswer: Seq[Row],
-                         sparkAnswer: Seq[Row]): String = {
-        val getRowType: Option[Row] => String = row =>
-            row.map(row =>
-                if (row.schema == null) {
-                    "struct<>"
-                } else {
-                    s"${row.schema.catalogString}"
-                }).getOrElse("struct<>")
-
-        s"""
-           |== Results ==
-           |${
-            sideBySide(
-                s"== Expected - ${expectedAnswer.size} ==" +:
-                    getRowType(expectedAnswer.headOption) +:
-                    prepareAnswer(expectedAnswer).map(_.toString()),
-                s"== Actual - ${sparkAnswer.size} ==" +:
-                    getRowType(sparkAnswer.headOption) +:
-                    prepareAnswer(sparkAnswer).map(_.toString())).mkString("\n")
-        }
-    """.stripMargin
     }
 }
 

@@ -33,6 +33,8 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestIdentifier
 
 
 object ScopeContext {
@@ -43,6 +45,7 @@ object ScopeContext {
         private var relations = Map[String, Template[Relation]]()
         private var targets = Map[String, Template[Target]]()
         private var jobs = Map[String, Template[Job]]()
+        private var tests = Map[String, Template[Test]]()
 
         def withMappings(mappings:Map[String,Template[Mapping]]) : Builder = {
             require(mappings != null)
@@ -64,6 +67,11 @@ object ScopeContext {
             this.jobs = this.jobs ++ jobs
             this
         }
+        def withTests(tests:Map[String,Template[Test]]) : Builder = {
+            require(tests != null)
+            this.tests = this.tests ++ tests
+            this
+        }
 
         override protected val logger = LoggerFactory.getLogger(classOf[ScopeContext])
 
@@ -76,7 +84,8 @@ object ScopeContext {
                 relations,
                 targets,
                 connections,
-                jobs
+                jobs,
+                tests
             )
         }
     }
@@ -93,13 +102,15 @@ final class ScopeContext(
     scopeRelations:Map[String,Template[Relation]] = Map(),
     scopeTargets:Map[String,Template[Target]] = Map(),
     scopeConnections:Map[String,Template[Connection]] = Map(),
-    scopeJobs:Map[String,Template[Job]] = Map()
+    scopeJobs:Map[String,Template[Job]] = Map(),
+    scopeTests:Map[String,Template[Test]] = Map()
 ) extends AbstractContext(fullEnv, fullConfig) {
     private val mappings = mutable.Map[String,Mapping]()
     private val relations = mutable.Map[String,Relation]()
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
     private val jobs = mutable.Map[String,Job]()
+    private val tests = mutable.Map[String,Test]()
 
     /**
      * Returns the namespace associated with this context. Can be null
@@ -209,6 +220,23 @@ final class ScopeContext(
         }
         else {
             parent.getJob(identifier)
+        }
+    }
+    override def getTest(identifier: TestIdentifier): Test = {
+        if (identifier.project.isEmpty) {
+            tests.get(identifier.name) match {
+                case Some(result) => result
+                case None => scopeTests.get(identifier.name) match {
+                    case Some(spec) =>
+                        val result = spec.instantiate(this)
+                        tests.put(identifier.name, result)
+                        result
+                    case None => parent.getTest(identifier)
+                }
+            }
+        }
+        else {
+            parent.getTest(identifier)
         }
     }
 }

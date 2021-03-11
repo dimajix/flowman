@@ -22,6 +22,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TestIdentifier
 
 
 class ExecutionException(
@@ -48,6 +49,8 @@ class NoSuchConnectionException(val connection:ConnectionIdentifier)
     extends ExecutionException(s"Connection '$connection' not found")
 class NoSuchJobException(val job:JobIdentifier)
     extends ExecutionException(s"Job '$job' not found")
+class NoSuchTestException(val test:TestIdentifier)
+    extends ExecutionException(s"Test '$test' not found")
 
 class VerificationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Verification of target $target failed", cause)

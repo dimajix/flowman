@@ -6,6 +6,11 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 
 
+case class AssertionResult(
+    name:String,
+    valid:Boolean
+)
+
 object Assertion {
     object Properties {
         def apply(context: Context, name:String = "", kind:String = "") : Properties = {
@@ -15,7 +20,8 @@ object Assertion {
                 context.project,
                 name,
                 kind,
-                Map()
+                Map(),
+                None
             )
         }
     }
@@ -26,7 +32,8 @@ object Assertion {
         project:Option[Project],
         name:String,
         kind:String,
-        labels:Map[String,String]
+        labels:Map[String,String],
+        description:Option[String]
     ) extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
     }
@@ -62,10 +69,12 @@ trait Assertion extends Instance {
      * @param input
      * @return
      */
-    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Boolean
+    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Seq[AssertionResult]
 }
 
 
 abstract class BaseAssertion extends AbstractInstance with Assertion {
     protected override def instanceProperties : Assertion.Properties
+
+    override def description: Option[String] = instanceProperties.description
 }

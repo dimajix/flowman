@@ -19,8 +19,10 @@ package com.dimajix.flowman.spec
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 
+import com.dimajix.flowman.spec.assertion.AssertionSpec
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
@@ -51,6 +53,8 @@ object ObjectMapper extends CoreObjectMapper {
         val targetTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val schemaTypes = SchemaSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val assertionTypes = AssertionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val datasetTypes = DatasetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = super.mapper
         mapper.registerSubtypes(stateStoreTypes:_*)
         mapper.registerSubtypes(catalogTypes:_*)
@@ -60,6 +64,8 @@ object ObjectMapper extends CoreObjectMapper {
         mapper.registerSubtypes(targetTypes:_*)
         mapper.registerSubtypes(schemaTypes:_*)
         mapper.registerSubtypes(connectionTypes:_*)
+        mapper.registerSubtypes(assertionTypes:_*)
+        mapper.registerSubtypes(datasetTypes:_*)
         mapper
     }
 }

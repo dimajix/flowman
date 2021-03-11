@@ -52,7 +52,7 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         df.schema should be (schema)
     }
 
-    "DataFrameUtils.ofRows" should "create a DataFrame" in {
+    "DataFrameUtils.ofStringValues" should "create a DataFrame" in {
         val lines = Seq(
             Array("1","lala","2.3"),
             Array("2","","3.4"),
@@ -63,12 +63,12 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("c2", StringType),
             StructField("c3", DoubleType)
         ))
-        val df = DataFrameUtils.ofRows(spark, lines, schema)
+        val df = DataFrameUtils.ofStringValues(spark, lines, schema)
 
         df.collect() should be (Seq(
             Row(1,"lala",2.3),
             Row(2,null,3.4),
-            Row(null,null,null),
+            Row(null,null,null)
         ))
         df.schema should be (schema)
     }
@@ -83,5 +83,78 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         df.collect() should be (Seq())
         df.schema should be (schema)
+    }
+
+    "DataFrameUtils.compare" should "work" in {
+        val schema = StructType(Seq(
+            StructField("c1", IntegerType),
+            StructField("c2", StringType),
+            StructField("c3", DoubleType)
+        ))
+        val lines1 = Seq(
+            Array("1","lala","2.3"),
+            Array("2","","3.4"),
+            Array("",null,"")
+        )
+        val lines2 = Seq(
+            Array("1","lala","2.3"),
+            Array("2","","3.4"),
+            Array("",null,"")
+        )
+        val df1 = DataFrameUtils.ofStringValues(spark, lines1, schema)
+        val df2 = DataFrameUtils.ofStringValues(spark, lines2, schema)
+
+        DataFrameUtils.compare(df1, df2) should be (true)
+        DataFrameUtils.compare(df1.limit(2), df2) should be (false)
+        DataFrameUtils.compare(df1, df2.limit(2)) should be (false)
+        DataFrameUtils.compare(df1.drop("c1"), df2) should be (false)
+        DataFrameUtils.compare(df1, df2.drop("c1")) should be (false)
+    }
+
+    "DataFrameUtils.diff" should "work" in {
+        val schema = StructType(Seq(
+            StructField("c1", IntegerType),
+            StructField("c2", StringType),
+            StructField("c3", DoubleType)
+        ))
+        val lines1 = Seq(
+            Array("1","lala","2.3"),
+            Array("2","","3.4"),
+            Array("",null,"")
+        )
+        val lines2 = Seq(
+            Array("1","lala","2.3"),
+            Array("2","","3.4"),
+            Array("",null,"")
+        )
+        val df1 = DataFrameUtils.ofStringValues(spark, lines1, schema)
+        val df2 = DataFrameUtils.ofStringValues(spark, lines2, schema)
+
+        DataFrameUtils.diff(df1, df2) should be (None)
+        DataFrameUtils.diff(df1.limit(2), df2) should not be (None)
+        DataFrameUtils.diff(df1, df2.limit(2)) should not be (None)
+    }
+
+    "DataFrameUtils.diffToStringValues" should "work" in {
+        val schema = StructType(Seq(
+            StructField("c1", IntegerType),
+            StructField("c2", StringType),
+            StructField("c3", DoubleType)
+        ))
+        val lines1 = Seq(
+            Array("1","lala","2.3"),
+            Array("2","","3.4"),
+            Array("",null,"")
+        )
+        val lines2 = Seq(
+            Array("1","lala","2.3"),
+            Array("2","","3.4"),
+            Array("",null,"")
+        )
+        val df1 = DataFrameUtils.ofStringValues(spark, lines1, schema)
+
+        DataFrameUtils.diffToStringValues(df1, lines2) should be (None)
+        DataFrameUtils.diffToStringValues(df1.limit(2), lines2) should not be (None)
+        DataFrameUtils.diffToStringValues(df1, lines2.take(2)) should not be (None)
     }
 }

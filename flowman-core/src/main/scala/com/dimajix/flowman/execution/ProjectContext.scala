@@ -37,6 +37,8 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.templating.FileWrapper
 
 
@@ -108,6 +110,7 @@ final class ProjectContext private[execution](
     private val targets = mutable.Map[String,Target]()
     private val connections = mutable.Map[String,Connection]()
     private val jobs = mutable.Map[String,Job]()
+    private val tests = mutable.Map[String,Test]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -258,7 +261,7 @@ final class ProjectContext private[execution](
     }
 
     /**
-      * Returns a specific named Job. The JobType can either be inside this Contexts project or in a different
+      * Returns a specific named Job. The job can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -278,6 +281,30 @@ final class ProjectContext private[execution](
         }
         else {
             parent.getJob(identifier)
+        }
+    }
+
+    /**
+     * Returns a specific named Test. The test can either be inside this Contexts project or in a different
+     * project within the same namespace
+     *
+     * @param identifier
+     * @return
+     */
+    override def getTest(identifier: TestIdentifier): Test = {
+        require(identifier != null && identifier.nonEmpty)
+
+        if (identifier.project.forall(_ == _project.name)) {
+            tests.getOrElseUpdate(identifier.name,
+                _project.tests
+                    .getOrElse(identifier.name,
+                        throw new NoSuchTestException(identifier)
+                    )
+                    .instantiate(this)
+            )
+        }
+        else {
+            parent.getTest(identifier)
         }
     }
 

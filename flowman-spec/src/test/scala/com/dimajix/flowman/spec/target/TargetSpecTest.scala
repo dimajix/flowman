@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,36 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.spec.target
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.annotation.TargetType
-import com.dimajix.flowman.spec.target.NullTargetSpec
 
 
-@TargetType(kind="customTarget")
-class CustomTargetSpec extends NullTargetSpec {
+@TargetType(kind = "annotatedTarget")
+class AnnotatedTargetSpec extends TargetSpec {
+    override def instantiate(context: Context): Target = ???
 }
 
-class CustomTargetProvider extends AnyFlatSpec with Matchers {
-    "A plugin" should "be used if present" in {
+
+
+class TargetSpecTest extends AnyFlatSpec with Matchers  {
+    "TargetSpec" should "support custom targets" in {
         val spec =
             """
               |targets:
               |  custom:
-              |    kind: customTarget
+              |    kind: annotatedTarget
             """.stripMargin
         val module = Module.read.string(spec)
-        module.targets.keys should contain("custom")
         val target = module.targets("custom")
-        target shouldBe a[CustomTargetSpec]
+        target shouldBe an[AnnotatedTargetSpec]
     }
 }

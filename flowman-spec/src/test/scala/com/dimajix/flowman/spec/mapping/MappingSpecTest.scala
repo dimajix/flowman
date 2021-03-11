@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.spec.mapping
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.annotation.RelationType
-import com.dimajix.flowman.spec.relation.NullRelationSpec
 
 
-@RelationType(kind="customRelation")
-class CustomRelationSpec extends NullRelationSpec {
+@RelationType(kind = "annotatedMapping")
+class AnnotationMappingSpec extends MappingSpec {
+    override def instantiate(context: Context): Mapping = ???
 }
 
-
-class CustomRelationProviderTest extends AnyFlatSpec with Matchers {
-    "A plugin" should "be used if present" in {
+class MappingSpecTest extends AnyFlatSpec with Matchers {
+    "MappingSpec" should "support custom mappings" in {
         val spec =
             """
-              |relations:
+              |mappings:
               |  custom:
-              |    kind: customRelation
+              |    kind: annotatedMapping
             """.stripMargin
         val module = Module.read.string(spec)
-        module.relations.keys should contain("custom")
-        val rel = module.relations("custom")
-        rel shouldBe a[CustomRelationSpec]
+        module.mappings.keys should contain("custom")
+        module.mappings("custom") shouldBe a[AnnotationMappingSpec]
     }
 }

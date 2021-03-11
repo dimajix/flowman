@@ -30,10 +30,10 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.splitSettings
 
 
-class TemplateTarget(
+case class TemplateTarget(
     override val instanceProperties:Target.Properties,
-    val target:TargetIdentifier,
-    val environment:Map[String,String]
+    target:TargetIdentifier,
+    environment:Map[String,String]
 ) extends BaseTarget {
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
@@ -123,7 +123,7 @@ class TemplateTargetSpec extends TargetSpec {
      * @return
      */
     override def instantiate(context: Context): TemplateTarget = {
-        new TemplateTarget(
+        TemplateTarget(
             instanceProperties(context),
             TargetIdentifier(context.evaluate(target)),
             splitSettings(environment).toMap

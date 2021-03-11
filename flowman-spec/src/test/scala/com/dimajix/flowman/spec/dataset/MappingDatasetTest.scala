@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.dataset.MappingDatasetTest.DummyMappingSpec
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -59,7 +60,16 @@ object MappingDatasetTest {
 }
 
 class MappingDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The MappingDataset" should "work" in {
+    "The MappingDataset" should "be parsable" in {
+        val spec =
+            """
+              |kind: mapping
+              |""".stripMargin
+        val ds = ObjectMapper.parse[DatasetSpec](spec)
+        ds shouldBe a[MappingDatasetSpec]
+    }
+
+    it should "work" in {
         val project = Project(
             name="test",
             mappings = Map("mapping" -> DummyMappingSpec(

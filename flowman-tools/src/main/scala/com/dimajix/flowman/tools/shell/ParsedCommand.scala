@@ -30,6 +30,7 @@ import com.dimajix.flowman.tools.exec.model.ModelCommand
 import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.sql.SqlCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
+import com.dimajix.flowman.tools.exec.test.TestCommand
 import com.dimajix.flowman.tools.shell.history.HistoryCommand
 
 
@@ -48,6 +49,7 @@ class ParsedCommand {
         new SubCommand(name="namespace",impl=classOf[NamespaceCommand]),
         new SubCommand(name="relation",impl=classOf[ModelCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
+        new SubCommand(name="test",impl=classOf[TestCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))
     var command:Command = _

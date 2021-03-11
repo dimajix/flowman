@@ -56,7 +56,7 @@ case class MockMapping(
             if (schemas.size != 1)
                 throw new UnsupportedOperationException("MockMapping only supports a single output with specified records")
             val (name,schema) = schemas.head
-            val df = DataFrameUtils.ofRows(execution.spark, records, schema.sparkType)
+            val df = DataFrameUtils.ofStringValues(execution.spark, records, schema.sparkType)
             Map(name -> df)
         }
         else {

@@ -41,6 +41,8 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestIdentifier
 
 
 object RootContext {
@@ -224,6 +226,21 @@ final class RootContext private[execution](
             throw new NoSuchJobException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getJob(identifier)
+    }
+
+    /**
+     * Returns a fully qualified test from a project belonging to the namespace of this execution
+     *
+     * @param identifier
+     * @return
+     */
+    override def getTest(identifier: TestIdentifier): Test = {
+        require(identifier != null && identifier.nonEmpty)
+
+        if (identifier.project.isEmpty)
+            throw new NoSuchTestException(identifier)
+        val child = getProjectContext(identifier.project.get)
+        child.getTest(identifier)
     }
 
     /**

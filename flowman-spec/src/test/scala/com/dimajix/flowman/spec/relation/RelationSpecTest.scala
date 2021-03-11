@@ -21,27 +21,14 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.annotation.RelationType
-import com.dimajix.flowman.spi.CustomRelationSpec
 
 
 @RelationType(kind = "annotatedRelation")
 class AnnotationRelationSpec extends NullRelationSpec { }
 
 
-class PluginRelationTest extends AnyFlatSpec with Matchers {
-    "A plugin" should "be used if present" in {
-        val spec =
-            """
-              |relations:
-              |  custom:
-              |    kind: customRelation
-            """.stripMargin
-        val module = Module.read.string(spec)
-        module.relations.keys should contain("custom")
-        module.relations("custom") shouldBe a[CustomRelationSpec]
-    }
-
-    "Annotated plugins should" should "be used" in {
+class RelationSpecTest extends AnyFlatSpec with Matchers {
+    "RelationSpec" should "support custom relations" in {
         val spec =
             """
               |relations:

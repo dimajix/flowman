@@ -348,4 +348,70 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
     }
+
+    it should "ignore exceptions in assertions if told so" in {
+        val project = Project(
+            name = "default"
+        )
+        val session = Session.builder()
+            .build()
+        val context = session.getContext(project)
+
+        val assertionTemplate1 = mock[Template[Assertion]]
+        val assertion1 = mock[Assertion]
+        val assertionTemplate2 = mock[Template[Assertion]]
+        val assertion2 = mock[Assertion]
+        val test = Test(
+            Test.Properties(context),
+            assertions = Map(
+                "assert1" -> assertionTemplate1,
+                "assert2" -> assertionTemplate2
+            )
+        )
+
+        val runner = session.runner
+
+        (assertionTemplate1.instantiate _).expects(*).returns(assertion1)
+        (assertion1.context _).expects().returns(context)
+        (assertion1.description _).expects().anyNumberOfTimes().returns(None)
+        (assertion1.inputs _).expects().returns(Seq())
+        (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
+        (assertionTemplate2.instantiate _).expects(*).returns(assertion2)
+        (assertion2.context _).expects().returns(context)
+        (assertion2.description _).expects().anyNumberOfTimes().returns(None)
+        (assertion2.inputs _).expects().returns(Seq())
+        (assertion2.execute _).expects(*,*).returns(Seq())
+
+        runner.executeTest(test, keepGoing = true) should be (Status.FAILED)
+    }
+
+    it should "stop on the first exceptions in assertions if told so" in {
+        val project = Project(
+            name = "default"
+        )
+        val session = Session.builder()
+            .build()
+        val context = session.getContext(project)
+
+        val assertionTemplate1 = mock[Template[Assertion]]
+        val assertion1 = mock[Assertion]
+        val assertionTemplate2 = mock[Template[Assertion]]
+        val test = Test(
+            Test.Properties(context),
+            assertions = Map(
+                "assert1" -> assertionTemplate1,
+                "assert2" -> assertionTemplate2
+            )
+        )
+
+        val runner = session.runner
+
+        (assertionTemplate1.instantiate _).expects(*).returns(assertion1)
+        (assertion1.context _).expects().returns(context)
+        (assertion1.description _).expects().anyNumberOfTimes().returns(None)
+        (assertion1.inputs _).expects().returns(Seq())
+        (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
+
+        runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
+    }
 }

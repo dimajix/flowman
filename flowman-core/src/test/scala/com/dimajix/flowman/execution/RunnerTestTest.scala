@@ -336,6 +336,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (target.after _).expects().anyNumberOfTimes().returns(Seq())
         (target.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
         (target.execute _).expects(*, Phase.CREATE).throws(new UnsupportedOperationException())
+        (target.execute _).expects(*, Phase.DESTROY).throws(new UnsupportedOperationException())
 
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
         (fixture.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("fixture", "default"))

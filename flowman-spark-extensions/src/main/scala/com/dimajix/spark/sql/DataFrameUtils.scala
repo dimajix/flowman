@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.dimajix.spark.sql
 
+import scala.collection.JavaConverters._
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
@@ -25,9 +27,13 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.spark.sql.catalyst.PlanUtils
+import com.dimajix.spark.sql.local.csv.CsvOptions
+import com.dimajix.spark.sql.local.csv.UnivocityReader
 
 
 object DataFrameUtils {
+    private val csvOptions = new CsvOptions(Map())
+
     def singleRow(sparkSession: SparkSession, schema: StructType): DataFrame = {
         val logicalPlan = PlanUtils.singleRowPlan(schema)
         new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
@@ -37,5 +43,35 @@ object DataFrameUtils {
         val qe = sparkSession.sessionState.executePlan(logicalPlan)
         qe.assertAnalyzed()
         new Dataset[Row](sparkSession, logicalPlan, RowEncoder(qe.analyzed.schema))
+    }
+
+    def ofRows(sparkSession: SparkSession, lines:Seq[Array[String]], schema:StructType) : DataFrame = {
+        val reader = new UnivocityReader(schema, csvOptions)
+        val rows = lines.map(reader.convert)
+        sparkSession.createDataFrame(rows.asJava, schema)
+    }
+
+    /**
+     * Create a [[DataFrame]] from a sequence of Strings containing CSV data
+     * @param sparkSession
+     * @param lines
+     * @param schema
+     * @return
+     */
+    def ofCsvRows(sparkSession: SparkSession, lines:Seq[String], schema:StructType) : DataFrame = {
+        val reader = new UnivocityReader(schema, csvOptions)
+        val rows = UnivocityReader.parseIterator(lines.iterator, false, reader).toSeq
+        sparkSession.createDataFrame(rows.asJava, schema)
+    }
+
+    /**
+     * Create an empty [[DataFrame]] from a schema
+     * @param sparkSession
+     * @param schema
+     * @return
+     */
+    def ofSchema(sparkSession: SparkSession, schema:StructType) : DataFrame = {
+        val rdd = sparkSession.sparkContext.emptyRDD[Row]
+        sparkSession.createDataFrame(rdd, schema)
     }
 }

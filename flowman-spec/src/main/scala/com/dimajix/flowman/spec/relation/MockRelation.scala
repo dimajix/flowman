@@ -37,11 +37,14 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class MockRelation(
     override val instanceProperties:Relation.Properties,
-    relation: RelationIdentifier
+    relation: RelationIdentifier,
+    records:Seq[Array[String]] = Seq()
 ) extends BaseRelation with SchemaRelation {
     private lazy val mocked = context.getRelation(relation, false)
     private var _exists = false
@@ -89,9 +92,17 @@ case class MockRelation(
 
         // Add partitions values as columns
         val fullSchema = inputSchema.map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
-        val readSchema = schema.orElse(fullSchema).get
-        val rdd = execution.spark.sparkContext.emptyRDD[Row]
-        execution.spark.createDataFrame(rdd, readSchema)
+
+        if (records.nonEmpty) {
+            if (fullSchema.isEmpty)
+                throw new IllegalArgumentException("Cannot return provided records without schema information")
+            val df = DataFrameUtils.ofRows(execution.spark, records, fullSchema.get)
+            SchemaUtils.applySchema(df, schema)
+        }
+        else {
+            val readSchema = schema.orElse(fullSchema).get
+            DataFrameUtils.ofSchema(execution.spark, readSchema)
+        }
     }
 
     /**
@@ -202,7 +213,8 @@ case class MockRelation(
 
 
 class MockRelationSpec extends RelationSpec {
-    @JsonProperty(value="relation", required = true) private var relation: Option[String] = None
+    @JsonProperty(value="relation", required=true) private var relation: Option[String] = None
+    @JsonProperty(value="records", required=false) private var records:Seq[Array[String]] = Seq()
 
     /**
      * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -212,7 +224,8 @@ class MockRelationSpec extends RelationSpec {
     override def instantiate(context: Context): MockRelation = {
         MockRelation(
             instanceProperties(context),
-            RelationIdentifier(context.evaluate(relation).getOrElse(name))
+            RelationIdentifier(context.evaluate(relation).getOrElse(name)),
+            records.map(_.map(context.evaluate))
         )
     }
 }

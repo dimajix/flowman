@@ -20,4 +20,7 @@ relations:
   Specify the base relation to be mocked. If no relation is specified, a relation with the same name will be mocked.
   Of course this doesn't work within the same project on project level. But it works well when the `mock` relation
   is created inside a test.
-  
+
+* `records` **(optional)** *(type: list:array)* *(default: empty)*:
+  An optional list of records to be returned. Note that this list needs to include values for any partition columns
+  of the mocked relation. The partition values need to be appended at the end.

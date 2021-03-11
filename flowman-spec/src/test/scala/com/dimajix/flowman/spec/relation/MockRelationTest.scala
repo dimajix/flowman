@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.relation
 
+import org.apache.spark.sql.Row
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -56,23 +57,31 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
               |  mock:
               |    kind: mock
               |    relation: empty
+              |    records:
+              |      - ["a",12,3]
+              |      - [cat,"",7]
+              |      - [dog,null,8]
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
         val context = session.getContext(project)
 
-        val mapping = context.getRelation(RelationIdentifier("mock")).asInstanceOf[MockRelation]
-        mapping shouldBe a[MockRelation]
+        val relation = context.getRelation(RelationIdentifier("mock")).asInstanceOf[MockRelation]
+        relation shouldBe a[MockRelation]
 
-        mapping.category should be ("relation")
-        mapping.kind should be ("mock")
-        mapping.relation should be (RelationIdentifier("empty"))
+        relation.category should be ("relation")
+        relation.kind should be ("mock")
+        relation.relation should be (RelationIdentifier("empty"))
+        relation.records.map(_.toSeq) should be (Seq(
+            Seq("a","12","3"),
+            Seq("cat","","7"),
+            Seq("dog",null,"8")
+        ))
     }
 
     it should "support create, write and destroy" in {
         val baseRelationTemplate = mock[Template[Relation]]
-        val baseRelation = mock[Relation]
         val mockRelationTemplate = mock[Template[Relation]]
 
         val project = Project(
@@ -168,6 +177,15 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
 
         (baseRelation.describe _).expects(executor).anyNumberOfTimes().returns(new StructType(schema.fields))
         relation.describe(executor) should be (new StructType(schema.fields))
+
+        val df1 = relation.read(executor, None, Map())
+        df1.schema should be (new StructType(schema.fields).sparkType)
+        df1.count() should be (0)
+
+        val readSchema = StructType(Seq(Field("int_col", IntegerType)))
+        val df2 = relation.read(executor, Some(readSchema.sparkType))
+        df2.schema should be (readSchema.sparkType)
+        df2.count() should be (0)
     }
 
     it should "work nicely with overrides" in {
@@ -216,6 +234,54 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
 
         (baseRelation.describe _).expects(executor).anyNumberOfTimes().returns(new StructType(schema.fields))
         relation.describe(executor) should be (new StructType(schema.fields))
+    }
 
+    it should "return provided records as a DataFrame" in {
+        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelation = mock[Relation]
+        val mockRelationTemplate = mock[Template[Relation]]
+
+        val project = Project(
+            "my_project",
+            relations = Map(
+                "base" -> baseRelationTemplate,
+                "mock" -> mockRelationTemplate
+            )
+        )
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.getContext(project)
+        val executor = session.execution
+
+        val mockRelation = MockRelation(
+            Relation.Properties(context, "mock"),
+            RelationIdentifier("base"),
+            Seq(
+                Array("lala","12"),
+                Array("lolo","13"),
+                Array("",null)
+            )
+        )
+        val schema = EmbeddedSchema(
+            Schema.Properties(context),
+            fields = Seq(
+                Field("str_col", StringType),
+                Field("int_col", IntegerType)
+            )
+        )
+
+        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        val relation = context.getRelation(RelationIdentifier("mock"))
+
+        (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
+        (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
+        (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
+        val df = relation.read(executor, None, Map())
+        df.schema should be (new StructType(schema.fields).sparkType)
+        df.collect() should be (Seq(
+            Row("lala", 12),
+            Row("lolo", 13),
+            Row(null,null)
+        ))
     }
 }

@@ -183,7 +183,7 @@ class UnivocityReader(schema: StructType, val options:CsvOptions) {
       */
     def parse(input: String): Row = convert(tokenizer.parseLine(input))
 
-    private def convert(tokens: Array[String]): Row = {
+    def convert(tokens: Array[String]): Row = {
         if (tokens.length != schema.length) {
             // If the number of tokens doesn't match the schema, we should treat it as a malformed record.
             // However, we still have chance to parse some of the tokens, by adding extra null tokens in
@@ -256,8 +256,7 @@ object UnivocityReader {
     def parseIterator(
                          lines: Iterator[String],
                          shouldDropHeader: Boolean,
-                         parser: UnivocityReader,
-                         schema: StructType): Iterator[Row] = {
+                         parser: UnivocityReader): Iterator[Row] = {
         val options = parser.options
 
         val linesWithoutHeader = if (shouldDropHeader) {

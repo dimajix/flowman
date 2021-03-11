@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import org.apache.spark.sql.Row
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -50,6 +51,10 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
               |  mock:
               |    kind: mock
               |    mapping: empty
+              |    records:
+              |      - ["a",12,3]
+              |      - [cat,"",7]
+              |      - [dog,null,8]
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
@@ -64,6 +69,11 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         mapping.mapping should be (MappingIdentifier("empty"))
         mapping.output should be (MappingOutputIdentifier("project/mock:main"))
         mapping.outputs should be (Seq("main"))
+        mapping.records.map(_.toSeq) should be (Seq(
+            Seq("a","12","3"),
+            Seq("cat","","7"),
+            Seq("dog",null,"8")
+        ))
     }
 
     it should "create empty DataFrames" in {
@@ -179,5 +189,54 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         dfOther.columns should contain("str_col")
         dfOther.columns should contain("int_col")
         dfOther.count() should be (0)
+    }
+
+    it should "work with specified records" in {
+        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMapping = mock[Mapping]
+        val mockMappingTemplate = mock[Template[Mapping]]
+
+        val project = Project(
+            "my_project",
+            mappings = Map(
+                "base" -> baseMappingTemplate,
+                "mock" -> mockMappingTemplate
+            )
+        )
+        val schema = new StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        ))
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.getContext(project)
+        val executor = session.execution
+
+        val mockMapping = MockMapping(
+            Mapping.Properties(context, "mock"),
+            MappingIdentifier("base"),
+            Seq(
+                Array("lala","12"),
+                Array("lolo","13"),
+                Array("",null)
+            )
+        )
+
+        (mockMappingTemplate.instantiate _).expects(context).returns(mockMapping)
+        val mapping = context.getMapping(MappingIdentifier("mock"))
+
+        (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
+        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
+        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
+            .anyNumberOfTimes().returns(schema)
+
+        val df = executor.instantiate(mapping, "main")
+        df.schema should be (schema.sparkType)
+        df.collect() should be (Seq(
+            Row("lala", 12),
+            Row("lolo", 13),
+            Row(null,null)
+        ))
     }
 }

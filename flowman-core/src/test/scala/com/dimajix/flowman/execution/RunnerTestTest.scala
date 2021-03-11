@@ -98,7 +98,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val project = Project(
             name = "default",
             targets = Map(
-                "target" -> targetTemplate,
+                "target" -> targetTemplate
             ),
             relations = Map(
                 "rel" -> relationTemplate
@@ -166,6 +166,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             assertionContext = ctx
             assertion
         }
+        (assertion.description _).expects().anyNumberOfTimes().returns(None)
         (assertion.context _).expects().onCall(() => assertionContext)
         (assertion.inputs _).expects().returns(Seq(MappingOutputIdentifier("map", "main", None)))
         (assertion.execute _).expects(*,*).returns(true)
@@ -207,6 +208,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val runner = session.runner
 
         (assertionTemplate.instantiate _).expects(*).returns(assertion)
+        (assertion.description _).expects().anyNumberOfTimes().returns(None)
 
         runner.executeTest(test, dryRun = true) should be (Status.SUCCESS)
     }
@@ -219,7 +221,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val project = Project(
             name = "default",
             targets = Map(
-                "target" -> targetTemplate,
+                "target" -> targetTemplate
             ),
             mappings = Map(
                 "map" -> mappingTemplate
@@ -276,6 +278,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             assertion
         }
         (assertion.context _).expects().onCall(() => assertionContext)
+        (assertion.description _).expects().anyNumberOfTimes().returns(None)
         (assertion.inputs _).expects().returns(Seq(MappingOutputIdentifier("map", "main", None)))
         (assertion.execute _).expects(*,*).throws(new UnsupportedOperationException())
 
@@ -302,7 +305,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val project = Project(
             name = "default",
             targets = Map(
-                "target" -> targetTemplate,
+                "target" -> targetTemplate
             )
         )
         val session = Session.builder()

@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -27,11 +26,13 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class MockMapping(
     instanceProperties:Mapping.Properties,
-    mapping:MappingIdentifier
+    mapping:MappingIdentifier,
+    records:Seq[Array[String]] = Seq()
 ) extends BaseMapping {
     private lazy val mocked = context.getMapping(mapping, false)
 
@@ -51,10 +52,18 @@ case class MockMapping(
      */
     override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
         val schemas = describe(execution, Map())
-        schemas.map { case(name,schema) =>
-            val rdd = execution.spark.sparkContext.emptyRDD[Row]
-            val df = execution.spark.createDataFrame(rdd, schema.sparkType)
-            (name,df)
+        if (records.nonEmpty) {
+            if (schemas.size != 1)
+                throw new UnsupportedOperationException("MockMapping only supports a single output with specified records")
+            val (name,schema) = schemas.head
+            val df = DataFrameUtils.ofRows(execution.spark, records, schema.sparkType)
+            Map(name -> df)
+        }
+        else {
+            schemas.map { case (name, schema) =>
+                val df = DataFrameUtils.ofSchema(execution.spark, schema.sparkType)
+                (name, df)
+            }
         }
     }
 
@@ -117,9 +126,9 @@ case class MockMapping(
 }
 
 
-
 class MockMappingSpec extends MappingSpec {
     @JsonProperty(value = "mapping", required=false) private var mapping:Option[String] = None
+    @JsonProperty(value = "records", required=false) private var records:Seq[Array[String]] = Seq()
 
     /**
      * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -129,7 +138,8 @@ class MockMappingSpec extends MappingSpec {
     override def instantiate(context: Context): MockMapping = {
         MockMapping(
             instanceProperties(context),
-            MappingIdentifier(context.evaluate(mapping).getOrElse(name))
+            MappingIdentifier(context.evaluate(mapping).getOrElse(name)),
+            records.map(_.map(context.evaluate))
         )
     }
 }

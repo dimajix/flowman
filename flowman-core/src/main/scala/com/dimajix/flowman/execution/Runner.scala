@@ -465,24 +465,59 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         keepGoing:Boolean,
         dryRun:Boolean
     ) : Status = {
-        val title = s"assert test '${test.identifier}"
+        val title = s"assert test '${test.identifier}'"
         logSubtitle(title)
 
-        Status.ofAll(test.assertions, keepGoing) { case (name,assertion) =>
-            try {
+        try {
+            val startTime = Instant.now()
+            var succeeded = 0
+            var failed = 0
+
+            test.assertions.map { case (name, assertion) =>
                 val instance = assertion.instantiate(context)
-                if (dryRun)
-                    Status.SUCCESS
-                else if (execution.assert(instance))
-                    Status.SUCCESS
-                else
-                    Status.FAILED
+                val description = instance.description.getOrElse(name)
+                logger.info(s"assert: $description")
+
+                val status = try {
+                    if (dryRun) {
+                        succeeded += 1
+                        Status.SUCCESS
+                    }
+                    else if (execution.assert(instance)) {
+                        succeeded += 1
+                        Status.SUCCESS
+                    }
+                    else {
+                        failed += 1
+                        Status.FAILED
+                    }
+                }
+                catch {
+                    case NonFatal(ex) =>
+                        failed += 1
+                        // Pass on exception when keepGoing is false, so next assertions won't be executed
+                        if (!keepGoing)
+                            throw ex
+                        logger.error(s"Caught exception during $description:", ex)
+                        Status.FAILED
+                }
+
+                // Remember test name, description and status for potential report
+                (name, description, status)
             }
-            catch {
-                case NonFatal(ex) =>
-                    logger.error(s"Caught exception during $title:", ex)
-                    Status.FAILED
-            }
+
+            val endTime = Instant.now()
+            val duration = Duration.between(startTime, endTime)
+            logger.info(s"$succeeded assertions passed, $failed assertions failed")
+            logger.info(s"Executed ${succeeded + failed} assertions in  ${duration.toMillis / 1000.0} s")
+
+            if (failed > 0) Status.FAILED else Status.SUCCESS
+        }
+        catch {
+            // Catch all exceptions
+            case NonFatal(ex) =>
+                logger.error(s"Caught exception during $title:", ex)
+                Status.FAILED
         }
     }
 

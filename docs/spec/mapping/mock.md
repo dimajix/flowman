@@ -2,7 +2,8 @@
 
 The `mock` mapping works similar to the [`null`](null.md) mapping in that it creates an empty output. But instead of
 explicitly specifying a schema of the empty output, the `mock` mapping will fetch the schema from a different mapping.
-This mapping is most useful to be used in tests.
+This mapping is most useful to be used in tests. In addition it is also possible to manually specify records to be
+returned, which makes this mapping even more convenient for mocking.
 
 ## Example
 ```yaml
@@ -17,6 +18,9 @@ mappings:
   empty_mapping:
     kind: mock
     mapping: some_mapping
+    records:
+      - [1,2,"some_string",""]
+      - [2,null,"cat","black"]
 ```
 
 ## Fields
@@ -39,8 +43,8 @@ mappings:
   mocked. Note that this will only work when used as an override mapping in test cases, otherwise an infinite loop
   would be created by referencing to itself.
 
-* `filter` **(optional)** *(type: string)* *(default: empty)*:
-  An optional SQL filter expression that is applied *after* schema operation.
+* `records` **(optional)** *(type: list:array)* *(default: empty)*:
+  An optional list of records to be returned.  
 
 
 ## Outputs

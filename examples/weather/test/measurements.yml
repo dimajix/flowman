@@ -15,9 +15,9 @@ tests:
         kind: sql
         description: "Measurements are extracted correctly"
         tests:
-          - sql: "SELECT * FROM measurements_extracted"
+          - query: "SELECT * FROM measurements_extracted"
             expected:
               - [1,63897,999999,10.6,2013-01-01,0.9,1,124,CRN05,1,0000,H]
               - [1,63897,999999,10.6,2013-01-01,1.5,1,124,CRN05,1,0005,H]
-          - sql: "SELECT COUNT(*) FROM measurements_extracted"
+          - query: "SELECT COUNT(*) FROM measurements_extracted"
             expected: 2

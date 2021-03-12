@@ -28,7 +28,7 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
-case class UpdateMapping(
+case class UpsertMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     updates:MappingOutputIdentifier,
@@ -94,7 +94,7 @@ case class UpdateMapping(
 
 
 
-class UpdateMappingSpec extends MappingSpec {
+class UpsertMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "updates", required = true) private var updates: String = _
     @JsonProperty(value = "keyColumns", required = true) private var keyColumns: Seq[String] = Seq()
@@ -105,8 +105,8 @@ class UpdateMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): UpdateMapping = {
-        UpdateMapping(
+    override def instantiate(context: Context): UpsertMapping = {
+        UpsertMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             MappingOutputIdentifier(context.evaluate(updates)),

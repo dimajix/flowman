@@ -27,12 +27,12 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The UpdateMapping" should "merge in updates" in {
+class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "The UpsertMapping" should "merge in updates" in {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val mapping = UpdateMapping(
+        val mapping = UpsertMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
@@ -66,7 +66,7 @@ class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val mapping = UpdateMapping(
+        val mapping = UpsertMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
@@ -101,7 +101,7 @@ class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val mapping = UpdateMapping(
+        val mapping = UpsertMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
@@ -135,7 +135,7 @@ class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val mapping = UpdateMapping(
+        val mapping = UpsertMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("prev"),
             MappingOutputIdentifier("updates"),
@@ -183,7 +183,7 @@ class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             """
               |mappings:
               |  t1:
-              |    kind: update
+              |    kind: upsert
               |    input: t0
               |    updates: t1
               |    filter: "operation != 'DELETE'"
@@ -198,9 +198,9 @@ class UpdateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         project.mappings.contains("t1") should be (true)
 
         val mapping = project.mappings("t1")
-        mapping shouldBe an[UpdateMappingSpec]
+        mapping shouldBe an[UpsertMappingSpec]
 
-        val updateMapping = mapping.instantiate(session.context).asInstanceOf[UpdateMapping]
+        val updateMapping = mapping.instantiate(session.context).asInstanceOf[UpsertMapping]
         updateMapping.inputs should be (Seq(MappingOutputIdentifier("t0"),MappingOutputIdentifier("t1")))
         updateMapping.input should be (MappingOutputIdentifier("t0"))
         updateMapping.updates should be (MappingOutputIdentifier("t1"))

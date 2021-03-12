@@ -56,7 +56,13 @@ class RunCommand extends ActionCommand {
             Status.ofAll(allTests, true) { test =>
                 val runner = session.runner
                 val instance = context.getTest(TestIdentifier(test))
-                runner.executeTest(instance, keepGoing = keepGoing)
+                if (instance.assertions.nonEmpty) {
+                    runner.executeTest(instance, keepGoing = keepGoing)
+                }
+                else {
+                    logger.info(s"Skipping test '$test' which does not provide any assertions")
+                    Status.SUCCESS
+                }
             }
         }
         match {

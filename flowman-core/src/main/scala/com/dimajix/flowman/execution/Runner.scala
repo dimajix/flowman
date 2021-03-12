@@ -444,7 +444,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                 else {
                     Status.SKIPPED
                 }
-            // Finally clean up
+            // Finally clean up, even in case of possible failures.
             val destroyStatus = Status.ofAll(Lifecycle.DESTROY, true) { phase =>
                 runPhase(phase)
             }
@@ -477,7 +477,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
         try {
             val startTime = Instant.now()
-            var sumExceptions = 0
+            var numExceptions = 0
 
             val results = test.assertions.map { case (name, assertion) =>
                 val instance = assertion.instantiate(context)
@@ -491,7 +491,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                     catch {
                         case NonFatal(ex) =>
                             // Pass on exception when keepGoing is false, so next assertions won't be executed
-                            sumExceptions = sumExceptions + 1
+                            numExceptions = numExceptions + 1
                             if (!keepGoing)
                                 throw ex
                             logger.error(s"Caught exception during $description:", ex)
@@ -508,13 +508,13 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
             val endTime = Instant.now()
             val duration = Duration.between(startTime, endTime)
-            val sumSucceeded = results.map(_._3.count(_.valid)).sum
-            val sumFailed = results.map(_._3.count(!_.valid)).sum
+            val numSucceeded = results.map(_._3.count(_.valid)).sum
+            val numFailed = results.map(_._3.count(!_.valid)).sum
 
-            logger.info(s"$sumSucceeded assertions passed, $sumFailed failed, $sumExceptions exceptions")
-            logger.info(s"Executed ${sumSucceeded + sumFailed} assertions in  ${duration.toMillis / 1000.0} s")
+            logger.info(s"$numSucceeded assertions passed, $numFailed failed, $numExceptions exceptions")
+            logger.info(s"Executed ${numSucceeded + numFailed} assertions in  ${duration.toMillis / 1000.0} s")
 
-            if (sumFailed + sumExceptions > 0) Status.FAILED else Status.SUCCESS
+            if (numFailed + numExceptions > 0) Status.FAILED else Status.SUCCESS
         }
         catch {
             // Catch all exceptions

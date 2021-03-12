@@ -30,6 +30,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SqlParser
 
 
@@ -51,12 +52,9 @@ extends BaseMapping {
         require(execution != null)
         require(input != null)
 
-        // Register all input DataFrames as temp views
-        input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
-        // Execute query
-        val result = execution.spark.sql(statement)
-        // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-        input.foreach(kv => execution.spark.sessionState.catalog.dropTempView(kv._1.name))
+        val result = DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+            execution.spark.sql(statement)
+        }
 
         Map("main" -> result)
     }

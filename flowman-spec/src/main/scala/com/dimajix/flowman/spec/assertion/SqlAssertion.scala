@@ -30,13 +30,16 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SqlParser
 
+
 object SqlAssertion {
     case class Case(
-        sql:String,
+        query:String,
         expected:Seq[Array[String]] = Seq()
     ) {
+        def sql : String = query
+
         override def hashCode(): Int = {
-            (sql, expected.map(_.toSeq)).hashCode()
+            (query, expected.map(_.toSeq)).hashCode()
         }
 
         override def equals(obj: Any): Boolean = {
@@ -51,8 +54,8 @@ object SqlAssertion {
             }
             else {
                 val otherCase = obj.asInstanceOf[Case]
-                val l = (sql, expected.map(_.toSeq))
-                val r = (otherCase.sql, otherCase.expected.map(_.toSeq))
+                val l = (query, expected.map(_.toSeq))
+                val r = (otherCase.query, otherCase.expected.map(_.toSeq))
                 l == r
             }
         }
@@ -90,44 +93,41 @@ case class SqlAssertion(
      * @param input
      * @return
      */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionResult] =  {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionResult] = {
         require(execution != null)
         require(input != null)
 
-        // Register all input DataFrames as temp views
-        input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
+        // Cache all input DataFrames, they will probably used more than once
+        DataFrameUtils.withCaches(input.values) {
+            DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+                tests.map { test =>
+                    // Execute query
+                    val sql = test.sql
+                    val actual = execution.spark.sql(sql)
 
-        val results = tests.map { test =>
-            // Execute query
-            val sql = test.sql
-            val actual = execution.spark.sql(sql)
-
-            val result = DataFrameUtils.diffToStringValues(test.expected, actual)
-            result match {
-                case Some(diff) =>
-                    logger.error(s"Difference between datasets: \n${diff}")
-                    AssertionResult(sql, false)
-                case None =>
-                    AssertionResult(sql, true)
+                    val result = DataFrameUtils.diffToStringValues(test.expected, actual)
+                    result match {
+                        case Some(diff) =>
+                            logger.error(s"Difference between datasets: \n${diff}")
+                            AssertionResult(sql, false)
+                        case None =>
+                            AssertionResult(sql, true)
+                    }
+                }
             }
         }
-
-        // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-        input.foreach(kv => execution.spark.sessionState.catalog.dropTempView(kv._1.name))
-
-        results
     }
 }
 
 
 object SqlAssertionSpec {
     class Case {
-        @JsonProperty(value="sql", required=true) private var sql:String = ""
+        @JsonProperty(value="query", required=true) private var query:String = ""
         @JsonProperty(value="expected", required=true) private var expected:Seq[Array[String]] = Seq()
 
         def instantiate(context:Context) : SqlAssertion.Case = {
             SqlAssertion.Case(
-                context.evaluate(sql),
+                context.evaluate(query),
                 expected.map(_.map(context.evaluate))
             )
         }

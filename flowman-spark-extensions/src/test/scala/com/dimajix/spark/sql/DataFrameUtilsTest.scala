@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
+import org.apache.spark.storage.StorageLevel
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -155,5 +156,57 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         DataFrameUtils.diffToStringValues(lines, df1) should be (None)
         DataFrameUtils.diffToStringValues(lines, df1.limit(2)) should not be (None)
         DataFrameUtils.diffToStringValues(lines.take(2), df1) should not be (None)
+    }
+
+    "DataFrameUtils.withCaches" should "cache und uncache DataFrames" in {
+        val df = spark.emptyDataFrame
+
+        df.storageLevel should be (StorageLevel.NONE)
+
+        DataFrameUtils.withCaches(Seq(df)) {
+            df.storageLevel should be (StorageLevel.MEMORY_AND_DISK)
+        }
+
+        df.storageLevel should be (StorageLevel.NONE)
+    }
+
+    it should "cache und uncache in presence of exceptions" in {
+        val df = spark.emptyDataFrame
+
+        df.storageLevel should be (StorageLevel.NONE)
+
+        an[IllegalArgumentException] should be thrownBy(
+            DataFrameUtils.withCaches(Seq(df)) {
+                df.storageLevel should be (StorageLevel.MEMORY_AND_DISK)
+                throw new IllegalArgumentException()
+            })
+
+        df.storageLevel should be (StorageLevel.NONE)
+    }
+
+    "DataFrameUtils.withTempViews" should "create and unregister temp views" in {
+        val df = spark.emptyDataFrame
+
+        spark.sessionState.catalog.getTempView("temp") should be (None)
+
+        DataFrameUtils.withTempViews(Seq("temp" -> df)) {
+            spark.sessionState.catalog.getTempView("temp") should be (Some(df.queryExecution.logical))
+        }
+
+        spark.sessionState.catalog.getTempView("temp") should be (None)
+    }
+
+    it should "create and unregister  temp views in presence of exceptions" in {
+        val df = spark.emptyDataFrame
+
+        spark.sessionState.catalog.getTempView("temp") should be (None)
+
+        an[IllegalArgumentException] should be thrownBy(
+            DataFrameUtils.withTempViews(Seq("temp" -> df)) {
+                spark.sessionState.catalog.getTempView("temp") should be (Some(df.queryExecution.logical))
+                throw new IllegalArgumentException()
+            })
+
+        spark.sessionState.catalog.getTempView("temp") should be (None)
     }
 }

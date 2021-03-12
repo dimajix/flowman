@@ -29,68 +29,14 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The SchemaMapping" should "work" in {
-        val df = spark.createDataFrame(Seq(
-            ("col1", 12),
-            ("col2", 23)
-        ))
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
-
-        val mapping = SchemaMapping(
-            Mapping.Properties(session.context),
-            MappingOutputIdentifier("myview"),
-            Seq("_2" -> "int")
-        )
-
-        mapping.input should be (MappingOutputIdentifier("myview"))
-        mapping.columns should be (Seq("_2" -> "int"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
-
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
-            .orderBy("_2").collect()
-        result.size should be (2)
-        result(0) should be (Row(12))
-        result(1) should be (Row(23))
-    }
-
-    it should "add NULL columns for missing columns" in {
-        val df = spark.createDataFrame(Seq(
-            ("col1", 12),
-            ("col2", 23)
-        ))
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
-
-        val mapping = SchemaMapping(
-            Mapping.Properties(session.context),
-            MappingOutputIdentifier("myview"),
-            Seq("_2" -> "int", "new" -> "string")
-        )
-
-        mapping.input should be (MappingOutputIdentifier("myview"))
-        mapping.columns should be (Seq("_2" -> "int", "new" -> "string"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
-
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
-            .orderBy("_2")
-        result.schema should be (StructType(Seq(
-            StructField("_2", IntegerType, false),
-            StructField("new", StringType, true)
-        )))
-        val rows = result.collect()
-        rows.size should be (2)
-        rows(0) should be (Row(12, null))
-        rows(1) should be (Row(23, null))
-    }
-
-    "An appropriate Dataflow" should "be readable from YML" in {
+    "The SchemaMapping" should "be parsable with columns" in {
         val spec =
             """
               |mappings:
@@ -108,7 +54,6 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val context = session.getContext(project)
 
         project.mappings.size should be (1)
-        project.mappings.contains("t0") should be (false)
         project.mappings.contains("t1") should be (true)
 
         val df = spark.createDataFrame(Seq(
@@ -117,7 +62,82 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         ))
 
         val mapping = context.getMapping(MappingIdentifier("t1"))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("t0")))
+        mapping.output should be (MappingOutputIdentifier("project/t1:main"))
+        mapping.identifier should be (MappingIdentifier("project/t1"))
         mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))
     }
 
+    it should "work" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+        val inputSchema = com.dimajix.flowman.types.StructType.of(inputDf.schema)
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context, name = "map"),
+            MappingOutputIdentifier("myview"),
+            Seq(Field("_2", FieldType.of("int")))
+        )
+
+        mapping.input should be (MappingOutputIdentifier("myview"))
+        mapping.columns should be (Seq(Field("_2", FieldType.of("int"))))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
+        mapping.output should be (MappingOutputIdentifier("map:main"))
+        mapping.identifier should be (MappingIdentifier("map"))
+
+        mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema)) should be (Map(
+            "main" -> com.dimajix.flowman.types.StructType(Seq(Field("_2", FieldType.of("int"))))
+        ))
+        mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema), "main") should be (
+            com.dimajix.flowman.types.StructType(Seq(Field("_2", FieldType.of("int"))))
+        )
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
+            .orderBy("_2")
+        result.collect() should be (Seq(
+            Row(12),
+            Row(23)
+        ))
+    }
+
+    it should "add NULL columns for missing columns" in {
+        val df = spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("myview"),
+            Seq(
+                Field("_2", FieldType.of("int")),
+                Field("new", FieldType.of("string"))
+            )
+        )
+
+        mapping.input should be (MappingOutputIdentifier("myview"))
+        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
+        mapping.outputs should be (Seq("main"))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
+            .orderBy("_2")
+        result.schema should be (StructType(Seq(
+            StructField("_2", IntegerType, false),
+            StructField("new", StringType, true)
+        )))
+
+        val rows = result.collect()
+        rows should be (Seq(
+            Row(12, null),
+            Row(23, null)
+        ))
+    }
 }

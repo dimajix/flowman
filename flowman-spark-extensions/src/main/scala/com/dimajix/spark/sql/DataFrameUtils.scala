@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.BadRecordException
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.spark.sql.catalyst.PlanUtils
 import com.dimajix.spark.sql.local.csv.CsvOptions
@@ -51,6 +52,57 @@ object DataFrameUtils {
 
     def ofRows(sparkSession: SparkSession, rows:Seq[Row], schema:StructType): DataFrame = {
         sparkSession.createDataFrame(rows.asJava, schema)
+    }
+
+    /**
+     * Temporarily caches a set of DataFrames
+     * @param input
+     * @param level
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def withCaches[T](input:Iterable[DataFrame], level:StorageLevel=StorageLevel.MEMORY_AND_DISK)(fn: => T) : T = {
+        // Cache all DataFrames, and memorize their original storage levels
+        val originalPersistedState = input.toSeq.map { df =>
+            val originalStorageLevel = df.storageLevel
+            if (originalStorageLevel == StorageLevel.NONE)
+                df.persist(level)
+
+            df -> originalStorageLevel
+        }
+
+        val result = try {
+            fn
+        }
+        finally {
+            // Restore previous storage level
+            originalPersistedState.foreach { case (df, level) =>
+                if (df.storageLevel != level) {
+                    if (level == StorageLevel.NONE)
+                        df.unpersist()
+                    else
+                        df.persist(level)
+                }
+            }
+        }
+
+        result
+    }
+
+    def withTempViews[T](input:Iterable[(String,DataFrame)])(fn: => T) : T = {
+        // Register all input DataFrames as temp views
+        input.foreach(kv => kv._2.createOrReplaceTempView(kv._1))
+
+        val result = try {
+            fn
+        }
+        finally {
+            // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
+            input.foreach(kv => kv._2.sparkSession.sessionState.catalog.dropTempView(kv._1))
+        }
+
+        result
     }
 
     /**

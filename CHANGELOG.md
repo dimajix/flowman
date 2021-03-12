@@ -22,6 +22,8 @@
 * Add new `--dry-run` command line option
 * Add new `mock` and `null` mapping types
 * Add new `mock` relation
+* Implement new testing capabilities  
+* Rename `update` mapping to `upsert` mapping, which better describes its functionality 
 
 
 # Version 0.14.2 - 2020-10-12

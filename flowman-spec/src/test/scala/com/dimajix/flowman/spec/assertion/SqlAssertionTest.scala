@@ -34,23 +34,23 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             """
               |kind: sql
               |tests:
-              | - sql: SELECT * FROM lala
+              | - query: SELECT * FROM lala
               |   expected: A
-              | - sql: SELECT * FROM lala
+              | - query: SELECT * FROM lala
               |   expected: [A]
-              | - sql: SELECT * FROM lolo
+              | - query: SELECT * FROM lolo
               |   expected: [A,2]
-              | - sql: SELECT * FROM lolo
+              | - query: SELECT * FROM lolo
               |   expected: [[A,2]]
-              | - sql: SELECT * FROM lolo
+              | - query: SELECT * FROM lolo
               |   expected:
               |     - A
               |     - B
-              | - sql: SELECT * FROM lolo
+              | - query: SELECT * FROM lolo
               |   expected:
               |     - [A]
               |     - [B]
-              | - sql: SELECT * FROM lolo
+              | - query: SELECT * FROM lolo
               |   expected:
               |     - [A,1]
               |     - [B,2]
@@ -64,31 +64,31 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         assertion.name should be ("")
         assertion.tests should be (Seq(
             SqlAssertion.Case(
-                sql = "SELECT * FROM lala",
+                query = "SELECT * FROM lala",
                 expected = Seq(Array("A"))
             ),
             SqlAssertion.Case(
-                sql = "SELECT * FROM lala",
+                query = "SELECT * FROM lala",
                 expected = Seq(Array("A"))
             ),
             SqlAssertion.Case(
-                sql = "SELECT * FROM lolo",
+                query = "SELECT * FROM lolo",
                 expected = Seq(Array("A"), Array("2"))
             ),
             SqlAssertion.Case(
-                sql = "SELECT * FROM lolo",
+                query = "SELECT * FROM lolo",
                 expected = Seq(Array("A", "2"))
             ),
             SqlAssertion.Case(
-                sql = "SELECT * FROM lolo",
+                query = "SELECT * FROM lolo",
                 expected = Seq(Array("A"), Array("B"))
             ),
             SqlAssertion.Case(
-                sql = "SELECT * FROM lolo",
+                query = "SELECT * FROM lolo",
                 expected = Seq(Array("A"), Array("B"))
             ),
             SqlAssertion.Case(
-                sql = "SELECT * FROM lolo",
+                query = "SELECT * FROM lolo",
                 expected = Seq(Array("A", "1"), Array("B", "2"))
             )
         ))
@@ -105,11 +105,11 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Assertion.Properties(context),
             Seq(
                 SqlAssertion.Case(
-                    sql = "SELECT COUNT(*), SUM(id) FROM mx",
+                    query = "SELECT COUNT(*), SUM(id) FROM mx",
                     expected = Seq(Array("2", "1"))
                 ),
                 SqlAssertion.Case(
-                    sql = "SELECT COUNT(*) FROM my",
+                    query = "SELECT COUNT(*) FROM my",
                     expected = Seq(Array("3"))
                 )
             )
@@ -137,7 +137,7 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Assertion.Properties(context),
             Seq(
                 SqlAssertion.Case(
-                    sql = "SELECT COUNT(*),SUM(id) FROM mx",
+                    query = "SELECT COUNT(*),SUM(id) FROM mx",
                     expected = Seq(Array("2", "1", "3"))
                 )
             )
@@ -161,7 +161,7 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Assertion.Properties(context),
             Seq(
                 SqlAssertion.Case(
-                    sql = "SELECT COUNT(*),SUM(id) FROM mx",
+                    query = "SELECT COUNT(*),SUM(id) FROM mx",
                     expected = Seq(Array("2"))
                 )
             )
@@ -185,7 +185,7 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Assertion.Properties(context),
             Seq(
                 SqlAssertion.Case(
-                    sql = "SELECT COUNT(*),SUM(id) FROM mx",
+                    query = "SELECT COUNT(*),SUM(id) FROM mx",
                     expected = Seq(Array("2.0"))
                 )
             )

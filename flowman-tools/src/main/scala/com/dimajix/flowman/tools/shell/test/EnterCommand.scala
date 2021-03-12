@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.shell.job
+package com.dimajix.flowman.tools.shell.test
 
 import scala.util.control.NonFatal
 
@@ -22,11 +22,10 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.NoSuchJobException
+import com.dimajix.flowman.execution.NoSuchTestException
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.shell.Shell
 
@@ -34,24 +33,21 @@ import com.dimajix.flowman.tools.shell.Shell
 class EnterCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[EnterCommand])
 
-    @Argument(index=0, required=true, usage = "name of job to enter", metaVar = "<job>")
-    var job: String = ""
-    @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
-    var args: Array[String] = Array()
+    @Argument(index=0, required=true, usage = "name of test to enter", metaVar = "<test>")
+    var test: String = ""
 
     override def execute(session: Session, project:Project, context:Context): Boolean = {
         try {
-            val job = context.getJob(JobIdentifier(this.job))
-            val args = splitSettings(this.args).toMap
-            Shell.instance.enterJob(job, args)
+            val test = context.getTest(TestIdentifier(this.test))
+            Shell.instance.enterTest(test)
             true
         }
         catch {
-            case ex:NoSuchJobException =>
-                logger.error(s"Cannot resolve job '${ex.job}'")
+            case ex:NoSuchTestException =>
+                logger.error(s"Cannot resolve test '${ex.test}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Error entering job '$job': ${e.getMessage}")
+                logger.error(s"Error entering test '$test': ${e.getMessage}")
                 false
         }
     }

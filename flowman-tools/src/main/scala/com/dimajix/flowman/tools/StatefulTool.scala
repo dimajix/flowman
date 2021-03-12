@@ -6,6 +6,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Test
 
 
 class StatefulTool(
@@ -17,6 +18,7 @@ class StatefulTool(
 ) extends Tool {
     private var _project: Project = Project("empty")
     private var _job: Option[Job] = None
+    private var _test: Option[Test] = None
     private var _context: Context = _
     private var _session: Session = _
 
@@ -30,6 +32,8 @@ class StatefulTool(
     def context: Context = _context
 
     def job: Option[Job] = _job
+
+    def test: Option[Test] = _test
 
     def newSession() : Session = {
         if (_session != null) {
@@ -65,6 +69,7 @@ class StatefulTool(
         val jargs = job.arguments(args)
         _context = _session.runner.withJobContext(job,jargs) { (context,args) => context }
         _session.execution.cleanup()
+        _test = None
         _job = Some(job)
     }
 
@@ -74,4 +79,16 @@ class StatefulTool(
         _job = None
     }
 
+    def enterTest(test: Test): Unit = {
+        _context = _session.runner.withTestContext(test) { context => context }
+        _session.execution.cleanup()
+        _job = None
+        _test = Some(test)
+    }
+
+    def leaveTest(): Unit = {
+        _context = _session.getContext(project)
+        _session.execution.cleanup()
+        _test = None
+    }
 }

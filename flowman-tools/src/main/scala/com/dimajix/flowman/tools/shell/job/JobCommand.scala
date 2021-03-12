@@ -40,7 +40,7 @@ class JobCommand extends NestedCommand {
         new SubCommand(name="verify",impl=classOf[VerifyCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),
         new SubCommand(name="destroy",impl=classOf[DestroyCommand]),
-        new SubCommand(name="info",impl=classOf[InfoCommand]),
+        new SubCommand(name="inspect",impl=classOf[InspectCommand]),
         new SubCommand(name="enter",impl=classOf[EnterCommand]),
         new SubCommand(name="leave",impl=classOf[LeaveCommand])
     ))

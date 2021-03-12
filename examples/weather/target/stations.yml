@@ -1,5 +1,5 @@
 targets:
   stations:
     kind: relation
-    mapping: stations-raw
+    mapping: stations_raw
     relation: stations

@@ -61,7 +61,6 @@ class ShowCommand extends ActionCommand {
             task.execute(session.execution, Phase.BUILD)
         } match {
             case Success(_) =>
-                logger.info("Successfully finished dumping relation")
                 true
             case Failure(NonFatal(e)) =>
                 logger.error(s"Caught exception while dumping relation '$relation'", e)

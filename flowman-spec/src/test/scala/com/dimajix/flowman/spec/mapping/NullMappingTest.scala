@@ -66,7 +66,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         mapping1.kind should be ("null")
         mapping1.fields should be (Seq(
             Field("str_col", StringType),
-            Field("int_col", IntegerType),
+            Field("int_col", IntegerType)
         ))
         mapping1.schema should be (None)
         mapping1.output should be (MappingOutputIdentifier("project/empty1:main"))
@@ -82,7 +82,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             Mapping.Properties(context, "empty"),
             Seq(
                 Field("str_col", StringType),
-                Field("int_col", IntegerType),
+                Field("int_col", IntegerType)
             ),
             None
         )

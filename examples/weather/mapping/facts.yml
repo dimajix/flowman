@@ -1,6 +1,6 @@
 mappings:
   # The `measurements-joined` mapping will add station metadata to measurements
-  measurements-joined:
+  measurements_joined:
     # Join together measurements and stations
     kind: join
     mode: left
@@ -17,7 +17,7 @@ mappings:
   # Replace invalid values with NULLs
   facts:
     kind: extend
-    input: measurements-joined
+    input: measurements_joined
     # Replace existing columns with new values, which will contain NULL values whenever the quality flags
     # indicate so
     columns:

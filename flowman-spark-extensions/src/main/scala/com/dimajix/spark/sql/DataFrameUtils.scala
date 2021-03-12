@@ -17,6 +17,8 @@
 package com.dimajix.spark.sql
 
 import scala.collection.JavaConverters._
+import scala.util.Failure
+import scala.util.Success
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Dataset
@@ -111,45 +113,45 @@ object DataFrameUtils {
      * @param right
      * @return
      */
-    def diff(left:DataFrame, right:DataFrame) : Option[String] = {
-        val expectedRows = left.collect().toSeq
-        val actualRows = right.collect().toSeq
+    def diff(expected:DataFrame, actual:DataFrame) : Option[String] = {
+        val expectedRows = expected.collect().toSeq
+        val actualRows = actual.collect().toSeq
 
         if (!compare(expectedRows, actualRows))
             Some(genError(expectedRows, actualRows))
         else
             None
     }
-    def diff(left:Seq[Row], right:Seq[Row]) : Option[String] = {
-        if (!compare(left, right))
-            Some(genError(left, right))
+    def diff(expected:Seq[Row], actual:Seq[Row]) : Option[String] = {
+        if (!compare(expected, actual))
+            Some(genError(expected, actual))
         else
             None
     }
 
-    def diffToStringValues(actual:DataFrame, expected:Seq[Array[String]]) : Option[String] = {
+    def diffToStringValues(expected:Seq[Array[String]], actual:DataFrame) : Option[String] = {
         val schema = actual.schema
         val actualRows = actual.collect()
 
         val expectedRows = try {
-            val parser = new RowParser(schema, RowParser.Options(useInternalTypes = false))
-            Some(expected.map(parser.parse))
+            val parser = new RowParser(schema, RowParser.Options())
+            Left(expected.map(parser.parse))
         }
         catch {
             case _:BadRecordException =>
-                None
+                Right(s"Cannot parse expected records with actual schema. Actual schema is:\n${schema.treeString}")
         }
 
         expectedRows match {
-            case Some(expectedRows) =>
-                DataFrameUtils.diff(actualRows, expectedRows) match {
+            case Left(expectedRows) =>
+                DataFrameUtils.diff(expectedRows, actualRows) match {
                     case Some(diff) =>
                         Some(s"Difference between datasets: \n${diff}")
                     case None =>
                         None
                 }
-            case None =>
-                Some(s"Cannot parse expected records with actual schema. Actual schema is:\n${schema.treeString}")
+            case Right(error) =>
+                Some(error)
         }
     }
 
@@ -185,7 +187,7 @@ object DataFrameUtils {
     }
 
     private def genError(expectedAnswer: Seq[Row],
-                         sparkAnswer: Seq[Row]): String = {
+                         actualAnswer: Seq[Row]): String = {
         val getRowType: Option[Row] => String = row =>
             row.map(row =>
                 if (row.schema == null) {
@@ -201,9 +203,9 @@ object DataFrameUtils {
                 s"== Expected - ${expectedAnswer.size} ==" +:
                     getRowType(expectedAnswer.headOption) +:
                     normalizeRows(expectedAnswer).map(_.toString()),
-                s"== Actual - ${sparkAnswer.size} ==" +:
-                    getRowType(sparkAnswer.headOption) +:
-                    normalizeRows(sparkAnswer).map(_.toString())).mkString("\n")
+                s"== Actual - ${actualAnswer.size} ==" +:
+                    getRowType(actualAnswer.headOption) +:
+                    normalizeRows(actualAnswer).map(_.toString())).mkString("\n")
         }
     """.stripMargin
     }

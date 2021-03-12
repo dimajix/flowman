@@ -102,7 +102,7 @@ case class SqlAssertion(
             val sql = test.sql
             val actual = execution.spark.sql(sql)
 
-            val result = DataFrameUtils.diffToStringValues(actual, test.expected)
+            val result = DataFrameUtils.diffToStringValues(test.expected, actual)
             result match {
                 case Some(diff) =>
                     logger.error(s"Difference between datasets: \n${diff}")

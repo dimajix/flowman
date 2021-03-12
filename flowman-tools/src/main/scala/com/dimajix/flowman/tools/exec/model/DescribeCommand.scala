@@ -26,6 +26,8 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.NoSuchJobException
+import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
@@ -41,7 +43,7 @@ class DescribeCommand extends ActionCommand {
     var relation: String = ""
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
-        Try {
+        try {
             val identifier = RelationIdentifier(this.relation)
             val relation = context.getRelation(identifier)
 
@@ -54,11 +56,12 @@ class DescribeCommand extends ActionCommand {
                 val schema = relation.describe(execution)
                 schema.printTree()
             }
-        } match {
-            case Success(_) =>
-                logger.info("Successfully finished describing relation")
-                true
-            case Failure(NonFatal(e)) =>
+            true
+        } catch {
+            case ex:NoSuchRelationException =>
+                logger.error(s"Cannot resolve relation '${ex.relation}'")
+                false
+            case NonFatal(e) =>
                 logger.error(s"Caught exception while describing relation '$relation':", e)
                 false
         }

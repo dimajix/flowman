@@ -41,11 +41,13 @@ class AssertionSpecTest extends AnyFlatSpec with Matchers {
               |    assertions:
               |      custom:
               |        kind: annotatedAssertion
+              |        description: This is a test
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().build()
         val context = session.getContext(project)
+
         val test = context.getTest(TestIdentifier("main"))
         test.assertions("custom") shouldBe a[AnnotationAssertionSpec]
     }

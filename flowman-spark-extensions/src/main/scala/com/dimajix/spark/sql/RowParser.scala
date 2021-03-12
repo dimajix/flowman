@@ -17,6 +17,7 @@
 package com.dimajix.spark.sql
 
 import java.math.BigDecimal
+import java.sql.Timestamp
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -48,8 +49,7 @@ import com.dimajix.util.DateTimeUtils
 
 object RowParser {
     object Options {
-        def apply(useInternalTypes:Boolean = true,
-                  addExtraColumns:Boolean = false,
+        def apply(addExtraColumns:Boolean = false,
                   removeExtraColumns:Boolean = false
                  ) : Options = {
             val timeZone = DateTimeUtils.getTimeZone("UTC")
@@ -61,7 +61,6 @@ object RowParser {
                 timeZone = timeZone,
                 timestampFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timeZone, Locale.US),
                 dateFormat = FastDateFormat.getInstance("yyyy-MM-dd", Locale.US),
-                useInternalTypes = useInternalTypes,
                 addExtraColumns = addExtraColumns,
                 removeExtraColumns = removeExtraColumns
             )
@@ -75,7 +74,6 @@ object RowParser {
         timeZone:TimeZone,
         timestampFormat:FastDateFormat,
         dateFormat:FastDateFormat,
-        useInternalTypes:Boolean,
         addExtraColumns:Boolean,
         removeExtraColumns:Boolean
     )
@@ -146,32 +144,22 @@ class RowParser(schema: StructType, options:RowParser.Options) {
             nullSafeDatum(d, name, nullable) { datum =>
                 // This one will lose microseconds parts.
                 // See https://issues.apache.org/jira/browse/SPARK-10681.
-                Try(options.timestampFormat.parse(datum).getTime * 1000L)
+                Try(new Timestamp(options.timestampFormat.parse(datum).getTime))
                     .getOrElse {
                         // If it fails to parse, then tries the way used in 2.0 and 1.x for backwards
                         // compatibility.
-                        DateTimeUtils.stringToTime(datum).getTime * 1000L
+                        new Timestamp(DateTimeUtils.stringToTime(datum).getTime)
                     }
             }
 
         case _: DateType => (d: String) =>
             nullSafeDatum(d, name, nullable) { datum =>
-                // This one will lose microseconds parts.
-                // See https://issues.apache.org/jira/browse/SPARK-10681.x
-                Try(DateTimeUtils.millisToDays(options.dateFormat.parse(datum).getTime))
-                    .getOrElse {
-                        // If it fails to parse, then tries the way used in 2.0 and 1.x for backwards
-                        // compatibility.
-                        DateTimeUtils.millisToDays(DateTimeUtils.stringToTime(datum).getTime)
-                    }
+                java.sql.Date.valueOf(datum)
             }
 
         case _: StringType => (d: String) =>
             nullSafeDatum(d, name, nullable) { datum =>
-                if (options.useInternalTypes)
-                    UTF8String.fromString(datum)
-                else
-                    datum
+                datum
             }
 
         // We don't actually hit this exception though, we keep it for understandability

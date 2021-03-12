@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2018-2019 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.namespace
+package com.dimajix.flowman.tools.shell.test
 
-import org.kohsuke.args4j.Argument
-import org.kohsuke.args4j.spi.SubCommand
-import org.kohsuke.args4j.spi.SubCommandHandler
-import org.kohsuke.args4j.spi.SubCommands
-
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
-import com.dimajix.flowman.tools.exec.NestedCommand
+import com.dimajix.flowman.tools.shell.Shell
 
 
-class NamespaceCommand extends NestedCommand {
-    @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
-    @SubCommands(Array(
-        new SubCommand(name="inspect",impl=classOf[InspectCommand])
-    ))
-    override var command:Command = _
+class LeaveCommand extends Command {
+    override def execute(session: Session, project:Project, context:Context): Boolean = {
+        Shell.instance.leaveTest()
+        true
+    }
 }

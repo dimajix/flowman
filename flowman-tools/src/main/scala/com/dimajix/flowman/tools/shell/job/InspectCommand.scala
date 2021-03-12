@@ -22,22 +22,24 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
 
-class InfoCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[InfoCommand])
+class InspectCommand extends Command {
+    private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
 
-    @Argument(index=0, required=true, usage = "name of job to enter", metaVar = "<job>")
+    @Argument(index=0, required=true, usage = "name of job to inspect", metaVar = "<job>")
     var job: String = ""
 
     override def execute(session: Session, project:Project, context:Context): Boolean = {
         try {
             val job = context.getJob(JobIdentifier(this.job))
             println(s"Name: ${job.name}")
+            println(s"Description: ${job.description}")
             println("Targets:")
             job.targets
                 .foreach{ p => println(s"    $p") }
@@ -53,6 +55,9 @@ class InfoCommand extends Command {
             true
         }
         catch {
+            case ex:NoSuchJobException =>
+                logger.error(s"Cannot resolve job '${ex.job}'")
+                false
             case NonFatal(e) =>
                 logger.error(s"Error '$job': ${e.getMessage}")
                 false

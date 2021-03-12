@@ -59,7 +59,6 @@ class ShowCommand extends ActionCommand {
             task.execute(session.execution, Phase.BUILD)
         } match {
             case Success(_) =>
-                logger.info("Successfully finished dumping mapping")
                 true
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")

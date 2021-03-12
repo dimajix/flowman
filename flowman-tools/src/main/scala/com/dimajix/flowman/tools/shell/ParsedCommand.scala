@@ -21,8 +21,6 @@ import org.kohsuke.args4j.spi.SubCommand
 import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
-import com.dimajix.flowman.tools.shell.job.JobCommand
-import com.dimajix.flowman.tools.shell.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
@@ -30,7 +28,9 @@ import com.dimajix.flowman.tools.exec.model.ModelCommand
 import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.sql.SqlCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
-import com.dimajix.flowman.tools.exec.test.TestCommand
+import com.dimajix.flowman.tools.shell.job.JobCommand
+import com.dimajix.flowman.tools.shell.project.ProjectCommand
+import com.dimajix.flowman.tools.shell.test.TestCommand
 import com.dimajix.flowman.tools.shell.history.HistoryCommand
 
 

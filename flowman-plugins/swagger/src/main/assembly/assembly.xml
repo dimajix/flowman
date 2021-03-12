@@ -23,7 +23,6 @@
         <dependencySet>
             <excludes>
                 <exclude>com.dimajix.flowman:flowman-spec</exclude>
-                <exclude>com.dimajix.flowman:flowman-dsl</exclude>
                 <exclude>org.slf4j:slf4j-ext</exclude>
             </excludes>
             <outputDirectory>plugins/${plugin.name}</outputDirectory>

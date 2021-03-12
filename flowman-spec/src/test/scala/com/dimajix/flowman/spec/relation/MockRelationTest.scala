@@ -196,7 +196,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         val project = Project(
             "my_project",
             relations = Map(
-                "base" -> baseRelationTemplate,
+                "base" -> baseRelationTemplate
             )
         )
 

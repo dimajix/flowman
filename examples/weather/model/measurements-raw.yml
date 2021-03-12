@@ -1,5 +1,5 @@
 relations:
-  measurements-raw:
+  measurements_raw:
     kind: file
     format: text
     location: "s3a://dimajix-training/data/weather/"

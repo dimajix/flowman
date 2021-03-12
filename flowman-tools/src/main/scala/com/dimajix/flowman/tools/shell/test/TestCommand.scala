@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2018 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.namespace
+package com.dimajix.flowman.tools.shell.test
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand
@@ -23,12 +23,18 @@ import org.kohsuke.args4j.spi.SubCommands
 
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
+import com.dimajix.flowman.tools.exec.test.ListCommand
+import com.dimajix.flowman.tools.exec.test.RunCommand
 
 
-class NamespaceCommand extends NestedCommand {
+class TestCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
-        new SubCommand(name="inspect",impl=classOf[InspectCommand])
+        new SubCommand(name="list",impl=classOf[ListCommand]),
+        new SubCommand(name="run",impl=classOf[RunCommand]),
+        new SubCommand(name="inspect",impl=classOf[InspectCommand]),
+        new SubCommand(name="enter",impl=classOf[EnterCommand]),
+        new SubCommand(name="leave",impl=classOf[LeaveCommand])
     ))
     override var command:Command = _
 }

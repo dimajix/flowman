@@ -124,7 +124,8 @@ class Shell(args:Arguments) extends StatefulTool(
             try {
                 System.err.flush()
                 System.out.flush()
-                val prompt = "flowman:" + project.name + job.map("/" + _.name).getOrElse("") + "> "
+                val context = job.map(_.name).orElse(test.map(_.name))
+                val prompt = "flowman:" + project.name + context.map("/" + _).getOrElse("") + "> "
                 console.readLine(prompt)
                 val args = console.getParsedLine.words().asScala.filter(_.trim.nonEmpty)
                 if (args.nonEmpty) {

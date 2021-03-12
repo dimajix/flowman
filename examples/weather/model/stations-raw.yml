@@ -1,5 +1,5 @@
 relations:
-  stations-raw:
+  stations_raw:
     kind: file
     format: csv
     location: "s3a://dimajix-training/data/weather/isd-history/"

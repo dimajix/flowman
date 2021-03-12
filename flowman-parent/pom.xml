@@ -115,6 +115,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mysql</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-swagger</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>
@@ -136,7 +142,7 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-scalatest-compat</artifactId>
-                <version>${project.version}</version>
+                <version>${flowman.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Phase
 class ResourcesTestSpec extends AnyFlatSpec with Matchers {
     "Projects as resources" should "be testable" in {
         val runner = Runner.builder
+            .withEnvironment("env", "some_value")
             .withProfile("test")
             .withProject(Resources.getResource("flows/project.yml"))
             .build()

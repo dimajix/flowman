@@ -237,21 +237,34 @@ class Session private[execution](
         _jars.toSeq
     }
     private def sparkMaster : String = {
-        _sparkMaster
+        // How should priorities look like?
+        //   1. Spark master from Flowman config.
+        //   2. Spark master from application code / session builder
+        //   3. Spark master from spark-submit. This is to be found in SparkConf
+        //   4. Default master
+        config.toMap.get("spark.master")
             .filter(_.nonEmpty)
-            .orElse(Option(System.getProperty("spark.master")))
+            .orElse(_sparkMaster)
+            .filter(_.nonEmpty)
+            .orElse(sparkConf.getOption("spark.master"))
             .filter(_.nonEmpty)
             .getOrElse("local[*]")
     }
     private def sparkName : String = {
-        if (sparkConf.contains("spark.app.name")) {
-            sparkConf.get("spark.app.name")
-        }
-        else {
-            _sparkName
-                .filter(_.nonEmpty)
-                .getOrElse("Flowman")
-        }
+        // How should priorities look like?
+        //   1. Spark app name from Flowman config.
+        //   2. Spark app name from application code
+        //   3. Spark app name from spark-submit / command-line
+        //   4. Spark app name from Flowman project
+        //   5. Default Spark app name
+        config.toMap.get("spark.app.name")
+            .filter(_.nonEmpty)
+            .orElse(_sparkName)
+            .filter(_.nonEmpty)
+            .orElse(_project.map(_.name).filter(_.nonEmpty).map("Flowman - " + _))
+            .orElse(sparkConf.getOption("spark.app.name"))
+            .filter(_.nonEmpty)
+            .getOrElse("Flowman")
     }
 
     /**

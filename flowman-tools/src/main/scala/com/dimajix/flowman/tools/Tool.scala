@@ -108,12 +108,13 @@ class Tool {
         val builder = Session.builder()
             .withNamespace(namespace)
             .withProject(project.orNull)
-            .withSparkName(sparkName)
             .withConfig(allConfigs)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
             .withJars(plugins.jars.map(_.toString))
 
+        if (sparkName.nonEmpty)
+            builder.withSparkName(sparkName)
         if (sparkMaster.nonEmpty)
             builder.withSparkMaster(sparkMaster)
 

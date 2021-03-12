@@ -53,7 +53,7 @@ class Arguments(args:Array[String]) {
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark application name", metaVar = "<spark_application_name>")
-    var sparkName: String = "flowman"
+    var sparkName: String = "Flowman Shell"
 
     /**
       * Returns true if a help message is requested

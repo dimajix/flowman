@@ -35,9 +35,12 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.spark.features
 
 
@@ -65,7 +68,8 @@ object Runner {
         private var environment:Map[String,String] = Map()
         private var config:Map[String,String] = Map()
         private var profiles:Seq[String] = Seq()
-        private var sparkMaster:String = "local[2]"
+        private var sparkMaster:String = "local[*]"
+        private var sparkName:String = ""
         private lazy val fs = FileSystem(new Configuration(false))
 
         def withNamespace(namespace:URL) : Builder = {
@@ -125,13 +129,18 @@ object Runner {
             this
         }
 
+        def withSparkName(name:String) : Builder = {
+            this.sparkName = name
+            this
+        }
+
         def withSparkMaster(master:String) : Builder = {
             this.sparkMaster = master
             this
         }
 
         def build() : Runner = {
-            new Runner(namespace, project, environment, config, profiles, sparkMaster)
+            new Runner(namespace, project, environment, config, profiles, sparkMaster, sparkName)
         }
     }
 
@@ -145,7 +154,8 @@ class Runner private(
     environment: Map[String,String],
     config: Map[String,String],
     profiles: Seq[String],
-    sparkMaster:String
+    sparkMaster:String,
+    sparkName:String
 ) {
 
     val tempDir : File = createTempDir()
@@ -186,16 +196,24 @@ class Runner private(
     /**
       * Provides access to the Flowman session
       */
-    val session : Session = Session.builder()
-        .withSparkSession(conf => createSparkSession(conf))
-        .withNamespace(namespace)
-        .withProject(project)
-        .withEnvironment(environment)
-        .withConfig(hiveOverrides)
-        .withConfig(sparkOverrides)
-        .withConfig(config)
-        .withProfiles(profiles)
-        .build()
+    val session : Session = {
+        val builder = Session.builder()
+            .withSparkSession(conf => createSparkSession(conf))
+            .withNamespace(namespace)
+            .withProject(project)
+            .withEnvironment(environment)
+            .withConfig(hiveOverrides)
+            .withConfig(sparkOverrides)
+            .withConfig(config)
+            .withProfiles(profiles)
+
+        if (sparkMaster.nonEmpty)
+            builder.withSparkMaster(sparkMaster)
+        if (sparkName.nonEmpty)
+            builder.withSparkName(sparkName)
+
+        builder.build()
+    }
 
     /**
       * Run a single job within the project
@@ -206,6 +224,10 @@ class Runner private(
     def runJob(jobName:String, phases:Seq[Phase], args:Map[String,String] = Map()) : Boolean = {
         val context = session.getContext(project)
         val job = context.getJob(JobIdentifier(jobName))
+        runJob(job, phases, args)
+    }
+
+    def runJob(job:Job, phases:Seq[Phase], args:Map[String,String]) : Boolean = {
         val runner = session.runner
         val result = runner.executeJob(job, phases, args, force=true)
 
@@ -222,6 +244,48 @@ class Runner private(
 
     def runJob(jobName:String, phases:java.util.List[Phase], args:java.util.Map[String,String]) : Boolean = {
         runJob(jobName, phases.asScala, args.asScala.toMap)
+    }
+
+
+    /**
+     * Run a single test within the project
+     * @param testName
+     * @param args
+     * @return
+     */
+    def runTest(testName:String) : Boolean = {
+        val context = session.getContext(project)
+        val test = context.getTest(TestIdentifier(testName))
+        runTest(test)
+    }
+
+    def runTest(test:Test) : Boolean = {
+        val runner = session.runner
+        val result = runner.executeTest(test)
+
+        result match {
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
+            case _ => false
+        }
+    }
+
+    /**
+     * Runs all non-empty tests in a project. Tests without any assertions will be skipped.
+     * @return
+     */
+    def runTests() : Boolean = {
+        val context = session.getContext(project)
+
+        project.tests.keys.toSeq.forall { testName =>
+            val test = context.getTest(TestIdentifier(testName))
+            if (test.assertions.nonEmpty) {
+                runTest(test)
+            }
+            else {
+                true
+            }
+        }
     }
 
     /**

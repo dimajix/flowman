@@ -97,22 +97,19 @@ case class SqlAssertion(
         require(execution != null)
         require(input != null)
 
-        // Cache all input DataFrames, they will probably used more than once
-        DataFrameUtils.withCaches(input.values) {
-            DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
-                tests.map { test =>
-                    // Execute query
-                    val sql = test.sql
-                    val actual = execution.spark.sql(sql)
+        DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+            tests.map { test =>
+                // Execute query
+                val sql = test.sql
+                val actual = execution.spark.sql(sql)
 
-                    val result = DataFrameUtils.diffToStringValues(test.expected, actual)
-                    result match {
-                        case Some(diff) =>
-                            logger.error(s"Difference between datasets: \n${diff}")
-                            AssertionResult(sql, false)
-                        case None =>
-                            AssertionResult(sql, true)
-                    }
+                val result = DataFrameUtils.diffToStringValues(test.expected, actual)
+                result match {
+                    case Some(diff) =>
+                        logger.error(s"Difference between datasets: \n${diff}")
+                        AssertionResult(sql, false)
+                    case None =>
+                        AssertionResult(sql, true)
                 }
             }
         }

@@ -138,24 +138,24 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val runner = session.runner
 
         (targetTemplate.instantiate _).expects(*).returns(target)
-        (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("target", "default"))
-        (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
-        (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
-        (target.before _).expects().anyNumberOfTimes().returns(Seq())
-        (target.after _).expects().anyNumberOfTimes().returns(Seq())
-        (target.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("target", "default"))
+        (target.requires _).expects(*).atLeastOnce().returns(Set())
+        (target.provides _).expects(*).atLeastOnce().returns(Set())
+        (target.before _).expects().atLeastOnce().returns(Seq())
+        (target.after _).expects().atLeastOnce().returns(Seq())
+        (target.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
         (target.execute _).expects(*, Phase.CREATE).returns(Unit)
         (target.execute _).expects(*, Phase.BUILD).returns(Unit)
         (target.execute _).expects(*, Phase.VERIFY).returns(Unit)
         (target.execute _).expects(*, Phase.DESTROY).returns(Unit)
 
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
-        (fixture.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("fixture", "default"))
-        (fixture.requires _).expects(*).anyNumberOfTimes().returns(Set())
-        (fixture.provides _).expects(*).anyNumberOfTimes().returns(Set())
-        (fixture.before _).expects().anyNumberOfTimes().returns(Seq())
-        (fixture.after _).expects().anyNumberOfTimes().returns(Seq())
-        (fixture.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (fixture.identifier _).expects().atLeastOnce().returns(TargetIdentifier("fixture", "default"))
+        (fixture.requires _).expects(*).atLeastOnce().returns(Set())
+        (fixture.provides _).expects(*).atLeastOnce().returns(Set())
+        (fixture.before _).expects().atLeastOnce().returns(Seq())
+        (fixture.after _).expects().atLeastOnce().returns(Seq())
+        (fixture.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
         (fixture.execute _).expects(*, Phase.CREATE).returns(Unit)
         (fixture.execute _).expects(*, Phase.BUILD).returns(Unit)
         (fixture.execute _).expects(*, Phase.VERIFY).returns(Unit)
@@ -166,9 +166,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             assertionContext = ctx
             assertion
         }
-        (assertion.description _).expects().anyNumberOfTimes().returns(None)
+        (assertion.description _).expects().atLeastOnce().returns(None)
         (assertion.context _).expects().onCall(() => assertionContext)
-        (assertion.inputs _).expects().returns(Seq(MappingOutputIdentifier("map", "main", None)))
+        (assertion.inputs _).expects().atLeastOnce().returns(Seq(MappingOutputIdentifier("map", "main", None)))
         (assertion.execute _).expects(*,*).returns(Seq())
 
         var overrideMappingContext:Context = null
@@ -176,9 +176,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             overrideMappingContext = ctx
             overrideMapping
         }
-        (overrideMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
-        (overrideMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
-        (overrideMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("map"))
+        (overrideMapping.inputs _).expects().atLeastOnce().returns(Seq())
+        (overrideMapping.outputs _).expects().atLeastOnce().returns(Seq("main"))
+        (overrideMapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("map"))
         (overrideMapping.context _).expects().onCall(() => overrideMappingContext)
         (overrideMapping.broadcast _).expects().returns(false)
         (overrideMapping.checkpoint _).expects().returns(false)
@@ -208,7 +208,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val runner = session.runner
 
         (assertionTemplate.instantiate _).expects(*).returns(assertion)
-        (assertion.description _).expects().anyNumberOfTimes().returns(None)
+        (assertion.description _).expects().atLeastOnce().returns(None)
 
         runner.executeTest(test, dryRun = true) should be (Status.SUCCESS)
     }
@@ -249,24 +249,24 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val runner = session.runner
 
         (targetTemplate.instantiate _).expects(*).returns(target)
-        (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("target", "default"))
-        (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
-        (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
-        (target.before _).expects().anyNumberOfTimes().returns(Seq())
-        (target.after _).expects().anyNumberOfTimes().returns(Seq())
-        (target.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("target", "default"))
+        (target.requires _).expects(*).atLeastOnce().returns(Set())
+        (target.provides _).expects(*).atLeastOnce().returns(Set())
+        (target.before _).expects().atLeastOnce().returns(Seq())
+        (target.after _).expects().atLeastOnce().returns(Seq())
+        (target.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
         (target.execute _).expects(*, Phase.CREATE).throws(new UnsupportedOperationException())
         (target.execute _).expects(*, Phase.BUILD).throws(new UnsupportedOperationException())
         (target.execute _).expects(*, Phase.VERIFY).throws(new UnsupportedOperationException())
         (target.execute _).expects(*, Phase.DESTROY).throws(new UnsupportedOperationException())
 
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
-        (fixture.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("fixture", "default"))
-        (fixture.requires _).expects(*).anyNumberOfTimes().returns(Set())
-        (fixture.provides _).expects(*).anyNumberOfTimes().returns(Set())
-        (fixture.before _).expects().anyNumberOfTimes().returns(Seq())
-        (fixture.after _).expects().anyNumberOfTimes().returns(Seq())
-        (fixture.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (fixture.identifier _).expects().atLeastOnce().returns(TargetIdentifier("fixture", "default"))
+        (fixture.requires _).expects(*).atLeastOnce().returns(Set())
+        (fixture.provides _).expects(*).atLeastOnce().returns(Set())
+        (fixture.before _).expects().atLeastOnce().returns(Seq())
+        (fixture.after _).expects().atLeastOnce().returns(Seq())
+        (fixture.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
         (fixture.execute _).expects(*, Phase.CREATE).throws(new UnsupportedOperationException())
         (fixture.execute _).expects(*, Phase.BUILD).throws(new UnsupportedOperationException())
         (fixture.execute _).expects(*, Phase.VERIFY).throws(new UnsupportedOperationException())
@@ -278,8 +278,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             assertion
         }
         (assertion.context _).expects().onCall(() => assertionContext)
-        (assertion.description _).expects().anyNumberOfTimes().returns(None)
-        (assertion.inputs _).expects().returns(Seq(MappingOutputIdentifier("map", "main", None)))
+        (assertion.description _).expects().atLeastOnce().returns(None)
+        (assertion.inputs _).expects().atLeastOnce().returns(Seq(MappingOutputIdentifier("map", "main", None)))
         (assertion.execute _).expects(*,*).throws(new UnsupportedOperationException())
 
         var mappingContext:Context = null
@@ -287,9 +287,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             mappingContext = ctx
             mapping
         }
-        (mapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
-        (mapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
-        (mapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("map"))
+        (mapping.inputs _).expects().atLeastOnce().returns(Seq())
+        (mapping.outputs _).expects().atLeastOnce().returns(Seq("main"))
+        (mapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("map"))
         (mapping.context _).expects().onCall(() => mappingContext)
         (mapping.broadcast _).expects().returns(false)
         (mapping.checkpoint _).expects().returns(false)
@@ -329,22 +329,22 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val runner = session.runner
 
         (targetTemplate.instantiate _).expects(*).returns(target)
-        (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("target", "default"))
-        (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
-        (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
-        (target.before _).expects().anyNumberOfTimes().returns(Seq())
-        (target.after _).expects().anyNumberOfTimes().returns(Seq())
-        (target.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("target", "default"))
+        (target.requires _).expects(*).atLeastOnce().returns(Set())
+        (target.provides _).expects(*).atLeastOnce().returns(Set())
+        (target.before _).expects().atLeastOnce().returns(Seq())
+        (target.after _).expects().atLeastOnce().returns(Seq())
+        (target.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
         (target.execute _).expects(*, Phase.CREATE).throws(new UnsupportedOperationException())
         (target.execute _).expects(*, Phase.DESTROY).throws(new UnsupportedOperationException())
 
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
-        (fixture.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier("fixture", "default"))
-        (fixture.requires _).expects(*).anyNumberOfTimes().returns(Set())
-        (fixture.provides _).expects(*).anyNumberOfTimes().returns(Set())
-        (fixture.before _).expects().anyNumberOfTimes().returns(Seq())
-        (fixture.after _).expects().anyNumberOfTimes().returns(Seq())
-        (fixture.phases _).expects().anyNumberOfTimes().returns(Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (fixture.identifier _).expects().atLeastOnce().returns(TargetIdentifier("fixture", "default"))
+        (fixture.requires _).expects(*).atLeastOnce().returns(Set())
+        (fixture.provides _).expects(*).atLeastOnce().returns(Set())
+        (fixture.before _).expects().atLeastOnce().returns(Seq())
+        (fixture.after _).expects().atLeastOnce().returns(Seq())
+        (fixture.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
     }
@@ -373,13 +373,13 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
 
         (assertionTemplate1.instantiate _).expects(*).returns(assertion1)
         (assertion1.context _).expects().returns(context)
-        (assertion1.description _).expects().anyNumberOfTimes().returns(None)
-        (assertion1.inputs _).expects().returns(Seq())
+        (assertion1.description _).expects().atLeastOnce().returns(None)
+        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
         (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
         (assertionTemplate2.instantiate _).expects(*).returns(assertion2)
         (assertion2.context _).expects().returns(context)
-        (assertion2.description _).expects().anyNumberOfTimes().returns(None)
-        (assertion2.inputs _).expects().returns(Seq())
+        (assertion2.description _).expects().atLeastOnce().returns(None)
+        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
         (assertion2.execute _).expects(*,*).returns(Seq())
 
         runner.executeTest(test, keepGoing = true) should be (Status.FAILED)
@@ -396,6 +396,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val assertionTemplate1 = mock[Template[Assertion]]
         val assertion1 = mock[Assertion]
         val assertionTemplate2 = mock[Template[Assertion]]
+        val assertion2 = mock[Assertion]
         val test = Test(
             Test.Properties(context),
             assertions = Map(
@@ -408,9 +409,11 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
 
         (assertionTemplate1.instantiate _).expects(*).returns(assertion1)
         (assertion1.context _).expects().returns(context)
-        (assertion1.description _).expects().anyNumberOfTimes().returns(None)
-        (assertion1.inputs _).expects().returns(Seq())
+        (assertion1.description _).expects().atLeastOnce().returns(None)
+        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
         (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
+        (assertionTemplate2.instantiate _).expects(*).returns(assertion2)
+        (assertion2.inputs _).expects().returns(Seq())
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
     }

@@ -28,7 +28,6 @@ import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 import org.slf4j.LoggerFactory
-
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
@@ -42,12 +41,14 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.util.withShutdownHook
+import com.dimajix.spark.sql.DataFrameUtils
 
 
 private[execution] sealed class RunnerImpl {
@@ -485,31 +486,46 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val startTime = Instant.now()
             var numExceptions = 0
 
-            val results = test.assertions.map { case (name, assertion) =>
+            // First instantiate all assertions
+            val instances = test.assertions.map { case (name, assertion) =>
                 val instance = assertion.instantiate(context)
-                val description = instance.description.getOrElse(name)
-                logger.info(s" - assert: $description")
+                name -> instance
+            }
 
-                val status = if (!dryRun) {
-                    try {
-                        execution.assert(instance)
-                    }
-                    catch {
-                        case NonFatal(ex) =>
-                            // Pass on exception when keepGoing is false, so next assertions won't be executed
-                            numExceptions = numExceptions + 1
-                            if (!keepGoing)
-                                throw ex
-                            logger.error(s"Caught exception during $description:", ex)
-                            Seq()
-                    }
-                }
-                else {
-                    Seq()
-                }
+            // Collect all required DataFrames for caching. We assume that each DataFrame might be used in multiple
+            // assertions and that the DataFrames aren't very huge (we are talking about tests!)
+            val inputDataFrames = instances
+                .flatMap { case(_,instance) =>  if(!dryRun) instance.inputs else Seq() }
+                .toSeq
+                .distinct
+                .map(id => execution.instantiate(context.getMapping(id.mapping), id.output))
 
-                // Remember test name, description and status for potential report
-                (name, description, status)
+            val results = DataFrameUtils.withCaches(inputDataFrames) {
+                instances.map { case (name, instance) =>
+                    val description = instance.description.getOrElse(name)
+                    logger.info(s" - assert: $description")
+
+                    val status = if (!dryRun) {
+                        try {
+                            execution.assert(instance)
+                        }
+                        catch {
+                            case NonFatal(ex) =>
+                                // Pass on exception when keepGoing is false, so next assertions won't be executed
+                                numExceptions = numExceptions + 1
+                                if (!keepGoing)
+                                    throw ex
+                                logger.error(s"Caught exception during $description:", ex)
+                                Seq()
+                        }
+                    }
+                    else {
+                        Seq()
+                    }
+
+                    // Remember test name, description and status for potential report
+                    (name, description, status)
+                }
             }
 
             val endTime = Instant.now()

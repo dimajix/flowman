@@ -427,8 +427,14 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val targets = test.targets.map(t => context.getTarget(t)) ++ test.fixtures.values.map(_.instantiate(context))
 
             def runPhase(phase:Phase) : Status = {
-                runner.withPhaseContext(context, phase) { context =>
-                    executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
+                // Skip execution of empty target list - this will reduce logging output
+                if (targets.nonEmpty) {
+                    runner.withPhaseContext(context, phase) { context =>
+                        executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
+                    }
+                }
+                else {
+                    Status.SUCCESS
                 }
             }
 

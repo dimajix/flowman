@@ -35,7 +35,8 @@ object DatasetSpec extends TypeRegistry[DatasetSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "file", value = classOf[FileDatasetSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingDatasetSpec]),
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationDatasetSpec])
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationDatasetSpec]),
+    new JsonSubTypes.Type(name = "values", value = classOf[ValuesDatasetSpec])
 ))
 abstract class DatasetSpec extends Spec[Dataset] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _

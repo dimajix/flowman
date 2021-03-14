@@ -52,6 +52,8 @@ class NoSuchJobException(val job:JobIdentifier)
 class NoSuchTestException(val test:TestIdentifier)
     extends ExecutionException(s"Test '$test' not found")
 
+class ValidationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Validation of target $target failed", cause)
 class VerificationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Verification of target $target failed", cause)
 

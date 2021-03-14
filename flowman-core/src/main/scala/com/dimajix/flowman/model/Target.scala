@@ -193,7 +193,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Returns all phases which are implemented by this target in the execute method
      * @return
      */
-    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+    override def phases : Set[Phase] = Set(Phase.VALIDATE, Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
 
     /**
      * Returns a list of physical resources produced by this target
@@ -228,6 +228,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      */
     override def execute(execution: Execution, phase: Phase) : Unit = {
         phase match {
+            case Phase.VALIDATE => validate(execution)
             case Phase.CREATE => create(execution)
             case Phase.BUILD => build(execution)
             case Phase.VERIFY => verify(execution)
@@ -235,6 +236,12 @@ abstract class BaseTarget extends AbstractInstance with Target {
             case Phase.DESTROY => destroy(execution)
         }
     }
+
+    /**
+     * Performs validation before execution. This might be a good point in time to validate any
+     * assumption on data sources
+     */
+    protected def validate(executor:Execution) : Unit = {}
 
     /**
      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method

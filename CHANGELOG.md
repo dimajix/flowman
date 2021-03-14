@@ -1,4 +1,5 @@
 # Version 0.15.0
+
 * New configuration variable `floman.default.target.rebalance`
 * New configuration variable `floman.default.target.parallelism`
 * Changed behaviour: The `mergeFile` target now does not assume any more that the `target` is local. If you already
@@ -22,8 +23,12 @@
 * Add new `--dry-run` command line option
 * Add new `mock` and `null` mapping types
 * Add new `mock` relation
+* Add new `values` mapping
+* Add new `values` dataset  
 * Implement new testing capabilities  
 * Rename `update` mapping to `upsert` mapping, which better describes its functionality 
+* Introduce new `VALIDATE` phase, which is executed even before `CREATE` phase
+* Implement new `validate` target
 
 
 # Version 0.14.2 - 2020-10-12

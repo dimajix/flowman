@@ -71,7 +71,7 @@ case class DeleteFileTarget(
     override def build(executor:Execution) : Unit = {
         val fs = executor.fs
         val file = fs.file(path)
-        logger.info(s"Deleting remote file '$file' (recursive=$recursive)")
+        logger.info(s"Deleting file '$file' (recursive=$recursive)")
         file.delete(recursive)
     }
 

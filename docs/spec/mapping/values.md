@@ -1,6 +1,6 @@
-# Const Mapping
+# Values Mapping
 
-A `const` mapping contains directly specified constant values. It is a good candidate to be used for mocking data in
+A `values` mapping contains directly specified constant values. It is a good candidate to be used for mocking data in
 tests.
 
 
@@ -9,14 +9,14 @@ tests.
 ```yaml
 mappings:
   fake_input:
-    kind: const  
+    kind: values  
     schema:
       kind: embedded
       fields:
-        - name: str_col
-          type: string
         - name: int_col
           type: integer
+        - name: str_col
+          type: string
     records:
         - [1,"some_string"]
         - [2,"cat"]
@@ -25,10 +25,10 @@ mappings:
 ```yaml
 mappings:
   fake_input:
-    kind: const
+    kind: values
     columns:
-      str_col: string
       int_col: integer
+      str_col: string
     records:
         - [1,"some_string"]
         - [2,"cat"]
@@ -36,7 +36,7 @@ mappings:
 
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `const`
+* `kind` **(mandatory)** *(type: string)*: `values` or `const`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*:
   Hint for broadcasting the result of this mapping for map-side joins.

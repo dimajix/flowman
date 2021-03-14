@@ -132,7 +132,7 @@ class ConsoleTargetSpec extends TargetSpec {
     @JsonProperty(value="input", required=true) private var input:DatasetSpec = _
     @JsonProperty(value="limit", required=false) private var limit:String = "100"
     @JsonProperty(value="header", required=false) private var header:String = "true"
-    @JsonProperty(value="header", required=false) private var csv:String = "true"
+    @JsonProperty(value="csv", required=false) private var csv:String = "true"
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq()
 
     override def instantiate(context: Context): Target = {

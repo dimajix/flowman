@@ -39,13 +39,13 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ConstMappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
-    "The ConstMapping" should "be parseable with a schema" in {
+class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
+    "The ValuesMapping" should "be parseable with a schema" in {
         val spec =
             """
               |mappings:
               |  fake:
-              |    kind: const
+              |    kind: values
               |    records:
               |      - ["a",12,3]
               |      - [cat,"",7]
@@ -63,11 +63,11 @@ class ConstMappingTest extends AnyFlatSpec with Matchers with MockFactory with L
         val session = Session.builder().build()
         val context = session.getContext(project)
 
-        val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ConstMapping]
-        mapping shouldBe a[ConstMapping]
+        val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
+        mapping shouldBe a[ValuesMapping]
 
         mapping.category should be ("mapping")
-        mapping.kind should be ("const")
+        mapping.kind should be ("values")
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
         mapping.outputs should be (Seq("main"))
@@ -83,7 +83,7 @@ class ConstMappingTest extends AnyFlatSpec with Matchers with MockFactory with L
             """
               |mappings:
               |  fake:
-              |    kind: const
+              |    kind: values
               |    records:
               |      - ["a",12,3]
               |      - [cat,"",7]
@@ -97,11 +97,11 @@ class ConstMappingTest extends AnyFlatSpec with Matchers with MockFactory with L
         val session = Session.builder().build()
         val context = session.getContext(project)
 
-        val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ConstMapping]
-        mapping shouldBe a[ConstMapping]
+        val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
+        mapping shouldBe a[ValuesMapping]
 
         mapping.category should be ("mapping")
-        mapping.kind should be ("const")
+        mapping.kind should be ("values")
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
         mapping.outputs should be (Seq("main"))
@@ -130,7 +130,7 @@ class ConstMappingTest extends AnyFlatSpec with Matchers with MockFactory with L
         val context = session.getContext(project)
         val executor = session.execution
 
-        val mockMapping = ConstMapping(
+        val mockMapping = ValuesMapping(
             Mapping.Properties(context, "const"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -178,7 +178,7 @@ class ConstMappingTest extends AnyFlatSpec with Matchers with MockFactory with L
         val context = session.getContext(project)
         val executor = session.execution
 
-        val mockMapping = ConstMapping(
+        val mockMapping = ValuesMapping(
             Mapping.Properties(context, "const"),
             columns = schema.fields,
             records = Seq(

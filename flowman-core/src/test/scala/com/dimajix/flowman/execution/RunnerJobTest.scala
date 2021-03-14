@@ -163,20 +163,21 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         def genTarget(name:String, toBeExecuted:Boolean) : Context => Target = (ctx:Context) => {
             val instance = TargetInstance("default", "default", name)
             val target = mock[Target]
-            (target.name _).expects().anyNumberOfTimes().returns(name)
-            (target.before _).expects().anyNumberOfTimes().returns(Seq())
-            (target.after _).expects().anyNumberOfTimes().returns(Seq())
-            (target.phases _).expects().anyNumberOfTimes().returns(Lifecycle.ALL.toSet)
-            (target.metadata _).expects().anyNumberOfTimes().returns(Metadata(name=name, kind="target", category="target"))
-            (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
-            (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
-            (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier(name))
-            (target.instance _).expects().anyNumberOfTimes().returns(instance)
-            (target.dirty _).expects(*, Phase.CREATE).anyNumberOfTimes().returns(Yes)
-            if (toBeExecuted)
+            (target.name _).expects().atLeastOnce().returns(name)
+            (target.before _).expects().atLeastOnce().returns(Seq())
+            (target.after _).expects().atLeastOnce().returns(Seq())
+            (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
+            (target.requires _).expects(*).atLeastOnce().returns(Set())
+            (target.provides _).expects(*).atLeastOnce().returns(Set())
+            (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
+            if (toBeExecuted) {
+                (target.instance _).expects().atLeastOnce().returns(instance)
+                (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
+                (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
                 (target.execute _).expects(*, Phase.CREATE).returning(Unit)
-            else
+            } else {
                 (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+            }
 
             target
         }
@@ -207,16 +208,15 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         def genTarget(name:String) : Context => Target = (ctx:Context) => {
             val instance = TargetInstance("default", "default", name)
             val target = mock[Target]
-            (target.name _).expects().anyNumberOfTimes().returns(name)
-            (target.before _).expects().anyNumberOfTimes().returns(Seq())
-            (target.after _).expects().anyNumberOfTimes().returns(Seq())
-            (target.phases _).expects().anyNumberOfTimes().returns(Lifecycle.ALL.toSet)
-            (target.metadata _).expects().anyNumberOfTimes().returns(Metadata(name=name, kind="target", category="target"))
-            (target.requires _).expects(*).anyNumberOfTimes().returns(Set())
-            (target.provides _).expects(*).anyNumberOfTimes().returns(Set())
-            (target.identifier _).expects().anyNumberOfTimes().returns(TargetIdentifier(name))
-            (target.instance _).expects().anyNumberOfTimes().returns(instance)
-            (target.dirty _).expects(*, Phase.CREATE).anyNumberOfTimes().returns(Yes)
+            (target.name _).expects().atLeastOnce().returns(name)
+            (target.before _).expects().atLeastOnce().returns(Seq())
+            (target.after _).expects().atLeastOnce().returns(Seq())
+            (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
+            (target.requires _).expects(*).atLeastOnce().returns(Set())
+            (target.provides _).expects(*).atLeastOnce().returns(Set())
+            (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
+            (target.instance _).expects().atLeastOnce().returns(instance)
+            (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
             (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
 
             target
@@ -236,6 +236,94 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE), dryRun = true) should be(Status.SUCCESS)
+    }
+
+    it should "stop execution in case of an exception" in {
+        def genTarget(name:String, throwsException:Boolean, toBeExecuted:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Context => Target = (ctx:Context) => {
+            val instance = TargetInstance("default", "default", name)
+            val target = mock[Target]
+            (target.name _).expects().atLeastOnce().returns(name)
+            (target.before _).expects().atLeastOnce().returns(before.map(TargetIdentifier(_)))
+            (target.after _).expects().atLeastOnce().returns(after.map(TargetIdentifier(_)))
+            (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
+            (target.requires _).expects(*).atLeastOnce().returns(Set())
+            (target.provides _).expects(*).atLeastOnce().returns(Set())
+            (target.project _).expects().anyNumberOfTimes().returns(None)
+            (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
+            if (toBeExecuted) {
+                (target.instance _).expects().atLeastOnce().returns(instance)
+                (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
+                (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
+                if (throwsException) {
+                    (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
+                }
+                else {
+                    (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                }
+            } else {
+                (target.execute _).expects(*, Phase.CREATE).never()
+            }
+
+            target
+        }
+
+        val project = Project(
+            name = "default",
+            targets = Map(
+                "t0" -> genTarget("t0", true, true),
+                "t1" -> genTarget("t1", false, false, after=Seq("t0"))
+            )
+        )
+        val session = Session.builder()
+            .withProject(project)
+            .build()
+        val job = Job.builder(session.getContext(session.project.get))
+            .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
+            .build()
+        val runner = session.runner
+        runner.executeJob(job, Seq(Phase.CREATE)) should be(Status.FAILED)
+    }
+
+    it should "continue execution in case of an exception with keep-going enabled" in {
+        def genTarget(name:String, throwsException:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Context => Target = (ctx:Context) => {
+            val instance = TargetInstance("default", "default", name)
+            val target = mock[Target]
+            (target.name _).expects().atLeastOnce().returns(name)
+            (target.before _).expects().atLeastOnce().returns(before.map(TargetIdentifier(_)))
+            (target.after _).expects().atLeastOnce().returns(after.map(TargetIdentifier(_)))
+            (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
+            (target.requires _).expects(*).atLeastOnce().returns(Set())
+            (target.provides _).expects(*).atLeastOnce().returns(Set())
+            (target.project _).expects().anyNumberOfTimes().returns(None)
+            (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
+            (target.instance _).expects().atLeastOnce().returns(instance)
+            (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
+            (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
+            if (throwsException) {
+                (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
+            }
+            else {
+                (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+            }
+
+            target
+        }
+
+        val project = Project(
+            name = "default",
+            targets = Map(
+                "t0" -> genTarget("t0", true),
+                "t1" -> genTarget("t1", false, after=Seq("t0"))
+            )
+        )
+        val session = Session.builder()
+            .withProject(project)
+            .build()
+        val job = Job.builder(session.getContext(session.project.get))
+            .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
+            .build()
+        val runner = session.runner
+        runner.executeJob(job, Seq(Phase.CREATE), keepGoing =true) should be(Status.FAILED)
     }
 
     it should "invoke all hooks (in jobs and namespaces)" in {

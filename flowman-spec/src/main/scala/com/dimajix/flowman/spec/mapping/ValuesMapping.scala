@@ -32,7 +32,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameUtils
 
 
-case class ConstMapping(
+case class ValuesMapping(
     instanceProperties:Mapping.Properties,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema] = None,
@@ -97,7 +97,7 @@ case class ConstMapping(
 }
 
 
-class ConstMappingSpec extends MappingSpec {
+class ValuesMappingSpec extends MappingSpec {
     @JsonProperty(value = "schema", required=false) private var schema:Option[SchemaSpec] = None
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "records", required=false) private var records:Seq[Array[String]] = Seq()
@@ -107,8 +107,8 @@ class ConstMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): ConstMapping = {
-        ConstMapping(
+    override def instantiate(context: Context): ValuesMapping = {
+        ValuesMapping(
             instanceProperties(context),
             context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
             schema.map(_.instantiate(context)),

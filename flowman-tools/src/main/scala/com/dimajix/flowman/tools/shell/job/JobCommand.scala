@@ -28,6 +28,7 @@ import com.dimajix.flowman.tools.exec.job.CreateCommand
 import com.dimajix.flowman.tools.exec.job.DestroyCommand
 import com.dimajix.flowman.tools.exec.job.ListCommand
 import com.dimajix.flowman.tools.exec.job.TruncateCommand
+import com.dimajix.flowman.tools.exec.job.ValidateCommand
 import com.dimajix.flowman.tools.exec.job.VerifyCommand
 
 
@@ -36,6 +37,7 @@ class JobCommand extends NestedCommand {
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="create",impl=classOf[CreateCommand]),
+        new SubCommand(name="validate",impl=classOf[ValidateCommand]),
         new SubCommand(name="build",impl=classOf[BuildCommand]),
         new SubCommand(name="verify",impl=classOf[VerifyCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),

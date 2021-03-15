@@ -22,7 +22,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
 
-class InfoCommand extends Command {
+class InspectCommand extends Command {
     override def execute(session: Session, project:Project, context:Context): Boolean = {
         println("Project:")
         println(s"    name: ${project.name}")

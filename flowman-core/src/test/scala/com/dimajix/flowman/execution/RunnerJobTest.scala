@@ -147,13 +147,44 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         an[IllegalArgumentException] shouldBe thrownBy(runner.executeJob(job, Seq(Phase.BUILD)))
     }
 
-    it should "catch exceptions" in {
+    it should "fail on missing targets" in {
         val session = Session.builder()
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
             .addTarget(TargetIdentifier("some_target"))
             .build()
+
+        val runner = session.runner
+        runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.FAILED)
+    }
+
+    it should "catch exceptions during execution" in {
+        val targetTemplate = mock[Template[Target]]
+        val target = mock[Target]
+        val project = Project(
+            "project",
+            targets = Map("some_target" -> targetTemplate)
+        )
+        val session = Session.builder()
+            .build()
+        val job = Job.builder(session.getContext(project))
+            .setName("batch")
+            .addTarget(TargetIdentifier("some_target"))
+            .build()
+
+        (targetTemplate.instantiate _).expects(*).returns(target)
+        (target.name _).expects().returns("some_target")
+        (target.before _).expects().returns(Seq())
+        (target.after _).expects().returns(Seq())
+        (target.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
+        (target.requires _).expects(Phase.BUILD).atLeastOnce().returns(Set())
+        (target.provides _).expects(Phase.BUILD).atLeastOnce().returns(Set())
+        (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("project/some_target"))
+        (target.instance _).expects().atLeastOnce().returns(TargetInstance("default", "project", "some_target"))
+        (target.dirty _).expects(*, Phase.BUILD).returns(Yes)
+        (target.metadata _).expects().atLeastOnce().returns(Metadata(name="some_target", kind="target", category="target"))
+        (target.execute _).expects(*, Phase.BUILD).throwing(new UnsupportedOperationException())
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.FAILED)
@@ -172,7 +203,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             if (toBeExecuted) {
                 (target.instance _).expects().atLeastOnce().returns(instance)
-                (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
+                (target.dirty _).expects(*, Phase.CREATE).returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
                 (target.execute _).expects(*, Phase.CREATE).returning(Unit)
             } else {

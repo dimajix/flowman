@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.shell.job
+package com.dimajix.flowman.tools.exec.job
 
 import scala.util.control.NonFatal
 

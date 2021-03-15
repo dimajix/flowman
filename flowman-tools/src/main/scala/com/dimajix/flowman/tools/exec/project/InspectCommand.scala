@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.shell.project
+package com.dimajix.flowman.tools.exec.project
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session

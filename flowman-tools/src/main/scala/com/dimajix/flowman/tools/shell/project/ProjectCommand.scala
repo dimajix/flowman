@@ -26,6 +26,7 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 import com.dimajix.flowman.tools.exec.project.BuildCommand
 import com.dimajix.flowman.tools.exec.project.CreateCommand
 import com.dimajix.flowman.tools.exec.project.DestroyCommand
+import com.dimajix.flowman.tools.exec.project.InspectCommand
 import com.dimajix.flowman.tools.exec.project.TruncateCommand
 import com.dimajix.flowman.tools.exec.project.ValidateCommand
 import com.dimajix.flowman.tools.exec.project.VerifyCommand

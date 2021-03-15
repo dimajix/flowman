@@ -93,7 +93,8 @@ private[execution] sealed class RunnerImpl {
     }
 
     def logEnvironment(context:Context) : Unit = {
-        context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"Environment $k=$v") }
+        logger.info(s"Environment:")
+        context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"  $k=$v") }
         logger.info("")
     }
 
@@ -143,7 +144,26 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         runner.withJobContext(job, args, force, dryRun) { (jobContext, arguments) =>
             withExecution(job) { execution =>
                 Status.ofAll(phases, keepGoing) { phase =>
-                    executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing, dryRun)
+                    // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
+                    // as SUCCESS (an empty list is always executed as SUCCESS)
+                    val isActive = job.targets
+                        .filter(target => targets.exists(_.unapplySeq(target.name).nonEmpty))
+                        .exists { target =>
+                            // This might throw exceptions for non-existing targets. The same
+                            // exception will be thrown and handeled properly in executeJobPhase
+                            try {
+                                jobContext.getTarget(target).phases.contains(phase)
+                            } catch {
+                                case NonFatal(_) => true
+                            }
+                        }
+
+                    if (isActive) {
+                        executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing, dryRun)
+                    }
+                    else {
+                        Status.SUCCESS
+                    }
                 }
             }
         }
@@ -428,8 +448,8 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val targets = test.targets.map(t => context.getTarget(t)) ++ test.fixtures.values.map(_.instantiate(context))
 
             def runPhase(phase:Phase) : Status = {
-                // Skip execution of empty target list - this will reduce logging output
-                if (targets.nonEmpty) {
+                // Only execute phase if there are targets. This will save some logging outputs
+                if (targets.exists(_.phases.contains(phase))) {
                     runner.withPhaseContext(context, phase) { context =>
                         executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
                     }

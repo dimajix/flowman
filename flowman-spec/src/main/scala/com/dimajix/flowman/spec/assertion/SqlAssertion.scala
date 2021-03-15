@@ -106,7 +106,7 @@ case class SqlAssertion(
                 val result = DataFrameUtils.diffToStringValues(test.expected, actual)
                 result match {
                     case Some(diff) =>
-                        logger.error(s"Difference between datasets: \n${diff}")
+                        logger.error(s"query: $sql\n$diff")
                         AssertionResult(sql, false)
                     case None =>
                         AssertionResult(sql, true)

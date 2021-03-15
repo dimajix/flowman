@@ -49,7 +49,7 @@ import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.sql.DataFrameUtils
-
+import com.dimajix.flowman.util.ConsoleColors._
 
 private[execution] sealed class RunnerImpl {
     val logger = LoggerFactory.getLogger(classOf[Runner])
@@ -60,7 +60,7 @@ private[execution] sealed class RunnerImpl {
         }
         match {
             case Success(_) =>
-                logger.info(s"Successfully finished phase '$phase' for target '${target.identifier}'")
+                logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
                 logger.info("")
                 Status.SUCCESS
             case Failure(NonFatal(e)) =>
@@ -70,15 +70,15 @@ private[execution] sealed class RunnerImpl {
         }
     }
 
-    private val separator = (0 to 79).map(_ => "-").mkString
+    private val separator = boldWhite((0 to 79).map(_ => "-").mkString)
     def logSubtitle(s:String) : Unit = {
         val l = (77 - (s.length + 1)) / 2
         val t = if (l > 3) {
             val sep = (0 to l).map(_ => '-').mkString
-            sep + " " + s + " " + sep
+            boldWhite(sep) + " " + boldCyan(s) + " " + boldWhite(sep)
         }
         else {
-            "--- " + s + " ---"
+            boldWhite("--- ") + boldCyan(s) + boldWhite(" ---")
         }
 
         logger.info("")
@@ -88,24 +88,26 @@ private[execution] sealed class RunnerImpl {
     def logTitle(title:String) : Unit = {
         logger.info("")
         logger.info(separator)
-        logger.info(s"  $title")
+        logger.info(boldWhite(s"  $title"))
         logger.info(separator)
     }
 
     def logEnvironment(context:Context) : Unit = {
-        logger.info(s"Environment:")
+        logger.info("Environment:")
         context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"  $k=$v") }
         logger.info("")
     }
 
     def logStatus(title:String, status:Status, duration: Duration, endTime:Instant) : Unit = {
         val msg = status match {
-            case Status.SUCCESS|Status.SKIPPED|Status.ABORTED|Status.FAILED =>
-                s"${status.toString.toUpperCase(Locale.ROOT)} $title"
+            case Status.SUCCESS|Status.SKIPPED =>
+                boldGreen(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+            case Status.ABORTED|Status.FAILED =>
+                boldRed(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.RUNNING =>
-                s"ALREADY RUNNING $title"
+                boldYellow(s"ALREADY RUNNING $title")
             case status =>
-                s"UNKNOWN STATE '$status' in $title. Assuming failure"
+                boldRed(s"UNKNOWN STATE '$status' in $title. Assuming failure")
         }
 
         logger.info(separator)
@@ -179,7 +181,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         keepGoing:Boolean,
         dryRun:Boolean) : Status = {
         runner.withPhaseContext(jobContext, phase) { context =>
-            val title = s"$phase job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+            val title = s"${phase.toString.toUpperCase} job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
             logTitle(title)
             logEnvironment(context)
 
@@ -523,7 +525,6 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val results = DataFrameUtils.withCaches(inputDataFrames) {
                 instances.map { case (name, instance) =>
                     val description = instance.description.getOrElse(name)
-                    logger.info(s" - assert: $description")
 
                     val status = if (!dryRun) {
                         try {
@@ -543,6 +544,11 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                         Seq()
                     }
 
+                    if (status.forall(_.valid))
+                        logger.info(green(s" ✓ passed: $description"))
+                    else
+                        logger.error(red(s" ✘ failed: $description"))
+
                     // Remember test name, description and status for potential report
                     (name, description, status)
                 }
@@ -553,8 +559,8 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val numSucceeded = results.map(_._3.count(_.valid)).sum
             val numFailed = results.map(_._3.count(!_.valid)).sum
 
-            logger.info(s"$numSucceeded assertions passed, $numFailed failed, $numExceptions exceptions")
-            logger.info(s"Executed ${numSucceeded + numFailed} assertions in  ${duration.toMillis / 1000.0} s")
+            logger.info(cyan(s"$numSucceeded assertions passed, $numFailed failed, $numExceptions exceptions"))
+            logger.info(cyan(s"Executed ${numSucceeded + numFailed} assertions in  ${duration.toMillis / 1000.0} s"))
 
             if (numFailed + numExceptions > 0) Status.FAILED else Status.SUCCESS
         }

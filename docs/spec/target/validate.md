@@ -1,5 +1,9 @@
 # Validate Target
 
+The `validate` target is used to execute a set of assertions in advance of the `CREATE` and `BUILD` phases. This is a
+good place to validate any assumptions on the input data like primary key or record count.
+
+
 ## Example
 
 ```yaml

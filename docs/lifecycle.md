@@ -33,14 +33,14 @@ The final phase *destroy* is used to phyiscally remove relations including their
 definitions, views and directories. It performs the opposite operation than the *create* phase.
 
 
-## Built In Lifecycles:
+## Built In Lifecycles
 
 Some of the execution phases can be performed in a meaningful way one after the other. Such a sequence of phases is
 called *lifecycle*. Flowman has the following lifecycles built in:
 
 ### Build
 
-The first lifecycle contains the three phases *VALIDATE*, *CREATE*, *BUILD* AND *VERIFY*.
+The first lifecycle contains the three phases *VALIDATE*, *CREATE*, *BUILD* and *VERIFY*.
 
 ### Truncate
 

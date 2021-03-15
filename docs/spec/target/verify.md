@@ -17,6 +17,14 @@ targets:
         tests:
           - query: "SELECT id,count(*) FROM output_table GROUP BY id HAVING count(*) > 0"
             expected: []
+          - query: "SELECT id,count(*) FROM output_cube GROUP BY id HAVING count(*) > 0"
+            expected: []
+      
+      assert_measurement_count:
+        kind: sql
+        tests:
+          - query: "SELECT COUNT(*) FROM measurements_extracted"
+            expected: 2
 ```
 
 ## Fields

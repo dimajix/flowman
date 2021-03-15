@@ -68,7 +68,7 @@ tests:
   
 * `overrideMappings`: **(optional)** *(type: map:mapping)*:
   This section allows you to override existing mappings with new definitions. Typically this is used for mocking the
-  output of some mappings by replacing those with [`const`](../mapping/const.md) or [`mock`](../mapping/mock.md) 
+  output of some mappings by replacing those with [`values`](../mapping/values.md) or [`mock`](../mapping/mock.md) 
   mappings. You can also specify new mappings in this section.
   
 * `overrideRelations`: **(optional)** *(type: map:relation)*:

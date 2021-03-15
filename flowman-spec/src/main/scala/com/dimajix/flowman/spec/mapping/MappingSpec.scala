@@ -84,7 +84,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),
     new JsonSubTypes.Type(name = "upsert", value = classOf[UpsertMappingSpec]),
-    new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec]),
+    new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec])
 ))
 abstract class MappingSpec extends NamedSpec[Mapping] {
     @JsonProperty("broadcast") protected var broadcast:String = "false"

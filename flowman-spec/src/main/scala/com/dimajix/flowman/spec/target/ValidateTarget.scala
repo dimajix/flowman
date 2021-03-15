@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
@@ -86,8 +87,9 @@ case class ValidateTarget(
             .toSeq
             .distinct
             .map(id => execution.instantiate(context.getMapping(id.mapping), id.output))
+        val cacheLevel = StorageLevel.NONE // actually disable caching for now
 
-        DataFrameUtils.withCaches(inputDataFrames) {
+        DataFrameUtils.withCaches(inputDataFrames, cacheLevel) {
             assertions.map { case (name, instance) =>
                 val description = instance.description.getOrElse(name)
                 logger.info(s" - assert: $description")

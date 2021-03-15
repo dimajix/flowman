@@ -66,7 +66,7 @@ object DataFrameUtils {
         // Cache all DataFrames, and memorize their original storage levels
         val originalPersistedState = input.toSeq.map { df =>
             val originalStorageLevel = df.storageLevel
-            if (originalStorageLevel == StorageLevel.NONE)
+            if (originalStorageLevel == StorageLevel.NONE && level != StorageLevel.NONE)
                 df.persist(level)
 
             df -> originalStorageLevel

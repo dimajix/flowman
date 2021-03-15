@@ -34,8 +34,12 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types
+import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.MapRecord
+import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.ValueRecord
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.DataFrameUtils
 
@@ -43,7 +47,7 @@ import com.dimajix.spark.sql.DataFrameUtils
 case class MockRelation(
     override val instanceProperties:Relation.Properties,
     relation: RelationIdentifier,
-    records:Seq[Array[String]] = Seq()
+    records:Seq[Record] = Seq()
 ) extends BaseRelation with SchemaRelation {
     private lazy val mocked = context.getRelation(relation, false)
     private var _exists = false
@@ -90,16 +94,19 @@ case class MockRelation(
             throw new IllegalArgumentException("Mock relation either needs own schema or a desired input schema")
 
         // Add partitions values as columns
-        val fullSchema = inputSchema.map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
+        val fullSchema = this.schema.map(_.fields ++ this.partitions.map(_.field))
+        val sparkSchema = fullSchema.map(s => StructType(s.map(_.sparkField)))
 
         if (records.nonEmpty) {
-            if (fullSchema.isEmpty)
+            if (fullSchema.isEmpty) {
                 throw new IllegalArgumentException("Cannot return provided records without schema information")
-            val df = DataFrameUtils.ofStringValues(execution.spark, records, fullSchema.get)
+            }
+            val values = records.map(_.toArray(com.dimajix.flowman.types.StructType(fullSchema.get)))
+            val df = DataFrameUtils.ofStringValues(execution.spark, values, sparkSchema.get)
             SchemaUtils.applySchema(df, schema)
         }
         else {
-            val readSchema = schema.orElse(fullSchema).get
+            val readSchema = schema.orElse(sparkSchema).get
             DataFrameUtils.ofSchema(execution.spark, readSchema)
         }
     }
@@ -213,7 +220,7 @@ case class MockRelation(
 
 class MockRelationSpec extends RelationSpec {
     @JsonProperty(value="relation", required=true) private var relation: Option[String] = None
-    @JsonProperty(value="records", required=false) private var records:Seq[Array[String]] = Seq()
+    @JsonProperty(value="records", required=false) private var records:Seq[Record] = Seq()
 
     /**
      * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -221,10 +228,15 @@ class MockRelationSpec extends RelationSpec {
      * @return
      */
     override def instantiate(context: Context): MockRelation = {
+        val records = this.records.map {
+            case v:ValueRecord => ValueRecord(context.evaluate(v.value))
+            case a:ArrayRecord => ArrayRecord(a.fields.map(context.evaluate))
+            case m:MapRecord => MapRecord(m.values.map(kv => kv._1 -> context.evaluate(kv._2)))
+        }
         MockRelation(
             instanceProperties(context),
             RelationIdentifier(context.evaluate(relation).getOrElse(name)),
-            records.map(_.map(context.evaluate))
+            records
         )
     }
 }

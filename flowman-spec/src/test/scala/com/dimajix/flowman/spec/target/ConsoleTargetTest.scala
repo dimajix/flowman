@@ -26,6 +26,7 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.ValuesDataset
+import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -67,9 +68,9 @@ class ConsoleTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Dataset.Properties(context, "const"),
             columns = schema.fields,
             records = Seq(
-                Array("lala","12"),
-                Array("lolo","13"),
-                Array("",null)
+                ArrayRecord("lala","12"),
+                ArrayRecord("lolo","13"),
+                ArrayRecord("",null)
             )
         )
         val target = ConsoleTarget(

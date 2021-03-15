@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -73,10 +74,10 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         relation.category should be ("relation")
         relation.kind should be ("mock")
         relation.relation should be (RelationIdentifier("empty"))
-        relation.records.map(_.toSeq) should be (Seq(
-            Seq("a","12","3"),
-            Seq("cat","","7"),
-            Seq("dog",null,"8")
+        relation.records should be (Seq(
+            ArrayRecord("a","12","3"),
+            ArrayRecord("cat","","7"),
+            ArrayRecord("dog",null,"8")
         ))
     }
 
@@ -257,9 +258,9 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             Relation.Properties(context, "mock"),
             RelationIdentifier("base"),
             Seq(
-                Array("lala","12"),
-                Array("lolo","13"),
-                Array("",null)
+                ArrayRecord("lala","12"),
+                ArrayRecord("lolo","13"),
+                ArrayRecord("",null)
             )
         )
         val schema = EmbeddedSchema(

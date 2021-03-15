@@ -35,30 +35,6 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "DataFrameUtils.ofCsvRows" should "create a DataFrame" in {
-        val lines = Seq(
-            "1,lala,2.3,2019-02-01",
-            "2,lolo,3.4,2019-02-02",
-            ",,,",
-            "3,\"\",4.5,2019-02-03"
-        )
-        val schema = StructType(Seq(
-            StructField("c1", IntegerType),
-            StructField("c2", StringType),
-            StructField("c3", DoubleType),
-            StructField("c4", DateType)
-        ))
-        val df = DataFrameUtils.ofCsvRows(spark, lines, schema)
-
-        df.collect() should be (Seq(
-            Row(1,"lala",2.3, Date.valueOf("2019-02-01")),
-            Row(2,"lolo",3.4, Date.valueOf("2019-02-02")),
-            Row(null,null,null,null),
-            Row(3,null,4.5, Date.valueOf("2019-02-03"))
-        ))
-        df.schema should be (schema)
-    }
-
     "DataFrameUtils.ofStringValues" should "create a DataFrame" in {
         val lines = Seq(
             Array("1","lala","2.3","2019-02-01","2019-02-01T12:34:00.000"),

@@ -30,6 +30,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -69,10 +70,10 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         mapping.mapping should be (MappingIdentifier("empty"))
         mapping.output should be (MappingOutputIdentifier("project/mock:main"))
         mapping.outputs should be (Seq("main"))
-        mapping.records.map(_.toSeq) should be (Seq(
-            Seq("a","12","3"),
-            Seq("cat","","7"),
-            Seq("dog",null,"8")
+        mapping.records should be (Seq(
+            ArrayRecord("a","12","3"),
+            ArrayRecord("cat","","7"),
+            ArrayRecord("dog",null,"8")
         ))
     }
 
@@ -216,9 +217,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             Mapping.Properties(context, "mock"),
             MappingIdentifier("base"),
             Seq(
-                Array("lala","12"),
-                Array("lolo","13"),
-                Array("",null)
+                ArrayRecord("lala","12"),
+                ArrayRecord("lolo","13"),
+                ArrayRecord("",null)
             )
         )
 

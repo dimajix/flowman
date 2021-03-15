@@ -25,14 +25,18 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.types.ArrayRecord
+import com.dimajix.flowman.types.MapRecord
+import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.ValueRecord
 import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class MockMapping(
     instanceProperties:Mapping.Properties,
     mapping:MappingIdentifier,
-    records:Seq[Array[String]] = Seq()
+    records:Seq[Record] = Seq()
 ) extends BaseMapping {
     private lazy val mocked = context.getMapping(mapping, false)
 
@@ -56,7 +60,9 @@ case class MockMapping(
             if (schemas.size != 1)
                 throw new UnsupportedOperationException("MockMapping only supports a single output with specified records")
             val (name,schema) = schemas.head
-            val df = DataFrameUtils.ofStringValues(execution.spark, records, schema.sparkType)
+
+            val values = records.map(_.toArray(schema))
+            val df = DataFrameUtils.ofStringValues(execution.spark, values, schema.sparkType)
             Map(name -> df)
         }
         else {
@@ -128,7 +134,7 @@ case class MockMapping(
 
 class MockMappingSpec extends MappingSpec {
     @JsonProperty(value = "mapping", required=false) private var mapping:Option[String] = None
-    @JsonProperty(value = "records", required=false) private var records:Seq[Array[String]] = Seq()
+    @JsonProperty(value = "records", required=false) private var records:Seq[Record] = Seq()
 
     /**
      * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -136,10 +142,15 @@ class MockMappingSpec extends MappingSpec {
      * @return
      */
     override def instantiate(context: Context): MockMapping = {
+        val records = this.records.map {
+            case v:ValueRecord => ValueRecord(context.evaluate(v.value))
+            case a:ArrayRecord => ArrayRecord(a.fields.map(context.evaluate))
+            case m:MapRecord => MapRecord(m.values.map(kv => kv._1 -> context.evaluate(kv._2)))
+        }
         MockMapping(
             instanceProperties(context),
             MappingIdentifier(context.evaluate(mapping).getOrElse(name)),
-            records.map(_.map(context.evaluate))
+            records
         )
     }
 }

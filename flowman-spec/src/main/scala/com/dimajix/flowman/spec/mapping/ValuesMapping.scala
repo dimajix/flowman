@@ -26,9 +26,13 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.MapRecord
+import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.ValueRecord
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -36,7 +40,7 @@ case class ValuesMapping(
     instanceProperties:Mapping.Properties,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema] = None,
-    records:Seq[Array[String]] = Seq()
+    records:Seq[Record] = Seq()
 ) extends BaseMapping {
     if (schema.isEmpty && columns.isEmpty)
         throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
@@ -56,14 +60,11 @@ case class ValuesMapping(
      * @return
      */
     override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
-        val sparkSchema = if(schema.nonEmpty) {
-            schema.get.sparkSchema
-        }
-        else {
-            org.apache.spark.sql.types.StructType(columns.map(_.sparkField))
-        }
+        val recordsSchema = StructType(schema.map(_.fields).getOrElse(columns))
+        val sparkSchema = recordsSchema.sparkType
 
-        val df = DataFrameUtils.ofStringValues(execution.spark, records, sparkSchema)
+        val values = records.map(_.toArray(recordsSchema))
+        val df = DataFrameUtils.ofStringValues(execution.spark, values, sparkSchema)
         Map("main" -> df)
     }
 
@@ -100,7 +101,7 @@ case class ValuesMapping(
 class ValuesMappingSpec extends MappingSpec {
     @JsonProperty(value = "schema", required=false) private var schema:Option[SchemaSpec] = None
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
-    @JsonProperty(value = "records", required=false) private var records:Seq[Array[String]] = Seq()
+    @JsonProperty(value = "records", required=false) private var records:Seq[Record] = Seq()
 
     /**
      * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -108,11 +109,16 @@ class ValuesMappingSpec extends MappingSpec {
      * @return
      */
     override def instantiate(context: Context): ValuesMapping = {
+        val records = this.records.map {
+            case v:ValueRecord => ValueRecord(context.evaluate(v.value))
+            case a:ArrayRecord => ArrayRecord(a.fields.map(context.evaluate))
+            case m:MapRecord => MapRecord(m.values.map(kv => kv._1 -> context.evaluate(kv._2)))
+        }
         ValuesMapping(
             instanceProperties(context),
             context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
             schema.map(_.instantiate(context)),
-            records.map(_.map(context.evaluate))
+            records
         )
     }
 }

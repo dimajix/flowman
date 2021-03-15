@@ -119,19 +119,6 @@ object DataFrameUtils {
     }
 
     /**
-     * Create a [[DataFrame]] from a sequence of Strings containing CSV data
-     * @param sparkSession
-     * @param lines
-     * @param schema
-     * @return
-     */
-    def ofCsvRows(sparkSession: SparkSession, lines:Seq[String], schema:StructType) : DataFrame = {
-        val reader = new UnivocityReader(schema, csvOptions)
-        val rows = UnivocityReader.parseIterator(lines.iterator, false, reader).toSeq
-        sparkSession.createDataFrame(rows.asJava, schema)
-    }
-
-    /**
      * Create an empty [[DataFrame]] from a schema
      * @param sparkSession
      * @param schema

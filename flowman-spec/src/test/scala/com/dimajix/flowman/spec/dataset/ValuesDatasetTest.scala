@@ -26,6 +26,7 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -55,9 +56,9 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val dataset = ds.instantiate(context).asInstanceOf[ValuesDataset]
         dataset.category should be ("dataset")
         dataset.kind should be ("values")
-        dataset.records.map(_.toSeq) should be (Seq(
-            Seq("a","1"),
-            Seq("b", "2")
+        dataset.records should be (Seq(
+            ArrayRecord("a","1"),
+            ArrayRecord("b", "2")
         ))
     }
 
@@ -88,10 +89,10 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         dataset.category should be ("dataset")
         dataset.kind should be ("values")
-        dataset.records.map(_.toSeq) should be (Seq(
-            Seq("a","12","3"),
-            Seq("cat","","7"),
-            Seq("dog",null,"8")
+        dataset.records should be (Seq(
+            ArrayRecord("a","12","3"),
+            ArrayRecord("cat","","7"),
+            ArrayRecord("dog",null,"8")
         ))
     }
 
@@ -112,9 +113,9 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
                 fields = schema.fields
             )),
             records = Seq(
-                Array("lala","12"),
-                Array("lolo","13"),
-                Array("",null)
+                ArrayRecord("lala","12"),
+                ArrayRecord("lolo","13"),
+                ArrayRecord("",null)
             )
         )
 
@@ -148,9 +149,9 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Dataset.Properties(context, "const"),
             columns = schema.fields,
             records = Seq(
-                Array("lala","12"),
-                Array("lolo","13"),
-                Array("",null)
+                ArrayRecord("lala","12"),
+                ArrayRecord("lolo","13"),
+                ArrayRecord("",null)
             )
         )
 
@@ -184,9 +185,9 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Dataset.Properties(context, "const"),
             columns = schema.fields,
             records = Seq(
-                Array("lala","12"),
-                Array("lolo","13"),
-                Array("",null)
+                ArrayRecord("lala","12"),
+                ArrayRecord("lolo","13"),
+                ArrayRecord("",null)
             )
         )
 

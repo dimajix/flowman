@@ -62,11 +62,9 @@ private[execution] sealed class RunnerImpl {
         match {
             case Success(_) =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
-                logger.info("")
                 Status.SUCCESS
             case Failure(NonFatal(e)) =>
                 logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
-                logger.info("")
                 Status.FAILED
         }
     }

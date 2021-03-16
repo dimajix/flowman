@@ -49,10 +49,8 @@ class SimpleExecutor extends Executor {
             .filter(_.phases.contains(phase))
             .filter(filter)
 
-        logger.info("")
         logger.info(s"Target order for $phase:")
         activeTargets.foreach(t => logger.info("  - " + t.identifier))
-        logger.info("")
 
         Status.ofAll(activeTargets, keepGoing) { target =>
             fn(execution, target, phase)

@@ -27,6 +27,7 @@ import scala.util.control.NonFatal
 
 import org.apache.commons.lang3.time.FastDateFormat
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.catalyst.util.BadRecordException
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.ByteType
@@ -204,7 +205,7 @@ class RowParser(schema: StructType, options:RowParser.Options) {
                 val from = tokenIndexArr(i)
                 valueConverters(from).apply(checkedTokens(from))
             }
-            Row(values:_*)
+            new GenericRowWithSchema(values.toArray, schema)
         } catch {
             case NonFatal(e) =>
                 throw BadRecordException(() => new UTF8String(), () => None, e)

@@ -138,6 +138,7 @@ case class RelationTarget(
         val rel = context.getRelation(relation)
 
         phase match {
+            case Phase.VALIDATE => No
             case Phase.CREATE =>
                 // Since an existing relation might need a migration, we return "unknown"
                 if (rel.exists(execution) == Yes)

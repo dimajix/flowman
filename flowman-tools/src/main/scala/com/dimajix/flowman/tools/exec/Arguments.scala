@@ -46,6 +46,8 @@ class Arguments(args:Array[String]) {
     var profiles: Array[String] = Array()
     @Option(name = "-D", aliases=Array("--env"), usage = "set environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
+    @Option(name = "-B", aliases=Array("--batch-mode"), usage = "Run in non-interactive batch mode. Disables output color.")
+    var batchMode: Boolean = false
     @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")

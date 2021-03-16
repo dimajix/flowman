@@ -212,6 +212,14 @@ class RecordTest extends AnyFlatSpec with Matchers {
 
         record.toArray(schema).toSeq should be (Seq("2", "12", null))
     }
+    it should "support map" in {
+        val record = ValueRecord("a")
+        record.map(_.toUpperCase) should be (ValueRecord("A"))
+    }
+    it should "support map with a null value" in {
+        val record = ValueRecord(null)
+        record.map(v => if (v != null) v.toUpperCase else null) should be (ValueRecord(null))
+    }
 
     "An ArrayRecord" should "return its values" in {
         val schema = StructType(Seq(
@@ -233,7 +241,7 @@ class RecordTest extends AnyFlatSpec with Matchers {
 
         record.toArray(schema).toSeq should be (Seq("2", null, "12", null))
     }
-    it should "drop additonal values" in {
+    it should "drop additional values" in {
         val schema = StructType(Seq(
             Field("c1", StringType),
             Field("c2", IntegerType)
@@ -241,6 +249,10 @@ class RecordTest extends AnyFlatSpec with Matchers {
         val record = ArrayRecord("2","3","4")
 
         record.toArray(schema).toSeq should be (Seq("2", "3"))
+    }
+    it should "support map" in {
+        val record = ArrayRecord("a", null)
+        record.map(v => if (v != null) v.toUpperCase else null) should be (ArrayRecord("A", null))
     }
 
     "A MapRecord" should "return correct values" in {
@@ -253,5 +265,9 @@ class RecordTest extends AnyFlatSpec with Matchers {
         val record = MapRecord("c1" -> "2", "c2" -> null, "c5" -> "xxx")
 
         record.toArray(schema).toSeq should be (Seq("2", null, "12", null))
+    }
+    it should "support map" in {
+        val record = MapRecord("f1" -> "a", "f2" -> null)
+        record.map(v => if (v != null) v.toUpperCase else null) should be (MapRecord("f1" -> "A", "f2" -> null))
     }
 }

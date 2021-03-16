@@ -76,7 +76,7 @@ object TargetOrdering {
         })
 
         nodes.foreach { case(n,deps) =>
-            logger.info(s"Dependencies of phase '$phase' of target '$n': ${deps.map(_.toString).mkString(",")}")
+            logger.debug(s"Dependencies of phase '$phase' of target '$n': ${deps.map(_.toString).mkString(",")}")
         }
 
         val order = mutable.ListBuffer[TargetIdentifier]()
@@ -84,8 +84,7 @@ object TargetOrdering {
             val candidate = nodes.find(_._2.isEmpty).map(_._1)
                 .getOrElse({
                     val deps = nodes.map { case(k,v) => s"  $k <= ${v.toSeq.mkString(", ")}"}.mkString("\n")
-                    logger.error(s"Cannot create target order due to cyclic dependencies:\n$deps")
-                    throw new RuntimeException("Cannot create target order")
+                    throw new RuntimeException(s"Cannot create target order due to cyclic dependencies:\n$deps")
                 })
 
             // Remove candidate

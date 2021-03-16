@@ -89,7 +89,13 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
-        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props)
+        val executor = slick.util.AsyncExecutor(
+            name="Flowman.default",
+            minThreads = 20,
+            maxThreads = 20,
+            queueSize = 1000,
+            maxConnections = 20)
+        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props, executor=executor)
     }
 
     val jobRuns = TableQuery[JobRuns]

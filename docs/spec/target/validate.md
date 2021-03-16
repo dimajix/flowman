@@ -29,7 +29,8 @@ targets:
 * `kind` **(mandatory)** *(type: string)*: `validate`
 
 * `assertions` **(optional)** *(type: map:assertion)*:
-  List of assertions to be executed
+  Map of [assertions](../assertion/index.md) to be executed. The validation is marked as *failed* if a single
+  assertion fails.
 
 
 ## Supported Phases

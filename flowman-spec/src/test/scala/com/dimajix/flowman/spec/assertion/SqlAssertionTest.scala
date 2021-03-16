@@ -96,6 +96,38 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         assertion.requires should be (Set())
     }
 
+    it should "support a single top level test" in {
+        val spec =
+            """
+              |kind: sql
+              |query: SELECT * FROM lala
+              |expected: A
+              |tests:
+              | - query: SELECT * FROM lolo
+              |   expected: [A]
+              |""".stripMargin
+
+        val assertionSpec = ObjectMapper.parse[AssertionSpec](spec)
+        assertionSpec shouldBe a[SqlAssertionSpec]
+
+        val context = RootContext.builder().build()
+        val assertion = assertionSpec.instantiate(context).asInstanceOf[SqlAssertion]
+        assertion.name should be ("")
+        assertion.tests should be (Seq(
+            SqlAssertion.Case(
+                query = "SELECT * FROM lala",
+                expected = Seq(Array("A"))
+            ),
+            SqlAssertion.Case(
+                query = "SELECT * FROM lolo",
+                expected = Seq(Array("A"))
+            )
+        ))
+        assertion.inputs should be (Seq(MappingOutputIdentifier("lala"), MappingOutputIdentifier("lolo")))
+        assertion.requires should be (Set())
+
+    }
+
     it should "work" in {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.context

@@ -109,16 +109,11 @@ class ValuesMappingSpec extends MappingSpec {
      * @return
      */
     override def instantiate(context: Context): ValuesMapping = {
-        val records = this.records.map {
-            case v:ValueRecord => ValueRecord(context.evaluate(v.value))
-            case a:ArrayRecord => ArrayRecord(a.fields.map(context.evaluate))
-            case m:MapRecord => MapRecord(m.values.map(kv => kv._1 -> context.evaluate(kv._2)))
-        }
         ValuesMapping(
             instanceProperties(context),
             context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
             schema.map(_.instantiate(context)),
-            records
+            records.map(_.map(context.evaluate))
         )
     }
 }

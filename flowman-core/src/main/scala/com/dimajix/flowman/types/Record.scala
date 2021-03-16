@@ -73,6 +73,7 @@ private class RecordDeserializer(vc:Class[_]) extends StdDeserializer[Record](vc
 @JsonDeserialize(using=classOf[RecordDeserializer])
 sealed abstract class Record {
     def toArray(schema:StructType) : Array[String]
+    def map(fn:String => String) : Record
 }
 
 final case class ValueRecord(value:String) extends Record {
@@ -80,6 +81,9 @@ final case class ValueRecord(value:String) extends Record {
         // Append default values
         val tail = schema.fields.tail.map(_.default.orNull).toArray
         Array(value) ++ tail
+    }
+    override def map(fn:String => String) : ValueRecord = {
+        ValueRecord(fn(value))
     }
 }
 
@@ -100,6 +104,9 @@ final case class ArrayRecord(fields:Seq[String]) extends Record {
             fields.toArray ++ tail
         }
     }
+    override def map(fn:String => String) : ArrayRecord = {
+        ArrayRecord(fields.map(fn))
+    }
 }
 
 object MapRecord {
@@ -110,5 +117,8 @@ object MapRecord {
 final case class MapRecord(values:Map[String,String]) extends Record {
     override def toArray(schema: StructType): Array[String] = {
         schema.fields.map(field => values.getOrElse(field.name, field.default.orNull)).toArray
+    }
+    override def map(fn:String => String) : MapRecord = {
+        MapRecord(values.map(kv => kv._1 -> fn(kv._2)))
     }
 }

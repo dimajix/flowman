@@ -22,9 +22,8 @@ targets:
       
       assert_measurement_count:
         kind: sql
-        tests:
-          - query: "SELECT COUNT(*) FROM measurements_extracted"
-            expected: 2
+        query: "SELECT COUNT(*) FROM measurements_extracted"
+        expected: 2
 ```
 
 ## Fields
@@ -32,7 +31,8 @@ targets:
 * `kind` **(mandatory)** *(type: string)*: `verify`
 
 * `assertions` **(optional)** *(type: map:assertion)*:
-  List of assertions to be executed
+  Map of [assertions](../assertion/index.md) to be executed. The verification is marked as *failed* if a single
+  assertion fails.
 
 
 ## Supported Phases

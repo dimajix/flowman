@@ -17,6 +17,8 @@
 package com.dimajix.flowman.util
 
 object ConsoleColors {
+    var disabled = false
+
     val NORMAL = Console.RESET
     val CYAN = Console.CYAN
     val CYAN_BOLD = Console.CYAN + Console.BOLD
@@ -29,14 +31,14 @@ object ConsoleColors {
     val WHITE = Console.WHITE
     val WHITE_BOLD = Console.WHITE + Console.BOLD
 
-    def white(str:String) : String = WHITE + str + NORMAL
-    def boldWhite(str:String) : String = WHITE_BOLD + str + NORMAL
-    def green(str:String) : String = GREEN + str + NORMAL
-    def boldGreen(str:String) : String = GREEN_BOLD + str + NORMAL
-    def red(str:String) : String = RED + str + NORMAL
-    def boldRed(str:String) : String = RED_BOLD + str + NORMAL
-    def yellow(str:String) : String = YELLOW + str + NORMAL
-    def boldYellow(str:String) : String = YELLOW_BOLD + str + NORMAL
-    def cyan(str:String) : String = CYAN + str + NORMAL
-    def boldCyan(str:String) : String = CYAN_BOLD + str + NORMAL
+    def white(str:String) : String = if (disabled) str else WHITE + str + NORMAL
+    def boldWhite(str:String) : String = if (disabled) str else WHITE_BOLD + str + NORMAL
+    def green(str:String) : String = if (disabled) str else GREEN + str + NORMAL
+    def boldGreen(str:String) : String = if (disabled) str else GREEN_BOLD + str + NORMAL
+    def red(str:String) : String = if (disabled) str else RED + str + NORMAL
+    def boldRed(str:String) : String = if (disabled) str else RED_BOLD + str + NORMAL
+    def yellow(str:String) : String = if (disabled) str else YELLOW + str + NORMAL
+    def boldYellow(str:String) : String = if (disabled) str else YELLOW_BOLD + str + NORMAL
+    def cyan(str:String) : String = if (disabled) str else CYAN + str + NORMAL
+    def boldCyan(str:String) : String = if (disabled) str else CYAN_BOLD + str + NORMAL
 }

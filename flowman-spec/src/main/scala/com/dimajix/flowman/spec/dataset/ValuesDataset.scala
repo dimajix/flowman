@@ -120,16 +120,11 @@ class ValuesDatasetSpec extends DatasetSpec {
      * @return
      */
     override def instantiate(context: Context): ValuesDataset = {
-        val records = this.records.map {
-            case v:ValueRecord => ValueRecord(context.evaluate(v.value))
-            case a:ArrayRecord => ArrayRecord(a.fields.map(context.evaluate))
-            case m:MapRecord => MapRecord(m.values.map(kv => kv._1 -> context.evaluate(kv._2)))
-        }
         ValuesDataset(
             instanceProperties(context, "values"),
             context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
             schema.map(_.instantiate(context)),
-            records
+            records.map(_.map(context.evaluate))
         )
     }
 }

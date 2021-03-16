@@ -28,6 +28,7 @@ import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 import org.slf4j.LoggerFactory
+
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
@@ -41,15 +42,15 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.MappingIdentifier
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.sql.DataFrameUtils
-import com.dimajix.flowman.util.ConsoleColors._
+
 
 private[execution] sealed class RunnerImpl {
     val logger = LoggerFactory.getLogger(classOf[Runner])
@@ -241,12 +242,12 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
 
             // First checkJob if execution is really required
             if (canSkip) {
-                logger.info(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution")
+                logger.info(cyan("Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
                 Status.SKIPPED
             }
             else if (!forceDirty && target.dirty(execution, phase) == No) {
-                logger.info(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution")
+                logger.info(cyan(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution"))
                 logger.info("")
                 Status.SKIPPED
             }

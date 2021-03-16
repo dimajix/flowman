@@ -26,6 +26,7 @@ import org.kohsuke.args4j.CmdLineException
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
+import com.dimajix.flowman.util.ConsoleColors
 
 
 object Driver {
@@ -74,6 +75,9 @@ class Driver(options:Arguments) extends Tool {
       * @return
       */
     def run() : Boolean = {
+        // Disable colors in batch mode
+        ConsoleColors.disabled = options.batchMode
+
         val command = options.command
         if (command.help) {
             command.printHelp(System.out)

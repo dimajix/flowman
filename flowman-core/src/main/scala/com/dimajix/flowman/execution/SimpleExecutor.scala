@@ -51,7 +51,7 @@ class SimpleExecutor extends Executor {
 
         logger.info("")
         logger.info(s"Target order for $phase:")
-        activeTargets.foreach(t => logger.info("  " + t.identifier))
+        activeTargets.foreach(t => logger.info("  - " + t.identifier))
         logger.info("")
 
         Status.ofAll(activeTargets, keepGoing) { target =>

@@ -142,15 +142,10 @@ class MockMappingSpec extends MappingSpec {
      * @return
      */
     override def instantiate(context: Context): MockMapping = {
-        val records = this.records.map {
-            case v:ValueRecord => ValueRecord(context.evaluate(v.value))
-            case a:ArrayRecord => ArrayRecord(a.fields.map(context.evaluate))
-            case m:MapRecord => MapRecord(m.values.map(kv => kv._1 -> context.evaluate(kv._2)))
-        }
         MockMapping(
             instanceProperties(context),
             MappingIdentifier(context.evaluate(mapping).getOrElse(name)),
-            records
+            records.map(_.map(context.evaluate))
         )
     }
 }

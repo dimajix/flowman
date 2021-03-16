@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.time.Clock
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
@@ -31,7 +33,10 @@ import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.spec.assertion.AssertionSpec
+import com.dimajix.flowman.util.ConsoleColors.green
+import com.dimajix.flowman.util.ConsoleColors.red
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -42,7 +47,24 @@ case class ValidateTarget(
     private val logger = LoggerFactory.getLogger(classOf[ValidateTarget])
 
     /**
+     * Returns an instance representing this target with the context
+     *
+     * @return
+     */
+    override def instance: TargetInstance = {
+        // Create a custom instance identifier with a timestamp, such that every run is a new instance. Otherwise
+        // validation wouldn't be always executed in the presence of a state store.
+        TargetInstance(
+            namespace.map(_.name).getOrElse(""),
+            project.map(_.name).getOrElse(""),
+            name,
+            Map("validation_ts" -> Clock.systemUTC().millis().toString)
+        )
+    }
+
+    /**
      * Returns all phases which are implemented by this target in the execute method
+     *
      * @return
      */
     override def phases : Set[Phase] = Set(Phase.VALIDATE)
@@ -92,10 +114,13 @@ case class ValidateTarget(
         DataFrameUtils.withCaches(inputDataFrames, cacheLevel) {
             assertions.map { case (name, instance) =>
                 val description = instance.description.getOrElse(name)
-                logger.info(s" - assert: $description")
 
                 if (execution.assert(instance).exists(r => !r.valid)) {
+                    logger.error(red(s" ✘ failed: $description"))
                     throw new ValidationFailedException(identifier)
+                }
+                else {
+                    logger.info(green(s" ✓ passed: $description"))
                 }
             }
         }

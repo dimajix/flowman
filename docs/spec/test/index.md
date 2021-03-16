@@ -76,7 +76,8 @@ tests:
   this section.
   
 * `assertions`: **(optional)** *(type: map:assertion)*:
-  This section contains the set of assertions to be executed.
+  This section contains the set of [assertions](../assertion/index.md) to be executed. The test is considered to have
+  failed if a single assertion has failed.
   
 
 ## Sub Pages

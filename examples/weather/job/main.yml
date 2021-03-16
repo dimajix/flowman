@@ -12,3 +12,4 @@ jobs:
       - measurements
       - stations
       - aggregates
+      - validate_stations_raw

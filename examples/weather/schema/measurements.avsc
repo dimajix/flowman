@@ -5,11 +5,11 @@
   "fields": [
     {
       "name": "usaf",
-      "type": "string"
+      "type": "int"
     },
     {
       "name": "wban",
-      "type": "string"
+      "type": "int"
     },
     {
       "name": "date",
@@ -21,7 +21,7 @@
     },
     {
       "name": "wind_direction",
-      "type": "string"
+      "type": [ "string", "null" ]
     },
     {
       "name": "wind_direction_qual",
@@ -29,7 +29,7 @@
     },
     {
       "name": "wind_observation",
-      "type": "string"
+      "type": [ "string", "null" ]
     },
     {
       "name": "wind_speed",

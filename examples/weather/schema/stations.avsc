@@ -5,11 +5,11 @@
     "fields": [
         {
             "name": "usaf",
-            "type": "string"
+            "type": "int"
         },
         {
             "name": "wban",
-            "type": "string"
+            "type": "int"
         },
         {
             "name": "name",

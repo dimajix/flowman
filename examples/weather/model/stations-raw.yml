@@ -12,3 +12,13 @@ relations:
     schema:
       kind: avro
       file: "${project.basedir}/schema/stations.avsc"
+
+
+targets:
+  validate_stations_raw:
+    kind: validate
+    assertions:
+      check_primary_key:
+        kind: sql
+        query: "SELECT usaf,wban,COUNT(*) FROM stations_raw GROUP BY usaf,wban HAVING COUNT(*) > 1"
+        expected: [ ]

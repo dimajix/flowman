@@ -1,0 +1,60 @@
+tests:
+  test_facts:
+    environment:
+      - year=2013
+
+    overrideMappings:
+      measurements:
+        kind: mock
+        records:
+          - year: $year
+            date: $year-01-02
+            time: 0100
+            usaf: 999999
+            wban: 63897
+            wind_direction_qual: 9
+            wind_speed_qual: 9
+            air_temperature_qual: 9
+          - year: $year
+            date: $year-01-02
+            time: 0100
+            usaf: 99999
+            wban: 63897
+            wind_direction_qual: 9
+            wind_speed_qual: 9
+            air_temperature_qual: 9
+          - year: $year
+            date: $year-01-02
+            time: 0100
+            usaf: 999999
+            wban: 3897
+            wind_direction_qual: 9
+            wind_speed_qual: 9
+            air_temperature_qual: 9
+
+      stations:
+        kind: mock
+        records:
+          - usaf: 999999
+            wban: 63897
+            country: US
+          - usaf: 999999
+            wban: 1
+            country: DE
+          - usaf: 1
+            wban: 63897
+            country: DE
+
+    targets:
+      - validate_stations_raw
+
+    assertions:
+      measurements_joined:
+        kind: sql
+        description: "Measurements are joined correctly"
+        tests:
+          - query: "SELECT year,usaf,wban,country FROM measurements_joined"
+            expected:
+              - [$year,999999,63897,US]
+              - [$year,99999,63897,null]
+              - [$year,999999,3897,null]

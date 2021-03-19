@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
@@ -107,9 +108,15 @@ case class TemplateTarget(
     override def execute(execution: Execution, phase: Phase): Unit = {
         targetInstance.execute(execution, phase)
     }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        targetInstance.link(linker)
+    }
 }
-
-
 
 
 class TemplateTargetSpec extends TargetSpec {

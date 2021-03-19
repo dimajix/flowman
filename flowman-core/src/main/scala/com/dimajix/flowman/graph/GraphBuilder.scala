@@ -30,6 +30,7 @@ class GraphBuilder(context:Context) {
     private val mappings:IdentityHashMap[Mapping,MappingRef] = IdentityHashMap()
     private val relations:IdentityHashMap[Relation,RelationRef] = IdentityHashMap()
     private val targets:IdentityHashMap[Target,TargetRef] = IdentityHashMap()
+    private var currentId:Int = 1
 
     /**
      * Adds a single [[Mapping]] to the [[GraphBuilder]] and performs all required linking operations to connect the
@@ -103,7 +104,7 @@ class GraphBuilder(context:Context) {
         }
         else {
             // Create new node and *first* put it into map of known mappings
-            val node = MappingRef(mapping)
+            val node = MappingRef(nextId(), mapping)
             mappings.put(mapping, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, mapping.context, node)
@@ -124,7 +125,7 @@ class GraphBuilder(context:Context) {
         }
         else {
             // Create new node and *first* put it into map of known relations
-            val node = RelationRef(relation)
+            val node = RelationRef(nextId(), relation)
             relations.put(relation, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, relation.context, node)
@@ -145,7 +146,7 @@ class GraphBuilder(context:Context) {
         }
         else {
             // Create new node and *first* put it into map of known targets
-            val node = TargetRef(target)
+            val node = TargetRef(nextId(), target)
             targets.put(target, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, target.context, node)
@@ -164,4 +165,10 @@ class GraphBuilder(context:Context) {
         relations.values.toList,
         targets.values.toList
     )
+
+    private def nextId() : Int = {
+        val result = currentId
+        currentId += 1
+        result
+    }
 }

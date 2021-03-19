@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.ScopeContext
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -204,6 +205,14 @@ case class TemplateRelation(
         require(execution != null)
 
         relationInstance.migrate(execution)
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        relationInstance.link(linker)
     }
 }
 

@@ -28,15 +28,15 @@ sealed abstract class Edge {
 }
 
 case class ReadRelation(override val input:RelationRef, override val output:Node, partitions:Map[String,FieldValue] = Map()) extends Edge {
-    override def action: String = s"READ from"
+    override def action: String = s"READ from ${input.label} partitions=(${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
     def resources : Set[ResourceIdentifier] = input.relation.resources(partitions)
 }
 
 case class InputMapping(override val input:MappingRef,override val output:Node,pin:String="main") extends Edge {
-    override def action: String = "INPUT from"
+    override def action: String = s"INPUT from ${input.label} output '$pin'"
 }
 
 case class WriteRelation(override val input:Node, override val output:RelationRef, partition:Map[String,SingleValue] = Map()) extends Edge {
-    override def action: String = "WRITE to"
+    override def action: String = s"WRITE from ${input.label} partition=(${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
     def resources : Set[ResourceIdentifier] = output.relation.resources(partition)
 }

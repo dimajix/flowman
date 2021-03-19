@@ -21,6 +21,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.graph.Linker
 
 /**
   *
@@ -148,6 +149,12 @@ trait Target extends Instance {
       * @param phase
       */
     def execute(execution: Execution, phase: Phase) : Unit
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit
 }
 
 
@@ -236,6 +243,12 @@ abstract class BaseTarget extends AbstractInstance with Target {
             case Phase.DESTROY => destroy(execution)
         }
     }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker:Linker) : Unit = {}
 
     /**
      * Performs validation before execution. This might be a good point in time to validate any

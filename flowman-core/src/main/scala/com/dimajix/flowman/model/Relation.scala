@@ -38,6 +38,7 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.types.StructType
 
 
@@ -222,6 +223,12 @@ trait Relation extends Instance {
       * @param execution
       */
     def migrate(execution:Execution) : Unit
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit
 }
 
 
@@ -273,6 +280,12 @@ abstract class BaseRelation extends AbstractInstance with Relation {
             StructType.of(df.schema)
         }
     }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit = {}
 
     /**
      * Creates a DataFrameReader which is already configured with the schema

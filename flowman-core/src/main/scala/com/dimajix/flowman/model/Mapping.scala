@@ -22,6 +22,8 @@ import org.apache.spark.storage.StorageLevel
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
+import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameUtils
 
@@ -144,6 +146,12 @@ trait Mapping extends Instance {
       * @return
       */
     def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit
 }
 
 
@@ -243,5 +251,15 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         require(output != null && output.nonEmpty)
 
         describe(execution, input)(output)
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker:Linker) : Unit = {
+        inputs.foreach( in =>
+            linker.input(in.mapping, in.output)
+        )
     }
 }

@@ -32,6 +32,7 @@ class TargetCommand extends NestedCommand {
     @SubCommands(Array(
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="inspect",impl=classOf[InspectCommand]),
+        new SubCommand(name="deptree",impl=classOf[DependencyTreeCommand]),
         new SubCommand(name="validate",impl=classOf[ValidateCommand]),
         new SubCommand(name="create",impl=classOf[CreateCommand]),
         new SubCommand(name="build",impl=classOf[BuildCommand]),

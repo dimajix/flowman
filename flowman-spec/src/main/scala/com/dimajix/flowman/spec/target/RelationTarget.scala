@@ -32,6 +32,7 @@ import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.BaseTarget
@@ -157,6 +158,18 @@ case class RelationTarget(
             case Phase.DESTROY =>
                 rel.exists(execution)
         }
+    }
+
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        val partition = this.partition.mapValues(v => SingleValue(v))
+        if (mapping.nonEmpty)
+            linker.input(mapping.mapping, mapping.output)
+        linker.write(relation, partition)
     }
 
     /**

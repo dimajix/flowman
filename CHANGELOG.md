@@ -1,4 +1,4 @@
-# Version 0.15.0
+# Version 0.15.0 - 2021-03-23
 
 * New configuration variable `floman.default.target.rebalance`
 * New configuration variable `floman.default.target.parallelism`
@@ -29,6 +29,7 @@
 * Rename `update` mapping to `upsert` mapping, which better describes its functionality 
 * Introduce new `VALIDATE` phase, which is executed even before `CREATE` phase
 * Implement new `validate` and `verify` targets
+* Implement new `deptree` command in Flowman shell
 
 
 # Version 0.14.2 - 2020-10-12

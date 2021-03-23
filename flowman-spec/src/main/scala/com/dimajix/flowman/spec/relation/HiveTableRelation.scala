@@ -437,6 +437,10 @@ case class HiveTableRelation(
         }
     }
 
+    override protected def outputSchema(execution:Execution) : Option[StructType] = {
+        Some(execution.catalog.getTable(tableIdentifier).dataSchema)
+    }
+
     /**
       * Applies the specified schema and converts all field names to lowercase. This is required when directly
       * writing into HDFS and using Hive, since Hive only supports lower-case field names.
@@ -445,8 +449,7 @@ case class HiveTableRelation(
       * @return
       */
     override protected def applyOutputSchema(execution:Execution, df: DataFrame) : DataFrame = {
-        val outputSchema = Some(execution.catalog.getTable(tableIdentifier).dataSchema)
-        val mixedCaseDf = SchemaUtils.applySchema(df, outputSchema)
+        val mixedCaseDf = SchemaUtils.applySchema(df, outputSchema(execution))
         if (needsLowerCaseSchema) {
             val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
             df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)

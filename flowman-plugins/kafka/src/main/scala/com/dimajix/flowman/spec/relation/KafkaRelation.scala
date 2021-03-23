@@ -260,7 +260,7 @@ case class KafkaRelation(
       *
       * @return
       */
-    override protected def outputSchema : Option[StructType] = None
+    override protected def outputSchema(execution:Execution) : Option[StructType] = None
 }
 
 

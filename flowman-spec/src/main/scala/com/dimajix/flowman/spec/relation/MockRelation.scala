@@ -90,23 +90,18 @@ case class MockRelation(
         require(schema != null)
         require(partitions != null)
 
-        if (inputSchema.isEmpty && schema.isEmpty)
-            throw new IllegalArgumentException("Mock relation either needs own schema or a desired input schema")
-
-        // Add partitions values as columns
-        val fullSchema = this.schema.map(_.fields ++ this.partitions.map(_.field))
-        val sparkSchema = fullSchema.map(s => StructType(s.map(_.sparkField)))
-
         if (records.nonEmpty) {
-            if (fullSchema.isEmpty) {
-                throw new IllegalArgumentException("Cannot return provided records without schema information")
-            }
-            val values = records.map(_.toArray(com.dimajix.flowman.types.StructType(fullSchema.get)))
-            val df = DataFrameUtils.ofStringValues(execution.spark, values, sparkSchema.get)
+            val fullSchema = this.schema.map(s => com.dimajix.flowman.types.StructType(s.fields ++ this.partitions.map(_.field)))
+                .getOrElse(throw new IllegalArgumentException("Cannot mock relation with records without schema information"))
+
+            val values = records.map(_.toArray(fullSchema))
+            val df = DataFrameUtils.ofStringValues(execution.spark, values, fullSchema.sparkType)
             SchemaUtils.applySchema(df, schema)
         }
         else {
-            val readSchema = schema.orElse(sparkSchema).get
+            val readSchema = schema.orElse(inputSchema)
+                .getOrElse(throw new IllegalArgumentException("Mock relation either needs own schema or a desired input schema"))
+
             DataFrameUtils.ofSchema(execution.spark, readSchema)
         }
     }
@@ -215,6 +210,24 @@ case class MockRelation(
      * @return
      */
     override def describe(execution: Execution): types.StructType = mocked.describe(execution)
+
+    /**
+     * Creates a Spark schema from the list of fields. This mocking implementation will add partition columns, since
+     * these are required for reading.
+     * @return
+     */
+    override protected def inputSchema : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+    }
+
+    /**
+     * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
+     * This mocking implementation will add partition columns, since these are required for writing.
+     * @return
+     */
+    override protected def outputSchema(execution:Execution) : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+    }
 }
 
 

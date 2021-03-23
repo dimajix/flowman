@@ -137,7 +137,11 @@ case class JdbcRelation(
                 reader.jdbc(url, tableIdentifier.unquotedString, props)
             }
 
-        val df = filterPartition(tableDf, partitions)
+        // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
+        // explicit schema specification of the relation
+        val schemaDf = applyInputSchema(tableDf)
+
+        val df = filterPartition(schemaDf, partitions)
         SchemaUtils.applySchema(df, schema)
     }
 
@@ -319,7 +323,8 @@ case class JdbcRelation(
     override def migrate(execution:Execution) : Unit = ???
 
     /**
-      * Creates a Spark schema from the list of fields.
+      * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
+      * these are required for reading.
       * @return
       */
     override protected def inputSchema : Option[StructType] = {
@@ -327,10 +332,11 @@ case class JdbcRelation(
     }
 
     /**
-      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
+      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
+      * This JDBC implementation will add partition columns, since these are required for writing.
       * @return
       */
-    override protected def outputSchema : Option[StructType] = {
+    override protected def outputSchema(execution:Execution) : Option[StructType] = {
         schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
     }
 

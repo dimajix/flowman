@@ -78,14 +78,12 @@ case class NullRelation(
         require(schema != null)
         require(partitions != null)
 
-        if (inputSchema.isEmpty && schema.isEmpty)
+        val readSchema = schema.orElse(inputSchema)
+        if (readSchema.isEmpty)
             throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
 
-        // Add partitions values as columns
-        val fullSchema = inputSchema.map(s => StructType(s.fields ++ this.partitions.map(_.sparkField)))
-        val readSchema = schema.orElse(fullSchema).get
         val rdd = execution.spark.sparkContext.emptyRDD[Row]
-        execution.spark.createDataFrame(rdd, readSchema)
+        execution.spark.createDataFrame(rdd, readSchema.get)
     }
 
     /**
@@ -135,6 +133,24 @@ case class NullRelation(
     }
     override def migrate(execution: Execution): Unit = {
         require(execution != null)
+    }
+
+    /**
+     * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
+     * these are required for reading.
+     * @return
+     */
+    override protected def inputSchema : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+    }
+
+    /**
+     * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
+     * This JDBC implementation will add partition columns, since these are required for writing.
+     * @return
+     */
+    override protected def outputSchema(execution:Execution) : Option[StructType] = {
+        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
     }
 }
 

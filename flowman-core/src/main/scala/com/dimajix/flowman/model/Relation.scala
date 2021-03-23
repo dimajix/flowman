@@ -349,28 +349,43 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     }
 
     /**
-     * Creates a Spark schema from the list of fields.
+     * Returns the schema that will be used internally when reading from this data source. This schema should match the
+     * user specified schema and will be applied in read operations. This should include the partition column whenever
+     * the source returns it.
      * @return
      */
     protected def inputSchema : Option[org.apache.spark.sql.types.StructType] = {
-        schema.map(s => org.apache.spark.sql.types.StructType(s.fields.map(_.sparkField)))
+        schema.map(_.sparkSchema)
     }
 
     /**
-     * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
+     * Applies the input schema (or maybe even transforms it). This should include partitions only if they are
+     * required in read operations.
+     * @param df
      * @return
      */
-    protected def outputSchema : Option[org.apache.spark.sql.types.StructType] = {
-        schema.map(s => s.sparkSchema)
+    protected def applyInputSchema(df:DataFrame) : DataFrame = {
+        SchemaUtils.applySchema(df, inputSchema, insertNulls=false)
     }
 
     /**
-     * Applies the specified schema (or maybe even transforms it)
+     * Returns the Spark schema as it is expected from the physical relation for write operations. The list is used
+     * for output operations, i.e. for writing. This should include partitions only if they are required for write
+     * operations.
+     * @return
+     */
+    protected def outputSchema(execution:Execution) : Option[org.apache.spark.sql.types.StructType] = {
+        schema.map(_.sparkSchema)
+    }
+
+    /**
+     * Applies the output schema (or maybe even transforms it). This should include partitions only if they are
+     * required for write operations.
      * @param df
      * @return
      */
     protected def applyOutputSchema(execution:Execution, df:DataFrame) : DataFrame = {
-        SchemaUtils.applySchema(df, outputSchema)
+        SchemaUtils.applySchema(df, outputSchema(execution))
     }
 }
 

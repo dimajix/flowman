@@ -73,21 +73,28 @@ object SchemaUtils {
       * @param schema
       * @return
       */
-    def applySchema(df:DataFrame, schema:Option[StructType]) : DataFrame = {
+    def applySchema(df:DataFrame, schema:Option[StructType], insertNulls:Boolean=true) : DataFrame = {
         require(df != null)
         require(schema != null)
 
-        val dfFieldsByName = df.schema.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
-        schema
-            .map { schema =>
-                val columns = schema.map { field =>
-                    dfFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
-                        .map(_ => df(field.name).cast(field.dataType).as(field.name, field.metadata))
-                        .getOrElse(lit(null).cast(field.dataType).as(field.name, field.metadata))
-                }
-                df.select(columns: _*)
+        def applySchema(df:DataFrame, schema:StructType, insertNulls:Boolean) : DataFrame = {
+            val dfFieldsByName = df.schema.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
+            val columns = schema.map { field =>
+                dfFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
+                    .map(_ => df(field.name).cast(field.dataType).as(field.name, field.metadata))
+                    .getOrElse {
+                        if (!insertNulls)
+                            throw new IllegalArgumentException(s"Missing column '${field.name}' in input DataFrame")
+                        lit(null).cast(field.dataType).as(field.name, field.metadata)
+                    }
             }
-            .getOrElse(df)
+            df.select(columns: _*)
+        }
+
+        schema match {
+            case Some(s) => applySchema(df, s, insertNulls)
+            case None => df
+        }
     }
 
     /**

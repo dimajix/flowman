@@ -16,6 +16,8 @@
 
 package org.apache.spark.sql
 
+import java.util.TimeZone
+
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
@@ -30,12 +32,21 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.unsafe.types.CalendarInterval
+import org.apache.spark.unsafe.types.UTF8String
 
 
 object SparkShim {
     def getHadoopConf(sparkConf:SparkConf) :org.apache.hadoop.conf.Configuration = SparkHadoopUtil.get.newConfiguration(sparkConf)
 
-    def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.fromDayTimeString(str)
+    def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.stringToInterval(UTF8String.fromString(str))
+
+    def calendarInterval(months:Int, days:Int, microseconds:Long=0L) : CalendarInterval = {
+        new CalendarInterval(months, days, microseconds)
+    }
+
+    def millisToDays(millisUtc: Long, timeZone: TimeZone): Int = {
+        org.apache.spark.sql.catalyst.util.DateTimeUtils.millisToDays(millisUtc, timeZone.toZoneId)
+    }
 
     def isStaticConf(key:String) : Boolean = {
         SQLConf.staticConfKeys.contains(key) ||

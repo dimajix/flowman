@@ -48,7 +48,8 @@ class Server(
 
         val namespaceService = new NamespaceService(session.namespace.get)
         val projectService = new ProjectService(session.store)
-        val historyService = new HistoryService(session.history)
+        val jobHistoryService = new JobHistoryService(session.history)
+        val targetHistoryService = new TargetHistoryService(session.history)
 
         val route = (
                 pathPrefix("api") {(
@@ -58,7 +59,9 @@ class Server(
                     ~
                     projectService.routes
                     ~
-                    historyService.routes
+                    jobHistoryService.routes
+                    ~
+                    targetHistoryService.routes
                 )}
                 ~
                 pathPrefix("swagger") {(

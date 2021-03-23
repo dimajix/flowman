@@ -1,19 +1,25 @@
 mappings:
-  measurements-joined:
+  # The `measurements-joined` mapping will add station metadata to measurements
+  measurements_joined:
     # Join together measurements and stations
     kind: join
     mode: left
+    # Specify list of input mappings to be joined
     inputs:
       - measurements
       - stations
+    # Specify columns to use for joining. Both input mappings need to contain both columns, merging is performed
+    # whenever the values of both columns match in both input mappings
     columns:
       - usaf
       - wban
 
+  # Replace invalid values with NULLs
   facts:
-    # Replace invalid values with NULLs
     kind: extend
-    input: measurements-joined
+    input: measurements_joined
+    # Replace existing columns with new values, which will contain NULL values whenever the quality flags
+    # indicate so
     columns:
       wind_direction: "CASE WHEN wind_direction_qual=1 THEN wind_direction END"
       wind_speed: "CASE WHEN wind_speed_qual=1 THEN wind_speed END"

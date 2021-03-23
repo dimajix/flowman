@@ -20,8 +20,8 @@ import java.nio.file.Path
 
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -29,7 +29,7 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalTempDir
 
 
-class DerbyJdbcTest extends FlatSpec with Matchers with LocalTempDir {
+class DerbyJdbcTest extends AnyFlatSpec with Matchers with LocalTempDir {
     var db:Path = _
     var url:String = _
     val driver = "org.apache.derby.jdbc.EmbeddedDriver"

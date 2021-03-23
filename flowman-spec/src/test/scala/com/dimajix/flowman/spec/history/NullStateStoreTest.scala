@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.spec.history
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class NullStateStoreTest extends FlatSpec with Matchers {
+class NullStateStoreTest extends AnyFlatSpec with Matchers {
     "The NullStateStoreSpec" should "be parseable" in {
         val spec =
             """

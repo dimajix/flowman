@@ -1,4 +1,3 @@
-
 # SQL Mapping
 The `sql` mapping allows to execute any SQL transformation which contains Spark SQL code.
 

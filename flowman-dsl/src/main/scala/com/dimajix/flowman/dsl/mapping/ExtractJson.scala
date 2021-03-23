@@ -35,7 +35,7 @@ case class ExtractJson(
             props,
             input,
             column,
-            schema.instantiate(props.context),
+            Some(schema.instantiate(props.context)),
             parseMode
         )
     }

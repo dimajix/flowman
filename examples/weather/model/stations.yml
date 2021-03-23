@@ -4,27 +4,5 @@ relations:
     format: parquet
     location: "$basedir/stations/"
     schema:
-      kind: embedded
-      fields:
-        - name: usaf
-          type: STRING
-        - name: wban
-          type: STRING
-        - name: name
-          type: STRING
-        - name: country
-          type: STRING
-        - name: state
-          type: STRING
-        - name: icao
-          type: STRING
-        - name: latitude
-          type: FLOAT
-        - name: longitude
-          type: FLOAT
-        - name: elevation
-          type: FLOAT
-        - name: date_begin
-          type: STRING
-        - name: date_end
-          type: STRING
+      kind: avro
+      file: "${project.basedir}/schema/stations.avsc"

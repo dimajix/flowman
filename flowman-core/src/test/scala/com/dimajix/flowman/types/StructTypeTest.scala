@@ -16,14 +16,15 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class StructTypeTest extends FlatSpec with Matchers {
+class StructTypeTest extends AnyFlatSpec with Matchers {
     "A StructType" should "provide the correct SQL type (1)" in {
         val ftype = StructType(Seq())
         ftype.sqlType should be ("struct<>")
+        ftype.sparkType should be (org.apache.spark.sql.types.StructType(Seq()))
     }
 
     it should "provide the correct SQL type (2)" in {

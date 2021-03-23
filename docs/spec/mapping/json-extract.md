@@ -8,7 +8,7 @@ Since Flowman cannot infer the JSON schema in advance, you need to explicitly sp
 schema of the JSONs to be extracted.
 
 ## Example
-```
+```yaml
 mappings:
   statement_item:
     kind: extractJson

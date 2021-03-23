@@ -31,6 +31,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.mapping.SqlMapping
 import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.util.ConsoleUtils
 
 
 class SqlCommand extends Command {
@@ -49,16 +50,9 @@ class SqlCommand extends Command {
             sql = Some(statement.mkString(" "))
         )
         Try {
-            val executor = session.executor
+            val executor = session.execution
             val df = executor.instantiate(mapping, "main")
-            if (csv) {
-                val result = df.limit(limit).collect()
-                println(df.columns.mkString(","))
-                result.foreach(record => println(record.mkString(",")))
-            }
-            else {
-                df.show(limit)
-            }
+            ConsoleUtils.showDataFrame(df, limit, csv)
             true
         } match {
             case Failure(ex) =>

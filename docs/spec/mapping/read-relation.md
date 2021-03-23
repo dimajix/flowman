@@ -1,6 +1,8 @@
-
 # Read Mapping
 
+The `read` (or `readRelation`, which is simply an alias) mapping is found in almost all Flowman projects, as it will
+read data from relations. It doesn't have any other mappings as inputs, and therefore usually is the first mapping
+in a data flow.
 
 ## Example
 ```
@@ -14,6 +16,7 @@ mappings:
         end: $end_year
     columns:
       raw_data: String
+    filter: "raw_data IS NOT NULL"
 ```
 
 ## Fields
@@ -44,7 +47,9 @@ will be applied to the records after they have been read and interpreted by the
 underlying source.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
-An optional SQL filter expression that is applied for reading only a subset of records.
+An optional SQL filter expression that is applied for reading only a subset of records. The filter is applied
+  *after* the schema as specified in `columns` is applied. This means that if you are using `columns`, then you
+  can only access these columns in the `filter` expression.
 
 
 ## Outputs

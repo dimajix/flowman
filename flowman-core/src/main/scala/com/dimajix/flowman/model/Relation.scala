@@ -18,6 +18,14 @@ package com.dimajix.flowman.model
 
 import java.util.Locale
 
+import com.dimajix.common.Trilean
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.SchemaUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
@@ -29,17 +37,9 @@ import org.apache.spark.sql.streaming.DataStreamReader
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
-import org.apache.spark.sql.types.StructType
 
-import com.dimajix.common.Trilean
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
-import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.model.Dataset.Properties
-import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.types.StructType
 
 
 object Relation {
@@ -52,8 +52,7 @@ object Relation {
                 name,
                 "",
                 Map(),
-                None,
-                Map()
+                None
             )
         }
     }
@@ -64,11 +63,11 @@ object Relation {
         name:String,
         kind:String,
         labels:Map[String,String],
-        description:Option[String],
-        options:Map[String,String]
+        description:Option[String]
     )
     extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : RelationIdentifier = RelationIdentifier(name, project.map(_.name))
     }
 }
 
@@ -137,85 +136,99 @@ trait Relation extends Instance {
     def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    def describe(execution:Execution) : StructType
+
+        /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
+    def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
       * Removes one or more partitions.
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit
+    def truncate(execution:Execution, partitions:Map[String,FieldValue] = Map()) : Unit
 
     /**
       * Reads data from a streaming source
-      * @param executor
+      * @param execution
       * @param schema
       * @return
       */
-    def readStream(executor:Executor, schema:Option[StructType]) : DataFrame = ???
+    def readStream(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink
-      * @param executor
+      * @param execution
       * @param df
       * @return
       */
-    def writeStream(executor:Executor, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
+    def writeStream(execution:Execution, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
       * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
      *  [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
  *
-      * @param executor
+      * @param execution
       * @return
       */
-    def exists(executor:Executor) : Trilean
+    def exists(execution:Execution) : Trilean
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    def loaded(executor:Executor, partition:Map[String,SingleValue] = Map()) : Trilean
+    def loaded(execution:Execution, partition:Map[String,SingleValue] = Map()) : Trilean
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
-      * @param executor
+      * @param execution
       */
-    def create(executor:Executor, ifNotExists:Boolean=false) : Unit
+    def create(execution:Execution, ifNotExists:Boolean=false) : Unit
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
-      * @param executor
+      * @param execution
       */
-    def destroy(executor:Executor, ifExists:Boolean=false) : Unit
+    def destroy(execution:Execution, ifExists:Boolean=false) : Unit
 
     /**
       * This will update any existing relation to the specified metadata.
-      * @param executor
+      * @param execution
       */
-    def migrate(executor:Executor) : Unit
+    def migrate(execution:Execution) : Unit
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit
 }
 
 
@@ -230,7 +243,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * Returns an identifier for this relation
      * @return
      */
-    override def identifier : RelationIdentifier = RelationIdentifier(name, project.map(_.name))
+    override def identifier : RelationIdentifier = instanceProperties.identifier
 
     /**
      * Returns a description for the relation
@@ -251,20 +264,38 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     override def partitions : Seq[PartitionField] = Seq()
 
     /**
-     * Returns a map of all options. There is no specific usage for options, that depends on the
-     * specific implementation
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
      * @return
      */
-    def options : Map[String,String] = instanceProperties.options
+    override def describe(execution:Execution) : StructType = {
+        if (fields.nonEmpty) {
+            // Use given fields if relation contains valid list of fields
+            StructType(fields)
+        }
+        else {
+            // Otherwise let Spark infer the schema
+            val df = read(execution, None)
+            StructType.of(df.schema)
+        }
+    }
 
     /**
-     * Creates a DataFrameReader which is already configured with options and the schema is also
-     * already included
-     * @param executor
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit = {}
+
+    /**
+     * Creates a DataFrameReader which is already configured with the schema
+     * @param execution
      * @return
      */
-    protected def reader(executor:Executor) : DataFrameReader = {
-        val reader = executor.spark.read.options(options)
+    protected def reader(execution:Execution, format:String, options:Map[String,String]) : DataFrameReader = {
+        val reader = execution.spark.read
+            .format(format)
+            .options(options)
 
         inputSchema.foreach(s => reader.schema(s))
 
@@ -272,13 +303,14 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     }
 
     /**
-     * Creates a DataStreamReader which is already configured with options and the schema is also
-     * already included
-     * @param executor
+     * Creates a DataStreamReader which is already configured
+     * @param execution
      * @return
      */
-    protected def streamReader(executor: Executor) : DataStreamReader = {
-        val reader = executor.spark.readStream.options(options)
+    protected def streamReader(execution: Execution, format:String, options:Map[String,String]) : DataStreamReader = {
+        val reader = execution.spark.readStream
+            .format(format)
+            .options(options)
 
         inputSchema.foreach(s => reader.schema(s))
 
@@ -288,13 +320,14 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     /**
      * Ceates a DataFrameWriter which is already configured with any options. Moreover
      * the desired schema of the relation is also applied to the DataFrame
-     * @param executor
+     * @param execution
      * @param df
      * @return
      */
-    protected def writer(executor: Executor, df:DataFrame, saveMode:SaveMode) : DataFrameWriter[Row] = {
-        applyOutputSchema(executor, df)
+    protected def writer(execution: Execution, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode) : DataFrameWriter[Row] = {
+        applyOutputSchema(execution, df)
             .write
+            .format(format)
             .options(options)
             .mode(saveMode)
     }
@@ -302,41 +335,57 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     /**
      * Ceates a DataStreamWriter which is already configured with any options. Moreover
      * the desired schema of the relation is also applied to the DataFrame
-     * @param executor
+     * @param execution
      * @param df
      * @return
      */
-    protected def streamWriter(executor: Executor, df:DataFrame, outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        val outputDf = applyOutputSchema(executor, df)
+    protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
+        val outputDf = applyOutputSchema(execution, df)
         outputDf.writeStream
+            .format(format)
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
             .outputMode(outputMode)
     }
 
     /**
-     * Creates a Spark schema from the list of fields.
+     * Returns the schema that will be used internally when reading from this data source. This schema should match the
+     * user specified schema and will be applied in read operations. This should include the partition column whenever
+     * the source returns it.
      * @return
      */
-    protected def inputSchema : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField)))
+    protected def inputSchema : Option[org.apache.spark.sql.types.StructType] = {
+        schema.map(_.sparkSchema)
     }
 
     /**
-     * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
-     * @return
-     */
-    protected def outputSchema : Option[StructType] = {
-        schema.map(s => s.sparkSchema)
-    }
-
-    /**
-     * Applies the specified schema (or maybe even transforms it)
+     * Applies the input schema (or maybe even transforms it). This should include partitions only if they are
+     * required in read operations.
      * @param df
      * @return
      */
-    protected def applyOutputSchema(executor:Executor, df:DataFrame) : DataFrame = {
-        SchemaUtils.applySchema(df, outputSchema)
+    protected def applyInputSchema(df:DataFrame) : DataFrame = {
+        SchemaUtils.applySchema(df, inputSchema, insertNulls=false)
+    }
+
+    /**
+     * Returns the Spark schema as it is expected from the physical relation for write operations. The list is used
+     * for output operations, i.e. for writing. This should include partitions only if they are required for write
+     * operations.
+     * @return
+     */
+    protected def outputSchema(execution:Execution) : Option[org.apache.spark.sql.types.StructType] = {
+        schema.map(_.sparkSchema)
+    }
+
+    /**
+     * Applies the output schema (or maybe even transforms it). This should include partitions only if they are
+     * required for write operations.
+     * @param df
+     * @return
+     */
+    protected def applyOutputSchema(execution:Execution, df:DataFrame) : DataFrame = {
+        SchemaUtils.applySchema(df, outputSchema(execution))
     }
 }
 

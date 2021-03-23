@@ -23,10 +23,10 @@ import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.MappingType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.annotation.MappingType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -47,12 +47,15 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMappingSpec]),
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMappingSpec]),
     new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMappingSpec]),
+    new JsonSubTypes.Type(name = "case", value = classOf[CaseMappingSpec]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMappingSpec]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMappingSpec]),
+    new JsonSubTypes.Type(name = "const", value = classOf[ValuesMappingSpec]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMappingSpec]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMappingSpec]),
     new JsonSubTypes.Type(name = "drop", value = classOf[DropMappingSpec]),
     new JsonSubTypes.Type(name = "earliest", value = classOf[EarliestMappingSpec]),
+    new JsonSubTypes.Type(name = "empty", value = classOf[NullMappingSpec]),
     new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeMappingSpec]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMappingSpec]),
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),
@@ -61,6 +64,8 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "historize", value = classOf[HistorizeMappingSpec]),
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMappingSpec]),
     new JsonSubTypes.Type(name = "latest", value = classOf[LatestMappingSpec]),
+    new JsonSubTypes.Type(name = "mock", value = classOf[MockMappingSpec]),
+    new JsonSubTypes.Type(name = "null", value = classOf[NullMappingSpec]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
     new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
@@ -78,7 +83,8 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
     new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),
-    new JsonSubTypes.Type(name = "update", value = classOf[UpdateMappingSpec])
+    new JsonSubTypes.Type(name = "upsert", value = classOf[UpsertMappingSpec]),
+    new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec])
 ))
 abstract class MappingSpec extends NamedSpec[Mapping] {
     @JsonProperty("broadcast") protected var broadcast:String = "false"

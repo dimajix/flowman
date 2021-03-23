@@ -16,8 +16,6 @@ readability. These YAML files are read in by Flowman executables and data flows 
 executed as specified on the command line (more on that in [Flowman CLI](../cli/flowexec.md))
 
 
-# Entity Documentation
-
 Flowman has a couple of different main entities, which are documented seperately:
 
 ```eval_rst
@@ -35,6 +33,7 @@ Flowman has a couple of different main entities, which are documented seperately
    dataset/index
    schema/index
    connection/index
+   test/index
    metric/index
    hooks/index
 ```

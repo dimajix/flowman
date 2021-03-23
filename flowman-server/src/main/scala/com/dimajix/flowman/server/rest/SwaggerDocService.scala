@@ -9,7 +9,8 @@ object SwaggerDocService extends SwaggerHttpService  {
     override def apiClasses = Set(
         classOf[NamespaceService],
         classOf[ProjectService],
-        classOf[HistoryService]
+        classOf[JobHistoryService],
+        classOf[TargetHistoryService]
     )
     override def host = ""
     override def basePath: String = "/api/"

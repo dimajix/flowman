@@ -16,14 +16,14 @@
 
 package com.dimajix.spark.sql.local
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.sql.local.implicits._
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class DataFrameWriterTest extends FlatSpec with Matchers with LocalSparkSession {
+class DataFrameWriterTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The DataFrameWriter" should "be instantiated by a readLocal call" in {
         val writer = spark.emptyDataFrame.writeLocal
         writer should not be (null)

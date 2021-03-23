@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.14.2</version>
+        <version>0.15.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -39,17 +39,18 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-scalatest-compat</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
         </dependency>
 
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-dsl</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-plugin-example</artifactId>
         </dependency>
 
         <dependency>

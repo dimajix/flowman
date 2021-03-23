@@ -19,9 +19,9 @@ package com.dimajix.flowman.model
 
 final case class Profile(
     name:String,
-    enabled:Boolean,
-    connections:Map[String,Template[Connection]],
-    config:Map[String,String],
-    environment:Map[String,String]
+    enabled:Boolean = false,
+    connections:Map[String,Template[Connection]] = Map(),
+    config:Map[String,String] = Map(),
+    environment:Map[String,String] = Map()
 ) {
 }

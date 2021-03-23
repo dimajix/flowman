@@ -17,11 +17,11 @@
 package com.dimajix.flowman.tools.exec
 
 import org.kohsuke.args4j.CmdLineException
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class DriverTest extends FlatSpec with Matchers {
+class DriverTest extends AnyFlatSpec with Matchers {
     "The Driver" should "fail with an exception on wrong arguments" in {
         Driver.run() should be (true)
 

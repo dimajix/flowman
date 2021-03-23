@@ -23,8 +23,8 @@ import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
@@ -34,7 +34,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
 
-class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with LocalSparkSession {
+class KafkaRelationTest extends AnyFlatSpec with Matchers with QueryTest with LocalSparkSession {
     private var testUtils: KafkaTestUtils = _
 
     private val topicId = new AtomicInteger(0)
@@ -84,7 +84,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import org.apache.spark.sql.functions._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()
@@ -111,7 +111,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import org.apache.spark.sql.functions._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()
@@ -138,7 +138,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
         import org.apache.spark.sql.functions._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()
@@ -164,7 +164,7 @@ class KafkaRelationTest extends FlatSpec with Matchers with QueryTest with Local
 
     it should "support stream reading" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val topic = newTopic()

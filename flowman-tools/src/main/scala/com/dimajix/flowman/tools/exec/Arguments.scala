@@ -34,6 +34,7 @@ import com.dimajix.flowman.tools.exec.model.ModelCommand
 import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand
+import com.dimajix.flowman.tools.exec.test.TestCommand
 
 
 class Arguments(args:Array[String]) {
@@ -45,6 +46,8 @@ class Arguments(args:Array[String]) {
     var profiles: Array[String] = Array()
     @Option(name = "-D", aliases=Array("--env"), usage = "set environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
+    @Option(name = "-B", aliases=Array("--batch-mode"), usage = "Run in non-interactive batch mode. Disables output color.")
+    var batchMode: Boolean = false
     @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
@@ -54,7 +57,7 @@ class Arguments(args:Array[String]) {
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark application name", metaVar = "<spark_application_name>")
-    var sparkName: String = "flowman"
+    var sparkName: String = "Flowman Exec"
 
     @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
@@ -65,6 +68,7 @@ class Arguments(args:Array[String]) {
         new SubCommand(name="mapping",impl=classOf[MappingCommand]),
         new SubCommand(name="namespace",impl=classOf[NamespaceCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
+        new SubCommand(name="test",impl=classOf[TestCommand]),
         new SubCommand(name="project",impl=classOf[ProjectCommand])
     ))
     var command:Command = _

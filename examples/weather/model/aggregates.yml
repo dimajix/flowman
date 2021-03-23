@@ -1,13 +1,19 @@
 relations:
   aggregates:
     kind: file
+    # Specify the file format to use
     format: parquet
+    # Specify the base directory where all data is stored. This location does not include the partition pattern
     location: "$basedir/aggregates/"
+    # Specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`
     pattern: "${year}"
+    # Add partition column, which can be used in the `pattern`
     partitions:
       - name: year
         type: integer
         granularity: 1
+    # Specify an optional schema here. It is always recommended to explicitly specify a schema for every relation
+    # and not just let data flow from a mapping into a target.
     schema:
       kind: embedded
       fields:

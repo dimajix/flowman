@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.RelationType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -43,22 +43,23 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
   */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
-    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
-    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec]),
+    new JsonSubTypes.Type(name = "empty", value = classOf[NullRelationSpec]),
+    new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "generic", value = classOf[GenericRelationSpec]),
     new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveUnionTable", value = classOf[HiveUnionTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
-    new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
+    new JsonSubTypes.Type(name = "mock", value = classOf[MockRelationSpec]),
+    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
+    new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec])
+    new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
-    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     override def instantiate(context:Context) : Relation
 
@@ -76,12 +77,10 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             name,
             kind,
             context.evaluate(labels),
-            description.map(context.evaluate),
-            context.evaluate(options)
+            description.map(context.evaluate)
         )
     }
 }
-
 
 
 class RelationSpecAnnotationHandler extends ClassAnnotationHandler {

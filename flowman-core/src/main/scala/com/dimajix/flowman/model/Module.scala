@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.model
 
-import java.io.InputStream
 import java.net.URL
 import java.util.ServiceLoader
 
@@ -25,6 +24,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spi.ModuleReader
 
 
 object Module {
@@ -106,7 +106,8 @@ final case class Module(
    connections : Map[String,Template[Connection]] = Map(),
    mappings : Map[String,Template[Mapping]] = Map(),
    targets : Map[String,Template[Target]] = Map(),
-   jobs : Map[String,Template[Job]] = Map()
+   jobs : Map[String,Template[Job]] = Map(),
+   tests : Map[String,Template[Test]] = Map()
 ) {
     /**
      * Creates a new dataflow by merging this one with another one.
@@ -123,7 +124,8 @@ final case class Module(
             connections = connections ++ other.connections,
             mappings = mappings ++ other.mappings,
             targets = targets ++ other.targets,
-            jobs = jobs ++ other.jobs
+            jobs = jobs ++ other.jobs,
+            tests = tests ++ other.tests
         )
     }
 
@@ -143,19 +145,11 @@ final case class Module(
             relations = relations,
             mappings = mappings,
             targets = targets,
-            jobs = jobs
+            jobs = jobs,
+            tests = tests
         )
     }
 }
 
 
-abstract class ModuleReader {
-    def name : String
-    def format : String
 
-    def supports(format:String) : Boolean = this.format == format
-
-    def file(file: File) : Module
-    def stream(stream: InputStream) : Module
-    def string(text: String): Module
-}

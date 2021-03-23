@@ -2,8 +2,8 @@ package com.dimajix.flowman.dsl
 
 import java.io.File
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.dsl.example.DqmProject
 import com.dimajix.flowman.execution.Lifecycle
@@ -13,7 +13,7 @@ import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ExampleSpec extends FlatSpec with Matchers with LocalSparkSession {
+class ExampleSpec extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A Project" should "be loadable" in (if (hiveSupported) {
         val project = DqmProject.instantiate()
 
@@ -24,7 +24,7 @@ class ExampleSpec extends FlatSpec with Matchers with LocalSparkSession {
             .build()
 
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
         val runner = session.runner
 
         val job = context.getJob(JobIdentifier("test"))

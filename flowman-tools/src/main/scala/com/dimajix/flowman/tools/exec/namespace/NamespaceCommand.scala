@@ -28,7 +28,7 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 class NamespaceCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
-        new SubCommand(name="info",impl=classOf[InfoCommand])
+        new SubCommand(name="inspect",impl=classOf[InspectCommand])
     ))
     override var command:Command = _
 }

@@ -106,8 +106,4 @@ object Velocity {
 }
 
 
-class TemplateObjectHandler extends ClassAnnotationHandler {
-    override def annotation: Class[_] = classOf[TemplateObject]
 
-    override def register(clazz: Class[_]): Unit = Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz)
-}

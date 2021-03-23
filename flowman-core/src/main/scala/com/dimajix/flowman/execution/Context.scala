@@ -34,6 +34,8 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestIdentifier
 
 case class SettingLevel(
     level:Int
@@ -58,7 +60,7 @@ abstract class Context {
     def namespace : Option[Namespace]
 
     /**
-      * Returns the project associated with this context. Can be null
+      * Returns the project associated with this context. Can be [[None]]
       * @return
       */
     def project : Option[Project]
@@ -129,25 +131,25 @@ abstract class Context {
     def getConnection(identifier: ConnectionIdentifier): Connection
 
     /**
-      * Returns a specific named Mapping. The Transform can either be inside this Contexts project or in a different
+      * Returns a specific named Mapping. The mapping can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
-    def getMapping(identifier: MappingIdentifier) : Mapping
+    def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true) : Mapping
 
     /**
-      * Returns a specific named Relation. The RelationType can either be inside this Contexts project or in a different
+      * Returns a specific named Relation. The relation can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
-    def getRelation(identifier: RelationIdentifier): Relation
+    def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation
 
     /**
-      * Returns a specific named Target. The TargetType can either be inside this Contexts project or in a different
+      * Returns a specific named Target. The target can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
@@ -156,13 +158,28 @@ abstract class Context {
     def getTarget(identifier: TargetIdentifier): Target
 
     /**
-      * Returns a specific named Job. The JobType can either be inside this Contexts project or in a different
+      * Returns a specific named Job. The job can either be inside this Contexts project or in a different
       * project within the same namespace
       *
       * @param identifier
       * @return
       */
     def getJob(identifier: JobIdentifier): Job
+
+    /**
+     * Returns a specific named Test. The Test can either be inside this Contexts project or in a different
+     * project within the same namespace
+     *
+     * @param identifier
+     * @return
+     */
+    def getTest(identifier: TestIdentifier): Test
+
+    /**
+     * Returns the list of active profile names
+     * @return
+     */
+    def profiles : Set[String]
 
     /**
       * Returns all configuration options as a key-value map

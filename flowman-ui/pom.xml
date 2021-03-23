@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.14.2</version>
+        <version>0.15.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -46,20 +46,6 @@
                         <goals>
                             <goal>exec</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>test-compile</id>
-                        <phase>none</phase>
                     </execution>
                 </executions>
             </plugin>

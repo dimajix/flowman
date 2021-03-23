@@ -22,7 +22,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
@@ -60,40 +60,40 @@ case class MappingDataset(
     /**
       * Returns true if the data represented by this Dataset actually exists
       *
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor: Executor): Trilean = Yes
+    override def exists(execution: Execution): Trilean = Yes
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present
       *
-      * @param executor
+      * @param execution
       */
-    override def clean(executor: Executor): Unit = {
+    override def clean(execution: Execution): Unit = {
         throw new UnsupportedOperationException
     }
 
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
         val instance = context.getMapping(mapping.mapping)
-        val df = executor.instantiate(instance, mapping.output)
+        val df = execution.instantiate(instance, mapping.output)
         SchemaUtils.applySchema(df, schema)
     }
 
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       */
-    override def write(executor: Executor, df: DataFrame, mode: OutputMode): Unit = {
+    override def write(execution: Execution, df: DataFrame, mode: OutputMode): Unit = {
         throw new UnsupportedOperationException
     }
 
@@ -102,9 +102,9 @@ case class MappingDataset(
       *
       * @return
       */
-    override def describe(executor:Executor) : Option[StructType] = {
+    override def describe(execution:Execution) : Option[StructType] = {
         val instance = context.getMapping(mapping.mapping)
-        Some(executor.describe(instance, mapping.output))
+        Some(execution.describe(instance, mapping.output))
     }
 }
 

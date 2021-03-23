@@ -19,8 +19,8 @@ package com.dimajix.flowman.spec.mapping
 import scala.collection.mutable
 
 import org.apache.spark.sql.Row
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -32,17 +32,18 @@ import com.dimajix.flowman.spec.mapping.RankMappingTest.Record
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
+
 object RankMappingTest {
     case class Record(ts:(String,Long), id:(String,Int), data:String)
 }
 
-class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The RankMapping" should "extract the latest version" in {
         val spark = this.spark
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -84,7 +85,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -124,7 +125,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,1], "op":"CREATE"}""",
@@ -156,7 +157,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val df = Seq(
             Record(("ts_0", 123), ("id_0", 7), "lala")
@@ -255,7 +256,7 @@ class RankMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val project = Module.read.string(spec).toProject("default")
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = context.getMapping(MappingIdentifier("latest"))
         val  df = executor.instantiate(mapping, "main")

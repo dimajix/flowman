@@ -1,9 +1,0 @@
-targets:
-  hello:
-    kind: hello-world
-
-jobs:
-  main:
-    description: "Simply print 'Hello World'"
-    targets:
-      - hello

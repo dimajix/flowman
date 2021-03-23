@@ -23,13 +23,13 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
+class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A conforming schema" should "be generated for simple cases" in {
         val inputSchema = StructType(Seq(
             StructField("col1", StringType),
@@ -41,29 +41,6 @@ class SchemaEnforcerTest extends FlatSpec with Matchers with LocalSparkSession {
             StructField("col1", StringType),
             StructField("col4", IntegerType)
         ))
-
-        val xfs = SchemaEnforcer(requestedSchema)
-        val columns = xfs.transform(inputSchema)
-        val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
-        val outputDf = inputDf.select(columns:_*)
-        outputDf.schema should be (StructType(Seq(
-            StructField("col2", StringType),
-            StructField("col1", StringType),
-            StructField("col4", IntegerType)
-        )))
-    }
-
-    it should "support a list of columns an types" in {
-        val inputSchema = StructType(Seq(
-            StructField("col1", StringType),
-            StructField("COL2", IntegerType),
-            StructField("col3", IntegerType)
-        ))
-        val requestedSchema = Seq(
-            "col2" -> "string",
-            "col1" -> "string",
-            "col4" -> "int"
-        )
 
         val xfs = SchemaEnforcer(requestedSchema)
         val columns = xfs.transform(inputSchema)

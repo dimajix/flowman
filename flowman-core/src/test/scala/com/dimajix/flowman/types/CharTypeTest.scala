@@ -16,22 +16,15 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class CharTypeTest extends FlatSpec with Matchers {
+class CharTypeTest extends AnyFlatSpec with Matchers {
     "A varchar type" should "be deserializable" in {
-        val spec =
-            """
-              |char(14)
-            """.stripMargin
-
-        val result = ObjectMapper.parse[FieldType](spec)
-        result.asInstanceOf[CharType].length should be (14)
-        result.sparkType should be (org.apache.spark.sql.types.StringType)
+        ObjectMapper.parse[FieldType]("char(14)") should be (CharType(14))
     }
 
     it should "parse strings" in {
@@ -48,10 +41,16 @@ class CharTypeTest extends FlatSpec with Matchers {
         result(1) should be ("27")
     }
 
+    it should "provide the correct Spark type" in {
+        val ftype = CharType(10)
+        ftype.sparkType should be (org.apache.spark.sql.types.StringType)
+    }
+
     it should "provide the correct SQL type" in {
         val ftype = CharType(10)
         ftype.sqlType should be ("char(10)")
         ftype.typeName should be ("char(10)")
+        ftype.sparkType.sql should be ("STRING")
     }
 
 }

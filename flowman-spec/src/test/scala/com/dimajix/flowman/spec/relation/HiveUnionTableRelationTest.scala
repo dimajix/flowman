@@ -29,16 +29,16 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
@@ -46,7 +46,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
 
-class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkSession with QueryTest {
+class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
     "The HiveUnionTableRelation" should "support the full lifecycle" in (if (hiveSupported) {
         val spec =
             """
@@ -72,7 +72,7 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -191,7 +191,7 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         // == Create ===================================================================
@@ -273,7 +273,7 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -418,7 +418,7 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -608,7 +608,7 @@ class HiveUnionTableRelationTest extends FlatSpec with Matchers with LocalSparkS
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))

@@ -7,3 +7,4 @@ modules:
  - target
  - job
  - config
+ - test

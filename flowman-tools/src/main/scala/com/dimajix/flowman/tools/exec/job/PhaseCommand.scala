@@ -46,10 +46,14 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     var job: String = ""
     @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
     var args: Array[String] = Array()
+    @Option(name = "-t", aliases=Array("--target"), usage = "only process specific targets, as specified by a regex", metaVar = "<target>")
+    var targets: Array[String] = Array(".*")
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
     @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
     var keepGoing: Boolean = false
+    @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
+    var dryRun: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
@@ -76,7 +80,7 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
 
         job.interpolate(args).forall { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, force, keepGoing)
+            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
             result match {
                 case Status.SUCCESS => true
                 case Status.SKIPPED => true
@@ -86,6 +90,7 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     }
 }
 
+class ValidateCommand extends PhaseCommand(Phase.VALIDATE)
 class CreateCommand extends PhaseCommand(Phase.CREATE)
 class BuildCommand extends PhaseCommand(Phase.BUILD)
 class VerifyCommand extends PhaseCommand(Phase.VERIFY)

@@ -16,12 +16,12 @@
 
 package com.dimajix.flowman.jdbc
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.PartitionSpec
 
-class BaseDialectTest extends FlatSpec with Matchers {
+class BaseDialectTest extends AnyFlatSpec with Matchers {
     "The BaseDialect" should "create PARTITION spects" in {
         val dialect = NoopDialect
         val partitionSpec = PartitionSpec(Map(

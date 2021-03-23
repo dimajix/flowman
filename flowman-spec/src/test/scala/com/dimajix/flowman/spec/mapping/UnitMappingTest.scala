@@ -17,17 +17,17 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private var inputDf0 : DataFrame = _
     private var inputDf1 : DataFrame = _
 
@@ -75,7 +75,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("instance_0"))
         instance0.inputs should be (Seq())
@@ -115,7 +115,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val unit = context.getMapping(MappingIdentifier("macro"))
         unit.inputs should be (Seq(MappingOutputIdentifier("outside")))
@@ -148,7 +148,7 @@ class UnitMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("alias"))
         instance0.inputs should be (Seq(MappingOutputIdentifier("macro:input")))

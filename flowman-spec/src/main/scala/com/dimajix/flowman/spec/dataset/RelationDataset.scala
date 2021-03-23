@@ -21,7 +21,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Dataset
@@ -66,55 +66,57 @@ case class RelationDataset(
     /**
       * Returns true if the data represented by this Dataset actually exists
       *
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor: Executor): Trilean = {
+    override def exists(execution: Execution): Trilean = {
         val instance = context.getRelation(relation)
-        instance.loaded(executor, partition)
+        instance.loaded(execution, partition)
     }
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present
       *
-      * @param executor
+      * @param execution
       */
-    override def clean(executor: Executor): Unit = {
+    override def clean(execution: Execution): Unit = {
         val instance = context.getRelation(relation)
-        instance.truncate(executor, partition)
+        instance.truncate(execution, partition)
     }
 
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
         val instance = context.getRelation(relation)
-        instance.read(executor, schema, partition)
+        instance.read(execution, schema, partition)
     }
 
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       */
-    override def write(executor: Executor, df: DataFrame, mode: OutputMode): Unit = {
+    override def write(execution: Execution, df: DataFrame, mode: OutputMode): Unit = {
         val instance = context.getRelation(relation)
-        instance.write(executor, df, partition, mode)
+        // Remove partition columns
+        val outDf = partition.keys.foldLeft(df)((df,col) => df.drop(col))
+        instance.write(execution, outDf, partition, mode)
     }
 
     /**
-      * Returns the schema as produced by this dataset, relative to the given input schema
+      * Returns the schema as produced by this dataset. The schema will not include any partition columns
       *
       * @return
       */
-    override def describe(executor:Executor) : Option[StructType] = {
+    override def describe(execution:Execution) : Option[StructType] = {
         val instance = context.getRelation(relation)
-        instance.schema.map(s => StructType(s.fields))
+        Some(instance.describe(execution))
     }
 }
 

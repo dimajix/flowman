@@ -16,14 +16,14 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class ArrayTypeTest extends FlatSpec with Matchers {
+class ArrayTypeTest extends AnyFlatSpec with Matchers {
     "An ArrayType" should "be deserializable" in {
         val spec =
             """

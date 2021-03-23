@@ -22,7 +22,8 @@ import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -68,12 +69,12 @@ case class ReadRelationMapping(
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
@@ -81,7 +82,7 @@ case class ReadRelationMapping(
 
         // Read relation
         val rel = context.getRelation(relation)
-        val df = rel.read(executor, schema, partitions)
+        val df = rel.read(execution, schema, partitions)
 
         // Apply optional filter
         val result = filter.map(df.filter).getOrElse(df)
@@ -94,19 +95,28 @@ case class ReadRelationMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         val schema = if (columns.nonEmpty) {
+            // Use user specified schema
             StructType(columns)
         }
         else {
             val relation = context.getRelation(this.relation)
-            StructType(relation.fields)
+            relation.describe(execution)
         }
 
         Map("main" -> schema)
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        linker.read(relation, partitions)
     }
 }
 

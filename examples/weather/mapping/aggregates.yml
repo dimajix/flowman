@@ -1,4 +1,5 @@
 mappings:
+  # Create some aggregates containing min/max/avg metrics of wind speed and temperature
   aggregates:
     kind: aggregate
     input: facts

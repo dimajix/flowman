@@ -1,0 +1,10 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ - swagger-parser-1.0.49.jar
+ - swagger-annotations-1.6.0.jar
+ - swagger-core-1.6.0.jar
+ - swagger-models-1.6.0.jar

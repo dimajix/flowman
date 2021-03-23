@@ -18,8 +18,8 @@ package com.dimajix.flowman.spec.target
 
 import java.nio.charset.Charset
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
@@ -29,10 +29,10 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.spark.testing.LocalTempDir
 
 
-class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
+class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalTempDir {
     "A MergeFilesTask" should "work" in {
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
         val fs = session.fs
 
@@ -90,7 +90,7 @@ class MergeFilesTargetTest extends FlatSpec with Matchers with LocalTempDir {
 
     it should "support delimiters" in {
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
         val fs = session.fs
 

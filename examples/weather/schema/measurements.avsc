@@ -1,0 +1,51 @@
+{
+  "type": "record",
+  "namespace": "",
+  "name": "stations",
+  "fields": [
+    {
+      "name": "usaf",
+      "type": "int"
+    },
+    {
+      "name": "wban",
+      "type": "int"
+    },
+    {
+      "name": "date",
+      "type": { "type": "int", "logicalType": "date" }
+    },
+    {
+      "name": "time",
+      "type": "string"
+    },
+    {
+      "name": "wind_direction",
+      "type": [ "string", "null" ]
+    },
+    {
+      "name": "wind_direction_qual",
+      "type": "string"
+    },
+    {
+      "name": "wind_observation",
+      "type": [ "string", "null" ]
+    },
+    {
+      "name": "wind_speed",
+      "type": [ "float", "null" ]
+    },
+    {
+      "name": "wind_speed_qual",
+      "type": "string"
+    },
+    {
+      "name": "air_temperature",
+      "type": [ "float", "null" ]
+    },
+    {
+      "name": "air_temperature_qual",
+      "type": "string"
+    }
+  ]
+}

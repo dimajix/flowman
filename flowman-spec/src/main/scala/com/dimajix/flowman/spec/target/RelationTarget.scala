@@ -23,12 +23,16 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.BaseTarget
@@ -43,14 +47,15 @@ import com.dimajix.spark.sql.functions.count_records
 
 object RelationTarget {
     def apply(context: Context, relation: RelationIdentifier) : RelationTarget = {
+        val conf = context.flowmanConf
         new RelationTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
             relation,
-            OutputMode.OVERWRITE,
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
-            16,
-            false
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
     }
 }
@@ -125,18 +130,19 @@ case class RelationTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
 
         phase match {
+            case Phase.VALIDATE => No
             case Phase.CREATE =>
                 // Since an existing relation might need a migration, we return "unknown"
-                if (rel.exists(executor) == Yes)
+                if (rel.exists(execution) == Yes)
                     Unknown
                 else
                     Yes
@@ -144,14 +150,26 @@ case class RelationTarget(
                 if (mode == OutputMode.APPEND) {
                     Yes
                 } else {
-                    !rel.loaded(executor, partition)
+                    !rel.loaded(execution, partition)
                 }
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
-                rel.loaded(executor, partition)
+                rel.loaded(execution, partition)
             case Phase.DESTROY =>
-                rel.exists(executor)
+                rel.exists(execution)
         }
+    }
+
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        val partition = this.partition.mapValues(v => SingleValue(v))
+        if (mapping.nonEmpty)
+            linker.input(mapping.mapping, mapping.output)
+        linker.write(relation, partition)
     }
 
     /**
@@ -159,7 +177,7 @@ case class RelationTarget(
      *
      * @param executor
       */
-    override def create(executor: Executor) : Unit = {
+    override def create(executor: Execution) : Unit = {
         require(executor != null)
 
         val rel = context.getRelation(relation)
@@ -178,7 +196,7 @@ case class RelationTarget(
       *
       * @param executor
       */
-    override def build(executor:Executor) : Unit = {
+    override def build(executor:Execution) : Unit = {
         require(executor != null)
 
         if (mapping.nonEmpty) {
@@ -187,10 +205,13 @@ case class RelationTarget(
             logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition with mode '$mode'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
-            val dfOut = if (rebalance)
-                dfIn.repartition(parallelism)
-            else
-                dfIn.coalesce(parallelism)
+            val dfOut =
+                if (parallelism <= 0)
+                    dfIn
+                else if (rebalance)
+                    dfIn.repartition(parallelism)
+                else
+                    dfIn.coalesce(parallelism)
 
             // Setup metric for counting number of records
             val counter = executor.metrics.findMetric(Selector(Some("target_records"), metadata.asMap))
@@ -214,7 +235,7 @@ case class RelationTarget(
       *
       * @param executor
       */
-    override def verify(executor: Executor) : Unit = {
+    override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
         val partition = this.partition.mapValues(v => SingleValue(v))
@@ -229,7 +250,7 @@ case class RelationTarget(
       * Cleans the target. This will remove any data in the target for the current partition
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
         val partition = this.partition.mapValues(v => SingleValue(v))
@@ -243,7 +264,7 @@ case class RelationTarget(
       * Destroys both the logical relation and the physical data
       * @param executor
       */
-    override def destroy(executor: Executor) : Unit = {
+    override def destroy(executor: Execution) : Unit = {
         require(executor != null)
 
         logger.info(s"Destroying relation '$relation'")
@@ -266,20 +287,21 @@ object RelationTargetSpec {
 class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:String = _
-    @JsonProperty(value="mode", required=false) private var mode:String = "overwrite"
+    @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
-    @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
-    @JsonProperty(value="rebalance", required=false) private var rebalance:String = "false"
+    @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
+    @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
     override def instantiate(context: Context): RelationTarget = {
+        val conf = context.flowmanConf
         RelationTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             RelationIdentifier.parse(context.evaluate(relation)),
-            OutputMode.ofString(context.evaluate(mode)),
+            OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
-            context.evaluate(parallelism).toInt,
-            context.evaluate(rebalance).toBoolean
+            context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )
     }
 }

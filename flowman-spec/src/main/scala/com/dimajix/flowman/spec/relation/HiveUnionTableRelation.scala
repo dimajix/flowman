@@ -31,7 +31,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ExecutionException
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
@@ -73,7 +73,8 @@ case class HiveUnionTableRelation(
     viewDatabase: Option[String] = None,
     view: String,
     external: Boolean = false,
-    format: String = "parquet",
+    format: Option[String] = None,
+    options: Map[String,String] = Map(),
     rowFormat: Option[String] = None,
     inputFormat: Option[String] = None,
     outputFormat: Option[String] = None,
@@ -87,7 +88,7 @@ case class HiveUnionTableRelation(
         TableIdentifier(tablePrefix + "_" + version.toString, tableDatabase)
     }
 
-    private def listTables(executor: Executor) : Seq[TableIdentifier] = {
+    private def listTables(executor: Execution) : Seq[TableIdentifier] = {
         val catalog = executor.catalog
         val regex = (TableIdentifier(tablePrefix, tableDatabase).unquotedString + "_[0-9]+").r
         catalog.listTables(tableDatabase.getOrElse(catalog.currentDatabase), tablePrefix + "_*")
@@ -114,6 +115,7 @@ case class HiveUnionTableRelation(
         external,
         location,
         format,
+        options,
         rowFormat,
         inputFormat,
         outputFormat,
@@ -133,7 +135,7 @@ case class HiveUnionTableRelation(
         )
     }
 
-    private def viewRelationFromTables(executor: Executor) : HiveViewRelation = {
+    private def viewRelationFromTables(executor: Execution) : HiveViewRelation = {
         val tables = listTables(executor)
         val spark = executor.spark
         val df = tables.map(t => spark.read.table(t.unquotedString))
@@ -183,19 +185,19 @@ case class HiveUnionTableRelation(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
-        require(executor != null)
+    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading from Hive union relation '$identifier' from UNION VIEW $viewIdentifier using partition values $partitions")
 
-        val tableDf = executor.spark.read.table(viewIdentifier.unquotedString)
+        val tableDf = execution.spark.read.table(viewIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
 
         SchemaUtils.applySchema(df, schema)
@@ -204,22 +206,22 @@ case class HiveUnionTableRelation(
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
-        require(executor != null)
+    override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
+        require(execution != null)
 
         requireAllPartitionKeys(partition)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         val partitionSchema = PartitionSchema(this.partitions)
         val partitionSpec = partitionSchema.spec(partition)
         logger.info(s"Writing to Hive union relation '$identifier' using partition values ${HiveDialect.expr.partition(partitionSpec)}")
 
         // 1. Find all tables
-        val allTables = listTables(executor)
+        val allTables = listTables(execution)
 
         // 2. Find appropriate table
         val table = allTables.find { id =>
@@ -238,25 +240,25 @@ case class HiveUnionTableRelation(
 
         // 4. Write to that table
         val relation = tableRelation(table, None)
-        relation.write(executor, df, partition, OutputMode.OVERWRITE)
+        relation.write(execution, df, partition, OutputMode.OVERWRITE)
     }
 
     /**
       * Removes one or more partitions.
       *
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        require(execution != null)
         require(partitions != null)
 
         logger.info(s"Truncating Hive union relation '$identifier' partition $partitions")
 
-        listTables(executor)
+        listTables(execution)
             .foreach { table =>
                 val relation = tableRelation(table, None)
-                relation.truncate(executor, partitions)
+                relation.truncate(execution, partitions)
             }
     }
 
@@ -266,17 +268,17 @@ case class HiveUnionTableRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
         requireValidPartitionKeys(partition)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
 
         if (this.partitions.isEmpty) {
             if (catalog.tableExists(viewIdentifier))
@@ -289,7 +291,7 @@ case class HiveUnionTableRelation(
             val partitionSpec = partitionSchema.spec(partition)
 
             catalog.tableExists(viewIdentifier) &&
-                listTables(executor).exists { table =>
+                listTables(execution).exists { table =>
                     catalog.partitionExists(table, partitionSpec)
                 }
         }
@@ -298,13 +300,13 @@ case class HiveUnionTableRelation(
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
       *
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor: Executor): Trilean = {
-        require(executor != null)
+    override def exists(execution: Execution): Trilean = {
+        require(execution != null)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         catalog.tableExists(viewIdentifier)
     }
 
@@ -312,23 +314,23 @@ case class HiveUnionTableRelation(
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       *
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Executor, ifNotExists: Boolean): Unit = {
-        require(executor != null)
+    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
+        require(execution != null)
 
-        if (!ifNotExists || exists(executor) == No) {
+        if (!ifNotExists || exists(execution) == No) {
             logger.info(s"Creating Hive union relation '$identifier'")
             // Create first table using current schema
             val hiveTableRelation = tableRelation(1)
-            hiveTableRelation.create(executor, ifNotExists)
+            hiveTableRelation.create(execution, ifNotExists)
 
             // Create initial view
-            val spark = executor.spark
+            val spark = execution.spark
             val df = spark.read.table(hiveTableRelation.tableIdentifier.unquotedString)
             val sql = new SqlBuilder(df).toSQL
             val hiveViewRelation = viewRelationFromSql(sql)
-            hiveViewRelation.create(executor, ifNotExists)
+            hiveViewRelation.create(execution, ifNotExists)
         }
     }
 
@@ -336,20 +338,20 @@ case class HiveUnionTableRelation(
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Executor, ifExists: Boolean): Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+        require(execution != null)
 
-        if (!ifExists || exists(executor) == Yes) {
-            val catalog = executor.catalog
+        if (!ifExists || exists(execution) == Yes) {
+            val catalog = execution.catalog
 
             // Destroy view
             logger.info(s"Dropping Hive union relation '$identifier' UNION VIEW $viewIdentifier")
             catalog.dropView(viewIdentifier, ifExists)
 
             // Destroy tables
-            listTables(executor)
+            listTables(execution)
                 .foreach { table =>
                     logger.info(s"Dropping Hive union relation '$identifier' backend table '$table'")
                     catalog.dropTable(table, false)
@@ -360,14 +362,14 @@ case class HiveUnionTableRelation(
     /**
       * This will update any existing relation to the specified metadata.
       *
-      * @param executor
+      * @param execution
       */
-    override def migrate(executor: Executor): Unit = {
-        require(executor != null)
+    override def migrate(execution: Execution): Unit = {
+        require(execution != null)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         val sourceSchema = schema.get.sparkSchema
-        val allTables = listTables(executor)
+        val allTables = listTables(execution)
 
         // 1. Find all tables
         // 2. Find appropriate table
@@ -394,7 +396,7 @@ case class HiveUnionTableRelation(
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
                     val newSchema = StructType(targetSchema.fields ++ missingFields)
-                    logger.info(s"Migrating Hive Untion Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
+                    logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
                     catalog.addTableColumns(id, missingFields)
                 }
 
@@ -403,14 +405,14 @@ case class HiveUnionTableRelation(
                 //  3.2 Create new table
                 val tableSet = allTables.toSet
                 val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
-                logger.info(s"Migrating Hive Untion Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
+                logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
                 val hiveTableRelation = tableRelation(version)
-                hiveTableRelation.create(executor, false)
+                hiveTableRelation.create(execution, false)
         }
 
         //  4 Always migrate union view, maybe SQL generator changed
-        val hiveViewRelation = viewRelationFromTables(executor)
-        hiveViewRelation.migrate(executor)
+        val hiveViewRelation = viewRelationFromTables(execution)
+        hiveViewRelation.migrate(execution)
     }
 }
 
@@ -424,7 +426,8 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
     @JsonProperty(value = "viewDatabase", required = false) private var viewDatabase: Option[String] = None
     @JsonProperty(value = "view", required = true) private var view: String = ""
     @JsonProperty(value = "external", required = false) private var external: String = "false"
-    @JsonProperty(value = "format", required = false) private var format: String = _
+    @JsonProperty(value = "format", required = false) private var format: Option[String] = None
+    @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value = "rowFormat", required = false) private var rowFormat: Option[String] = None
     @JsonProperty(value = "inputFormat", required = false) private var inputFormat: Option[String] = None
     @JsonProperty(value = "outputFormat", required = false) private var outputFormat: Option[String] = None
@@ -448,6 +451,7 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
             context.evaluate(view),
             context.evaluate(external).toBoolean,
             context.evaluate(format),
+            context.evaluate(options),
             context.evaluate(rowFormat),
             context.evaluate(inputFormat),
             context.evaluate(outputFormat),

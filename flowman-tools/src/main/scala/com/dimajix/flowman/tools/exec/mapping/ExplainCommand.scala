@@ -45,20 +45,19 @@ class ExplainCommand extends ActionCommand {
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
         logger.info(s"Explaining mapping '$mapping'")
 
-        Try {
+        try {
             val id = MappingOutputIdentifier(mapping)
             val instance = context.getMapping(id.mapping)
-            val executor = session.executor
+            val executor = session.execution
             val table = executor.instantiate(instance, id.output)
             table.explain(extended)
-        } match {
-            case Success(_) =>
-                logger.info("Successfully finished explaining mapping")
-                true
-            case Failure(ex:NoSuchMappingException) =>
+            true
+        }
+        catch {
+            case ex:NoSuchMappingException =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case Failure(NonFatal(e)) =>
+            case NonFatal(e) =>
                 logger.error(s"Caught exception while explaining mapping '$mapping", e)
                 false
         }

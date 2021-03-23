@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.metric
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.accumulator.CounterAccumulator
 
 
-class CounterAccumulatorMetricBundleTest extends FlatSpec with Matchers {
+class CounterAccumulatorMetricBundleTest extends AnyFlatSpec with Matchers {
     "A CounterAccumulatorMetricBundle" should "provide all metrics" in {
         val accumulator = new CounterAccumulator()
         accumulator.add(Map("a" -> 1l, "b" -> 2l))

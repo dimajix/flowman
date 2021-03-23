@@ -22,6 +22,7 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
@@ -46,6 +47,9 @@ class EnterCommand extends Command {
             true
         }
         catch {
+            case ex:NoSuchJobException =>
+                logger.error(s"Cannot resolve job '${ex.job}'")
+                false
             case NonFatal(e) =>
                 logger.error(s"Error entering job '$job': ${e.getMessage}")
                 false

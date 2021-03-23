@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -29,7 +29,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The ReadRelationMapping" should "be able to read from a NullRelation" in {
         val spec =
             """
@@ -49,7 +49,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -89,7 +89,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -134,7 +134,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -176,7 +176,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))
@@ -222,7 +222,7 @@ class InputMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("empty")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("empty"))

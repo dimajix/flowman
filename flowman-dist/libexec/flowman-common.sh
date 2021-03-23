@@ -75,13 +75,11 @@ fi
 
 
 spark_submit() {
-    LIB_JARS=$(ls $FLOWMAN_HOME/lib/*.jar | awk -vORS=, '{ print $1 }' | sed 's/,$/\n/')
-
     $SPARK_SUBMIT \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
-      --conf spark.executor.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
-      --class $2 \
+      --conf spark.execution.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
+      --class $3 \
       $SPARK_OPTS \
-      --jars $LIB_JARS \
-      $1 "${@:3}"
+      --jars $2 \
+      $1 "${@:4}"
 }

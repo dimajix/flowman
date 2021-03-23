@@ -36,7 +36,7 @@ import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -66,12 +66,12 @@ extends BaseMapping {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
         val statement = this.statement
@@ -89,10 +89,10 @@ extends BaseMapping {
         // Register all input DataFrames as temp views
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
         // Execute query
-        val first = firstDf(executor.spark, statement)
+        val first = firstDf(execution.spark, statement)
         val result = fix(first, first.count())
         // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-        input.foreach(kv => executor.spark.sessionState.catalog.dropTempView(kv._1.name))
+        input.foreach(kv => execution.spark.sessionState.catalog.dropTempView(kv._1.name))
 
         Map("main" -> result)
     }
@@ -126,11 +126,11 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def describe(executor: Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
-        require(executor != null)
+    override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+        require(execution != null)
         require(input != null)
 
-        val spark = executor.spark
+        val spark = execution.spark
         val statement = this.statement
 
         // Create dummy data frames

@@ -1,17 +1,19 @@
 <template>
-  <v-app dark>
-    <v-toolbar app >
-      <v-toolbar-title class="headline text-uppercase">
-        <span>Flowman</span>
-      </v-toolbar-title>
-      <v-spacer></v-spacer>
-    </v-toolbar>
-
+  <v-app>
+    <v-app-bar app color="primary">
+      <v-app-bar-title>Flowman</v-app-bar-title>
+    </v-app-bar>
     <main-navigation-drawer/>
 
-    <v-content>
-      <router-view></router-view>
-    </v-content>
+    <v-main>
+      <v-container class="fill-height" fluid>
+        <v-row class="fill-height">
+          <v-col>
+            <router-view></router-view>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
 
     <template>
       <v-footer class="pa-3" app>
@@ -30,5 +32,5 @@ export default {
   components: {
       MainNavigationDrawer
   }
-}
+};
 </script>

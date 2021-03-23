@@ -21,10 +21,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.DatasetType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.annotation.DatasetType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -35,7 +35,8 @@ object DatasetSpec extends TypeRegistry[DatasetSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "file", value = classOf[FileDatasetSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingDatasetSpec]),
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationDatasetSpec])
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationDatasetSpec]),
+    new JsonSubTypes.Type(name = "values", value = classOf[ValuesDatasetSpec])
 ))
 abstract class DatasetSpec extends Spec[Dataset] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _

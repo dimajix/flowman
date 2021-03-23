@@ -16,14 +16,10 @@
 
 package com.dimajix.flowman.execution
 
-import java.io.StringWriter
-
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
-import org.apache.velocity.VelocityContext
 import org.slf4j.Logger
 
 import com.dimajix.flowman.config.Configuration
@@ -32,12 +28,10 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Template
-import com.dimajix.flowman.templating.RecursiveValue
-import com.dimajix.flowman.templating.Velocity
 
 
 object AbstractContext {
-    abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) /*extends Context.Builder[B,C]*/ { this:B =>
+    abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
         private var _connections = Seq[(String, Template[Connection], SettingLevel)]()
@@ -53,6 +47,7 @@ object AbstractContext {
             val rawConfig = mutable.Map[String,(String, Int)]()
             val rawConnections = mutable.Map[String, (Template[Connection], Int)]()
 
+            // Fetch environment from parent
             if (parent != null) {
                 parent.rawEnvironment.foreach(kv => rawEnvironment.update(kv._1, kv._2))
                 parent.rawConfig.foreach(kv => rawConfig.update(kv._1, kv._2))

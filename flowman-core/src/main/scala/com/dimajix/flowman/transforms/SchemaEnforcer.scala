@@ -28,16 +28,8 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.spark.sql.functions.nullable_struct
-import com.dimajix.flowman.util.SchemaUtils
-
-
-object SchemaEnforcer {
-    def apply(columns:Seq[(String,String)]) : SchemaEnforcer = {
-        val schema = StructType(columns.map(nt => StructField(nt._1, SchemaUtils.mapType(nt._2))))
-        SchemaEnforcer(schema)
-    }
-}
 
 
 case class SchemaEnforcer(schema:StructType) {

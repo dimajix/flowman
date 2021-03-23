@@ -715,7 +715,7 @@ class SqlBuilder private(
         case SubqueryAlias(_, a2 @ SubqueryAlias(_,_)) => a2
 
         // Remove subqueries between project and UNION
-        case p1 @ Project(_, a @ SubqueryAlias(_, u @ Union(_))) => p1.copy(child = u)
+        case p1 @ Project(_, a @ SubqueryAlias(_, u)) if u.isInstanceOf[Union] => p1.copy(child = u)
 
         // Move projections together, they will be merged by CollapseProject
         case p1 @ Project(_, a @ SubqueryAlias(_, p2 @ Project(_, c))) => p1.copy(child = p2.copy(child = a.copy(child = c)))

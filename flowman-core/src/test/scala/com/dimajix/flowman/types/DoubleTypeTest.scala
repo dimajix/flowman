@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class DoubleTypeTest  extends FlatSpec with Matchers {
+class DoubleTypeTest  extends AnyFlatSpec with Matchers {
     "A DoubleType" should "parse strings" in {
         DoubleType.parse("1.0") should be (1.0)
     }
@@ -70,8 +70,12 @@ class DoubleTypeTest  extends FlatSpec with Matchers {
         result2.toSeq should be (Seq(12.0,16.0))
     }
 
+    it should "provide the correct Spark type" in {
+        DoubleType.sparkType should be (org.apache.spark.sql.types.DoubleType)
+    }
+
     it should "provide the correct SQL type" in {
-        val ftype = DoubleType
-        ftype.sqlType should be ("double")
+        DoubleType.sqlType should be ("double")
+        DoubleType.sparkType.sql should be ("DOUBLE")
     }
 }

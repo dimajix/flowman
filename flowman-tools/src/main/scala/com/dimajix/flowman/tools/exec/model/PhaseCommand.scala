@@ -40,6 +40,10 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
     var relations: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
+    @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
+    var keepGoing: Boolean = false
+    @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
+    var dryRun: Boolean = false
     @Option(name = "-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
     var partition: String = ""
 
@@ -63,7 +67,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
             .build()
 
         val runner = session.runner
-        val result = runner.executeJob(job, Seq(phase), force=force)
+        val result = runner.executeJob(job, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun)
 
         result match {
             case Status.SUCCESS => true

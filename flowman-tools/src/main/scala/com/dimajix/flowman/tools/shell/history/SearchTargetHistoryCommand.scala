@@ -25,8 +25,8 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.ConsoleUtils
 import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.util.ConsoleUtils
 
 
 class SearchTargetHistoryCommand extends Command {

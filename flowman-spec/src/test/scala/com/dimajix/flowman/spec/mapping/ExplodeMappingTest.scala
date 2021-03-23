@@ -22,8 +22,8 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -35,7 +35,7 @@ import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class ExplodeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private val inputJson =
         """
           |{
@@ -94,7 +94,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "work" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),
@@ -133,7 +133,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "select specified columns" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),
@@ -170,7 +170,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "support renaming columns" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),
@@ -208,7 +208,7 @@ class ExplodeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
 
     it should "explode simple arrays" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = ExplodeMapping(
             Mapping.Properties(session.context),

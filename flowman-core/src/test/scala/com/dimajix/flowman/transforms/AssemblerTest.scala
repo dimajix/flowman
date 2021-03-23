@@ -22,15 +22,15 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
+class AssemblerTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private val inputJson =
         """
           |{
@@ -40,8 +40,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
           |      "other_field":456
           |    }
           |  },
-          |  "lala": {
-          |  },
+          |  "lala": 23,
           |  "embedded" : {
           |    "structure": {
           |      "secret": {
@@ -98,7 +97,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
             )
             .columns(
                 _.path(Path(""))
-                    .keep(Seq(Path("lala"), Path("lolo")))
+                    .keep(Seq(Path("lala")))
             )
             .columns(
                 _.path(Path(""))
@@ -122,6 +121,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
                     StructField("other_field", LongType)
                 )))
             ))),
+            StructField("lala", LongType),
             StructField("embedded", StructType(Seq(
                 StructField("struct_array", ArrayType(
                     StructType(Seq(
@@ -133,6 +133,7 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
                     StructField("public", StringType)
                 )))
             ))),
+            StructField("lala", LongType),
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
             )))
@@ -143,6 +144,21 @@ class AssemblerTest extends FlatSpec with Matchers with LocalSparkSession {
 
         val resultSchema = asm.reassemble(inputSchema)
         resultSchema.sparkType should be (resultDf.schema)
+    }
+
+    it should "throw an exception on missing columns in 'keep'" in {
+        val asm = Assembler.builder()
+            .nest("clever_name")(
+                _.path(Path("stupidName"))
+                    .drop(Path("secret.field"))
+            )
+            .columns(
+                _.path(Path(""))
+                    .keep(Seq(Path("lala"), Path("lolo")))
+            )
+            .build()
+
+        an[AnalysisException] shouldBe thrownBy(asm.reassemble(inputDf))
     }
 
     it should "support keep" in {

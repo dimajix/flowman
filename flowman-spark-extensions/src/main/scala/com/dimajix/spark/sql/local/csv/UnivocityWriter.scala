@@ -76,10 +76,10 @@ class UnivocityWriter(schema: StructType, writer:Writer, options:CsvOptions) ext
     private def makeConverter(dataType: DataType): ValueConverter = dataType match {
         case DateType =>
             (row: Row, ordinal: Int) =>
-                options.dateFormat.format(DateTimeUtils.toJavaDate(row.getInt(ordinal)))
+                options.dateFormat.format(row.getDate(ordinal))
         case TimestampType =>
             (row: Row, ordinal: Int) =>
-                options.timestampFormat.format(DateTimeUtils.toJavaTimestamp(row.getLong(ordinal)))
+                options.timestampFormat.format(row.getTimestamp(ordinal))
         case BooleanType =>
             (row: Row, ordinal: Int) =>
                 row.getBoolean(ordinal).toString

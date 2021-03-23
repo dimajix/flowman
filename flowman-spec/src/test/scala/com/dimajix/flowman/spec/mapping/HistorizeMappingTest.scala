@@ -24,25 +24,25 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The HistorizeMapping" should "extract the latest version" in {
         val spark = this.spark
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -100,7 +100,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"ts":123,"id":12}"""
@@ -149,7 +149,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val json_1 = Seq(
             """{"version_major":1, "version_minor":1, "ts":123,"id":12, "a":[12,2], "op":"CREATE"}""",
@@ -232,7 +232,7 @@ class HistorizeMappingTest extends FlatSpec with Matchers with LocalSparkSession
         val session = Session.builder().withSparkSession(spark).build()
         val project = Module.read.string(spec).toProject("default")
         val context = session.getContext(project)
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = context.getMapping(MappingIdentifier("history"))
         val  df = executor.instantiate(mapping, "main")

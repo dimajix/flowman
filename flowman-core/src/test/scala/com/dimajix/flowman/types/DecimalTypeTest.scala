@@ -16,13 +16,15 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import java.math.BigDecimal
+
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class DecimalTypeTest extends FlatSpec with Matchers {
+class DecimalTypeTest extends AnyFlatSpec with Matchers {
     "A decimal type" should "be deserializable" in {
         val spec =
             """
@@ -32,12 +34,21 @@ class DecimalTypeTest extends FlatSpec with Matchers {
         val result = ObjectMapper.parse[FieldType](spec)
         result.asInstanceOf[DecimalType].precision should be (10)
         result.asInstanceOf[DecimalType].scale should be (4)
-        result.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
+    }
+
+    it should "provide the correct Spark type" in {
+        val ftype = DecimalType(10,4)
+        ftype.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
     }
 
     it should "provide the correct SQL type" in {
         val ftype = DecimalType(10,4)
         ftype.sqlType should be ("decimal(10,4)")
         ftype.typeName should be ("decimal(10,4)")
+    }
+
+    it should "support parsing" in {
+        val ftype = DecimalType(10,4)
+        ftype.parse("10.3") should be (new BigDecimal(103).divide(new BigDecimal(10)))
     }
 }

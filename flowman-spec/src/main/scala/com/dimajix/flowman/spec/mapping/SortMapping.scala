@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -31,7 +31,7 @@ import com.dimajix.flowman.types.StructType
 case class SortMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[(String,String)]
+    columns:Seq[(String,SortOrder)]
 ) extends BaseMapping {
     /**
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -44,20 +44,22 @@ case class SortMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(tables != null)
 
         val df = tables(input)
         val cols = columns.map(nv =>
-            if (nv._2.toLowerCase == "desc")
-                col(nv._1).desc
-            else
-                col(nv._1).asc
+            nv._2 match {
+                case SortOrder(Ascending, NullsFirst) => col(nv._1).asc_nulls_first
+                case SortOrder(Ascending, NullsLast) => col(nv._1).asc_nulls_last
+                case SortOrder(Descending, NullsFirst) => col(nv._1).desc_nulls_first
+                case SortOrder(Descending, NullsLast) => col(nv._1).desc_nulls_last
+            }
         )
         val result = df.sort(cols:_*)
 
@@ -69,8 +71,8 @@ case class SortMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         val result = input(this.input)
@@ -94,7 +96,7 @@ class SortMappingSpec extends MappingSpec {
         SortMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.flatMap(context.evaluate)
+            columns.flatMap(context.evaluate).map { case(col,order) => col -> SortOrder.of(order) }
         )
     }
 }

@@ -16,11 +16,11 @@
 
 package com.dimajix.spark.sql
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class SqlParserTest extends FlatSpec with Matchers {
+class SqlParserTest extends AnyFlatSpec with Matchers {
     "The SqlParser" should "detect all dependencies" in {
         val deps = SqlParser.resolveDependencies(
             """

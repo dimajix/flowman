@@ -19,11 +19,12 @@ package com.dimajix.flowman.spec.mapping
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.transforms.schema.Path
@@ -31,7 +32,7 @@ import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class DropMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The DropMapping" should "be parseable" in {
         val spec =
             """
@@ -46,6 +47,11 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val project = Module.read.string(spec).toProject("project")
         project.mappings.keys should contain("drop")
         project.mappings("drop") shouldBe a[DropMappingSpec]
+
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+        val instance = context.getMapping(MappingIdentifier("drop"))
+        instance shouldBe an[DropMapping]
     }
 
     it should "drop known columns" in {
@@ -57,7 +63,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )
         val inputDf = records.toDF
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = DropMapping(
             Mapping.Properties(session.context),
@@ -85,7 +91,7 @@ class DropMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         )
         val inputDf = records.toDF
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = DropMapping(
             Mapping.Properties(session.context),

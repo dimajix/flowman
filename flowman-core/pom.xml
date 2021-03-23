@@ -9,11 +9,27 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.14.2</version>
+        <version>0.15.0</version>
         <relativePath>..</relativePath>
     </parent>
 
     <profiles>
+        <!-- Default profile if nothing else is specified -->
+        <profile>
+            <id>default</id>
+            <activation>
+                <!-- This setting ensures that we have at least one Avro library enabled per default -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-avro_${scala.api_version}</artifactId>
+                    <version>${spark.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <!-- First come the Hadoop distributon profiles -->
         <profile>
             <id>CDH-5.15</id>
@@ -34,20 +50,6 @@
                     <groupId>com.databricks</groupId>
                     <artifactId>spark-avro_${scala.api_version}</artifactId>
                     <version>${spark-avro.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>spark-2.4</id>
-            <activation>
-                <!-- This setting ensures that we have at least one Avro library enabled per default -->
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-avro_${scala.api_version}</artifactId>
-                    <version>${spark.version}</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -173,7 +175,7 @@
         <dependency>
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick_${scala.api_version}</artifactId>
-            <version>3.2.3</version>
+            <version>3.3.3</version>
             <scope>compile</scope>
         </dependency>
 
@@ -197,11 +199,6 @@
         <dependency>
             <groupId>org.scalamock</groupId>
             <artifactId>scalamock_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
         </dependency>
     </dependencies>
 </project>

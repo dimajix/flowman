@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.jdbc.HiveDialect
@@ -55,7 +55,8 @@ case class LocalRelation(
     override val partitions: Seq[PartitionField],
     location:Path,
     pattern:Option[String],
-    format:String
+    format:String = "csv",
+    options:Map[String,String] = Map()
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
@@ -109,13 +110,13 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
-        require(executor != null)
+    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
@@ -131,7 +132,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         val data = mapFiles(partitions) { (partition, paths) =>
             logger.info(s"Local relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
-            val reader = executor.spark.readLocal.options(options)
+            val reader = execution.spark.readLocal.options(options)
             inputSchema.foreach(s => reader.schema(s))
 
             val df = reader
@@ -149,12 +150,12 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     /**
       * Writes data into the relation, possibly into a specific partition
       *
-      * @param executor
+      * @param execution
       * @param df        - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor: Executor, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
-        require(executor != null)
+    override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
@@ -166,7 +167,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
         // Create correct schema for output
-        val outputDf = applyOutputSchema(executor, df)
+        val outputDf = applyOutputSchema(execution, df)
         val writer = outputDf.writeLocal.options(options)
 
         writer.format(format)
@@ -176,11 +177,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
     /**
      * Removes one or more partitions.
-     * @param executor
+     * @param execution
      * @param partitions
      */
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        require(execution != null)
         require(partitions != null)
 
         if (this.partitions.nonEmpty)
@@ -204,11 +205,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor:Executor) : Trilean = {
-        require(executor != null)
+    override def exists(execution:Execution) : Trilean = {
+        require(execution != null)
 
         new File(localDirectory).exists()
     }
@@ -219,12 +220,12 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
         requireValidPartitionKeys(partition)
@@ -246,10 +247,10 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
       * relation will not contain any data, but all metadata will be processed
       *
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Executor, ifNotExists:Boolean=false): Unit =  {
-        require(executor != null)
+    override def create(execution: Execution, ifNotExists:Boolean=false): Unit =  {
+        require(execution != null)
 
         val path = new File(localDirectory)
         if (path.exists()) {
@@ -267,19 +268,19 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
      * This will update any existing relation to the specified metadata. Actually for this file based target, the
      * command will precisely do nothing.
      *
-     * @param executor
+     * @param execution
      */
-    override def migrate(executor: Executor): Unit = {
+    override def migrate(execution: Execution): Unit = {
     }
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Executor, ifExists:Boolean=false): Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
+        require(execution != null)
 
         val dir = localDirectory
         logger.info(s"Removing local directory '$dir' of local file relation")
@@ -337,6 +338,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
     @JsonProperty(value="location", required=true) private var location: String = "/"
     @JsonProperty(value="format", required=true) private var format: String = "csv"
+    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value="pattern", required=false) private var pattern: Option[String] = None
 
     /**
@@ -351,7 +353,8 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
             partitions.map(_.instantiate(context)),
             makePath(context.evaluate(location)),
             pattern,
-            context.evaluate(format)
+            context.evaluate(format),
+            context.evaluate(options)
         )
     }
 

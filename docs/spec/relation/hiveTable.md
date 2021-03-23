@@ -5,14 +5,22 @@ The `hiveTable` relation is used for managing Hive tables.
 ## Examples
 
 ### Parquet Example
-```
+```yaml
 relations:
   parquet_relation:
     kind: hiveTable
     database: default
     table: financial_transactions
+    # Specify the physical location where the data files should be stored at. If you leave this out, the Hive
+    # default location will be used
     location: /warehouse/default/financial_transactions
+    # Specify the file format to use
     format: parquet
+    # Add partition column
+    partitions:
+        - name: business_date
+          type: string
+    # Specify a schema, which is mandatory for write operations
     schema:
       kind: inline
       fields:
@@ -20,22 +28,23 @@ relations:
           type: string
         - name: amount
           type: double
-    partitions:
-      - name: business_date
-        type: string
 ```
 
 ### CSV Example
-```
+```yaml
 relations:
   csv_relation:
     kind: hiveTable
     database: default
     table: financial_transactions
+    # Chose `textfile` file format
     format: textfile
+    # Also specify a RowFormat via a Hive class
     rowFormat: org.apache.hadoop.hive.serde2.OpenCSVSerde
+    # Specify additional serialization/deserialization properties
     serdeProperties:
       separatorChar: "\t"
+    # Specify a schema, which is mandatory for write operations
     schema:
       kind: inline
       fields:
@@ -115,3 +124,11 @@ relations:
 
 
 ## Description
+
+When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
+whole lifecycle for you. This means that
+* Hive tables will be created and migrated during `create` phase
+* Hive tables will be populated with records and partitions will be added during `build` phase
+* Hive tables will be truncated or individual partitions will be dropped during `clean` phase
+* Hive tables will be removed during `destroy` phase
+

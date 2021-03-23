@@ -16,12 +16,18 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.util.ObjectMapper
 
 
-class BooleanTypeTest extends FlatSpec with Matchers {
-    "A BooleanType" should "parse strings" in {
+class BooleanTypeTest extends AnyFlatSpec with Matchers {
+    "A BooleanType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("boolean") should be(BooleanType)
+    }
+
+    it should "parse strings" in {
         BooleanType.parse("true") should be (true)
         BooleanType.parse("false") should be (false)
     }
@@ -36,9 +42,12 @@ class BooleanTypeTest extends FlatSpec with Matchers {
         result.drop(1).head should be (false)
     }
 
-    it should "provide the correct SQL type" in {
-        val ftype = BooleanType
+    it should "provide the correct Spark type" in {
+        BooleanType.sparkType should be (org.apache.spark.sql.types.BooleanType)
+    }
 
-        ftype.sqlType should be ("boolean")
+    it should "provide the correct SQL type" in {
+        BooleanType.sqlType should be ("boolean")
+        BooleanType.sparkType.sql should be ("BOOLEAN")
     }
 }

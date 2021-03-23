@@ -26,8 +26,8 @@ import com.dimajix.flowman.history.JobOrder
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.ConsoleUtils
 import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.util.ConsoleUtils
 
 
 class SearchJobHistoryCommand extends Command {

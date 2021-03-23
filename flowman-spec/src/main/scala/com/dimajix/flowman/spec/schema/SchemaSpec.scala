@@ -20,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.SchemaType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.Spec
+import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -38,11 +38,9 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchemaSpec]),
     new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchemaSpec]),
     new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchemaSpec]),
-    new JsonSubTypes.Type(name = "json", value = classOf[JsonSchemaSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationSchemaSpec]),
     new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchemaSpec]),
-    new JsonSubTypes.Type(name = "swagger", value = classOf[SwaggerSchemaSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {

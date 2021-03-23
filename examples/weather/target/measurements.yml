@@ -1,7 +1,7 @@
 targets:
   measurements:
     kind: relation
-    mapping: measurements-extracted
+    mapping: measurements_extracted
     relation: measurements
     partition:
       year: $year

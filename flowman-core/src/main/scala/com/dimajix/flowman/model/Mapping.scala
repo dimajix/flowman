@@ -20,8 +20,10 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
+import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameUtils
 
@@ -54,6 +56,7 @@ object Mapping {
         cache:StorageLevel
     ) extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : MappingIdentifier = MappingIdentifier(name, project.map(_.name))
     }
 }
 
@@ -122,27 +125,33 @@ trait Mapping extends Instance {
     def output(name:String = "main") : MappingOutputIdentifier
 
     /**
-      * Executes this MappingType and returns a corresponding DataFrame
+      * Executes this Mapping and returns a corresponding map of DataFrames per output
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
+    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
+    def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
 
     /**
       * Returns the schema as produced by this mapping, relative to the given input schema
       * @param input
       * @return
       */
-    def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
+    def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    def link(linker:Linker) : Unit
 }
 
 
@@ -156,7 +165,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * Returns an identifier for this mapping
      * @return
      */
-    override def identifier : MappingIdentifier = MappingIdentifier(name, project.map(_.name))
+    override def identifier : MappingIdentifier = instanceProperties.identifier
 
     /**
      * This method should return true, if the resulting dataframe should be broadcast for map-side joins
@@ -214,17 +223,17 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * @param input
      * @return
      */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         // Create dummy data frames
         val replacements = input.map { case (name,schema) =>
-            name -> DataFrameUtils.singleRow(executor.spark, schema.sparkType)
+            name -> DataFrameUtils.singleRow(execution.spark, schema.sparkType)
         }
 
         // Execute mapping
-        val results = execute(executor, replacements)
+        val results = execute(execution, replacements)
 
         // Extract schemas
         results.map { case (name,df) => name -> StructType.of(df.schema)}
@@ -236,11 +245,21 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * @param input
      * @return
      */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
+        require(execution != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        describe(executor, input)(output)
+        describe(execution, input)(output)
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker:Linker) : Unit = {
+        inputs.foreach( in =>
+            linker.input(in.mapping, in.output)
+        )
     }
 }

@@ -29,15 +29,15 @@ import com.dimajix.flowman.hadoop.GlobPattern
 
 object ResourceIdentifier {
     def ofFile(file:Path) = GlobbingResourceIdentifier("file", file.toString)
-    def ofLocal(file:Path) = GlobbingResourceIdentifier("local", file.toString)
-    def ofLocal(file:File) = GlobbingResourceIdentifier("local", file.toURI.toString)
+    def ofLocal(file:Path) = GlobbingResourceIdentifier("local", file.toUri.getPath)
+    def ofLocal(file:File) = GlobbingResourceIdentifier("local", file.toURI.getPath)
     def ofHiveDatabase(database:String) = RegexResourceIdentifier("hiveDatabase", database)
     def ofHiveTable(table:String) = RegexResourceIdentifier("hiveTable", table)
     def ofHiveTable(table:String, database:Option[String]) = RegexResourceIdentifier("hiveTable", fqTable(table, database))
     def ofHivePartition(table:String, database:Option[String], partition:Map[String,Any]) = RegexResourceIdentifier("hiveTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
     def ofJdbcDatabase(database:String) = RegexResourceIdentifier("jdbcDatabase", database)
     def ofJdbcTable(table:String, database:Option[String]) = RegexResourceIdentifier("jdbcTable", fqTable(table, database))
-    def ofJdbcTablePartition(table:String, database:Option[String], partition:Map[String,Any]) = RegexResourceIdentifier("jdbcTable", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
+    def ofJdbcTablePartition(table:String, database:Option[String], partition:Map[String,Any]) = RegexResourceIdentifier("jdbcTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
     def ofURL(url:URL) = RegexResourceIdentifier("url", url.toString)
 
     private def fqTable(table:String, database:Option[String]) : String = database.map(_ + ".").getOrElse("") + table

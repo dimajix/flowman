@@ -18,11 +18,11 @@ package com.dimajix.flowman.spec.catalog
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-import com.dimajix.flowman.annotation.CatalogType
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.catalog.ImpalaExternalCatalog
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.spec.annotation.CatalogType
 import com.dimajix.flowman.spec.connection.ImpalaConnection
 import com.dimajix.flowman.spec.connection.JdbcConnection
 

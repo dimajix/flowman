@@ -48,55 +48,53 @@ case class GlobPattern(globPattern: String) {
         var setOpen = 0
         var curlyOpen = 0
         var isBackslash = false
-        globPattern.foreach { c =>
-            c match {
-                case _ if isBackslash =>
+        globPattern.foreach {
+            case c if isBackslash =>
+                regex.append(c)
+                isBackslash = false
+            case BACKSLASH =>
+                regex.append(BACKSLASH)
+                isBackslash = true
+            case c@('.' | '$' | '(' | ')' | '|' | '+') =>
+                // escape regex special chars that are not glob special chars
+                regex.append(BACKSLASH)
+                regex.append(c)
+            case '*' =>
+                regex.append("[^/]+")
+                _hasWildcard = true
+            case '?' =>
+                regex.append("[^/\\*]")
+                _hasWildcard = true
+            case '{' => // start of a group
+                regex.append("(?:") // non-capturing
+                curlyOpen += 1
+                _hasWildcard = true
+            case c@',' =>
+                regex.append(if (curlyOpen > 0) '|' else c)
+            case c@'}' =>
+                if (curlyOpen > 0) { // end of a group
+                    curlyOpen -= 1
+                    regex.append(")")
+                } else {
                     regex.append(c)
-                    isBackslash = false
-                case BACKSLASH =>
-                    regex.append(BACKSLASH)
-                    isBackslash = true
-                case '.'| '$' | '(' | ')' | '|' | '+' =>
-                    // escape regex special chars that are not glob special chars
-                    regex.append(BACKSLASH)
-                    regex.append(c)
-                case '*' =>
-                    regex.append("[^/]+")
-                    _hasWildcard = true
-                case '?' =>
-                    regex.append("[^/\\*]")
-                    _hasWildcard = true
-                case '{' => // start of a group
-                    regex.append("(?:") // non-capturing
-                    curlyOpen += 1
-                    _hasWildcard = true
-                case ',' =>
-                    regex.append(if (curlyOpen > 0) '|' else c)
-                case '}' =>
-                    if (curlyOpen > 0) { // end of a group
-                        curlyOpen -= 1
-                        regex.append(")")
-                    } else {
-                        regex.append(c)
-                    }
-                case '[' =>
-                    //if (setOpen > 0) GlobPattern.error("Unclosed character class", glob, i)
-                    setOpen += 1
-                    _hasWildcard = true
-                    regex.append(c)
-                case '^' => // ^ inside [...] can be unescaped
-                    if (setOpen == 0) regex.append(BACKSLASH)
-                    regex.append(c)
-                case '!' => // TODO: [! needs to be translated to [^
-                    regex.append('!')
-                case ']' =>
-                    // Many set errors like [][] could not be easily detected here,
-                    // as []], []-] and [-] are all valid POSIX glob and java regex.
-                    // We'll just let the regex compiler do the real work.
-                    setOpen -= 1
-                    regex.append(c)
-                case _ => regex.append(c)
-            }
+                }
+            case c@'[' =>
+                //if (setOpen > 0) GlobPattern.error("Unclosed character class", glob, i)
+                setOpen += 1
+                _hasWildcard = true
+                regex.append(c)
+            case c@'^' => // ^ inside [...] can be unescaped
+                if (setOpen == 0) regex.append(BACKSLASH)
+                regex.append(c)
+            case '!' => // TODO: [! needs to be translated to [^
+                regex.append('!')
+            case c@']' =>
+                // Many set errors like [][] could not be easily detected here,
+                // as []], []-] and [-] are all valid POSIX glob and java regex.
+                // We'll just let the regex compiler do the real work.
+                setOpen -= 1
+                regex.append(c)
+            case c => regex.append(c)
         }
         //if (setOpen > 0) GlobPattern.error("Unclosed character class", glob, len)
         //if (curlyOpen > 0) GlobPattern.error("Unclosed group", glob, len)

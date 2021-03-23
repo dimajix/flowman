@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.storage
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 
 
-class FileStoreTest extends FlatSpec with Matchers {
+class FileStoreTest extends AnyFlatSpec with Matchers {
     "A FileStore" should "list all projects" in {
         val session = Session.builder()
             .build()

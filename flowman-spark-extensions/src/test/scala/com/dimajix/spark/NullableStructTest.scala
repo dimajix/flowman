@@ -18,8 +18,8 @@ package com.dimajix.spark
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.sql.functions._
 import com.dimajix.spark.testing.LocalSparkSession
@@ -29,7 +29,7 @@ object NullableStructTest {
     case class Person(name:String, age:Option[Int])
 }
 
-class NullableStructTest extends FlatSpec with Matchers with LocalSparkSession {
+class NullableStructTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     import NullableStructTest.Person
 
     "The nullable_struct function" should "return non-null values" in {

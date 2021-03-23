@@ -23,7 +23,6 @@ import org.apache.spark.sql.SparkShim
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.Catalog
-import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
@@ -31,10 +30,11 @@ import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Hook
-import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spi.LogFilter
+import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
@@ -163,7 +163,7 @@ object Session {
          * @param profiles
          * @return
          */
-        def withProfiles(profiles:Seq[String]) : Builder = {
+        def withProfiles(profiles:Iterable[String]) : Builder = {
             require(profiles != null)
             this.profiles = this.profiles ++ profiles
             this
@@ -174,7 +174,7 @@ object Session {
          * @param jars
          * @return
          */
-        def withJars(jars:Seq[String]) : Builder = {
+        def withJars(jars:Iterable[String]) : Builder = {
             require(jars != null)
             this.jars = this.jars ++ jars
             this
@@ -237,21 +237,34 @@ class Session private[execution](
         _jars.toSeq
     }
     private def sparkMaster : String = {
-        _sparkMaster
+        // How should priorities look like?
+        //   1. Spark master from Flowman config.
+        //   2. Spark master from application code / session builder
+        //   3. Spark master from spark-submit. This is to be found in SparkConf
+        //   4. Default master
+        config.toMap.get("spark.master")
             .filter(_.nonEmpty)
-            .orElse(Option(System.getProperty("spark.master")))
+            .orElse(_sparkMaster)
+            .filter(_.nonEmpty)
+            .orElse(sparkConf.getOption("spark.master"))
             .filter(_.nonEmpty)
             .getOrElse("local[*]")
     }
     private def sparkName : String = {
-        if (sparkConf.contains("spark.app.name")) {
-            sparkConf.get("spark.app.name")
-        }
-        else {
-            _sparkName
-                .filter(_.nonEmpty)
-                .getOrElse("Flowman")
-        }
+        // How should priorities look like?
+        //   1. Spark app name from Flowman config.
+        //   2. Spark app name from application code
+        //   3. Spark app name from spark-submit / command-line
+        //   4. Spark app name from Flowman project
+        //   5. Default Spark app name
+        config.toMap.get("spark.app.name")
+            .filter(_.nonEmpty)
+            .orElse(_sparkName)
+            .filter(_.nonEmpty)
+            .orElse(_project.map(_.name).filter(_.nonEmpty).map("Flowman - " + _))
+            .orElse(sparkConf.getOption("spark.app.name"))
+            .filter(_.nonEmpty)
+            .getOrElse("Flowman")
     }
 
     /**
@@ -266,15 +279,15 @@ class Session private[execution](
 
         Option(_sparkSession)
             .flatMap(builder => Option(builder(sparkConf)))
-            .map { injectedSession =>
+            .map { spark =>
                 logger.info("Creating Spark session using provided builder")
                 // Set all session properties that can be changed in an existing session
                 sparkConf.getAll.foreach { case (key, value) =>
                     if (!SparkShim.isStaticConf(key)) {
-                        injectedSession.conf.set(key, value)
+                        spark.conf.set(key, value)
                     }
                 }
-                injectedSession
+                spark
             }
             .getOrElse {
                 logger.info("Creating new Spark session")
@@ -284,6 +297,9 @@ class Session private[execution](
                     logger.info("Enabling Spark Hive support")
                     sessionBuilder.enableHiveSupport()
                 }
+                // Apply all session extensions to builder
+                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder))
+                // Create Spark session
                 sessionBuilder.getOrCreate()
             }
     }
@@ -298,17 +314,24 @@ class Session private[execution](
         // Register additional planning strategies
         ExtraStrategies.register(spark)
 
+        // Apply all session extensions
+        SparkExtension.extensions.foreach(_.register(spark))
+
+        // Register special UDFs
+        UdfProvider.providers.foreach(_.register(spark.udf))
+
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)
 
         // Log all config properties
-        spark.conf.getAll.toSeq.sortBy(_._1).foreach { case (key, value)=> logger.info("Config: {} = {}", key: Any, value: Any) }
+        val logFilters = LogFilter.filters
+        spark.conf.getAll.toSeq.sortBy(_._1).foreach { keyValue =>
+            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
+                .foreach { case (key,value) => logger.info("Config: {} = {}", key: Any, value: Any) }
+        }
 
         // Copy all Spark configs over to SparkConf inside the Context
         sparkConf.setAll(spark.conf.getAll)
-
-        // Register special UDFs
-        UdfProvider.providers.foreach(_.register(spark.udf))
 
         spark
     }
@@ -319,7 +342,7 @@ class Session private[execution](
             Some(store.loadProject(name))
         }
 
-        val builder = RootContext.builder(_namespace, _profiles.toSeq)
+        val builder = RootContext.builder(_namespace, _profiles)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
             .withProjectResolver(loadProject)
@@ -345,8 +368,8 @@ class Session private[execution](
         }
     }
 
-    private lazy val rootExecutor : RootExecutor = {
-        new RootExecutor(this)
+    private lazy val rootExecution : RootExecution = {
+        new RootExecution(this)
     }
 
     private lazy val _catalog = {
@@ -388,6 +411,13 @@ class Session private[execution](
     def project : Option[Project] = _project
 
     /**
+     * Returns the list of active profile names
+     *
+     * @return
+     */
+    def profiles: Set[String] = _profiles
+
+    /**
       * Returns the storage used to manage projects
       * @return
       */
@@ -410,7 +440,7 @@ class Session private[execution](
       * @return
       */
     def runner : Runner = {
-        new Runner(executor, _history, _hooks)
+        new Runner(execution, _history, _hooks)
     }
 
     /**
@@ -464,12 +494,11 @@ class Session private[execution](
     def context : Context = rootContext
 
     /**
-      * Returns the root executor of this session. Every project has its own derived executor, which should
-      * be used instead if working with a project
-      *
+      * Returns the root execution of this session. You might want to wrap it up into a [[ScopedExecution]] to
+      * isolate resources.
       * @return
       */
-    def executor : Executor = rootExecutor
+    def execution : Execution = rootExecution
 
     /**
       * Either returns an existing or creates a new project specific context

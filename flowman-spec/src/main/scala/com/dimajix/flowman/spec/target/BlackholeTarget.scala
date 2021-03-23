@@ -22,7 +22,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.BaseTarget
@@ -55,11 +55,11 @@ case class BlackholeTarget(
     /**
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase) : Trilean = {
+    override def dirty(execution: Execution, phase: Phase) : Trilean = {
         phase match {
             case Phase.BUILD => Yes
             case _ => No
@@ -72,7 +72,7 @@ case class BlackholeTarget(
       *
       * @param executor
       */
-    override def build(executor:Executor) : Unit = {
+    override def build(executor:Execution) : Unit = {
         val mapping = context.getMapping(this.mapping.mapping)
         val df = executor.instantiate(mapping, this.mapping.output)
         df.write.format("null").save()

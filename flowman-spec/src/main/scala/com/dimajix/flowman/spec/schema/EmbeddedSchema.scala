@@ -26,9 +26,9 @@ import com.dimajix.flowman.types.Field
 
 case class EmbeddedSchema(
     instanceProperties : Schema.Properties,
-    description : Option[String],
-    fields : Seq[Field],
-    primaryKey : Seq[String]
+    description : Option[String] = None,
+    fields : Seq[Field] = Seq(),
+    primaryKey : Seq[String] = Seq()
 )
 extends AbstractInstance with Schema {
 }

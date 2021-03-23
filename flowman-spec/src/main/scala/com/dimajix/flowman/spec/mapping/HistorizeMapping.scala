@@ -24,7 +24,7 @@ import org.apache.spark.sql.functions.lead
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -54,12 +54,12 @@ case class HistorizeMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(tables != null)
 
         val df = tables(input)
@@ -101,8 +101,8 @@ case class HistorizeMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         val fields = input(this.input).fields

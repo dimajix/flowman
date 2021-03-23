@@ -25,8 +25,6 @@ relations:
 * `description` **(optional)** *(string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
  
-* `options` **(optional)** *(map:string)* *(default: empty)*:
-
 * `database` **(optional)** *(string)* *(default: empty)*:
  Defines the Hive database where the view is defined. When no database is specified, the  table is accessed without
  any specific qualification, meaning that the default database will be used.

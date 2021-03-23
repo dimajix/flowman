@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.server.model
 
+import com.dimajix.flowman.history
 import com.dimajix.flowman.model
 
 
@@ -40,7 +41,9 @@ object Converter {
             project.config,
             project.profiles.keys.toSeq,
             project.connections.keys.toSeq,
-            project.basedir.toString
+            project.basedir.map(_.toString),
+            project.jobs.keys.toSeq,
+            project.targets.keys.toSeq
         )
     }
 
@@ -50,6 +53,35 @@ object Converter {
             job.description,
             job.parameters.map(_.name),
             job.environment
+        )
+    }
+
+    def ofSpec(jobState:history.JobState) : JobState = {
+        JobState(
+            jobState.id,
+            jobState.namespace,
+            jobState.project,
+            jobState.job,
+            jobState.phase.toString,
+            jobState.args,
+            jobState.status.toString,
+            jobState.startDateTime,
+            jobState.endDateTime
+        )
+    }
+
+    def ofSpec(state:history.TargetState) : TargetState = {
+        TargetState(
+            state.id,
+            state.jobId,
+            state.namespace,
+            state.project,
+            state.target,
+            state.partitions,
+            state.phase.toString,
+            state.status.toString,
+            state.startDateTime,
+            state.endDateTime
         )
     }
 }

@@ -50,7 +50,7 @@ class ValidateCommand extends ActionCommand {
                     project.mappings.keys.toSeq
 
             val tables = mappingNames.map(name => context.getMapping(MappingIdentifier(name)))
-            tables.forall(table => session.executor.instantiate(table) != null)
+            tables.forall(table => session.execution.instantiate(table) != null)
         } match {
             case Success(true) =>
                 logger.info("Successfully validated mappings")

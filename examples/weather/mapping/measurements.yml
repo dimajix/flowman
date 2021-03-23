@@ -1,20 +1,21 @@
 mappings:
   # This mapping refers to the "raw" relation and reads in data from the source in S3
-  measurements-raw:
+  measurements_raw:
     kind: read
-    relation: measurements-raw
+    relation: measurements_raw
     partitions:
       year: $year
     columns:
       raw_data: String
 
-  measurements-extracted:
+  # Extract multiple columns from the raw measurements data using SQL SUBSTR functions
+  measurements_extracted:
     kind: select
-    input: measurements-raw
+    input: measurements_raw
     columns:
       usaf: "SUBSTR(raw_data,5,6)"
       wban: "SUBSTR(raw_data,11,5)"
-      date: "SUBSTR(raw_data,16,8)"
+      date: "TO_DATE(SUBSTR(raw_data,16,8), 'yyyyMMdd')"
       time: "SUBSTR(raw_data,24,4)"
       report_type: "SUBSTR(raw_data,42,5)"
       wind_direction: "SUBSTR(raw_data,61,3)"

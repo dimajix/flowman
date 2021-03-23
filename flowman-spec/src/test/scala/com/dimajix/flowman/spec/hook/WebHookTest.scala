@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.hook
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
@@ -36,7 +36,7 @@ import com.dimajix.flowman.spec.target.NullTargetSpec
 import com.dimajix.flowman.types.StringType
 
 
-class WebHookTest extends FlatSpec with Matchers {
+class WebHookTest extends AnyFlatSpec with Matchers {
     "The WebHook" should "provide a working job API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")

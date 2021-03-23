@@ -16,15 +16,16 @@
 
 package com.dimajix.flowman.tools
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobState
+import com.dimajix.flowman.util.ConsoleUtils
 
 
-class ConsoleUtilsTest extends FlatSpec with Matchers {
+class ConsoleUtilsTest extends AnyFlatSpec with Matchers {
     "ConsoleUtils" should "correctly format a list of JobStates" in {
         val columns = Seq("id", "namespace", "project", "job", "phase", "args", "status", "start_dt", "end_dt")
         val records = Seq(JobState("123", "default", "p1", "some_job", Phase.BUILD, Map("arg1" -> "val1"), Status.SUCCESS, None, None))

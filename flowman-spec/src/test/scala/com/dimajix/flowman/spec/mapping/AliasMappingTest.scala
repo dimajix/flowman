@@ -16,17 +16,18 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class AliasMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class AliasMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "An AliasMapping" should "be parseable" in {
         val spec =
             """
@@ -40,11 +41,16 @@ class AliasMappingTest extends FlatSpec with Matchers with LocalSparkSession {
         val mapping = project.mappings("my_alias")
 
         mapping shouldBe an[AliasMappingSpec]
+
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+        val instance = context.getMapping(MappingIdentifier("my_alias"))
+        instance shouldBe an[AliasMapping]
     }
 
     it should "support different outputs" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AliasMapping(
             Mapping.Properties(session.context),

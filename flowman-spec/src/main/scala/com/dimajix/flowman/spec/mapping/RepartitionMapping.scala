@@ -21,7 +21,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -33,7 +33,7 @@ case class RepartitionMapping(
     input:MappingOutputIdentifier,
     columns:Seq[String],
     partitions:Int,
-    sort:Boolean
+    sort:Boolean=false
 ) extends BaseMapping {
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
@@ -47,12 +47,12 @@ case class RepartitionMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
         val df = input(this.input)
@@ -77,8 +77,8 @@ case class RepartitionMapping(
       * @param input
       * @return
       */
-    override def describe(executor: Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution: Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         val result = input(this.input)

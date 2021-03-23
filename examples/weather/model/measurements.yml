@@ -9,27 +9,5 @@ relations:
         type: integer
         granularity: 1
     schema:
-      kind: embedded
-      fields:
-        - name: usaf
-          type: STRING
-        - name: wban
-          type: STRING
-        - name: date
-          type: STRING
-        - name: time
-          type: STRING
-        - name: wind_direction
-          type: STRING
-        - name: wind_direction_qual
-          type: STRING
-        - name: wind_observation
-          type: STRING
-        - name: wind_speed
-          type: FLOAT
-        - name: wind_speed_qual
-          type: STRING
-        - name: air_temperature
-          type: FLOAT
-        - name: air_temperature_qual
-          type: STRING
+      kind: avro
+      file: "${project.basedir}/schema/measurements.avsc"

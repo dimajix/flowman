@@ -34,12 +34,13 @@ config:
 
 # This section enables plugins. You may want to remove plugins which are of no use for you.
 plugins:
-  - flowman-example
   - flowman-aws
   - flowman-azure
   - flowman-kafka
   - flowman-mariadb
   - flowman-mysql
+  - flowman-swagger
+  - flowman-json
 
 
 # The 'store' defines how Flowman can reference entities in different projects.

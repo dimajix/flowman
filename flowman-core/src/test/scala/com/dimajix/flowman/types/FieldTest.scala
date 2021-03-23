@@ -17,23 +17,20 @@
 package com.dimajix.flowman.types
 
 import org.apache.spark.sql.types.MetadataBuilder
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.util.ObjectMapper
 
 
-class FieldTest extends FlatSpec with Matchers {
+class FieldTest extends AnyFlatSpec with Matchers {
     "A Field" should "be nullable per default" in {
         val spec =
             """
               |name: lala
               |type: String
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -50,9 +47,6 @@ class FieldTest extends FlatSpec with Matchers {
               |nullable: true
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -67,9 +61,6 @@ class FieldTest extends FlatSpec with Matchers {
               |type: String
               |nullable: false
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (false)
@@ -86,9 +77,6 @@ class FieldTest extends FlatSpec with Matchers {
               |type: String
               |description: Some description
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -107,9 +95,6 @@ class FieldTest extends FlatSpec with Matchers {
               |size: 27
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -127,9 +112,6 @@ class FieldTest extends FlatSpec with Matchers {
               |default: 27
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -146,9 +128,6 @@ class FieldTest extends FlatSpec with Matchers {
               |type: String
               |default:
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -175,9 +154,6 @@ class FieldTest extends FlatSpec with Matchers {
               |default: null
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -195,9 +171,6 @@ class FieldTest extends FlatSpec with Matchers {
               |default: ""
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -214,9 +187,6 @@ class FieldTest extends FlatSpec with Matchers {
               |type: String
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -229,9 +199,6 @@ class FieldTest extends FlatSpec with Matchers {
               |name: lala
               |type: TEXT
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -251,9 +218,6 @@ class FieldTest extends FlatSpec with Matchers {
               |      type: String
               |      nullable: false
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -278,9 +242,6 @@ class FieldTest extends FlatSpec with Matchers {
               |  elementType: String
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -297,9 +258,6 @@ class FieldTest extends FlatSpec with Matchers {
               |  elementType: String
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -315,9 +273,6 @@ class FieldTest extends FlatSpec with Matchers {
               |  containsNull: false
               |  elementType: String
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -340,9 +295,6 @@ class FieldTest extends FlatSpec with Matchers {
               |      - name: i
               |        type: Integer
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
@@ -370,9 +322,6 @@ class FieldTest extends FlatSpec with Matchers {
               |type: decimal(10,4)
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -387,9 +336,6 @@ class FieldTest extends FlatSpec with Matchers {
               |type: varchar(14)
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)
         result.name should be ("lala")
@@ -403,9 +349,6 @@ class FieldTest extends FlatSpec with Matchers {
               |name: lala
               |type: char(14)
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[Field](spec)
         result.nullable should be (true)

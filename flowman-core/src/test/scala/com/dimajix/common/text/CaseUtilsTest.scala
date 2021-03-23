@@ -16,11 +16,11 @@
 
 package com.dimajix.common.text
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class CaseUtilsTest extends FlatSpec with Matchers {
+class CaseUtilsTest extends AnyFlatSpec with Matchers {
     "CaseUtils" should "support generic splitting" in {
         CaseUtils.splitGeneric("ThisIsATest") should be (Seq("This", "Is", "ATest"))
         CaseUtils.splitGeneric("thisIsATest") should be (Seq("this", "Is", "ATest"))

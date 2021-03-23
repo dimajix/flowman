@@ -27,7 +27,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -78,20 +78,20 @@ case class MergeFilesTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.BUILD =>
-                val fs = executor.fs
-                val dst = fs.local(target)
+                val fs = execution.fs
+                val dst = fs.file(target)
                 !dst.exists()
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE|Phase.DESTROY =>
-                val fs = executor.fs
-                val dst = fs.local(target)
+                val fs = execution.fs
+                val dst = fs.file(target)
                 dst.exists()
             case _ => No
         }
@@ -103,13 +103,13 @@ case class MergeFilesTarget(
       *
       * @param executor
       */
-    override protected def build(executor: Executor): Unit = {
+    override protected def build(executor: Execution): Unit = {
         val fs = executor.fs
         val src = fs.file(source)
-        val dst = fs.local(target)
+        val dst = fs.file(target)
         val delimiter = Option(this.delimiter).map(_.getBytes(Charset.forName("UTF-8"))).filter(_.nonEmpty)
 
-        logger.info(s"Merging remote files in '$src' to local file '$dst' (overwrite=$overwrite)")
+        logger.info(s"Merging remote files in '$src' to file '$dst' (overwrite=$overwrite)")
         val output = dst.create(overwrite)
         try {
             fs.file(source)
@@ -137,12 +137,12 @@ case class MergeFilesTarget(
       *
       * @param executor
       */
-    override protected def verify(executor: Executor): Unit = {
+    override protected def verify(executor: Execution): Unit = {
         require(executor != null)
 
-        val file = executor.fs.local(target)
+        val file = executor.fs.file(target)
         if (!file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - local file '$target' does not exist")
+            logger.error(s"Verification of target '$identifier' failed - file file '$target' does not exist")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -152,12 +152,12 @@ case class MergeFilesTarget(
       *
       * @param executor
       */
-    override protected def truncate(executor: Executor): Unit = {
+    override protected def truncate(executor: Execution): Unit = {
         require(executor != null)
 
-        val outputFile = executor.fs.local(target)
+        val outputFile = executor.fs.file(target)
         if (outputFile.exists()) {
-            logger.info(s"Removing local file '$target'")
+            logger.info(s"Removing file file '$target'")
             outputFile.delete()
         }
     }
@@ -168,7 +168,7 @@ case class MergeFilesTarget(
       *
       * @param executor
       */
-    override protected def destroy(executor: Executor): Unit = {
+    override protected def destroy(executor: Execution): Unit = {
         truncate(executor)
     }
 }

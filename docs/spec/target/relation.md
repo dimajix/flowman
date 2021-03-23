@@ -6,7 +6,7 @@ the physical location or connection, the format and so on.
 
 ## Example
 
-```
+```yaml
 targets:
   stations:
     kind: relation
@@ -35,23 +35,29 @@ Specifies the behavior when data or table or partition already exists. Options i
   * `append`: append the data.
   * `ignore`: ignore the operation (i.e. no-op).
   * `error` or `errorifexists`: throw an exception at runtime . 
+The default value is controlled by the Flowman config variable `floman.default.target.outputMode`.
 
 * `partition` **(optional)** *(type: map:string)* *(default=empty)*:
 
 * `parallelism` **(optional)** *(type: integer)* *(default=16)*:
 This specifies the parallelism to be used when writing data. The parallelism equals the number
-of files being generated in HDFS output and also equals the maximum number of threads that
-are used in total in all Spark executors to produce the output.
+of files being generated in HDFS output and also equals the maximum number of threads that are used in total in all 
+Spark executors to produce the output. If `parallelism` is set to zero or to a negative number, Flowman will not 
+coalesce any partitions and generate as many files as Spark partitions. The default value is controlled by the
+Flowman config variable `floman.default.target.parallelism`.
 
 * `rebalance` **(optional)** *(type: bool)* *(default=false)*:
-Enables rebalancing the size of all partitions by introducing an additional internal shuffle
-operation. Each partition will contain approximately the same number of records.
+Enables rebalancing the size of all partitions by introducing an additional internal shuffle operation. Each partition 
+and output file will contain approximately the same number of records. The default value is controlled by the
+Flowman config variable `floman.default.target.rebalance`.
 
 
 ## Description
 
 The `relation` target will write the output of a mapping specified via the `mapping` field into the relation specified
-in `relation`. 
+in `relation`. If the `mapping` field is not specified, then Flowman will only perform actions for creating and removing
+the relation during the `CREATE`, `TRUNCATE` and `DESTROY` phase. In this case, the `BUILD` phase is a no-op for this
+target.
 
 
 ## Supported Phases

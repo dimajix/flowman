@@ -16,11 +16,11 @@
 
 package com.dimajix.common
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class TrileanTest extends FlatSpec with Matchers {
+class TrileanTest extends AnyFlatSpec with Matchers {
     "Trileans" should "provide toString" in {
         No.toString should be ("no")
         Yes.toString should be ("yes")

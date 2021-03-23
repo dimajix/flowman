@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.model
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class IdentifierTest extends FlatSpec with Matchers {
+class IdentifierTest extends AnyFlatSpec with Matchers {
     "The TableIdentifier" should "be parsed correctly" in {
         MappingIdentifier.parse("lala") should be (new MappingIdentifier("lala", None))
         MappingIdentifier.parse("project/lala") should be (new MappingIdentifier("lala", Some("project")))

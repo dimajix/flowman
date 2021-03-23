@@ -16,15 +16,15 @@
 
 package com.dimajix.flowman.spec.catalog
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.ImpalaExternalCatalog
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Namespace
 
 
-class ImpalaExternalCatalogTest extends FlatSpec with Matchers {
+class ImpalaExternalCatalogTest extends AnyFlatSpec with Matchers {
     "An ImpalaCatalog" should "be readable from a namespace definition" in {
         val spec =
             """

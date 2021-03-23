@@ -17,11 +17,11 @@
 package com.dimajix.flowman
 
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class SqlExpressionTest extends FlatSpec with Matchers {
+class SqlExpressionTest extends AnyFlatSpec with Matchers {
     "The SqlParser" should "parse simple columns" in {
         val parser = CatalystSqlParser
         val result = parser.parseExpression("some_column")

@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -47,12 +47,12 @@ case class DropMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param deps
       * @return
       */
-    override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution: Execution, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(execution != null)
         require(deps != null)
 
         val df = deps(input)
@@ -70,8 +70,8 @@ case class DropMapping(
       * @param deps
       * @return
       */
-    override def describe(executor:Executor, deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, deps:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(deps != null)
 
         val schema = deps(this.input)

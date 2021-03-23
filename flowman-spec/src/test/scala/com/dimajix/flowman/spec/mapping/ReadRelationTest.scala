@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -26,7 +26,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.types.SingleValue
 
 
-class ReadRelationTest extends FlatSpec with Matchers {
+class ReadRelationTest extends AnyFlatSpec with Matchers {
     "A ReadRelationMapping" should "be parseable" in {
         val spec =
             """

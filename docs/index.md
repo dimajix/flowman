@@ -29,6 +29,10 @@ and schema information) in a single place managed by a single program.
 
 ## Where to go from here
 
+## Quickstart
+A small [quickstart guide](quickstart.md) will lead you through a simple example.
+
+
 ### Installation
 * [Flowman Installation](installation.md): Installation Guide
 * [Configuration](config.md): Configuration settings
@@ -60,6 +64,7 @@ More detail on all these items is described in the following sections:
 ### Cookbooks
 
 * [Testing](cookbook/testing.md) How to implement tests in Flowman
+* [Kerberos](cookbook/kerberos.md) How to use Flowman in Kerberized environments
 
 
 ## Table of Contents
@@ -69,6 +74,7 @@ More detail on all these items is described in the following sections:
    :maxdepth: 1
    :glob:
 
+   quickstart
    building
    installation
    lifecycle

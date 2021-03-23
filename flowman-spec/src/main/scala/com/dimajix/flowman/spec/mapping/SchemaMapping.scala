@@ -20,24 +20,29 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
 case class SchemaMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[(String,String)] = Seq(),
-    schema:Schema = null,
+    columns:Seq[Field] = Seq(),
+    schema:Option[Schema] = None,
     filter:Option[String] = None
 )
 extends BaseMapping {
+    if (schema.isEmpty && columns.isEmpty)
+        throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
+
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
      *
@@ -50,22 +55,19 @@ extends BaseMapping {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param tables
       * @return
       */
-    override def execute(executor:Executor, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+        require(execution != null)
         require(tables != null)
 
-        val xfs = if (schema != null) {
-            SchemaEnforcer(schema.sparkSchema)
-        }
-        else if (columns != null && columns.nonEmpty) {
-            SchemaEnforcer(columns)
+        val xfs = if(schema.nonEmpty) {
+            SchemaEnforcer(schema.get.sparkSchema)
         }
         else {
-            throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
+            SchemaEnforcer(StructType(columns).sparkType)
         }
 
         val df = tables(input)
@@ -82,11 +84,17 @@ extends BaseMapping {
       * @param input
       * @return
       */
-    override def describe(executor: Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution: Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
-        val result = StructType(schema.fields)
+        val result = if(schema.nonEmpty) {
+            StructType(schema.get.fields)
+        }
+        else  {
+            StructType(columns)
+        }
+
         Map("main" -> result)
     }
 }
@@ -96,7 +104,7 @@ extends BaseMapping {
 class SchemaMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
-    @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
+    @JsonProperty(value = "schema", required = false) private var schema: Option[SchemaSpec] = None
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
@@ -108,8 +116,8 @@ class SchemaMappingSpec extends MappingSpec {
         SchemaMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(this.input)),
-            context.evaluate(columns).toSeq,
-            if (schema != null) schema.instantiate(context) else null,
+            context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
+            schema.map(_.instantiate(context)),
             context.evaluate(filter)
         )
     }

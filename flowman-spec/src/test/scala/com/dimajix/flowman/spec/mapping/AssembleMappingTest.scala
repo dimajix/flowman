@@ -22,8 +22,8 @@ import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -35,12 +35,13 @@ import com.dimajix.flowman.spec.mapping.AssembleMapping.LiftEntry
 import com.dimajix.flowman.spec.mapping.AssembleMapping.NestEntry
 import com.dimajix.flowman.spec.mapping.AssembleMapping.RenameEntry
 import com.dimajix.flowman.spec.mapping.AssembleMapping.StructEntry
+import com.dimajix.flowman.transforms.AnalysisException
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private val inputJson =
         """
           |{
@@ -50,8 +51,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
           |      "other_field":456
           |    }
           |  },
-          |  "lala": {
-          |  },
+          |  "lala": 23,
           |  "embedded" : {
           |    "structure": {
           |      "secret": {
@@ -151,14 +151,14 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "transform DataFrames correctly" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
                 NestEntry("clever_name", Path("stupidName"), Seq(), Seq(Path("secret.field"))),
-                AppendEntry(Path(""), Seq(Path("lala"), Path("lolo")), Seq()),
+                AppendEntry(Path(""), Seq(Path("lala")), Seq()),
                 AppendEntry(Path(""), Seq(), Seq(Path("stupidName"), Path("embedded.structure.secret"), Path("embedded.old_structure"))),
                 StructEntry("sub_structure", Seq(
                     AppendEntry(Path("embedded.old_structure"), Seq(), Seq())
@@ -175,6 +175,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                     StructField("other_field", LongType)
                 )))
             ))),
+            StructField("lala", LongType),
             StructField("embedded", StructType(Seq(
                 StructField("struct_array", ArrayType(
                     StructType(Seq(
@@ -186,6 +187,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                     StructField("public", StringType)
                 )))
             ))),
+            StructField("lala", LongType),
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
             ))),
@@ -198,14 +200,14 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "provide a correct output schema" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("input_df"),
             Seq(
                 NestEntry("clever_name", Path("stupidName"), Seq(), Seq(Path("secret.field"))),
-                AppendEntry(Path(""), Seq(Path("lala"), Path("lolo")), Seq()),
+                AppendEntry(Path(""), Seq(Path("lala")), Seq()),
                 AppendEntry(Path(""), Seq(), Seq(Path("stupidName"), Path("embedded.structure.secret"), Path("embedded.old_structure"))),
                 StructEntry("sub_structure", Seq(
                     AppendEntry(Path("embedded.old_structure"), Seq(), Seq())
@@ -220,6 +222,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                     StructField("other_field", LongType)
                 )), true)
             )), true),
+            StructField("lala", LongType, true),
             StructField("embedded", StructType(Seq(
                 StructField("struct_array", ArrayType(
                     StructType(Seq(
@@ -231,6 +234,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
                     StructField("public", StringType)
                 )), true)
             )), true),
+            StructField("lala", LongType, true),
             StructField("sub_structure", StructType(Seq(
                 StructField("value", ArrayType(LongType))
             )), true),
@@ -243,7 +247,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support explodes of complex types with rename" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -270,9 +274,31 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
         outputDf.count() should be (2)
     }
 
+    it should "throw an exception on missing fields in 'keep'" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val mapping = AssembleMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("input_df"),
+            Seq(
+                NestEntry("clever_name", Path("stupidName"), Seq(), Seq(Path("secret.field"))),
+                AppendEntry(Path(""), Seq(Path("lala"), Path("lolo")), Seq()),
+                AppendEntry(Path(""), Seq(), Seq(Path("stupidName"), Path("embedded.structure.secret"), Path("embedded.old_structure"))),
+                StructEntry("sub_structure", Seq(
+                    AppendEntry(Path("embedded.old_structure"), Seq(), Seq())
+                )),
+                LiftEntry(Path("stupidName"), Seq(Path("secret.field")))
+            )
+        )
+
+        an[AnalysisException] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf)))
+        an[AnalysisException] shouldBe thrownBy(mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main"))
+    }
+
     it should "support explodes of complex types without rename" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -301,7 +327,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support explodes of simple types" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -325,7 +351,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "throw exceptions on explodes of non-existing paths" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -340,7 +366,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "support rename operations" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),
@@ -366,7 +392,7 @@ class AssembleMappingTest extends FlatSpec with Matchers with LocalSparkSession 
 
     it should "not throw an exception on renames of non-existing fields" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = AssembleMapping(
             Mapping.Properties(session.context),

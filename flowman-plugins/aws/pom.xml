@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.14.2</version>
+        <version>0.15.0</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -17,10 +17,30 @@
         <plugin.name>flowman-aws</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <aws.version>1.10.6</aws.version>
+
+        <!-- Dependency versions -->
+        <aws.version>1.11.375</aws.version>
     </properties>
 
     <profiles>
+        <!-- Default profile if nothing else is specified -->
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <aws.version>1.11.375</aws.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-bundle</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <profile>
             <id>hadoop-2.6</id>
             <properties>
@@ -51,9 +71,6 @@
 
         <profile>
             <id>hadoop-2.8</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <aws.version>1.10.6</aws.version>
             </properties>
@@ -122,8 +139,11 @@
     <build>
         <resources>
             <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
                 <directory>src/hadoop-${hadoop-api.version}/resources</directory>
-                <targetPath>${project.build.outputDirectory}</targetPath>
                 <filtering>true</filtering>
             </resource>
         </resources>
@@ -133,23 +153,12 @@
                 <artifactId>scala-maven-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <descriptors>
-                                <descriptor>src/main/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
@@ -162,9 +171,19 @@
         </dependency>
 
         <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-scalatest-compat</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
             <version>${hadoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.api_version}</artifactId>
         </dependency>
     </dependencies>
 </project>

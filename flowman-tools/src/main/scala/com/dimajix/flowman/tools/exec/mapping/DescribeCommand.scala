@@ -42,10 +42,10 @@ class DescribeCommand extends ActionCommand {
     var mapping: String = ""
 
     override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
-        Try {
+        try {
             val identifier = MappingOutputIdentifier(this.mapping)
             val mapping = context.getMapping(identifier.mapping)
-            val executor = session.executor
+            val executor = session.execution
 
             if (useSpark) {
                 val df = executor.instantiate(mapping, identifier.output)
@@ -55,14 +55,13 @@ class DescribeCommand extends ActionCommand {
                 val schema = executor.describe(mapping, identifier.output)
                 schema.printTree()
             }
-        } match {
-            case Success(_) =>
-                logger.info("Successfully finished describing mapping")
-                true
-            case Failure(ex:NoSuchMappingException) =>
+            true
+        }
+        catch {
+            case ex:NoSuchMappingException =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case Failure(NonFatal(e)) =>
+            case NonFatal(e) =>
                 logger.error(s"Caught exception while describing mapping '$mapping'", e)
                 false
         }

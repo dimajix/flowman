@@ -7,7 +7,9 @@ is installed on the build machine.
 
 Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
 
-    mvn clean install
+```shell
+mvn clean install
+```
 
 ## Main Artifacts
 
@@ -28,11 +30,15 @@ You should also configure git such that all files are checked out using "LF" end
 some unittests may fail and Docker images might not be useable. This can be done by setting the git configuration
 value "core.autocrlf" to "input"
 
-    git config --global core.autocrlf input
-    
+```shell
+git config --global core.autocrlf input
+```
+
 You might also want to skip unittests (the HBase plugin is currently failing under windows)
 
-    mvn clean install -DskipTests
+```shell
+mvn clean install -DskipTests
+```
     
 It may well be the case that some unittests fail on Windows - don't panic, we focus on Linux systems and ensure that
 the `master` branch really builds clean with all unittests passing on Linux.
@@ -42,13 +48,17 @@ the `master` branch really builds clean with all unittests passing on Linux.
 
 Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and Hadoop (2.8.5). 
 But of course you can also build for a different version by either using a profile
-    
-    mvn install -Pspark2.3 -Phadoop2.7 -DskipTests
-    
+
+```shell
+mvn install -Pspark2.3 -Phadoop2.7 -DskipTests
+```
+ 
 This will always select the latest bugfix version within the minor version. You can also specify versions explicitly 
 as follows:    
 
-    mvn install -Dspark.version=2.2.1 -Dhadoop.version=2.7.3
+```shell
+mvn install -Dspark.version=2.2.1 -Dhadoop.version=2.7.3
+```
         
 Note that using profiles is the preferred way, as this guarantees that also dependencies are selected
 using the correct version. The following profiles are available:
@@ -56,6 +66,7 @@ using the correct version. The following profiles are available:
 * spark-2.3
 * spark-2.4
 * spark-3.0
+* spark-3.1 
 * hadoop-2.6
 * hadoop-2.7
 * hadoop-2.8
@@ -69,63 +80,92 @@ With these profiles it is easy to build Flowman to match your environment.
 
 ## Building for Open Source Hadoop and Spark
 
-Spark 2.3 and Hadoop 2.6:
+### Spark 2.3 and Hadoop 2.6:
 
-    mvn clean install -Pspark-2.3 -Phadoop-2.6
-    
-Spark 2.3 and Hadoop 2.7:
-    
-    mvn clean install -Pspark-2.3 -Phadoop-2.7
+```shell
+mvn clean install -Pspark-2.3 -Phadoop-2.6
+```
 
-Spark 2.3 and Hadoop 2.8:
+### Spark 2.3 and Hadoop 2.7:
 
-    mvn clean install -Pspark-2.3 -Phadoop-2.8
+```shell
+mvn clean install -Pspark-2.3 -Phadoop-2.7
+```
 
-Spark 2.3 and Hadoop 2.9:
+### Spark 2.3 and Hadoop 2.8:
 
-    mvn clean install -Pspark-2.3 -Phadoop-2.9
+```shell
+mvn clean install -Pspark-2.3 -Phadoop-2.8
+```
 
-Spark 2.4 and Hadoop 2.6:
+### Spark 2.3 and Hadoop 2.9:
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.6
-    
-Spark 2.4 and Hadoop 2.7:
+```shell
+mvn clean install -Pspark-2.3 -Phadoop-2.9
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.7
+### Spark 2.4 and Hadoop 2.6:
 
-Spark 2.4 and Hadoop 2.8:
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.6
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.8
+### Spark 2.4 and Hadoop 2.7:
 
-Spark 2.4 and Hadoop 2.9:
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.7
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.9
+### Spark 2.4 and Hadoop 2.8:
 
-Spark 3.0 and Hadoop 3.1
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.8
+```
 
-    mvn clean install -Pspark-3.0 -Phadoop-3.1
+### Spark 2.4 and Hadoop 2.9:
 
-Spark 3.0 and Hadoop 3.2
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.9
+```
 
-    mvn clean install -Pspark-3.0 -Phadoop-3.2
+### Spark 3.0 and Hadoop 3.1
+
+```shell
+mvn clean install -Pspark-3.0 -Phadoop-3.1
+```
+
+### Spark 3.0 and Hadoop 3.2
+
+```shell
+mvn clean install -Pspark-3.0 -Phadoop-3.2
+```
+
+### Spark 3.1 and Hadoop 3.2
+
+```shell
+mvn clean install -Pspark-3.1 -Phadoop-3.2
+```
 
 ## Building for Cloudera
 
 The Maven project also contains preconfigured profiles for Cloudera.
 
-    mvn clean install -Pspark-2.3 -PCDH-5.15 -DskipTests
+```shell
+mvn clean install -Pspark-2.3 -PCDH-5.15 -DskipTests
+```
     
 Or for Cloudera 6.3 
 
-    mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
+```shell
+mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
+```
 
+# Coverage Analysis
+```shell
+mvn scoverage:report
+```
 
-## Skipping Docker Image
-
-Part of the build also is a Docker image. Since you might not want to use it, because you are using different base
-images, you can skip the building of the Docker image via `-Ddockerfile.skip`
-
-## Building Documentation
+# Building Documentation
 
 Flowman also contains Markdown documentation which is processed by Sphinx to generate the online HTML documentation.
 

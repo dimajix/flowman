@@ -77,6 +77,6 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
     private def readFile(file:File) : Iterator[Row] = {
         val lines = Source.fromFile(file, options.encoding).getLines()
         val parser = new UnivocityReader(schema, options)
-        UnivocityReader.parseIterator(lines, parser.options.headerFlag, parser, schema)
+        UnivocityReader.parseIterator(lines, parser.options.headerFlag, parser)
     }
 }

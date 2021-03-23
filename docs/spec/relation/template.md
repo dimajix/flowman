@@ -4,6 +4,7 @@
 
 ```yaml
 relations:
+  # First define the template relation itself  
   structured_macro:
     kind: hiveUnionTable
     viewDatabase: "dqm"
@@ -20,6 +21,7 @@ relations:
       kind: mapping
       mapping: ${schema}
 
+  # Now use the template and replace some of the used variables
   fee:
     kind: template
     relation: structured_macro

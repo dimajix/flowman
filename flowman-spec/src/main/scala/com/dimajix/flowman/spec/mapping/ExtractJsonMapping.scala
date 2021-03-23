@@ -24,7 +24,7 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StringType
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -38,7 +38,7 @@ case class ExtractJsonMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     column: String,
-    schema: Schema,
+    schema: Option[Schema],
     parseMode: String = "PERMISSIVE",
     allowComments: Boolean = false,
     allowUnquotedFieldNames: Boolean = false,
@@ -68,20 +68,18 @@ case class ExtractJsonMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param deps
       * @return
       */
-    override def execute(executor: Executor, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution: Execution, deps: Map[MappingOutputIdentifier, DataFrame]): Map[String,DataFrame] = {
+        require(execution != null)
         require(deps != null)
 
-        val spark = executor.spark
+        val spark = execution.spark
         val corruptedColumn = "_flowman_corrupted_column"
-        val sparkSchema = Option(schema).map(schema => schema.sparkSchema.add(corruptedColumn, StringType)).orNull
         val table = deps(this.input)
-        val result = spark.read
-            .schema(sparkSchema)
+        val reader = spark.read
             .option("mode", parseMode)
             .option("columnNameOfCorruptRecord", corruptedColumn)
             .option("allowComments", allowComments)
@@ -91,7 +89,12 @@ case class ExtractJsonMapping(
             .option("allowNonNumericNumbers", allowNonNumericNumbers)
             .option("allowBackslashEscapingAnyCharacter", allowBackslashEscapingAnyCharacter)
             .option("allowUnquotedControlChars", allowUnquotedControlChars)
-            .json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
+        schema.foreach { schema =>
+            val sparkSchema = schema.sparkSchema.add(corruptedColumn, StringType)
+            reader.schema(sparkSchema)
+        }
+
+        val result = reader.json(table.select(table(column).cast(StringType)).as[String](Encoders.STRING))
 
         // If no schema is specified, Spark will only add the error column if an error actually occurred
         val (mainResult, errorResult) =
@@ -110,7 +113,8 @@ case class ExtractJsonMapping(
 
         Map(
             "main" -> mainResult,
-            "error" -> errorResult
+            "error" -> errorResult,
+            "cache" -> result
         )
     }
 
@@ -119,11 +123,11 @@ case class ExtractJsonMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,ftypes.StructType]) : Map[String,ftypes.StructType] = {
+        require(execution != null)
         require(input != null)
 
-        val mainSchema = ftypes.StructType(if (schema != null) schema.fields else Seq())
+        val mainSchema = ftypes.StructType(schema.map(_.fields).getOrElse(Seq()))
         val errorSchema = ftypes.StructType(Seq(Field("record", ftypes.StringType, false)))
         Map(
             "main" -> mainSchema,
@@ -137,7 +141,7 @@ case class ExtractJsonMapping(
 class ExtractJsonMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "column", required = true) private var column: String = _
-    @JsonProperty(value = "schema", required = false) private var schema: SchemaSpec = _
+    @JsonProperty(value = "schema", required = false) private var schema: Option[SchemaSpec] = None
     @JsonProperty(value = "parseMode", required = false) private var parseMode: String = "PERMISSIVE"
     @JsonProperty(value = "allowComments", required = false) private var allowComments: String = "false"
     @JsonProperty(value = "allowUnquotedFieldNames", required = false) private var allowUnquotedFieldNames: String = "false"
@@ -157,7 +161,7 @@ class ExtractJsonMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(column),
-            if (schema != null) schema.instantiate(context) else null,
+            schema.map(_.instantiate(context)),
             context.evaluate(parseMode),
             context.evaluate(allowComments).toBoolean,
             context.evaluate(allowUnquotedFieldNames).toBoolean,

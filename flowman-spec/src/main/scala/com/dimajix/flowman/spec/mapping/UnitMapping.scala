@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
@@ -86,14 +86,14 @@ case class UnitMapping(
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor: Executor, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
         mappingInstances
             .filter(_._2.outputs.contains("main"))
-            .map{ case (id,mapping) => (id,executor.instantiate(mapping, "main")) }
+            .map{ case (id,mapping) => (id,execution.instantiate(mapping, "main")) }
     }
 
     /**
@@ -102,14 +102,14 @@ case class UnitMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
+        require(execution != null)
         require(input != null)
 
         mappingInstances
             .filter(_._2.outputs.contains("main"))
             .keys
-            .map(name => name -> describe(executor, input, name))
+            .map(name => name -> describe(execution, input, name))
             .toMap
     }
 
@@ -119,14 +119,14 @@ case class UnitMapping(
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input: Map[MappingOutputIdentifier, StructType], output:String): StructType = {
-        require(executor != null)
+    override def describe(execution:Execution, input: Map[MappingOutputIdentifier, StructType], output:String): StructType = {
+        require(execution != null)
         require(input != null)
         require(output != null && output.nonEmpty)
 
         def describe(mapping:Mapping, output:String) : StructType = {
             val deps = dependencies(mapping)
-            mapping.describe(executor, deps, output)
+            mapping.describe(execution, deps, output)
         }
         def describe2(context:Context, id:MappingOutputIdentifier) : StructType = {
             val mapping = context.getMapping(id.mapping)

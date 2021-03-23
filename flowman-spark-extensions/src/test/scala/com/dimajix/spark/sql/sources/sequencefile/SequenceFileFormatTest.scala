@@ -24,13 +24,13 @@ import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SequenceFileFormatTest extends FlatSpec with Matchers with LocalSparkSession {
+class SequenceFileFormatTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private val inputRecords = Seq(
         ("key1", "value1"),
         ("key2", "value2")

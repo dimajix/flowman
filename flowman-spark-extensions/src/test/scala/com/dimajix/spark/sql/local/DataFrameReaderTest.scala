@@ -16,14 +16,14 @@
 
 package com.dimajix.spark.sql.local
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.sql.local.implicits._
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class DataFrameReaderTest extends FlatSpec with Matchers with LocalSparkSession {
+class DataFrameReaderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The DataFrameReader" should "be instantiated by a readLocal call" in {
         spark.readLocal should not be (null)
     }

@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
@@ -107,12 +107,12 @@ case class JdbcRelation(
 
     /**
       * Reads the configured table from the source
-      * @param executor
+      * @param execution
       * @param schema
       * @return
       */
-    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        require(executor != null)
+    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
@@ -120,12 +120,13 @@ case class JdbcRelation(
         val (url,props) = createProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
-        val reader = executor.spark.read.options(options)
+        val reader = execution.spark.read
 
         val tableDf =
             if (query.nonEmpty) {
                 logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
                 reader.format("jdbc")
+                    .options(properties)
                     .option("query", query.get)
                     .option("url", url)
                     .options(props.asScala)
@@ -136,20 +137,24 @@ case class JdbcRelation(
                 reader.jdbc(url, tableIdentifier.unquotedString, props)
             }
 
-        val df = filterPartition(tableDf, partitions)
+        // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
+        // explicit schema specification of the relation
+        val schemaDf = applyInputSchema(tableDf)
+
+        val df = filterPartition(schemaDf, partitions)
         SchemaUtils.applySchema(df, schema)
     }
 
     /**
       * Writes a given DataFrame into a JDBC connection
       *
-      * @param executor
+      * @param execution
       * @param df
       * @param partition
       * @param mode
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
-        require(executor != null)
+    override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
@@ -167,13 +172,13 @@ case class JdbcRelation(
 
         if (partition.isEmpty) {
             // Write partition into DataBase
-            this.writer(executor, dfExt, mode.batchMode)
+            this.writer(execution, dfExt, "jdbc", Map(), mode.batchMode)
                 .mode(mode.batchMode)
                 .jdbc(url, tableIdentifier.unquotedString, props)
         }
         else {
             def writePartition(): Unit = {
-                this.writer(executor, dfExt, SaveMode.Append)
+                this.writer(execution, dfExt, "jdbc", Map(), SaveMode.Append)
                     .jdbc(url, tableIdentifier.unquotedString, props)
             }
 
@@ -206,11 +211,11 @@ case class JdbcRelation(
 
     /**
       * Removes one or more partitions.
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        require(execution != null)
         require(partitions != null)
 
         if (query.nonEmpty)
@@ -235,11 +240,11 @@ case class JdbcRelation(
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor:Executor) : Trilean = {
-        require(executor != null)
+    override def exists(execution:Execution) : Trilean = {
+        require(execution != null)
 
         withConnection{ (con,options) =>
             JdbcUtils.tableExists(con, tableIdentifier, options)
@@ -252,12 +257,12 @@ case class JdbcRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
         withConnection{ (con,options) =>
@@ -272,10 +277,10 @@ case class JdbcRelation(
     /**
       * This method will physically create the corresponding relation in the target JDBC database.
      *
-     * @param executor
+     * @param execution
       */
-    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        require(executor != null)
+    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+        require(execution != null)
 
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
@@ -299,10 +304,10 @@ case class JdbcRelation(
 
     /**
       * This method will physically destroy the corresponding relation in the target JDBC database.
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        require(executor != null)
+    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
+        require(execution != null)
 
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot destroy JDBC relation '$identifier' which is defined by an SQL query")
@@ -315,10 +320,11 @@ case class JdbcRelation(
         }
     }
 
-    override def migrate(executor:Executor) : Unit = ???
+    override def migrate(execution:Execution) : Unit = ???
 
     /**
-      * Creates a Spark schema from the list of fields.
+      * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
+      * these are required for reading.
       * @return
       */
     override protected def inputSchema : Option[StructType] = {
@@ -326,10 +332,11 @@ case class JdbcRelation(
     }
 
     /**
-      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing
+      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
+      * This JDBC implementation will add partition columns, since these are required for writing.
       * @return
       */
-    override protected def outputSchema : Option[StructType] = {
+    override protected def outputSchema(execution:Execution) : Option[StructType] = {
         schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
     }
 

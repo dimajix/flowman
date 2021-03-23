@@ -21,11 +21,11 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class UtcTimestampTest extends FlatSpec with Matchers {
+class UtcTimestampTest extends AnyFlatSpec with Matchers {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm[:ss][.S]").withZone(ZoneOffset.UTC)
     def parseDateTime(value:String) = new Timestamp(LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC) * 1000l)
 

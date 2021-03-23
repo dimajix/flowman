@@ -18,12 +18,18 @@ package com.dimajix.flowman.types
 
 import java.sql.Date
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.util.ObjectMapper
 
 
-class DateTypeTest extends FlatSpec with Matchers {
-    "A DateType" should "parse strings" in {
+class DateTypeTest extends AnyFlatSpec with Matchers {
+    "A DateType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("date") should be(DateType)
+    }
+
+    it should "parse strings" in {
         DateType.parse("2017-12-01") should be (Date.valueOf("2017-12-01"))
     }
 
@@ -77,9 +83,12 @@ class DateTypeTest extends FlatSpec with Matchers {
         result2(3) should be (Date.valueOf("2017-12-16"))
     }
 
-    it should "provide the correct SQL type" in {
-        val ftype = DateType
+    it should "provide the correct Spark type" in {
+        DateType.sparkType should be (org.apache.spark.sql.types.DateType)
+    }
 
-        ftype.sqlType should be ("date")
+    it should "provide the correct SQL type" in {
+        DateType.sqlType should be ("date")
+        DateType.sparkType.sql should be ("DATE")
     }
 }

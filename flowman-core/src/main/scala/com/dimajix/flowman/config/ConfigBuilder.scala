@@ -4,6 +4,14 @@ import java.io.File
 
 
 private object ConfigHelpers {
+    private lazy val classLoader = {
+        val cl = Thread.currentThread.getContextClassLoader
+        if (cl == null)
+            classOf[Configuration].getClassLoader
+        else
+            cl
+    }
+
 
     def toNumber[T](s: String, converter: String => T, key: String, configType: String): T = {
         try {
@@ -29,6 +37,21 @@ private object ConfigHelpers {
 
     def seqToString[T](v: Seq[T], stringConverter: T => String): String = {
         v.map(stringConverter).mkString(",")
+    }
+
+    def stringToClass[T](s: String, key:String, xface:Class[T]) : Class[_ <: T] = {
+        try {
+            val clazz = Class.forName(s, true, classLoader)
+            clazz.asSubclass(xface)
+        }
+        catch {
+            case e: ClassNotFoundException =>
+                throw new RuntimeException(e)
+        }
+    }
+
+    def classToString[T](clazz:Class[T]) : String = {
+        clazz.getCanonicalName
     }
 }
 
@@ -126,5 +149,9 @@ case class ConfigBuilder(key: String) {
 
     def fileConf: TypedConfigBuilder[File] = {
         new TypedConfigBuilder(this, v => new File(v))
+    }
+
+    def classConf[T](xface:Class[T]): TypedConfigBuilder[Class[_ <: T]] = {
+        new TypedConfigBuilder(this, stringToClass(_, key, xface), classToString(_))
     }
 }

@@ -22,7 +22,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.Logger
 
 import com.dimajix.common.Trilean
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.types.FieldValue
@@ -39,19 +39,19 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor: Executor, schema: Option[StructType], partitions: Map[String, FieldValue] = Map()): DataFrame = {
-        require(executor != null)
+    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue] = Map()): DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading Hive relation '$identifier' from table $tableIdentifier using partition values $partitions")
 
-        val reader = executor.spark.read.options(options)
+        val reader = execution.spark.read
         val tableDf = reader.table(tableIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
 
@@ -60,13 +60,13 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
-      * @param executor
+      * @param execution
       * @return
       */
-    override def exists(executor:Executor) : Trilean = {
-        require(executor != null)
+    override def exists(execution:Execution) : Trilean = {
+        require(execution != null)
 
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         catalog.tableExists(tableIdentifier)
     }
 }

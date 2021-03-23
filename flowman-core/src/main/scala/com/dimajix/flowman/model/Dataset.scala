@@ -20,7 +20,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.Connection.Properties
 import com.dimajix.flowman.types.StructType
@@ -75,36 +75,37 @@ trait Dataset extends Instance {
 
     /**
       * Returns true if the data represented by this Dataset actually exists
-      * @param executor
+      * @param execution
       * @return
       */
-    def exists(executor: Executor) : Trilean
+    def exists(execution: Execution) : Trilean
 
     /**
       * Removes the data represented by this dataset, but leaves the underlying relation present
-      * @param executor
+      * @param execution
       */
-    def clean(executor: Executor) : Unit
+    def clean(execution: Execution) : Unit
 
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    def read(executor:Executor, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame
+    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       */
-    def write(executor:Executor, df:DataFrame, mode:OutputMode = OutputMode.OVERWRITE) : Unit
+    def write(execution:Execution, df:DataFrame, mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
-      * Returns the schema as produced by this dataset, relative to the given input schema
+      * Returns the schema of this dataset that is either returned by [[read]] operations or that is expected
+      * by [[write]] operations. If the schema is dynamic or cannot be inferred, [[None]] is returned.
       * @return
       */
-    def describe(executor:Executor) : Option[StructType]
+    def describe(execution:Execution) : Option[StructType]
 }

@@ -17,8 +17,8 @@
 package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
+class AvroRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "An Avro Hive Table" should "be writeable" in (if (hiveSupported && spark.version >= "2.4") {
         val spark = this.spark
         import spark.implicits._
@@ -61,7 +61,7 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -118,7 +118,7 @@ class AvroRelationTest extends FlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))

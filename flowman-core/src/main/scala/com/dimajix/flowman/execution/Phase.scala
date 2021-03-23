@@ -26,6 +26,9 @@ sealed abstract class Phase  {
 }
 
 object Phase {
+    case object VALIDATE extends Phase {
+        override val value = "validate"
+    }
     case object CREATE extends Phase {
         override val value = "create"
     }
@@ -44,6 +47,7 @@ object Phase {
 
     def ofString(status:String) : Phase = {
         status.toLowerCase(Locale.ROOT) match {
+            case VALIDATE.value => VALIDATE
             case CREATE.value => CREATE
             case BUILD.value => BUILD
             case VERIFY.value => VERIFY
@@ -61,6 +65,7 @@ object Phase {
   */
 object Lifecycle {
     val BUILD:Seq[Phase] = Seq(
+        Phase.VALIDATE,
         Phase.CREATE,
         Phase.BUILD,
         Phase.VERIFY

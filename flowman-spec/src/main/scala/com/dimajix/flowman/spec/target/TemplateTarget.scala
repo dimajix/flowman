@@ -20,9 +20,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
@@ -30,10 +31,10 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.splitSettings
 
 
-class TemplateTarget(
+case class TemplateTarget(
     override val instanceProperties:Target.Properties,
-    val target:TargetIdentifier,
-    val environment:Map[String,String]
+    target:TargetIdentifier,
+    environment:Map[String,String]
 ) extends BaseTarget {
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
@@ -90,26 +91,32 @@ class TemplateTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
-        targetInstance.dirty(executor, phase)
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
+        targetInstance.dirty(execution, phase)
     }
 
     /**
      * Executes a specific phase of this target
      *
-     * @param executor
+     * @param execution
      * @param phase
      */
-    override def execute(executor: Executor, phase: Phase): Unit = {
-        targetInstance.execute(executor, phase)
+    override def execute(execution: Execution, phase: Phase): Unit = {
+        targetInstance.execute(execution, phase)
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        targetInstance.link(linker)
     }
 }
-
-
 
 
 class TemplateTargetSpec extends TargetSpec {
@@ -123,7 +130,7 @@ class TemplateTargetSpec extends TargetSpec {
      * @return
      */
     override def instantiate(context: Context): TemplateTarget = {
-        new TemplateTarget(
+        TemplateTarget(
             instanceProperties(context),
             TargetIdentifier(context.evaluate(target)),
             splitSettings(environment).toMap

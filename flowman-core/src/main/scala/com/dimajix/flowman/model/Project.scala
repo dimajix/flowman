@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spi.ProjectReader
 
 
 object Project {
@@ -109,7 +110,8 @@ object Project {
                 relations = module.relations,
                 mappings = module.mappings,
                 targets = module.targets,
-                jobs = module.jobs
+                jobs = module.jobs,
+                tests = module.tests
             )
         }
 
@@ -140,16 +142,6 @@ final case class Project(
     connections : Map[String,Template[Connection]] = Map(),
     mappings : Map[String,Template[Mapping]] = Map(),
     targets : Map[String,Template[Target]] = Map(),
-    jobs : Map[String,Template[Job]] = Map()
+    jobs : Map[String,Template[Job]] = Map(),
+    tests : Map[String,Template[Test]] = Map()
 )
-
-
-abstract class ProjectReader {
-    def name : String
-    def format : String
-
-    def supports(format:String) : Boolean = this.format == format
-
-    def file(file: File) : Project
-    def string(text: String): Project
-}

@@ -73,6 +73,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
 }
 
 
+class ValidateCommand extends PhaseCommand(Phase.VALIDATE)
 class CreateCommand extends PhaseCommand(Phase.CREATE)
 class BuildCommand extends PhaseCommand(Phase.BUILD)
 class VerifyCommand extends PhaseCommand(Phase.VERIFY)

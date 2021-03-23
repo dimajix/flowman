@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.14.2</version>
+    <version>0.15.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
-    <url>http://flowman.io</url>
+    <url>https://flowman.io</url>
     <inceptionYear>2018</inceptionYear>
 
     <licenses>
@@ -51,70 +51,84 @@
 
     <properties>
         <hadoop.dist>oss</hadoop.dist>
-        <hadoop.version>2.8.5</hadoop.version>
-        <hadoop-api.version>2.8</hadoop-api.version>
         <hive.version>2.3.3</hive.version>
         <hbase.version>1.2.0</hbase.version>
-        <spark.version>2.4.7</spark.version>
-        <spark-hive.scope>compile</spark-hive.scope>
-        <spark-api.version>2.4</spark-api.version>
-        <azure.version>2.2.0</azure.version>
         <args4j.version>2.33</args4j.version>
-        <joda.version>2.9.4</joda.version>
-        <avro.version>1.8.2</avro.version>
         <ivy.version>2.4.0</ivy.version>
-        <kafka.version>2.0.0</kafka.version>
-        <jackson.version>2.6.7</jackson.version>
-        <jackson.databind.version>2.6.7.3</jackson.databind.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
-        <paranamer.version>2.8</paranamer.version>
-        <json4s.version>3.5.3</json4s.version>
-        <json-smart.version>1.1.1</json-smart.version>
-        <guava.version>14.0.1</guava.version>
-        <snakeyaml.version>1.25</snakeyaml.version>
         <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>
-        <slf4j.version>1.7.16</slf4j.version>
+        <re2j.version>1.1</re2j.version>
+        <scalamock.version>5.1.0</scalamock.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <dropwizard.version>3.1.5</dropwizard.version>
-        <commons-lang.version>2.6</commons-lang.version>
-        <commons-dbcp.version>1.4</commons-dbcp.version>
-        <commons-codec.version>1.10</commons-codec.version>
-        <commons-compress.version>1.8.1</commons-compress.version>
-        <commons-digester.version>1.8.1</commons-digester.version>
-        <commons-io.version>2.4</commons-io.version>
-        <commons-pool.version>1.5.4</commons-pool.version>
-        <commons-validator.version>1.6</commons-validator.version>
-        <commons-compiler.version>3.0.9</commons-compiler.version>
         <commons-cli.version>1.2</commons-cli.version>
+        <commons-compiler.version>3.0.9</commons-compiler.version>
+        <commons-dbcp.version>1.4</commons-dbcp.version>
+        <commons-digester.version>1.8.1</commons-digester.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
-        <commons-math3.version>3.4.1</commons-math3.version>
-        <commons-lang3.version>3.5</commons-lang3.version>
-        <commons-net.version>3.1</commons-net.version>
-        <commons-text.version>1.6</commons-text.version>
-        <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-beanutils.version>1.9.2</commons-beanutils.version>
+        <commons-io.version>2.4</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.1.3</commons-logging.version>
-        <httpclient.version>4.5.6</httpclient.version>
-        <httpcore.version>4.4.10</httpcore.version>
+        <commons-math3.version>3.4.1</commons-math3.version>
+        <commons-net.version>3.1</commons-net.version>
+        <commons-pool.version>1.5.4</commons-pool.version>
+        <commons-text.version>1.6</commons-text.version>
+        <commons-validator.version>1.6</commons-validator.version>
         <netty.version>3.9.9.Final</netty.version>
+
+        <!-- Default Hadoop version (3.2.0) -->
+        <hadoop.version>3.2.0</hadoop.version>
+        <hadoop-api.version>3.2</hadoop-api.version>
+        <commons-beanutils.version>1.9.3</commons-beanutils.version>
+        <commons-codec.version>1.11</commons-codec.version>
+
+        <!-- Default Spark version (3.0) -->
+        <scala.version>2.12.10</scala.version>
+        <scala.api_version>2.12</scala.api_version>
+        <scalatest.version>3.0.8</scalatest.version>
+        <scalatest-api.version>3.0</scalatest-api.version>
+        <spark.version>3.0.2</spark.version>
+        <spark-api.version>3.0</spark-api.version>
+        <spark-hive.scope>compile</spark-hive.scope>
         <netty-all.version>4.1.47.Final</netty-all.version>
+        <jackson.version>2.10.0</jackson.version>
+        <jackson.databind.version>2.10.0</jackson.databind.version>
+        <paranamer.version>2.8</paranamer.version>
+        <kafka.version>2.4.1</kafka.version>
+        <zookeeper.version>3.4.14</zookeeper.version>
+        <avro.version>1.8.2</avro.version>
+        <json4s.version>3.6.6</json4s.version>
+        <json-smart.version>2.3</json-smart.version>
+        <guava.version>14.0.1</guava.version>
+        <slf4j.version>1.7.30</slf4j.version>
+        <httpclient.version>4.5.6</httpclient.version>
+        <httpcore.version>4.4.12</httpcore.version>
+        <dropwizard.version>4.1.1</dropwizard.version>
+        <snappy.version>1.1.8.2</snappy.version>
+        <commons-collections.version>3.2.2</commons-collections.version>
+        <commons-compress.version>1.20</commons-compress.version>
+        <commons-lang3.version>3.9</commons-lang3.version>
+
+        <!-- Flowman version -->
+        <flowman.version>${project.version}</flowman.version>
+
         <!-- Language versions -->
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <scala.version>2.11.12</scala.version>
-        <scala.api_version>2.11</scala.api_version>
+
         <!-- Set this to false for releases -->
         <gpg.skip>true</gpg.skip>
+
         <!-- Definition of the release repository -->
         <deployment.repository.id>ossrh</deployment.repository.id>
         <deployment.repository.snapshot-id>${deployment.repository.id}</deployment.repository.snapshot-id>
         <deployment.repository.server>https://oss.sonatype.org/</deployment.repository.server>
         <deployment.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</deployment.repository.url>
         <deployment.repository.snapshot-url>https://oss.sonatype.org/content/repositories/snapshots</deployment.repository.snapshot-url>
+
         <!-- Encoding related settings -->
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -134,6 +148,10 @@
             <properties>
                 <hadoop.dist>cdh5</hadoop.dist>
                 <cdh.version>cdh5.15.1</cdh.version>
+                <scala.version>2.11.12</scala.version>
+                <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.3</spark-api.version>
@@ -142,21 +160,22 @@
                 <hive.version>1.1.0-${cdh.version}</hive.version>
                 <hbase.version>1.2.0-${cdh.version}</hbase.version>
                 <kafka.version>0.10.0-kafka-2.1.0</kafka.version>
+                <zookeeper.version>3.4.5-${cdh.version}</zookeeper.version>
                 <avro.version>1.7.6-${cdh.version}</avro.version>
                 <guava.version>12.0.1</guava.version>
                 <json4s.version>3.2.11</json4s.version>
+                <json-smart.version>1.1.1</json-smart.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <httpclient.version>4.5.4</httpclient.version>
                 <httpcore.version>4.4.7</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
-                <commons-lang.version>2.6</commons-lang.version>
-                <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <commons-compress.version>1.4.1</commons-compress.version>
+                <commons-lang3.version>3.5</commons-lang3.version>
                 <slf4j.version>1.7.5</slf4j.version>
-                <scala.api_version>2.11</scala.api_version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -180,6 +199,10 @@
             <properties>
                 <hadoop.dist>cdh6</hadoop.dist>
                 <cdh.version>cdh6.3.3</cdh.version>
+                <scala.version>2.11.12</scala.version>
+                <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.4.0-cdh6.3.3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.4</spark-api.version>
@@ -188,23 +211,22 @@
                 <hive.version>2.1.1-${cdh.version}</hive.version>
                 <hbase.version>2.1.0-${cdh.version}</hbase.version>
                 <kafka.version>2.2.1-${cdh.version}</kafka.version>
+                <zookeeper.version>3.4.5-${cdh.version}</zookeeper.version>
                 <avro.version>1.8.2-${cdh.version}</avro.version>
                 <guava.version>14.0.1</guava.version>
                 <json4s.version>3.5.3</json4s.version>
+                <json-smart.version>1.1.1</json-smart.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <jackson.version>2.9.10</jackson.version>
                 <jackson.databind.version>2.9.10.1</jackson.databind.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
-                <commons-lang.version>2.6</commons-lang.version>
-                <commons-lang3.version>3.7</commons-lang3.version>
-                <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
+                <commons-lang3.version>3.7</commons-lang3.version>
                 <slf4j.version>1.7.25</slf4j.version>
-                <scala.version>2.11.12</scala.version>
-                <scala.api_version>2.11</scala.api_version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -223,21 +245,28 @@
             <properties>
                 <scala.version>2.11.8</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.3.3</spark.version>
                 <spark-api.version>2.3</spark-api.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.17.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.1</jackson.databind.version>
                 <paranamer.version>2.6</paranamer.version>
                 <avro.version>1.7.7</avro.version>
                 <kafka.version>0.10.0.1</kafka.version>
+                <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.2.11</json4s.version>
+                <json-smart.version>1.1.1</json-smart.version>
                 <guava.version>12.0</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
                 <httpclient.version>4.5.4</httpclient.version>
                 <httpcore.version>4.4.7</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.4.1</commons-compress.version>
+                <commons-lang3.version>3.5</commons-lang3.version>
             </properties>
         </profile>
         <profile>
@@ -245,23 +274,28 @@
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
                 <spark.version>2.4.7</spark.version>
                 <spark-api.version>2.4</spark-api.version>
+                <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson.databind.version>2.6.7.3</jackson.databind.version>
                 <paranamer.version>2.8</paranamer.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
+                <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.5.3</json4s.version>
+                <json-smart.version>1.1.1</json-smart.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
-                <commons-lang3.version>3.5</commons-lang3.version>
-                <commons-math3.version>3.4.1</commons-math3.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.8.1</commons-compress.version>
+                <commons-lang3.version>3.5</commons-lang3.version>
             </properties>
         </profile>
         <profile>
@@ -269,23 +303,57 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.0.1</spark.version>
+                <scalatest.version>3.0.8</scalatest.version>
+                <scalatest-api.version>3.0</scalatest-api.version>
+                <spark.version>3.0.2</spark.version>
                 <spark-api.version>3.0</spark-api.version>
+                <snappy.version>1.1.8.2</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <jackson.version>2.10.0</jackson.version>
                 <jackson.databind.version>2.10.0</jackson.databind.version>
                 <paranamer.version>2.8</paranamer.version>
+                <kafka.version>2.4.1</kafka.version>
+                <zookeeper.version>3.4.14</zookeeper.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.6.6</json4s.version>
+                <json-smart.version>2.3</json-smart.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.30</slf4j.version>
-                <kafka.version>2.4.1</kafka.version>
                 <httpclient.version>4.5.6</httpclient.version>
-                <httpcore.version>4.4.10</httpcore.version>
+                <httpcore.version>4.4.12</httpcore.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compress.version>1.20</commons-compress.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
-                <commons-math3.version>3.4.1</commons-math3.version>
-                <commons-compress.version>1.8.1</commons-compress.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.1</id>
+            <properties>
+                <scala.version>2.12.10</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <scalatest.version>3.2.5</scalatest.version>
+                <scalatest-api.version>3.2</scalatest-api.version>
+                <spark.version>3.1.1</spark.version>
+                <spark-api.version>3.1</spark-api.version>
+                <snappy.version>1.1.8.2</snappy.version>
+                <netty-all.version>4.1.51.Final</netty-all.version>
+                <jackson.version>2.10.0</jackson.version>
+                <jackson.databind.version>2.10.0</jackson.databind.version>
+                <paranamer.version>2.8</paranamer.version>
+                <kafka.version>2.6.0</kafka.version>
+                <zookeeper.version>3.5.7</zookeeper.version>
+                <avro.version>1.8.2</avro.version>
+                <json4s.version>3.7.0-M5</json4s.version>
+                <json-smart.version>2.3</json-smart.version>
+                <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.30</slf4j.version>
+                <httpclient.version>4.5.6</httpclient.version>
+                <httpcore.version>4.4.12</httpcore.version>
+                <dropwizard.version>4.1.1</dropwizard.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compress.version>1.20</commons-compress.version>
+                <commons-lang3.version>3.9</commons-lang3.version>
             </properties>
         </profile>
 
@@ -346,12 +414,12 @@
     </profiles>
 
     <modules>
+        <module>flowman-scalatest-compat</module>
         <module>flowman-spark-testing</module>
         <module>flowman-spark-extensions</module>
         <module>flowman-core</module>
         <module>flowman-spec</module>
         <module>flowman-dsl</module>
-        <module>flowman-plugins/example</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
@@ -359,11 +427,14 @@
         <module>flowman-plugins/impala</module>
         <module>flowman-plugins/mariadb</module>
         <module>flowman-plugins/mysql</module>
+        <module>flowman-plugins/swagger</module>
+        <module>flowman-plugins/json</module>
         <module>flowman-testing</module>
         <module>flowman-tools</module>
         <module>flowman-ui</module>
         <module>flowman-server</module>
         <module>flowman-dist</module>
+        <module>flowman-parent</module>
         <!--<module>docker</module>-->
     </modules>
 
@@ -457,6 +528,16 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.9.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.1.1</version>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -472,6 +553,31 @@
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+                <!-- Disable Java Compiler -->
+                <plugin>
+                    <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
@@ -479,33 +585,25 @@
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-compile</id>
+                            <phase>none</phase>
+                        </execution>
+                        <execution>
+                            <id>default-testCompile</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
+                    <inherited>true</inherited>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.3.1</version>
+                    <version>4.4.0</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
+                        <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
                         <args>
                             <arg>-unchecked</arg>
                             <arg>-deprecation</arg>
@@ -547,13 +645,14 @@
                     </executions>
                 </plugin>
                 <plugin>
+                    <inherited>true</inherited>
                     <groupId>org.scalatest</groupId>
                     <artifactId>scalatest-maven-plugin</artifactId>
                     <version>2.0.0</version>
                     <configuration>
                         <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                         <junitxml>.</junitxml>
-                        <filereports>WDF TestSuite.txt</filereports>
+                        <filereports>TestSuite.txt</filereports>
                         <systemProperties>
                             <derby.system.durability>test</derby.system.durability>
                             <spark.ui.enabled>false</spark.ui.enabled>
@@ -572,17 +671,13 @@
                     </executions>
                 </plugin>
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.9.1</version>
-                </plugin>
-                <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>3.1.2</version>
                 </plugin>
                 <plugin>
+                    <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
                     <version>3.1.0</version>
@@ -634,6 +729,21 @@
                             <defaultDirectoryMode>0755</defaultDirectoryMode>
                         </archiverConfig>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <finalName>${project.artifactId}-${project.version}</finalName>
+                                <descriptors>
+                                    <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                </descriptors>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -662,6 +772,7 @@
                         </execution>
                     </executions>
                 </plugin>
+                <!-- Disable Surefire -->
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -675,11 +786,13 @@
                     </executions>
                 </plugin>
                 <plugin>
+                    <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.7</version>
+                    <version>2.8.1</version>
                 </plugin>
                 <plugin>
+                    <inherited>true</inherited>
                     <groupId>com.spotify</groupId>
                     <artifactId>dockerfile-maven-plugin</artifactId>
                     <version>1.4.12</version>
@@ -714,8 +827,9 @@
     <reporting>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.1</version>
             </plugin>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
@@ -728,6 +842,21 @@
                     </jvmArgs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.scoverage</groupId>
+                <artifactId>scoverage-maven-plugin</artifactId>
+                <version>1.4.1</version>
+                <configuration>
+                    <aggregate>false</aggregate>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report> <!-- select only one report from: report, integration-report and report-only reporters -->
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
         </plugins>
     </reporting>
 
@@ -735,78 +864,67 @@
         <dependencies>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-scalatest-compat</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-testing</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spec</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-dsl</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-testing</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-aws</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-azure</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-plugin-example</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <!--
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
@@ -814,23 +932,37 @@
                 <version>${project.version}</version>
             </dependency>
             -->
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-kafka</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-impala</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mariadb</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-swagger</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-json</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-dist</artifactId>
+                <version>${project.version}</version>
+                <type>tar.gz</type>
+                <classifier>bin</classifier>
             </dependency>
 
             <dependency>
@@ -839,7 +971,6 @@
                 <version>${scala.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-reflect</artifactId>
@@ -852,41 +983,6 @@
                 <artifactId>scala-xml_${scala.api_version}</artifactId>
                 <version>1.2.0</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest_${scala.api_version}</artifactId>
-                <version>3.0.8</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>3.1.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.scalamock</groupId>
-                <artifactId>scalamock_${scala.api_version}</artifactId>
-                <version>4.4.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>5.5.2</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>5.5.2</version>
-                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -909,28 +1005,30 @@
                 <version>${spark.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <dependency>
+                <groupId>org.spark-project.spark</groupId>
+                <artifactId>unused</artifactId>
+                <version>1.0.0</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-tags_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-catalyst_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-hive_${scala.api_version}</artifactId>
@@ -947,14 +1045,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>compile</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-core_${scala.api_version}</artifactId>
@@ -962,7 +1058,6 @@
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-catalyst_${scala.api_version}</artifactId>
@@ -970,7 +1065,6 @@
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql_${scala.api_version}</artifactId>
@@ -978,14 +1072,12 @@
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>compile</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
@@ -1002,16 +1094,30 @@
             </dependency>
 
             <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-                <scope>compile</scope>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
-                <groupId>org.xerial.snappy</groupId>
-                <artifactId>snappy-java</artifactId>
-                <version>1.1.7.3</version>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>1.3.9</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>1.1.0.Final</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1021,21 +1127,18 @@
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-yarn-common</artifactId>
@@ -1056,14 +1159,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-hdfs</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
@@ -1088,14 +1189,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-minicluster</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-hdfs</artifactId>
@@ -1152,24 +1251,15 @@
                 <version>${slf4j.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-ext</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>joda-time</groupId>
-                <artifactId>joda-time</artifactId>
-                <version>${joda.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1186,7 +1276,6 @@
                 <version>${avro.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-mapred</artifactId>
@@ -1208,7 +1297,6 @@
                 <version>${jackson_asl.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-core-asl</artifactId>
@@ -1221,7 +1309,6 @@
                 <artifactId>jackson-jaxrs</artifactId>
                 <version>${jackson_asl.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-xc</artifactId>
@@ -1234,56 +1321,48 @@
                 <version>${jackson.databind.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-paranamer</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-scala_${scala.api_version}</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-json-provider</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-base</artifactId>
                 <version>${jackson.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-yaml</artifactId>
@@ -1304,21 +1383,18 @@
                 <version>${json4s.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-core_${scala.api_version}</artifactId>
                 <version>${json4s.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-ast_${scala.api_version}</artifactId>
                 <version>${json4s.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-scalap_${scala.api_version}</artifactId>
@@ -1332,28 +1408,24 @@
                 <version>${dropwizard.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-json</artifactId>
                 <version>${dropwizard.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jvm</artifactId>
                 <version>${dropwizard.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jmx</artifactId>
                 <version>${dropwizard.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-graphite</artifactId>
@@ -1362,111 +1434,99 @@
             </dependency>
 
             <dependency>
-                <groupId>commons-beanutils</groupId>
-                <artifactId>commons-beanutils</artifactId>
-                <version>${commons-beanutils.version}</version>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-math3</artifactId>
                 <version>${commons-math3.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>commons-collections</groupId>
                 <artifactId>commons-collections</artifactId>
                 <version>${commons-collections.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
                 <version>${commons-logging.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-httpclient</groupId>
                 <artifactId>commons-httpclient</artifactId>
                 <version>${commons-httpclient.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
                 <version>${commons-cli.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-dbcp</groupId>
                 <artifactId>commons-dbcp</artifactId>
                 <version>${commons-dbcp.version}</version>
+                <scope>compile</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-digester</groupId>
                 <artifactId>commons-digester</artifactId>
                 <version>${commons-digester.version}</version>
                 <scope>provided</scope>
             </dependency>
-
-            <dependency>
-                <groupId>commons-compress</groupId>
-                <artifactId>commons-compress</artifactId>
-                <version>${commons-compress.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
             <dependency>
                 <groupId>commons-pool</groupId>
                 <artifactId>commons-pool</artifactId>
                 <version>${commons-pool.version}</version>
+                <scope>compile</scope>
             </dependency>
-
             <dependency>
                 <groupId>commons-compiler</groupId>
                 <artifactId>commons-compiler</artifactId>
                 <version>${commons-compiler.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>commons-validator</groupId>
                 <artifactId>commons-validator</artifactId>
                 <version>${commons-validator.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -1475,12 +1535,64 @@
                 <version>${httpclient.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
                 <version>${httpcore.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-parser</artifactId>
+                <version>1.0.49</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-core</artifactId>
+                <version>1.6.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-models</artifactId>
+                <version>1.6.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>1.6.0</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.re2j</groupId>
+                <artifactId>re2j</artifactId>
+                <version>${re2j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.reactivestreams</groupId>
+                <artifactId>reactive-streams</artifactId>
+                <version>1.0.2</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.tukaani</groupId>
+                <artifactId>xz</artifactId>
+                <version>1.5</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+                <version>1.3.3</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -1495,6 +1607,34 @@
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <!-- Test Dependencies -->
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_${scala.api_version}</artifactId>
+                <version>${scalatest.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.scalamock</groupId>
+                <artifactId>scalamock_${scala.api_version}</artifactId>
+                <version>${scalamock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>5.5.2</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>5.5.2</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

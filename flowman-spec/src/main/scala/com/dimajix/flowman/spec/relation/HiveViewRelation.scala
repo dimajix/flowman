@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -77,16 +77,16 @@ case class HiveViewRelation(
         db ++ other
     }
 
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
+    override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         throw new UnsupportedOperationException()
     }
 
     /**
       * Truncating a view actually is non-op
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    override def truncate(executor: Executor, partitions: Map[String, FieldValue]): Unit = {
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
     }
 
     /**
@@ -94,22 +94,22 @@ case class HiveViewRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean =  {
-        exists(executor)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean =  {
+        exists(execution)
     }
 
     /**
      * This method will physically create the corresponding Hive view
      *
-     * @param executor
+     * @param execution
      */
-    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        val select = getSelect(executor)
-        val catalog = executor.catalog
+    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+        val select = getSelect(execution)
+        val catalog = execution.catalog
         if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
             logger.info(s"Creating Hive view relation '$identifier' with VIEW $tableIdentifier")
             catalog.createView(tableIdentifier, select, ifNotExists)
@@ -119,12 +119,12 @@ case class HiveViewRelation(
     /**
      * This will update any existing Hive view to the current definition. The update will only be performed, if the
      * definition actually changed.
-     * @param executor
+     * @param execution
      */
-    override def migrate(executor:Executor) : Unit = {
-        val catalog = executor.catalog
+    override def migrate(execution:Execution) : Unit = {
+        val catalog = execution.catalog
         if (catalog.tableExists(tableIdentifier)) {
-            val newSelect = getSelect(executor)
+            val newSelect = getSelect(execution)
             val curTable = catalog.getTable(tableIdentifier)
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
@@ -136,24 +136,24 @@ case class HiveViewRelation(
             else {
                 logger.warn(s"VIEW target is currently a table, dropping...")
                 catalog.dropTable(tableIdentifier, false)
-                create(executor, false)
+                create(execution, false)
             }
         }
     }
 
     /**
      * This will drop the corresponding Hive view
-     * @param executor
+     * @param execution
      */
-    override def destroy(executor:Executor, ifExists:Boolean=false) : Unit = {
-        val catalog = executor.catalog
+    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
+        val catalog = execution.catalog
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
             logger.info(s"Destroying Hive view relation '$identifier' with VIEW $tableIdentifier")
             catalog.dropView(tableIdentifier)
         }
     }
 
-    private def getSelect(executor: Executor) : String = {
+    private def getSelect(executor: Execution) : String = {
         val select = sql.orElse(mapping.map(id => buildMappingSql(executor, id)))
             .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
 
@@ -162,7 +162,7 @@ case class HiveViewRelation(
         select
     }
 
-    private def buildMappingSql(executor: Executor, output:MappingOutputIdentifier) : String = {
+    private def buildMappingSql(executor: Execution, output:MappingOutputIdentifier) : String = {
         val mapping = context.getMapping(output.mapping)
         val df = executor.instantiate(mapping, output.output)
         new SqlBuilder(df).toSQL

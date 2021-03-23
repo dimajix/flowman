@@ -17,8 +17,8 @@
 package com.dimajix.flowman.execution
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -55,7 +55,7 @@ case class DummyTarget(
 }
 
 
-class TargetOrderTest extends FlatSpec with Matchers {
+class TargetOrderTest extends AnyFlatSpec with Matchers {
     "Ordering" should "work with simple resources" in {
         val session = Session.builder().build()
         val context = session.context

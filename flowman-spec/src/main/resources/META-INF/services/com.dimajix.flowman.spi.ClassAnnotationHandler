@@ -9,3 +9,4 @@ com.dimajix.flowman.spec.relation.RelationSpecAnnotationHandler
 com.dimajix.flowman.spec.schema.SchemaSpecAnnotationHandler
 com.dimajix.flowman.spec.storage.StorageSpecAnnotationHandler
 com.dimajix.flowman.spec.target.TargetSpecAnnotationHandler
+com.dimajix.flowman.spec.assertion.AssertionSpecAnnotationHandler

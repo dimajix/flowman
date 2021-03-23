@@ -32,7 +32,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
@@ -102,18 +102,18 @@ case class LocalTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.BUILD =>
-                val file = executor.fs.local(path)
+                val file = execution.fs.local(path)
                 !file.exists()
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE|Phase.DESTROY =>
-                val file = executor.fs.local(path)
+                val file = execution.fs.local(path)
                 file.exists()
             case _ => No
         }
@@ -124,7 +124,7 @@ case class LocalTarget(
       *
       * @param executor
       */
-    override def build(executor:Executor) : Unit = {
+    override def build(executor:Execution) : Unit = {
         logger.info(s"Writing mapping '${this.mapping}' to local file '$path'")
 
         val mapping = context.getMapping(this.mapping.mapping)
@@ -164,7 +164,7 @@ case class LocalTarget(
       *
       * @param executor
       */
-    override def verify(executor: Executor) : Unit = {
+    override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
         val file = executor.fs.local(path)
@@ -179,7 +179,7 @@ case class LocalTarget(
       *
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
         val outputFile = new File(path)
@@ -189,7 +189,7 @@ case class LocalTarget(
         }
     }
 
-    override def destroy(executor: Executor) : Unit = {
+    override def destroy(executor: Execution) : Unit = {
         truncate(executor)
     }
 }

@@ -38,7 +38,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ConnectionIdentifier
@@ -117,18 +117,18 @@ case class SftpUploadTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.BUILD => Unknown
             case _ => No
         }
     }
 
-    override protected def build(executor:Executor) : Unit = {
+    override protected def build(executor:Execution) : Unit = {
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
         val fs = executor.fs

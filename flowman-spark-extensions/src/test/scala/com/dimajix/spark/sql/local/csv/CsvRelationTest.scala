@@ -17,49 +17,57 @@
 package com.dimajix.spark.sql.local.csv
 
 import java.io.File
+import java.sql.Timestamp
+import java.sql.Date
 
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.BeforeAndAfter
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.apache.spark.sql.types.TimestampType
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.sql.local.implicits._
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class CsvRelationTest extends FlatSpec with Matchers with BeforeAndAfter with LocalSparkSession {
-    "The csv relation" should "support writing CSV files" in {
-        val df = spark.createDataFrame(Seq((1,"lala", 1.2),(2,"lolo", 2.3)))
+class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "The local CSV relation" should "support writing CSV files" in {
+        val df = spark.createDataFrame(Seq(
+            (1,"lala", 1.2, Timestamp.valueOf("2020-01-02 23:12:31"), Date.valueOf("2020-01-02")),
+            (2,"lolo", 2.3, Timestamp.valueOf("2021-03-02 21:12:31"), Date.valueOf("2020-02-02"))
+        ))
         df.writeLocal
             .format("csv")
             .option("encoding", "UTF-8")
+            .option("header", true)
             .save(new File(tempDir, "lala.csv"), SaveMode.Overwrite)
     }
 
     it should "support reading CSV files" in {
-        val df = spark.readLocal
+        val result = spark.readLocal
             .format("csv")
             .schema(StructType(
                 StructField("int_field", IntegerType) ::
                 StructField("str_field", StringType) ::
                 StructField("double_field", DoubleType) ::
+                StructField("timestamp_field", TimestampType) ::
+                StructField("date_field", DateType) ::
                 Nil
             ))
             .option("encoding", "UTF-8")
+            .option("header", true)
             .load(new File(tempDir, "lala.csv"))
-        val result = df
+
         result.count() should be (2)
-        val rows = result.collect()
-        rows(0).getInt(0) should be (1)
-        rows(0).getString(1) should be ("lala")
-        rows(0).getDouble(2) should be (1.2)
-        rows(1).getInt(0) should be (2)
-        rows(1).getString(1) should be ("lolo")
-        rows(1).getDouble(2) should be (2.3)
+        result.collect() should be (Seq(
+            Row(1,"lala", 1.2, Timestamp.valueOf("2020-01-02 23:12:31"), Date.valueOf("2020-01-02")),
+            Row(2,"lolo", 2.3, Timestamp.valueOf("2021-03-02 21:12:31"), Date.valueOf("2020-02-02"))
+        ))
     }
 }

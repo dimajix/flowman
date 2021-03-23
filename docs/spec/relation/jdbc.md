@@ -1,12 +1,33 @@
-
 # JDBC Relations
 
+The JDBC relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate JDBC
+driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
+
+
 ## Example
+
+```yaml
+# First specify a connection. This can be used by multiple JDBC relations
+connections:
+  frontend:
+    driver: "$frontend_db_driver"
+    url: "$frontend_db_url"
+    username: "$frontend_db_username"
+    password: "$frontend_db_password"
+
+relations:
+  frontend_users:
+    kind: jdbc
+    # Specify the name of the connection to use
+    connection: frontend
+    # Specify the table
+    table: "users"
 ```
-```
+
 
 ## Fields
  * `kind` **(mandatory)** *(type: string)*: `jdbc`
+   
  * `schema` **(optional)** *(type: schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
  try to infer the schema.
@@ -14,10 +35,6 @@
  * `description` **(optional)** *(type: string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
  
- * `options` **(optional)** *(type: map:string)* *(default: empty)*:
- All key-value pairs specified in *options* are directly passed to Apache spark for reading
- and/or writing to this relation.
-
  * `connection` **(mandatory)** *(type: string)*:
  The *connection* field specifies the name of a [Connection](../connection/index.md)
  object which has to be defined elsewhere.

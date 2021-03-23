@@ -89,7 +89,13 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
-        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props)
+        val executor = slick.util.AsyncExecutor(
+            name="Flowman.default",
+            minThreads = 20,
+            maxThreads = 20,
+            queueSize = 1000,
+            maxConnections = 20)
+        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props, executor=executor)
     }
 
     val jobRuns = TableQuery[JobRuns]
@@ -235,12 +241,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     def findJob(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
         def mapOrderColumn(order:JobOrder) : JobRuns => Rep[_] = {
-            order match {
-                case JobOrder.BY_DATETIME => t => t.start_ts
-                case JobOrder.BY_ID => t => t.id
-                case JobOrder.BY_NAME => t => t.job
-                case JobOrder.BY_PHASE => t => t.phase
-                case JobOrder.BY_STATUS => t => t.status
+            order.column match {
+                case JobOrderColumn.BY_DATETIME => t => t.start_ts
+                case JobOrderColumn.BY_ID => t => t.id
+                case JobOrderColumn.BY_NAME => t => t.job
+                case JobOrderColumn.BY_PHASE => t => t.phase
+                case JobOrderColumn.BY_STATUS => t => t.status
             }
         }
         def mapOrderDirection(order:JobOrder) : slick.ast.Ordering = {
@@ -335,12 +341,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     def findTarget(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
         def mapOrderColumn(order:TargetOrder) : TargetRuns => Rep[_] = {
-            order match {
-                case TargetOrder.BY_DATETIME => t => t.start_ts
-                case TargetOrder.BY_ID => t => t.id
-                case TargetOrder.BY_NAME => t => t.target
-                case TargetOrder.BY_PHASE => t => t.phase
-                case TargetOrder.BY_STATUS => t => t.status
+            order.column match {
+                case TargetOrderColumn.BY_DATETIME => t => t.start_ts
+                case TargetOrderColumn.BY_ID => t => t.id
+                case TargetOrderColumn.BY_NAME => t => t.target
+                case TargetOrderColumn.BY_PHASE => t => t.phase
+                case TargetOrderColumn.BY_STATUS => t => t.status
             }
         }
         def mapOrderDirection(order:TargetOrder) : slick.ast.Ordering = {

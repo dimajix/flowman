@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
@@ -71,7 +71,7 @@ case class StreamTarget(
       * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
       * @param executor
       */
-    override def create(executor: Executor) : Unit = {
+    override def create(executor: Execution) : Unit = {
         require(executor != null)
 
         val rel = context.getRelation(relation)
@@ -91,7 +91,7 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def build(executor: Executor): Unit = {
+    override def build(executor: Execution): Unit = {
         logger.info(s"Writing mapping '${this.mapping}' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")
         val mapping = context.getMapping(this.mapping.mapping)
         val rel = context.getRelation(relation)
@@ -104,7 +104,7 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def truncate(executor: Executor): Unit = {
+    override def truncate(executor: Execution): Unit = {
         logger.info(s"Cleaining streaming relation '$relation'")
         val rel = context.getRelation(relation)
         rel.truncate(executor)
@@ -114,7 +114,7 @@ case class StreamTarget(
       * Destroys both the logical relation and the physical data
       * @param executor
       */
-    override def destroy(executor: Executor) : Unit = {
+    override def destroy(executor: Execution) : Unit = {
         require(executor != null)
 
         logger.info(s"Destroying relation '$relation'")

@@ -1,4 +1,38 @@
-# Version 0.14.2
+# Version 0.15.0 - 2021-03-23
+
+* New configuration variable `floman.default.target.rebalance`
+* New configuration variable `floman.default.target.parallelism`
+* Changed behaviour: The `mergeFile` target now does not assume any more that the `target` is local. If you already
+  use `mergeFiles` with a local file, you need to prefix the target file name with `file://`.
+* Add new `-t` argument for selectively building a subset of targets
+* Remove example-plugin
+* Add quickstart guide  
+* Add new "flowman-parent" BOM for projects using Flowman
+* Move `com.dimajix.flowman.annotations` package to `com.dimajix.flowman.spec.annotations`
+* Add new log redaction
+* Integrate Scala scode coverage analysis
+* `assemble` will fail when trying to use non-existing columns
+* Move `swagger` and `json` schema support into separate plugins
+* Change default build to Spark 3.0 and Hadoop 3.2
+* Update Spark to 3.0.2
+* Rename class `Executor` to `Execution` - watch your plugins!
+* Implement new configurable `Executor` class for executing build targets.
+* Add build profile for Spark 3.1.x
+* Update ScalaTest to 3.2.5 - watch your unittests for changed ScalaTest API!
+* Add new `case` mapping
+* Add new `--dry-run` command line option
+* Add new `mock` and `null` mapping types
+* Add new `mock` relation
+* Add new `values` mapping
+* Add new `values` dataset  
+* Implement new testing capabilities  
+* Rename `update` mapping to `upsert` mapping, which better describes its functionality 
+* Introduce new `VALIDATE` phase, which is executed even before `CREATE` phase
+* Implement new `validate` and `verify` targets
+* Implement new `deptree` command in Flowman shell
+
+
+# Version 0.14.2 - 2020-10-12
 
 * Upgrade to Spark 2.4.7 and Spark 3.0.1
 * Clean up dependencies

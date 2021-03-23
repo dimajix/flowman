@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,22 @@
 
 package com.dimajix.flowman.model
 
+import java.io.File
+
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ResourceIdentifierTest extends FlatSpec with Matchers {
-    "A ResourceIdentifier" should "support 'contains' with partitions" in {
+class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
+    "A ResourceIdentifier" should "support basic methods" in {
+        val id = ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz"))
+        id.category should be ("hiveTablePartition")
+        id.name should be ("some_table")
+        id.partition should be (Map("p1" -> "xyz"))
+    }
+
+    it should "support 'contains' with partitions" in {
         val id = ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz"))
         id.contains(ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz"))) should be (true)
         id.contains(ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "zyx"))) should be (false)
@@ -82,7 +91,7 @@ class ResourceIdentifierTest extends FlatSpec with Matchers {
         id.contains(ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.test.dev/processing_date=2019-03-20"))) should be (true)
     }
 
-    it should "support character sets" in {
+    it should "support character sets in regex" in {
         val id = ResourceIdentifier.ofHiveTable("table_[0-9]+")
         id.contains(ResourceIdentifier.ofHiveTable("table_[0-9]+")) should be (true)
         id.contains(ResourceIdentifier.ofHiveTable("table_+")) should be (false)
@@ -91,5 +100,77 @@ class ResourceIdentifierTest extends FlatSpec with Matchers {
         id.contains(ResourceIdentifier.ofHiveTable("table_01")) should be (true)
         id.contains(ResourceIdentifier.ofHiveTable("table_0x")) should be (false)
         id.contains(ResourceIdentifier.ofHiveTable("table_0+")) should be (false)
+    }
+
+    it should "support changing partitions" in {
+        val id = ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz"))
+        id.partition should be (Map("p1" -> "xyz"))
+
+        val id2 = id.withPartition(Map("p2" -> "abc"))
+        id2 should be (ResourceIdentifier.ofHivePartition("some_table", None, Map("p2" -> "abc")))
+        id2.partition should be (Map("p2" -> "abc"))
+    }
+
+    it should "enumerate all super-partitions" in {
+        val id = ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz", "p2" -> "abc"))
+        id.partition should be (Map("p1" -> "xyz", "p2" -> "abc"))
+        id.explodePartitions() should be (Seq(
+            ResourceIdentifier.ofHivePartition("some_table", None, Map()),
+            ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz")),
+            ResourceIdentifier.ofHivePartition("some_table", None, Map("p2" -> "abc")),
+            ResourceIdentifier.ofHivePartition("some_table", None, Map("p1" -> "xyz", "p2" -> "abc"))
+        ))
+    }
+
+    it should "support files" in {
+        val id = ResourceIdentifier.ofFile(new Path("/path/?/with/wildcard"))
+        id should be (GlobbingResourceIdentifier("file", "/path/?/with/wildcard"))
+        id.isEmpty should be (false)
+        id.nonEmpty should be (true)
+        id.category should be ("file")
+        id.name should be ("/path/?/with/wildcard")
+        id.partition should be (Map())
+
+        ResourceIdentifier.ofFile(new Path("file:/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+    }
+
+    it should "support local files" in {
+        ResourceIdentifier.ofLocal(new Path("/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+        ResourceIdentifier.ofLocal(new Path("file:/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+        ResourceIdentifier.ofLocal(new File("/path/?/with/wildcard")) should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+    }
+
+    it should "support Hive databases" in {
+        val id =  ResourceIdentifier.ofHiveDatabase("db")
+        id should be (RegexResourceIdentifier("hiveDatabase", "db"))
+        id.isEmpty should be (false)
+        id.nonEmpty should be (true)
+        id.category should be ("hiveDatabase")
+        id.name should be ("db")
+    }
+
+    it should "support Hive tables" in {
+        ResourceIdentifier.ofHiveTable("table") should be (RegexResourceIdentifier("hiveTable", "table"))
+        ResourceIdentifier.ofHiveTable("table", None) should be (RegexResourceIdentifier("hiveTable", "table"))
+        ResourceIdentifier.ofHiveTable("table", Some("db")) should be (RegexResourceIdentifier("hiveTable", "db.table"))
+    }
+
+    it should "support Hive table partitions" in {
+        ResourceIdentifier.ofHivePartition("table", Some("db"), Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("hiveTablePartition", "db.table", Map("p1" -> "v1", "p2" -> "2")))
+        ResourceIdentifier.ofHivePartition("table", None, Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("hiveTablePartition", "table", Map("p1" -> "v1", "p2" -> "2")))
+    }
+
+    it should "support JDBC databases" in {
+        ResourceIdentifier.ofJdbcDatabase("db") should be (RegexResourceIdentifier("jdbcDatabase", "db"))
+    }
+
+    it should "support JDBC tables" in {
+        ResourceIdentifier.ofJdbcTable("table", None) should be (RegexResourceIdentifier("jdbcTable", "table"))
+        ResourceIdentifier.ofJdbcTable("table", Some("db")) should be (RegexResourceIdentifier("jdbcTable", "db.table"))
+    }
+
+    it should "support JDBC table partitions" in {
+        ResourceIdentifier.ofJdbcTablePartition("table", Some("db"), Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("jdbcTablePartition", "db.table", Map("p1" -> "v1", "p2" -> "2")))
+        ResourceIdentifier.ofJdbcTablePartition("table", None, Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("jdbcTablePartition", "table", Map("p1" -> "v1", "p2" -> "2")))
     }
 }

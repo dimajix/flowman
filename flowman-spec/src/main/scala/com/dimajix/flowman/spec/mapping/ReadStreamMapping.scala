@@ -21,7 +21,7 @@ import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -49,19 +49,19 @@ case class ReadStreamMapping (
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
       *
-      * @param executor
+      * @param execution
       * @param input
       * @return
       */
-    override def execute(executor:Executor, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
-        require(executor != null)
+    override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
+        require(execution != null)
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(SchemaUtils.createSchema(columns.toSeq)) else None
         logger.info(s"Reading from streaming relation '$relation'")
 
         val rel = context.getRelation(relation)
-        val result = rel.readStream(executor, schema)
+        val result = rel.readStream(execution, schema)
 
         Map("main" -> result)
     }
@@ -71,8 +71,8 @@ case class ReadStreamMapping (
       * @param input
       * @return
       */
-    override def describe(executor:Executor, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
-        require(executor != null)
+    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType] = {
+        require(execution != null)
         require(input != null)
 
         if (columns.nonEmpty) {

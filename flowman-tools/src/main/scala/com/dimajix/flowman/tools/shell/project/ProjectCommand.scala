@@ -26,20 +26,23 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 import com.dimajix.flowman.tools.exec.project.BuildCommand
 import com.dimajix.flowman.tools.exec.project.CreateCommand
 import com.dimajix.flowman.tools.exec.project.DestroyCommand
+import com.dimajix.flowman.tools.exec.project.InspectCommand
 import com.dimajix.flowman.tools.exec.project.TruncateCommand
+import com.dimajix.flowman.tools.exec.project.ValidateCommand
 import com.dimajix.flowman.tools.exec.project.VerifyCommand
 
 
 class ProjectCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
+        new SubCommand(name="validate",impl=classOf[ValidateCommand]),
         new SubCommand(name="create",impl=classOf[CreateCommand]),
         new SubCommand(name="migrate",impl=classOf[CreateCommand]),
         new SubCommand(name="build",impl=classOf[BuildCommand]),
         new SubCommand(name="verify",impl=classOf[VerifyCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),
         new SubCommand(name="destroy",impl=classOf[DestroyCommand]),
-        new SubCommand(name="info",impl=classOf[InfoCommand]),
+        new SubCommand(name="inspect",impl=classOf[InspectCommand]),
         new SubCommand(name="load",impl=classOf[LoadCommand]),
         new SubCommand(name="reload",impl=classOf[ReloadCommand])
     ))

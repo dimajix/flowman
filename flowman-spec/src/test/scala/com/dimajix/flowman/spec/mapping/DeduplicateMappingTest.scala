@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.mapping.DeduplicateMappingTest.Record
 import com.dimajix.flowman.types.Field
@@ -37,48 +37,61 @@ object DeduplicateMappingTest {
 }
 
 
-class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSession {
+class DeduplicateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
-    "The DeduplicateMapping" should "work without list of columns" in {
-        val sparkSession = spark
-        import sparkSession.implicits._
-
+    "The DeduplicateMapping" should "be parseable" in {
         val spec =
             """
               |mappings:
-              |  dummy:
-              |    kind: provided
-              |    table: my_table
               |  dedup:
               |    kind: deduplicate
               |    input: dummy
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        project.mappings.keys should contain("dedup")
+        val mapping = project.mappings("dedup")
 
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        mapping shouldBe an[DeduplicateMappingSpec]
+
+        val session = Session.builder().build()
         val context = session.getContext(project)
 
-        executor.spark.createDataFrame(Seq(
+        val instance = context.getMapping(MappingIdentifier("dedup"))
+        instance should not be null
+        instance shouldBe a[DeduplicateMapping]
+    }
+
+    it should "work without list of columns" in {
+        val sparkSession = spark
+        import sparkSession.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+        val context = session.context
+
+        val mapping = DeduplicateMapping(
+            Mapping.Properties(context),
+            MappingOutputIdentifier("input"),
+            Seq("c1")
+        )
+
+        val input = executor.spark.createDataFrame(Seq(
             Record("c1_v1", "c2_v1"),
             Record("c1_v1", "c2_v2"),
             Record("c1_v1", "c2_v2")
-        )).createOrReplaceTempView("my_table")
+        ))
 
-        val mapping = context.getMapping(MappingIdentifier("dedup"))
-        mapping should not be null
-
-        val df = executor.instantiate(mapping, "main")
-        val rows = df.as[Record].collect()
-        rows.size should be(2)
+        // Verify execution
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
+        result.schema should be(input.schema)
+        val rows = result.as[Record].collect()
+        rows.size should be(1)
 
         // Verify schema
-        val inputSchema =  StructType(Seq(
+        val inputSchema = StructType(Seq(
             Field("c1", StringType),
             Field("c2", IntegerType, nullable = true)
         ))
-        mapping.describe(executor, Map(MappingOutputIdentifier("dummy") -> inputSchema)) should be (Map("main" -> inputSchema))
+        mapping.describe(executor, Map(MappingOutputIdentifier("input") -> inputSchema)) should be (Map("main" -> inputSchema))
     }
 
     it should "work with an explicit column list" in {
@@ -86,7 +99,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         import sparkSession.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DeduplicateMapping(
@@ -118,7 +131,7 @@ class DeduplicateMappingTest extends FlatSpec with Matchers with LocalSparkSessi
         ).toDS)
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.context
 
         val mapping = DeduplicateMapping(

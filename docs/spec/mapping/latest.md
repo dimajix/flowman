@@ -6,7 +6,7 @@ when working with streams of change events and you only want to keep the newest
 event for each ID.
 
 ## Example
-```
+```yaml
 mappings:
   latest_customer_updates:
     kind: latest

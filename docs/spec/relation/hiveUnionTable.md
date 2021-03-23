@@ -11,17 +11,28 @@ possibly multiple Hive tables (each of them having a different incompatible sche
 relations:
   some_table:
     kind: hiveUnionTable
+    # Specify the Hive database, where the UNION view will be created
     viewDatabase: "crm"
+    # Specify the name of the Hive UNION view
     view: "my_table"
+    # Specify the Hive database where the underlying tables are to be created
     tableDatabase: "crm"
+    # Specify the prefix of all Hive tables. Flowman will add numbers like 1,2,3,... to the prefix for 
+    # different schema versions
     tablePrefix: "zz_my_table"
+    # Specify the location prefix of all Hive tables. Flowman will add numbers like 1,2,3,... to the prefix for 
+    # different schema versions
     locationPrefix: "/hive/crm/zz_my_table"
     external: true
+    # Select file format
     format: parquet
+    # Add partition column
     partitions:
     - name: landing_date
       type: string
       description: "The date on which the contract event was generated"
+    # Explicitly specify the schema, which is mandatory for this relation type. In this case the schema is inferred
+    # from a mapping called `some_mapping`
     schema:
       kind: mapping
       mapping: some_mapping
@@ -57,6 +68,10 @@ Name of the Hive database where the tables should be created in
  when Flowman is used to create the Hive table and is ignored otherwise. This corresponds
  to the `FORMAT` in a `CREATE TABLE` statement.
 
+* `options` **(optional)** *(map:string)* *(default: empty)*:
+  All key-value pairs specified in *options* are directly passed to Apache spark for reading
+  and/or writing to this relation.
+
  * `rowFormat` **(optional)** *(string)* *(default: empty)*:
  Specifies the row format of the files stored in this Hive table. This setting is only used
  when Flowman is used to create the Hive table and is ignored otherwise. This corresponds
@@ -82,3 +97,14 @@ Name of the Hive database where the tables should be created in
  Specifies additional properties of the Hive table. This setting is only used
  when Flowman is used to create the Hive table and is ignored otherwise. This corresponds
  to the `TBLPROPERTIES` in a `CREATE TABLE` statement.
+
+
+## Description
+
+When using Hive union tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
+whole lifecycle for you. This means that
+* Hive tables will be created and migrated during `create` phase
+* Hive tables will be populated with records and partitions will be added during `build` phase
+* Hive tables will be truncated or individual partitions will be dropped during `clean` phase
+* Hive tables will be removed during `destroy` phase
+

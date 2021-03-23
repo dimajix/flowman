@@ -19,8 +19,8 @@ package com.dimajix.flowman.spec.target
 import java.io.File
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
@@ -38,7 +38,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
+class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A CopyTarget" should "support configuration via YML" in {
         val spec =
             """
@@ -109,7 +109,7 @@ class CopyTargetTest extends FlatSpec with Matchers with LocalSparkSession {
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
         val session = Session.builder().build()
-        val executor = session.executor
+        val executor = session.execution
         val context = session.getContext(project)
 
         val targetFilename = new File(tempDir, "copy-relation-output.csv")

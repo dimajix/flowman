@@ -24,7 +24,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -48,14 +48,14 @@ case class DeleteFileTarget(
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
      *
-     * @param executor
+     * @param execution
      * @param phase
      * @return
      */
-    override def dirty(executor: Executor, phase: Phase): Trilean = {
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
             case Phase.BUILD =>
-                val fs = executor.fs
+                val fs = execution.fs
                 val file = fs.file(path)
                 !file.exists()
             case Phase.VERIFY => Yes
@@ -68,10 +68,10 @@ case class DeleteFileTarget(
      *
      * @param executor
      */
-    override def build(executor:Executor) : Unit = {
+    override def build(executor:Execution) : Unit = {
         val fs = executor.fs
         val file = fs.file(path)
-        logger.info(s"Deleting remote file '$file' (recursive=$recursive)")
+        logger.info(s"Deleting file '$file' (recursive=$recursive)")
         file.delete(recursive)
     }
 
@@ -80,7 +80,7 @@ case class DeleteFileTarget(
      *
      * @param executor
      */
-    override def verify(executor: Executor) : Unit = {
+    override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
         val file = executor.fs.file(path)

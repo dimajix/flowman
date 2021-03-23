@@ -20,7 +20,7 @@ import java.io.InputStream
 
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Module
-import com.dimajix.flowman.model.ModuleReader
+import com.dimajix.flowman.spi.ModuleReader
 
 
 class YamlModuleReader extends ModuleReader {

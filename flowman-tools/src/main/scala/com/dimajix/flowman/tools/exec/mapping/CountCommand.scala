@@ -44,7 +44,7 @@ class CountCommand extends ActionCommand {
         val task = CountTarget(context, MappingOutputIdentifier(mapping))
 
         Try {
-            task.execute(session.executor, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD)
         } match {
             case Success(_) =>
                 logger.info("Successfully counted  mapping")

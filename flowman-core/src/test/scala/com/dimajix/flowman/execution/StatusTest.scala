@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.execution
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class StatusTest extends FlatSpec with Matchers {
+class StatusTest extends AnyFlatSpec with Matchers {
     "Status.ofAll" should "return SUCCESS for empty lists" in {
         Status.ofAll(Seq())(identity) should be (Status.SUCCESS)
     }

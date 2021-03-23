@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.hadoop.FileUtils
@@ -57,7 +57,8 @@ case class FileRelation(
     override val partitions: Seq[PartitionField] = Seq(),
     location:Path,
     pattern:Option[String] = None,
-    format:String = "csv"
+    format:String = "csv",
+    options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
 
@@ -110,13 +111,13 @@ case class FileRelation(
     /**
       * Reads data from the relation, possibly from specific partitions
       *
-      * @param executor
+      * @param execution
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(executor:Executor, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
-        require(executor != null)
+    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+        require(execution != null)
         require(schema != null)
         require(partitions != null)
 
@@ -133,13 +134,12 @@ case class FileRelation(
             logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
             val pathNames = paths.map(_.toString)
-            val reader = this.reader(executor)
-                .format(format)
+            val reader = this.reader(execution, format, options)
 
             // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
             // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
             // underlying format implementation
-            val providingClass = DataSource.lookupDataSource(format, executor.spark.sessionState.conf)
+            val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
             val df = if (SparkShim.relationSupportsMultiplePaths(providingClass)) {
                 reader.load(pathNames: _*)
             }
@@ -156,12 +156,12 @@ case class FileRelation(
 
     /**
       * Writes data into the relation, possibly into a specific partition
-      * @param executor
+      * @param execution
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    override def write(executor:Executor, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
-        require(executor != null)
+    override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode = OutputMode.OVERWRITE) : Unit = {
+        require(execution != null)
         require(df != null)
         require(partition != null)
 
@@ -172,8 +172,7 @@ case class FileRelation(
 
         logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
 
-        this.writer(executor, df, mode.batchMode)
-            .format(format)
+        this.writer(execution, df, format, options, mode.batchMode)
             .save(outputPath.toString)
     }
 
@@ -183,18 +182,18 @@ case class FileRelation(
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
      *
-     * @param executor
+     * @param execution
      * @param partition
      * @return
      */
-    override def loaded(executor: Executor, partition: Map[String, SingleValue]): Trilean = {
-        require(executor != null)
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
+        require(execution != null)
         require(partition != null)
 
         requireValidPartitionKeys(partition)
 
         def checkPartition(path:Path) = {
-            val fs = path.getFileSystem(executor.hadoopConf)
+            val fs = path.getFileSystem(execution.hadoopConf)
             FileUtils.isValidFileData(fs, path)
         }
 
@@ -212,24 +211,24 @@ case class FileRelation(
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage
      *
-     * @param executor
+     * @param execution
       * @return
       */
-    override def exists(executor:Executor) : Trilean = {
-        require(executor != null)
+    override def exists(execution:Execution) : Trilean = {
+        require(execution != null)
 
-        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         fs.exists(location)
     }
 
     /**
       * This method will create the given directory as specified in "location"
-      * @param executor
+      * @param execution
       */
-    override def create(executor:Executor, ifNotExists:Boolean=false) : Unit = {
-        require(executor != null)
+    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+        require(execution != null)
 
-        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         if (fs.exists(location)) {
             if (!ifNotExists) {
                 throw new FileAlreadyExistsException(location.toString)
@@ -245,18 +244,18 @@ case class FileRelation(
       * This will update any existing relation to the specified metadata. Actually for this file based target, the
       * command will precisely do nothing.
       *
-      * @param executor
+      * @param execution
       */
-    override def migrate(executor:Executor) : Unit = {
+    override def migrate(execution:Execution) : Unit = {
     }
 
     /**
       * Removes one or more partitions.
-      * @param executor
+      * @param execution
       * @param partitions
       */
-    override def truncate(executor:Executor, partitions:Map[String,FieldValue] = Map()) : Unit = {
-        require(executor != null)
+    override def truncate(execution:Execution, partitions:Map[String,FieldValue] = Map()) : Unit = {
+        require(execution != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
@@ -281,12 +280,12 @@ case class FileRelation(
 
     /**
       * This method will remove the given directory as specified in "location"
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor:Executor, ifExists:Boolean) : Unit =  {
-        require(executor != null)
+    override def destroy(execution:Execution, ifExists:Boolean) : Unit =  {
+        require(execution != null)
 
-        val fs = location.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         if (!fs.exists(location)) {
             if (!ifExists) {
                 throw new FileNotFoundException(location.toString)
@@ -338,6 +337,7 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
     @JsonProperty(value="location", required = true) private var location: String = "/"
     @JsonProperty(value="format", required = true) private var format: String = "csv"
     @JsonProperty(value="pattern", required = false) private var pattern: Option[String] = None
+    @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -351,7 +351,8 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),
             pattern,
-            context.evaluate(format)
+            context.evaluate(format),
+            context.evaluate(options)
         )
     }
 }

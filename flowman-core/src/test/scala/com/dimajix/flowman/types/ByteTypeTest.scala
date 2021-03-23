@@ -16,12 +16,19 @@
 
 package com.dimajix.flowman.types
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.util.ObjectMapper
 
 
-class ByteTypeTest extends FlatSpec with Matchers {
-    "A ByteType" should "parse strings" in {
+class ByteTypeTest extends AnyFlatSpec with Matchers {
+    "A ByteType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("byte") should be(ByteType)
+        ObjectMapper.parse[FieldType]("tinyint") should be(ByteType)
+    }
+
+    it should "parse strings" in {
         ByteType.parse("12") should be (12)
     }
 
@@ -53,5 +60,15 @@ class ByteTypeTest extends FlatSpec with Matchers {
 
         val result2 = ByteType.interpolate(RangeValue("13","17"), Some("2"))
         result2.toSeq should be (Seq(12,14).map(_.toByte))
+    }
+
+    it should "provide the correct Spark type" in {
+        ByteType.sparkType should be (org.apache.spark.sql.types.ByteType)
+    }
+
+    it should "provide the correct SQL type" in {
+        ByteType.sqlType should be ("tinyint")
+        ByteType.typeName should be ("byte")
+        ByteType.sparkType.sql should be ("TINYINT")
     }
 }

@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -29,7 +29,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSession{
+class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
     "The RecursiveSqlMapping" should "be parseable" in {
         val spec =
             """
@@ -59,7 +59,7 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = RecursiveSqlMapping(
             Mapping.Properties(context),
@@ -107,7 +107,7 @@ class RecursiveSqlMappingTest extends FlatSpec with Matchers with LocalSparkSess
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
-        val executor = session.executor
+        val executor = session.execution
 
         val mapping = RecursiveSqlMapping(
             Mapping.Properties(context),

@@ -19,11 +19,12 @@ package com.dimajix.flowman.spec.mapping
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.transforms.CaseFormat
@@ -31,7 +32,7 @@ import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
+class FlattenMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
     "A FlattenMapping" should "be parseable" in {
         val spec =
             """
@@ -43,8 +44,12 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
 
         val project = Module.read.string(spec).toProject("project")
         val mapping = project.mappings("my_structure")
-
         mapping shouldBe an[FlattenMappingSpec]
+
+        val session = Session.builder().build()
+        val context = session.getContext(project)
+        val instance = context.getMapping(MappingIdentifier("my_structure"))
+        instance shouldBe an[FlattenMapping]
     }
 
     it should "flatten nested structures" in {
@@ -63,7 +68,7 @@ class FlattenMappingTest extends FlatSpec with Matchers with LocalSparkSession{
         import spark.implicits._
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.executor
+        val executor = session.execution
 
         val inputRecords = Seq(inputJson.replace("\n",""))
         val inputDs = spark.createDataset(inputRecords)

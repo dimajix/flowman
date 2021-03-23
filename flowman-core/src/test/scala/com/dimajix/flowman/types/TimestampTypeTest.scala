@@ -21,15 +21,21 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.util.ObjectMapper
 
 
-class TimestampTypeTest extends FlatSpec with Matchers {
+class TimestampTypeTest extends AnyFlatSpec with Matchers {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss[.S]").withZone(ZoneOffset.UTC)
     def parseDateTime(value:String) = new Timestamp(LocalDateTime.parse(value, formatter).toEpochSecond(ZoneOffset.UTC) * 1000l)
 
-    "A TimestampType" should "parse strings" in {
+    "A TimestampType" should "be deserializable" in {
+        ObjectMapper.parse[FieldType]("timestamp") should be(TimestampType)
+    }
+
+    it should "parse strings" in {
         TimestampType.parse("2017-12-01T12:21:20").toTimestamp should be (parseDateTime("2017-12-01T12:21:20"))
         TimestampType.parse("2017-12-01T12:21:20Z").toTimestamp should be (parseDateTime("2017-12-01T12:21:20"))
         TimestampType.parse("2017-12-01T12:21:20+00").toTimestamp should be (parseDateTime("2017-12-01T12:21:20"))
@@ -164,8 +170,12 @@ class TimestampTypeTest extends FlatSpec with Matchers {
         result3(3).toTimestamp should be (parseDateTime("2017-12-16T00:00:00"))
     }
 
+    it should "provide the correct Spark type" in {
+        TimestampType.sparkType should be (org.apache.spark.sql.types.TimestampType)
+    }
+
     it should "provide the correct SQL type" in {
-        val ftype = TimestampType
-        ftype.sqlType should be ("timestamp")
+        TimestampType.sqlType should be ("timestamp")
+        TimestampType.sparkType.sql should be ("TIMESTAMP")
     }
 }

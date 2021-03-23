@@ -1,5 +1,8 @@
 module.exports = {
   outputDir: 'target/classes/META-INF/resources/webjars/flowman-ui',
+  transpileDependencies: [
+    'vuetify'
+  ],
   devServer: {
     port: 8088,
     proxy: {

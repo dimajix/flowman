@@ -1,14 +1,33 @@
 # Building Flowman
 
 Since Flowman depends on libraries like Spark and Hadoop, which are commonly provided by a platform environment like
-Cloudera or EMR,  you currently need to build Flowman yourself to match the correct versions. Prebuilt Flowman
-distributions are planned, but not available yet.
+Cloudera or EMR,  you currently need to build Flowman yourself to match the correct versions. 
+
+## Download Prebuilt Distribution
+
+As an alternative to building Flowman yourself, prebuilt Flowman distributions are are provided on 
+[GitHub](https://github.com/dimajix/flowman/releases). This probably is the simplest way to grab a working Flowman 
+package. Note that for each release, there are different packages being provided, for different Spark and Hadoop 
+versions. The naming is very simple:
+```
+flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
+```
+You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
+package of Flowman 0.14.1 and for Spark 3.0 and Hadoop 3.2 would be
+```
+flowman-dist-0.14.1-oss-spark30-hadoop32-bin.tar.gz
+```
+and the full URL then would be
+```
+https://github.com/dimajix/flowman/releases/download/0.14.1/flowman-dist-0.14.1-oss-spark3.0-hadoop3.2-bin.tar.gz
+```
 
 The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
 is installed on the build machine - building the Docker image can be disabled (see below).
 
 ## Build with Maven
 
+When you decide against downloading a prebuilt Flowman distribution, you can simply built it yourself with Maven.
 Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
 
     mvn clean install
@@ -57,6 +76,7 @@ using the correct version. The following profiles are available:
 * spark-2.3
 * spark-2.4
 * spark-3.0
+* spark-3.1
 * hadoop-2.6
 * hadoop-2.7
 * hadoop-2.8
@@ -110,6 +130,11 @@ Spark 3.0 and Hadoop 3.2
 
     mvn clean install -Pspark-3.0 -Phadoop-3.2
 
+Spark 3.1 and Hadoop 3.2
+
+    mvn clean install -Pspark-3.1 -Phadoop-3.2
+
+
 ### Building for Cloudera
 
 The Maven project also contains preconfigured profiles for Cloudera.
@@ -120,11 +145,6 @@ Or for Cloudera 6.3
 
     mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
 
-
-## Skipping Docker Image
-
-Part of the build also is a Docker image. Since you might not want to use it, because you are using different base
-images, you can skip the building of the Docker image via `-Ddockerfile.skip`
 
 ## Building Documentation
 

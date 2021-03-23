@@ -16,13 +16,13 @@
 
 package com.dimajix.spark.sql.catalyst
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SqlBuilderTest extends FlatSpec with Matchers with LocalSparkSession {
+class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
     override def beforeAll(): Unit = {
         super.beforeAll()

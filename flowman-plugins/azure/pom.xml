@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.14.2</version>
+        <version>0.15.0</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -17,6 +17,9 @@
         <plugin.name>flowman-azure</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
+
+        <!-- Dependency versions -->
+        <azure.version>2.2.0</azure.version>
     </properties>
 
     <profiles>
@@ -34,33 +37,13 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <targetPath>${project.build.outputDirectory}</targetPath>
                 <filtering>true</filtering>
             </resource>
         </resources>
         <plugins>
             <plugin>
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <descriptors>
-                                <descriptor>src/main/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

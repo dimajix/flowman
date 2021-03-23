@@ -17,11 +17,12 @@
 package com.dimajix.flowman.model
 
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
 
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Status
@@ -109,7 +110,7 @@ object Job {
         labels: Map[String, String],
         description:Option[String]
    ) extends Instance.Properties[Properties] {
-        override val kind : String = "batch"
+        override val kind : String = "job"
         override def withName(name: String): Properties = copy(name=name)
    }
 
@@ -279,6 +280,10 @@ final case class Job(
       * @return
       */
     def instance(args:Map[String,String]) : JobInstance = {
+        val pargs = parameters.map(_.name).toSet
+        if (args.keySet != pargs)
+            throw new IllegalArgumentException(s"Argument mismatch for job '$identifier', expected: ${pargs.mkString(",")} received: ${args.keySet.mkString(",")}")
+
         JobInstance(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
@@ -310,14 +315,14 @@ final case class Job(
 
     /**
       * Performs interpolation of given arguments as FieldValues. This will return an Iterable of argument maps each
-      * of them to be used by a job executor.
+      * of them to be used by a job execution.
       * @param args
       * @return
       */
     def interpolate(args:Map[String,FieldValue]) : Iterable[Map[String,Any]] = {
         def interpolate(args:Iterable[Map[String,Any]], param:Parameter, values:FieldValue) : Iterable[Map[String,Any]] = {
             val vals = try {
-                param.ftype.interpolate(values, param.granularity)
+                param.interpolate(values)
             }
             catch {
                 case NonFatal(ex) => throw new IllegalArgumentException(s"Cannot interpolate parameter '${param.name}' of job '$name' with values '$values'", ex)
@@ -382,13 +387,13 @@ final case class Job(
       * @param force
       * @return
       */
-    def execute(executor:Executor, phase:Phase, args:Map[String,String], force:Boolean=false) : Status = {
+    def execute(executor:Execution, phase:Phase, args:Map[String,String], targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, dryRun:Boolean=false) : Status = {
         require(args != null)
         require(phase != null)
         require(args != null)
 
         val jobArgs = arguments(args)
         val jobRunner = new Runner(executor, new NullStateStore)
-        jobRunner.executeJob(this, Seq(phase), jobArgs, force)
+        jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force, dryRun)
     }
 }

@@ -140,6 +140,8 @@ object Runner {
         }
 
         def build() : Runner = {
+            if (project == null)
+                throw new IllegalArgumentException("Runner requires a project")
             new Runner(namespace, project, environment, config, profiles, sparkMaster, sparkName)
         }
     }

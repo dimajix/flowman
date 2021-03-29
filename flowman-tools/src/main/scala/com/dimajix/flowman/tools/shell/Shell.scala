@@ -118,6 +118,18 @@ class Shell(args:Arguments) extends StatefulTool(
         console.getHistory.load()
         Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
 
+        val logo =
+            """
+              |______  _
+              ||  ___|| |
+              || |_   | |  ___ __      __ _ __ ___    __ _  _ __
+              ||  _|  | | / _ \\ \ /\ / /| '_ ` _ \  / _` || '_ \
+              || |    | || (_) |\ V  V / | | | | | || (_| || | | |
+              |\_|    |_| \___/  \_/\_/  |_| |_| |_| \__,_||_| |_|
+              |""".stripMargin
+
+        writer.println(logo)
+
         // REPL-loop
         while (true) {
             val cmd = new ParsedCommand

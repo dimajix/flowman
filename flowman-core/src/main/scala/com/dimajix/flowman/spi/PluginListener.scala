@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.plugin
+package com.dimajix.flowman.spi
 
+import com.dimajix.flowman.plugin.Plugin
+
+
+/**
+ * The PluginListener gets called whenever a new plugin has been loaded. This allows Flowman or plugins to clean
+ * up some classpath caches or do similar work.
+ */
 trait PluginListener {
+    /**
+     * Called when a new Plugin has been loaded and its code is available.
+     * @param plugin
+     * @param classLoader
+     */
     def pluginLoaded(plugin:Plugin, classLoader: ClassLoader) : Unit
 }

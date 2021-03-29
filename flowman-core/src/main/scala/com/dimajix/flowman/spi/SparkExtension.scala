@@ -22,6 +22,8 @@ import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.SparkSession
 
+import com.dimajix.flowman.config.Configuration
+
 
 object SparkExtension {
     def extensions : Seq[SparkExtension] = {
@@ -36,12 +38,12 @@ abstract class SparkExtension {
      * @param builder
      * @return
      */
-    def register(builder:SparkSession.Builder) : SparkSession.Builder
+    def register(builder:SparkSession.Builder, config:Configuration) : SparkSession.Builder
 
     /**
      * Hook for extending an existing Spark session
      * @param session
      * @return
      */
-    def register(session:SparkSession) : SparkSession
+    def register(session:SparkSession, config:Configuration) : SparkSession
 }

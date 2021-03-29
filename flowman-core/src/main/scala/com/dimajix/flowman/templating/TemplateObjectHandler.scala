@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix.flowman.templating
 
 import com.dimajix.flowman.annotation.TemplateObject
-import com.dimajix.flowman.templating.Velocity
+import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 class TemplateObjectHandler extends ClassAnnotationHandler {

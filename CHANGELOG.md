@@ -1,3 +1,9 @@
+# Version 0.15.1
+
+* Add logo to Flowman Shell
+* Fix name of config option `flowman.execution.executor.class`
+
+
 # Version 0.15.0 - 2021-03-23
 
 * New configuration variable `floman.default.target.rebalance`

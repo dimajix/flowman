@@ -63,7 +63,7 @@ object FlowmanConf {
         .doc("Consider all targets as being 'dirty' without checking")
         .booleanConf
         .createWithDefault(false)
-    val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.execution.class")
+    val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.executor.class")
         .doc("Class name for executing targets")
         .classConf(classOf[Executor])
         .createWithDefault(classOf[SimpleExecutor])

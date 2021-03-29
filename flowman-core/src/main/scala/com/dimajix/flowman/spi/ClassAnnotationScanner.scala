@@ -26,10 +26,6 @@ import io.github.classgraph.ClassGraph
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.plugin.Plugin
-import com.dimajix.flowman.plugin.PluginListener
-
-
-
 
 
 class ClassAnnotationScanner
@@ -67,28 +63,33 @@ object ClassAnnotationScanner {
         "org.xerial",
         "org.yaml"
     )
-    private val _loaders:mutable.Set[ClassLoader] = mutable.Set()
+    private var _loaded:Boolean = false
 
+    /**
+     * Clears all information about annotated classes
+     */
     def invalidate() : Unit = {
-        invalidate(Thread.currentThread.getContextClassLoader)
-    }
-    def invalidate(cl:ClassLoader) : Unit = {
-        synchronized {
-            _loaders.remove(cl)
-        }
+        _loaded = false
     }
 
-    def load() : Unit = {
-        load(Thread.currentThread.getContextClassLoader)
+    /**
+     * Clears all information about annotated classes for the specified [[ClassLoader]]. Currently this will invalidate
+     * all information for all [[ClassLoader]]s
+     */
+    def invalidate(cl:ClassLoader) : Unit = {
+        invalidate()
     }
-    def load(cl:ClassLoader): Unit = {
+
+    /**
+     * Loads all annotated classes and invokes the appropriate [[ClassAnnotationHandler]].
+     */
+    def load() : Unit = {
         synchronized {
-            if (!_loaders.contains(cl)) {
+            if (!_loaded) {
                 val scanResult = new ClassGraph()
                     .blacklistPackages(IGNORED_PACKAGES:_*)
                     .enableAnnotationInfo()
                     .enableClassInfo()
-                    .overrideClassLoaders(cl)
                     .scan()
 
                 ServiceLoader.load(classOf[ClassAnnotationHandler])
@@ -106,7 +107,7 @@ object ClassAnnotationScanner {
                             }
                     }
 
-                _loaders.add(cl)
+                _loaded = true
             }
         }
     }

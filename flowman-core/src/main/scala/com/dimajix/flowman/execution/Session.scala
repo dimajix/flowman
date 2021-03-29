@@ -298,7 +298,7 @@ class Session private[execution](
                     sessionBuilder.enableHiveSupport()
                 }
                 // Apply all session extensions to builder
-                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder))
+                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
                 // Create Spark session
                 sessionBuilder.getOrCreate()
             }
@@ -315,10 +315,10 @@ class Session private[execution](
         ExtraStrategies.register(spark)
 
         // Apply all session extensions
-        SparkExtension.extensions.foreach(_.register(spark))
+        SparkExtension.extensions.foreach(_.register(spark, config))
 
         // Register special UDFs
-        UdfProvider.providers.foreach(_.register(spark.udf))
+        UdfProvider.providers.foreach(_.register(spark.udf, config))
 
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)

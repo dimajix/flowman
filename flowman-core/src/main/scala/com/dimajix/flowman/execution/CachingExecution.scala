@@ -147,10 +147,6 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 df2.values.foreach(_.persist(cacheLevel))
         }
 
-        df2.foreach { case (name,df) =>
-            logger.debug(s"Instantiated mapping '${mapping.identifier}' output '$name' with schema\n ${df.schema.treeString}")
-        }
-
         df2
     }
 }

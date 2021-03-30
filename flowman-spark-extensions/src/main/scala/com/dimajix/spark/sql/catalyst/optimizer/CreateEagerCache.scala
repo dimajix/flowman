@@ -26,26 +26,46 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.columnar.InMemoryRelation
+import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
 
 import com.dimajix.spark.sql.catalyst.plans.logical.EagerCache
+import com.dimajix.spark.sql.execution.EagerCacheExec
 
 
 object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
     def apply(plan: LogicalPlan): LogicalPlan = {
         val cacheCounts = new util.IdentityHashMap[SparkPlan,(InMemoryRelation,Int)]()
-        plan.foreachUp {
-            case relation:InMemoryRelation =>
-                val cp = SparkShim.getCachedPlan(relation)
-                val (_,count) = cacheCounts.getOrDefault(cp, (null,0))
-                // Do not increase counter, if it was marked as "already cached"
-                if (count >= 0)
-                    cacheCounts.put(cp, (relation, count+1))
-            case EagerCache(_, caches) =>
-                // Mark this plan not to be cached again, since there already is an eager cache
-                caches.foreach(c => cacheCounts.put(SparkShim.getCachedPlan(c), (c,-1)))
-            case _ =>
+
+        def countSubCaches(relation:InMemoryRelation) : Unit = {
+            val cp = SparkShim.getCachedPlan(relation)
+            val (_,count) = cacheCounts.getOrDefault(cp, (null,0))
+            // Do not increase counter, if it was marked as "already cached"
+            if (count >= 0)
+                cacheCounts.put(cp, (relation, count+1))
+
+            // Recursively follow any sub-caches below current cache
+            cp.foreachUp {
+                case tableScan:InMemoryTableScanExec =>
+                    countSubCaches(tableScan.relation)
+                case EagerCacheExec(_, caches) =>
+                    // Mark this plan not to be cached again, since there already is an eager cache
+                    caches.foreach(c => cacheCounts.put(c, (null,-1)))
+                case _ =>
+            }
         }
 
+        def countCaches(plan:LogicalPlan) : Unit = {
+            plan.foreachUp {
+                case relation:InMemoryRelation =>
+                    countSubCaches(relation)
+                case EagerCache(_, caches) =>
+                    // Mark this plan not to be cached again, since there already is an eager cache
+                    caches.foreach(c => cacheCounts.put(SparkShim.getCachedPlan(c), (null,-1)))
+                case _ =>
+            }
+        }
+
+        countCaches(plan)
 
         // Collect all caches, which are used more than once
         val caches = cacheCounts.asScala

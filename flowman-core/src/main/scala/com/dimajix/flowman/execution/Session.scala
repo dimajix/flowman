@@ -38,6 +38,7 @@ import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
+import com.dimajix.spark.sql.catalyst.optimizer.ExtraOptimizations
 import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
@@ -309,6 +310,10 @@ class Session private[execution](
         // Set checkpoint directory if not already specified
         if (spark.sparkContext.getCheckpointDir.isEmpty) {
             spark.sparkContext.getConf.getOption("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
+        }
+
+        if (flowmanConf.getConf(FlowmanConf.SPARK_EAGER_CACHE)) {
+            ExtraOptimizations.enableEagerCache(spark)
         }
 
         // Register additional planning strategies

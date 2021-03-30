@@ -38,6 +38,10 @@ object FlowmanConf {
 
     def buildConf(key: String): ConfigBuilder = ConfigBuilder(key).onCreate(register)
 
+    val SPARK_EAGER_CACHE = buildConf("flowman.spark.eagerCache")
+        .doc("Enables eager caching in Spark")
+        .booleanConf
+        .createWithDefault(false)
     val SPARK_ENABLE_HIVE = buildConf("flowman.spark.enableHive")
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf

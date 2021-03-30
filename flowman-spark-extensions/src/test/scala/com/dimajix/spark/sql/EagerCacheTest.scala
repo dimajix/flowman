@@ -3,6 +3,7 @@ package com.dimajix.spark.sql
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.spark.sql.catalyst.optimizer.ExtraOptimizations
 import com.dimajix.spark.sql.execution.ExtraStrategies
 import com.dimajix.spark.sql.functions._
 import com.dimajix.spark.testing.LocalSparkSession
@@ -12,17 +13,13 @@ class EagerCacheTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     override def beforeAll() : Unit = {
         super.beforeAll()
         ExtraStrategies.register(spark)
+        ExtraOptimizations.enableEagerCache(spark)
         spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
     }
 
     "The EagerCache" should "work" in {
         val accumulator = spark.sparkContext.longAccumulator
         val source = count_records(spark.range(10000).toDF, accumulator).cache()
-        //val source = spark.range(10000).toDF.cache()
-        //val source = count_records(spark.read.csv("/dimajix/projects/smartclip/data/moat"), accumulator).cache().toDF()
-        //val source = spark.read.csv("/srv/ssd/smartclip/adselect-req/2017/02/01").cache().toDF()
-        //val source = count_records(spark.read.csv("/srv/ssd/smartclip/adselect-req/2017/02/01").toDF(), accumulator).cache()
-
         val df2 = source.withColumn("id2", source("id") * 2)
         val df3 = df2.groupBy("id", "id2").count().where("count < 3")
         val result = df2.join(df3, Seq("id")).groupBy().count()
@@ -106,5 +103,27 @@ class EagerCacheTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         result.count()
         source1.count() should be (accumulator1.value)
         source2.count() should be (accumulator2.value)
+    }
+
+    it should "work with multiple cross nested caches" in {
+        val accumulator = spark.sparkContext.longAccumulator
+        val source = count_records(spark.range(10000).toDF, accumulator).cache()
+
+        val interim = source.withColumn("id2", source("id") * 2)
+            .groupBy("id", "id2")
+            .count()
+            .where("count < 3")
+            .cache()
+
+        val result = source.join(interim, Seq("id")).groupBy().count()
+        result.explain(false)
+        result.show()
+
+        // Check that every record is generated only once
+        source.count() should be (accumulator.value)
+
+        // Check that cache is working and that source isn't processed a second time
+        result.count()
+        source.count() should be (accumulator.value)
     }
 }

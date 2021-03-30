@@ -21,7 +21,6 @@ import org.apache.spark.sql.Strategy
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
 
-import com.dimajix.spark.sql.catalyst.optimizer.CreateEagerCache
 import com.dimajix.spark.sql.catalyst.plans.logical.CountRecords
 import com.dimajix.spark.sql.catalyst.plans.logical.EagerCache
 
@@ -30,8 +29,6 @@ object ExtraStrategies extends Strategy {
     def register(spark:SparkSession) : Unit = {
         spark.sqlContext.experimental.extraStrategies
             = spark.sqlContext.experimental.extraStrategies ++ Seq(ExtraStrategies)
-        spark.sqlContext.experimental.extraOptimizations
-            = spark.sqlContext.experimental.extraOptimizations ++ Seq(CreateEagerCache)
     }
 
     def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {

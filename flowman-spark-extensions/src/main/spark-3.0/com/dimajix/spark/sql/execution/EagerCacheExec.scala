@@ -35,6 +35,8 @@ case class EagerCacheExec(child: SparkPlan, caches:Seq[SparkPlan]) extends Spark
     override def supportsColumnar: Boolean = child.supportsColumnar
     override def vectorTypes: Option[Seq[String]] = child.vectorTypes
 
+    override protected def doCanonicalize(): SparkPlan = copy(child=child.canonicalized, caches.map(_.canonicalized))
+
     override protected def doExecute(): RDD[InternalRow] = {
         child.execute()
     }

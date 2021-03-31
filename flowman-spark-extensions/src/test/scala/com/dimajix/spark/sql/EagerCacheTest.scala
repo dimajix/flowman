@@ -92,7 +92,7 @@ class EagerCacheTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val df7 = df5.join(df6, Seq("id"))
 
         val result = df4.join(df7, Seq("id")).groupBy().count()
-        result.explain(false)
+        result.explain(true)
         result.show()
 
         // Check that every record is generated only once

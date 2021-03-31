@@ -32,6 +32,8 @@ case class EagerCacheExec(child: SparkPlan, caches:Seq[SparkPlan]) extends Spark
     override def outputPartitioning: Partitioning = child.outputPartitioning
     override def outputOrdering: Seq[SortOrder] = child.outputOrdering
 
+    override protected def doCanonicalize(): SparkPlan = copy(child=child.canonicalized, caches.map(_.canonicalized))
+
     override protected def doExecute(): RDD[InternalRow] = {
         child.execute()
     }

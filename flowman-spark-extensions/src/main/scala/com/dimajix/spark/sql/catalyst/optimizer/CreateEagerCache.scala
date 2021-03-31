@@ -36,20 +36,31 @@ object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
     def apply(plan: LogicalPlan): LogicalPlan = {
         val cacheCounts = new util.IdentityHashMap[SparkPlan,(InMemoryRelation,Int)]()
 
-        def countSubCaches(relation:InMemoryRelation) : Unit = {
+        def addCache(relation:InMemoryRelation) : Unit = {
             val cp = SparkShim.getCachedPlan(relation)
-            val (_,count) = cacheCounts.getOrDefault(cp, (null,0))
-            // Do not increase counter, if it was marked as "already cached"
+            val (rel,count) = cacheCounts.getOrDefault(cp, (null,0))
             if (count >= 0)
-                cacheCounts.put(cp, (relation, count+1))
+                cacheCounts.put(cp, (relation, count + 1))
+        }
+        def disallowCache(relation:InMemoryRelation) : Unit = {
+            val cp = SparkShim.getCachedPlan(relation)
+            cacheCounts.put(cp, (relation, -1))
+        }
+
+        def countSubCaches(relation:InMemoryRelation) : Unit = {
+            addCache(relation)
 
             // Recursively follow any sub-caches below current cache
+            val cp = SparkShim.getCachedPlan(relation)
             cp.foreachUp {
                 case tableScan:InMemoryTableScanExec =>
                     countSubCaches(tableScan.relation)
                 case EagerCacheExec(_, caches) =>
                     // Mark this plan not to be cached again, since there already is an eager cache
-                    caches.foreach(c => cacheCounts.put(c, (null,-1)))
+                    caches.foreach { c =>
+                        c.collectFirst { case ex:InMemoryTableScanExec => ex }
+                            .foreach(scan => disallowCache(scan.relation))
+                    }
                 case _ =>
             }
         }
@@ -60,21 +71,24 @@ object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
                     countSubCaches(relation)
                 case EagerCache(_, caches) =>
                     // Mark this plan not to be cached again, since there already is an eager cache
-                    caches.foreach(c => cacheCounts.put(SparkShim.getCachedPlan(c), (null,-1)))
+                    caches.foreach(c => disallowCache(c))
                 case _ =>
             }
         }
 
+        // Skip top level EagerCache, which might be replaced later and therefore shouldn't be counted
         countCaches(plan)
 
         // Collect all caches, which are used more than once
         val caches = cacheCounts.asScala
             .filter(_._2._2 > 1)
             .map(_._2._1)
+            .toSeq
 
-        if (caches.isEmpty) // || plan.collectFirst { case _:EagerCache => true }.exists(identity))
-            plan
+        // Now check what we need to do
+        if (caches.nonEmpty)
+            EagerCache(plan, caches)
         else
-            EagerCache(plan, caches.toSeq)
+            plan
     }
 }

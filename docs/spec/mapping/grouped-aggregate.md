@@ -8,7 +8,7 @@ common fact table, but with different aggregation levels (i.e. aggregation group
 ```yaml
 mappings:
   aggregations:
-    kind: groupedSet
+    kind: groupedAggregate
     input: facts_delivery
     aggregations:
       imps: "SUM(imps)"

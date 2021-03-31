@@ -1,5 +1,14 @@
+# You can override the included template(s) by including variable overrides
+# See https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#priority-of-environment-variables
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 stages:
   - build
+  - test
+  - site
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -9,6 +18,8 @@ variables:
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  # SpotBugs currently doesn't work, maybe because of the custom image
+  SAST_EXCLUDED_ANALYZERS: "spotbugs"
 
 image: dimajix/maven-npm:latest
 
@@ -20,9 +31,13 @@ cache:
     - .npm
 
 
+# Run security tests
+sast:
+  stage: test
+
 # Build site and reports
 build-site:
-  stage: build
+  stage: site
   script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests && mvn ${MAVEN_CLI_OPTS} site'
   artifacts:
     name: "flowman-site"

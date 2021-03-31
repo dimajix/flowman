@@ -2,6 +2,7 @@
 
 * Add logo to Flowman Shell
 * Fix name of config option `flowman.execution.executor.class`
+* Add new `groupedAggregate` mapping
 
 
 # Version 0.15.0 - 2021-03-23

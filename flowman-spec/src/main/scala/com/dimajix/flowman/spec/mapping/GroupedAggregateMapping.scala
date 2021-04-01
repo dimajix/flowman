@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.catalyst.plans.logical.GroupingSets
@@ -36,7 +37,6 @@ import com.dimajix.spark.sql.DataFrameUtils
 
 object GroupedAggregateMapping {
     case class Group(
-        name:String,
         dimensions:Seq[String],
         aggregations:Seq[String]
     )
@@ -45,7 +45,7 @@ object GroupedAggregateMapping {
 case class GroupedAggregateMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
-    groups : Seq[GroupedAggregateMapping.Group],
+    groups : Map[String,GroupedAggregateMapping.Group],
     aggregations : Map[String,String],
     partitions : Int = 0
 ) extends BaseMapping {
@@ -55,7 +55,7 @@ case class GroupedAggregateMapping(
      * @return
      */
     override def output: MappingOutputIdentifier = {
-        MappingOutputIdentifier(identifier, groups.headOption.map(_.name).getOrElse("cache"))
+        MappingOutputIdentifier(identifier, groups.keys.headOption.getOrElse("cache"))
     }
 
     /**
@@ -64,7 +64,7 @@ case class GroupedAggregateMapping(
      * recommended.
      * @return
      */
-    override def outputs: Seq[String] = groups.map(_.name) :+ "cache"
+    override def outputs: Seq[String] = groups.keys.toSeq :+ "cache"
 
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
@@ -86,33 +86,54 @@ case class GroupedAggregateMapping(
      * @return
      */
     override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
-        val groupings = groups.zipWithIndex.map { case (g,i) =>
-            struct(g.dimensions.map(d => col(d)):_*).as(s"_flowman_grouping_set_$i")
-        }
+        val df = input(this.input)
+        val dimensions = groups.values.flatMap(_.dimensions).toSeq.distinct
+        if (dimensions.size > 31)
+            executeViaStructs(df)
+        else
+            executeDirectly(df)
+    }
 
-        val aggregates = aggregations.toSeq.map(kv => expr(kv._2).as(kv._1))
-        val expressions = (
-            aggregates ++
-                groupings :+
-                grouping_id().as("_flowman_grouping_id")
-            )
-            .map(_.expr.asInstanceOf[NamedExpression])
+    private def executeDirectly(input: DataFrame): Map[String, DataFrame] = {
+        val dimensions = groups.values.flatMap(_.dimensions).toSeq.distinct
+        val dimensionIndices = dimensions.zipWithIndex.toMap
+        val dimensionColumns = dimensions.map(col)
+        val groupingColumns = groups.values.map(g => g.dimensions.map(d => dimensionColumns(dimensionIndices(d)))).toSeq
 
-        val df =
-            if (partitions > 0)
-                input(this.input).repartition(partitions, groupings:_*)
-            else
-                input(this.input)
-
-        val allGroupings = DataFrameUtils.ofRows(execution.spark, GroupingSets(
-            groupings.map(g => Seq(g.expr)),
-            groupings.map(_.expr),
-            df.queryExecution.logical, expressions))
+        val allGroupings = performGroupedAggregation(input, dimensionColumns, groupingColumns)
 
         val numGroups = groups.size
         val groupingMask = (1 << numGroups) - 1
 
-        val results = groups.zipWithIndex.map { case (group, index) =>
+        val results = groups.map { case (name,group) =>
+            val dimensions = group.dimensions
+            val aggregates = {
+                if (group.aggregations.nonEmpty)
+                    group.aggregations.map(col)
+                else
+                    aggregations.keys.map(col).toSeq
+            }
+            val mask = (groupingMask +: dimensions.map(d => ~(1 << (numGroups - 1 - dimensionIndices(d))))).reduce(_ & _)
+            name -> allGroupings
+                .filter(col("_flowman_grouping_id") === mask)
+                .select((dimensions.map(col) ++ aggregates):_*)
+        }
+
+        results.toMap ++ Map("cache" -> allGroupings)
+    }
+
+    private def executeViaStructs(input: DataFrame): Map[String, DataFrame] = {
+        val dimensionColumns = groups.values.zipWithIndex.map { case (g,i) =>
+            struct(g.dimensions.map(d => col(d)):_*).as(s"_flowman_grouping_set_$i")
+        }.toSeq
+        val groupingColumns = dimensionColumns.map(g => Seq(g))
+
+        val allGroupings = performGroupedAggregation(input, dimensionColumns, groupingColumns)
+
+        val numGroups = groups.size
+        val groupingMask = (1 << numGroups) - 1
+
+        val results = groups.zipWithIndex.map { case ((name,group), index) =>
             val groupPrefix = s"_flowman_grouping_set_$index"
             val dimensions = group.dimensions.map(d => col(groupPrefix + "." + d))
             val aggregates = {
@@ -122,25 +143,44 @@ case class GroupedAggregateMapping(
                     aggregations.keys.map(a => col(a)).toSeq
             }
             val mask = groupingMask & ~(1 << (numGroups - 1 - index))
-            group.name -> allGroupings
+            name -> allGroupings
                 .filter(col("_flowman_grouping_id") === mask)
                 .select((dimensions ++ aggregates):_*)
         }
 
         results.toMap ++ Map("cache" -> allGroupings)
     }
+
+    private def performGroupedAggregation(input:DataFrame, dimensions:Seq[Column], groupings:Seq[Seq[Column]]) : DataFrame = {
+        val aggregates = aggregations.toSeq.map(kv => expr(kv._2).as(kv._1))
+        val expressions = (
+            aggregates ++
+                dimensions :+
+                grouping_id().as("_flowman_grouping_id")
+            )
+            .map(_.expr.asInstanceOf[NamedExpression])
+
+        val df =
+            if (partitions > 0)
+                input.repartition(partitions, dimensions:_*)
+            else
+                input
+
+        DataFrameUtils.ofRows(input.sparkSession, GroupingSets(
+            groupings.map(g => g.map(_.expr)),
+            dimensions.map(_.expr),
+            df.queryExecution.logical, expressions))
+    }
 }
 
 
 object GroupedAggregateMappingSpec {
     class GroupSpec {
-        @JsonProperty(value = "name", required = true) private var name: String = _
         @JsonProperty(value = "dimensions", required = true) private var dimensions: Seq[String] = Seq()
         @JsonProperty(value = "aggregations", required = true) private var aggregations: Seq[String] = Seq()
 
         def instantiate(context: Context) : GroupedAggregateMapping.Group = {
             GroupedAggregateMapping.Group(
-                context.evaluate(name),
                 dimensions.map(context.evaluate),
                 aggregations.map(context.evaluate)
             )
@@ -149,7 +189,7 @@ object GroupedAggregateMappingSpec {
 }
 class GroupedAggregateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "groups", required = true) private var groups:Seq[GroupSpec] = Seq()
+    @JsonProperty(value = "groups", required = true) private var groups:Map[String,GroupSpec] = Map()
     @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: Map[String, String] = _
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = ""
 
@@ -162,7 +202,7 @@ class GroupedAggregateMappingSpec extends MappingSpec {
         GroupedAggregateMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            groups.map(_.instantiate(context)),
+            groups.map(kv => kv._1 -> kv._2.instantiate(context)),
             aggregations.map(kv => kv._1 -> context.evaluate(kv._2)),
             if (partitions.isEmpty) 0 else context.evaluate(partitions).toInt
         )

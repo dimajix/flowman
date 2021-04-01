@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -42,14 +43,14 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
               |  clicks: "SUM(clicks)"
               |
               |groups:
-              |  - name: adpod
+              |  adpod:
               |    dimensions:
               |      - device_setting
               |      - network
               |    aggregations:
               |      - imps
               |
-              |  - name: delivery
+              |  delivery:
               |    dimensions:
               |      - device_setting
               |      - network
@@ -70,19 +71,16 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         val mapping = GroupedAggregateMapping(
             Mapping.Properties(context),
             MappingOutputIdentifier("data"),
-            Seq(
-                GroupedAggregateMapping.Group(
-                    name = "g1",
+            Map(
+                "g1" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1", "_2"),
                     aggregations = Seq("count")
                 ),
-                GroupedAggregateMapping.Group(
-                    name = "g2",
+                "g2" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1"),
                     aggregations = Seq("count")
                 ),
-                GroupedAggregateMapping.Group(
-                    name = "g3",
+                "g3" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1", "_3"),
                     aggregations = Seq()
                 )
@@ -139,5 +137,71 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
             Row("c1_v2", "c3_v4", 1l, 1l)
         ))
         result("cache").count() should be (9)
+    }
+
+    it should "work with more than 32 dimensions" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val mapping = GroupedAggregateMapping(
+            Mapping.Properties(context),
+            MappingOutputIdentifier("data"),
+            Map(
+                "g1" -> GroupedAggregateMapping.Group(
+                    dimensions = (1 to 18).map(i => s"_$i"),
+                    aggregations = Seq("count")
+                ),
+                "g2" -> GroupedAggregateMapping.Group(
+                    dimensions = (10 to 28).map(i => s"_$i"),
+                    aggregations = Seq("count")
+                ),
+                "g3" -> GroupedAggregateMapping.Group(
+                    dimensions = (24 to 38).map(i => s"_$i"),
+                    aggregations = Seq()
+                )
+            ),
+            Map(
+                "count" -> "count(1)",
+                "sum" -> "sum(1)"
+            )
+        )
+
+        mapping.input should be (MappingOutputIdentifier("data"))
+        mapping.outputs.toSet should be (Set("g1", "g2", "g3", "cache"))
+
+        val schema = StructType((1 to 38).map(i => StructField(s"_$i", StringType)))
+        val records = (1 to 10).map(row => (1 to 38).map(col => s"${row}_${col}").toArray)
+        val data = DataFrameUtils.ofStringValues(execution.spark, records, schema)
+
+        val result = mapping.execute(execution, Map(MappingOutputIdentifier("data") -> data))
+        result.keySet should be (Set("g1", "g2", "g3", "cache"))
+
+        result("g1").schema should be (StructType(
+            (1 to 18).map(i => StructField(s"_$i", StringType)) :+
+            StructField("count", LongType, false)
+        ))
+        result("g1").collect.toSet should be (
+            (1 to 10).map(row => Row((1 to 18).map(col => s"${row}_${col}") :+ 1l:_*)).toSet
+        )
+
+        result("g2").schema should be (StructType(
+            (10 to 28).map(i => StructField(s"_$i", StringType)) :+
+                StructField("count", LongType, false)
+        ))
+        result("g2").collect.toSet should be (
+            (1 to 10).map(row => Row((10 to 28).map(col => s"${row}_${col}") :+ 1l:_*)).toSet
+        )
+
+        result("g3").schema should be (StructType(
+            (24 to 38).map(i => StructField(s"_$i", StringType)) :+
+                StructField("count", LongType, false) :+
+                StructField("sum", LongType, true)
+        ))
+        result("g3").collect.toSet should be (
+            (1 to 10).map(row => Row((24 to 38).map(col => s"${row}_${col}") :+ 1l :+ 1l:_*)).toSet
+        )
+
+        result("cache").count() should be (30)
     }
 }

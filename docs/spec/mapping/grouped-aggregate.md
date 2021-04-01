@@ -16,7 +16,7 @@ mappings:
       requests: "SUM(requests)"
 
     groups:
-      - name: adpod
+      adpod:
         dimensions:
           - device_setting
           - master_publisher
@@ -25,7 +25,7 @@ mappings:
           - imps
           - clicks
   
-      - name: delivery
+      delivery:
         dimensions:
           - advertiser
           - agency
@@ -40,9 +40,9 @@ targets:
     mapping: aggregations:adpod
 
   parquet_delivery:
-      kind: relation
-      relation: parquet_delivery
-      mapping: aggregations:delivery
+    kind: relation
+    relation: parquet_delivery
+    mapping: aggregations:delivery
 ```
 
 ## Fields
@@ -68,7 +68,7 @@ targets:
   Specifies the list of aggregations to perform. Each aggregation has a name (the key in the
   map) and an aggregation expression. The name corresponds to the outgoing column name.
 
-* `groups` **(mandatory)** *(type: list:aggregation_group)*:
+* `groups` **(mandatory)** *(type: map:aggregation_group)*:
   Specifies a list of aggregation groups. Each aggregation group contains a `name`, a list of `dimensions` and a list
   of `aggregations`. The names of the `aggregations` must match the names of the top level `aggregations`
 

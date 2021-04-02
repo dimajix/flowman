@@ -17,7 +17,7 @@ mappings:
 
     groups:
       adpod:
-        filter: clicks > 0
+        filter: is_rtb IS TRUE
         dimensions:
           - device_setting
           - master_publisher
@@ -27,6 +27,7 @@ mappings:
           - clicks
   
       delivery:
+        having: imps > 0  
         dimensions:
           - advertiser
           - agency
@@ -72,6 +73,27 @@ targets:
 * `groups` **(mandatory)** *(type: map:aggregation_group)*:
   Specifies a list of aggregation groups. Each aggregation group contains a `name`, a list of `dimensions` and a list
   of `aggregations`. The names of the `aggregations` must match the names of the top level `aggregations`
+
+Each `aggregation_group` has the following fields:
+
+Note that the `filter` is applied *before* the aggregation while *having* is applied after aggregation. This implies
+that in `filter` you have access to all fields of the incoming mapping, while in `having` you only have access to
+all aggregations and the dimensions defined in each group. If both options are viable, using `filter` is probably
+more efficient, since it will reduce the records before aggregation.
+
+* `dimensions` **(mandatory)** *(type: list:string)*:
+  The list of dimensions within this aggregation group used for creating aggregation groups. These corresponds to
+  the set of dimensions specified in a `GROUP BY` clause.
+  
+* `aggregations` **(optional)** *(type: list:string)*:
+  The list of aggregations as defined in the `groupedAggregate`. When the aggregations list of a group is empty,
+  then all aggregations will be used.
+
+* `filter` **(optional)** *(type: string)*:
+ A Spark SQL filter condition to be applied to all incoming records within this group *befpre* aggregation.
+  
+* `having`  **(optional)** *(type: string)*:
+  A Spark SQL filter condition to be applied to all aggregates within this group after aggregation.
 
 
 ## Outputs

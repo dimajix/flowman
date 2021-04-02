@@ -44,6 +44,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
               |
               |groups:
               |  adpod:
+              |    filter: rtb_bids > 0
               |    dimensions:
               |      - device_setting
               |      - network
@@ -139,7 +140,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         result("cache").count() should be (9)
     }
 
-    it should "support filtering" in {
+    it should "support pre-aggregate filtering" in {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -217,6 +218,66 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         result("cache").count() should be (8)
     }
 
+    it should "support post-aggregate filtering" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val mapping = GroupedAggregateMapping(
+            Mapping.Properties(context),
+            MappingOutputIdentifier("data"),
+            Map(
+                "g1" -> GroupedAggregateMapping.Group(
+                    dimensions = Seq("_1", "_2"),
+                    aggregations = Seq("count"),
+                    having = Some("count > 1")
+                ),
+                "g2" -> GroupedAggregateMapping.Group(
+                    dimensions = Seq("_1"),
+                    aggregations = Seq("count"),
+                    filter = Some("_4 > 19"),
+                    having = Some("sum > 1")
+                )
+            ),
+            Map(
+                "count" -> "count(1)",
+                "sum" -> "sum(1)"
+            )
+        )
+
+        mapping.input should be (MappingOutputIdentifier("data"))
+        mapping.outputs.toSet should be (Set("g1", "g2", "cache"))
+
+        val data = execution.spark.createDataFrame(Seq(
+            ("c1_v1", "c2_v1", "c3_v1", 23.0),
+            ("c1_v1", "c2_v1", "c3_v2", 18.0),
+            ("c1_v2", "c2_v1", "c3_v3", 123.0),
+            ("c1_v2", "c2_v2", "c3_v4", 118.0)
+        ))
+
+        val result = mapping.execute(execution, Map(MappingOutputIdentifier("data") -> data))
+        result.keySet should be (Set("g1", "g2", "cache"))
+
+        result("g1").schema should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType),
+            StructField("count", LongType, false)
+        )))
+        result("g1").collect().toSet should be (Set(
+            Row("c1_v1", "c2_v1", 2l)
+        ))
+
+        result("g2").schema should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("count", LongType, false)
+        )))
+        result("g2").collect().toSet should be (Set(
+            Row("c1_v2", 2l)
+        ))
+
+        result("cache").count() should be (5)
+    }
+
     it should "work with more than 32 dimensions" in {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
@@ -283,7 +344,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         result("cache").count() should be (30)
     }
 
-    it should "work with more than 32 dimensions and filtering" in {
+    it should "work with more than 32 dimensions and pre-aggregate filtering" in {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context

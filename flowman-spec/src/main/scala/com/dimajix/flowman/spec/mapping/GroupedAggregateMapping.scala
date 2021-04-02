@@ -39,7 +39,8 @@ object GroupedAggregateMapping {
     case class Group(
         dimensions:Seq[String],
         aggregations:Seq[String],
-        filter:Option[String] = None
+        filter:Option[String] = None,
+        having:Option[String] = None
     )
 }
 
@@ -199,8 +200,10 @@ case class GroupedAggregateMapping(
             else
                 aggregations.keys.map(col).toSeq
         }
-        allGroupings.filter(col("_flowman_grouping_id") === mask)
+        val df = allGroupings.filter(col("_flowman_grouping_id") === mask)
             .select((dimensions.map(col) ++ aggregates):_*)
+
+        group.having.map(f => df.filter(f)).getOrElse(df)
     }
 
     private def performGroupedAggregation(input:DataFrame, dimensions:Seq[Column], groupings:Seq[Seq[Column]]) : DataFrame = {
@@ -231,12 +234,14 @@ object GroupedAggregateMappingSpec {
         @JsonProperty(value = "dimensions", required = true) private var dimensions: Seq[String] = Seq()
         @JsonProperty(value = "aggregations", required = true) private var aggregations: Seq[String] = Seq()
         @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
+        @JsonProperty(value = "having", required = false) private var having: Option[String] = None
 
         def instantiate(context: Context) : GroupedAggregateMapping.Group = {
             GroupedAggregateMapping.Group(
                 dimensions.map(context.evaluate),
                 aggregations.map(context.evaluate),
-                context.evaluate(filter)
+                context.evaluate(filter),
+                context.evaluate(having)
             )
         }
     }

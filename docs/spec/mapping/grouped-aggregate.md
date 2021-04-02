@@ -17,6 +17,7 @@ mappings:
 
     groups:
       adpod:
+        filter: clicks > 0
         dimensions:
           - device_setting
           - master_publisher

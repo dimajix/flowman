@@ -38,7 +38,8 @@ import com.dimajix.spark.sql.DataFrameUtils
 object GroupedAggregateMapping {
     case class Group(
         dimensions:Seq[String],
-        aggregations:Seq[String]
+        aggregations:Seq[String],
+        filter:Option[String] = None
     )
 }
 
@@ -88,67 +89,118 @@ case class GroupedAggregateMapping(
     override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
         val df = input(this.input)
         val dimensions = groups.values.flatMap(_.dimensions).toSeq.distinct
-        if (dimensions.size > 31)
+        val filters = groups.values.flatMap(_.filter).toSeq.distinct
+        if (dimensions.size + filters.size > 31)
             executeViaStructs(df)
         else
             executeDirectly(df)
     }
 
     private def executeDirectly(input: DataFrame): Map[String, DataFrame] = {
-        val dimensions = groups.values.flatMap(_.dimensions).toSeq.distinct
+        // Add columns for all filter expressions
+        val filters = groups.values.flatMap(_.filter).toSeq.distinct
+        val filterIndices = filters.zipWithIndex.toMap
+        val filterNames = filters.indices.map(i => s"_flowman_grouping_filter_$i")
+        val filteredInput = filters.zip(filterNames).foldLeft(input)((df, fi) => df.withColumn(fi._2, expr(fi._1)))
+
+        // Create GROUP BY dimensions and GROUPING SETs
+        val dimensions = groups.values.flatMap(_.dimensions).toSeq.distinct ++ filterNames
         val dimensionIndices = dimensions.zipWithIndex.toMap
         val dimensionColumns = dimensions.map(col)
-        val groupingColumns = groups.values.map(g => g.dimensions.map(d => dimensionColumns(dimensionIndices(d)))).toSeq
+        val groupingColumns = groups.values.map(g =>
+            g.dimensions.map(d => dimensionColumns(dimensionIndices(d))) ++
+                g.filter.map(f => col(filterNames(filterIndices(f))))
+        ).toSeq
 
-        val allGroupings = performGroupedAggregation(input, dimensionColumns, groupingColumns)
+        val allGroupings = performGroupedAggregation(filteredInput, dimensionColumns, groupingColumns)
 
-        val numGroups = groups.size
-        val groupingMask = (1 << numGroups) - 1
-
-        val results = groups.map { case (name,group) =>
+        val numDimensions = dimensions.size
+        val groupingMask = (1 << numDimensions) - 1
+        val groupIds = groups.values.map { group =>
             val dimensions = group.dimensions
-            val aggregates = {
-                if (group.aggregations.nonEmpty)
-                    group.aggregations.map(col)
-                else
-                    aggregations.keys.map(col).toSeq
-            }
-            val mask = (groupingMask +: dimensions.map(d => ~(1 << (numGroups - 1 - dimensionIndices(d))))).reduce(_ & _)
-            name -> allGroupings
-                .filter(col("_flowman_grouping_id") === mask)
-                .select((dimensions.map(col) ++ aggregates):_*)
+            val filter = group.filter.map(f => filterNames(filterIndices(f)))
+            (groupingMask +: (dimensions ++ filter).map(d => ~(1 << (numDimensions - 1 - dimensionIndices(d))))).reduce(_ & _)
         }
 
-        results.toMap ++ Map("cache" -> allGroupings)
+        // Apply all grouping filters to reduce cache size
+        val cache = if (filterIndices.nonEmpty) {
+            val filter = groups.values.zip(groupIds).map { case (group, groupId) =>
+                val filter = group.filter.map(f => filterNames(filterIndices(f)))
+                createGroupFilter(groupId, filter)
+            }.reduce(_ || _)
+            allGroupings.filter(filter)
+        }
+        else {
+            allGroupings
+        }
+
+        val results = groups.zip(groupIds).map { case ((name,group),mask) =>
+            val dimensions = group.dimensions
+            name -> extractGroup(cache, group, dimensions, mask)
+        }
+
+        results ++ Map("cache" -> cache)
     }
 
     private def executeViaStructs(input: DataFrame): Map[String, DataFrame] = {
+        // Add columns for all filter expressions
+        val filters = groups.values.flatMap(_.filter).toSeq.distinct
+        val filterIndices = filters.zipWithIndex.toMap
+        val filterNames = filters.indices.map(i => s"_flowman_grouping_filter_$i")
+        val filteredInput = filters.zip(filterNames).foldLeft(input)((df, fi) => df.withColumn(fi._2, expr(fi._1)))
+
+        // Create GROUP BY dimensions and GROUPING SETs via nested structs
         val dimensionColumns = groups.values.zipWithIndex.map { case (g,i) =>
-            struct(g.dimensions.map(d => col(d)):_*).as(s"_flowman_grouping_set_$i")
+            val filter = g.filter.map(f => filterNames(filterIndices(f)))
+            val dimensions = g.dimensions.distinct ++ filter
+            struct(dimensions.map(d => col(d)):_*).as(s"_flowman_grouping_set_$i")
         }.toSeq
         val groupingColumns = dimensionColumns.map(g => Seq(g))
 
-        val allGroupings = performGroupedAggregation(input, dimensionColumns, groupingColumns)
+        val allGroupings = performGroupedAggregation(filteredInput, dimensionColumns, groupingColumns)
 
         val numGroups = groups.size
         val groupingMask = (1 << numGroups) - 1
 
-        val results = groups.zipWithIndex.map { case ((name,group), index) =>
-            val groupPrefix = s"_flowman_grouping_set_$index"
-            val dimensions = group.dimensions.map(d => col(groupPrefix + "." + d))
-            val aggregates = {
-                if (group.aggregations.nonEmpty)
-                    group.aggregations.map(a => col(a))
-                else
-                    aggregations.keys.map(a => col(a)).toSeq
-            }
-            val mask = groupingMask & ~(1 << (numGroups - 1 - index))
-            name -> allGroupings
-                .filter(col("_flowman_grouping_id") === mask)
-                .select((dimensions ++ aggregates):_*)
+        // Apply all grouping filters to reduce cache size
+        val cache = if (filterIndices.nonEmpty) {
+            val filter = groups.values.zipWithIndex.map { case (group, index) =>
+                val groupPrefix = s"_flowman_grouping_set_$index"
+                val filter = group.filter.map(f => groupPrefix + "." + filterNames(filterIndices(f)))
+                val groupId = groupingMask & ~(1 << (numGroups - 1 - index))
+                createGroupFilter(groupId, filter)
+            }.reduce(_ || _)
+            allGroupings.filter(filter)
+        }
+        else {
+            allGroupings
         }
 
-        results.toMap ++ Map("cache" -> allGroupings)
+        // Extract different groupings via filtering
+        val results = groups.zipWithIndex.map { case ((name,group), index) =>
+            val groupPrefix = s"_flowman_grouping_set_$index"
+            val dimensions = group.dimensions.map(d => groupPrefix + "." + d)
+            val mask = groupingMask & ~(1 << (numGroups - 1 - index))
+            name -> extractGroup(cache, group, dimensions,  mask)
+        }
+
+        results ++ Map("cache" -> cache)
+    }
+
+    private def createGroupFilter(groupId:Int, filter:Option[String]) : Column = {
+        val groupingFilter = (col("_flowman_grouping_id") === groupId)
+        filter.map(f => col(f) && groupingFilter).getOrElse(groupingFilter)
+    }
+
+    private def extractGroup(allGroupings:DataFrame, group:GroupedAggregateMapping.Group, dimensions:Seq[String], mask:Int) : DataFrame = {
+        val aggregates = {
+            if (group.aggregations.nonEmpty)
+                group.aggregations.map(col)
+            else
+                aggregations.keys.map(col).toSeq
+        }
+        allGroupings.filter(col("_flowman_grouping_id") === mask)
+            .select((dimensions.map(col) ++ aggregates):_*)
     }
 
     private def performGroupedAggregation(input:DataFrame, dimensions:Seq[Column], groupings:Seq[Seq[Column]]) : DataFrame = {
@@ -178,11 +230,13 @@ object GroupedAggregateMappingSpec {
     class GroupSpec {
         @JsonProperty(value = "dimensions", required = true) private var dimensions: Seq[String] = Seq()
         @JsonProperty(value = "aggregations", required = true) private var aggregations: Seq[String] = Seq()
+        @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
 
         def instantiate(context: Context) : GroupedAggregateMapping.Group = {
             GroupedAggregateMapping.Group(
                 dimensions.map(context.evaluate),
-                aggregations.map(context.evaluate)
+                aggregations.map(context.evaluate),
+                context.evaluate(filter)
             )
         }
     }

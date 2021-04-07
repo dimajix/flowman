@@ -268,8 +268,7 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
         val t2 = DummyTarget(context, "t2",
             bfore = Seq(TargetIdentifier("t3"))
         )
-        val t3 = DummyTarget(context, "t3",
-        )
+        val t3 = DummyTarget(context, "t3")
 
         def filter(target:Target) : Boolean = (target.name == "t1" || target.name == "t3")
         sort(Seq(t1,t2,t3), Phase.BUILD, filter).map(_.name) should be (Seq("t1", "t3"))

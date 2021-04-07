@@ -155,7 +155,8 @@ class SimpleScheduler extends Scheduler {
      * @return
      */
     protected def selectNext(candidates:Iterable[Target]) : Option[Target] = {
-        candidates.headOption
+        // Sort candidates, so the selection algorithm is deterministic
+        candidates.toSeq.sortBy(_.name).headOption
     }
 
     /**

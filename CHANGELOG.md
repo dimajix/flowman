@@ -3,6 +3,7 @@
 * Add logo to Flowman Shell
 * Fix name of config option `flowman.execution.executor.class`
 * Add new `groupedAggregate` mapping
+* Reimplement target ordering, configurable via `flowman.execution.scheduler.class`
 
 
 # Version 0.15.0 - 2021-03-23

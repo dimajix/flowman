@@ -170,7 +170,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         }
     }
 
-    def executeJobPhase(
+    private def executeJobPhase(
         execution: Execution,
         jobContext:Context,
         job:Job, phase:Phase,

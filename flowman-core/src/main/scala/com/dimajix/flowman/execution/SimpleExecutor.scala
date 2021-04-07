@@ -16,8 +16,11 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.mutable
+
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
 
 
@@ -37,22 +40,18 @@ class SimpleExecutor extends Executor {
      * @return
      */
     def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => Status) : Status = {
+        val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_SCHEDULER_CLASS)
+        val ctor = clazz.getDeclaredConstructor()
+        val scheduler = ctor.newInstance()
+
         // First determine ordering before filtering active targets, since their might be some transitive dependencies
         // in place. For example accessing a VIEW which does not require a BUILD but accesses other resources
-        val orderedTargets = phase match {
-            case Phase.DESTROY | Phase.TRUNCATE => TargetOrdering.sort(targets, phase).reverse
-            case _ => TargetOrdering.sort(targets, phase)
-        }
-
-        // Filter targets by phase then by optional target name patterns
-        val activeTargets = orderedTargets
-            .filter(_.phases.contains(phase))
-            .filter(filter)
+        val orderedTargets = Scheduler.sort(scheduler, targets, phase, filter)
 
         logger.info(s"Target order for $phase:")
-        activeTargets.foreach(t => logger.info("  - " + t.identifier))
+        orderedTargets.foreach(t => logger.info("  - " + t.identifier))
 
-        Status.ofAll(activeTargets, keepGoing) { target =>
+        Status.ofAll(orderedTargets, keepGoing) { target =>
             fn(execution, target, phase)
         }
     }

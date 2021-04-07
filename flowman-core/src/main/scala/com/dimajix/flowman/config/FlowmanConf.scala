@@ -23,6 +23,8 @@ import java.util.NoSuchElementException
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
+import com.dimajix.flowman.execution.SimpleScheduler
+import com.dimajix.flowman.execution.Scheduler
 import com.dimajix.spark.features
 
 
@@ -71,6 +73,10 @@ object FlowmanConf {
         .doc("Class name for executing targets")
         .classConf(classOf[Executor])
         .createWithDefault(classOf[SimpleExecutor])
+    val EXECUTION_SCHEDULER_CLASS = buildConf("flowman.execution.scheduler.class")
+        .doc("Class name for scheduling targets")
+        .classConf(classOf[Scheduler])
+        .createWithDefault(classOf[SimpleScheduler])
 
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")

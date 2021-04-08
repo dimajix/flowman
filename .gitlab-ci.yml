@@ -72,8 +72,6 @@ build-hadoop2.6-spark2.3:
 
 build-hadoop2.6-spark2.4:
   stage: build
-  except:
-    - pushes
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.6-spark2.4"
@@ -92,8 +90,6 @@ build-hadoop2.7-spark2.4:
 
 build-hadoop3.1-spark2.4:
   stage: build
-  except:
-    - pushes
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.1 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.1-spark2.4"

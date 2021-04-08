@@ -275,4 +275,18 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
         sort(Seq(t3,t2,t1), Phase.BUILD, filter).map(_.name) should be (Seq("t1", "t3"))
         sort(Seq(t1,t2,t3), Phase.DESTROY, filter).map(_.name) should be (Seq("t3", "t1"))
     }
+
+    it should "error on cyclic dependencies" in {
+        val session = Session.builder().build()
+        val context = session.context
+
+        val t1 = DummyTarget(context, "t1",
+            bfore = Seq(TargetIdentifier("t2"))
+        )
+        val t2 = DummyTarget(context, "t2",
+            bfore = Seq(TargetIdentifier("t1"))
+        )
+
+        a[RuntimeException] should be thrownBy (sort(Seq(t1,t2), Phase.BUILD))
+    }
 }

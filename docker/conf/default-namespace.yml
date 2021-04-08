@@ -26,7 +26,8 @@ store:
 plugins:
   - flowman-aws
   - flowman-azure
-  - flowman-example
   - flowman-kafka
   - flowman-mariadb
   - flowman-mysql
+  - flowman-swagger
+  - flowman-json

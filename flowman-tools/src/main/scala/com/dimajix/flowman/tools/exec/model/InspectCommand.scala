@@ -14,59 +14,51 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.target
+package com.dimajix.flowman.tools.exec.model
 
 import scala.util.control.NonFatal
 
-import org.kohsuke.args4j.Argument
-import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.NoSuchTargetException
+import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.tools.exec.ActionCommand
+import org.kohsuke.args4j.Argument
+import org.slf4j.LoggerFactory
 
 
 class InspectCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
 
-    @Argument(required = true, usage = "specifies target to inspect", metaVar = "<target>")
-    var target: String = ""
+    @Argument(required = true, usage = "specifies relation to inspect", metaVar = "<relation>")
+    var relation: String = ""
 
     override protected def executeInternal(session: Session, context: Context, project: Project): Boolean = {
         try {
-            val target = context.getTarget(TargetIdentifier(this.target))
-            println("Target:")
-            println(s"    name: ${target.name}")
-            println(s"    kind: ${target.kind}")
-            println(s"    phases: ${target.phases.mkString(",")}")
-            println(s"    before: ${target.before.mkString(",")}")
-            println(s"    after: ${target.after.mkString(",")}")
-            target.phases.foreach { phase =>
-                println(s"Phase '$phase':")
-                println(s"  Provides:")
-                target.provides(phase)
+            val relation = context.getRelation(RelationIdentifier(this.relation))
+            println("Relation:")
+            println(s"    name: ${relation.name}")
+            println(s"    kind: ${relation.kind}")
+            println(s"  Requires:")
+                relation.requires
                     .map(_.toString)
                     .toSeq.sorted
                     .foreach{ p => println(s"    $p") }
-                println(s"  Requires:")
-                target.requires(phase)
-                    .map(_.toString)
-                    .toSeq.sorted
-                    .foreach{ p => println(s"    $p") }
-            }
+            println(s"  Provides:")
+            relation.provides
+                .map(_.toString)
+                .toSeq.sorted
+                .foreach{ p => println(s"    $p") }
             true
         }
         catch {
-            case ex:NoSuchTargetException =>
-                logger.error(s"Cannot resolve target '${ex.target}'")
+            case ex:NoSuchRelationException =>
+                logger.error(s"Cannot resolve relation '${ex.relation}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Error '$target': ${e.getMessage}")
+                logger.error(s"Error '$relation': ${e.getMessage}")
                 false
         }
-
     }
 }

@@ -14,59 +14,48 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.target
+package com.dimajix.flowman.tools.exec.mapping
 
 import scala.util.control.NonFatal
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.tools.exec.ActionCommand
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
-
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.NoSuchTargetException
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
 
 
 class InspectCommand extends ActionCommand {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
 
-    @Argument(required = true, usage = "specifies target to inspect", metaVar = "<target>")
-    var target: String = ""
+    @Argument(required = true, usage = "specifies mapping to inspect", metaVar = "<mapping>")
+    var mapping: String = ""
 
     override protected def executeInternal(session: Session, context: Context, project: Project): Boolean = {
         try {
-            val target = context.getTarget(TargetIdentifier(this.target))
-            println("Target:")
-            println(s"    name: ${target.name}")
-            println(s"    kind: ${target.kind}")
-            println(s"    phases: ${target.phases.mkString(",")}")
-            println(s"    before: ${target.before.mkString(",")}")
-            println(s"    after: ${target.after.mkString(",")}")
-            target.phases.foreach { phase =>
-                println(s"Phase '$phase':")
-                println(s"  Provides:")
-                target.provides(phase)
+            val mapping = context.getMapping(MappingIdentifier(this.mapping))
+            println("Mapping:")
+            println(s"    name: ${mapping.name}")
+            println(s"    kind: ${mapping.kind}")
+            println(s"    inputs: ${mapping.inputs.map(_.toString).mkString(",")}")
+            println(s"    outputs: ${mapping.outputs.mkString(",")}")
+            println(s"  Requires:")
+                mapping.requires
                     .map(_.toString)
                     .toSeq.sorted
                     .foreach{ p => println(s"    $p") }
-                println(s"  Requires:")
-                target.requires(phase)
-                    .map(_.toString)
-                    .toSeq.sorted
-                    .foreach{ p => println(s"    $p") }
-            }
             true
         }
         catch {
-            case ex:NoSuchTargetException =>
-                logger.error(s"Cannot resolve target '${ex.target}'")
+            case ex:NoSuchMappingException =>
+                logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Error '$target': ${e.getMessage}")
+                logger.error(s"Error '$mapping': ${e.getMessage}")
                 false
         }
-
     }
 }

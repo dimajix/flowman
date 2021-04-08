@@ -34,6 +34,7 @@ class MappingCommand extends NestedCommand {
         new SubCommand(name="describe",impl=classOf[DescribeCommand]),
         new SubCommand(name="explain",impl=classOf[ExplainCommand]),
         new SubCommand(name="deptree",impl=classOf[DependencyTreeCommand]),
+        new SubCommand(name="inspect",impl=classOf[InspectCommand]),
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="validate",impl=classOf[ValidateCommand]),
         new SubCommand(name="export-schema",impl=classOf[ExportSchemaCommand]),

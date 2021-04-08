@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.14.2-SNAPSHOT</version>
+        <version>0.15.1-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -98,11 +98,14 @@
                     <tag>${dist.tag}</tag>
                     <pullNewerImage>false</pullNewerImage>
                     <buildArgs>
+                        <BUILD_SPARK_VERSION>${spark.version}</BUILD_SPARK_VERSION>
+                        <BUILD_HADOOP_VERSION>${hadoop-api.version}</BUILD_HADOOP_VERSION>
                         <DIST_FILE>flowman-dist-${dist.tag}-bin.tar.gz</DIST_FILE>
+                        <http_proxy>${env.http_proxy}</http_proxy>
+                        <https_proxy>${env.https_proxy}</https_proxy>
                     </buildArgs>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 </project>
-

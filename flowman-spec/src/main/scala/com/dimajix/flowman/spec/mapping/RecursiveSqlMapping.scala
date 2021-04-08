@@ -87,12 +87,10 @@ extends BaseMapping {
         }
 
         // Register all input DataFrames as temp views
-        input.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
-        // Execute query
-        val first = firstDf(execution.spark, statement)
-        val result = fix(first, first.count())
-        // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-        input.foreach(kv => execution.spark.sessionState.catalog.dropTempView(kv._1.name))
+        val result = DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+            val first = firstDf(execution.spark, statement)
+            fix(first, first.count())
+        }
 
         Map("main" -> result)
     }
@@ -114,10 +112,9 @@ extends BaseMapping {
     }
     private def nextDf(statement:String, prev:DataFrame) : DataFrame = {
         val spark = prev.sparkSession
-        prev.createOrReplaceTempView("__this__")
-        val result = spark.sql(statement).localCheckpoint(false)
-        spark.sessionState.catalog.dropTempView("__this__")
-        result
+        DataFrameUtils.withTempView("__this__", prev) {
+            spark.sql(statement).localCheckpoint(false)
+        }
     }
 
     /**

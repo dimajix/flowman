@@ -90,6 +90,10 @@ object DataFrameUtils {
         result
     }
 
+    def withTempView[T](name:String,df:DataFrame)(fn: => T) : T = {
+        withTempViews(Seq(name -> df))(fn)
+    }
+
     def withTempViews[T](input:Iterable[(String,DataFrame)])(fn: => T) : T = {
         // Register all input DataFrames as temp views
         input.foreach(kv => kv._2.createOrReplaceTempView(kv._1))

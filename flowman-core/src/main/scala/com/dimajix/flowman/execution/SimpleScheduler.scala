@@ -78,6 +78,11 @@ class SimpleScheduler extends Scheduler {
         this.running = IdentityHashSet[Target]()
         this.phase = phase
         this.filter = filter
+
+        logger.debug(s"Dependencies of phase '$phase'")
+        this.dependencies.foreach { case(n,deps) =>
+            logger.debug(s"  ${n.identifier}  depends on  ${deps.map(_.identifier.toString).mkString(",")}")
+        }
     }
 
     /**
@@ -108,8 +113,10 @@ class SimpleScheduler extends Scheduler {
             val candidates = dependencies.filter(_._2.isEmpty).keys
 
             // Check for cyclic dependencies: No candidates found, but dependencies non-empty and no running targets
-            if (candidates.isEmpty && dependencies.nonEmpty && running.isEmpty)
-                throw new RuntimeException(s"Cannot create target order, probably due to cyclic dependencies.")
+            if (candidates.isEmpty && dependencies.nonEmpty && running.isEmpty) {
+                val deps = dependencies.map { case(k,v) => s"  ${k.identifier}  depends on  ${v.map(_.identifier.toString).mkString(", ")}"}.mkString("\n")
+                throw new RuntimeException(s"Cannot create target order, probably due to cyclic dependencies.\n$deps")
+            }
 
             val (actives,inactives) = candidates.partition(t => t.phases.contains(phase) && filter(t))
 

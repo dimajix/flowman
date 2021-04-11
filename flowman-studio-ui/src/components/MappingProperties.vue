@@ -1,0 +1,16 @@
+<template>
+  <v-container>
+    <v-card>
+      <v-card-title>Mapping</v-card-title>
+      <v-data-table
+        dense
+        :headers="headers"
+        :items="jobs"
+        :items-per-page="25"
+        :loading="loading"
+        item-key="id"
+        class="elevation-1"
+      ></v-data-table>
+    </v-card>
+  </v-container>
+</template>

@@ -39,6 +39,7 @@ class Application extends Tool {
         val session = createSession(
             sparkMaster = "",
             sparkName = "flowman-server",
+            disableSpark = true
         )
 
         //val project = loadProject(new Path(options.projectFile))

@@ -38,7 +38,7 @@ class Application extends Tool {
     def run() : Boolean = {
         val session = createSession(
             sparkMaster = "",
-            sparkName = "flowman-server",
+            sparkName = "flowman-server"
         )
 
         //val project = loadProject(new Path(options.projectFile))

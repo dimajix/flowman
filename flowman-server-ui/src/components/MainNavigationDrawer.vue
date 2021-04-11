@@ -84,7 +84,7 @@
 
 <script>
   export default {
-    name: 'MainNavigationDrawe',
+    name: 'MainNavigationDrawer',
 
     data() {
       return {

@@ -438,8 +438,11 @@
         <module>flowman-plugins/json</module>
         <module>flowman-testing</module>
         <module>flowman-tools</module>
-        <module>flowman-ui</module>
+        <module>flowman-server-ui</module>
         <module>flowman-server</module>
+        <module>flowman-studio-server</module>
+        <module>flowman-studio-kernel</module>
+        <module>flowman-studio-ui</module>
         <module>flowman-dist</module>
         <module>flowman-parent</module>
         <module>docker</module>
@@ -914,12 +917,27 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-ui</artifactId>
+                <artifactId>flowman-server-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-studio-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-studio-kernel</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-studio-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

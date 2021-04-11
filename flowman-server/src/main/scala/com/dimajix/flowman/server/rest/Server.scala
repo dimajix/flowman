@@ -73,10 +73,10 @@ class Server(
                 )}
                 ~
                 pathEndOrSingleSlash {
-                    getFromResource("META-INF/resources/webjars/flowman-ui/index.html")
+                    getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
                 }
                 ~
-                getFromResourceDirectory("META-INF/resources/webjars/flowman-ui")
+                getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
             )
 
         logger.info("Starting http server")

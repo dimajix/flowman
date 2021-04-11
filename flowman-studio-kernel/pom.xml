@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>flowman-server</artifactId>
-    <name>Flowman Server</name>
+    <artifactId>flowman-studio-kernel</artifactId>
+    <name>Flowman Studio Kernel</name>
 
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.17.0-SNAPSHOT</version>
+        <version>0.15.1-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -35,7 +35,7 @@
                         </goals>
                         <configuration>
                             <includeScope>runtime</includeScope>
-                            <outputProperty>flowman-server.classpath</outputProperty>
+                            <outputProperty>flowman-studio-kernel.classpath</outputProperty>
                             <outputAbsoluteArtifactFilename>false</outputAbsoluteArtifactFilename>
                             <pathSeparator>,</pathSeparator>
                             <prefix>$FLOWMAN_HOME/lib</prefix>
@@ -83,7 +83,7 @@
                         <configuration>
                             <artifacts>
                                 <artifact>
-                                    <file>${project.build.directory}/properties/flowman-server.properties</file>
+                                    <file>${project.build.directory}/properties/flowman-studio-kernel.properties</file>
                                     <type>properties</type>
                                     <classifier>properties</classifier>
                                 </artifact>
@@ -103,7 +103,7 @@
 
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-server-ui</artifactId>
+            <artifactId>flowman-studio-ui</artifactId>
         </dependency>
 
         <dependency>

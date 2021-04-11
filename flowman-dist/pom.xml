@@ -28,7 +28,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties</filters>
+                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-server-${project.version}-properties.properties,target/flowman-studio-kernel-${project.version}-properties.properties</filters>
                             <resources>
                                 <resource>
                                     <directory>.</directory>
@@ -170,6 +170,22 @@
                                     <classifier>properties</classifier>
                                     <outputDirectory>${project.build.directory}</outputDirectory>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-studio-server</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>properties</type>
+                                    <classifier>properties</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-studio-kernel</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>properties</type>
+                                    <classifier>properties</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -205,6 +221,14 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-studio-kernel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-studio-server</artifactId>
         </dependency>
     </dependencies>
 </project>

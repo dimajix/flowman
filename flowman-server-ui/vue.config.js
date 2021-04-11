@@ -1,5 +1,5 @@
 module.exports = {
-  outputDir: 'target/classes/META-INF/resources/webjars/flowman-ui',
+  outputDir: 'target/classes/META-INF/resources/webjars/flowman-server-ui',
   transpileDependencies: [
     'vuetify'
   ],

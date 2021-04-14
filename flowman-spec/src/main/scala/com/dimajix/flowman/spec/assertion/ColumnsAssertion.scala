@@ -134,8 +134,8 @@ object ColumnsAssertionSpec {
         def parse(input: String): Predicate =
             parse(commands, input) match {
                 case Success(res, _) => res
-                case Error(msg, _)   => throw new IllegalArgumentException(s"Cannot parse column expectation: $input")
-                case Failure(msg, _) => throw new IllegalArgumentException(s"Cannot parse column expectation: $input")
+                case e@Error(_, _)   => throw new IllegalArgumentException(s"Cannot parse column expectation: $input\n${e.toString()}")
+                case f@Failure(_, _) => throw new IllegalArgumentException(s"Cannot parse column expectation: $input\n${f.toString()}")
             }
     }
 }

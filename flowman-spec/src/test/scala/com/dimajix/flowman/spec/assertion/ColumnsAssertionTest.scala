@@ -40,9 +40,9 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
               |kind: columns
               |mapping: lala
               |expected:
-              | - network IS PRESENT
+              | - network IS present
               | - xyz IS ABSENT
-              | - "  campaign   IS   OF   TYPE   (  int  ,  BIGINT  ) "
+              | - "  campaign   IS   of   TYPE   (  int  ,  BIGINT  ) "
               | - lineitem IS OF TYPE float
               |""".stripMargin
 
@@ -76,7 +76,7 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
                 ColumnsAssertion.ColumnIsAbsent("id"),
                 ColumnsAssertion.ColumnIsAbsent("no_such_column"),
                 ColumnsAssertion.ColumnIsOfType("id", Seq(BooleanType)),
-                ColumnsAssertion.ColumnIsOfType("id", Seq(StringType, LongType))
+                ColumnsAssertion.ColumnIsOfType("ID", Seq(StringType, LongType))
             )
         )
 
@@ -88,7 +88,7 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
             AssertionResult("id IS ABSENT", false),
             AssertionResult("no_such_column IS ABSENT", true),
             AssertionResult("id IS OF TYPE BOOLEAN", false),
-            AssertionResult("id IS OF TYPE (STRING,BIGINT)", true)
+            AssertionResult("ID IS OF TYPE (STRING,BIGINT)", true)
         ))
     }
 }

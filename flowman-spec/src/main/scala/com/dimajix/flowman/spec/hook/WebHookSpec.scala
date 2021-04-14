@@ -145,7 +145,7 @@ case class WebHook(
                 httpClient.execute(httpGet)
             }
             catch {
-                case NonFatal(ex) => logger.warn(s"Could not post status to url '$url'", ex)
+                case NonFatal(ex) => logger.warn(s"Could not post status to url '$url': ${ex.toString}")
             }
         }
     }

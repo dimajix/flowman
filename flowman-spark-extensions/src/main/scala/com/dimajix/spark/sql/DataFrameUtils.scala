@@ -17,9 +17,8 @@
 package com.dimajix.spark.sql
 
 import scala.collection.JavaConverters._
-import scala.util.Failure
-import scala.util.Success
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
@@ -27,12 +26,14 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.BadRecordException
+import org.apache.spark.sql.types.BinaryType
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.Utils
 
 import com.dimajix.spark.sql.catalyst.PlanUtils
 import com.dimajix.spark.sql.local.csv.CsvOptions
-import com.dimajix.spark.sql.local.csv.UnivocityReader
 
 
 object DataFrameUtils {
@@ -88,6 +89,10 @@ object DataFrameUtils {
         }
 
         result
+    }
+
+    def withCache[T](df:DataFrame, level:StorageLevel=StorageLevel.MEMORY_AND_DISK)(fn:(DataFrame) => T) : T = {
+        withCaches(Seq(df), level)(fn(df))
     }
 
     def withTempView[T](name:String,df:DataFrame)(fn: => T) : T = {
@@ -196,6 +201,92 @@ object DataFrameUtils {
             case Right(error) =>
                 Some(error)
         }
+    }
+
+    def toStringRows(df:DataFrame,numRows: Int,truncate: Int) : Seq[Seq[String]] = {
+        val newDf = df.toDF()
+        val castCols = newDf.schema.fields.map { col =>
+            // Since binary types in top-level schema fields have a specific format to print,
+            // so we do not cast them to strings here.
+            if (col.dataType == BinaryType) {
+                newDf(col.name)
+            } else {
+                newDf(col.name).cast(StringType)
+            }
+        }
+        val data = newDf.select(castCols: _*).take(numRows + 1)
+
+        // For array values, replace Seq and Array with square brackets
+        // For cells that are beyond `truncate` characters, replace it with the
+        // first `truncate-3` and "..."
+        df.schema.fieldNames.toSeq +: data.map { row =>
+            row.toSeq.map { cell =>
+                val str = cell match {
+                    case null => "null"
+                    case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
+                    case _ => cell.toString
+                }
+                if (truncate > 0 && str.length > truncate) {
+                    // do not show ellipses for strings shorter than 4 characters.
+                    if (truncate < 4) str.substring(0, truncate)
+                    else str.substring(0, truncate - 3) + "..."
+                } else {
+                    str
+                }
+            }: Seq[String]
+        }
+    }
+
+    def showString(df:DataFrame, numRows: Int, truncate: Int = 20) : String = {
+        // Get rows represented by Seq[Seq[String]], we may get one more line if it has more data.
+        val tmpRows = toStringRows(df, numRows, truncate)
+
+        val hasMoreData = tmpRows.length - 1 > numRows
+        val rows = tmpRows.take(numRows + 1)
+
+        val sb = new StringBuilder
+        val numCols = df.schema.fieldNames.length
+        // We set a minimum column width at '3'
+        val minimumColWidth = 3
+
+        // Initialise the width of each column to a minimum value
+        val colWidths = Array.fill(numCols)(minimumColWidth)
+
+        // Compute the width of each column
+        for (row <- rows) {
+            for ((cell, i) <- row.zipWithIndex) {
+                colWidths(i) = math.max(colWidths(i), cell.length)
+            }
+        }
+
+        val paddedRows = rows.map { row =>
+            row.zipWithIndex.map { case (cell, i) =>
+                if (truncate > 0) {
+                    StringUtils.leftPad(cell, colWidths(i) - cell.length)
+                } else {
+                    StringUtils.rightPad(cell, colWidths(i) - cell.length)
+                }
+            }
+        }
+
+        // Create SeparateLine
+        val sep: String = colWidths.map("-" * _).addString(sb, "+", "+", "+\n").toString()
+
+        // column names
+        paddedRows.head.addString(sb, "|", "|", "|\n")
+        sb.append(sep)
+
+        // data
+        paddedRows.tail.foreach(_.addString(sb, "|", "|", "|\n"))
+        sb.append(sep)
+
+        if (hasMoreData) {
+            // For Data that has more than "numRows" records
+            val rowsString = if (numRows == 1) "row" else "rows"
+            sb.append(s"only showing top $numRows $rowsString\n")
+        }
+
+        sb.toString()
     }
 
     /**

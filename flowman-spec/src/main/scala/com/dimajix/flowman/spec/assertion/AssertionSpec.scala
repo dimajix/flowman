@@ -41,6 +41,8 @@ object AssertionSpec extends TypeRegistry[AssertionSpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionAssertionSpec]),
+    new JsonSubTypes.Type(name = "columns", value = classOf[ColumnsAssertionSpec]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlAssertionSpec])
 ))
 abstract class AssertionSpec  extends NamedSpec[Assertion] {

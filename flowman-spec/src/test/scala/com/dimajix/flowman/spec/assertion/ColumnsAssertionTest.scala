@@ -42,7 +42,7 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
               |expected:
               | - network IS PRESENT
               | - xyz IS ABSENT
-              | -   campaign   IS   OF   TYPE   (  int  ,  BIGINT  )
+              | - "  campaign   IS   OF   TYPE   (  int  ,  BIGINT  ) "
               | - lineitem IS OF TYPE float
               |""".stripMargin
 

@@ -1,4 +1,4 @@
-## SQL Assertion
+# SQL Assertion
 
 One of the most flexible assertions is a *SQL query* assertion, which simply executed some SQL query, which can access
 all mappings as inputs and then compares the result to some expected result.

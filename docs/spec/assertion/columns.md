@@ -1,4 +1,4 @@
-## Columns Assertion
+# Columns Assertion
 
 An assertion of type `columns` allows you to verify schema properties, like specific types of columns or presence/absence
 of individual columns.

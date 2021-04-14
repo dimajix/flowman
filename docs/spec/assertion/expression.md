@@ -1,4 +1,4 @@
-## Expression Assertion
+# Expression Assertion
 
 An assertion of type `expression` allows you to verify specific properties for each record of a specific mapping.
 The assertion works like a SQL filter and checks that every record fulfills the given SQL expression.

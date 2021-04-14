@@ -20,8 +20,8 @@ import scala.util.parsing.combinator.RegexParsers
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.types.DataTypes
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -125,8 +125,8 @@ object ColumnsAssertionSpec {
 
         private def columnIsPresent = identifier <~ IS <~ PRESENT ^^ { case id =>  ColumnIsPresent(id) }
         private def columnIsAbsent = identifier <~ IS <~ ABSENT ^^ { case id =>  ColumnIsAbsent(id) }
-        private def columnIsOfType = identifier ~ (IS ~> OF ~> TYPE ~> identifier) ^^ { case col ~ dtype =>  ColumnIsOfType(col, Seq(DataType.fromDDL(dtype))) }
-        private def columnIsOfTypes = identifier ~ (IS ~> OF ~> TYPE ~> "(" ~> repsep(identifier,",") <~ ")") ^^ { case col ~ dtypes =>  ColumnIsOfType(col, dtypes.map(DataType.fromDDL)) }
+        private def columnIsOfType = identifier ~ (IS ~> OF ~> TYPE ~> identifier) ^^ { case col ~ dtype =>  ColumnIsOfType(col, Seq(CatalystSqlParser.parseDataType(dtype))) }
+        private def columnIsOfTypes = identifier ~ (IS ~> OF ~> TYPE ~> "(" ~> repsep(identifier,",") <~ ")") ^^ { case col ~ dtypes =>  ColumnIsOfType(col, dtypes.map(CatalystSqlParser.parseDataType)) }
 
         private def commands =
             columnIsPresent | columnIsAbsent | columnIsOfType | columnIsOfTypes

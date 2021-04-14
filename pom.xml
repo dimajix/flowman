@@ -89,6 +89,7 @@
         <scala.api_version>2.12</scala.api_version>
         <scalatest.version>3.0.8</scalatest.version>
         <scalatest-api.version>3.0</scalatest-api.version>
+        <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
         <spark.version>3.0.2</spark.version>
         <spark-api.version>3.0</spark-api.version>
         <spark-hive.scope>compile</spark-hive.scope>
@@ -152,6 +153,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-parser-combinators.version>1.0.4</scala-parser-combinators.version>
                 <spark.version>2.3.0.cloudera3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.3</spark-api.version>
@@ -203,6 +205,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.0-cdh6.3.3</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.4</spark-api.version>
@@ -247,6 +250,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-parser-combinators.version>1.0.4</scala-parser-combinators.version>
                 <spark.version>2.3.3</spark.version>
                 <spark-api.version>2.3</spark-api.version>
                 <snappy.version>1.1.7.3</snappy.version>
@@ -276,6 +280,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.7</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <snappy.version>1.1.7.3</snappy.version>
@@ -305,6 +310,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.0.2</spark.version>
                 <spark-api.version>3.0</spark-api.version>
                 <snappy.version>1.1.8.2</snappy.version>
@@ -334,6 +340,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.2.5</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.1.1</spark.version>
                 <spark-api.version>3.1</spark-api.version>
                 <snappy.version>1.1.8.2</snappy.version>
@@ -982,6 +989,12 @@
                 <groupId>org.scala-lang.modules</groupId>
                 <artifactId>scala-xml_${scala.api_version}</artifactId>
                 <version>1.2.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
+                <version>${scala-parser-combinators.version}</version>
                 <scope>provided</scope>
             </dependency>
 

@@ -38,6 +38,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
         </dependency>
@@ -67,13 +72,6 @@
             <groupId>com.damnhandy</groupId>
             <artifactId>handy-uri-templates</artifactId>
             <version>2.1.8</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
-            <version>1.1.2</version>
             <scope>compile</scope>
         </dependency>
 

@@ -372,6 +372,12 @@
                 <version>${scala.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
+                <version>${scala-parser-combinators.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <!-- Spark Dependencies -->
             <dependency>

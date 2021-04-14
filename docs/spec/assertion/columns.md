@@ -33,6 +33,23 @@ targets:
           - lineitem IS OF TYPE float
 ```
 
+Another example using the assertion inside a test:
+```yaml
+test:
+  test_pricing:
+    assertions:
+      assert_pricing_columns:
+        kind: columns
+        description: "Assert correctness of column names and types"
+        mapping: cube_pricing
+        expected:
+          - campaign IS OF TYPE (int,long)
+          - lineitem IS OF TYPE string
+          - imps IS OF TYPE long
+          - price IS OF TYPE float 
+```
+
+
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `columns`

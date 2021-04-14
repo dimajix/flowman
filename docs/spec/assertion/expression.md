@@ -10,8 +10,8 @@ kind: expression
 description: "Assert that only allowed values are used"
 mapping: measurements_extracted
 expected:
-  - "network IS NOT NULL"
-  - "campaign IS IN (1,2)" 
+  - "usaf IS NOT NULL"
+  - "air_temperature_qual IS IN (1,2,3,4,5,6,7,8,9)" 
 ```
 
 A more complete example (with the required top level entities) could look as follows:
@@ -25,8 +25,22 @@ targets:
         description: "Assert that only allowed values are used"
         mapping: measurements_extracted
         expected:
-          - "network IS NOT NULL"
-          - "campaign IS IN (1,2)" 
+          - "usaf IS NOT NULL"
+          - "wban IS >= '00000' AND wban <= '99999'" 
+```
+
+Another example using the assertion inside a test:
+```yaml
+test:
+  test_pricing:
+    assertions:
+      assert_pricing_columns:
+        kind: columns
+        description: "Assert correctness of column names and types"
+        mapping: measurements_extracted
+        expected:
+          - "usaf IS NOT NULL"
+          - "wban IS >= '00000' AND wban <= '99999'"  
 ```
 
 ## Fields

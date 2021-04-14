@@ -14,6 +14,20 @@ expected:
   - "campaign IS IN (1,2)" 
 ```
 
+A more complete example (with the required top level entities) could look as follows:
+```yaml
+targets:
+  verify_output:
+    kind: verify
+    assertions:
+      assert_facts_columns:
+        kind: expression
+        description: "Assert that only allowed values are used"
+        mapping: measurements_extracted
+        expected:
+          - "network IS NOT NULL"
+          - "campaign IS IN (1,2)" 
+```
 
 ## Fields
 

@@ -16,6 +16,23 @@ expected:
  - lineitem IS OF TYPE float
 ```
 
+A more complete example (with the required top level entities) could look as follows:
+```yaml
+targets:
+  verify_output:
+    kind: verify
+    assertions:
+      assert_facts_columns:
+        kind: columns
+        description: "Verify correctness of column names and types"
+        mapping: facts_all
+        expected:
+          - network IS PRESENT
+          - xyz IS ABSENT
+          - campaign IS OF TYPE (int,BIGINT)
+          - lineitem IS OF TYPE float
+```
+
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `columns`

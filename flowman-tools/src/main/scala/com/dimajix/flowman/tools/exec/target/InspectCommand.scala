@@ -26,16 +26,16 @@ import com.dimajix.flowman.execution.NoSuchTargetException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class InspectCommand extends ActionCommand {
+class InspectCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
 
     @Argument(required = true, usage = "specifies target to inspect", metaVar = "<target>")
     var target: String = ""
 
-    override protected def executeInternal(session: Session, context: Context, project: Project): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Boolean = {
         try {
             val target = context.getTarget(TargetIdentifier(this.target))
             println("Target:")

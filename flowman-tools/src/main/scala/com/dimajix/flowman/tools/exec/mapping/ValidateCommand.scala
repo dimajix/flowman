@@ -29,16 +29,16 @@ import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class ValidateCommand extends ActionCommand {
+class ValidateCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ValidateCommand])
 
     @Argument(usage = "specifies mappings to validate", metaVar = "<mapping>")
     var mappings: Array[String] = Array()
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         logger.info("Validating mappings {}", if (mappings != null) mappings.mkString(",") else "all")
 
         // Then execute output operations

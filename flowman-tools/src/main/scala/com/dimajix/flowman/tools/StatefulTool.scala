@@ -52,6 +52,7 @@ class StatefulTool(
         )
         _context = _session.getContext(project)
         _job = None
+        _test = None
         _session
     }
 

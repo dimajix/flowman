@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.job
+package com.dimajix.flowman
 
-import org.slf4j.LoggerFactory
-
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.exec.Command
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ListCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[ListCommand])
-
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
-        project.jobs.keys.toList.sorted.foreach(println)
-        true
+class VersionsTest extends AnyFlatSpec with Matchers {
+    "Versions" should "not be empty" in {
+        SPARK_VERSION should not be empty
+        FLOWMAN_VERSION should not be empty
+        JAVA_VERSION should not be empty
     }
 }

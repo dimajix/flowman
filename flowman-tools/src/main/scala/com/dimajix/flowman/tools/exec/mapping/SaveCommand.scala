@@ -34,10 +34,10 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spec.target.FileTarget
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class SaveCommand extends ActionCommand {
+class SaveCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[SaveCommand])
 
     @Option(name="-f", aliases=Array("--format"), usage="Specifies the format", metaVar="<format>", required = false)
@@ -49,7 +49,7 @@ class SaveCommand extends ActionCommand {
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true, index = 1)
     var location: String = ""
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val task = FileTarget(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
         try {

@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.tools.exec.mapping
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
@@ -30,10 +27,10 @@ import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class DescribeCommand extends ActionCommand {
+class DescribeCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Option(name = "-s", aliases=Array("--spark"), usage = "use Spark to derive final schema")
@@ -41,7 +38,7 @@ class DescribeCommand extends ActionCommand {
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         try {
             val identifier = MappingOutputIdentifier(this.mapping)
             val mapping = context.getMapping(identifier.mapping)

@@ -49,6 +49,3 @@ An optional SQL filter expression that is applied *after* projection.
 
 ## Outputs
 * `main` - the only output of the mapping
-
-
-## Description

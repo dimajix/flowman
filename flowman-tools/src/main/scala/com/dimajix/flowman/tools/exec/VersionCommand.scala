@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2020 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.job
+package com.dimajix.flowman.tools.exec
 
-import org.slf4j.LoggerFactory
-
+import com.dimajix.flowman.FLOWMAN_VERSION
+import com.dimajix.flowman.JAVA_VERSION
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.tools.ToolConfig
 
 
-class ListCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[ListCommand])
-
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
-        project.jobs.keys.toList.sorted.foreach(println)
+class VersionCommand extends Command {
+    override def execute(session: Session, project: Project, context: Context): Boolean = {
+        println(s"Flowman $FLOWMAN_VERSION")
+        println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
+        println(s"Spark version $SPARK_VERSION")
+        println(s"Java version $JAVA_VERSION")
         true
     }
 }

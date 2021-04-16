@@ -34,9 +34,13 @@ import org.jline.terminal.TerminalBuilder
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 
+import com.dimajix.flowman.FLOWMAN_VERSION
+import com.dimajix.flowman.JAVA_VERSION
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.StatefulTool
+import com.dimajix.flowman.tools.ToolConfig
 import com.dimajix.flowman.util.withShutdownHook
 
 
@@ -65,8 +69,15 @@ object Shell {
 
     def run(args: String*) : Boolean = {
         val options = new Arguments(args.toArray)
-        // Check if only help is requested
-        if (options.help) {
+        // Check if only help or version is requested
+        if (options.version) {
+            println(s"Flowman $FLOWMAN_VERSION")
+            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
+            println(s"Spark version $SPARK_VERSION")
+            println(s"Java version $JAVA_VERSION")
+            true
+        }
+        else if (options.help) {
             options.printHelp(System.out)
             true
         }
@@ -119,16 +130,17 @@ class Shell(args:Arguments) extends StatefulTool(
         Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
 
         val logo =
-            """
-              |______  _
+            """______  _
               ||  ___|| |
               || |_   | |  ___ __      __ _ __ ___    __ _  _ __
               ||  _|  | | / _ \\ \ /\ / /| '_ ` _ \  / _` || '_ \
               || |    | || (_) |\ V  V / | | | | | || (_| || | | |
-              |\_|    |_| \___/  \_/\_/  |_| |_| |_| \__,_||_| |_|
-              |""".stripMargin
+              |\_|    |_| \___/  \_/\_/  |_| |_| |_| \__,_||_| |_|""".stripMargin
 
-        writer.println(logo)
+        writer.println("\nWelcome to")
+        writer.println(s"$logo    $FLOWMAN_VERSION\n")
+        writer.println(s"Using Spark version $SPARK_VERSION and Java version $JAVA_VERSION\n")
+        writer.println("Type in 'help' for getting help")
 
         // REPL-loop
         while (true) {

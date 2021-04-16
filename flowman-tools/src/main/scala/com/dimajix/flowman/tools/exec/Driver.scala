@@ -22,10 +22,15 @@ import scala.util.Try
 
 import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.CmdLineException
+import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.FLOWMAN_VERSION
+import com.dimajix.flowman.JAVA_VERSION
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
+import com.dimajix.flowman.tools.ToolConfig
 import com.dimajix.flowman.util.ConsoleColors
 
 
@@ -54,8 +59,15 @@ object Driver {
 
     def run(args: String*) : Boolean = {
         val options = new Arguments(args.toArray)
-        // Check if only help is requested
-        if (options.help) {
+        // Check if only help or version is requested
+        if (options.version) {
+            println(s"Flowman $FLOWMAN_VERSION")
+            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
+            println(s"Spark version $SPARK_VERSION")
+            println(s"Java version $JAVA_VERSION")
+            true
+        }
+        else if (options.help) {
             options.printHelp(System.out)
             true
         }
@@ -70,6 +82,8 @@ object Driver {
 
 
 class Driver(options:Arguments) extends Tool {
+    private val logger = LoggerFactory.getLogger(classOf[Driver])
+
     /**
       * Main method for running this command
       * @return
@@ -97,6 +111,9 @@ class Driver(options:Arguments) extends Tool {
                 profiles = options.profiles
             )
             val context = session.getContext(project)
+
+            logger.info(s"Flowman $FLOWMAN_VERSION using Spark version $SPARK_VERSION and Java version $JAVA_VERSION")
+
             val result = options.command.execute(session, project, context)
             session.shutdown()
             result

@@ -28,6 +28,11 @@ object JacksonTest {
         @JsonProperty(value = "val") var value: Option[String] = _
     }
 
+    class SpaceContainer {
+        @JsonProperty(value = "some key") var some_key: String = _
+        @JsonProperty(value = "map") var map: Map[String,String] = Map()
+    }
+
     case class CaseClassWithDefaults @JsonCreator(mode=JsonCreator.Mode.DISABLED)(
         @JsonProperty(value = "key", defaultValue = "key") key: String = "key",
         @JsonProperty(value = "value", defaultValue = "value") value: String = "value"
@@ -68,6 +73,19 @@ class JacksonTest extends AnyFlatSpec with Matchers {
         val data = mapper.readValue(yaml, classOf[CaseClassWithDefaults])
         //data.key should be ("key")
         data.value should be ("lala")
+    }
+
+    "Spaces in keys" should "be supported" in {
+        val yaml =
+            """
+              |some key: some_key
+              |map:
+              |  some key: some value
+            """.stripMargin
+
+        val data = mapper.readValue(yaml, classOf[SpaceContainer])
+        data.some_key should be ("some_key")
+        data.map should be (Map("some key" -> "some value"))
     }
 
     "Optional values" should "be supported" in {

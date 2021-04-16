@@ -35,11 +35,11 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.types.FieldValue
 
 
-sealed class PhaseCommand(phase:Phase) extends ActionCommand {
+sealed class PhaseCommand(phase:Phase) extends Command {
     private val logger = LoggerFactory.getLogger(this.getClass)
 
     @Argument(index=0, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
@@ -55,7 +55,7 @@ sealed class PhaseCommand(phase:Phase) extends ActionCommand {
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val args = splitSettings(this.args).toMap
         val job = "main"
         Try {

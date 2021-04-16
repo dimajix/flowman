@@ -23,18 +23,18 @@ import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 
-class InspectCommand extends ActionCommand {
+class InspectCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
 
     @Argument(required = true, usage = "specifies mapping to inspect", metaVar = "<mapping>")
     var mapping: String = ""
 
-    override protected def executeInternal(session: Session, context: Context, project: Project): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Boolean = {
         try {
             val mapping = context.getMapping(MappingIdentifier(this.mapping))
             println("Mapping:")

@@ -33,10 +33,10 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.ConsoleTarget
 import com.dimajix.flowman.tools.ParserUtils
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class ShowCommand extends ActionCommand {
+class ShowCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ShowCommand])
 
     @Argument(index=0, usage="Specifies the mapping to show", metaVar="<mapping>", required=true)
@@ -51,7 +51,7 @@ class ShowCommand extends ActionCommand {
     var csv: Boolean = false
 
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val columns = ParserUtils.parseDelimitedList(this.columns)
         val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns, !noHeader, csv)
 

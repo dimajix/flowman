@@ -23,18 +23,18 @@ import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 
-class InspectCommand extends ActionCommand {
+class InspectCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
 
     @Argument(required = true, usage = "specifies relation to inspect", metaVar = "<relation>")
     var relation: String = ""
 
-    override protected def executeInternal(session: Session, context: Context, project: Project): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Boolean = {
         try {
             val relation = context.getRelation(RelationIdentifier(this.relation))
             println("Relation:")

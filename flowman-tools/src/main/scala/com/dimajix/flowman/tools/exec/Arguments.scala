@@ -40,6 +40,8 @@ import com.dimajix.flowman.tools.exec.test.TestCommand
 class Arguments(args:Array[String]) {
     @Option(name = "-h", aliases=Array("--help"), usage = "show help", help=true)
     var _help: Boolean = false
+    @Option(name = "-v", aliases=Array("--version"), usage = "show version", help=true)
+    var version: Boolean = false
     @Option(name = "-f", aliases=Array("--project"), usage = "project file or directory", metaVar = "<project_file>")
     var projectFile: String = "project.yml"
     @Option(name = "-P", aliases=Array("--profile"), usage = "activate profile with specified name", metaVar = "<profile>")

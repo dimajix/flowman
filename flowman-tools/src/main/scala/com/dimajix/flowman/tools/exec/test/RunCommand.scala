@@ -32,10 +32,10 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TestIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class RunCommand extends ActionCommand {
+class RunCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[RunCommand])
 
     @Argument(required = false, usage = "specifies tests(s) to execute", metaVar = "<tests>")
@@ -44,7 +44,7 @@ class RunCommand extends ActionCommand {
     var keepGoing: Boolean = false
 
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         Try {
             val allTests = if (tests.nonEmpty) {
                 tests.flatMap(_.split(",")).toSeq.distinct

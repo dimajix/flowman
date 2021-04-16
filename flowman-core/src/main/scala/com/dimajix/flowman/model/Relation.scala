@@ -270,6 +270,8 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     override def describe(execution:Execution) : StructType = {
+        //val partitions = this.partitions.map(_.name).toSet
+        //if (!fields.forall(f => partitions.contains(f.name))) {
         if (fields.nonEmpty) {
             // Use given fields if relation contains valid list of fields
             StructType(fields)

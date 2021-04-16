@@ -33,11 +33,9 @@ object Resources {
     }
 
     private def loadProperties(url:URL) : Properties = {
-        val byteSource = com.google.common.io.Resources.asByteSource(url)
-        val inputStream = byteSource.openBufferedStream
+        val inputStream = url.openStream()
         try {
             val props = new Properties()
-            val properties = props.load(inputStream)
             props.load(inputStream)
             props
         } finally {

@@ -56,7 +56,6 @@
         <args4j.version>2.33</args4j.version>
         <ivy.version>2.4.0</ivy.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
-        <opencsv.version>2.3</opencsv.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <derby.version>10.12.1.1</derby.version>
         <log4j.version>1.2.17</log4j.version>
@@ -440,8 +439,8 @@
         <module>flowman-tools</module>
         <module>flowman-server-ui</module>
         <module>flowman-server</module>
-        <module>flowman-studio-server</module>
-        <module>flowman-studio-kernel</module>
+        <module>flowman-kernel</module>
+        <module>flowman-studio</module>
         <module>flowman-studio-ui</module>
         <module>flowman-dist</module>
         <module>flowman-parent</module>
@@ -1316,13 +1315,6 @@
             </dependency>
 
             <dependency>
-                <groupId>net.sf.opencsv</groupId>
-                <artifactId>opencsv</artifactId>
-                <version>${opencsv.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-mapper-asl</artifactId>
                 <version>${jackson_asl.version}</version>
@@ -1334,7 +1326,6 @@
                 <version>${jackson_asl.version}</version>
                 <scope>provided</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-jaxrs</artifactId>
@@ -1574,6 +1565,22 @@
             </dependency>
 
             <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-http_${scala.api_version}</artifactId>
+                <version>10.1.14</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-http-spray-json_${scala.api_version}</artifactId>
+                <version>10.1.14</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.swagger-akka-http</groupId>
+                <artifactId>swagger-akka-http_${scala.api_version}</artifactId>
+                <version>1.1.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-parser</artifactId>
                 <version>1.0.49</version>
@@ -1596,6 +1603,11 @@
                 <artifactId>swagger-annotations</artifactId>
                 <version>1.6.0</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>swagger-ui</artifactId>
+                <version>3.22.2</version>
             </dependency>
 
             <dependency>

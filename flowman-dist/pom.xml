@@ -11,7 +11,7 @@
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
         <version>0.17.0-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <build>
@@ -28,7 +28,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-server-${project.version}-properties.properties,target/flowman-studio-kernel-${project.version}-properties.properties</filters>
+                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties,target/flowman-kernel-${project.version}-properties.properties</filters>
                             <resources>
                                 <resource>
                                     <directory>.</directory>

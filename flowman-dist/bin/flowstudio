@@ -3,11 +3,11 @@
 basedir=$(readlink -f $(dirname $0)/..)
 source $basedir/libexec/flowman-common.sh
 
-APP_NAME="flowman-studio-server"
+APP_NAME="flowman-studio"
 APP_VERSION="${project.version}"
-APP_MAIN="com.dimajix.flowman.studio.server.Application"
+APP_MAIN="com.dimajix.flowman.studio.Application"
 
 APP_JAR=$FLOWMAN_HOME/lib/"$APP_NAME-$APP_VERSION.jar"
-LIB_JARS="${flowman-studio-server.classpath}"
+LIB_JARS="${flowman-studio.classpath}"
 
 spark_submit $APP_JAR $LIB_JARS $APP_MAIN "$@"

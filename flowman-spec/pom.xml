@@ -10,7 +10,7 @@
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
         <version>0.17.0-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <build>

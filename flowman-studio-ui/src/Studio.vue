@@ -5,19 +5,20 @@
     </v-app-bar>
 
     <v-main>
-      <v-container class="fill-height">
+      <v-container class="fill-height, container--fluid">
         <v-row  class="fill-height">
-          <v-col>
-            <navigation-menu></navigation-menu>
+          <v-col class="col-lg-2">
+            <v-row>
+               <navigation-menu></navigation-menu>
+            </v-row>
+            <v-row>
+                <mapping-properties></mapping-properties>
+            </v-row>
           </v-col>
           <v-col>
-            <v-container>
               <v-row>
                 <v-col>
-                  <v-subheader>Graph</v-subheader>
-                </v-col>
-                <v-col>
-                  <mapping-properties></mapping-properties>
+                  <flow></flow>
                 </v-col>
               </v-row>
               <v-divider/>
@@ -36,7 +37,7 @@
                         v-for="i in 3"
                         :key="i"
                       >
-                        Item {{ i }}
+                        Mapping {{ i }}
                       </v-tab>
                     </v-tabs>
 
@@ -56,7 +57,6 @@
                   </v-sheet>
                 </v-col>
               </v-row>
-            </v-container>
           </v-col>
         </v-row>
       </v-container>
@@ -75,13 +75,15 @@
 import NavigationMenu from './components/NavigationMenu'
 import MappingOutput from './components/MappingOutput'
 import MappingProperties from './components/MappingProperties'
+import Flow from './components/Flow'
 
 export default {
   name: 'App',
   components: {
       NavigationMenu,
       MappingProperties,
-      MappingOutput
+      MappingOutput,
+      Flow
   },
   data () {
     return {

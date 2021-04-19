@@ -36,15 +36,15 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
 * `relation` **(mandatory)** *(type: string)*:
-Specifies the name of the relation to read from
+Specifies the name of the relation to read from.
 
 * `partitions` **(optional)** *(type: map:partition)*:
-Specifies the partition (or multiple partitions) to read data from
+Specifies the partition (or multiple partitions) to read data from.
 
 * `columns` **(optional)** *(type: map:data_type)* *(default: empty):
-Specifies the list of columns and types to read from the relation. This schema
-will be applied to the records after they have been read and interpreted by the
-underlying source.
+Specifies the list of columns and types to read from the relation. This schema will be applied to the records after 
+  they have been read and interpreted by the underlying source. This schema will also be used as a subsitute for schema
+  inference and therefore can be very helpful when using [`mock`](mock.md) mappings.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
 An optional SQL filter expression that is applied for reading only a subset of records. The filter is applied
@@ -54,6 +54,3 @@ An optional SQL filter expression that is applied for reading only a subset of r
 
 ## Outputs
 * `main` - the only output of the mapping
-
-
-## Description

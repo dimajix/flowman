@@ -34,12 +34,10 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types
-import com.dimajix.flowman.types.ArrayRecord
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.MapRecord
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.types.ValueRecord
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.DataFrameUtils
 
@@ -203,13 +201,24 @@ case class MockRelation(
     override def partitions: Seq[PartitionField] = mocked.partitions
 
     /**
-     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
-     * the physical source
+      * Returns a list of fields including the partition columns. This method should not perform any physical schema
+      * inference.
+      *
+      * @return
+      */
+    override def fields: Seq[Field] = mocked.fields
+
+    /**
+     * Returns the schema of the relation. This implementation will *not* simply call the [[describe]] Method
+     * of the mocked instance, but it will use the [[fields]] method instead. This ensures that no physical data
+     * source is inspected during mocking.
      *
      * @param execution
      * @return
      */
-    override def describe(execution: Execution): types.StructType = mocked.describe(execution)
+    override def describe(execution: Execution): types.StructType = {
+        types.StructType(mocked.fields)
+    }
 
     /**
      * Creates a Spark schema from the list of fields. This mocking implementation will add partition columns, since

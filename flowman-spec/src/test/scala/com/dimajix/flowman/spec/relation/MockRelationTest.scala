@@ -169,14 +169,14 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         val relation = context.getRelation(RelationIdentifier("mock"))
 
         (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
-        (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
+        (baseRelation.schema _).expects().atLeastOnce().returns(Some(schema))
         relation.schema should be (Some(schema))
 
-        (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
+        (baseRelation.partitions _).expects().atLeastOnce().returns(Seq())
         relation.partitions should be (Seq())
-        relation.fields should be (schema.fields)
 
-        (baseRelation.describe _).expects(executor).anyNumberOfTimes().returns(new StructType(schema.fields))
+        (baseRelation.fields _).expects().atLeastOnce().returns(schema.fields)
+        relation.fields should be (schema.fields)
         relation.describe(executor) should be (new StructType(schema.fields))
 
         val df1 = relation.read(executor, None, Map())
@@ -226,14 +226,14 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         val relation = context.getRelation(RelationIdentifier("base"))
 
         (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
-        (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
+        (baseRelation.schema _).expects().atLeastOnce().returns(Some(schema))
         relation.schema should be (Some(schema))
 
-        (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
+        (baseRelation.partitions _).expects().atLeastOnce().returns(Seq())
         relation.partitions should be (Seq())
-        relation.fields should be (schema.fields)
 
-        (baseRelation.describe _).expects(executor).anyNumberOfTimes().returns(new StructType(schema.fields))
+        (baseRelation.fields _).expects().atLeastOnce().returns(schema.fields)
+        relation.fields should be (schema.fields)
         relation.describe(executor) should be (new StructType(schema.fields))
     }
 

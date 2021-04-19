@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
+import com.dimajix.flowman.types
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
@@ -105,7 +106,6 @@ case class NullRelation(
         require(execution != null)
     }
 
-
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
@@ -133,6 +133,16 @@ case class NullRelation(
     }
     override def migrate(execution: Execution): Unit = {
         require(execution != null)
+    }
+
+    /**
+      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+      * the physical source
+      * @param execution
+      * @return
+      */
+    override def describe(execution:Execution) : types.StructType = {
+        types.StructType(fields)
     }
 
     /**

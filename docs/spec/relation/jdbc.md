@@ -55,4 +55,10 @@ relations:
  a relation property can overwrite a connection property if it has the same name.
 
 
-## Description
+## Remarks
+
+Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
+for describing the schema of a relation. This might create unwanted connections to the physical data source,
+particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data 
+source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema 
+in all situations where only schema information is required.

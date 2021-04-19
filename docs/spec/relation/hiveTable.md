@@ -123,7 +123,7 @@ relations:
  files and can be used to workaround some bugs in the Hive backend.
 
 
-## Description
+## Remarks
 
 When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
 whole lifecycle for you. This means that
@@ -132,3 +132,10 @@ whole lifecycle for you. This means that
 * Hive tables will be truncated or individual partitions will be dropped during `clean` phase
 * Hive tables will be removed during `destroy` phase
 
+### Schema Inference
+
+Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
+for describing the schema of a relation. This might create unwanted connections to the physical data source,
+particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data
+source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema
+in all situations where only schema information is required.

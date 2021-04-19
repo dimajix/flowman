@@ -38,6 +38,4 @@ relations:
 * `mapping` **(optional)** *(string)* *(default: empty)*:
  Specifies the name of a mapping, which should be translated into SQL and stored in the Hive view. Cannot be used
  together with `sql`.
- 
-
-## Description
+  

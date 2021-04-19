@@ -71,7 +71,7 @@ relations:
  Please see the section [Partitioning](#Partitioning) below. 
 
 
-## Description
+## Remarks
 
 When using `file` relations as data sinks in a [`relation` target](../target/relation.md), then Flowman will manage the
 whole lifecycle of the directory for you. This means that
@@ -81,8 +81,16 @@ whole lifecycle of the directory for you. This means that
 * The directory specified in `location` will be truncated or individual partitions will be dropped during `clean` phase
 * The directory specified in `location` tables will be removed during `destroy` phase
 
+### Schema Inference
 
-## Supported File Format
+Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
+for describing the schema of a relation. This might create unwanted connections to the physical data source,
+particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data
+source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema
+in all situations where only schema information is required.
+
+
+### Supported File Format
 
 File relations support all file formats also supported by Spark. This includes simple text files, CSV files,
 Parquet files, ORC files and Avro files. Each file format provides its own additional settings which can be specified

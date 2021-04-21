@@ -110,6 +110,10 @@ class SessionEndpoint(rootSession:execution.Session) {
 
     @POST
     @ApiOperation(value = "Create new session", nickname = "createSession", httpMethod = "POST")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "session request", value = "session parameters and project name", required = true,
+            dataTypeClass = classOf[CreateSessionRequest], paramType = "body")
+    ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Create a new session and opens a project", response = classOf[Session])
     ))
@@ -137,7 +141,8 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Retrieve session information", response = classOf[Session])
+        new ApiResponse(code = 200, message = "Retrieve session information", response = classOf[Session]),
+        new ApiResponse(code = 404, message = "Session not found")
     ))
     def getSession(@ApiParam(hidden = true) session:String) : server.Route = {
         get {
@@ -160,6 +165,10 @@ class SessionEndpoint(rootSession:execution.Session) {
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
     ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Retrieve session information"),
+        new ApiResponse(code = 404, message = "Session not found")
+    ))
     def resetSession(@ApiParam(hidden = true) session: String) : server.Route = {
         post {
             withSession(session) { session =>
@@ -176,7 +185,8 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Close current session (and project)")
+        new ApiResponse(code = 200, message = "Close current session (and project)"),
+        new ApiResponse(code = 404, message = "Session not found")
     ))
     def closeSession(@ApiParam(hidden = true) session:String) : server.Route = {
         delete {
@@ -194,7 +204,8 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about the project", response = classOf[Project])
+        new ApiResponse(code = 200, message = "Information about the project", response = classOf[Project]),
+        new ApiResponse(code = 404, message = "Session not found")
     ))
     def getProject(@ApiParam(hidden = true) session:String) : server.Route = {
         get {

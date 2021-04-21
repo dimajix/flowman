@@ -32,7 +32,7 @@ object Configuration {
 
     private def defaultProperties() : Properties = {
         val loader = Thread.currentThread.getContextClassLoader
-        val url = loader.getResource("com/dimajix/flowman/flowman-server.properties")
+        val url = loader.getResource("com/dimajix/flowman/kernel/flowman-kernel.properties")
         val properties = new Properties()
         properties.load(url.openStream())
         properties

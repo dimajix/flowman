@@ -44,8 +44,14 @@ import com.dimajix.flowman.kernel.service.SessionService
 import com.dimajix.flowman.model
 
 
-@Api(value = "/session/{session}/job", produces = "application/json", consumes = "application/json")
+@Api(value = "job", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/job")
+@ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+))
+@ApiResponses(Array(
+    new ApiResponse(code = 404, message = "Session or job not found")
+))
 class JobEndpoint {
     import akka.http.scaladsl.server.Directives._
 

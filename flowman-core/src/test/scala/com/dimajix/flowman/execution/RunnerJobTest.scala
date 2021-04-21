@@ -36,7 +36,6 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
-import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.types.StringType
 
 
@@ -363,14 +362,14 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         val jobTargetToken = new TargetToken {}
         (jobHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(jobJobToken)
         (jobHook.finishJob _).expects(jobJobToken, Status.SUCCESS)
-        (jobHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[JobToken]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
+        (jobHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
         (jobHook.finishTarget _).expects(jobTargetToken, Status.SUCCESS)
         val namespaceHook = mock[Hook]
         val namespaceJobToken = new JobToken {}
         val namespaceTargetToken = new TargetToken {}
         (namespaceHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(namespaceJobToken)
         (namespaceHook.finishJob _).expects(namespaceJobToken, Status.SUCCESS)
-        (namespaceHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[JobToken]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
+        (namespaceHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
         (namespaceHook.finishTarget _).expects(namespaceTargetToken, Status.SUCCESS)
 
         val ns = Namespace(

@@ -236,11 +236,11 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         // Create target instance for state server
         val instance = target.instance
 
+        val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
+        val canSkip = !force && checkTarget(instance, phase)
+
         withListeners(target, instance, phase, jobToken) {
             logSubtitle(s"$phase target '${target.identifier}'")
-
-            val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
-            val canSkip = !force && checkTarget(instance, phase)
 
             // First checkJob if execution is really required
             if (canSkip) {

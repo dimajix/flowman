@@ -224,11 +224,11 @@
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-studio-kernel</artifactId>
+            <artifactId>flowman-kernel</artifactId>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-studio-server</artifactId>
+            <artifactId>flowman-studio</artifactId>
         </dependency>
     </dependencies>
 </project>

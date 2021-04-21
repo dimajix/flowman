@@ -17,26 +17,17 @@
 package com.dimajix.flowman.kernel.model
 
 
-case class Job(
-    name:String,
-    description:Option[String],
-    parameters:Seq[String],
-    environment:Map[String,String]
-) {
-}
+abstract class Task
 
-
-case class JobList(
-    jobs:Seq[String]
-) {
-}
-
-case class RunJobRequest(
+case class JobTask(
+    id:String,
     job:String,
     phase:String,
+    lifecycle:Seq[String],
     args:Map[String,String],
     force:Boolean,
     keepGoing:Boolean,
-    dryRun:Boolean
-)
-
+    dryRun:Boolean,
+    status:String
+) extends Task {
+}

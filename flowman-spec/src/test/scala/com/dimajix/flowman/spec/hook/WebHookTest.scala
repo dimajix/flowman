@@ -29,9 +29,11 @@ import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spec.target.NullTarget
 import com.dimajix.flowman.spec.target.NullTargetSpec
 import com.dimajix.flowman.types.StringType
 
@@ -47,9 +49,10 @@ class WebHookTest extends AnyFlatSpec with Matchers {
             jobFinish = Some("http://0.0.0.0/$env/$job/$arg1/$status")
         )
 
-        val job = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
+        val job = Job.builder(session.context).build()
+        val instance = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
 
-        val token = hook.startJob(job, Phase.BUILD)
+        val token = hook.startJob(job, instance, Phase.BUILD)
         hook.finishJob(token, Status.SUCCESS)
     }
 
@@ -63,9 +66,10 @@ class WebHookTest extends AnyFlatSpec with Matchers {
             targetFinish = Some("http://0.0.0.0/$env/$target/$arg1/$status")
         )
 
-        val target = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
+        val target = NullTarget(Target.Properties(session.context, "t1"), Map())
+        val instance = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
 
-        val token = hook.startTarget(target, Phase.BUILD, None)
+        val token = hook.startTarget(target, instance, Phase.BUILD, None)
         hook.finishTarget(token, Status.SUCCESS)
     }
 

@@ -16,25 +16,43 @@
 
 package com.dimajix.flowman.kernel.rest
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiImplicitParam
+import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
+import javax.ws.rs.DELETE
+import javax.ws.rs.GET
+import javax.ws.rs.POST
 import javax.ws.rs.Path
 
-import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution
 import com.dimajix.flowman.kernel.model.Converter
-import com.dimajix.flowman.kernel.model.Namespace
+import com.dimajix.flowman.kernel.model.CreateSessionRequest
+import com.dimajix.flowman.kernel.model.Project
+import com.dimajix.flowman.kernel.model.Session
+import com.dimajix.flowman.kernel.model.SessionList
+import com.dimajix.flowman.kernel.service.SessionManager
+import com.dimajix.flowman.kernel.service.SessionService
 
 
 @Api(value = "/session", produces = "application/json", consumes = "application/json")
 @Path("/session")
-class SessionEndpoint(rootSession:Session) {
+class SessionEndpoint(rootSession:execution.Session) {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.kernel.model.JsonSupport._
 
-    private val projectService:ProjectEndpoint = new ProjectEndpoint
+    private val sessionManager:SessionManager = new SessionManager(rootSession)
     private val jobService:JobEndpoint = new JobEndpoint
     private val mappingService:MappingEndpoint = new MappingEndpoint
     private val relationService:RelationEndpoint = new RelationEndpoint
@@ -43,57 +61,155 @@ class SessionEndpoint(rootSession:Session) {
 
     def routes : server.Route = pathPrefix("session") {(
         pathEndOrSingleSlash {(
-            list()
+            listSessions()
             ~
-            create()
+            createSession()
         )}
         ~
-        pathPrefix(Segment) { session => (
-            pathEndOrSingleSlash {
-                close(session)
+        pathPrefix(Segment) { session =>
+            (
+            pathEndOrSingleSlash {(
+                getSession(session)
+                ~
+                closeSession(session)
+            )}
+            ~
+            path("project") {
+                getProject(session)
             }
             ~
-            projectService.routes
+            path("reset") {
+                resetSession(session)
+            }
             ~
-            jobService.routes
-            ~
-            mappingService.routes
-            ~
-            relationService.routes
-            ~
-            targetService.routes
-            ~
-            testService.routes
+            withSession(session) { session => (
+                jobService.routes(session)
+                ~
+                mappingService.routes(session)
+                ~
+                relationService.routes(session)
+                ~
+                targetService.routes(session)
+                ~
+                testService.routes(session)
+            )}
         )}
     )}
 
-    @ApiOperation(value = "Return list of all active sessions", nickname = "getSessions", httpMethod = "GET")
+    @GET
+    @ApiOperation(value = "Return list of all active sessions", nickname = "listSessions", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about namespace", response = classOf[Namespace])
+        new ApiResponse(code = 200, message = "Information about namespace", response = classOf[SessionList])
     ))
-    def list() : server.Route = {
+    def listSessions() : server.Route = {
         get {
-            complete(Converter.ofSpec(ns))
+            val result = SessionList(sessionManager.list().map(_.id))
+            complete(result)
         }
     }
 
+    @POST
     @ApiOperation(value = "Create new session", nickname = "createSession", httpMethod = "POST")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about namespace", response = classOf[Namespace])
+        new ApiResponse(code = 200, message = "Create a new session and opens a project", response = classOf[Session])
     ))
-    def create() : server.Route = {
+    def createSession() : server.Route = {
         post {
-            complete(Converter.ofSpec(ns))
+            entity(as[CreateSessionRequest]) { request =>
+                val path = new org.apache.hadoop.fs.Path(request.project)
+                val session = sessionManager.createSession(path)
+                val result = Session(
+                    id = session.id,
+                    namespace = session.namespace.name,
+                    project = session.project.name,
+                    config = session.context.config.toMap,
+                    environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
+                )
+                complete(result)
+            }
         }
     }
 
-    @ApiOperation(value = "Close session", nickname = "closeSession", httpMethod = "DELETE")
-    @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about namespace", response = classOf[Namespace])
+    @GET
+    @Path("/{session}")
+    @ApiOperation(value = "Get session", nickname = "getSession", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
     ))
-    def close(session:String) : server.Route = {
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Retrieve session information", response = classOf[Session])
+    ))
+    def getSession(@ApiParam(hidden = true) session:String) : server.Route = {
+        get {
+            withSession(session) { session =>
+                val result = Session(
+                    id = session.id,
+                    namespace = session.namespace.name,
+                    project = session.project.name,
+                    config = session.context.config.toMap,
+                    environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
+                )
+                complete(result)
+            }
+        }
+    }
+
+    @POST
+    @Path("/{session}/reset")
+    @ApiOperation(value = "Reset session", nickname = "resetSession", httpMethod = "POST")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+    ))
+    def resetSession(@ApiParam(hidden = true) session: String) : server.Route = {
+        post {
+            withSession(session) { session =>
+                session.reset()
+                complete("")
+            }
+        }
+    }
+
+    @DELETE
+    @Path("/{session}")
+    @ApiOperation(value = "Close session", nickname = "closeSession", httpMethod = "DELETE")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Close current session (and project)")
+    ))
+    def closeSession(@ApiParam(hidden = true) session:String) : server.Route = {
         delete {
-            complete(Converter.ofSpec(ns))
+            withSession(session) { session =>
+                sessionManager.closeSession(session)
+                complete("")
+            }
+        }
+    }
+
+    @GET
+    @Path("/{session}/project")
+    @ApiOperation(value = "Get project", nickname = "getProject", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Information about the project", response = classOf[Project])
+    ))
+    def getProject(@ApiParam(hidden = true) session:String) : server.Route = {
+        get {
+            withSession(session) { session =>
+                complete(Converter.of(session.project))
+            }
+        }
+    }
+
+    private def withSession(sessionId:String)(fn:(SessionService) => server.Route) : server.Route = {
+        Try {
+            sessionManager.getSession(sessionId)
+        } match {
+            case Success(session) => fn(session)
+            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
         }
     }
 }

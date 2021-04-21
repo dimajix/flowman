@@ -31,8 +31,6 @@ import com.dimajix.flowman.tools.Tool
 
 object Application {
     def main(args: Array[String]) : Unit = {
-        java.lang.System.setProperty("akka.http.server.remote-address-header", "true")
-
         Logging.init()
         Try {
             run(args:_*)

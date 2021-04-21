@@ -8,9 +8,8 @@ import io.swagger.models.auth.BasicAuthDefinition
 object SwaggerDocEndpoint extends SwaggerHttpService  {
     override def apiClasses = Set(
         classOf[NamespaceEndpoint],
-        classOf[ProjectEndpoint],
-        classOf[JobHistoryService],
-        classOf[TargetHistoryService]
+        classOf[SessionEndpoint],
+        classOf[JobEndpoint]
     )
     override def host = ""
     override def basePath: String = "/api/"

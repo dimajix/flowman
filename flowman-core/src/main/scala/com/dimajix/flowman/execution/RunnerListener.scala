@@ -14,89 +14,84 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.model
+package com.dimajix.flowman.execution
 
-import com.dimajix.flowman.execution.AssertionToken
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.JobToken
-import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.RunnerListener
-import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.execution.TargetToken
-import com.dimajix.flowman.execution.TestToken
-import com.dimajix.flowman.execution.Token
+import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestInstance
 
 
-object Hook {
-    object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
-            Properties(
-                context,
-                context.namespace,
-                context.project,
-                name,
-                "",
-                Map()
-            )
-        }
-    }
-    final case class Properties(
-        context:Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name:String,
-        kind:String,
-        labels:Map[String,String]
-    )
-    extends Instance.Properties[Properties] {
-        override def withName(name: String): Properties = copy(name=name)
-    }
-}
+abstract class Token
+abstract class JobToken extends Token
+abstract class TargetToken extends Token
+abstract class TestToken extends Token
+abstract class AssertionToken extends Token
 
 
-trait Hook extends Instance with RunnerListener {
-    /**
-     * Returns the category of this resource
-     * @return
-     */
-    final override def category: String = "hook"
-
+trait RunnerListener {
     /**
      * Starts the run and returns a token, which can be anything
      * @param job
      * @return
      */
-    override def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken
+    def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken
 
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishJob(token:JobToken, status:Status) : Unit
+    def finishJob(token:JobToken, status:Status) : Unit
 
     /**
      * Starts the run and returns a token, which can be anything
      * @param target
      * @return
      */
-    override def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[Token]) : TargetToken
+    def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[Token]) : TargetToken
 
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishTarget(token:TargetToken, status:Status) : Unit
+    def finishTarget(token:TargetToken, status:Status) : Unit
+
+    /**
+     * Starts the test and returns a token, which can be anything
+     * @param test
+     * @return
+     */
+    def startTest(test:Test, instance:TestInstance) : TestToken
+
+    /**
+     * Sets the status of a test after it has been started
+     * @param token The token returned by startJob
+     * @param status
+     */
+    def finishTest(token:TestToken, status:Status) : Unit
+
+    /**
+     * Starts the assertion and returns a token, which can be anything
+     * @param assertion
+     * @return
+     */
+    def startAssertion(assertion:Assertion, parent:Option[Token]) : AssertionToken
+
+    /**
+     * Sets the status of a assertion after it has been started
+     * @param token The token returned by startJob
+     * @param status
+     */
+    def finishAssertion(token:AssertionToken, status:Status) : Unit
 }
 
 
-/**
- * Common base implementation for the Hook interface class. It contains a couple of common properties.
- */
-abstract class BaseHook extends AbstractInstance with Hook {
-    protected override def instanceProperties: Hook.Properties
-
+abstract class AbstractRunnerListener extends RunnerListener {
     override def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken = new JobToken {}
     override def finishJob(token: JobToken, status: Status): Unit = {}
     override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}

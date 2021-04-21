@@ -25,13 +25,12 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.kernel.service.SessionService
 
 
-@Api(value = "/session/{session}/target", produces = "application/json", consumes = "application/json")
-@Path("/session/{session}/target")
-class TargetEndpoint {
-    def routes(session:SessionService) : server.Route = pathPrefix("target") {(
+@Api(value = "/session/{session}/task", produces = "application/json", consumes = "application/json")
+@Path("/session/{session}/task")
+class TaskEndpoint {
+    def routes(session:SessionService) : server.Route = pathPrefix("task") {(
         pathEndOrSingleSlash {(
             ???
             )}
         )}
-
 }

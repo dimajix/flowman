@@ -75,9 +75,11 @@ class StatefulTool(
     }
 
     def leaveJob(): Unit = {
-        _context = _session.getContext(project)
-        _session.execution.cleanup()
-        _job = None
+        if (_job.nonEmpty) {
+            _context = _session.getContext(project)
+            _session.execution.cleanup()
+            _job = None
+        }
     }
 
     def enterTest(test: Test): Unit = {
@@ -88,8 +90,10 @@ class StatefulTool(
     }
 
     def leaveTest(): Unit = {
-        _context = _session.getContext(project)
-        _session.execution.cleanup()
-        _test = None
+        if (_test.nonEmpty) {
+            _context = _session.getContext(project)
+            _session.execution.cleanup()
+            _test = None
+        }
     }
 }

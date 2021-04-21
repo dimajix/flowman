@@ -17,12 +17,9 @@
 package com.dimajix.flowman.tools
 
 import java.io.File
-import java.util.Locale
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.log4j.PropertyConfigurator
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
@@ -31,13 +28,9 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.SystemSettings
 import com.dimajix.flowman.plugin.PluginManager
-import com.dimajix.flowman.spec.NamespaceSpec
-import com.dimajix.flowman.tools.exec.Driver
 
 
 class Tool {
-    private val logger = LoggerFactory.getLogger(classOf[Tool])
-
     // First create PluginManager
     val plugins:PluginManager = createPluginManager()
     // Second load global system settings (including plugins for namespaces)

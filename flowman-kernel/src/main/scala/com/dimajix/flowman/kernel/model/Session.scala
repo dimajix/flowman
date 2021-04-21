@@ -17,26 +17,19 @@
 package com.dimajix.flowman.kernel.model
 
 
-case class Job(
-    name:String,
-    description:Option[String],
-    parameters:Seq[String],
-    environment:Map[String,String]
-) {
-}
-
-
-case class JobList(
-    jobs:Seq[String]
-) {
-}
-
-case class RunJobRequest(
-    job:String,
-    phase:String,
-    args:Map[String,String],
-    force:Boolean,
-    keepGoing:Boolean,
-    dryRun:Boolean
+case class Session(
+    id: String,
+    namespace: String,
+    project: String,
+    config: Map[String,String],
+    environment: Map[String,String]
 )
 
+case class SessionList(
+    sessions:Seq[String]
+)
+
+
+case class CreateSessionRequest(
+    project:String
+)

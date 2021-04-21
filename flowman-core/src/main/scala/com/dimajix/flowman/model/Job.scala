@@ -53,7 +53,7 @@ final case class JobInstance(
     require(job != null)
     require(args != null)
 
-    def asMap =
+    def asMap: Map[String, String] =
          Map(
             "namespace" -> namespace,
             "project" -> project,

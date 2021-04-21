@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.kernel.model
 
-import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -44,8 +43,14 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     }
 
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
-    implicit val projectFormat: RootJsonFormat[Project] = jsonFormat10(Project)
+    implicit val projectFormat: RootJsonFormat[Project] = jsonFormat11(Project)
     implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job)
+    implicit val jobListFormat: RootJsonFormat[JobList] = jsonFormat1(JobList)
+    implicit val jobTaskFormat: RootJsonFormat[JobTask] = jsonFormat9(JobTask)
+    implicit val runJobRequestFormat: RootJsonFormat[RunJobRequest] = jsonFormat6(RunJobRequest)
+    implicit val sessionFormat: RootJsonFormat[Session] = jsonFormat5(Session)
+    implicit val createSessionRequestFormat: RootJsonFormat[CreateSessionRequest] = jsonFormat1(CreateSessionRequest)
+    implicit val sessionListFormat: RootJsonFormat[SessionList] = jsonFormat1(SessionList)
 }
 
 

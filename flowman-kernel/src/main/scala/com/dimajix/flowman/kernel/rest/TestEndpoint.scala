@@ -19,10 +19,16 @@ package com.dimajix.flowman.kernel.rest
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.pathEndOrSingleSlash
 import akka.http.scaladsl.server.Directives.pathPrefix
+import io.swagger.annotations.Api
+import javax.ws.rs.Path
+
+import com.dimajix.flowman.kernel.service.SessionService
 
 
+@Api(value = "/session/{session}/test", produces = "application/json", consumes = "application/json")
+@Path("/session/{session}/test")
 class TestEndpoint {
-    def routes : server.Route = pathPrefix("test") {(
+    def routes(session:SessionService) : server.Route = pathPrefix("test") {(
         pathEndOrSingleSlash {(
             ???
             )}

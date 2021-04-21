@@ -16,15 +16,17 @@
 
 package com.dimajix.flowman.kernel.model
 
+
 case class Project(
     name:String,
     version:Option[String],
     description: Option[String],
+    filename : Option[String],
+    basedir : Option[String],
     environment: Map[String,String],
     config: Map[String,String],
     profiles: Seq[String],
     connections: Seq[String],
-    basedir: Option[String],
     jobs: Seq[String],
     targets: Seq[String]
 ) {

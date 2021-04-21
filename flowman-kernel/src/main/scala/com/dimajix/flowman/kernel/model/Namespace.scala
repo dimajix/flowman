@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.kernel.model
 
+
 case class Namespace(
     name:String,
     environment: Map[String,String],

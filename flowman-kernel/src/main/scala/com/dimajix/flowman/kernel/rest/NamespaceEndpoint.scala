@@ -32,6 +32,7 @@ import com.dimajix.flowman.model
 @Path("/namespace")
 class NamespaceEndpoint(ns:model.Namespace) {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.kernel.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("namespace") {
@@ -46,7 +47,7 @@ class NamespaceEndpoint(ns:model.Namespace) {
     ))
     def info() : server.Route = {
         get {
-            complete(Converter.ofSpec(ns))
+            complete(Converter.of(ns))
         }
     }
 }

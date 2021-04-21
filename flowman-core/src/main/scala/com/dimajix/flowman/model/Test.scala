@@ -18,6 +18,24 @@ package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
 
+final case class TestInstance(
+    namespace:String,
+    project:String,
+    test:String
+) {
+    require(namespace != null)
+    require(project != null)
+    require(test != null)
+
+    def asMap: Map[String, String] =
+        Map(
+            "namespace" -> namespace,
+            "project" -> project,
+            "name" -> test,
+            "test" -> test
+        )
+}
+
 
 object Test {
     object Properties {
@@ -94,7 +112,27 @@ final case class Test(
     override def category: String = "test"
     override def kind : String = "test"
 
+   /**
+     * Returns an identifier for this test
+     * @return
+     */
     def identifier : TestIdentifier = TestIdentifier(name, project.map(_.name))
 
+    /**
+     * Returns a description of the test
+     * @return
+     */
     def description : Option[String] = instanceProperties.description
+
+    /**
+     * Returns a TestInstance used for state management
+     * @return
+     */
+    def instance : TestInstance = {
+        TestInstance(
+            namespace.map(_.name).getOrElse(""),
+            project.map(_.name).getOrElse(""),
+            name
+        )
+    }
 }

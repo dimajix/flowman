@@ -14,29 +14,12 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.kernel.model
+package com.dimajix.flowman.kernel.rest
+
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-case class Job(
-    name:String,
-    description:Option[String],
-    parameters:Seq[String],
-    environment:Map[String,String]
-) {
+class SessionEndpointTest extends AnyFlatSpec with Matchers {
+
 }
-
-
-case class JobList(
-    jobs:Seq[String]
-) {
-}
-
-case class RunJobRequest(
-    job:String,
-    phase:String,
-    args:Map[String,String],
-    force:Boolean,
-    keepGoing:Boolean,
-    dryRun:Boolean
-)
-

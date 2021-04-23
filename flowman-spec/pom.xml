@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.15.0</version>
+        <version>0.16.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -35,6 +35,11 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

@@ -29,6 +29,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.spi.PluginListener
+
 
 /**
   * Helper class for loading Plugins

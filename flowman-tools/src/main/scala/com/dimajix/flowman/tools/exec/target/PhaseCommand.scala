@@ -32,10 +32,10 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class PhaseCommand(phase:Phase) extends ActionCommand {
+class PhaseCommand(phase:Phase) extends Command {
     private val logger = LoggerFactory.getLogger(classOf[PhaseCommand])
 
     @Argument(required = true, usage = "specifies target(s) to execute", metaVar = "<target>")
@@ -48,7 +48,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
     var noLifecycle: Boolean = false
 
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)

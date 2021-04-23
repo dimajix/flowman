@@ -22,6 +22,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
 
 import com.dimajix.spark.sql.catalyst.plans.logical.CountRecords
+import com.dimajix.spark.sql.catalyst.plans.logical.EagerCache
 
 
 object ExtraStrategies extends Strategy {
@@ -32,6 +33,7 @@ object ExtraStrategies extends Strategy {
 
     def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
         case CountRecords(child, counter) => CountRecordsExec(planLater(child), counter) :: Nil
+        case EagerCache(child, caches) => EagerCacheExec(planLater(child), caches.map(planLater)) :: Nil
         case _ => Nil
     }
 }

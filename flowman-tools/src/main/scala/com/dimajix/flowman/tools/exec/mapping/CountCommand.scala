@@ -31,16 +31,16 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.CountTarget
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class CountCommand extends ActionCommand {
+class CountCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[CountCommand])
 
     @Argument(usage = "specifies the mapping to count", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val task = CountTarget(context, MappingOutputIdentifier(mapping))
 
         Try {

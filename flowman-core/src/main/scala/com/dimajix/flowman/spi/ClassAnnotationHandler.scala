@@ -17,8 +17,20 @@
 package com.dimajix.flowman.spi
 
 
+/**
+ * This class represents an extension for handling annotated classes during code and plugin loading. It is called
+ * whenever
+ */
 trait ClassAnnotationHandler {
+    /**
+     * The class-level annotation to be scanned for
+     * @return
+     */
     def annotation: Class[_]
 
+    /**
+     * Callback that is invoked for every class which is annotated with the class in [[annotation]]
+     * @param clazz
+     */
     def register(clazz: Class[_]): Unit
 }

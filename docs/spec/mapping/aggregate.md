@@ -1,8 +1,7 @@
-
 # Aggregate Mapping
 
 ## Example
-```
+```yaml
 mappings:
   cube_weather:
     kind: aggregate
@@ -19,7 +18,7 @@ mappings:
 
 ## Fields
 
-* `kind` **(mandatory)** *(type: string)*: `alias`
+* `kind` **(mandatory)** *(type: string)*: `aggregate`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.

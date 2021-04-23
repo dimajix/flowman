@@ -89,7 +89,7 @@ extends AbstractMetricSink {
         }
         catch {
             case NonFatal(ex) =>
-                logger.warn(s"Cannot publishing metrics to Prometheus at $url", ex)
+                logger.warn(s"Cannot publishing metrics to Prometheus at $url: ${ex.toString}")
         }
         finally {
             httpClient.close()

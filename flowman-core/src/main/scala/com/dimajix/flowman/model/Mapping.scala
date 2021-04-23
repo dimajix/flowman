@@ -106,9 +106,11 @@ trait Mapping extends Instance {
     def inputs : Seq[MappingOutputIdentifier]
 
     /**
-      * Lists all outputs of this mapping. Every mapping should have one "main" output
-      * @return
-      */
+     * Lists all outputs of this mapping. Every mapping should have one "main" output, which is the default output
+     * implicitly used when no output is specified. But eventually, the "main" output is not mandatory, but
+     * recommended.
+     * @return
+     */
     def outputs : Seq[String]
 
     /**
@@ -125,7 +127,10 @@ trait Mapping extends Instance {
     def output(name:String = "main") : MappingOutputIdentifier
 
     /**
-      * Executes this Mapping and returns a corresponding map of DataFrames per output
+      * Executes this Mapping and returns a corresponding map of DataFrames per output. The map should contain
+      * one entry for each declared output in [[outputs]]. If it contains an additional entry called `cache`, then
+      * this [[DataFrame]] will be cached instead of all outputs. The `cache` DataFrame may even well be some
+      * internal [[DataFrame]] which is not listed in [[outputs]].
       *
       * @param execution
       * @param input
@@ -134,7 +139,8 @@ trait Mapping extends Instance {
     def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame]
 
     /**
-      * Returns the schema as produced by this mapping, relative to the given input schema
+      * Returns the schema as produced by this mapping, relative to the given input schema. The method should
+      * return one entry for each entry declared in [[outputs]].
       * @param input
       * @return
       */

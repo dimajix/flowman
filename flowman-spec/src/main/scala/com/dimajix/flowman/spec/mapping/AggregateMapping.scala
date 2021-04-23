@@ -76,7 +76,7 @@ class AggregateMappingSpec extends MappingSpec {
     @JsonProperty(value = "dimensions", required = true) private[spec] var dimensions: Array[String] = _
     @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: Map[String, String] = _
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
-    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
+    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = ""
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -90,7 +90,7 @@ class AggregateMappingSpec extends MappingSpec {
             dimensions.map(context.evaluate),
             context.evaluate(aggregations),
             context.evaluate(filter),
-            if (partitions == null || partitions.isEmpty) 0 else context.evaluate(partitions).toInt
+            if (partitions.isEmpty) 0 else context.evaluate(partitions).toInt
         )
     }
 }

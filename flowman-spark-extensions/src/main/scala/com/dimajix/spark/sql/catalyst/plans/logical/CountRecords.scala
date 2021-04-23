@@ -19,10 +19,13 @@ package com.dimajix.spark.sql.catalyst.plans.logical
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
+import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.util.LongAccumulator
 
 
 case class CountRecords(child: LogicalPlan, counter:LongAccumulator) extends UnaryNode {
     override def maxRows: Option[Long] = child.maxRows
     override def output: Seq[Attribute] = child.output
+
+    override protected def doCanonicalize(): LogicalPlan = copy(child=child.canonicalized)
 }

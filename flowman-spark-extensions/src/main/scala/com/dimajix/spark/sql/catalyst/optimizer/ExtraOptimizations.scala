@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.plugin
+package com.dimajix.spark.sql.catalyst.optimizer
 
-trait PluginListener {
-    def pluginLoaded(plugin:Plugin, classLoader: ClassLoader) : Unit
+import org.apache.spark.sql.SparkSession
+
+
+object ExtraOptimizations {
+    def enableEagerCache(spark:SparkSession) : Unit = {
+        spark.sqlContext.experimental.extraOptimizations
+            = spark.sqlContext.experimental.extraOptimizations ++ Seq(CreateEagerCache)
+    }
 }

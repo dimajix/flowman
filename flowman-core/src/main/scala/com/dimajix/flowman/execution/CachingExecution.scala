@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.broadcast
@@ -79,7 +80,13 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                     .map(id => id -> describe(context.getMapping(id.mapping), id.output))
                     .toMap
 
-                mapping.describe(this, deps, output)
+                // Transform any non-fatal exception in a DescribeMappingFailedException
+                try {
+                    mapping.describe(this, deps, output)
+                }
+                catch {
+                    case NonFatal(e) => throw new DescribeMappingFailedException(mapping.identifier, e)
+                }
             })
     }
 
@@ -99,9 +106,6 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @return
      */
     private def createTables(mapping:Mapping): Map[String,DataFrame] = {
-        // Ensure all dependencies are instantiated
-        logger.debug(s"Ensuring dependencies for mapping '${mapping.identifier}'")
-
         val context = mapping.context
         val dependencies = mapping.inputs.map { dep =>
             require(dep.mapping.nonEmpty)
@@ -124,7 +128,16 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         val cacheLevel = mapping.cache
         val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
         logger.info(s"Instantiating mapping '${mapping.identifier}' with outputs ${mapping.outputs.map("'" + _ + "'").mkString(",")} (broadcast=$doBroadcast, cache='$cacheDesc')")
-        val instances = mapping.execute(this, dependencies)
+
+        // Transform any non-fatal exception in a InstantiateMappingFailedException
+        val instances = {
+            try {
+                mapping.execute(this, dependencies)
+            }
+            catch {
+                case NonFatal(e) => throw new InstantiateMappingFailedException(mapping.identifier, e)
+            }
+        }
 
         // Optionally checkpoint DataFrame
         val df1 = if (doCheckpoint)
@@ -145,10 +158,6 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 df2("cache").persist(cacheLevel)
             else
                 df2.values.foreach(_.persist(cacheLevel))
-        }
-
-        df2.foreach { case (name,df) =>
-            logger.debug(s"Instantiated mapping '${mapping.identifier}' output '$name' with schema\n ${df.schema.treeString}")
         }
 
         df2

@@ -22,6 +22,8 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.command.ViewType
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
@@ -69,6 +71,8 @@ object SparkShim {
         queryExecution: QueryExecution,
         name: Option[String] = None)(body: => T): T =
         SQLExecution.withNewExecutionId(sparkSession, queryExecution)(body)
+
+    def getCachedPlan(ir:InMemoryRelation) : SparkPlan = ir.child
 
     val LocalTempView : ViewType = org.apache.spark.sql.execution.command.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.execution.command.GlobalTempView

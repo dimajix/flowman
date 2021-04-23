@@ -22,6 +22,8 @@ import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.UDFRegistration
 
+import com.dimajix.flowman.config.Configuration
+
 
 object UdfProvider {
     def providers : Seq[UdfProvider] = {
@@ -31,5 +33,5 @@ object UdfProvider {
 }
 
 abstract class UdfProvider {
-    def register(registration:UDFRegistration) : Unit
+    def register(registration:UDFRegistration, config:Configuration) : Unit
 }

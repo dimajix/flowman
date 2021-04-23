@@ -2,7 +2,9 @@
 # Schema Mapping
 The `schema` mapping performs a *projection* of an input mapping onto a specific set of columns
 and also performs type conversions. This corresponds to a simple SQL `SELECT` with a series of
-`CAST` expressions.
+`CAST` expressions. The main difference is that fields, which are missing from the mappings input, are silently
+added with `NULL` values. A typical use case of this mapping is to conform data from possibly slightly different
+sources to a single super-schema.
 
 ## Example
 ```yaml
@@ -61,6 +63,3 @@ An optional SQL filter expression that is applied *after* schema operation.
 
 ## Outputs
 * `main` - the only output of the mapping
-
-
-## Description

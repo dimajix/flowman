@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spi
+package com.dimajix
 
-import com.dimajix.flowman.annotation.TemplateObject
-import com.dimajix.flowman.templating.Velocity
+import com.dimajix.common.Resources
 
 
-class TemplateObjectHandler extends ClassAnnotationHandler {
-    override def annotation: Class[_] = classOf[TemplateObject]
-
-    override def register(clazz: Class[_]): Unit = Velocity.addClass(clazz.getAnnotation(classOf[TemplateObject]).name(), clazz)
+package object flowman {
+    final val SPARK_VERSION = org.apache.spark.SPARK_VERSION
+    final val JAVA_VERSION = System.getProperty("java.version")
+    final val FLOWMAN_VERSION = {
+        Resources.loadProperties("com/dimajix/flowman/flowman.properties")
+            .getProperty("version")
+    }
 }

@@ -34,6 +34,7 @@ class ModelCommand extends NestedCommand {
         new SubCommand(name="describe",impl=classOf[DescribeCommand]),
         new SubCommand(name="destroy",impl=classOf[DestroyCommand]),
         new SubCommand(name="export-schema",impl=classOf[ExportSchemaCommand]),
+        new SubCommand(name="inspect",impl=classOf[InspectCommand]),
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="show",impl=classOf[ShowCommand]),
         new SubCommand(name="truncate",impl=classOf[TruncateCommand]),

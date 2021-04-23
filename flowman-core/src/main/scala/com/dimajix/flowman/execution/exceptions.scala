@@ -52,6 +52,11 @@ class NoSuchJobException(val job:JobIdentifier)
 class NoSuchTestException(val test:TestIdentifier)
     extends ExecutionException(s"Test '$test' not found")
 
+class DescribeMappingFailedException(val mapping:MappingIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Describing mapping $mapping failed", cause)
+class InstantiateMappingFailedException(val mapping:MappingIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Instantiating mapping $mapping failed", cause)
+
 class ValidationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Validation of target $target failed", cause)
 class VerificationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)

@@ -18,7 +18,6 @@ package com.dimajix.flowman.execution
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 import com.dimajix.flowman.model.Module
 
 
@@ -72,6 +71,26 @@ class SessionTest extends AnyFlatSpec with Matchers {
         session.spark.conf.get("spark.lolo") should be ("lolo_cmdline")
         session.spark.conf.get("spark.lili") should be ("lili.project")
         session.spark.stop()
+    }
+
+    it should "correctly propagate configurations" in {
+        val session = Session.builder()
+            .withConfig("spark.lala", "spark_lala")
+            .withConfig("flowman.lolo", "flowman_lolo")
+            .withConfig("other.abc", "other_abc")
+            .build()
+
+        session.sparkConf.get("spark.lala") should be ("spark_lala")
+        session.sparkConf.contains("flowman.lolo") should be (false)
+        session.sparkConf.get("other.abc") should be ("other_abc")
+
+        session.flowmanConf.get("flowman.lolo") should be ("flowman_lolo")
+        session.flowmanConf.contains("spark.lala") should be (false)
+        session.flowmanConf.contains("other.abc") should be (false)
+
+        session.config.get("spark.lala") should be ("spark_lala")
+        session.config.get("flowman.lolo") should be ("flowman_lolo")
+        session.config.get("other.abc") should be ("other_abc")
     }
 
     it should "create new detached Sessions" in {

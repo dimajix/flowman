@@ -31,10 +31,10 @@ import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class DescribeCommand extends ActionCommand {
+class DescribeCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Option(name = "-s", aliases=Array("--spark"), usage = "use Spark to derive final schema")
@@ -42,7 +42,7 @@ class DescribeCommand extends ActionCommand {
     @Argument(usage = "specifies the relation to describe", metaVar = "<relation>", required = true)
     var relation: String = ""
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         try {
             val identifier = RelationIdentifier(this.relation)
             val relation = context.getRelation(identifier)

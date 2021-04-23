@@ -1,8 +1,10 @@
-
 # Select Mapping
 
+A `select` mapping performs simple column-wise transformations, very similar to a simple SQL `SELECT ... FROM` 
+statement. You specify a list of output columns together with an SQL expression for each of them.
+
 ## Example
-```
+```yaml
 mappings:
   measurements:
     kind: select
@@ -50,6 +52,3 @@ An optional SQL filter expression that is applied *after* select operation.
 
 ## Outputs
 * `main` - the only output of the mapping
-
-
-## Description

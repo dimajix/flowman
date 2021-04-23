@@ -22,6 +22,7 @@ import org.kohsuke.args4j.spi.SubCommandHandler
 import org.kohsuke.args4j.spi.SubCommands
 
 import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.tools.exec.VersionCommand
 import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
@@ -50,7 +51,8 @@ class ParsedCommand {
         new SubCommand(name="relation",impl=classOf[ModelCommand]),
         new SubCommand(name="target",impl=classOf[TargetCommand]),
         new SubCommand(name="test",impl=classOf[TestCommand]),
-        new SubCommand(name="project",impl=classOf[ProjectCommand])
+        new SubCommand(name="project",impl=classOf[ProjectCommand]),
+        new SubCommand(name="version",impl=classOf[VersionCommand])
     ))
     var command:Command = _
 

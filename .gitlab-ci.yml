@@ -1,5 +1,14 @@
+# You can override the included template(s) by including variable overrides
+# See https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#priority-of-environment-variables
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 stages:
   - build
+  - test
+  - site
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -9,6 +18,8 @@ variables:
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  # SpotBugs currently doesn't work, maybe because of the custom image
+  SAST_EXCLUDED_ANALYZERS: "spotbugs"
 
 image: dimajix/maven-npm:latest
 
@@ -20,10 +31,14 @@ cache:
     - .npm
 
 
+# Run security tests
+sast:
+  stage: test
+
 # Build site and reports
 build-site:
-  stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests && mvn ${MAVEN_CLI_OPTS} site'
+  stage: site
+  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests -Ddockerfile.skip && mvn ${MAVEN_CLI_OPTS} site -Ddockerfile.skip'
   artifacts:
     name: "flowman-site"
     paths:
@@ -36,7 +51,7 @@ build-site:
 # Default build variant
 build-default:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Ddockerfile.skip'
   except:
     - pushes
   artifacts:
@@ -48,7 +63,7 @@ build-default:
 # List additional build variants (some of them will be built on pushes)
 build-hadoop2.6-spark2.3:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.3'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.3 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.6-spark2.3"
     paths:
@@ -57,18 +72,16 @@ build-hadoop2.6-spark2.3:
 
 build-hadoop2.6-spark2.4:
   stage: build
-  except:
-    - pushes
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.4'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.6-spark2.4"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-build-hadoop2.9-spark2.4:
+build-hadoop2.7-spark2.4:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.9 -Pspark-2.4'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.9-spark2.4"
     paths:
@@ -77,49 +90,43 @@ build-hadoop2.9-spark2.4:
 
 build-hadoop3.1-spark2.4:
   stage: build
-  except:
-    - pushes
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.1 -Pspark-2.4'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.1 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.1-spark2.4"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-build-hadoop2.9-spark3.0:
+build-hadoop2.7-spark3.0:
   stage: build
-  except:
-    - pushes
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.9 -Pspark-3.0'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-3.0 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.9-spark3.0"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-build-hadoop3.1-spark3.0:
-  stage: build
-  except:
-    - pushes
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.1 -Pspark-3.0'
-  artifacts:
-    name: "flowman-dist-hadoop3.1-spark3.0"
-    paths:
-      - flowman-dist/target/flowman-dist-*-bin.tar.gz
-    expire_in: 5 days
-
 build-hadoop3.2-spark3.0:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.2 -Pspark-3.0'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.2 -Pspark-3.0 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.2-spark3.0"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
+build-hadoop2.7-spark3.1:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-3.0 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-hadoop3.1-spark3.0"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
 build-hadoop3.2-spark3.1:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.2 -Pspark-3.1'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.2 -Pspark-3.1 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.2-spark3.1"
     paths:
@@ -130,7 +137,7 @@ build-cdh5.15:
   stage: build
   except:
     - pushes
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDH-5.15'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDH-5.15 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-cdh5.15"
     paths:
@@ -139,9 +146,7 @@ build-cdh5.15:
 
 build-cdh6.3:
   stage: build
-  except:
-    - pushes
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDH-6.3'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDH-6.3 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-cdh6.3"
     paths:

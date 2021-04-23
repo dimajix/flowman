@@ -38,6 +38,7 @@ import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
 import com.dimajix.flowman.storage.NullStore
 import com.dimajix.flowman.storage.Store
+import com.dimajix.spark.sql.catalyst.optimizer.ExtraOptimizations
 import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
@@ -298,7 +299,7 @@ class Session private[execution](
                     sessionBuilder.enableHiveSupport()
                 }
                 // Apply all session extensions to builder
-                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder))
+                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
                 // Create Spark session
                 sessionBuilder.getOrCreate()
             }
@@ -311,14 +312,18 @@ class Session private[execution](
             spark.sparkContext.getConf.getOption("spark.checkpoint.dir").foreach(spark.sparkContext.setCheckpointDir)
         }
 
+        if (flowmanConf.getConf(FlowmanConf.SPARK_EAGER_CACHE)) {
+            ExtraOptimizations.enableEagerCache(spark)
+        }
+
         // Register additional planning strategies
         ExtraStrategies.register(spark)
 
         // Apply all session extensions
-        SparkExtension.extensions.foreach(_.register(spark))
+        SparkExtension.extensions.foreach(_.register(spark, config))
 
         // Register special UDFs
-        UdfProvider.providers.foreach(_.register(spark.udf))
+        UdfProvider.providers.foreach(_.register(spark.udf, config))
 
         // Distribute additional Plugin jar files
         sparkJars.foreach(spark.sparkContext.addJar)

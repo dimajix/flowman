@@ -30,10 +30,10 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.target.RelationTargetSpec
 import com.dimajix.flowman.tools.ParserUtils
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class PhaseCommand(phase:Phase) extends ActionCommand {
+class PhaseCommand(phase:Phase) extends Command {
     private val logger = LoggerFactory.getLogger(this.getClass)
 
     @Argument(usage = "specifies relations to create", metaVar = "<relation>")
@@ -47,7 +47,7 @@ class PhaseCommand(phase:Phase) extends ActionCommand {
     @Option(name = "-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
     var partition: String = ""
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         logger.info(s"Executing phase '$phase' for relations {}", if (relations != null) relations.mkString(",") else "all")
 
         val toRun =

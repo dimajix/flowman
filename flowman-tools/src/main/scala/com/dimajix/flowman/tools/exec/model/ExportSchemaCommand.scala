@@ -29,11 +29,11 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.types.SchemaWriter
 
 
-class ExportSchemaCommand extends ActionCommand {
+class ExportSchemaCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ExportSchemaCommand])
 
     @Option(name="-f", aliases=Array("--format"), usage="Specifies the format", metaVar="<format>", required = false)
@@ -43,7 +43,7 @@ class ExportSchemaCommand extends ActionCommand {
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true)
     var filename: String = ""
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         logger.info(s"Exporting the schema of model '$relation' to '$filename'")
 
         Try {

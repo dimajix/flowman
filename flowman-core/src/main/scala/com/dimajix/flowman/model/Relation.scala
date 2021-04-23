@@ -130,10 +130,11 @@ trait Relation extends Instance {
     def partitions : Seq[PartitionField]
 
     /**
-      * Returns a list of fields including the partition columns
+      * Returns a list of fields including the partition columns. This method should not perform any physical schema
+      * inference.
       * @return
       */
-    def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
+    def fields : Seq[Field]
 
     /**
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
@@ -264,13 +265,21 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     override def partitions : Seq[PartitionField] = Seq()
 
     /**
+      * Returns a list of fields including the partition columns. This method should not perform any physical schema
+      * inference.
+      * @return
+      */
+    override def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
+
+    /**
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
      * the physical source
      * @param execution
      * @return
      */
     override def describe(execution:Execution) : StructType = {
-        if (fields.nonEmpty) {
+        val partitions = this.partitions.map(_.name).toSet
+        if (!fields.forall(f => partitions.contains(f.name))) {
             // Use given fields if relation contains valid list of fields
             StructType(fields)
         }

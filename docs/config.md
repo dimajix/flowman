@@ -33,7 +33,14 @@ the existence of targets to decide if a rebuild is required.
 Configure the executor to use. The default `SimpleExecutor` will process all targets in the correct order
 sequentially.
 
-- `flowman.default.target.outputMode` *(type: string)* *(default:OVERWRITE)*
+- `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleScheduler`)*
+  Configure the scheduler to use. The default `SimpleScheduler` will sort all targets according to their dependency.
+
+- `flowman.spark.eagerCache` *(type: boolean)* *(default: `false`)*
+Turns on automatic eager caching of Spark jobs that reference a single cached DataFrame multiple times. This is to
+avoid parallel computation of the same partitions, which can be seen in some scenarios.
+
+- `flowman.default.target.outputMode` *(type: string)* *(default:`OVERWRITE`)*
 Sets the default target output mode. Possible values are 
   - *`OVERWRITE`*: Will overwrite existing data. Only supported in batch output.
   - *`APPEND`*: Will append new records to existing data

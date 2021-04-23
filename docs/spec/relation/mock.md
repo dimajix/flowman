@@ -24,3 +24,12 @@ relations:
 * `records` **(optional)** *(type: list:array)* *(default: empty)*:
   An optional list of records to be returned. Note that this list needs to include values for any partition columns
   of the mocked relation. The partition values need to be appended at the end.
+
+  
+## Remarks
+
+Mocking relations is very useful for creating meaningful tests. But you need to take into account one important fact:
+Mocking for testing only works well if Flowman doesn't need to read real data. Access to real data might occur when
+Flowman doesn't have all schema information in the specification and therefore falls back to Spark doing schema
+inference. This is something you always should avoid. The best way to avoid automatic schema inference with Spark
+is to explicitly specify schema definitions in all relations.

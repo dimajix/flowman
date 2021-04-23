@@ -24,5 +24,6 @@ build_profile hadoop-2.9 spark-2.4
 build_profile hadoop-2.9 spark-3.0
 build_profile hadoop-3.1 spark-3.0
 build_profile hadoop-3.2 spark-3.0
+build_profile hadoop-3.2 spark-3.1
 build_profile CDH-5.15
 build_profile CDH-6.3

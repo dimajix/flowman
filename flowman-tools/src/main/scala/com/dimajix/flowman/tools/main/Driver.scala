@@ -90,7 +90,7 @@ class Driver(options:Arguments) extends Tool {
         //val bundleArgs = options.arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         //logger.info(s"Executing job '${bundle.name}' $bundleDescription with args $bundleArgs")
 
-        // val result = executeInternal(execution, context, project)
+        // val result = execute(execution, context, project)
 
 
         // Cleanup caches, but after printing error message. Otherwise it looks confusing when the error occured

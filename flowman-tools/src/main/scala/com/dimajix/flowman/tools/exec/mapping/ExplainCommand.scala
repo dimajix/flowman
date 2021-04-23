@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.tools.exec.mapping
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
@@ -30,10 +27,10 @@ import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.exec.ActionCommand
+import com.dimajix.flowman.tools.exec.Command
 
 
-class ExplainCommand extends ActionCommand {
+class ExplainCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
 
     @Option(name="-e", aliases=Array("--extended"), required = false)
@@ -42,7 +39,7 @@ class ExplainCommand extends ActionCommand {
     var mapping: String = ""
 
 
-    override def executeInternal(session: Session, context:Context, project: Project) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Boolean = {
         logger.info(s"Explaining mapping '$mapping'")
 
         try {

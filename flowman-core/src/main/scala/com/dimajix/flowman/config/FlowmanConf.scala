@@ -23,6 +23,8 @@ import java.util.NoSuchElementException
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
+import com.dimajix.flowman.execution.SimpleScheduler
+import com.dimajix.flowman.execution.Scheduler
 import com.dimajix.spark.features
 
 
@@ -38,6 +40,10 @@ object FlowmanConf {
 
     def buildConf(key: String): ConfigBuilder = ConfigBuilder(key).onCreate(register)
 
+    val SPARK_EAGER_CACHE = buildConf("flowman.spark.eagerCache")
+        .doc("Enables eager caching in Spark")
+        .booleanConf
+        .createWithDefault(false)
     val SPARK_ENABLE_HIVE = buildConf("flowman.spark.enableHive")
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
@@ -63,10 +69,14 @@ object FlowmanConf {
         .doc("Consider all targets as being 'dirty' without checking")
         .booleanConf
         .createWithDefault(false)
-    val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.execution.class")
+    val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.executor.class")
         .doc("Class name for executing targets")
         .classConf(classOf[Executor])
         .createWithDefault(classOf[SimpleExecutor])
+    val EXECUTION_SCHEDULER_CLASS = buildConf("flowman.execution.scheduler.class")
+        .doc("Class name for scheduling targets")
+        .classConf(classOf[Scheduler])
+        .createWithDefault(classOf[SimpleScheduler])
 
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")

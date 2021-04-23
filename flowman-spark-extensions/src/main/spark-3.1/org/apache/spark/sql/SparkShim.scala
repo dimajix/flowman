@@ -29,6 +29,8 @@ import org.apache.spark.sql.catalyst.util.DateTimeUtils.microsToInstant
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
@@ -82,6 +84,8 @@ object SparkShim {
         queryExecution: QueryExecution,
         name: Option[String] = None)(body: => T): T =
         SQLExecution.withNewExecutionId(queryExecution, name)(body)
+
+    def getCachedPlan(ir:InMemoryRelation) : SparkPlan = ir.cachedPlan
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView

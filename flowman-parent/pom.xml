@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.15.0</version>
+        <version>0.16.0</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -370,6 +370,12 @@
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-reflect</artifactId>
                 <version>${scala.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
+                <version>${scala-parser-combinators.version}</version>
                 <scope>provided</scope>
             </dependency>
 

@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec
+package com.dimajix.flowman
 
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.Project
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 
-abstract class ActionCommand extends Command {
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
-        executeInternal(session, context, project)
+class VersionsTest extends AnyFlatSpec with Matchers {
+    "Versions" should "not be empty" in {
+        SPARK_VERSION should not be empty
+        FLOWMAN_VERSION should not be empty
+        JAVA_VERSION should not be empty
     }
-
-    protected def executeInternal(session: Session, context:Context, project: Project) : Boolean
 }

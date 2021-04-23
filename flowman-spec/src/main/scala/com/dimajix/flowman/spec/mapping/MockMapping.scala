@@ -113,21 +113,7 @@ case class MockMapping(
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        def describe(mapping:Mapping, output:String) : StructType = {
-            val deps = dependencies(mapping)
-            mapping.describe(execution, deps, output)
-        }
-        def describe2(context:Context, id:MappingOutputIdentifier) : StructType = {
-            val mapping = context.getMapping(id.mapping)
-            describe(mapping, id.output)
-        }
-        def dependencies(mapping:Mapping) ={
-            mapping.inputs
-                .map(dep => dep -> describe2(mapping.context, dep))
-                .toMap
-        }
-
-        describe(mocked, output)
+        execution.describe(mocked, output)
     }
 }
 

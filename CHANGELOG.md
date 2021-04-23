@@ -1,3 +1,12 @@
+# Version 0.16.0 - 2021-04-23
+
+* Add logo to Flowman Shell
+* Fix name of config option `flowman.execution.executor.class`
+* Add new `groupedAggregate` mapping
+* Reimplement target ordering, configurable via `flowman.execution.scheduler.class`
+* Implement new assertions `columns` and `expression`
+
+
 # Version 0.15.0 - 2021-03-23
 
 * New configuration variable `floman.default.target.rebalance`

@@ -1,4 +1,4 @@
-# Version 0.16.0
+# Version 0.16.0 - 2021-04-23
 
 * Add logo to Flowman Shell
 * Fix name of config option `flowman.execution.executor.class`

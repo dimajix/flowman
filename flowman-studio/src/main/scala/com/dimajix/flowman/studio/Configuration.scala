@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.kernel.rest
+package com.dimajix.flowman.studio
 
 import java.io.FileInputStream
-
 import java.util.Properties
 
 
 object Configuration {
-    val SERVER_BIND_HOST = "kernel.server.bind.host"
-    val SERVER_BIND_PORT = "kernel.server.bind.port"
-    val SERVER_BIND_METRICS_PORT = "kernel.server.bind.metrics-port"
-    val SERVER_REQUEST_TIMEOUT = "kernel.server.request.timeout"
-    val SERVER_IDLE_TIMEOUT = "kernel.server.idle.timeout"
-    val SERVER_BIND_TIMEOUT = "kernel.server.bind.timeout"
-    val SERVER_LINGER_TIMEOUT = "kernel.server.linger.timeout"
+    val SERVER_BIND_HOST = "studio.server.bind.host"
+    val SERVER_BIND_PORT = "studio.server.bind.port"
+    val SERVER_REQUEST_TIMEOUT = "studio.server.request.timeout"
+    val SERVER_IDLE_TIMEOUT = "studio.server.idle.timeout"
+    val SERVER_BIND_TIMEOUT = "studio.server.bind.timeout"
+    val SERVER_LINGER_TIMEOUT = "studio.server.linger.timeout"
 
     private def defaultProperties() : Properties = {
         val loader = Thread.currentThread.getContextClassLoader
-        val url = loader.getResource("com/dimajix/flowman/kernel/flowman-kernel.properties")
+        val url = loader.getResource("com/dimajix/flowman/studio/flowman-studio.properties")
         val properties = new Properties()
         properties.load(url.openStream())
         properties
@@ -64,7 +62,6 @@ class Configuration(properties: Properties) {
 
     def getBindHost() : String = properties.getProperty(SERVER_BIND_HOST, "0.0.0.0")
     def getBindPort() : Int = properties.getProperty(SERVER_BIND_PORT, "8080").toInt
-    def getBindMetricsPort() : Int = properties.getProperty(SERVER_BIND_METRICS_PORT, "8081").toInt
 
     def getRequestTimeout() : Int = properties.getProperty(SERVER_REQUEST_TIMEOUT, "20").toInt
     def getIdleTimeout() : Int = properties.getProperty(SERVER_IDLE_TIMEOUT, "60").toInt

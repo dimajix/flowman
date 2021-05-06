@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
         }
     }
 
+    implicit val statusFormat: RootJsonFormat[Status] = jsonFormat1(Status)
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
     implicit val projectFormat: RootJsonFormat[Project] = jsonFormat11(Project)
     implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job)

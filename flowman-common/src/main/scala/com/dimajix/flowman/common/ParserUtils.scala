@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools
-
+package com.dimajix.flowman.common
 
 object ParserUtils {
     def parseDelimitedList(list:String) : Seq[String] = {

@@ -41,6 +41,7 @@ import com.dimajix.flowman.kernel.model.CreateSessionRequest
 import com.dimajix.flowman.kernel.model.Project
 import com.dimajix.flowman.kernel.model.Session
 import com.dimajix.flowman.kernel.model.SessionList
+import com.dimajix.flowman.kernel.model.Status
 import com.dimajix.flowman.kernel.service.SessionManager
 import com.dimajix.flowman.kernel.service.SessionService
 
@@ -67,22 +68,22 @@ class SessionEndpoint(rootSession:execution.Session) {
         )}
         ~
         pathPrefix(Segment) { session =>
+            withSession(session) { session =>
             (
-            pathEndOrSingleSlash {(
-                getSession(session)
+                pathEndOrSingleSlash {(
+                    getSession(session)
+                    ~
+                    closeSession(session)
+                )}
                 ~
-                closeSession(session)
-            )}
-            ~
-            path("project") {
-                getProject(session)
-            }
-            ~
-            path("reset") {
-                resetSession(session)
-            }
-            ~
-            withSession(session) { session => (
+                path("project") {
+                    getProject(session)
+                }
+                ~
+                path("reset") {
+                    resetSession(session)
+                }
+                ~
                 jobService.routes(session)
                 ~
                 mappingService.routes(session)
@@ -93,7 +94,7 @@ class SessionEndpoint(rootSession:execution.Session) {
                 ~
                 testService.routes(session)
             )}
-        )}
+        }
     )}
 
     @GET
@@ -144,18 +145,16 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiResponse(code = 200, message = "Retrieve session information", response = classOf[Session]),
         new ApiResponse(code = 404, message = "Session not found")
     ))
-    def getSession(@ApiParam(hidden = true) session:String) : server.Route = {
+    def getSession(@ApiParam(hidden = true) session:SessionService) : server.Route = {
         get {
-            withSession(session) { session =>
-                val result = Session(
-                    id = session.id,
-                    namespace = session.namespace.name,
-                    project = session.project.name,
-                    config = session.context.config.toMap,
-                    environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
-                )
-                complete(result)
-            }
+            val result = Session(
+                id = session.id,
+                namespace = session.namespace.name,
+                project = session.project.name,
+                config = session.context.config.toMap,
+                environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
+            )
+            complete(result)
         }
     }
 
@@ -169,12 +168,10 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiResponse(code = 200, message = "Retrieve session information"),
         new ApiResponse(code = 404, message = "Session not found")
     ))
-    def resetSession(@ApiParam(hidden = true) session: String) : server.Route = {
+    def resetSession(@ApiParam(hidden = true) session: SessionService) : server.Route = {
         post {
-            withSession(session) { session =>
-                session.reset()
-                complete("")
-            }
+            session.reset()
+            complete(Status("success"))
         }
     }
 
@@ -188,12 +185,10 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiResponse(code = 200, message = "Close current session (and project)"),
         new ApiResponse(code = 404, message = "Session not found")
     ))
-    def closeSession(@ApiParam(hidden = true) session:String) : server.Route = {
+    def closeSession(@ApiParam(hidden = true) session:SessionService) : server.Route = {
         delete {
-            withSession(session) { session =>
-                sessionManager.closeSession(session)
-                complete("")
-            }
+            session.close()
+            complete(Status("success"))
         }
     }
 
@@ -207,20 +202,16 @@ class SessionEndpoint(rootSession:execution.Session) {
         new ApiResponse(code = 200, message = "Information about the project", response = classOf[Project]),
         new ApiResponse(code = 404, message = "Session not found")
     ))
-    def getProject(@ApiParam(hidden = true) session:String) : server.Route = {
+    def getProject(@ApiParam(hidden = true) session:SessionService) : server.Route = {
         get {
-            withSession(session) { session =>
-                complete(Converter.of(session.project))
-            }
+            complete(Converter.of(session.project))
         }
     }
 
     private def withSession(sessionId:String)(fn:(SessionService) => server.Route) : server.Route = {
-        Try {
-            sessionManager.getSession(sessionId)
-        } match {
-            case Success(session) => fn(session)
-            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+        sessionManager.getSession(sessionId) match {
+            case Some(session) => fn(session)
+            case None => complete(HttpResponse(status = StatusCodes.NotFound))
         }
     }
 }

@@ -46,6 +46,17 @@
             <v-list-item-action>
               <v-icon>work</v-icon>
             </v-list-item-action>
+            <v-list-item-title>Tests</v-list-item-title>
+          </v-list-item>
+        </template>
+      </v-list-group>
+
+      <v-list-group no-action>
+        <template v-slot:activator>
+          <v-list-item>
+            <v-list-item-action>
+              <v-icon>work</v-icon>
+            </v-list-item-action>
             <v-list-item-title>Targets</v-list-item-title>
           </v-list-item>
         </template>
@@ -58,6 +69,17 @@
               <v-icon>work</v-icon>
             </v-list-item-action>
             <v-list-item-title>Mappings</v-list-item-title>
+          </v-list-item>
+        </template>
+      </v-list-group>
+
+      <v-list-group no-action>
+        <template v-slot:activator>
+          <v-list-item>
+            <v-list-item-action>
+              <v-icon>work</v-icon>
+            </v-list-item-action>
+            <v-list-item-title>Relations</v-list-item-title>
           </v-list-item>
         </template>
       </v-list-group>

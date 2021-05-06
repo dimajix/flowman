@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.kernel.service
 
+import java.io.Closeable
 import java.util.UUID
 
 import scala.concurrent.ExecutionContext
@@ -37,7 +38,7 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
 
-class SessionService(_session:Session) {
+class SessionService(_manager:SessionManager, _session:Session) extends Closeable {
     private var _job: Option[Job] = None
     private var _test: Option[Test] = None
     private var _context : Context = _session.getContext(_session.project.get)
@@ -54,6 +55,10 @@ class SessionService(_session:Session) {
     def context : Context = _context
     def execution : Execution = _session.execution
     def runner: Runner = _session.runner
+
+    override def close(): Unit = {
+        _manager.removeSession(this)
+    }
 
     def job: Option[Job] = _job
     def test: Option[Test] = _test

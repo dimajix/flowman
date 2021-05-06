@@ -25,6 +25,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
@@ -32,7 +33,6 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.ConsoleTarget
-import com.dimajix.flowman.tools.ParserUtils
 import com.dimajix.flowman.tools.exec.Command
 
 

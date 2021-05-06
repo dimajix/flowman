@@ -20,6 +20,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
@@ -29,7 +30,6 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.target.RelationTargetSpec
-import com.dimajix.flowman.tools.ParserUtils
 import com.dimajix.flowman.tools.exec.Command
 
 

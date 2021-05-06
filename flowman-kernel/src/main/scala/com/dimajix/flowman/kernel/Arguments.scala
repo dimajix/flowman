@@ -17,6 +17,7 @@
 package com.dimajix.flowman.kernel
 
 import java.io.PrintStream
+import java.net.URL
 
 import scala.collection.JavaConverters._
 
@@ -46,6 +47,16 @@ class Arguments(args:Array[String]) {
     var environment: Array[String] = Array()
     @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
     var config: Array[String] = Array()
+    @Option(name = "--bind-host", usage = "set the host to bind the REST API to", metaVar = "<bind_host>")
+    var bindHost: String = "0.0.0.0"
+    @Option(name = "--bind-port", usage = "set the port to bind the REST API to. Use 0 for random port.", metaVar = "<bind_port>")
+    var bindPort: Int = 8080
+    @Option(name = "--kernel-id", usage = "set the kernel ID used for registration", metaVar = "<kernel_id>")
+    var kernelId: String = ""
+    @Option(name = "--studio-url", usage = "set the URL to register to", metaVar = "<studio_url>")
+    var studioUrl: String = ""
+    @Option(name = "--studio-secret", usage = "set the secret to use for communication with the Flowman Studio server", metaVar = "<studio_secret>")
+    var studioSecret: String = ""
     @Option(name = "--spark-master", usage = "set the master for Spark", metaVar = "<spark_master>")
     var sparkMaster: String = ""
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")

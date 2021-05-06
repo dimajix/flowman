@@ -27,10 +27,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.common.Logging
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
-import com.dimajix.flowman.tools.ToolConfig
 import com.dimajix.flowman.util.ConsoleColors
 
 

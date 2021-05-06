@@ -16,16 +16,24 @@
 
 package com.dimajix.flowman.kernel.rest
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
+import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.Directives.pathEndOrSingleSlash
 import akka.http.scaladsl.server.Directives.pathPrefix
 import io.swagger.annotations.Api
 import javax.ws.rs.Path
 
 import com.dimajix.flowman.kernel.service.SessionService
+import com.dimajix.flowman.model.Relation
 
 
-@Api(value = "/session/{session}/relation", produces = "application/json", consumes = "application/json")
+@Api(value = "relation", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/relation")
 class RelationEndpoint {
     def routes(session:SessionService) : server.Route = pathPrefix("relation") {(
@@ -34,4 +42,13 @@ class RelationEndpoint {
             )}
         )}
 
+    private def withRelation(session:SessionService, relationId:String)(fn:(Relation) => server.Route) : server.Route = {
+        Try {
+            session.getRelation(relationId)
+        }
+        match {
+            case Success(relation) => fn(relation)
+            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+        }
+    }
 }

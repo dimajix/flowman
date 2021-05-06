@@ -3,6 +3,14 @@ module.exports = {
   transpileDependencies: [
     'vuetify'
   ],
+  pages: {
+    'index': {
+      'entry': './src/main.js',
+      'template': 'public/index.html',
+      'title': 'Flowman Studio',
+      'chucnks': ['chunk-vendors', 'chunk-common', 'index']
+    }
+  },
   devServer: {
     port: 8088,
     proxy: {

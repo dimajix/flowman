@@ -22,10 +22,9 @@ import scala.util.Try
 
 import org.kohsuke.args4j.CmdLineException
 
-import com.dimajix.flowman.kernel.rest.Configuration
+import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.kernel.rest.Server
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
 
 
@@ -81,6 +80,11 @@ class Application(options:Arguments) extends Tool {
         )
 
         val conf = Configuration.loadDefaults()
+            .setBindHost(options.bindHost)
+            .setBindPort(options.bindPort)
+            .setKernelId(options.kernelId)
+            .setStudioUrl(options.studioUrl)
+            .setStudioSecret(options.studioSecret)
         val server = new Server(conf, session)
         server.run()
 

@@ -16,9 +16,9 @@
 
 package com.dimajix.flowman.server
 
+import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.server.rest.Configuration
 import com.dimajix.flowman.server.rest.Server
-import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
 
 

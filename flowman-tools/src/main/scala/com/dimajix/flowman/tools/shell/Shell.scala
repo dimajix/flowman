@@ -37,10 +37,10 @@ import org.kohsuke.args4j.CmdLineParser
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.common.Logging
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.StatefulTool
-import com.dimajix.flowman.tools.ToolConfig
 import com.dimajix.flowman.util.withShutdownHook
 
 

@@ -21,6 +21,7 @@ import java.util.UUID
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -71,7 +72,7 @@ class TaskService(sessionService: SessionService) {
     implicit private val executionContext:ExecutionContext = sessionService.executionContext
     private val tasks = mutable.ListBuffer[Task[_]]()
 
-    private def listType[T]() : Seq[T] = {
+    private def listType[T : ClassTag]() : Seq[T] = {
         val entities = mutable.ListBuffer[T]()
         tasks.synchronized {
             tasks.foreach {

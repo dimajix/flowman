@@ -2,6 +2,21 @@
   <v-app>
     <v-app-bar app color="primary">
       <v-app-bar-title>Flowman Studio</v-app-bar-title>
+      <v-spacer></v-spacer>
+      <v-dialog
+        v-model="sessionDialog"
+        persistent
+      >
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            v-bind="attrs"
+            v-on="on"
+          >
+            Switch Kernel & Session
+          </v-btn>
+        </template>
+        <sessions></sessions>
+      </v-dialog>
     </v-app-bar>
 
     <v-main>
@@ -71,23 +86,27 @@
   </v-app>
 </template>
 
+
 <script>
-import NavigationMenu from './components/NavigationMenu'
-import MappingOutput from './components/MappingOutput'
-import MappingProperties from './components/MappingProperties'
-import Flow from './components/Flow'
+import NavigationMenu from '@/components/NavigationMenu'
+import MappingOutput from '@/components/MappingOutput'
+import MappingProperties from '@/components/MappingProperties'
+import Flow from '@/components/Flow'
+import Sessions from '@/components/Sessions'
 
 export default {
-  name: 'App',
+  name: 'Workbench',
   components: {
       NavigationMenu,
       MappingProperties,
       MappingOutput,
-      Flow
+      Flow,
+      Sessions
   },
   data () {
     return {
-      tab: null
+      tab: null,
+      sessionDialog: false
     }
   },
 };

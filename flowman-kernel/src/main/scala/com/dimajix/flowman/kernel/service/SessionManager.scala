@@ -37,19 +37,19 @@ class SessionManager(rootSession:execution.Session) {
         result
     }
 
-    def getSession(id:String) : SessionService = {
+    def getSession(id:String) : Option[SessionService] = {
         var result:Option[SessionService] = None
         sessions.synchronized {
             result = sessions.find(_.id == id)
         }
-        result.get
+        result
     }
 
     def createSession(projectPath:Path) : SessionService = {
         val project = loadProject(projectPath)
         val session = rootSession.newSession(project)
 
-        val svc = new SessionService(session)
+        val svc = new SessionService(this, session)
 
         sessions.synchronized {
             sessions.append(svc)
@@ -58,7 +58,7 @@ class SessionManager(rootSession:execution.Session) {
         svc
     }
 
-    def closeSession(svc:SessionService) : Unit = {
+    private[service] def removeSession(svc:SessionService) : Unit = {
         val id = svc.id
         sessions.synchronized {
             val index = sessions.indexWhere(_.id == id)

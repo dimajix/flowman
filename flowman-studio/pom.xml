@@ -98,7 +98,7 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-tools</artifactId>
+            <artifactId>flowman-common</artifactId>
         </dependency>
 
         <dependency>

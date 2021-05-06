@@ -1,5 +1,6 @@
 <template>
   <v-data-table
+    dense
     :headers="headers"
     :items="desserts"
     :items-per-page="5"

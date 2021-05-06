@@ -21,6 +21,7 @@ import java.io.File
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem

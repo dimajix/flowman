@@ -7,6 +7,7 @@ import io.swagger.models.auth.BasicAuthDefinition
 
 object SwaggerDocEndpoint extends SwaggerHttpService  {
     override def apiClasses = Set(
+        classOf[PingEndpoint],
         classOf[NamespaceEndpoint],
         classOf[SessionEndpoint],
         classOf[JobEndpoint]

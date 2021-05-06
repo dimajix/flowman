@@ -18,7 +18,6 @@ package com.dimajix.flowman.studio
 
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.studio.rest.Server
-import com.dimajix.flowman.tools.Tool
 
 
 object Application {
@@ -33,7 +32,7 @@ object Application {
 }
 
 
-class Application extends Tool {
+class Application {
     def run() : Boolean = {
         val conf = Configuration.loadDefaults()
 

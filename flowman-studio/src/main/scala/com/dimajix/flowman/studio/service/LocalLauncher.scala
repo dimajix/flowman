@@ -34,7 +34,7 @@ class LocalLauncher(system:ActorSystem) extends Launcher {
         val args = Seq(
             "--bind-host", "localhost",
             "--bind-port", "0",
-            "--studio-url", "http://localhost:8080",
+            "--studio-url", "http://localhost:8080"
         )
         val extraEnv = Seq[(String,String)]()
         val builder = sys.process.Process.apply(cmd +: args, None, extraEnv:_*)

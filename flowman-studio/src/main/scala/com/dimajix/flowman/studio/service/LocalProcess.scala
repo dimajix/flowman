@@ -33,6 +33,7 @@ class LocalProcess(builder:ProcessBuilder, system:ActorSystem) extends Process {
     private implicit val materializer = ActorMaterializer()
 
     private var terminated = false
+    private var isAlive:Boolean = false
     private val (loggerQueue, loggerPublisher) = Source
         .queue[String](1000, OverflowStrategy.dropHead)
         .toMat(Sink.asPublisher(fanout = true))(Keep.both)
@@ -41,10 +42,12 @@ class LocalProcess(builder:ProcessBuilder, system:ActorSystem) extends Process {
         override def out(s: => String): Unit = loggerQueue.offer(s)
         override def err(s: => String): Unit = loggerQueue.offer(s)
         override def buffer[T](f: => T): T = {
+            isAlive = true
             try {
                 f
             } finally {
                 loggerQueue.complete()
+                isAlive = false
             }
         }
     }
@@ -57,13 +60,17 @@ class LocalProcess(builder:ProcessBuilder, system:ActorSystem) extends Process {
         }
     }
     override def state : ProcessState = {
-        if (process.isAlive()) {
+        // We cannot use process.isAlive, since this method is not available in Scala 2.11
+        if (isAlive) {
             if (terminated)
                 ProcessState.STOPPING
             else
                 ProcessState.RUNNING
         } else {
-            ProcessState.TERMINATED
+            if (!terminated)
+                ProcessState.STARTING
+            else
+                ProcessState.TERMINATED
         }
     }
     override def messages : Publisher[String] = loggerPublisher

@@ -29,12 +29,12 @@ class LocalLauncher(system:ActorSystem) extends Launcher {
 
     override def description: String = "Default local launcher"
 
-    override def launch() : Process = {
+    override def launch(env:LaunchEnvironment) : Process = {
         val cmd = new File(ToolConfig.homeDirectory.get, "bin/flowkernel").toString
         val args = Seq(
             "--bind-host", "localhost",
             "--bind-port", "0",
-            "--studio-url", "http://localhost:8080"
+            "--studio-url", env.studio.toString
         )
         val extraEnv = Seq[(String,String)]()
         val builder = sys.process.Process.apply(cmd +: args, None, extraEnv:_*)

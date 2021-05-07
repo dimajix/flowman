@@ -16,9 +16,14 @@
 
 package com.dimajix.flowman.studio.service
 
+import java.net.URL
 
-abstract class Launcher {
-    def name : String
-    def description : String
-    def launch(env:LaunchEnvironment) : Process
+import akka.actor.ActorSystem
+
+
+case class LaunchEnvironment(
+    system:ActorSystem,
+    studio:URL
+) {
+
 }

@@ -40,8 +40,8 @@ class KernelManager {
         result
     }
 
-    def launchKernel(launcher:Launcher) : KernelService = {
-        val process = launcher.launch()
+    def launchKernel(launcher:Launcher, env:LaunchEnvironment) : KernelService = {
+        val process = launcher.launch(env)
         val svc = new KernelService(process)
 
         kernels.synchronized {

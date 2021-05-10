@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.metric
 
-import scala.collection.mutable
-
 import com.dimajix.common.IdentityHashSet
 import com.dimajix.common.SynchronizedSet
 

@@ -23,6 +23,12 @@ import scala.collection.mutable
 object SynchronizedSet {
     def apply[A]() : SynchronizedSet[A] = SynchronizedSet(mutable.Set[A]())
 }
+
+/**
+ * This is a thin wrapper around a Set which provides synchronized Access
+ * @param impl
+ * @tparam A
+ */
 case class SynchronizedSet[A](impl:mutable.Set[A]) {
     def add(elem: A): Boolean = {
         impl.synchronized(impl.add(elem))

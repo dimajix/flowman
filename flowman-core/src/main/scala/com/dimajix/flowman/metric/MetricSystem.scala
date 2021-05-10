@@ -19,6 +19,7 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 import com.dimajix.common.IdentityHashSet
+import com.dimajix.common.SynchronizedSet
 import com.dimajix.flowman.execution.Status
 
 trait MetricCatalog {
@@ -53,9 +54,9 @@ trait MetricCatalog {
 
 
 class MetricSystem extends MetricCatalog {
-    private val metricBundles : mutable.Set[MetricBundle] = IdentityHashSet()
-    private val metricBoards : mutable.Set[MetricBoard] = IdentityHashSet()
-    private val metricSinks : mutable.Set[MetricSink] = IdentityHashSet()
+    private val metricBundles : SynchronizedSet[MetricBundle] = SynchronizedSet(IdentityHashSet())
+    private val metricBoards : SynchronizedSet[MetricBoard] = SynchronizedSet(IdentityHashSet())
+    private val metricSinks : SynchronizedSet[MetricSink] = SynchronizedSet(IdentityHashSet())
 
     /**
      * Registers an individual metric. It will be wrapped into a bundle.

@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
-
 import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

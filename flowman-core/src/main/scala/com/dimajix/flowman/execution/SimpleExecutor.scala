@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
-
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf

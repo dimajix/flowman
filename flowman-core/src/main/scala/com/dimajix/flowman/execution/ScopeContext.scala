@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
@@ -105,12 +106,12 @@ final class ScopeContext(
     scopeJobs:Map[String,Template[Job]] = Map(),
     scopeTests:Map[String,Template[Test]] = Map()
 ) extends AbstractContext(fullEnv, fullConfig) {
-    private val mappings = mutable.Map[String,Mapping]()
-    private val relations = mutable.Map[String,Relation]()
-    private val targets = mutable.Map[String,Target]()
-    private val connections = mutable.Map[String,Connection]()
-    private val jobs = mutable.Map[String,Job]()
-    private val tests = mutable.Map[String,Test]()
+    private val mappings = TrieMap[String,Mapping]()
+    private val relations = TrieMap[String,Relation]()
+    private val targets = TrieMap[String,Target]()
+    private val connections = TrieMap[String,Connection]()
+    private val jobs = TrieMap[String,Job]()
+    private val tests = TrieMap[String,Test]()
 
     /**
      * Returns the namespace associated with this context. Can be null

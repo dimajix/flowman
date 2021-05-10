@@ -20,7 +20,6 @@ import scala.collection.Iterable
 import scala.collection.mutable
 
 
-
 object SynchronizedMap {
     def apply[K,V]() : SynchronizedMap[K,V] = SynchronizedMap(mutable.Map[K,V]())
 }
@@ -67,11 +66,14 @@ case class SynchronizedMap[K,V](impl:mutable.Map[K,V]) {
         }
     }
 
-    def iterator : Iterator[(K,V)] = {
-        val buffer = synchronized {
+    def toSeq : collection.Seq[(K,V)] = {
+        synchronized {
             impl.toSeq
         }
-        buffer.iterator
+    }
+
+    def iterator : Iterator[(K,V)] = {
+        toSeq.iterator
     }
 
     def values: Iterable[V] = {

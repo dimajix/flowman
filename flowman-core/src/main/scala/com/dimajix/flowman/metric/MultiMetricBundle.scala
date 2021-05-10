@@ -19,10 +19,11 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 import com.dimajix.common.IdentityHashSet
+import com.dimajix.common.SynchronizedSet
 
 
 final case class MultiMetricBundle(override val name:String, override val labels:Map[String,String]) extends MetricBundle {
-    private val bundleMetrics : mutable.Set[Metric] = IdentityHashSet()
+    private val bundleMetrics : SynchronizedSet[Metric] = SynchronizedSet(IdentityHashSet())
 
     def addMetric(metric:Metric) : Unit = {
         bundleMetrics.add(metric)

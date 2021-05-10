@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.execution
 
+import java.lang.Thread.UncaughtExceptionHandler
+import java.util.concurrent.ForkJoinPool
+
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
@@ -23,6 +26,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinWorkerThread
 
 import org.slf4j.LoggerFactory
 
@@ -33,6 +38,19 @@ import com.dimajix.flowman.model.Target
 
 class ParallelExecutor extends Executor {
     private val logger = LoggerFactory.getLogger(classOf[SimpleExecutor])
+
+    private class MyForkJoinWorkerThread(pool: ForkJoinPool) extends ForkJoinWorkerThread(pool) { // set the correct classloader here
+        setContextClassLoader(Thread.currentThread.getContextClassLoader)
+    }
+    private object MyForkJoinWorkerThreadFactory extends ForkJoinPool.ForkJoinWorkerThreadFactory {
+        override final def newThread(pool: ForkJoinPool) = new MyForkJoinWorkerThread(pool)
+    }
+    private val exceptionHandler = new UncaughtExceptionHandler {
+        override def uncaughtException(thread: Thread, throwable: Throwable): Unit = {
+            logger.error("Uncaught exception: ", throwable)
+        }
+    }
+
 
     /**
      * Executes a list of targets in an appropriate order.
@@ -47,12 +65,15 @@ class ParallelExecutor extends Executor {
      * @return
      */
     def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => Status) : Status = {
-        implicit val ec:ExecutionContext = ExecutionContext.global
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_SCHEDULER_CLASS)
         val ctor = clazz.getDeclaredConstructor()
         val scheduler = ctor.newInstance()
 
         scheduler.initialize(targets, phase, filter)
+
+        val parallelism = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_PARALLELISM)
+        val threadPool = new ForkJoinPool(parallelism, MyForkJoinWorkerThreadFactory, exceptionHandler, true)
+        implicit val ec:ExecutionContext = ExecutionContext.fromExecutorService(threadPool)
 
         val tasks = IdentityHashMap[Target, Future[Status]]()
         var error = false
@@ -103,13 +124,15 @@ class ParallelExecutor extends Executor {
             }
         }
 
-        // Run all targets
+        // Run all targets and schedule new targets as they become runnable
         while(scheduler.synchronized(scheduler.hasNext()) && (!error || keepGoing)) {
             scheduleTargets()
 
             val next = tasks.synchronized(Future.firstCompletedOf(tasks.values))
             Await.ready(next, Duration.Inf)
         }
+
+        threadPool.shutdown()
 
         // Evaluate overall status
         if (empty)

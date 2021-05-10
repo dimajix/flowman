@@ -1,3 +1,10 @@
+# Version 0.17.0
+
+* New Flowman Kernel and Flowman Studio application prototypes
+* New ParallelExecutor
+* Fix before/after dependencies in `count` target
+
+
 # Version 0.16.0 - 2021-04-23
 
 * Add logo to Flowman Shell

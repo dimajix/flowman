@@ -16,11 +16,10 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.mutable
+import scala.collection.concurrent.TrieMap
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.Identifier
@@ -39,7 +38,6 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
-import com.dimajix.flowman.templating.FileWrapper
 
 
 object ProjectContext {
@@ -103,14 +101,14 @@ final class ProjectContext private[execution](
     _env + ("project" -> ((ProjectWrapper(_project), SettingLevel.SCOPE_OVERRIDE.level))),
     _config)
 {
-    private val mappings = mutable.Map[String,Mapping]()
-    private val overrideMappings = mutable.Map[String,Mapping]()
-    private val relations = mutable.Map[String,Relation]()
-    private val overrideRelations = mutable.Map[String,Relation]()
-    private val targets = mutable.Map[String,Target]()
-    private val connections = mutable.Map[String,Connection]()
-    private val jobs = mutable.Map[String,Job]()
-    private val tests = mutable.Map[String,Test]()
+    private val mappings = TrieMap[String,Mapping]()
+    private val overrideMappings = TrieMap[String,Mapping]()
+    private val relations = TrieMap[String,Relation]()
+    private val overrideRelations = TrieMap[String,Relation]()
+    private val targets = TrieMap[String,Target]()
+    private val connections = TrieMap[String,Connection]()
+    private val jobs = TrieMap[String,Job]()
+    private val tests = TrieMap[String,Test]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -246,11 +244,7 @@ final class ProjectContext private[execution](
             connections.getOrElse(identifier.name,
                 extraConnections.get(identifier.name)
                     .orElse(_project.connections.get(identifier.name))
-                    .map { t =>
-                        val instance = t.instantiate(this)
-                        connections.update(identifier.name, instance)
-                        instance
-                    }
+                    .map(t => connections.getOrElseUpdate(identifier.name, t.instantiate(this)))
                     .getOrElse(parent.getConnection(identifier))
             )
         }
@@ -308,15 +302,13 @@ final class ProjectContext private[execution](
         }
     }
 
-    private def findOrInstantiate[T](identifier:Identifier[T], templates:Map[String,Template[T]], cache:mutable.Map[String,T]) = {
+    private def findOrInstantiate[T](identifier:Identifier[T], templates:Map[String,Template[T]], cache:TrieMap[String,T]) = {
         val name = identifier.name
         cache.get(name)
             .orElse {
-                val m = templates
+                templates
                     .get(name)
-                    .map(_.instantiate(this))
-                m.foreach(m => cache.update(name, m))
-                m
+                    .map(m => cache.getOrElseUpdate(name, m.instantiate(this)))
             }
     }
 

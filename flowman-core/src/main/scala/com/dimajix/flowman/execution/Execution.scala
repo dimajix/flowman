@@ -107,6 +107,11 @@ abstract class Execution {
         instances(output)
     }
 
+    /**
+     * Executes an assertion from a TestSuite. This method ensures that all inputs are instantiated correctly
+     * @param assertion
+     * @return
+     */
     def assert(assertion:Assertion) : Seq[AssertionResult] = {
         val context = assertion.context
         val inputs = assertion.inputs
@@ -124,9 +129,9 @@ abstract class Execution {
      * @return
      */
     def describe(mapping:Mapping, output:String) : StructType
+
     /**
-     * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
-     * schema analysis beforehand. In such cases, None will be returned.
+     * Returns the schema for a specific output created by a specific mapping.
      * @param mapping
      * @return
      */

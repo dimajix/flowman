@@ -18,6 +18,11 @@ package com.dimajix.flowman.execution
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
+import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
@@ -44,6 +49,15 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
 
+    private val frameCacheFutures:SynchronizedMap[Mapping,Future[Map[String,DataFrame]]] = {
+        parent match {
+            case Some(ce:CachingExecution) if !isolated =>
+                ce.frameCacheFutures
+            case _ =>
+                SynchronizedMap(IdentityHashMap[Mapping,Future[Map[String,DataFrame]]]())
+        }
+    }
+
     private val schemaCache:SynchronizedMap[Mapping,TrieMap[String,StructType]] = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
@@ -61,7 +75,25 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
-        frameCache.getOrElseUpdate(mapping, createTables(mapping))
+        // We do not simply call getOrElseUpdate, since the creation of the DataFrame might be slow and
+        // concurrent trials
+        def createOrWait() : Map[String,DataFrame] = {
+            val p = Promise[Map[String,DataFrame]]()
+            val f = frameCacheFutures.getOrElseUpdate(mapping, p.future)
+            // Check if the returned future is the one we passed in. If that is the case, the current thread
+            // is responsible for fullfilling the promise
+            if (f eq p.future) {
+                val tables = Try(createTables(mapping))
+                p.complete(tables)
+                tables.get
+            }
+            else {
+                // Other threads simply wait for the promise to be fullfilled.
+                Await.result(f, Duration.Inf)
+            }
+        }
+
+        frameCache.getOrElseUpdate(mapping, createOrWait())
     }
 
     /**

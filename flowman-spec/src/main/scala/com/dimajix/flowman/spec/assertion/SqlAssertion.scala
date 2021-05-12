@@ -98,7 +98,7 @@ case class SqlAssertion(
         require(input != null)
 
         DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
-            tests.map { test =>
+            tests.par.map { test =>
                 // Execute query
                 val sql = test.sql
                 val actual = execution.spark.sql(sql)
@@ -111,7 +111,7 @@ case class SqlAssertion(
                     case None =>
                         AssertionResult(sql, true)
                 }
-            }
+            }.toList
         }
     }
 }

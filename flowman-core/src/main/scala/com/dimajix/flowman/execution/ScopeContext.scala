@@ -144,9 +144,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeConnections.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        connections.put(identifier.name, result)
-                        result
+                        connections.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getConnection(identifier)
                 }
             }
@@ -161,9 +159,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeMappings.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        mappings.put(identifier.name, result)
-                        result
+                        mappings.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getMapping(identifier, allowOverrides)
                 }
             }
@@ -178,9 +174,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeRelations.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        relations.put(identifier.name, result)
-                        result
+                        relations.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getRelation(identifier, allowOverrides)
                 }
             }
@@ -195,9 +189,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeTargets.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        targets.put(identifier.name, result)
-                        result
+                        targets.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getTarget(identifier)
                 }
             }
@@ -212,9 +204,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeJobs.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        jobs.put(identifier.name, result)
-                        result
+                        jobs.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getJob(identifier)
                 }
             }
@@ -229,9 +219,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeTests.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        tests.put(identifier.name, result)
-                        result
+                        tests.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getTest(identifier)
                 }
             }

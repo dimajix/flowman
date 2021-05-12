@@ -42,8 +42,9 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.DataFrameUtils.withTempView
+import com.dimajix.spark.sql.DataFrameUtils.withTempViews
 import com.dimajix.spark.sql.SqlParser
-
 
 case class RecursiveSqlMapping(
     instanceProperties:Mapping.Properties,
@@ -87,7 +88,7 @@ extends BaseMapping {
         }
 
         // Register all input DataFrames as temp views
-        val result = DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+        val result = withTempViews(input.map(kv => kv._1.name -> kv._2)) {
             val first = firstDf(execution.spark, statement)
             fix(first, first.count())
         }
@@ -112,7 +113,7 @@ extends BaseMapping {
     }
     private def nextDf(statement:String, prev:DataFrame) : DataFrame = {
         val spark = prev.sparkSession
-        DataFrameUtils.withTempView("__this__", prev) {
+        withTempView("__this__", prev) {
             spark.sql(statement).localCheckpoint(false)
         }
     }
@@ -131,16 +132,13 @@ extends BaseMapping {
         val statement = this.statement
 
         // Create dummy data frames
-        val replacements = input.map { case (name,schema) =>
-            name -> DataFrameUtils.singleRow(spark, schema.sparkType)
+        val replacements = input.map { case (id,schema) =>
+            id.name -> DataFrameUtils.singleRow(spark, schema.sparkType)
         }
 
-        // Register all input DataFrames as temp views
-        replacements.foreach(kv => kv._2.createOrReplaceTempView(kv._1.name))
-
-        val result = firstDf(spark, statement)
-        // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-        replacements.foreach(kv => spark.catalog.dropTempView(kv._1.name))
+        val result = withTempViews(replacements) {
+            firstDf(spark, statement)
+        }
 
         Map("main" -> StructType.of(result.schema))
     }

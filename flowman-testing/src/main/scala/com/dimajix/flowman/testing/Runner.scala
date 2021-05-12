@@ -276,10 +276,10 @@ class Runner private(
      * Runs all non-empty tests in a project. Tests without any assertions will be skipped.
      * @return
      */
-    def runTests() : Boolean = {
+    def runTests(parallel:Boolean=false) : Boolean = {
         val context = session.getContext(project)
 
-        project.tests.keys.toSeq.forall { testName =>
+        def run(testName:String) : Boolean = {
             val test = context.getTest(TestIdentifier(testName))
             if (test.assertions.nonEmpty) {
                 runTest(test)
@@ -288,6 +288,12 @@ class Runner private(
                 true
             }
         }
+
+        val testNames = project.tests.keys.toSeq
+        if (parallel)
+            testNames.par.forall(run)
+        else
+            testNames.forall(run)
     }
 
     /**

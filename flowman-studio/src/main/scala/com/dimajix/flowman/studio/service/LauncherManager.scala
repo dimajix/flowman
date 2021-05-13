@@ -19,9 +19,13 @@ package com.dimajix.flowman.studio.service
 import scala.collection.mutable
 
 
-class LauncherManager {
+final class LauncherManager {
     private val launchers = mutable.ListBuffer[Launcher]()
 
+    /**
+     * Returns a list of all available Launchers
+     * @return
+     */
     def list() : Seq[Launcher] = {
         val result = mutable.ListBuffer[Launcher]()
         launchers.synchronized {
@@ -30,6 +34,11 @@ class LauncherManager {
         result
     }
 
+    /**
+     * Retrieves a specific launcher by its name. If no such launcher is known, [[None]] will be returned instead
+     * @param name
+     * @return
+     */
     def getLauncher(name:String) : Option[Launcher] = {
         var result:Option[Launcher] = None
         launchers.synchronized {
@@ -38,6 +47,11 @@ class LauncherManager {
         result
     }
 
+    /**
+     * Registers a new Launcher. If another launcher with the same name is already registered, it will be replaced
+     * with the new launcher
+     * @param launcher
+     */
     def addLauncher(launcher:Launcher) : Unit = {
         launchers.synchronized {
             val name = launcher.name

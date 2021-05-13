@@ -42,7 +42,7 @@ class LauncherEndpoint(launcherManager: LauncherManager) {
 
     import com.dimajix.flowman.studio.model.JsonSupport._
 
-    def routes : server.Route = pathPrefix("kernel") {(
+    def routes : server.Route = pathPrefix("launcher") {(
         pathEndOrSingleSlash {
                 listLaunchers()
             }
@@ -56,7 +56,7 @@ class LauncherEndpoint(launcherManager: LauncherManager) {
     }
 
     @GET
-    @ApiOperation(value = "list", nickname = "listLaunchers", httpMethod = "GET")
+    @ApiOperation(value = "listLaunchers", nickname = "List all Launchers", httpMethod = "GET")
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "List of launchers", response = classOf[LauncherList])
     ))
@@ -69,7 +69,7 @@ class LauncherEndpoint(launcherManager: LauncherManager) {
 
     @GET
     @Path("/{launcher}")
-    @ApiOperation(value = "Get launcher", nickname = "getLauncher", httpMethod = "GET")
+    @ApiOperation(value = "getLauncher", nickname = "Get a specific Laucnher by ID", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "kernel", value = "Kernel ID", required = true, dataType = "string", paramType = "path")
     ))

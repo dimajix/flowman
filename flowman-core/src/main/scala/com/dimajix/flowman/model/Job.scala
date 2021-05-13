@@ -336,7 +336,8 @@ final case class Job(
     }
 
     /**
-      * Parse command line parameters
+      * Parse command line parameters into [[FieldValue]] entities, which then can be interpolated via the
+      * [[interpolate]] method.
       * @param rawArgs
       * @return
       */
@@ -379,8 +380,8 @@ final case class Job(
     }
 
     /**
-      * This method will execute all targets secified in this job in the correct order. It is a convenient wrapper
-      * around JobExecutor, which actually takes care about all the details
+      * This method will execute all targets specified in this job in the correct order. It is a convenient wrapper
+      * using the [[Runner]] class, which actually takes care about all the details.
       * @param executor
       * @param phase
       * @param args

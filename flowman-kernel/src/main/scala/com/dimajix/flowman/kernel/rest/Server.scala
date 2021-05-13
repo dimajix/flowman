@@ -16,19 +16,18 @@
 
 package com.dimajix.flowman.kernel.rest
 
-import java.net.InetAddress
+import java.net.InetSocketAddress
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
 
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.StatusCodes.Found
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.settings.ServerSettings
@@ -36,24 +35,28 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.net.SocketUtils
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.kernel.Configuration
+import com.dimajix.flowman.kernel.model.KernelRegistrationRequest
 
 
 class Server(
     conf:Configuration,
     session:Session
 ) {
+    import akka.http.scaladsl.client.RequestBuilding._
     import akka.http.scaladsl.server.Directives._
+
+    import com.dimajix.flowman.kernel.model.JsonSupport._
 
     private val logger = LoggerFactory.getLogger(classOf[Server])
 
     implicit val system: ActorSystem = ActorSystem("flowman")
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     def run(): Unit = {
-        import scala.concurrent.duration._
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
-        implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
         val pingEndpoint = new PingEndpoint
         val namespaceEndpoint = new NamespaceEndpoint(session.namespace.get)
@@ -94,27 +97,33 @@ class Server(
             .run()
 
         server.foreach { binding =>
-            logger.info(s"Flowman kernel online at http://[${binding.localAddress.getAddress.getHostAddress}]:${binding.localAddress.getPort}")
+            val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
+            logger.info(s"Flowman kernel online at $listenUrl")
 
-            // Register at Flowman Studio
-            conf.getStudioUrl().foreach { url =>
-                val localhost = InetAddress.getLocalHost
-                val localIpAddress = localhost.getHostAddress
-                val localPort = binding.localAddress.getPort
-
-                logger.info(s"Registering Kernel at [$localIpAddress]:$localPort with Flowman Studio running at $url")
-                val studioUri = Uri(url.toString)
-                val uri = studioUri.withPath(studioUri.path / "api" / "registry")
-                val responseFuture = Http().singleRequest(HttpRequest(uri = uri, method = HttpMethods.POST))
-
-                responseFuture
-                    .onComplete {
-                        case Success(res) => println(res)
-                        case Failure(_) => sys.error("something wrong")
-                    }
-            }
+            register(binding.localAddress)
         }
 
         Await.ready(Promise[Done].future, Duration.Inf)
+    }
+
+    /**
+     * Register kernel at Flowman Studio
+     * @param localAddress
+     */
+    private def register(localAddress:InetSocketAddress) : Unit = {
+        conf.getStudioUrl().foreach { url =>
+            val localUrl = SocketUtils.toURL("http", localAddress)
+
+            logger.info(s"Registering Flowman kernel running at $localUrl with Flowman Studio running at $url")
+            val request = KernelRegistrationRequest(id=conf.getKernelId(), url=localUrl.toString)
+            val studioUri = Uri(url.toString)
+            val uri = studioUri.withPath(studioUri.path / "api" / "registry")
+
+            Http().singleRequest(Post(uri, request))
+                .onComplete {
+                    case Success(res) => println(res)
+                    case Failure(_) => sys.error("something wrong")
+                }
+        }
     }
 }

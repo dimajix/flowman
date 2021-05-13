@@ -84,7 +84,7 @@ class Application(options:Arguments) extends Tool {
             .setBindPort(options.bindPort)
             .setKernelId(options.kernelId)
             .setStudioUrl(options.studioUrl)
-            .setStudioSecret(options.studioSecret)
+            .setStudioSecret(options.kernelSecret)
         val server = new Server(conf, session)
         server.run()
 

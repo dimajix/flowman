@@ -22,7 +22,9 @@ case class KernelRegistrationRequest(
 )
 
 case class Kernel(
-    id:String
+    id:String,
+    url:Option[String],
+    state:String
 )
 
 case class KernelList(

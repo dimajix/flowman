@@ -24,7 +24,7 @@ import spray.json.RootJsonFormat
 trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit val statusFormat: RootJsonFormat[Status] = jsonFormat1(Status)
     implicit val kernelRegistrationRequestFormat: RootJsonFormat[KernelRegistrationRequest] = jsonFormat2(KernelRegistrationRequest)
-    implicit val kernelFormat: RootJsonFormat[Kernel] = jsonFormat1(Kernel)
+    implicit val kernelFormat: RootJsonFormat[Kernel] = jsonFormat3(Kernel)
     implicit val kernelListFormat: RootJsonFormat[KernelList] = jsonFormat1(KernelList)
     implicit val launcherFormat: RootJsonFormat[Launcher] = jsonFormat2(Launcher)
     implicit val launcherListFormat: RootJsonFormat[LauncherList] = jsonFormat1(LauncherList)

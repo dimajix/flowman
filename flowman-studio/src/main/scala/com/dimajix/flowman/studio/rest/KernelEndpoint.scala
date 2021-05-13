@@ -19,6 +19,7 @@ package com.dimajix.flowman.studio.rest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.StatusCodes.Found
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.server
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
@@ -38,12 +39,18 @@ import com.dimajix.flowman.studio.model.Kernel
 import com.dimajix.flowman.studio.model.KernelList
 import com.dimajix.flowman.studio.service.KernelManager
 import com.dimajix.flowman.studio.service.KernelService
+import com.dimajix.flowman.studio.service.LaunchEnvironment
+import com.dimajix.flowman.studio.service.LauncherManager
 
 
 @Api(value = "kernel", produces = "application/json", consumes = "application/json")
 @Path("/kernel")
-class KernelEndpoint(kernelManager:KernelManager) {
+@ApiResponses(Array(
+    new ApiResponse(code = 500, message = "Internal Server Error")
+))
+class KernelEndpoint(kernelManager:KernelManager, launcherManager:LauncherManager) {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.studio.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("kernel") {(
@@ -69,22 +76,25 @@ class KernelEndpoint(kernelManager:KernelManager) {
     )}
 
     @POST
-    @ApiOperation(value = "create", nickname = "createKernel", httpMethod = "GET")
+    @ApiOperation(value = "Launch a new kernel", nickname = "createKernel", httpMethod = "POST")
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Create new kernel", response = classOf[Kernel])
     ))
-    private def createKernel() : server.Route = {
+    def createKernel() : server.Route = {
         post {
-            ???
+            val launcher = launcherManager.list().head
+            val env = LaunchEnvironment()
+            val kernel = kernelManager.launchKernel(launcher, env)
+            complete(Converter.of(kernel))
         }
     }
 
     @GET
-    @ApiOperation(value = "list", nickname = "listKernels", httpMethod = "GET")
+    @ApiOperation(value = "List all known kernels", nickname = "listKernels", httpMethod = "GET")
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "List of kernels", response = classOf[KernelList])
     ))
-    private def listKernel() : server.Route = {
+    def listKernel() : server.Route = {
         get {
             val result = KernelList(kernelManager.list().map(Converter.of))
             complete(result)
@@ -93,7 +103,7 @@ class KernelEndpoint(kernelManager:KernelManager) {
 
     @GET
     @Path("/{kernel}")
-    @ApiOperation(value = "Get kernel", nickname = "getKernel", httpMethod = "GET")
+    @ApiOperation(value = "Retrieve a specific kernel by its ID", nickname = "getKernel", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "kernel", value = "Kernel ID", required = true, dataType = "string", paramType = "path")
     ))
@@ -101,7 +111,7 @@ class KernelEndpoint(kernelManager:KernelManager) {
         new ApiResponse(code = 200, message = "Retrieve information about a  specific kernel", response = classOf[Kernel]),
         new ApiResponse(code = 404, message = "Kernel not found")
     ))
-    private def getKernel(@ApiParam(hidden = true) kernel:String) : server.Route = {
+    def getKernel(@ApiParam(hidden = true) kernel:String) : server.Route = {
         get {
             withKernel(kernel) { kernel =>
                 val result = Converter.of(kernel)
@@ -112,7 +122,7 @@ class KernelEndpoint(kernelManager:KernelManager) {
 
     @DELETE
     @Path("/{kernel}")
-    @ApiOperation(value = "Shutdown kernel", nickname = "stopKernel", httpMethod = "DELETE")
+    @ApiOperation(value = "Shutdown a running kernel", nickname = "stopKernel", httpMethod = "DELETE")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "kernel", value = "Kernel ID", required = true, dataType = "string", paramType = "path")
     ))
@@ -120,7 +130,7 @@ class KernelEndpoint(kernelManager:KernelManager) {
         new ApiResponse(code = 200, message = "Successfully stopped kernel", response = classOf[String]),
         new ApiResponse(code = 404, message = "Kernel not found")
     ))
-    private def stopKernel(@ApiParam(hidden = true) kernel:String) : server.Route = {
+    def stopKernel(@ApiParam(hidden = true) kernel:String) : server.Route = {
         delete {
             withKernel(kernel) { kernel =>
                 kernel.shutdown()
@@ -134,7 +144,7 @@ class KernelEndpoint(kernelManager:KernelManager) {
     @POST
     @DELETE
     @Path("/{kernel}/")
-    @ApiOperation(value = "Invoke kernel", nickname = "invokeKernel", httpMethod = "GET")
+    @ApiOperation(value = "Invoke a kernel", nickname = "invokeKernel", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "kernel", value = "Kernel ID", required = true, dataType = "string", paramType = "path")
     ))
@@ -142,11 +152,11 @@ class KernelEndpoint(kernelManager:KernelManager) {
         new ApiResponse(code = 200, message = "Successfully invoked kernel"),
         new ApiResponse(code = 404, message = "Kernel not found")
     ))
-    private def invokeKernel(@ApiParam(hidden = true) kernel:String) : server.Route = {
+    def invokeKernel(@ApiParam(hidden = true) kernel:String) : server.Route = {
         withKernel(kernel) { kernel =>
             extractUnmatchedPath { path =>
                 extractRequest { request =>
-                    val uri = request.uri.withPath(path)
+                    val uri = request.uri.withPath(Uri.Path("/api") ++ path)
                     val newRequest = request.withUri(uri)
                     complete(kernel.invoke(newRequest))
                 }

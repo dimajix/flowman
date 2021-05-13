@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.service
+package com.dimajix.flowman.kernel.model
 
-
-case class LaunchEnvironment(
-    id:String="",
-    secret:String=""
-) {
-
-}
+case class KernelRegistrationRequest(
+    id:String,
+    url:String
+)

@@ -17,29 +17,68 @@
 package com.dimajix.flowman.studio.service
 
 import java.net.URL
-import java.util.UUID
 
+import scala.concurrent.Future
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 
 
-abstract class KernelState
+sealed abstract class KernelState
 object KernelState {
-    object STARTING extends KernelState
-    object RUNNING extends KernelState
-    object STOPPING extends KernelState
-    object TERMINATED extends KernelState
+    case object STARTING extends KernelState
+    case object RUNNING extends KernelState
+    case object STOPPING extends KernelState
+    case object TERMINATED extends KernelState
 }
 
-class KernelService(val process: Process) {
-    val id : String = UUID.randomUUID().toString
-    val secret : String = UUID.randomUUID().toString
+final class KernelService(val id:String, val secret: String, process: Process)(implicit system:ActorSystem) {
+    private var _url:Option[URL] = None
 
-    def url : URL = ???
+    def url : Option[URL] = _url
+    private[service] def setUrl(url:URL) : Unit = {_url = Some(url)}
 
-    def state : KernelState = ???
+    /**
+     * Returns the state of the kernel as known by the service. This may polling the process state and its
+     * registration state
+     * @return
+     */
+    def state : KernelState = {
+        process.state match {
+            case ProcessState.STARTING => KernelState.STARTING
+            case ProcessState.RUNNING =>
+                if (url.isEmpty)
+                    KernelState.STARTING
+                else
+                    KernelState.RUNNING
+            case ProcessState.STOPPING => KernelState.STOPPING
+            case ProcessState.TERMINATED => KernelState.TERMINATED
+        }
+    }
 
-    def shutdown() : Unit = ???
+    /**
+     * Returns true if the Kernel is still alive
+     * @return
+     */
+    def isAlive() : Boolean = {
+        process.state == ProcessState.RUNNING
+    }
 
-    def invoke(request:HttpRequest) : HttpResponse = ???
+    /**
+     * Stops the Kernel
+     */
+    def shutdown() : Unit = {
+        process.shutdown()
+    }
+
+    def invoke(request:HttpRequest) : Future[HttpResponse] = {
+        _url match {
+            case Some(url) =>
+                val uri = request.uri.withHost(url.getHost).withPort(url.getPort)
+                val finalRequest = request.copy(uri=uri)
+                Http().singleRequest(finalRequest)
+        }
+    }
 }

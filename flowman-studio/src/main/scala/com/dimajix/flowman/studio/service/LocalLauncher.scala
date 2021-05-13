@@ -17,26 +17,40 @@
 package com.dimajix.flowman.studio.service
 
 import java.io.File
+import java.net.URL
 
 import akka.actor.ActorSystem
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.common.ToolConfig
 
 
-class LocalLauncher(system:ActorSystem) extends Launcher {
+class LocalLauncher(studioUrl:URL, system:ActorSystem) extends Launcher {
+    private val logger = LoggerFactory.getLogger(classOf[LocalLauncher])
 
     override def name: String = "local"
 
     override def description: String = "Default local launcher"
 
     override def launch(env:LaunchEnvironment) : Process = {
-        val cmd = new File(ToolConfig.homeDirectory.get, "bin/flowkernel").toString
+        val cmd = new File(ToolConfig.homeDirectory.getOrElse(throw new RuntimeException("FLOWMAN_HOME not set")), "bin/flowkernel").toString
         val args = Seq(
+            "--kernel-id", env.id,
+            "--kernel-secret", env.secret,
             "--bind-host", "localhost",
             "--bind-port", "0",
-            "--studio-url", env.studio.toString
+            "--studio-url", studioUrl.toString
         )
         val extraEnv = Seq[(String,String)]()
+
+        logger.info(
+            s"""Launching local process
+               |  kernel-id: ${env.id}
+               |  kernel-secret: ${env.secret}
+               |  cmd: $cmd
+               |  args: ${args.mkString(" ")}
+               |  extraEnv: ${extraEnv.map(kv => kv._1 + "=" + kv._2).mkString("\n      ")}""".stripMargin)
+
         val builder = sys.process.Process.apply(cmd +: args, None, extraEnv:_*)
         new LocalProcess(builder, system)
     }

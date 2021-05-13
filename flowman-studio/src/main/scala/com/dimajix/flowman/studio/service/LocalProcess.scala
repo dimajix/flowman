@@ -16,8 +16,11 @@
 
 package com.dimajix.flowman.studio.service
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.sys.process.ProcessBuilder
 import scala.sys.process.ProcessLogger
+import scala.util.Try
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -26,52 +29,71 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import org.reactivestreams.Publisher
+import org.slf4j.LoggerFactory
 
 
 class LocalProcess(builder:ProcessBuilder, system:ActorSystem) extends Process {
-    private implicit val ec = system
-    private implicit val materializer = ActorMaterializer()
+    private val logger = LoggerFactory.getLogger(classOf[LocalProcess])
+    private implicit val as: ActorSystem = system
+    private implicit val ec: ExecutionContext = system.dispatcher
+    private implicit val materializer: ActorMaterializer = ActorMaterializer()
 
     private var terminated = false
-    private var isAlive:Boolean = false
     private val (loggerQueue, loggerPublisher) = Source
         .queue[String](1000, OverflowStrategy.dropHead)
         .toMat(Sink.asPublisher(fanout = true))(Keep.both)
         .run()
-    private val logger = new ProcessLogger {
-        override def out(s: => String): Unit = loggerQueue.offer(s)
-        override def err(s: => String): Unit = loggerQueue.offer(s)
-        override def buffer[T](f: => T): T = {
-            isAlive = true
-            try {
-                f
-            } finally {
-                loggerQueue.complete()
-                isAlive = false
-            }
+    private val processLogger = new ProcessLogger {
+        override def out(s: => String): Unit = {
+            logger.info("stdout: " + s)
+            loggerQueue.offer(s)
         }
+        override def err(s: => String): Unit = {
+            logger.info("stderr: " + s)
+            loggerQueue.offer(s)
+        }
+        override def buffer[T](f: => T): T = f
     }
-    private val process = builder.run(logger, connectInput = false)
+    private val process = builder.run(processLogger, connectInput = false)
+    private val exitValue = Future {
+        val result = process.exitValue()
+        loggerQueue.complete()
+        terminated = true
+        result
+    }
 
+    /**
+     * Tries to shutdown the process
+     */
     override def shutdown(): Unit = {
         if (!terminated) {
             terminated = true
             process.destroy()
         }
     }
+
+    /**
+     * Returns the current state of the process
+     * @return
+     */
     override def state : ProcessState = {
         // We cannot use process.isAlive, since this method is not available in Scala 2.11
-        if (isAlive) {
-            if (terminated)
-                ProcessState.STOPPING
-            else
-                ProcessState.RUNNING
-        } else {
+        if (exitValue.isCompleted) {
             if (!terminated)
                 ProcessState.STARTING
             else
                 ProcessState.TERMINATED
+        } else {
+            if (terminated)
+                ProcessState.STOPPING
+            else
+                ProcessState.RUNNING
         }
     }
+
+    /**
+     * Returns a publisher for all console messages produced by the process
+     * @return
+     */
     override def messages : Publisher[String] = loggerPublisher
 }

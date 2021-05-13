@@ -53,10 +53,10 @@ class Arguments(args:Array[String]) {
     var bindPort: Int = 8080
     @Option(name = "--kernel-id", usage = "set the kernel ID used for registration", metaVar = "<kernel_id>")
     var kernelId: String = ""
+    @Option(name = "--kernel-secret", usage = "set the secret to use for communication with the Flowman Studio server", metaVar = "<studio_secret>")
+    var kernelSecret: String = ""
     @Option(name = "--studio-url", usage = "set the URL to register to", metaVar = "<studio_url>")
     var studioUrl: String = ""
-    @Option(name = "--studio-secret", usage = "set the secret to use for communication with the Flowman Studio server", metaVar = "<studio_secret>")
-    var studioSecret: String = ""
     @Option(name = "--spark-master", usage = "set the master for Spark", metaVar = "<spark_master>")
     var sparkMaster: String = ""
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")

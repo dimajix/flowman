@@ -17,13 +17,22 @@
 package com.dimajix.flowman.studio.service
 
 import java.net.URL
+import java.util.UUID
 
 import scala.collection.mutable
 
+import akka.actor.ActorSystem
+import org.slf4j.LoggerFactory
 
-class KernelManager {
+
+final class KernelManager(system:ActorSystem) {
+    private val logger = LoggerFactory.getLogger(classOf[KernelManager])
     private val kernels = mutable.ListBuffer[KernelService]()
 
+    /**
+     * Lists all known Kernels
+     * @return
+     */
     def list() : Seq[KernelService] = {
         val result = mutable.ListBuffer[KernelService]()
         kernels.synchronized {
@@ -41,8 +50,13 @@ class KernelManager {
     }
 
     def launchKernel(launcher:Launcher, env:LaunchEnvironment) : KernelService = {
-        val process = launcher.launch(env)
-        val svc = new KernelService(process)
+        val id = UUID.randomUUID().toString
+        val secret = UUID.randomUUID().toString
+        val finalEnv = env.copy(id=id, secret=secret)
+
+        // Launch kernel process
+        val process = launcher.launch(finalEnv)
+        val svc = new KernelService(id, secret, process)(system)
 
         kernels.synchronized {
             kernels.append(svc)
@@ -51,9 +65,21 @@ class KernelManager {
         svc
     }
 
+    /**
+     * This method is indirectly called by a kernel (via the Studio REST interface) in order to register its URL
+     * for further communications
+     * @param id
+     * @param url
+     */
     def registerKernel(id:String, url:URL) : Unit = {
         val svc = getKernel(id)
-        ???
+        svc match {
+            case Some(svc) =>
+                logger.info(s"Register known kernel $id at $url")
+                svc.setUrl(url)
+            case None =>
+                logger.info(s"Register unknown kernel $id at $url")
+        }
     }
 
     def unregisterKernel(kernel:KernelService) : Unit = {

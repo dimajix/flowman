@@ -42,6 +42,7 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
         }
     }
 
+    implicit val kernelRegistrationRequestFormat: RootJsonFormat[KernelRegistrationRequest] = jsonFormat2(KernelRegistrationRequest)
     implicit val statusFormat: RootJsonFormat[Status] = jsonFormat1(Status)
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
     implicit val projectFormat: RootJsonFormat[Project] = jsonFormat11(Project)

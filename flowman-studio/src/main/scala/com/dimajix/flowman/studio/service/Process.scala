@@ -19,12 +19,12 @@ package com.dimajix.flowman.studio.service
 import org.reactivestreams.Publisher
 
 
-abstract class ProcessState
+sealed abstract class ProcessState
 object ProcessState {
-    object STARTING extends ProcessState
-    object RUNNING extends ProcessState
-    object STOPPING extends ProcessState
-    object TERMINATED extends ProcessState
+    case object STARTING extends ProcessState
+    case object RUNNING extends ProcessState
+    case object STOPPING extends ProcessState
+    case object TERMINATED extends ProcessState
 }
 
 

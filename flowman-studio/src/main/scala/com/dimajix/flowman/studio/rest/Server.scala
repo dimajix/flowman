@@ -19,6 +19,7 @@ package com.dimajix.flowman.studio.rest
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 
 import akka.Done
 import akka.actor.ActorSystem
@@ -29,6 +30,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.net.SocketUtils
 import com.dimajix.flowman.studio.Configuration
 import com.dimajix.flowman.studio.service.KernelManager
 import com.dimajix.flowman.studio.service.LauncherManager
@@ -43,19 +45,17 @@ class Server(
     private val logger = LoggerFactory.getLogger(classOf[Server])
 
     implicit private val system: ActorSystem = ActorSystem("flowman")
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     private val launcherManager = new LauncherManager
-    private val kernelManager = new KernelManager
+    private val kernelManager = new KernelManager(system)
     private val pingEndpoint = new PingEndpoint
     private val launcherEndpoint = new LauncherEndpoint(launcherManager)
     private val registryEndpoint = new RegistryEndpoint(kernelManager)
-    private val kernelEndpoint = new KernelEndpoint(kernelManager)
+    private val kernelEndpoint = new KernelEndpoint(kernelManager, launcherManager)
 
     def run(): Unit = {
-        import scala.concurrent.duration._
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
-        implicit val executionContext: ExecutionContextExecutor = system.dispatcher
-
         val route = (
                 pathPrefix("api") {(
                     pingEndpoint.routes
@@ -93,9 +93,12 @@ class Server(
             .run()
 
         server.foreach { binding =>
-            logger.info(s"Flowman Studio online at http://[${binding.localAddress.getAddress.getHostAddress}]:${binding.localAddress.getPort}")
+            val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
+            logger.info(s"Flowman Studio online at $listenUrl")
 
-            launcherManager.addLauncher(new LocalLauncher(system))
+            val localUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = false)
+
+            launcherManager.addLauncher(new LocalLauncher(localUrl, system))
         }
 
         Await.ready(Promise[Done].future, Duration.Inf)

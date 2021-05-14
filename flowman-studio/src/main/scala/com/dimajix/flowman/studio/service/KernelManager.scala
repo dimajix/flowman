@@ -18,16 +18,34 @@ package com.dimajix.flowman.studio.service
 
 import java.net.URL
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import scala.collection.mutable
+import scala.concurrent.duration.FiniteDuration
 
 import akka.actor.ActorSystem
 import org.slf4j.LoggerFactory
 
 
-final class KernelManager(system:ActorSystem) {
+final class KernelManager(implicit system:ActorSystem) {
+    implicit private val ec = system.dispatcher
     private val logger = LoggerFactory.getLogger(classOf[KernelManager])
     private val kernels = mutable.ListBuffer[KernelService]()
+
+    system.scheduler.schedule(
+        FiniteDuration(10, TimeUnit.SECONDS),
+        FiniteDuration(10, TimeUnit.SECONDS)) {
+        // Find all IDs of all terminated kernels
+        val terminatedKernels = list().filter(_.state == KernelState.TERMINATED).map(_.id).toSet
+
+        // Clean up terminated kernels
+        kernels.synchronized {
+            val index = kernels.indexWhere(k => terminatedKernels.contains(k.id))
+            if (index >= 0) {
+                kernels.remove(index)
+            }
+        }
+    }
 
     /**
      * Lists all known Kernels

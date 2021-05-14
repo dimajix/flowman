@@ -1,27 +1,52 @@
 <template>
-  <v-container>
-    <v-card elevation="2">
-      <v-card-title>Running Kernels and Sessions</v-card-title>
+  <v-dialog
+    v-model="show"
+  >
+    <template v-slot:activator="slotProps">
+      <slot name="activator" v-bind="slotProps"></slot>
+    </template>
+    <v-card elevation="2" class="flex-fill">
+      <v-card-title>
+        <v-col>Running Kernels and Sessions</v-col>
+        <v-col class="text-right"><v-icon @click="retrieveSessions()">refresh</v-icon></v-col>
+      </v-card-title>
       <v-card-text>
         <v-treeview
           open-all
           rounded
           hoverable
+          item-key="id"
+          item-children="sessions"
+          item-text="description"
           :items="sessions"
         >
           <template v-slot:append="{ item }">
-            <v-btn
-              v-if="item.session"
-            >Jump to Session {{item.id}}</v-btn>
-            <v-btn
-              v-if="!item.session"
-            >Create New Session</v-btn>
+            <v-row>
+              <v-col v-if="item.session">
+                <v-btn
+                >Jump to Session {{item.id}}</v-btn>
+              </v-col>
+              <v-col v-if="!item.session">
+                <v-chip>{{item.state}}</v-chip>
+              </v-col>
+              <v-col v-if="!item.session">
+                <v-btn
+                >New Session</v-btn>
+              </v-col>
+              <v-col v-if="!item.session">
+                <v-btn
+                  @click.stop="shutdownKernel(item.id)"
+                >Shutdown</v-btn>
+              </v-col>
+            </v-row>
           </template>
         </v-treeview>
-        <v-btn>Start new Kernel</v-btn>
+        <v-btn
+          @click.stop="launchKernel()"
+        >Start new Kernel</v-btn>
       </v-card-text>
     </v-card>
-  </v-container>
+  </v-dialog>
 </template>
 
 
@@ -30,24 +55,66 @@ export default {
   name: 'Kernels',
   components: {},
   data: () => ({
-    sessions: [
-      {
-        id: 1,
-        name: 'Kernel 1 :',
-        children: [
-          { id: 2, name: 'Session A', session:'abc' },
-          { id: 3, name: 'Session B', session:'abc' }
-        ],
-      },
-      {
-        id: 4,
-        name: 'Kernel 2 :',
-        children: [
-          { id: 5, name: 'Session X', session:'abc' },
-          { id: 6, name: 'Session Y', session:'abc' }
-        ],
-      },
-    ],
+    sessions: [],
+    show: false
   }),
+
+  mounted() {
+    this.retrieveSessions()
+  },
+
+  watch: {
+    // whenever question changes, this function will run
+    show: function (newValue) {
+      if (newValue) {
+        this.retrieveSessions()
+      }
+    }
+  },
+
+  methods: {
+    launchKernel() {
+      this.$api.launchKernel().then(response => {
+        response // Eat response
+        this.retrieveSessions()
+      })
+    },
+    shutdownKernel(kernel) {
+      this.$api.shutdownKernel(kernel).then(response => {
+        response // Eat response
+        this.retrieveSessions()
+      })
+    },
+    retrieveSessions() {
+      this.$api.listKernels()
+        .then(response => {
+          console.info(response)
+          this.sessions = response.kernels.map(k => {
+              let result = {
+                id: k.id,
+                description: "Kernel " + k.id + " running at " + k.url,
+                state: k.state,
+                sessions: []
+              }
+              try {
+                this.$api.listSessions(k.id).then(response => {
+                  response.sessions.map(s => {
+                    result.sessions.append({
+                      id: s.id,
+                      description: "Sessions " + s.id
+                    })
+                  })
+                })
+              } catch (error) {
+                console.error(error);
+              }
+              return result
+            }
+          )
+          return this.sessions
+        })
+    }
+  }
+
 };
 </script>

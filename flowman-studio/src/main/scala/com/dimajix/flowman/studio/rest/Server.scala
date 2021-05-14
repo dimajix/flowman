@@ -45,8 +45,8 @@ class Server(
     private val logger = LoggerFactory.getLogger(classOf[Server])
 
     implicit private val system: ActorSystem = ActorSystem("flowman")
-    implicit val materializer: ActorMaterializer = ActorMaterializer()
-    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+    implicit private val materializer: ActorMaterializer = ActorMaterializer()
+    implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
 
     private val launcherManager = new LauncherManager
     private val kernelManager = new KernelManager(system)

@@ -43,7 +43,7 @@ import com.dimajix.flowman.kernel.model.KernelRegistrationRequest
 
 class Server(
     conf:Configuration,
-    session:Session
+    rootSession:Session
 ) {
     import akka.http.scaladsl.client.RequestBuilding._
     import akka.http.scaladsl.server.Directives._
@@ -52,18 +52,21 @@ class Server(
 
     private val logger = LoggerFactory.getLogger(classOf[Server])
 
-    implicit val system: ActorSystem = ActorSystem("flowman")
-    implicit val materializer: ActorMaterializer = ActorMaterializer()
-    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+    implicit private  val system: ActorSystem = ActorSystem("flowman")
+    implicit private val materializer: ActorMaterializer = ActorMaterializer()
+    implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
+
+    private val shutdownPromise = Promise[Done]()
+    private val shutdownEndpoint = new ShutdownEndpoint(shutdownPromise.trySuccess(Done))
+    private val pingEndpoint = new PingEndpoint
+    private val namespaceEndpoint = new NamespaceEndpoint(rootSession.namespace.get)
+    private val sessionEndpoint = new SessionEndpoint(rootSession)
 
     def run(): Unit = {
-
-        val pingEndpoint = new PingEndpoint
-        val namespaceEndpoint = new NamespaceEndpoint(session.namespace.get)
-        val sessionEndpoint = new SessionEndpoint(session)
-
         val route = (
                 pathPrefix("api") {(
+                    shutdownEndpoint.routes
+                    ~
                     pingEndpoint.routes
                     ~
                     namespaceEndpoint.routes
@@ -103,7 +106,7 @@ class Server(
             register(binding.localAddress)
         }
 
-        Await.ready(Promise[Done].future, Duration.Inf)
+        Await.ready(shutdownPromise.future, Duration.Inf)
     }
 
     /**

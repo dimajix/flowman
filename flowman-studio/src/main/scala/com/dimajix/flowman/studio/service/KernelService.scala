@@ -18,12 +18,17 @@ package com.dimajix.flowman.studio.service
 
 import java.net.URL
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.client.RequestBuilding.Post
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.Uri
 
 
 sealed abstract class KernelState
@@ -35,6 +40,7 @@ object KernelState {
 }
 
 final class KernelService(val id:String, val secret: String, process: Process)(implicit system:ActorSystem) {
+    private implicit val ec: ExecutionContextExecutor = system.dispatcher
     private var _url:Option[URL] = None
 
     def url : Option[URL] = _url
@@ -67,18 +73,35 @@ final class KernelService(val id:String, val secret: String, process: Process)(i
     }
 
     /**
-     * Stops the Kernel
+     * Stops the Kernel by issuing a shutdown request to the kernel via its REST interface.
      */
     def shutdown() : Unit = {
-        process.shutdown()
+        val url = _url.get
+        val uri = Uri(url.toString).withPath(Uri.Path("/api/shutdown"))
+
+        Http().singleRequest(Post(uri))
+            .onComplete {
+                case Success(res) =>
+                    println(res)
+                case Failure(_) =>
+                    process.shutdown()
+            }
     }
 
+    /**
+     * Forwards a [[HttpRequest]] to the kernel. This function will replace the host and port by the appropriate
+     * values, but the path has already to be correct. Note that the resulting [[HttpResponse]] will not be modified,
+     * which means that a HTTP redirect will contain the kernel host for example.
+     * @param request
+     * @return
+     */
     def invoke(request:HttpRequest) : Future[HttpResponse] = {
         _url match {
             case Some(url) =>
                 val uri = request.uri.withHost(url.getHost).withPort(url.getPort)
                 val finalRequest = request.copy(uri=uri)
                 Http().singleRequest(finalRequest)
+            case None => Future.failed(new RuntimeException("No URL for kernel"))
         }
     }
 }

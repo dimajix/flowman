@@ -88,6 +88,8 @@ class Application(options:Arguments) extends Tool {
         val server = new Server(conf, session)
         server.run()
 
+        session.shutdown()
+
         true
     }
 }

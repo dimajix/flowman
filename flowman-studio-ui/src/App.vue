@@ -3,10 +3,7 @@
     <v-app-bar app color="primary">
       <v-app-bar-title>Flowman Studio</v-app-bar-title>
       <v-spacer></v-spacer>
-      <v-dialog
-        v-model="sessionDialog"
-        persistent
-      >
+      <sessions>
         <template v-slot:activator="{ on, attrs }">
           <v-btn
             v-bind="attrs"
@@ -15,8 +12,7 @@
             Switch Kernel & Session
           </v-btn>
         </template>
-        <sessions></sessions>
-      </v-dialog>
+      </sessions>
     </v-app-bar>
 
     <v-main>
@@ -42,7 +38,7 @@
                   <v-sheet elevation="2">
                     <v-tabs
                       v-model="tab"
-                      grow="true"
+                      grow=true
                       next-icon="mdi-arrow-right-bold-box-outline"
                       prev-icon="mdi-arrow-left-bold-box-outline"
                       show-arrows

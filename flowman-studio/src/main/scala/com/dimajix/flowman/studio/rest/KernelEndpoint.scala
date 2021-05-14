@@ -39,6 +39,7 @@ import com.dimajix.flowman.studio.model.Kernel
 import com.dimajix.flowman.studio.model.KernelList
 import com.dimajix.flowman.studio.service.KernelManager
 import com.dimajix.flowman.studio.service.KernelService
+import com.dimajix.flowman.studio.service.KernelState
 import com.dimajix.flowman.studio.service.LaunchEnvironment
 import com.dimajix.flowman.studio.service.LauncherManager
 
@@ -96,7 +97,8 @@ class KernelEndpoint(kernelManager:KernelManager, launcherManager:LauncherManage
     ))
     def listKernel() : server.Route = {
         get {
-            val result = KernelList(kernelManager.list().map(Converter.of))
+            val kernels = kernelManager.list().filter(_.state != KernelState.TERMINATED)
+            val result = KernelList(kernels.map(Converter.of))
             complete(result)
         }
     }
@@ -158,6 +160,7 @@ class KernelEndpoint(kernelManager:KernelManager, launcherManager:LauncherManage
                 extractRequest { request =>
                     val uri = request.uri.withPath(Uri.Path("/api") ++ path)
                     val newRequest = request.withUri(uri)
+                    // TODO: Think about redirects etc...
                     complete(kernel.invoke(newRequest))
                 }
             }

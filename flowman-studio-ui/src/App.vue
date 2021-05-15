@@ -36,26 +36,29 @@
               <v-row>
                 <v-col>
                   <v-sheet elevation="2">
+                    <v-card-title>Data Inspector</v-card-title>
                     <v-tabs
                       v-model="tab"
-                      grow=true
+                      grow=false
                       next-icon="mdi-arrow-right-bold-box-outline"
                       prev-icon="mdi-arrow-left-bold-box-outline"
                       show-arrows
                     >
                       <v-tabs-slider color="yellow"></v-tabs-slider>
                       <v-tab
-                        v-for="i in 3"
-                        :key="i"
+                        v-for="item in outputTabs"
+                        :key="item.id"
                       >
-                        Mapping {{ i }}
+                        <v-icon>refresh</v-icon>
+                        {{ item.title }}
+                        <v-icon @click="closeTab(item.id)">close</v-icon>
                       </v-tab>
                     </v-tabs>
 
                     <v-tabs-items  v-model="tab">
                       <v-tab-item
-                        v-for="i in 3"
-                        :key="i"
+                        v-for="item in outputTabs"
+                        :key="item.id"
                       >
                         <v-card
                           color="basil"
@@ -99,11 +102,23 @@ export default {
       Flow,
       Sessions
   },
+
   data () {
     return {
       tab: null,
+      outputTabs: [
+        {id:1, title:"Mapping 1"},
+        {id:2, title:"Mapping 2"},
+        {id:3, title:"Mapping 3"}
+      ],
       sessionDialog: false
     }
   },
+
+  methods: {
+    closeTab(id) {
+      this.outputTabs = this.outputTabs.filter(t => t.id !== id)
+    }
+  }
 };
 </script>

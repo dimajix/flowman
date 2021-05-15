@@ -49,7 +49,7 @@ class Server(
     implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
 
     private val launcherManager = new LauncherManager
-    private val kernelManager = new KernelManager(system)
+    private val kernelManager = new KernelManager
     private val pingEndpoint = new PingEndpoint
     private val launcherEndpoint = new LauncherEndpoint(launcherManager)
     private val registryEndpoint = new RegistryEndpoint(kernelManager)

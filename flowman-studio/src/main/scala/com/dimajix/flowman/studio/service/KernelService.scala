@@ -28,6 +28,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding.Post
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 
 
@@ -76,16 +77,19 @@ final class KernelService(val id:String, val secret: String, process: Process)(i
      * Stops the Kernel by issuing a shutdown request to the kernel via its REST interface.
      */
     def shutdown() : Unit = {
-        val url = _url.get
-        val uri = Uri(url.toString).withPath(Uri.Path("/api/shutdown"))
-
-        Http().singleRequest(Post(uri))
-            .onComplete {
-                case Success(res) =>
-                    println(res)
-                case Failure(_) =>
-                    process.shutdown()
-            }
+        _url match {
+            case Some(url) =>
+                val uri = Uri(url.toString).withPath(Uri.Path("/api/shutdown"))
+                Http().singleRequest(Post(uri))
+                    .onComplete {
+                        case Success(res) =>
+                            println(res)
+                        case Failure(_) =>
+                            process.shutdown()
+                    }
+            case None =>
+                process.shutdown()
+        }
     }
 
     /**
@@ -101,7 +105,7 @@ final class KernelService(val id:String, val secret: String, process: Process)(i
                 val uri = request.uri.withHost(url.getHost).withPort(url.getPort)
                 val finalRequest = request.copy(uri=uri)
                 Http().singleRequest(finalRequest)
-            case None => Future.failed(new RuntimeException("No URL for kernel"))
+            case None => Future.successful(HttpResponse(StatusCodes.BadGateway))
         }
     }
 }

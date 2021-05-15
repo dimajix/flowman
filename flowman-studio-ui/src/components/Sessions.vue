@@ -88,7 +88,6 @@ export default {
     retrieveSessions() {
       this.$api.listKernels()
         .then(response => {
-          console.info(response)
           this.sessions = response.kernels.map(k => {
               let result = {
                 id: k.id,
@@ -106,7 +105,7 @@ export default {
                   })
                 })
               } catch (error) {
-                console.error(error);
+                error
               }
               return result
             }

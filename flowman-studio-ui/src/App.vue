@@ -9,7 +9,7 @@
             v-bind="attrs"
             v-on="on"
           >
-            Switch Kernel & Session
+            Switch Kernel & Project
           </v-btn>
         </template>
       </sessions>
@@ -39,7 +39,6 @@
                     <v-card-title>Data Inspector</v-card-title>
                     <v-tabs
                       v-model="tab"
-                      grow=false
                       next-icon="mdi-arrow-right-bold-box-outline"
                       prev-icon="mdi-arrow-left-bold-box-outline"
                       show-arrows
@@ -49,9 +48,9 @@
                         v-for="item in outputTabs"
                         :key="item.id"
                       >
-                        <v-icon>refresh</v-icon>
+                        <v-icon v-if="item.reload === true">refresh</v-icon>
                         {{ item.title }}
-                        <v-icon @click="closeTab(item.id)">close</v-icon>
+                        <v-icon v-if="item.close === true" @click="closeTab(item.id)">close</v-icon>
                       </v-tab>
                     </v-tabs>
 
@@ -64,7 +63,8 @@
                           color="basil"
                           flat
                         >
-                          <mapping-output></mapping-output>
+                          <log-output v-if="item.kind === 'log'"></log-output>
+                          <mapping-output v-if="item.kind === 'mapping'"></mapping-output>
                         </v-card>
                       </v-tab-item>
                     </v-tabs-items>
@@ -88,6 +88,7 @@
 
 <script>
 import NavigationMenu from '@/components/NavigationMenu'
+import LogOutput from '@/components/LogOutput'
 import MappingOutput from '@/components/MappingOutput'
 import MappingProperties from '@/components/MappingProperties'
 import Flow from '@/components/Flow'
@@ -98,6 +99,7 @@ export default {
   components: {
       NavigationMenu,
       MappingProperties,
+      LogOutput,
       MappingOutput,
       Flow,
       Sessions
@@ -107,11 +109,11 @@ export default {
     return {
       tab: null,
       outputTabs: [
-        {id:1, title:"Mapping 1"},
-        {id:2, title:"Mapping 2"},
-        {id:3, title:"Mapping 3"}
+        {id:"log", kind:"log", title:"Log Output", close:false, reload:false},
+        {id:"mapping-1", kind:"mapping", title:"Mapping 1", close:true, reload:true},
+        {id:"mapping-2", kind:"mapping", title:"Mapping 2", close:true, reload:true},
+        {id:"mapping-3", kind:"mapping", title:"Mapping 3", close:true, reload:true}
       ],
-      sessionDialog: false
     }
   },
 

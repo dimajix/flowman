@@ -21,19 +21,25 @@
           :items="sessions"
         >
           <template v-slot:append="{ item }">
-            <v-row>
-              <v-col v-if="item.session">
+            <v-row v-if="item.session">
+              <v-col>
                 <v-btn
                 >Jump to Session {{item.id}}</v-btn>
               </v-col>
-              <v-col v-if="!item.session">
+              <v-col>
+                <v-btn
+                >Close Project</v-btn>
+              </v-col>
+            </v-row>
+            <v-row v-if="!item.session">
+              <v-col>
                 <v-chip>{{item.state}}</v-chip>
               </v-col>
-              <v-col v-if="!item.session">
+              <v-col>
                 <v-btn
-                >New Session</v-btn>
+                >Open Project</v-btn>
               </v-col>
-              <v-col v-if="!item.session">
+              <v-col>
                 <v-btn
                   @click.stop="shutdownKernel(item.id)"
                 >Shutdown</v-btn>
@@ -76,6 +82,7 @@ export default {
     launchKernel() {
       this.$api.launchKernel().then(response => {
         response // Eat response
+        this.$api.setCurrentSession(response.id, "")
         this.retrieveSessions()
       })
     },

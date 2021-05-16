@@ -30,6 +30,7 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
+import org.reactivestreams.Publisher
 
 
 sealed abstract class KernelState
@@ -46,6 +47,12 @@ final class KernelService(val id:String, val secret: String, process: Process)(i
 
     def url : Option[URL] = _url
     private[service] def setUrl(url:URL) : Unit = {_url = Some(url)}
+
+    /**
+     * Returns a publisher for all console messages produced by the process
+     * @return
+     */
+    def messages : Publisher[String] = process.messages
 
     /**
      * Returns the state of the kernel as known by the service. This may polling the process state and its

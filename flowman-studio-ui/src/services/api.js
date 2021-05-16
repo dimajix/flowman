@@ -1,9 +1,14 @@
 import axios from 'axios';
 
+
 export default {
   install(Vue) {
-
     const api = {
+      state: Vue.observable({
+          kernel: null,
+          session: null
+      }),
+
       getNamespace() {
         return axios.get('/api/namespace')
           .then(response => response.data)
@@ -27,14 +32,16 @@ export default {
           .then(response => response.data)
       },
 
-      getCurrentSession() {
-
-      },
-      getCurrentKernel() {
-
-      },
       setCurrentSession(kernel, session) {
-        kernel == session
+        this.state.kernel = kernel
+        this.state.session = session
+      },
+
+      getKernelLog() {
+        return Vue.$sse.create({
+          url:'/api/kernel/' + this.state.kernel + '/log',
+          format: 'json'
+        })
       }
     };
 

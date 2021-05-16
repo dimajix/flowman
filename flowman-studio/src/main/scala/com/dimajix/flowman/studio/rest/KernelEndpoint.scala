@@ -16,11 +16,18 @@
 
 package com.dimajix.flowman.studio.rest
 
+import java.time.Clock
+import java.time.ZonedDateTime
+
+import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.StatusCodes.Found
 import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.sse.ServerSentEvent
 import akka.http.scaladsl.server
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.Source
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
@@ -37,6 +44,7 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.studio.model.Converter
 import com.dimajix.flowman.studio.model.Kernel
 import com.dimajix.flowman.studio.model.KernelList
+import com.dimajix.flowman.studio.model.KernelLogMessage
 import com.dimajix.flowman.studio.service.KernelManager
 import com.dimajix.flowman.studio.service.KernelService
 import com.dimajix.flowman.studio.service.KernelState
@@ -54,6 +62,8 @@ class KernelEndpoint(kernelManager:KernelManager, launcherManager:LauncherManage
 
     import com.dimajix.flowman.studio.model.JsonSupport._
 
+    private val clock = Clock.systemDefaultZone()
+
     def routes : server.Route = pathPrefix("kernel") {(
         pathEndOrSingleSlash {
             redirectToNoTrailingSlashIfPresent(Found) {(
@@ -70,6 +80,10 @@ class KernelEndpoint(kernelManager:KernelManager, launcherManager:LauncherManage
                     ~
                     stopKernel(kernel)
                 )}
+            }
+            ~
+            path("log") {
+                getKernelLog(kernel)
             }
             ~
             invokeKernel(kernel)
@@ -137,6 +151,30 @@ class KernelEndpoint(kernelManager:KernelManager, launcherManager:LauncherManage
             withKernel(kernel) { kernel =>
                 kernel.shutdown()
                 complete("success")
+            }
+        }
+    }
+
+    @GET
+    @Path("/{kernel}/log")
+    @ApiOperation(value = "Retrieve the kernel log as a SSE stream", nickname = "getKernelLog", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "kernel", value = "Kernel ID", required = true, dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Successfully retrieved kernel log"),
+        new ApiResponse(code = 404, message = "Kernel not found")
+    ))
+    def getKernelLog(@ApiParam(hidden = true) kernel:String) : server.Route = {
+        get {
+            withKernel(kernel) { kernel =>
+                complete {
+                    Source.fromPublisher(kernel.messages)
+                        .map { message =>
+                            val event = KernelLogMessage(kernel.id, ZonedDateTime.now(), message)
+                            ServerSentEvent(kernelLogMessageFormat.write(event).toString(), Some("message"))
+                        }
+                }
             }
         }
     }

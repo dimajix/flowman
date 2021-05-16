@@ -2,7 +2,7 @@
   <v-container>
     <v-card>
     <v-list nav>
-      <v-list-item :to="{name: 'system'}">
+      <v-list-item>
         <v-list-item-action>
           <v-icon>info</v-icon>
         </v-list-item-action>
@@ -11,7 +11,7 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item :to="{name: 'namespace'}">
+      <v-list-item>
         <v-list-item-action>
           <v-icon>home</v-icon>
         </v-list-item-action>
@@ -20,7 +20,7 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item :to="{name: 'project'}">
+      <v-list-item>
         <v-list-item-action>
           <v-icon>home</v-icon>
         </v-list-item-action>

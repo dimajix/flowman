@@ -16,12 +16,33 @@
 
 package com.dimajix.flowman.studio.model
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
+import spray.json.DeserializationException
+import spray.json.JsString
+import spray.json.JsValue
+import spray.json.JsonFormat
 import spray.json.RootJsonFormat
 
 
 trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
+    implicit object ZonedDateTimeFormat extends JsonFormat[ZonedDateTime] {
+        final val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        def write(value:ZonedDateTime) : JsString = {
+            JsString(value.toLocalDateTime.format(formatter))
+        }
+        def read(value:JsValue) : ZonedDateTime = {
+            value match {
+                case JsString(dt) => ZonedDateTime.parse(dt, formatter)
+                case _ => throw DeserializationException("Not a string")
+            }
+        }
+    }
+
+    implicit val kernelLogMessageFormat: RootJsonFormat[KernelLogMessage] = jsonFormat3(KernelLogMessage)
     implicit val statusFormat: RootJsonFormat[Status] = jsonFormat1(Status)
     implicit val kernelRegistrationRequestFormat: RootJsonFormat[KernelRegistrationRequest] = jsonFormat2(KernelRegistrationRequest)
     implicit val kernelFormat: RootJsonFormat[Kernel] = jsonFormat3(Kernel)

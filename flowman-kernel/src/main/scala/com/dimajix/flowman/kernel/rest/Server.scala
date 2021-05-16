@@ -59,6 +59,7 @@ class Server(
     private val shutdownPromise = Promise[Done]()
     private val shutdownEndpoint = new ShutdownEndpoint(shutdownPromise.trySuccess(Done))
     private val pingEndpoint = new PingEndpoint
+    private val projectEndpoint = new ProjectEndpoint(rootSession.store)
     private val namespaceEndpoint = new NamespaceEndpoint(rootSession.namespace.get)
     private val sessionEndpoint = new SessionEndpoint(rootSession)
 
@@ -68,6 +69,8 @@ class Server(
                     shutdownEndpoint.routes
                     ~
                     pingEndpoint.routes
+                    ~
+                    projectEndpoint.routes
                     ~
                     namespaceEndpoint.routes
                     ~

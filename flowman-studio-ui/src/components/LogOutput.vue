@@ -21,7 +21,6 @@ export default {
 
   mounted() {
     this.$watch(x => x.$api.state.kernel, function () {
-      console.info("New dings")
       this.lines = []
       this.setupStream()
     })
@@ -42,10 +41,9 @@ export default {
       this.$api.getKernelLog()
         .on('message', (msg) => {
           this.lines.push(msg)
-          console.log(msg)
         })
         .connect()
-        .catch((err) => console.error('Failed make initial connection:', err));
+        //.catch((err) => console.error('Failed make initial connection:', err));
     }
   },
 }

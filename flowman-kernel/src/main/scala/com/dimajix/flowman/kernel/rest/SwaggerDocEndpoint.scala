@@ -9,6 +9,7 @@ object SwaggerDocEndpoint extends SwaggerHttpService  {
     override def apiClasses = Set(
         classOf[ShutdownEndpoint],
         classOf[PingEndpoint],
+        classOf[ProjectEndpoint],
         classOf[NamespaceEndpoint],
         classOf[SessionEndpoint],
         classOf[JobEndpoint]

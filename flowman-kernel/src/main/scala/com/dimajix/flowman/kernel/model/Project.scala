@@ -29,5 +29,8 @@ case class Project(
     connections: Seq[String],
     jobs: Seq[String],
     targets: Seq[String]
-) {
-}
+)
+
+case class ProjectList(
+    projects:Seq[Project]
+)

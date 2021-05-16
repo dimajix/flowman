@@ -54,22 +54,30 @@ class ProjectService(store:Store) {
 
     def routes : Route = pathPrefix("project") {(
         pathEndOrSingleSlash {
-            listProjects()
+            redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                listProjects()
+            }
         }
         ~
         pathPrefix(Segment) { project => (
             pathEndOrSingleSlash {
-                infoProject(project)
+                redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                    infoProject(project)
+                }
             }
             ~
             pathPrefix("job") {(
                 pathEndOrSingleSlash {
-                    listJobs(project)
+                    redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                        listJobs(project)
+                    }
                 }
                 ~
                 pathPrefix(Segment) { job => (
                     pathEndOrSingleSlash {
-                        infoJob(project, job)
+                        redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                            infoJob(project, job)
+                        }
                     }
                     ~
                     path("run") {
@@ -80,12 +88,16 @@ class ProjectService(store:Store) {
             ~
             pathPrefix("target") {(
                 pathEndOrSingleSlash {
-                    listTargets(project)
+                    redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                        listTargets(project)
+                    }
                 }
                 ~
                 path(Segment) { target => (
                     pathEndOrSingleSlash {
-                        infoTarget(project, target)
+                        redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                            infoTarget(project, target)
+                        }
                     }
                     ~
                     path("build") {

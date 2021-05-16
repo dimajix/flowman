@@ -16,10 +16,6 @@
 
 package com.dimajix.flowman.kernel.rest
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
@@ -48,6 +44,9 @@ import com.dimajix.flowman.kernel.service.SessionService
 
 @Api(value = "/session", produces = "application/json", consumes = "application/json")
 @Path("/session")
+@ApiResponses(Array(
+    new ApiResponse(code = 500, message = "Internal server error"),
+))
 class SessionEndpoint(rootSession:execution.Session) {
     import akka.http.scaladsl.server.Directives._
 

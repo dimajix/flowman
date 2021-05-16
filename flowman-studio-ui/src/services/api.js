@@ -42,6 +42,11 @@ export default {
           url:'/api/kernel/' + this.state.kernel + '/log',
           format: 'json'
         })
+      },
+
+      listProjects(kernel) {
+        return axios.get('/api/kernel/' + kernel + '/project')
+          .then(response => response.data)
       }
     };
 

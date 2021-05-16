@@ -29,6 +29,10 @@ import com.dimajix.flowman.model.Project
 class SessionManager(rootSession:execution.Session) {
     private val sessions = mutable.ListBuffer[SessionService]()
 
+    /**
+     * Returns a list of all active [[SessionService]]s
+     * @return
+     */
     def list() : Seq[SessionService] = {
         val result = mutable.ListBuffer[SessionService]()
         sessions.synchronized {
@@ -37,6 +41,12 @@ class SessionManager(rootSession:execution.Session) {
         result
     }
 
+    /**
+     * Returns the [[SessionService]] for a specific id. If no such session is known, [[None]] will be returned
+     * instead
+     * @param id
+     * @return
+     */
     def getSession(id:String) : Option[SessionService] = {
         var result:Option[SessionService] = None
         sessions.synchronized {
@@ -45,6 +55,12 @@ class SessionManager(rootSession:execution.Session) {
         result
     }
 
+    /**
+     * Creates a new [[SessionService]] by loading a new project. The project is specified via a path, which needs
+     * to point to a location resolvable by the Hadoop filesystem layer.
+     * @param projectPath
+     * @return
+     */
     def createSession(projectPath:Path) : SessionService = {
         val project = loadProject(projectPath)
         val session = rootSession.newSession(project)

@@ -36,8 +36,16 @@
                 <v-chip>{{item.state}}</v-chip>
               </v-col>
               <v-col>
-                <v-btn
-                >Open Project</v-btn>
+                <project-selector :kernel="item.id">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      Open Project
+                    </v-btn>
+                  </template>
+                </project-selector>
               </v-col>
               <v-col>
                 <v-btn
@@ -57,9 +65,14 @@
 
 
 <script>
+import ProjectSelector from '@/components/ProjectSelector'
+
 export default {
   name: 'Kernels',
-  components: {},
+  components: {
+    ProjectSelector
+  },
+
   data: () => ({
     sessions: [],
     show: false

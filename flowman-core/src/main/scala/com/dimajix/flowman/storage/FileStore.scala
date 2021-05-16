@@ -15,6 +15,7 @@
  */
 
 package com.dimajix.flowman.storage
+
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
@@ -27,6 +28,11 @@ class FileStore(root:File) extends Store {
     private val logger = LoggerFactory.getLogger(classOf[FileStore])
     private val globPattern = new Path("*/project.{yml,yaml}")
 
+    /**
+     * Loads a project via its name (not its filename or directory)
+     * @param name
+     * @return
+     */
     override def loadProject(name: String): Project = {
         root.glob(globPattern)
             .flatMap(file => loadProjectManifest(file).map((file, _)))
@@ -35,10 +41,24 @@ class FileStore(root:File) extends Store {
             .getOrElse(throw new NoSuchProjectException(name))
     }
 
+    /**
+     * Stores a project inside this persistent storage
+     * @param project
+     */
     override def storeProject(project: Project): Unit = ???
 
+    /**
+     * Removes a project from this persistent storage
+     * @param name
+     */
     override def removeProject(name: String): Unit = ???
 
+    /**
+     * Retrieves a list of all projects. The returned projects only contain some fundamental information
+     * like the projects's name, its basedir and so on. The project itself (mappings, relations, targets etc)
+     * will not be loaded
+     * @return
+     */
     override def listProjects(): Seq[Project] = {
         root.glob(globPattern)
             .flatMap(loadProjectManifest)

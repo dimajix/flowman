@@ -424,12 +424,6 @@
                 <version>${spark.version}</version>
                 <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>com.databricks</groupId>
-                <artifactId>spark-avro_${scala.api_version}</artifactId>
-                <version>${spark-avro.version}</version>
-                <scope>provided</scope>
-            </dependency>
 
             <dependency>
                 <groupId>org.xerial.snappy</groupId>

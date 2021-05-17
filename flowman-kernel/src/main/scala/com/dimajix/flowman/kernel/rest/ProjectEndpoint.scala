@@ -42,7 +42,7 @@ import com.dimajix.flowman.storage.Store
 @Api(value = "/project", produces = "application/json", consumes = "application/json")
 @Path("/project")
 @ApiResponses(Array(
-    new ApiResponse(code = 500, message = "Internal server error"),
+    new ApiResponse(code = 500, message = "Internal server error")
 ))
 class ProjectEndpoint(store:Store) {
     import akka.http.scaladsl.server.Directives._

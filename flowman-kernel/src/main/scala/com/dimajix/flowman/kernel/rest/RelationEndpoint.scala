@@ -23,30 +23,62 @@ import scala.util.Try
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives.complete
-import akka.http.scaladsl.server.Directives.pathEndOrSingleSlash
-import akka.http.scaladsl.server.Directives.pathPrefix
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiImplicitParam
+import io.swagger.annotations.ApiImplicitParams
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import io.swagger.annotations.ApiResponse
+import io.swagger.annotations.ApiResponses
+import javax.ws.rs.GET
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.kernel.model.RelationList
 import com.dimajix.flowman.kernel.service.SessionService
-import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model
 
 
-@Api(value = "relation", produces = "application/json", consumes = "application/json")
+@Api(value = "/session/{session}/relation", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/relation")
+@ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+))
+@ApiResponses(Array(
+    new ApiResponse(code = 404, message = "Session or relation not found"),
+    new ApiResponse(code = 500, message = "Internal server error")
+))
 class RelationEndpoint {
+    import akka.http.scaladsl.server.Directives._
+
+    import com.dimajix.flowman.kernel.model.JsonSupport._
+
     def routes(session:SessionService) : server.Route = pathPrefix("relation") {(
-        pathEndOrSingleSlash {(
-            ???
-            )}
+        pathEndOrSingleSlash {
+            redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                listRelations(session)
+            }
+        }
         )}
 
-    private def withRelation(session:SessionService, relationId:String)(fn:(Relation) => server.Route) : server.Route = {
-        Try {
-            session.getRelation(relationId)
+    @GET
+    @ApiOperation(value = "Return list of all jobs", nickname = "listRelations", httpMethod = "GET")
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "List of all relations", response = classOf[RelationList])
+    ))
+    def listRelations(@ApiParam(hidden = true) session: SessionService) : server.Route = {
+        get {
+            val result = RelationList(
+                session.listRelations()
+            )
+            complete(result)
         }
-        match {
+    }
+
+
+    private def withRelation(session:SessionService, relationName:String)(fn:(model.Relation) => server.Route) : server.Route = {
+        Try {
+            session.getRelation(relationName)
+        } match {
             case Success(relation) => fn(relation)
             case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
         }

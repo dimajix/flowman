@@ -1,11 +1,24 @@
 <template>
   <v-app>
-    <v-app-bar app color="primary">
-      <v-app-bar-title>Flowman Studio</v-app-bar-title>
-      <v-spacer></v-spacer>
+    <v-app-bar
+      app color="primary"
+      elevate-on-scroll
+    >
+      <v-toolbar-title
+        class="flex-fill"
+      >
+        Flowman Studio: {{projectName}}
+      </v-toolbar-title>
+      <v-btn class="ma-2"
+        @click.stop="resetSession()"
+      >Reset Session</v-btn>
+      <v-btn class="ma-2"
+        @click.stop="reloadProject()"
+      >Reload Project</v-btn>
       <sessions>
         <template v-slot:activator="{ on, attrs }">
           <v-btn
+            class="ma-2"
             v-bind="attrs"
             v-on="on"
           >
@@ -114,20 +127,36 @@ export default {
         {id:"mapping-2", kind:"mapping", title:"Mapping 2", close:true, reload:true},
         {id:"mapping-3", kind:"mapping", title:"Mapping 3", close:true, reload:true}
       ],
+      projectName: null
     }
+  },
+
+  mounted() {
+    this.refreshProject()
   },
 
   computed: {
-    kernel: function() { return this.$api.state.kernel }
+    kernel: function() { return this.$api.state.kernel },
+    session: function() { return this.$api.state.session }
   },
 
   watch: {
-    kernel: function () {
-      this.outputTabs = this.outputTabs.filter(t => t.kind === "log")
-    }
+    kernel: function () { this.refreshProject() },
+    session: function() { this.refreshProject() }
   },
 
   methods: {
+    refreshProject() {
+      this.$api.getCurrentSession()
+        .then(s => { this.projectName = s.project })
+      this.outputTabs = this.outputTabs.filter(t => t.kind === "log")
+    },
+    reloadProject() {
+
+    },
+    resetSession() {
+      this.$api.resetSession(this.kernel, this.session)
+    },
     closeTab(id) {
       this.outputTabs = this.outputTabs.filter(t => t.id !== id)
     }

@@ -57,6 +57,19 @@ object Converter {
         )
     }
 
+    def of(mapping:model.Mapping) : Mapping = {
+        Mapping(
+            mapping.name,
+            mapping.kind,
+            mapping.broadcast,
+            mapping.cache.toString(),
+            mapping.checkpoint,
+            mapping.inputs.map(_.toString),
+            mapping.outputs,
+            mapping.labels,
+        )
+    }
+
     def of(job:service.JobTask) : JobTask = {
         JobTask(
             job.id,
@@ -70,4 +83,5 @@ object Converter {
             job.status.toString
         )
     }
+
 }

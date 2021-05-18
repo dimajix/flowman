@@ -28,8 +28,7 @@ case class Job(
 
 case class JobList(
     jobs:Seq[String]
-) {
-}
+)
 
 case class RunJobRequest(
     job:String,

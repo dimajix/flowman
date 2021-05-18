@@ -16,6 +16,17 @@
 
 package com.dimajix.flowman.kernel.model
 
-class Mapping {
+case class Mapping(
+    name:String,
+    kind:String,
+    broadcast:Boolean,
+    cache:String,
+    checkpoint:Boolean,
+    inputs:Seq[String],
+    outputs:Seq[String],
+    labels:Map[String,String]
+)
 
-}
+case class MappingList(
+    mappings:Seq[String]
+)

@@ -16,22 +16,71 @@
 
 package com.dimajix.flowman.kernel.rest
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives.pathEndOrSingleSlash
-import akka.http.scaladsl.server.Directives.pathPrefix
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiImplicitParam
+import io.swagger.annotations.ApiImplicitParams
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import io.swagger.annotations.ApiResponse
+import io.swagger.annotations.ApiResponses
+import javax.ws.rs.GET
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.kernel.model.TargetList
 import com.dimajix.flowman.kernel.service.SessionService
+import com.dimajix.flowman.model
 
 
 @Api(value = "/session/{session}/target", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/target")
+@ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+))
+@ApiResponses(Array(
+    new ApiResponse(code = 404, message = "Session or target not found"),
+    new ApiResponse(code = 500, message = "Internal server error")
+))
 class TargetEndpoint {
+    import akka.http.scaladsl.server.Directives._
+
+    import com.dimajix.flowman.kernel.model.JsonSupport._
+
     def routes(session:SessionService) : server.Route = pathPrefix("target") {(
-        pathEndOrSingleSlash {(
-            ???
-            )}
+        pathEndOrSingleSlash {
+            redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                listTargets(session)
+            }
+        }
         )}
 
+    @GET
+    @ApiOperation(value = "Return list of all jobs", nickname = "listTargets", httpMethod = "GET")
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "List of all targets", response = classOf[TargetList])
+    ))
+    def listTargets(@ApiParam(hidden = true) session: SessionService) : server.Route = {
+        get {
+            val result = TargetList(
+                session.listTargets()
+            )
+            complete(result)
+        }
+    }
+
+
+    private def withTarget(session:SessionService, targetName:String)(fn:(model.Target) => server.Route) : server.Route = {
+        Try {
+            session.getTarget(targetName)
+        } match {
+            case Success(target) => fn(target)
+            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+        }
+    }
 }

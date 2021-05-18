@@ -116,12 +116,14 @@ class SessionService(_manager:SessionManager, _session:Session)(implicit ec:Exec
         _test = None
     }
 
+    def listMappings() : Seq[String] = project.mappings.keys.toSeq
     def getMapping(name:String) : Mapping = {
         _context.getMapping(MappingIdentifier(name))
     }
     def collectMapping(mapping:Mapping, output:String) = ???
     def describeMapping(mapping:Mapping, output:String) = ???
 
+    def listRelations() : Seq[String] = project.relations.keys.toSeq
     def getRelation(name:String) : Relation = ???
     def collectRelation(relation:Relation) = ???
 }

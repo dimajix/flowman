@@ -16,21 +16,71 @@
 
 package com.dimajix.flowman.kernel.rest
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives.pathEndOrSingleSlash
-import akka.http.scaladsl.server.Directives.pathPrefix
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiImplicitParam
+import io.swagger.annotations.ApiImplicitParams
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import io.swagger.annotations.ApiResponse
+import io.swagger.annotations.ApiResponses
+import javax.ws.rs.GET
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.kernel.model.TestList
 import com.dimajix.flowman.kernel.service.SessionService
+import com.dimajix.flowman.model
 
 
 @Api(value = "/session/{session}/test", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/test")
+@ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
+))
+@ApiResponses(Array(
+    new ApiResponse(code = 404, message = "Session or test not found"),
+    new ApiResponse(code = 500, message = "Internal server error")
+))
 class TestEndpoint {
+    import akka.http.scaladsl.server.Directives._
+
+    import com.dimajix.flowman.kernel.model.JsonSupport._
+
     def routes(session:SessionService) : server.Route = pathPrefix("test") {(
-        pathEndOrSingleSlash {(
-            ???
-            )}
+        pathEndOrSingleSlash {
+            redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                listTests(session)
+            }
+        }
         )}
+
+    @GET
+    @ApiOperation(value = "Return list of all jobs", nickname = "listTests", httpMethod = "GET")
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "List of all tests", response = classOf[TestList])
+    ))
+    def listTests(@ApiParam(hidden = true) session: SessionService) : server.Route = {
+        get {
+            val result = TestList(
+                session.listTests()
+            )
+            complete(result)
+        }
+    }
+
+
+    private def withTest(session:SessionService, testName:String)(fn:(model.Test) => server.Route) : server.Route = {
+        Try {
+            session.getTest(testName)
+        } match {
+            case Success(test) => fn(test)
+            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+        }
+    }
 }

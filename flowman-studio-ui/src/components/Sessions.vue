@@ -24,11 +24,13 @@
             <v-row v-if="item.kind === 'session'">
               <v-col>
                 <v-btn
+                  @click.stop="useSession(item.kernel_id, item.id)"
                 >Jump to Session</v-btn>
               </v-col>
               <v-col>
                 <v-btn
-                >Close Project</v-btn>
+                  @click.stop="closeSession(item.kernel_id, item.id)"
+                >Close</v-btn>
               </v-col>
             </v-row>
             <v-row v-if="item.kind === 'kernel'">
@@ -98,6 +100,13 @@ export default {
   },
 
   methods: {
+    useSession(kernel, session) {
+      this.$api.setCurrentSession(kernel, session)
+      this.show = false
+    },
+    closeSession(kernel, session) {
+      this.$api.closeSession(kernel, session)
+    },
     launchKernel() {
       this.$api.launchKernel().then(response => {
         response // Eat response
@@ -120,6 +129,7 @@ export default {
               return response.sessions.map(s => {
                 return {
                   id: s.id,
+                  kernel_id: k.id,
                   kind: "session",
                   description: "Project " + s.project
                 }

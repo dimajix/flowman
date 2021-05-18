@@ -59,11 +59,11 @@ class SessionEndpoint(rootSession:execution.Session) {
 
     private val logger = LoggerFactory.getLogger(classOf[SessionEndpoint])
     private val sessionManager:SessionManager = new SessionManager(rootSession)
-    private val jobService:JobEndpoint = new JobEndpoint
-    private val mappingService:MappingEndpoint = new MappingEndpoint
-    private val relationService:RelationEndpoint = new RelationEndpoint
-    private val targetService:TargetEndpoint = new TargetEndpoint
-    private val testService:TestEndpoint = new TestEndpoint
+    private val jobEndpoint:JobEndpoint = new JobEndpoint
+    private val mappingEndpoint:MappingEndpoint = new MappingEndpoint
+    private val relationEndpoint:RelationEndpoint = new RelationEndpoint
+    private val targetEndpoint:TargetEndpoint = new TargetEndpoint
+    private val testEndpoint:TestEndpoint = new TestEndpoint
 
     def routes : server.Route = pathPrefix("session") {(
         pathEndOrSingleSlash {(
@@ -89,15 +89,15 @@ class SessionEndpoint(rootSession:execution.Session) {
                     resetSession(session)
                 }
                 ~
-                jobService.routes(session)
+                jobEndpoint.routes(session)
                 ~
-                mappingService.routes(session)
+                mappingEndpoint.routes(session)
                 ~
-                relationService.routes(session)
+                relationEndpoint.routes(session)
                 ~
-                targetService.routes(session)
+                targetEndpoint.routes(session)
                 ~
-                testService.routes(session)
+                testEndpoint.routes(session)
             )}
         }
     )}

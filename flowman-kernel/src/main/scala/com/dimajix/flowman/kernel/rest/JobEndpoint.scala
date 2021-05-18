@@ -50,7 +50,8 @@ import com.dimajix.flowman.model
     new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
 ))
 @ApiResponses(Array(
-    new ApiResponse(code = 404, message = "Session or job not found")
+    new ApiResponse(code = 404, message = "Session or job not found"),
+    new ApiResponse(code = 500, message = "Internal server error")
 ))
 class JobEndpoint {
     import akka.http.scaladsl.server.Directives._
@@ -59,13 +60,17 @@ class JobEndpoint {
 
     def routes(session:SessionService) : server.Route = pathPrefix("job") {(
         pathEndOrSingleSlash {
-            listJobs(session)
+            redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                listJobs(session)
+            }
         }
         ~
         pathPrefix(Segment) { jobName =>
             (
                 pathEndOrSingleSlash {
-                    getJob(session, jobName)
+                    redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                        getJob(session, jobName)
+                    }
                 }
                 ~
                 path("run") {

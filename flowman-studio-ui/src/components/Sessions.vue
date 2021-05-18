@@ -8,30 +8,30 @@
     <v-card elevation="2" class="flex-fill">
       <v-card-title>
         <v-col>Running Kernels and Sessions</v-col>
-        <v-col class="text-right"><v-icon @click="retrieveSessions()">refresh</v-icon></v-col>
+        <v-col class="text-right"><v-icon @click="fetchKernels()">refresh</v-icon></v-col>
       </v-card-title>
       <v-card-text>
         <v-treeview
-          open-all
           rounded
           hoverable
           item-key="id"
-          item-children="sessions"
+          item-children="children"
           item-text="description"
-          :items="sessions"
+          :items="items"
+          :open="open"
         >
           <template v-slot:append="{ item }">
-            <v-row v-if="item.session">
+            <v-row v-if="item.kind === 'session'">
               <v-col>
                 <v-btn
-                >Jump to Session {{item.id}}</v-btn>
+                >Jump to Session</v-btn>
               </v-col>
               <v-col>
                 <v-btn
                 >Close Project</v-btn>
               </v-col>
             </v-row>
-            <v-row v-if="!item.session">
+            <v-row v-if="item.kind === 'kernel'">
               <v-col>
                 <v-chip>{{item.state}}</v-chip>
               </v-col>
@@ -74,19 +74,25 @@ export default {
   },
 
   data: () => ({
-    sessions: [],
-    show: false
+    items: [],
+    show: false,
   }),
 
+  computed: {
+    open() {
+      // Forcibly reopen all elements whenever items change
+      return this.items.map(k => {return k.id})
+    }
+  },
+
   mounted() {
-    this.retrieveSessions()
   },
 
   watch: {
     // whenever question changes, this function will run
     show: function (newValue) {
       if (newValue) {
-        this.retrieveSessions()
+        this.fetchKernels()
       }
     }
   },
@@ -96,44 +102,60 @@ export default {
       this.$api.launchKernel().then(response => {
         response // Eat response
         this.$api.setCurrentSession(response.id, "")
-        this.retrieveSessions()
+        this.fetchKernels()
       })
     },
     shutdownKernel(kernel) {
       this.$api.shutdownKernel(kernel).then(response => {
         response // Eat response
-        this.retrieveSessions()
+        this.fetchKernels()
       })
     },
-    retrieveSessions() {
+    fetchKernels() {
       this.$api.listKernels()
         .then(response => {
-          this.sessions = response.kernels.map(k => {
-              let result = {
+          this.items = []
+          response.kernels.forEach(k => {
+            return this.$api.listSessions(k.id).then(response => {
+              return response.sessions.map(s => {
+                return {
+                  id: s.id,
+                  kind: "session",
+                  description: "Project " + s.project
+                }
+              })
+            })
+            .catch(error => {
+              error
+              return []
+            })
+            .then(s => {
+              this.items.push({
                 id: k.id,
+                kind: "kernel",
                 description: "Kernel " + k.id + " running at " + k.url,
                 state: k.state,
-                sessions: []
-              }
-              try {
-                this.$api.listSessions(k.id).then(response => {
-                  response.sessions.map(s => {
-                    result.sessions.append({
-                      id: s.id,
-                      description: "Sessions " + s.id
-                    })
-                  })
-                })
-              } catch (error) {
-                error
-              }
-              return result
-            }
-          )
-          return this.sessions
+                children: s
+              })
+            })
+          })
         })
+    },
+    fetchSessions(kernel) {
+      return this.$api.listSessions(kernel.id).then(response => {
+        return response.sessions.map(s => {
+          return {
+            id: s.id,
+            kind: "session",
+            description: "Project " + s.project
+          }
+        })
+      })
+      .catch(error => {
+        error
+        return []
+      })
     }
   }
-
 };
 </script>

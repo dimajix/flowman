@@ -10,9 +10,10 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "vue": "^2.6.11",
+    "vue-async-computed": "^3.9.0",
     "vue-router": "^3.0.3",
     "vue-sse": "^2.2.0",
-    "vuetify": "^2.4.0"
+    "vuetify": "^2.5.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.5.0",

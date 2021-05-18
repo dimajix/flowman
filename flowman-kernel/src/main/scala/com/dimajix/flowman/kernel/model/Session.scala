@@ -21,15 +21,16 @@ case class Session(
     id: String,
     namespace: String,
     project: String,
-    config: Map[String,String],
-    environment: Map[String,String]
+    config: Map[String,String] = Map(),
+    environment: Map[String,String] = Map()
 )
 
 case class SessionList(
-    sessions:Seq[String]
+    sessions:Seq[Session]
 )
 
 
 case class CreateSessionRequest(
-    project:String
+    projectName:Option[String],
+    projectPath:Option[String]
 )

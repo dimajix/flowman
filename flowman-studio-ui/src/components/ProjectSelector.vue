@@ -51,7 +51,14 @@ export default {
   },
 
   mounted() {
-    this.reloadProjects()
+  },
+
+  watch: {
+    show: function (newValue) {
+      if (newValue) {
+        this.reloadProjects()
+      }
+    }
   },
 
   methods: {
@@ -62,7 +69,11 @@ export default {
         })
     },
     openProject(project) {
-      project
+      this.$api.openProject(this.kernel, project)
+        .then(response => {
+          this.$api.setCurrentSession(this.kernel, response.id)
+        })
+      this.show = false
     }
   }
 }

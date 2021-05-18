@@ -117,6 +117,16 @@ export default {
     }
   },
 
+  computed: {
+    kernel: function() { return this.$api.state.kernel }
+  },
+
+  watch: {
+    kernel: function () {
+      this.outputTabs = this.outputTabs.filter(t => t.kind === "log")
+    }
+  },
+
   methods: {
     closeTab(id) {
       this.outputTabs = this.outputTabs.filter(t => t.id !== id)

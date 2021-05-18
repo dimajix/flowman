@@ -52,7 +52,7 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit val jobTaskFormat: RootJsonFormat[JobTask] = jsonFormat9(JobTask)
     implicit val runJobRequestFormat: RootJsonFormat[RunJobRequest] = jsonFormat6(RunJobRequest)
     implicit val sessionFormat: RootJsonFormat[Session] = jsonFormat5(Session)
-    implicit val createSessionRequestFormat: RootJsonFormat[CreateSessionRequest] = jsonFormat1(CreateSessionRequest)
+    implicit val createSessionRequestFormat: RootJsonFormat[CreateSessionRequest] = jsonFormat2(CreateSessionRequest)
     implicit val sessionListFormat: RootJsonFormat[SessionList] = jsonFormat1(SessionList)
 }
 

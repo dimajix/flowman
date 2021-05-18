@@ -16,18 +16,42 @@
 
 package com.dimajix.flowman.kernel.service
 
+import java.lang.Thread.UncaughtExceptionHandler
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinWorkerThread
+
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Project
 
 
+object SessionManager {
+    private val logger = LoggerFactory.getLogger(classOf[SessionManager])
+    private class MyForkJoinWorkerThread(pool: ForkJoinPool) extends ForkJoinWorkerThread(pool) { // set the correct classloader here
+        setContextClassLoader(Thread.currentThread.getContextClassLoader)
+    }
+    private object MyForkJoinWorkerThreadFactory extends ForkJoinPool.ForkJoinWorkerThreadFactory {
+        override final def newThread(pool: ForkJoinPool) = new MyForkJoinWorkerThread(pool)
+    }
+    private val exceptionHandler = new UncaughtExceptionHandler {
+        override def uncaughtException(thread: Thread, throwable: Throwable): Unit = {
+            logger.error("Uncaught exception: ", throwable)
+        }
+    }
+}
+
 class SessionManager(rootSession:execution.Session) {
+    import SessionManager._
     private val sessions = mutable.ListBuffer[SessionService]()
+    private val threadPool = new ForkJoinPool(4, MyForkJoinWorkerThreadFactory, exceptionHandler, true)
+    private implicit val executionContext = ExecutionContext.fromExecutorService(threadPool)
 
     /**
      * Returns a list of all active [[SessionService]]s
@@ -55,6 +79,18 @@ class SessionManager(rootSession:execution.Session) {
         result
     }
 
+
+    /**
+     * Creates a new [[SessionService]] by loading a new project. The project is specified via its name, as returned
+     * by [[rootSession]]
+     * @param projectPath
+     * @return
+     */
+    def createSession(projectName:String) : SessionService = {
+        val project = rootSession.store.loadProject(projectName)
+        createSession(project)
+    }
+
     /**
      * Creates a new [[SessionService]] by loading a new project. The project is specified via a path, which needs
      * to point to a location resolvable by the Hadoop filesystem layer.
@@ -63,8 +99,11 @@ class SessionManager(rootSession:execution.Session) {
      */
     def createSession(projectPath:Path) : SessionService = {
         val project = loadProject(projectPath)
-        val session = rootSession.newSession(project)
+        createSession(project)
+    }
 
+    private def createSession(project:Project) : SessionService = {
+        val session = rootSession.newSession(project)
         val svc = new SessionService(this, session)
 
         sessions.synchronized {

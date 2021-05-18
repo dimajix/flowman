@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.kernel.rest
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
@@ -30,6 +34,7 @@ import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.POST
 import javax.ws.rs.Path
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution
 import com.dimajix.flowman.kernel.model.Converter
@@ -52,6 +57,7 @@ class SessionEndpoint(rootSession:execution.Session) {
 
     import com.dimajix.flowman.kernel.model.JsonSupport._
 
+    private val logger = LoggerFactory.getLogger(classOf[SessionEndpoint])
     private val sessionManager:SessionManager = new SessionManager(rootSession)
     private val jobService:JobEndpoint = new JobEndpoint
     private val mappingService:MappingEndpoint = new MappingEndpoint
@@ -103,7 +109,7 @@ class SessionEndpoint(rootSession:execution.Session) {
     ))
     def listSessions() : server.Route = {
         get {
-            val result = SessionList(sessionManager.list().map(_.id))
+            val result = SessionList(sessionManager.list().map(s => Session(s.id, s.namespace.name, s.project.name)))
             complete(result)
         }
     }
@@ -115,21 +121,38 @@ class SessionEndpoint(rootSession:execution.Session) {
             dataTypeClass = classOf[CreateSessionRequest], paramType = "body")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Create a new session and opens a project", response = classOf[Session])
+        new ApiResponse(code = 200, message = "Create a new session and opens a project", response = classOf[Session]),
+        new ApiResponse(code = 400, message = "Bad request", response = classOf[Session])
     ))
     def createSession() : server.Route = {
         post {
             entity(as[CreateSessionRequest]) { request =>
-                val path = new org.apache.hadoop.fs.Path(request.project)
-                val session = sessionManager.createSession(path)
-                val result = Session(
-                    id = session.id,
-                    namespace = session.namespace.name,
-                    project = session.project.name,
-                    config = session.context.config.toMap,
-                    environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
-                )
-                complete(result)
+                request.projectPath.map { p =>
+                    val path = new org.apache.hadoop.fs.Path(p)
+                    Try { sessionManager.createSession(path) }
+                }
+                .orElse {
+                    request.projectName.map { p =>
+                        Try { sessionManager.createSession(p) }
+                    }
+                }
+                .map {
+                    case Success(session) =>
+                        val result = Session(
+                            id = session.id,
+                            namespace = session.namespace.name,
+                            project = session.project.name,
+                            config = session.context.config.toMap,
+                            environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
+                        )
+                        complete(result)
+                    case Failure(e) =>
+                        logger.warn(s"Cannot load project. Request was $request, error is ${e.getMessage}")
+                        complete(HttpResponse(status = StatusCodes.InternalServerError))
+                }
+                .getOrElse {
+                    complete(HttpResponse(status = StatusCodes.BadRequest))
+                }
             }
         }
     }

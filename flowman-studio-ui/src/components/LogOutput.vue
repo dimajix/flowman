@@ -20,10 +20,6 @@ export default {
   name: 'LogOutput',
 
   mounted() {
-    this.$watch(x => x.$api.state.kernel, function () {
-      this.lines = []
-      this.setupStream()
-    })
   },
 
   data() {
@@ -33,7 +29,15 @@ export default {
     }
   },
 
+  computed: {
+    kernel: function() { return this.$api.state.kernel }
+  },
+
   watch: {
+    kernel: function () {
+      this.lines = []
+      this.setupStream()
+    }
   },
 
   methods: {

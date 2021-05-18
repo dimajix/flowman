@@ -17,9 +17,15 @@
 package com.dimajix.flowman.kernel.service
 
 import java.io.Closeable
+import java.lang.Thread.UncaughtExceptionHandler
 import java.util.UUID
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinWorkerThread
+import java.util.concurrent.TimeUnit
 
 import scala.concurrent.ExecutionContext
+
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -38,14 +44,14 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
 
-class SessionService(_manager:SessionManager, _session:Session) extends Closeable {
+class SessionService(_manager:SessionManager, _session:Session)(implicit ec:ExecutionContext) extends Closeable {
     private var _job: Option[Job] = None
     private var _test: Option[Test] = None
     private var _context : Context = _session.getContext(_session.project.get)
 
     val tasks = new TaskService(this)
 
-    def executionContext:ExecutionContext = ???
+    def executionContext:ExecutionContext = ec
 
     val id : String = UUID.randomUUID().toString
     val namespace : Namespace = _session.namespace.get

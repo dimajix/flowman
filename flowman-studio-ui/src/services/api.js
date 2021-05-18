@@ -47,6 +47,10 @@ export default {
       listProjects(kernel) {
         return axios.get('/api/kernel/' + kernel + '/project')
           .then(response => response.data)
+      },
+      openProject(kernel, project) {
+        return axios.post('/api/kernel/' + kernel + '/session', {projectName: project})
+          .then(response => response.data)
       }
     };
 

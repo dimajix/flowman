@@ -320,6 +320,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mssqlserver</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-swagger</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>

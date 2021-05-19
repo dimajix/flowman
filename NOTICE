@@ -66,6 +66,12 @@ MariaDB Java Client
   * HOMEPAGE:
     * https://mariadb.com
 
+MSSQL JDBC Client
+  * LICENSE
+    * license/LICENSE-mssql-jdbc.txt
+  * HOMEPAGE:
+    * https://github.com/Microsoft/mssql-jdbc
+
 Apache Derby
   * LICENSE
     * license/LICENSE-derby.txt (Apache 2.0 License)

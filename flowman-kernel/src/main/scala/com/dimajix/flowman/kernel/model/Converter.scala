@@ -66,7 +66,7 @@ object Converter {
             mapping.checkpoint,
             mapping.inputs.map(_.toString),
             mapping.outputs,
-            mapping.labels,
+            mapping.labels
         )
     }
 

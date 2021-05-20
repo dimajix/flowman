@@ -43,6 +43,7 @@
                     <v-btn
                       v-bind="attrs"
                       v-on="on"
+                      :disabled="item.state !== 'RUNNING'"
                     >
                       Open Project
                     </v-btn>
@@ -51,6 +52,7 @@
               </v-col>
               <v-col>
                 <v-btn
+                  :disabled="item.state !== 'RUNNING'"
                   @click.stop="shutdownKernel(item.id)"
                 >Shutdown</v-btn>
               </v-col>

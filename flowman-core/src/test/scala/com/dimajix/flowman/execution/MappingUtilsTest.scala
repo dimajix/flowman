@@ -52,7 +52,7 @@ object MappingUtilsTest {
 }
 
 class MappingUtilsTest extends AnyFlatSpec with Matchers {
-    "The MappingUtils" should "collect all requirements of a mapping" in {
+    "The MappingUtils" should "glob all requirements of a mapping" in {
         val project = Project(
             "test",
             mappings = Map(

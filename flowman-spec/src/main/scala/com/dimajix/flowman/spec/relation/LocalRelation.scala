@@ -185,12 +185,12 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(partitions != null)
 
         if (this.partitions.nonEmpty)
-            cleanPartitionedFiles(partitions)
+            truncatePartitionedFiles(partitions)
         else
-            cleanUnpartitionedFiles()
+            truncateUnpartitionedFiles()
     }
 
-    private def cleanPartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
+    private def truncatePartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
@@ -199,7 +199,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         collector.delete(resolvedPartitions)
     }
 
-    private def cleanUnpartitionedFiles() : Unit = {
+    private def truncateUnpartitionedFiles() : Unit = {
         collector.truncate()
     }
 
@@ -316,11 +316,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(partitions != null)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
+        resolvedPartitions.map(p => fn(p, collector.glob(p))).toSeq
     }
 
     private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
-        fn(PartitionSpec(), collector.collect())
+        fn(PartitionSpec(), collector.glob())
     }
 
     private def localDirectory = {

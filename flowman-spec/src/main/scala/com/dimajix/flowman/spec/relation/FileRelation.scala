@@ -201,7 +201,7 @@ case class FileRelation(
 
         if (this.partitions.nonEmpty) {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
-            collector.collect(partitionSpec).exists(checkPartition)
+            collector.glob(partitionSpec).exists(checkPartition)
         }
         else {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
@@ -300,7 +300,7 @@ case class FileRelation(
     }
 
     /**
-      * Collects files for a given time period using the pattern inside the specification
+      * Collects files for a given time period using the pattern inside the specification.
       *
       * @param partitions
       * @return
@@ -308,24 +308,16 @@ case class FileRelation(
     protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
-        if (this.partitions.nonEmpty)
-            mapPartitionedFiles(partitions)(fn)
-        else
-            Seq(mapUnpartitionedFiles(fn))
-    }
-
-    private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
-        require(partitions != null)
-
-        val resolvedPartitions = resolvePartitions(partitions)
-        if (resolvedPartitions.size > 2)
-            resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
-        else
-            resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
-    }
-
-    private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
-        fn(PartitionSpec(), collector.collect())
+        if (this.partitions.nonEmpty) {
+            val resolvedPartitions = resolvePartitions(partitions)
+            if (resolvedPartitions.size > 2)
+                resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
+            else
+                resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
+        }
+        else {
+            Seq(fn(PartitionSpec(), collector.collect()))
+        }
     }
 
     private def resolvePartitions(partitions:Map[String,FieldValue]) : Iterable[PartitionSpec] = {

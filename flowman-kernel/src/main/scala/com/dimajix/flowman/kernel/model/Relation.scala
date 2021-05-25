@@ -16,9 +16,11 @@
 
 package com.dimajix.flowman.kernel.model
 
-class Relation {
-
-}
+case class Relation(
+    name:String,
+    kind:String,
+    labels:Map[String,String]
+)
 
 case class RelationList(
     relations:Seq[String]

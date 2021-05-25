@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.kernel.model
 
-class Target {
-
-}
+case class Target(
+    name:String,
+    kind:String,
+    labels:Map[String,String],
+    before:Seq[String],
+    after:Seq[String]
+)
 
 
 case class TargetList(

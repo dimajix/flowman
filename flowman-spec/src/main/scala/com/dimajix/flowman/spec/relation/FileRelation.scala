@@ -130,6 +130,9 @@ case class FileRelation(
         }
 
         logger.info(s"Reading file relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
+        val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
+        val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
+
         val data = mapFiles(partitions) { (partition, paths) =>
             logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
@@ -139,8 +142,7 @@ case class FileRelation(
             // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
             // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
             // underlying format implementation
-            val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
-            val df = if (SparkShim.relationSupportsMultiplePaths(providingClass)) {
+            val df = if (multiPath) {
                 reader.load(pathNames: _*)
             }
             else {

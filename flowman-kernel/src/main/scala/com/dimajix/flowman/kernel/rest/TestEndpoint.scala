@@ -33,6 +33,8 @@ import io.swagger.annotations.ApiResponses
 import javax.ws.rs.GET
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.kernel.model.Converter
+import com.dimajix.flowman.kernel.model.Test
 import com.dimajix.flowman.kernel.model.TestList
 import com.dimajix.flowman.kernel.service.SessionService
 import com.dimajix.flowman.model
@@ -58,7 +60,15 @@ class TestEndpoint {
                 listTests(session)
             }
         }
-        )}
+        ~
+        pathPrefix(Segment) { testName => (
+            pathEndOrSingleSlash {
+                redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                    getTest(session, testName)
+                }
+            })
+        }
+    )}
 
     @GET
     @ApiOperation(value = "Return list of all jobs", nickname = "listTests", httpMethod = "GET")
@@ -71,6 +81,23 @@ class TestEndpoint {
                 session.listTests()
             )
             complete(result)
+        }
+    }
+
+    @GET
+    @Path("/{test}")
+    @ApiOperation(value = "Get test", nickname = "getTest", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "test", value = "Test Name", required = true, dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Information about the test", response = classOf[Test])
+    ))
+    def getTest(@ApiParam(hidden = true) session: SessionService, @ApiParam(hidden = true) test:String) : server.Route = {
+        get {
+            withTest(session, test) { test =>
+                complete(Converter.of(test))
+            }
         }
     }
 

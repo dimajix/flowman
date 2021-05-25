@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import java.lang.Thread.UncaughtExceptionHandler
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ForkJoinWorkerThread
 import java.util.concurrent.TimeUnit
 
 import scala.annotation.tailrec
@@ -32,26 +29,12 @@ import scala.util.Success
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
 
 
 class ParallelExecutor extends Executor {
-    private val logger = LoggerFactory.getLogger(classOf[SimpleExecutor])
-
-    private class MyForkJoinWorkerThread(pool: ForkJoinPool) extends ForkJoinWorkerThread(pool) { // set the correct classloader here
-        setContextClassLoader(Thread.currentThread.getContextClassLoader)
-    }
-    private object MyForkJoinWorkerThreadFactory extends ForkJoinPool.ForkJoinWorkerThreadFactory {
-        override final def newThread(pool: ForkJoinPool) = new MyForkJoinWorkerThread(pool)
-    }
-    private val exceptionHandler = new UncaughtExceptionHandler {
-        override def uncaughtException(thread: Thread, throwable: Throwable): Unit = {
-            logger.error("Uncaught exception: ", throwable)
-        }
-    }
-
-
     /**
      * Executes a list of targets in an appropriate order.
      *
@@ -72,7 +55,7 @@ class ParallelExecutor extends Executor {
         scheduler.initialize(targets, phase, filter)
 
         val parallelism = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_PARALLELISM)
-        val threadPool = new ForkJoinPool(parallelism, MyForkJoinWorkerThreadFactory, exceptionHandler, true)
+        val threadPool = ThreadUtils.newThreadPool("ParallelExecutor", parallelism)
         implicit val ec:ExecutionContext = ExecutionContext.fromExecutorService(threadPool)
 
         // Allocate state variables for tracking overall Status

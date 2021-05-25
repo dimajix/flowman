@@ -38,6 +38,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Test
@@ -124,6 +125,8 @@ class SessionService(_manager:SessionManager, _session:Session)(implicit ec:Exec
     def describeMapping(mapping:Mapping, output:String) = ???
 
     def listRelations() : Seq[String] = project.relations.keys.toSeq
-    def getRelation(name:String) : Relation = ???
+    def getRelation(name:String) : Relation = {
+        _context.getRelation(RelationIdentifier(name))
+    }
     def collectRelation(relation:Relation) = ???
 }

@@ -33,6 +33,9 @@ import io.swagger.annotations.ApiResponses
 import javax.ws.rs.GET
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.kernel.model.Converter
+import com.dimajix.flowman.kernel.model.Mapping
+import com.dimajix.flowman.kernel.model.Target
 import com.dimajix.flowman.kernel.model.TargetList
 import com.dimajix.flowman.kernel.service.SessionService
 import com.dimajix.flowman.model
@@ -58,7 +61,15 @@ class TargetEndpoint {
                 listTargets(session)
             }
         }
-        )}
+        ~
+        pathPrefix(Segment) { targetName => (
+            pathEndOrSingleSlash {
+                redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                    getTarget(session, targetName)
+                }
+            })
+        }
+    )}
 
     @GET
     @ApiOperation(value = "Return list of all jobs", nickname = "listTargets", httpMethod = "GET")
@@ -71,6 +82,23 @@ class TargetEndpoint {
                 session.listTargets()
             )
             complete(result)
+        }
+    }
+
+    @GET
+    @Path("/{target}")
+    @ApiOperation(value = "Get target", nickname = "getTarget", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "target", value = "Target Name", required = true, dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Information about the target", response = classOf[Target])
+    ))
+    def getTarget(@ApiParam(hidden = true) session: SessionService, @ApiParam(hidden = true) target:String) : server.Route = {
+        get {
+            withTarget(session, target) { target =>
+                complete(Converter.of(target))
+            }
         }
     }
 

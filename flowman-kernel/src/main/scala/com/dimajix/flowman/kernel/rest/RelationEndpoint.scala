@@ -33,6 +33,8 @@ import io.swagger.annotations.ApiResponses
 import javax.ws.rs.GET
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.kernel.model.Converter
+import com.dimajix.flowman.kernel.model.Relation
 import com.dimajix.flowman.kernel.model.RelationList
 import com.dimajix.flowman.kernel.service.SessionService
 import com.dimajix.flowman.model
@@ -58,7 +60,15 @@ class RelationEndpoint {
                 listRelations(session)
             }
         }
-        )}
+        ~
+        pathPrefix(Segment) { relationName => (
+            pathEndOrSingleSlash {
+                redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                    getRelation(session, relationName)
+                }
+            })
+        }
+    )}
 
     @GET
     @ApiOperation(value = "Return list of all jobs", nickname = "listRelations", httpMethod = "GET")
@@ -71,6 +81,23 @@ class RelationEndpoint {
                 session.listRelations()
             )
             complete(result)
+        }
+    }
+
+    @GET
+    @Path("/{relation}")
+    @ApiOperation(value = "Get relation", nickname = "getRelation", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "relation", value = "Relation Name", required = true, dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Information about the relation", response = classOf[Relation])
+    ))
+    def getRelation(@ApiParam(hidden = true) session: SessionService, @ApiParam(hidden = true) relation:String) : server.Route = {
+        get {
+            withRelation(session, relation) { relation =>
+                complete(Converter.of(relation))
+            }
         }
     }
 

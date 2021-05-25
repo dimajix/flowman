@@ -27,6 +27,7 @@
         <v-list-item
           v-for="item in jobs"
           :key="item"
+          @click.stop="clickJob(item)"
           link
         >
           <v-list-item-content>
@@ -37,7 +38,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="executeJob(item)"
                   icon><v-icon>play_arrow</v-icon>
                 </v-btn>
               </template>
@@ -57,6 +58,7 @@
         <v-list-item
           v-for="item in tests"
           :key="item"
+          @click.stop="clickTest(item)"
           link
         >
           <v-list-item-content>
@@ -67,7 +69,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="executeTest(item)"
                   icon><v-icon>play_arrow</v-icon>
                 </v-btn>
               </template>
@@ -87,6 +89,7 @@
         <v-list-item
           v-for="item in targets"
           :key="item"
+          @click.stop="clickTarget(item)"
           link
         >
           <v-list-item-content>
@@ -97,7 +100,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="executeTarget(item)"
                   icon><v-icon>play_arrow</v-icon>
                 </v-btn>
               </template>
@@ -117,6 +120,7 @@
         <v-list-item
           v-for="item in mappings"
           :key="item"
+          @click.stop="clickMapping(item)"
           link
         >
           <v-list-item-content>
@@ -127,7 +131,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="collectMapping(item)"
                   icon><v-icon>manage_search</v-icon>
                 </v-btn>
               </template>
@@ -139,7 +143,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="inspectMappingSchema(item)"
                   icon><v-icon>schema</v-icon>
                 </v-btn>
               </template>
@@ -161,6 +165,7 @@
         <v-list-item
           v-for="item in relations"
           :key="item"
+          @click.stop="clickRelation(item)"
           link
         >
           <v-list-item-content>
@@ -171,7 +176,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="collectRelation(item)"
                   icon><v-icon>manage_search</v-icon>
                 </v-btn>
               </template>
@@ -183,7 +188,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
-                  v-on="on"
+                  @click.stop="inspectRelationSchema(item)"
                   icon><v-icon>schema</v-icon>
                 </v-btn>
               </template>
@@ -232,6 +237,18 @@ export default {
       this.$api.listMappings().then(s => { this.mappings = s.mappings.sort() })
       this.$api.listRelations().then(s => { this.relations = s.relations.sort() })
     },
+    clickJob(job) { this.$emit('select-job', job) },
+    executeJob(job) { this.$emit('execute-job', job) },
+    clickTest(test) { this.$emit('select-test', test) },
+    executeTest(test) { this.$emit('execute-test', test) },
+    clickTarget(target) { this.$emit('select-target', target) },
+    executeTarget(target) { this.$emit('execute-target', target) },
+    clickMapping(mapping) { this.$emit('select-mapping', mapping) },
+    collectMapping(mapping) { this.$emit('collect-mapping', mapping) },
+    inspectMappingSchema(mapping) { this.$emit('inspect-mapping-schema', mapping) },
+    clickRelation(relation) { this.$emit('select-relation', relation) },
+    collectRelation(relation) { this.$emit('collect-relation', relation) },
+    inspectRelationSchema(relation) { this.$emit('inspect-relation-schema', relation) },
   }
 }
 </script>

@@ -20,10 +20,10 @@ package com.dimajix.flowman.kernel.model
 case class Job(
     name:String,
     description:Option[String],
+    targets:Seq[String],
     parameters:Seq[String],
     environment:Map[String,String]
-) {
-}
+)
 
 
 case class JobList(

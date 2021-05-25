@@ -1,26 +1,33 @@
 <template>
   <v-container>
     <v-card>
-      <v-card-title>Mapping Properties</v-card-title>
+      <v-card-title><v-icon>mediation</v-icon>Mapping '{{mapping}}'</v-card-title>
       <v-simple-table>
         <template v-slot:default>
-          <thead>
-          <tr>
-            <th class="text-left">
-              Name
-            </th>
-            <th class="text-left">
-              Value
-            </th>
-          </tr>
-          </thead>
           <tbody>
-          <tr
-            v-for="item in properties"
-            :key="item.name"
-          >
-            <td>{{ item.name }}</td>
-            <td>{{ item.calories }}</td>
+          <tr>
+            <td>Name</td>
+            <td>{{ properties.name }}</td>
+          </tr>
+          <tr>
+            <td>Kind</td>
+            <td>{{ properties.kind }}</td>
+          </tr>
+          <tr>
+            <td>Inputs</td>
+            <td>{{ properties.inputs }}</td>
+          </tr>
+          <tr>
+            <td>Outputs</td>
+            <td>{{ properties.outputs }}</td>
+          </tr>
+          <tr>
+            <td>Broadcast</td>
+            <td>{{ properties.broadcast }}</td>
+          </tr>
+          <tr>
+            <td>Cache</td>
+            <td>{{ properties.cache }}</td>
           </tr>
           </tbody>
         </template>
@@ -33,57 +40,40 @@
 export default {
   name: 'MappingProperties',
 
-  mounted() {
-  },
-
-  methods: {
+  props: {
+    mapping: String
   },
 
   data () {
     return {
-      properties: [
-        {
-          name: 'Frozen Yogurt',
-          calories: 159,
-        },
-        {
-          name: 'Ice cream sandwich',
-          calories: 237,
-        },
-        {
-          name: 'Eclair',
-          calories: 262,
-        },
-        {
-          name: 'Cupcake',
-          calories: 305,
-        },
-        {
-          name: 'Gingerbread',
-          calories: 356,
-        },
-        {
-          name: 'Jelly bean',
-          calories: 375,
-        },
-        {
-          name: 'Lollipop',
-          calories: 392,
-        },
-        {
-          name: 'Honeycomb',
-          calories: 408,
-        },
-        {
-          name: 'Donut',
-          calories: 452,
-        },
-        {
-          name: 'KitKat',
-          calories: 518,
-        },
-      ],
+      properties: {}
     }
   },
+
+  mounted() {
+    this.refresh()
+  },
+
+  watch: {
+    mapping: function() {
+      this.refresh()
+    },
+  },
+
+  methods: {
+    refresh() {
+      this.$api.getMapping(this.mapping).then(response => {
+        this.properties = {
+          name: response.name,
+          kind: response.kind,
+          inputs: response.inputs,
+          outputs: response.outputs,
+          broadcast: response.broadcast,
+          cache: response.cache
+        }
+      })
+    }
+  },
+
 }
 </script>

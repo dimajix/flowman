@@ -16,9 +16,11 @@
 
 package com.dimajix.flowman.kernel.model
 
-class Test {
-
-}
+case class Test(
+    name:String,
+    description:Option[String],
+    labels:Map[String,String]
+)
 
 
 case class TestList(

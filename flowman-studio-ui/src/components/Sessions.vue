@@ -125,8 +125,7 @@ export default {
     fetchKernels() {
       this.$api.listKernels()
         .then(response => {
-          this.items = []
-          response.kernels.forEach(k => {
+          return Promise.all(response.kernels.map(k => {
             return this.$api.listSessions(k.id).then(response => {
               return response.sessions.map(s => {
                 return {
@@ -142,7 +141,7 @@ export default {
               return []
             })
             .then(s => {
-              this.items.push({
+              return({
                 id: k.id,
                 kind: "kernel",
                 description: "Kernel " + k.id + " running at " + k.url,
@@ -150,8 +149,9 @@ export default {
                 children: s
               })
             })
-          })
+          }))
         })
+      .then(items => {this.items = items})
     },
     fetchSessions(kernel) {
       return this.$api.listSessions(kernel.id).then(response => {

@@ -52,8 +52,27 @@ object Converter {
         Job(
             job.name,
             job.description,
+            job.targets.map(_.toString),
             job.parameters.map(_.name),
             job.environment
+        )
+    }
+
+    def of(test:model.Test) : Test = {
+        Test(
+            test.name,
+            test.description,
+            test.labels
+        )
+    }
+
+    def of(target:model.Target) : Target = {
+        Target(
+            target.name,
+            target.kind,
+            target.labels,
+            target.before.map(_.toString),
+            target.after.map(_.toString)
         )
     }
 
@@ -67,6 +86,14 @@ object Converter {
             mapping.inputs.map(_.toString),
             mapping.outputs,
             mapping.labels
+        )
+    }
+
+    def of(relation:model.Relation) : Relation = {
+        Relation(
+            relation.name,
+            relation.kind,
+            relation.labels
         )
     }
 

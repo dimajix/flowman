@@ -81,7 +81,7 @@ object Converter {
             mapping.name,
             mapping.kind,
             mapping.broadcast,
-            mapping.cache.toString(),
+            mapping.cache.description,
             mapping.checkpoint,
             mapping.inputs.map(_.toString),
             mapping.outputs,

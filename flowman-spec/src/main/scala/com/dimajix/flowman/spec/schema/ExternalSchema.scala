@@ -47,6 +47,7 @@ abstract class ExternalSchema extends AbstractInstance with Schema {
     protected val file: Option[Path]
     protected val url: Option[URL]
     protected val spec: Option[String]
+    private lazy val cache : CachedSchema = loadSchema
 
     /**
       * Returns the description of the schema. This will be cached once and for ever
@@ -67,14 +68,6 @@ abstract class ExternalSchema extends AbstractInstance with Schema {
     override def primaryKey : Seq[String] = {
         cache.primaryKey
     }
-
-    private def cache : CachedSchema = {
-        if (cachedSchema == null) {
-            cachedSchema = loadSchema
-        }
-        cachedSchema
-    }
-    private var cachedSchema:CachedSchema = _
 
     /**
       * Loads the real schema from external source. This has to be provided by derived classes

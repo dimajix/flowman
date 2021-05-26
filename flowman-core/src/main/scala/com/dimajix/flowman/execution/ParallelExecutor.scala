@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
+import com.dimajix.spark.SparkUtils.withJobGroup
 
 
 class ParallelExecutor extends Executor {
@@ -52,6 +53,8 @@ class ParallelExecutor extends Executor {
         val ctor = clazz.getDeclaredConstructor()
         val scheduler = ctor.newInstance()
 
+        val sc = execution.spark.sparkContext
+
         scheduler.initialize(targets, phase, filter)
 
         val parallelism = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_PARALLELISM)
@@ -66,7 +69,9 @@ class ParallelExecutor extends Executor {
 
         def executeTarget(target:Target) : Future[Status] = {
             Future {
-                fn(execution, target, phase)
+                withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+                    fn(execution, target, phase)
+                }
             }.andThen { case status =>
                 // Inform scheduler that Target is built
                 scheduler.synchronized {

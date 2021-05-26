@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
+import com.dimajix.spark.SparkUtils.withJobGroup
 
 
 class SimpleExecutor extends Executor {
@@ -42,6 +43,8 @@ class SimpleExecutor extends Executor {
         val ctor = clazz.getDeclaredConstructor()
         val scheduler = ctor.newInstance()
 
+        val sc = execution.spark.sparkContext
+
         // First determine ordering before filtering active targets, since their might be some transitive dependencies
         // in place. For example accessing a VIEW which does not require a BUILD but accesses other resources
         val orderedTargets = Scheduler.sort(scheduler, targets, phase, filter)
@@ -50,7 +53,9 @@ class SimpleExecutor extends Executor {
         orderedTargets.foreach(t => logger.info("  - " + t.identifier))
 
         Status.ofAll(orderedTargets, keepGoing) { target =>
-            fn(execution, target, phase)
+            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+                fn(execution, target, phase)
+            }
         }
     }
 }

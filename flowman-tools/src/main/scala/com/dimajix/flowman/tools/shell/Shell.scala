@@ -17,6 +17,8 @@
 package com.dimajix.flowman.tools.shell
 
 import java.io.File
+import java.io.PrintWriter
+import java.util.UUID
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -30,6 +32,8 @@ import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.impl.DefaultParser
 import org.jline.reader.impl.history.DefaultHistory
+import org.jline.terminal.Terminal
+import org.jline.terminal.Terminal.Signal
 import org.jline.terminal.TerminalBuilder
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
@@ -103,15 +107,18 @@ class Shell(args:Arguments) extends StatefulTool(
     args.sparkMaster,
     args.sparkName
 ) {
-    val historyFile = new File(
+    private val historyFile = new File(
         ProjectDirectories.from("com", "dimajix", "Flowman").dataDir,
         "shell-history")
+    private var jobGroupId:String = ""
+    private var writer:PrintWriter = _
+
     /**
      * Main method for running this command
      * @return
      */
     def run() : Boolean = {
-        val terminal = TerminalBuilder.builder()
+        val terminal:Terminal = TerminalBuilder.builder()
             .build()
         val console = LineReaderBuilder.builder()
             .appName("Flowman")
@@ -124,7 +131,7 @@ class Shell(args:Arguments) extends StatefulTool(
             .completer(new CommandCompleter)
             .history(new DefaultHistory)
             .build()
-        val writer = terminal.writer()
+        writer = terminal.writer()
 
         console.getHistory.load()
         Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
@@ -164,6 +171,7 @@ class Shell(args:Arguments) extends StatefulTool(
                     writer.println("Error parsing command: " + e.getMessage)
             }
 
+            jobGroupId = "flowshell-" + UUID.randomUUID().toString
             try {
                 val command = cmd.command
                 if (command != null) {
@@ -171,7 +179,9 @@ class Shell(args:Arguments) extends StatefulTool(
                         command.printHelp(System.out)
                     }
                     else {
+                        session.spark.sparkContext.setJobGroup(jobGroupId, "Flowman Shell")
                         command.execute(session, project, context)
+                        session.spark.sparkContext.clearJobGroup()
                     }
                 }
             }
@@ -180,6 +190,7 @@ class Shell(args:Arguments) extends StatefulTool(
                     writer.println("Error executing command: " + e.getMessage)
                     e.printStackTrace(writer)
             }
+            jobGroupId = ""
         }
 
         true

@@ -51,6 +51,7 @@ import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
+import com.dimajix.spark.SparkUtils.withJobGroup
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -287,7 +288,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
 
         executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
-            executeTargetPhase(execution, target, phase, token, force, dryRun)
+            val sc = execution.spark.sparkContext
+            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+                executeTargetPhase(execution, target, phase, token, force, dryRun)
+            }
         }
     }
 
@@ -460,7 +464,10 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             // Now run tests if fixtures where successful
             val testStatus =
                 if (buildStatus == Status.SUCCESS || keepGoing) {
-                    executeTestAssertions(execution, context, test, keepGoing, dryRun)
+                    val sc = execution.spark.sparkContext
+                    withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
+                        executeTestAssertions(execution, context, test, keepGoing, dryRun)
+                    }
                 }
                 else {
                     Status.SKIPPED
@@ -575,7 +582,10 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             target.phases.contains(phase)
 
         executor.execute(execution, context, phase, targets, targetFilter, keepGoing) { (execution, target, phase) =>
-            executeTestTargetPhase(execution, target, phase, dryRun)
+            val sc = execution.spark.sparkContext
+            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+                executeTestTargetPhase(execution, target, phase, dryRun)
+            }
         }
     }
 

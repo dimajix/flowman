@@ -58,7 +58,7 @@ extends AbstractMetricSink {
         */
         val metrics = board.metrics(catalog(board), status).flatMap { metric =>
             val name = metric.name
-            val labels = metric.labels.map(kv => s"""${kv._1}="${kv._2}"""").mkString("{", ",", "}")
+            val labels = metric.labels.map(kv => s"""${kv._1}="${sanitize(kv._2)}"""").mkString("{", ",", "}")
             metric match {
                 case gauge: GaugeMetric => Some(name -> s"$name$labels ${gauge.value}")
                 case _ => None
@@ -88,11 +88,17 @@ extends AbstractMetricSink {
             httpClient.execute(httpPost, handler)
         }
         catch {
+            case ex:HttpResponseException =>
+                logger.warn(s"Got error response ${ex.getStatusCode} from Prometheus at $url: ${ex.toString}. Payload was:\n$payload")
             case NonFatal(ex) =>
                 logger.warn(s"Cannot publishing metrics to Prometheus at $url: ${ex.toString}")
         }
         finally {
             httpClient.close()
         }
+    }
+
+    private def sanitize(str:String) : String = {
+        str.replace("\"","\\\"").replace("\n","").trim
     }
 }

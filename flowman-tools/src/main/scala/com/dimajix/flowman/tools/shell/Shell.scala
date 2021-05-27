@@ -18,7 +18,6 @@ package com.dimajix.flowman.tools.shell
 
 import java.io.File
 import java.io.PrintWriter
-import java.util.UUID
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -30,7 +29,6 @@ import dev.dirs.ProjectDirectories
 import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
-import org.jline.reader.impl.DefaultParser
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.Terminal
 import org.jline.terminal.Terminal.Signal
@@ -45,7 +43,6 @@ import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.StatefulTool
-import com.dimajix.flowman.util.withShutdownHook
 
 
 object Shell {
@@ -110,8 +107,6 @@ class Shell(args:Arguments) extends StatefulTool(
     private val historyFile = new File(
         ProjectDirectories.from("com", "dimajix", "Flowman").dataDir,
         "shell-history")
-    private var jobGroupId:String = ""
-    private var writer:PrintWriter = _
 
     /**
      * Main method for running this command
@@ -131,7 +126,15 @@ class Shell(args:Arguments) extends StatefulTool(
             .completer(new CommandCompleter)
             .history(new DefaultHistory)
             .build()
-        writer = terminal.writer()
+        val writer = terminal.writer()
+
+        val signalHandler = new Terminal.SignalHandler {
+            override def handle(signal: Terminal.Signal): Unit = {
+                writer.println("Aborting all Spark jobs on user request")
+                session.spark.sparkContext.cancelAllJobs()
+            }
+        }
+        //terminal.handle(Signal.INT, signalHandler)
 
         console.getHistory.load()
         Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
@@ -171,7 +174,6 @@ class Shell(args:Arguments) extends StatefulTool(
                     writer.println("Error parsing command: " + e.getMessage)
             }
 
-            jobGroupId = "flowshell-" + UUID.randomUUID().toString
             try {
                 val command = cmd.command
                 if (command != null) {
@@ -179,9 +181,7 @@ class Shell(args:Arguments) extends StatefulTool(
                         command.printHelp(System.out)
                     }
                     else {
-                        session.spark.sparkContext.setJobGroup(jobGroupId, "Flowman Shell")
                         command.execute(session, project, context)
-                        session.spark.sparkContext.clearJobGroup()
                     }
                 }
             }
@@ -190,7 +190,6 @@ class Shell(args:Arguments) extends StatefulTool(
                     writer.println("Error executing command: " + e.getMessage)
                     e.printStackTrace(writer)
             }
-            jobGroupId = ""
         }
 
         true

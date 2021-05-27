@@ -5,6 +5,8 @@
 * Fix before/after dependencies in `count` target
 * Remove build profiles for Spark 2.3 and CDH 5.15
 * Add MS SQL Server plugin containing JDBC driver
+* Speed up file listing for `file` relations  
+* Use Spark JobGroups
 
 
 # Version 0.16.0 - 2021-04-23

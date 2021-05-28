@@ -18,8 +18,10 @@ package com.dimajix.flowman.jdbc
 
 import java.util.Locale
 
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
 
+import com.dimajix.flowman.jdbc.MySQLDialect.Statements
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.FieldType
@@ -29,6 +31,8 @@ import com.dimajix.flowman.types.TimestampType
 
 
 object MsSqlServerDialect extends BaseDialect {
+    private object Statements extends MsSqlServerStatements(this)
+
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
 
     override def quoteIdentifier(colName: String): String = {
@@ -41,6 +45,18 @@ object MsSqlServerDialect extends BaseDialect {
         case BooleanType => Some(JdbcType("BIT", java.sql.Types.BIT))
         case BinaryType => Some(JdbcType("VARBINARY(MAX)", java.sql.Types.VARBINARY))
         case ShortType => Some(JdbcType("SMALLINT", java.sql.Types.SMALLINT))
-        case _ => None
+        case _ => super.getJdbcType(dt)
+    }
+
+    override def statement : SqlStatements = Statements
+}
+
+
+class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
+    override def firstRow(table: TableIdentifier, condition:String) : String = {
+        if (condition.isEmpty)
+            s"SELECT TOP 1 * FROM ${dialect.quote(table)}"
+        else
+            s"SELECT TOP 1 * FROM ${dialect.quote(table)} WHERE $condition"
     }
 }

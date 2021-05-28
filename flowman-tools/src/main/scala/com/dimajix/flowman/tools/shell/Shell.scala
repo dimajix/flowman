@@ -37,6 +37,7 @@ import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 
 import com.dimajix.flowman.FLOWMAN_VERSION
+import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
@@ -149,7 +150,7 @@ class Shell(args:Arguments) extends StatefulTool(
 
         writer.println("\nWelcome to")
         writer.println(s"$logo    $FLOWMAN_VERSION\n")
-        writer.println(s"Using Spark version $SPARK_VERSION and Java version $JAVA_VERSION\n")
+        writer.println(s"Using Spark version $SPARK_VERSION and Hadoop version $HADOOP_VERSION and Java version $JAVA_VERSION\n")
         writer.println("Type in 'help' for getting help")
 
         // REPL-loop

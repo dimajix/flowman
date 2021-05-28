@@ -16,15 +16,7 @@
 
 package com.dimajix
 
-import com.dimajix.common.Resources
 
-
-package object flowman {
-    final val SPARK_VERSION = org.apache.spark.SPARK_VERSION
+package object hadoop {
     final val HADOOP_VERSION = org.apache.hadoop.util.VersionInfo.getVersion
-    final val JAVA_VERSION = System.getProperty("java.version")
-    final val FLOWMAN_VERSION = {
-        Resources.loadProperties("com/dimajix/flowman/flowman.properties")
-            .getProperty("version")
-    }
 }

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.splitSettings
@@ -112,7 +113,7 @@ class Driver(options:Arguments) extends Tool {
             )
             val context = session.getContext(project)
 
-            logger.info(s"Flowman $FLOWMAN_VERSION using Spark version $SPARK_VERSION and Java version $JAVA_VERSION")
+            logger.info(s"Flowman $FLOWMAN_VERSION using Spark version $SPARK_VERSION and Hadoop Version $HADOOP_VERSION and Java version $JAVA_VERSION")
 
             val result = options.command.execute(session, project, context)
             session.shutdown()

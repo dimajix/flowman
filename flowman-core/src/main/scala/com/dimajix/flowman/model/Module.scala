@@ -75,7 +75,7 @@ object Module {
                 file.list()
                     .filter(_.isFile)
                     .map(f => loadFile(f))
-                    .reduce((l,r) => l.merge(r))
+                    .foldLeft(Module())((l,r) => l.merge(r))
             }
             else {
                 loadFile(file)

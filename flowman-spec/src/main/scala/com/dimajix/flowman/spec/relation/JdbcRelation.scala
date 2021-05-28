@@ -21,6 +21,7 @@ import java.sql.Statement
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
@@ -167,9 +168,10 @@ case class JdbcRelation(
         val (url,props) = createProperties()
         val dialect = SqlDialects.get(url)
 
-        // Write partition into DataBase
-        val dfExt = addPartition(df, partition)
+        // Apply schema and add partition column
+        val dfExt = addPartition(applyOutputSchema(execution, df), partition)
 
+        // Write partition into DataBase
         if (partition.isEmpty) {
             // Write partition into DataBase
             this.writer(execution, dfExt, "jdbc", Map(), mode.batchMode)
@@ -390,10 +392,17 @@ case class JdbcRelation(
         connection.username.foreach(props.update("user", _))
         connection.password.foreach(props.update("password", _))
 
-        logger.info("Connecting to jdbc source at {}", connection.url)
+        logger.debug("Connecting to jdbc source at {}", connection.url)
 
         val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
-        val conn = JdbcUtils.createConnection(options)
+        val conn = try {
+            JdbcUtils.createConnection(options)
+        } catch {
+            case NonFatal(e) =>
+                logger.error(s"Error connecting to jdbc source at ${connection.url}: ${e.getMessage}")
+                throw e
+        }
+
         try {
             fn(conn, options)
         }

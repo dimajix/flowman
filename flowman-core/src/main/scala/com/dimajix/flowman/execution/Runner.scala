@@ -245,7 +245,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
 
             // First checkJob if execution is really required
             if (canSkip) {
-                logger.info(cyan("Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
+                logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
                 Status.SKIPPED
             }

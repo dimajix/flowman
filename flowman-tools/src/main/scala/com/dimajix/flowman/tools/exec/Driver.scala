@@ -25,14 +25,17 @@ import org.kohsuke.args4j.CmdLineException
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.FLOWMAN_VERSION
+import com.dimajix.flowman.HADOOP_BUILD_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.HADOOP_VERSION
+import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.Tool
 import com.dimajix.flowman.util.ConsoleColors
+import com.dimajix.flowman.util.ConsoleColors.yellow
 
 
 object Driver {
@@ -114,6 +117,12 @@ class Driver(options:Arguments) extends Tool {
             val context = session.getContext(project)
 
             logger.info(s"Flowman $FLOWMAN_VERSION using Spark version $SPARK_VERSION and Hadoop Version $HADOOP_VERSION and Java version $JAVA_VERSION")
+            if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {
+                logger.warn(yellow("Detected Version mismatch between build and execution:"))
+                logger.warn(yellow(s"  Hadoop build version: ${HADOOP_BUILD_VERSION}, Hadoop execution version: ${HADOOP_VERSION}"))
+                logger.warn(yellow(s"  Spark build version: ${SPARK_BUILD_VERSION}, Spark execution version: ${SPARK_VERSION}"))
+                logger.warn(yellow("It is highly recommended to use matching versions, specifically for Spark."))
+            }
 
             val result = options.command.execute(session, project, context)
             session.shutdown()

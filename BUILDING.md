@@ -10,8 +10,7 @@ You need the following tools installed on your machine:
   Java 11). This mainly affects builds with Spark 2.x
 * Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
 * npm (install via package manager or download from https://www.npmjs.com/get-npm)
-* Windows users also need Hadoop winutils installed. Those can be retrieved from 
-https://github.com/steveloughran/winutils or  https://github.com/s911415/apache-hadoop-3.1.0-winutils for Hadoop 3.1
+* Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
 and later. See some additional details for building on Windows below.
 
 
@@ -36,9 +35,9 @@ in a complex environment with Kerberos. You can find the `tar.gz` file in the di
 
 Although you can normally build Flowman on Windows, it is recommended to use Linux instead. But nevertheless Windows
 is still supported to some extend, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
-download the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto 
-your machine (please also consider https://github.com/s911415/apache-hadoop-3.1.0-winutils for Hadoop 3.1 and later). 
-Do not forget to set the HADOOP_HOME or PATH environment variable to the installation directory of these utils!
+download the binaries from https://github.com/cdarlint/winutils and install an appropriate version somewhere onto 
+your machine. Do not forget to set the HADOOP_HOME or PATH environment variable to the installation directory of these 
+utils!
 
 You should also configure git such that all files are checked out using "LF" endings instead of "CRLF", otherwise
 some unittests may fail and Docker images might not be useable. This can be done by setting the git configuration

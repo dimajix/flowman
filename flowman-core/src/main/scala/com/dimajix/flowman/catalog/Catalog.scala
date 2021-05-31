@@ -18,7 +18,7 @@ package com.dimajix.flowman.catalog
 
 import java.io.FileNotFoundException
 
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
@@ -43,7 +43,6 @@ import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -538,11 +537,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val status = fs.getFileStatus(location)
         if (status.isDirectory()) {
             logger.info(s"Deleting all files in directory '$location'")
-            fs.listStatus(location).foreach(f => fs.delete(f.getPath, true))
+            java.lang.System.gc() // Release open file handles on Windows
+            fs.listStatus(location).foreach { f =>
+                doDelete(fs, f.getPath, true)
+            }
         }
         else if (status.isFile()) {
             logger.info(s"Deleting single file '$location'")
-            fs.delete(location, false)
+            doDelete(fs, location, false)
         }
       } catch {
         case _:FileNotFoundException =>
@@ -559,7 +561,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val fs = location.getFileSystem(hadoopConf)
         if (fs.exists(location)) {
             logger.info(s"Deleting file or directory '$location'")
-            fs.delete(location, true)
+            doDelete(fs, location, true)
+        }
+    }
+
+    private def doDelete(fs:FileSystem, location:Path, recursive:Boolean) : Unit = {
+        java.lang.System.gc() // Release open file handles on Windows
+        if (!fs.delete(location, recursive)) {
+            logger.warn(s"Cannot delete file or directory '$location'")
         }
     }
 

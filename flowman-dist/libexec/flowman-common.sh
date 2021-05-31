@@ -5,16 +5,16 @@ export FLOWMAN_HOME=${FLOWMAN_HOME=$(readlink -f $(dirname $0)/..)}
 export FLOWMAN_CONF_DIR=${FLOWMAN_CONF_DIR=$FLOWMAN_HOME/conf}
 
 # Load environment file if present
-if [ -f $FLOWMAN_CONF_DIR/flowman-env.sh ]; then
-    source $FLOWMAN_CONF_DIR/flowman-env.sh
+if [ -f "$FLOWMAN_CONF_DIR/flowman-env.sh" ]; then
+    source "$FLOWMAN_CONF_DIR/flowman-env.sh"
 fi
 
-if [ -f $HADOOP_HOME/etc/hadoop/hadoop-env.sh ]; then
-    source $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+if [ -f "$HADOOP_HOME/etc/hadoop/hadoop-env.sh" ]; then
+    source "$HADOOP_HOME/etc/hadoop/hadoop-env.sh"
 fi
 
 # Set basic Spark options
-: ${SPARK_SUBMIT:=$SPARK_HOME/bin/spark-submit}
+: ${SPARK_SUBMIT:="$SPARK_HOME"/bin/spark-submit}
 : ${SPARK_OPTS:=""}
 : ${SPARK_DRIVER_JAVA_OPTS:="-server"}
 : ${SPARK_EXECUTOR_JAVA_OPTS:="-server"}
@@ -23,13 +23,13 @@ fi
 # Build Spark dist classpath
 if [ "$SPARK_DIST_CLASSPATH" = "" ]; then
     if [ -d "$HADOOP_HOME" ]; then
-        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/*.jar:$HADOOP_HOME/lib/*.jar"
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:"$HADOOP_HOME"/*.jar:$HADOOP_HOME/lib/*.jar"
     fi
     if [ -d "$HADOOP_CONF_DIR" ]; then
-        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_CONF_DIR/*"
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:"$HADOOP_CONF_DIR"/*"
     fi
     if [ -d "$HADOOP_HOME/share/hadoop/common" ]; then
-        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:$HADOOP_HOME/share/hadoop/common/*.jar:$HADOOP_HOME/share/hadoop/common/lib/*.jar"
+        export SPARK_DIST_CLASSPATH="$SPARK_DIST_CLASSPATH:"$HADOOP_HOME"/share/hadoop/common/*.jar:$HADOOP_HOME/share/hadoop/common/lib/*.jar"
     fi
 
     if [ -d "$YARN_HOME" ]; then
@@ -74,6 +74,12 @@ if [ "$SPARK_DRIVER_MEMORY" != "" ]; then
 fi
 
 
+
+flowman_lib() {
+	echo $1 | awk -F, '{for(i=1;i<=NF;i++) printf("%s%s",ENVIRON["FLOWMAN_HOME"]"/lib/"$i,(i<NF)?",":"")}'
+}
+
+
 spark_submit() {
     $SPARK_SUBMIT \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
@@ -81,5 +87,5 @@ spark_submit() {
       --class $3 \
       $SPARK_OPTS \
       --jars $2 \
-      $1 "${@:4}"
+      $FLOWMAN_HOME/lib/$1 "${@:4}"
 }

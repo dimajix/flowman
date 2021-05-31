@@ -184,6 +184,8 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         require(execution != null)
         require(partitions != null)
 
+        java.lang.System.gc() // In Windows, open files may block truncation
+
         if (this.partitions.nonEmpty)
             truncatePartitionedFiles(partitions)
         else
@@ -281,6 +283,8 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       */
     override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
         require(execution != null)
+
+        java.lang.System.gc() // In Windows, open files may block destruction
 
         val dir = localDirectory
         logger.info(s"Removing local directory '$dir' of local file relation")

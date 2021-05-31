@@ -16,22 +16,18 @@
 
 package com.dimajix.flowman.hadoop
 
-import java.io.FileNotFoundException
-import java.io.StringWriter
+import java.io.{FileNotFoundException, StringWriter}
 
-import scala.collection.parallel.ParIterable
-import scala.math.Ordering
-
+import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.templating.Velocity
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileStatus
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
+import org.apache.hadoop.fs.{FileStatus, Path, FileSystem => HadoopFileSystem}
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.templating.Velocity
+import scala.collection.parallel.ParIterable
+import scala.math.Ordering
 
 
 object FileCollector {
@@ -440,7 +436,11 @@ case class FileCollector(
           logger.info(s"Deleting file(s) '$path'")
           val files = try fs.globStatus(path) catch { case _:FileNotFoundException => null }
           if (files != null)
-            files.foreach(f => fs.delete(f.getPath, true))
+            files.foreach { f =>
+                if (!fs.delete(f.getPath, true)) {
+                    logger.warn(s"Cannot delete file '${f.getPath}'")
+                }
+            }
         }
     }
 

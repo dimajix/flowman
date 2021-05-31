@@ -3,7 +3,19 @@
 The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
 is installed on the build machine.
 
-## Build with Maven
+## Prerequisites
+
+You need the following tools installed on your machine:
+* JDK 1.8 or later. If you build a variant with Scala 2.11, you have to use JDK 1.8 (and not anything newer like
+  Java 11). This mainly affects builds with Spark 2.x
+* Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
+* npm (install via package manager or download from https://www.npmjs.com/get-npm)
+* Windows users also need Hadoop winutils installed. Those can be retrieved from 
+https://github.com/steveloughran/winutils or  https://github.com/s911415/apache-hadoop-3.1.0-winutils for Hadoop 3.1
+and later. See some additional details for building on Windows below.
+
+
+# Build with Maven
 
 Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
 
@@ -22,9 +34,11 @@ in a complex environment with Kerberos. You can find the `tar.gz` file in the di
 
 ## Build on Windows
 
-Although you can normally build Flowman on Windows, you will need the Hadoop WinUtils installed. You can download
-the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto your 
-machine. Do not forget to set the HADOOP_HOME environment variable to the installation directory of these utils!
+Although you can normally build Flowman on Windows, it is recommended to use Linux instead. But nevertheless Windows
+is still supported to some extend, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
+download the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto 
+your machine (please also consider https://github.com/s911415/apache-hadoop-3.1.0-winutils for Hadoop 3.1 and later). 
+Do not forget to set the HADOOP_HOME or PATH environment variable to the installation directory of these utils!
 
 You should also configure git such that all files are checked out using "LF" endings instead of "CRLF", otherwise
 some unittests may fail and Docker images might not be useable. This can be done by setting the git configuration

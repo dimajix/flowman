@@ -16,15 +16,13 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.File
-import java.io.PrintWriter
+import java.io.{File, FileOutputStream, PrintWriter}
 import java.nio.file.Paths
 
 import org.apache.hadoop.fs.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.OutputMode

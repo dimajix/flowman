@@ -8,6 +8,7 @@
 * Add MS SQL Server plugin containing JDBC driver
 * Speed up file listing for `file` relations  
 * Use Spark JobGroups
+* Better support running Flowman on Windows with appropriate batch scripts
 
 
 # Version 0.16.0 - 2021-04-23

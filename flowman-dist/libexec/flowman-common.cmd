@@ -34,7 +34,7 @@ if "x%SPARK_EXECUTOR_JAVA_OPTS%"=="x" (
 
 rem Add Optional settings to SPARK_OPTS
 if not "x%KRB_PRINCIPAL%" == "x" (
-    set SPARK_OPTS="--principal %KRB_PRINCIPAL% --keytab %KRB_KEYTAB% %SPARK_OPTS%"
+    set SPARK_OPTS=--principal %KRB_PRINCIPAL% --keytab %KRB_KEYTAB% %SPARK_OPTS%
 )
 if not "x%YARN_QUEUE%" == "x" (
     set SPARK_OPTS=--queue %YARN_QUEUE% %SPARK_OPTS%

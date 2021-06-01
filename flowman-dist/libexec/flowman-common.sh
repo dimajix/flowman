@@ -76,7 +76,7 @@ fi
 
 
 flowman_lib() {
-	echo $1 | awk -F, '{for(i=1;i<=NF;i++) printf("%s%s",ENVIRON["FLOWMAN_HOME"]"/lib/"$i,(i<NF)?",":"")}'
+	echo $1 | awk -F, '{for(i=1;i<=NF;i++) printf("%s%s",ENVIRON["FLOWMAN_HOME"]"/"$i,(i<NF)?",":"")}'
 }
 
 
@@ -86,6 +86,6 @@ spark_submit() {
       --conf spark.execution.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
       --class $3 \
       $SPARK_OPTS \
-      --jars $2 \
+      --jars "$(flowman_lib $2)" \
       $FLOWMAN_HOME/lib/$1 "${@:4}"
 }

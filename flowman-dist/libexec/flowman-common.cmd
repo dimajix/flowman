@@ -1,7 +1,8 @@
+@echo off
+
 rem Set Flowman directories
 if "x%FLOWMAN_HOME%"=="x" (
-	call :NORMALIZEPATH ..
-	set FLOWMAN_HOME=%RETVAL%
+	call :NORMALIZEPATH FLOWMAN_HOME %~dp0\..
 )
 if "x%FLOWMAN_CONF_DIR%"=="x" (
     set FLOWMAN_CONF_DIR=%FLOWMAN_HOME%\conf
@@ -56,9 +57,9 @@ if not "x%SPARK_DRIVER_MEMORY%" == "x" (
 
 
 :: ========== FUNCTIONS ==========
-EXIT /B
+exit /b
 
 :NORMALIZEPATH
-  set RETVAL=%~f1
-  EXIT /B
+  set %~1=%~f2
+  goto :eof
 

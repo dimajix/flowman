@@ -39,6 +39,7 @@
                             <outputAbsoluteArtifactFilename>false</outputAbsoluteArtifactFilename>
                             <fileSeparator>/</fileSeparator>
                             <pathSeparator>,</pathSeparator>
+                            <prefix>lib</prefix>
                             <!-- Manually exclude shaded artifacts -->
                             <excludeArtifactIds>json,org.everit.json.schema,velocity-engine-core</excludeArtifactIds>
                         </configuration>

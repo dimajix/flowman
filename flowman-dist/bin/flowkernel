@@ -7,7 +7,7 @@ APP_NAME="flowman-kernel"
 APP_VERSION="${project.version}"
 APP_MAIN="com.dimajix.flowman.kernel.Application"
 
-APP_JAR="$(flowman_lib $APP_NAME-$APP_VERSION.jar)"
-LIB_JARS="$(flowman_lib ${flowman-kernel.classpath})"
+APP_JAR="$APP_NAME-$APP_VERSION.jar"
+LIB_JARS="${flowman-kernel.classpath}"
 
 spark_submit $APP_JAR $LIB_JARS $APP_MAIN "$@"

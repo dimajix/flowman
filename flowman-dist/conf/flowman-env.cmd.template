@@ -1,0 +1,41 @@
+@echo off
+
+rem Specify Java home (just in case)
+rem set JAVA_HOME=
+
+rem Explicitly override Flowmans home. These settings are detected automatically, but can be overridden
+rem set FLOWMAN_HOME=
+rem set FLOWMAN_CONF_DIR=
+
+rem Specify any environment settings and paths
+rem set SPARK_HOME=
+rem set HADOOP_HOME=
+rem set HADOOP_CONF_DIR=%HADOOP_HOME%/conf
+rem set YARN_HOME=
+rem set HDFS_HOME=
+rem set MAPRED_HOME=
+rem set HIVE_HOME=
+rem set HIVE_CONF_DIR=%HIVE_HOME%/conf
+
+rem Set the Kerberos principal in YARN cluster
+rem set KRB_PRINCIPAL=
+rem set KRB_KEYTAB=
+
+rem Specify the YARN queue to use
+rem set YARN_QUEUE=
+
+rem Specify Spark master
+rem set SPARK_MASTER=
+
+rem Resource configuration. This probably should be overridden either in the application or via the corresponding
+rem Spark config variables in an "environment" section.
+rem set SPARK_EXECUTOR_CORES=4
+rem set SPARK_EXECUTOR_MEMORY=8G
+rem set SPARK_DRIVER_CORES=2
+rem set SPARK_DRIVER_MEMORY=3G
+
+rem Specify additional Spark options to be passed to spark-submit
+rem set SPARK_OPTS=
+
+rem Use a different spark-submit (for example spark2-submit in Cloudera)
+rem set SPARK_SUBMIT=

@@ -32,7 +32,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
+import com.dimajix.flowman.history
 import com.dimajix.flowman.history.StateStore
+import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
@@ -49,6 +51,7 @@ import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
+import com.dimajix.spark.SparkUtils.withJobGroup
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -123,11 +126,12 @@ private[execution] sealed class RunnerImpl {
  * Private implementation of Job specific methods
  */
 private[execution] object JobRunnerImpl {
-    private final case class RunnerJobToken(tokens:Seq[(JobListener, JobToken)]) extends JobToken
-    private final case class RunnerTargetToken(tokens:Seq[(JobListener, TargetToken)]) extends TargetToken
+    private final case class RunnerJobToken(tokens:Seq[(RunnerListener, JobToken)]) extends JobToken
+    private final case class RunnerTargetToken(tokens:Seq[(RunnerListener, TargetToken)]) extends TargetToken
 }
 private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     private val stateStore = runner.stateStore
+    private val stateStoreListener = new StateStoreAdaptorListener(stateStore)
     private val parentExecution = runner.parentExecution
 
     /**
@@ -185,28 +189,29 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             logEnvironment(context)
 
             val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
-            val allHooks = (runner.hooks ++ job.hooks).map(_.instantiate(context))
+            val allHooks = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
             val allMetrics = job.metrics.map(_.instantiate(context))
 
-            withMetrics(execution.metrics, allMetrics) {
-                val startTime = Instant.now()
-                val status = recordJob(instance, phase, allHooks, dryRun) { token =>
-                    try {
-                        withWallTime(execution.metrics, job.metadata, phase) {
+            val startTime = Instant.now()
+            val status = withListeners(job, instance, phase, allHooks) { token =>
+                withMetrics(execution.metrics, allMetrics) {
+                    withWallTime(execution.metrics, job.metadata, phase) {
+                        try {
                             executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing, dryRun)
                         }
-                    }
-                    catch {
-                        case NonFatal(ex) =>
-                            logger.error(s"Caught exception during $title:", ex)
-                            Status.FAILED
+                        catch {
+                            case NonFatal(ex) =>
+                                logger.error(s"Caught exception during $phase $title:", ex)
+                                Status.FAILED
+                        }
                     }
                 }
-                val endTime = Instant.now()
-                val duration = Duration.between(startTime, endTime)
-                logStatus(title, status, duration, endTime)
-                status
             }
+
+            val endTime = Instant.now()
+            val duration = Duration.between(startTime, endTime)
+            logStatus(title, status, duration, endTime)
+            status
         }
     }
 
@@ -235,12 +240,12 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
         val canSkip = !force && checkTarget(instance, phase)
 
-        recordTarget(instance, phase, jobToken, dryRun) {
+        withListeners(target, instance, phase, jobToken) {
             logSubtitle(s"$phase target '${target.identifier}'")
 
             // First checkJob if execution is really required
             if (canSkip) {
-                logger.info(cyan("Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
+                logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
                 Status.SKIPPED
             }
@@ -283,91 +288,83 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
 
         executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
-            executeTargetPhase(execution, target, phase, token, force, dryRun)
+            val sc = execution.spark.sparkContext
+            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+                executeTargetPhase(execution, target, phase, token, force, dryRun)
+            }
         }
     }
 
     /**
-     * Monitors the job execution by invoking all hooks and the state store
+     * Monitors the job execution by invoking all listeners
      * @param job
      * @param phase
-     * @param hooks
+     * @param listeners
      * @param fn
      * @return
      */
-    private def recordJob(job:JobInstance, phase:Phase, hooks:Seq[Hook], dryRun:Boolean)(fn: RunnerJobToken => Status) : Status = {
-        def startJob() : Seq[(JobListener, JobToken)] = {
-            Seq((stateStore, stateStore.startJob(job, phase))) ++
-                hooks.flatMap { hook =>
-                    try {
-                        Some((hook, hook.startJob(job, phase)))
-                    } catch {
-                        case NonFatal(ex) =>
-                            logger.warn("Execution listener threw exception on startJob.", ex)
-                            None
-                    }
-                }
-        }
-
-        def finishJob(tokens:Seq[(JobListener, JobToken)], status:Status) : Unit = {
-            tokens.foreach { case (listener, token)  =>
+    private def withListeners(job:Job, instance:JobInstance, phase:Phase, listeners:Seq[RunnerListener])(fn: RunnerJobToken => Status) : Status = {
+        def startJob() : Seq[(RunnerListener, JobToken)] = {
+            listeners.flatMap { hook =>
                 try {
-                    listener.finishJob(token, status)
+                    Some((hook, hook.startJob(job, instance, phase)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn("Execution listener threw exception on finishJob.", ex)
-                }
-            }
-        }
-
-        if (dryRun) {
-            fn(RunnerJobToken(Seq()))
-        }
-        else {
-            val tokens = startJob()
-            withShutdownHook(finishJob(tokens, Status.FAILED)) {
-                val status = fn(RunnerJobToken(tokens))
-                finishJob(tokens, status)
-                status
-            }
-        }
-    }
-
-    private def recordTarget(target:TargetInstance, phase:Phase, job:RunnerJobToken, dryRun:Boolean)(fn: => Status) : Status = {
-        def startTarget() : Seq[(JobListener, TargetToken)] = {
-            job.tokens.flatMap { case(listener,jobToken) =>
-                try {
-                    Some((listener, listener.startTarget(target, phase, Some(jobToken))))
-                }
-                catch {
-                    case NonFatal(ex) =>
-                        logger.warn("Execution listener threw exception on startTarget.", ex)
+                        logger.warn(s"Execution listener threw exception on startJob: ${ex.toString}.")
                         None
                 }
             }
         }
 
-        def finishTarget(tokens:Seq[(JobListener, TargetToken)], status:Status) : Unit = {
+        def finishJob(tokens:Seq[(RunnerListener, JobToken)], status:Status) : Unit = {
+            tokens.foreach { case (listener, token)  =>
+                try {
+                    listener.finishJob(token, status)
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on finishJob: ${ex.toString}.")
+                }
+            }
+        }
+
+        val tokens = startJob()
+        withShutdownHook(finishJob(tokens, Status.FAILED)) {
+            val status = fn(RunnerJobToken(tokens))
+            finishJob(tokens, status)
+            status
+        }
+    }
+
+    private def withListeners(target:Target, instance:TargetInstance, phase:Phase, job:RunnerJobToken)(fn: => Status) : Status = {
+        def startTarget() : Seq[(RunnerListener, TargetToken)] = {
+            job.tokens.flatMap { case(listener,jobToken) =>
+                try {
+                    Some((listener, listener.startTarget(target, instance, phase, Some(jobToken))))
+                }
+                catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on startTarget: ${ex.toString}.")
+                        None
+                }
+            }
+        }
+
+        def finishTarget(tokens:Seq[(RunnerListener, TargetToken)], status:Status) : Unit = {
             tokens.foreach { case(listener, token) =>
                 try {
                     listener.finishTarget(token, status)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn("Execution listener threw exception on finishTarget.", ex)
+                        logger.warn(s"Execution listener threw exception on finishTarget: ${ex.toString}.")
                 }
             }
         }
 
-        if (dryRun) {
-            fn
-        }
-        else {
-            val tokens = startTarget()
-            withShutdownHook(finishTarget(tokens, Status.FAILED)) {
-                val status = fn
-                finishTarget(tokens, status)
-                status
-            }
+        val tokens = startTarget()
+        withShutdownHook(finishTarget(tokens, Status.FAILED)) {
+            val status = fn
+            finishTarget(tokens, status)
+            status
         }
     }
 
@@ -467,7 +464,10 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             // Now run tests if fixtures where successful
             val testStatus =
                 if (buildStatus == Status.SUCCESS || keepGoing) {
-                    executeTestAssertions(execution, context, test, keepGoing, dryRun)
+                    val sc = execution.spark.sparkContext
+                    withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
+                        executeTestAssertions(execution, context, test, keepGoing, dryRun)
+                    }
                 }
                 else {
                     Status.SKIPPED
@@ -582,7 +582,10 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             target.phases.contains(phase)
 
         executor.execute(execution, context, phase, targets, targetFilter, keepGoing) { (execution, target, phase) =>
-            executeTestTargetPhase(execution, target, phase, dryRun)
+            val sc = execution.spark.sparkContext
+            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+                executeTestTargetPhase(execution, target, phase, dryRun)
+            }
         }
     }
 

@@ -41,7 +41,7 @@ final case class TargetInstance(
     require(target != null)
     require(partitions != null)
 
-    def asMap =
+    def asMap: Map[String, String] =
         Map(
             "namespace" -> namespace,
             "project" -> project,

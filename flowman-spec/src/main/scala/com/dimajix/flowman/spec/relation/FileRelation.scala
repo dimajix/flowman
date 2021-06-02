@@ -130,6 +130,9 @@ case class FileRelation(
         }
 
         logger.info(s"Reading file relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
+        val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
+        val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
+
         val data = mapFiles(partitions) { (partition, paths) =>
             logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
 
@@ -139,8 +142,7 @@ case class FileRelation(
             // Use either load(files) or load(single_file) - this actually results in different code paths in Spark
             // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
             // underlying format implementation
-            val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
-            val df = if (SparkShim.relationSupportsMultiplePaths(providingClass)) {
+            val df = if (multiPath) {
                 reader.load(pathNames: _*)
             }
             else {
@@ -199,7 +201,7 @@ case class FileRelation(
 
         if (this.partitions.nonEmpty) {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
-            collector.collect(partitionSpec).exists(checkPartition)
+            collector.glob(partitionSpec).exists(checkPartition)
         }
         else {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
@@ -298,7 +300,7 @@ case class FileRelation(
     }
 
     /**
-      * Collects files for a given time period using the pattern inside the specification
+      * Collects files for a given time period using the pattern inside the specification.
       *
       * @param partitions
       * @return
@@ -306,24 +308,16 @@ case class FileRelation(
     protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
         require(partitions != null)
 
-        if (this.partitions.nonEmpty)
-            mapPartitionedFiles(partitions)(fn)
-        else
-            Seq(mapUnpartitionedFiles(fn))
-    }
-
-    private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
-        require(partitions != null)
-
-        val resolvedPartitions = resolvePartitions(partitions)
-        if (resolvedPartitions.size > 2)
-            resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
-        else
-            resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
-    }
-
-    private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
-        fn(PartitionSpec(), collector.collect())
+        if (this.partitions.nonEmpty) {
+            val resolvedPartitions = resolvePartitions(partitions)
+            if (resolvedPartitions.size > 2)
+                resolvedPartitions.par.map(p => fn(p, collector.collect(p))).toList
+            else
+                resolvedPartitions.map(p => fn(p, collector.collect(p))).toSeq
+        }
+        else {
+            Seq(fn(PartitionSpec(), collector.collect()))
+        }
     }
 
     private def resolvePartitions(partitions:Map[String,FieldValue]) : Iterable[PartitionSpec] = {

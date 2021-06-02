@@ -135,9 +135,16 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
     }
 
     it should "support local files" in {
-        ResourceIdentifier.ofLocal(new Path("/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
-        ResourceIdentifier.ofLocal(new Path("file:/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
-        ResourceIdentifier.ofLocal(new File("/path/?/with/wildcard")) should be (GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            ResourceIdentifier.ofLocal(new Path("C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/C:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new Path("file:/C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/C:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new File("/C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/C:/path/?/with/wildcard"))
+        }
+        else {
+            ResourceIdentifier.ofLocal(new Path("/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new Path("file:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new File("/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+        }
     }
 
     it should "support Hive databases" in {

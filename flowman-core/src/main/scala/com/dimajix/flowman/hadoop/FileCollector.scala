@@ -16,21 +16,18 @@
 
 package com.dimajix.flowman.hadoop
 
-import java.io.FileNotFoundException
-import java.io.StringWriter
+import java.io.{FileNotFoundException, StringWriter}
 
-import scala.math.Ordering
-
+import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.templating.Velocity
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileStatus
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
+import org.apache.hadoop.fs.{FileStatus, Path, FileSystem => HadoopFileSystem}
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.templating.Velocity
+import scala.collection.parallel.ParIterable
+import scala.math.Ordering
 
 
 object FileCollector {
@@ -125,60 +122,181 @@ case class FileCollector(
         def compare(x: FileStatus, y: FileStatus): Int = x.getPath compareTo y.getPath
     }
 
-    private lazy val templateEngine = Velocity.newEngine()
-    private lazy val templateContext = Velocity.newContext()
+    private val templateEngine = Velocity.newEngine()
+    private val templateContext = Velocity.newContext()
+    private val qualifiedPath = {
+        val fs = path.getFileSystem(hadoopConf)
+        path.makeQualified(fs.getUri, fs.getWorkingDirectory)
+    }
 
+    /**
+     * Resolves the root location and performs any variable substitution.
+     * @return
+     */
     def resolve() : Path = {
         resolve(Seq())
     }
+
+    /**
+     * Resolves a single partition and performs any variable substitution.
+     * @return
+     */
     def resolve(partition:PartitionSpec) : Path = {
         resolve(partition.toSeq)
     }
+
+    /**
+     * Resolves a single partition and performs any variable substitution.
+     * @return
+     */
     def resolve(partition:Map[String,Any]) : Path = {
         resolve(partition.toSeq)
     }
+
+    /**
+     * Resolves a single partition and performs any variable substitution.
+     * @return
+     */
     def resolve(partition:Seq[(String,Any)]) : Path = {
+        val path = resolvePattern(partition)
+        if (path.nonEmpty) {
+            new Path(qualifiedPath, path)
+        }
+        else {
+            qualifiedPath
+        }
+    }
+
+    /**
+     * Resolves a single partition and performs any variable substitution.
+     * @return
+     */
+    def resolvePattern(partition:PartitionSpec) : String = {
+        resolvePattern(partition.toSeq)
+    }
+
+    /**
+     * Resolves a single partition and performs any variable substitution.
+     * @return
+     */
+    def resolvePattern(partition:Map[String,Any]) : String = {
+        resolvePattern(partition.toSeq)
+    }
+
+    /**
+     * Evaluates the pattern with the given partition
+     * @param partition
+     * @return
+     */
+    def resolvePattern(partition:Seq[(String,Any)]) : String = {
         if (pattern.exists(_.nonEmpty)) {
             val context = new VelocityContext(templateContext)
             val partitionValues = defaults ++ partition.toMap
             partitionValues.foreach(kv => context.put(kv._1, kv._2))
             val output = new StringWriter()
             templateEngine.evaluate(context, output, "FileCollector", pattern.get)
-            new Path(path, output.getBuffer.toString)
+            output.getBuffer.toString
         }
         else {
-            path
+            ""
         }
     }
 
     /**
-      * Collects files from the given partitions
-      *
-      * @param partitions
-      * @return
-      */
+     * Collects files from the given partitions.  The [[collect]] series
+     * of methods do not perform any globbing, which means that if the [[FileCollector]] contains any globbing
+     * patterns, those will be returned.  Globbing-patterns which do not match (i.e. no files are found) will not
+     * be returned.
+     *
+     * @param partitions
+     * @return
+     */
     def collect(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
         requirePathAndPattern()
 
-        logger.debug(s"Collecting files in location ${path} with pattern '${pattern.get}'")
-        flatMap(partitions)(collectPath)
-    }
-
-    def collect(partition:PartitionSpec) : Seq[Path] = {
-        requirePathAndPattern()
-
-        logger.debug(s"Collecting files in location ${path} for partition ${partition.spec} using pattern '${pattern.get}'")
-        map(partition)(collectPath)
+        logger.debug(s"Collecting files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.get}'")
+        parFlatMap(partitions)((fs,p) => collectPath(fs,p,false)).toList
     }
 
     /**
-      * Collects files from the configured directory. Does not perform partition resolution
-      *
-      * @return
-      */
+     * Collects files from the given partitions.  The [[collect]] series
+     * of methods do not perform any globbing, which means that if the [[FileCollector]] contains any globbing
+     * patterns, those will be returned. Globbing-patterns which do not match (i.e. no files are found) will not
+     * be returned.
+     *
+     * @param partitions
+     * @return
+     */
+    def collect(partition:PartitionSpec) : Seq[Path] = {
+        requirePathAndPattern()
+
+        logger.debug(s"Collecting files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${pattern.get}'")
+        map(partition)((fs,p) => collectPath(fs,p,false))
+    }
+
+    /**
+     * Collects files from the configured directory. Does not perform partition resolution. The [[collect]] series
+     * of methods do not perform any globbing, which means that if the [[FileCollector]] contains any globbing
+     * patterns, those will be returned. Globbing-patterns which do not match (i.e. no files are found) will not
+     * be returned.
+     *
+     * @return
+     */
     def collect() : Seq[Path] = {
-        logger.debug(s"Collecting files in location ${path}, for all partitions ignoring any pattern")
-        map(collectPath)
+        logger.debug(s"Collecting files in location ${qualifiedPath}, for all partitions ignoring any pattern")
+        map((fs,p) => collectPath(fs,p,false))
+    }
+
+    /**
+     * Collects and globs files from the given partitions. Any globbing patterns will be resolved into individual
+     * files and/or directories.
+     *
+     * @param partitions
+     * @return
+     */
+    def glob(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
+        requirePathAndPattern()
+
+        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.get}'")
+        parFlatMap(partitions)((fs,p) => collectPath(fs,p,true)).toList
+    }
+
+    /**
+     * Collects files from the given partitions. Any globbing patterns will be resolved into individual
+     * files and/or directories.
+     *
+     * @param partitions
+     * @return
+     */
+    def glob(partition:PartitionSpec) : Seq[Path] = {
+        requirePathAndPattern()
+
+        logger.debug(s"Globbing files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${pattern.get}'")
+        map(partition)((fs,p) => collectPath(fs,p,true))
+    }
+
+    /**
+     * Collects files from the configured directory. Does not perform partition resolution. Any globbing patterns will
+     * be resolved into individual files and/or directories.
+     *
+     * @return
+     */
+    def glob() : Seq[Path] = {
+        logger.debug(s"Globbing files in location ${qualifiedPath}, for all partitions ignoring any pattern")
+        map((fs,p) => collectPath(fs,p,true))
+    }
+
+    /**
+     * Creates a single globbing expression for all partitions
+     * @param partitions
+     * @return
+     */
+    def mkGlob(partitions:Iterable[PartitionSpec]) : Path = {
+        requirePathAndPattern()
+
+        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.get}'")
+        val parts = partitions.map(p => resolvePattern(p)).mkString("{",",","}")
+        new Path(qualifiedPath, parts)
     }
 
     /**
@@ -190,7 +308,7 @@ case class FileCollector(
     def delete(partitions:Iterable[PartitionSpec]) : Unit = {
         requirePathAndPattern()
 
-        logger.info(s"Deleting files in location ${path} with pattern '${pattern.get}'")
+        logger.info(s"Deleting files in location ${qualifiedPath} with pattern '${pattern.get}'")
         foreach(partitions)(deletePath)
     }
 
@@ -200,7 +318,7 @@ case class FileCollector(
       * @return
       */
     def delete() : Unit = {
-        logger.info(s"Deleting files in location ${path}, for all partitions ignoring any pattern")
+        logger.info(s"Deleting files in location ${qualifiedPath}, for all partitions ignoring any pattern")
         foreach(deletePath _)
     }
 
@@ -210,7 +328,7 @@ case class FileCollector(
      * @return
      */
     def truncate() : Unit = {
-        logger.info(s"Deleting files in location ${path}, for all partitions ignoring any pattern")
+        logger.info(s"Deleting files in location ${qualifiedPath}, for all partitions ignoring any pattern")
         foreach(truncatePath _)
     }
 
@@ -224,12 +342,12 @@ case class FileCollector(
     def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Iterable[T] = {
         requirePathAndPattern()
 
-        val fs = path.getFileSystem(hadoopConf)
+        val fs = qualifiedPath.getFileSystem(hadoopConf)
         partitions.flatMap(p => fn(fs, resolve(p)))
     }
 
     /**
-      * Maps all partitions using the given function
+      * Maps all partitions using the given function. Note that no globbing will be performed by this function.
       * @param partitions
       * @param fn
       * @tparam T
@@ -238,28 +356,59 @@ case class FileCollector(
     def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Iterable[T] = {
         requirePathAndPattern()
 
-        val fs = path.getFileSystem(hadoopConf)
+        val fs = qualifiedPath.getFileSystem(hadoopConf)
         partitions.map(p => fn(fs, resolve(p)))
     }
 
+    /**
+     * Maps a single partition using the given function. Note that no globbing will be performed by this function.
+     * @param partitions
+     * @param fn
+     * @tparam T
+     * @return
+     */
     def map[T](partition:PartitionSpec)(fn:(HadoopFileSystem,Path) => T) : T = {
         requirePathAndPattern()
 
-        val fs = path.getFileSystem(hadoopConf)
+        val fs = qualifiedPath.getFileSystem(hadoopConf)
         fn(fs, resolve(partition))
     }
 
     def map[T](fn:(HadoopFileSystem,Path) => T) : T = {
         requirePath()
 
-        val fs = path.getFileSystem(hadoopConf)
-        fn(fs,path)
+        val fs = qualifiedPath.getFileSystem(hadoopConf)
+        fn(fs,qualifiedPath)
     }
 
+    def parFlatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : ParIterable[T] = {
+        requirePathAndPattern()
+
+        val fs = qualifiedPath.getFileSystem(hadoopConf)
+        partitions.par.flatMap(p => fn(fs, resolve(p)))
+    }
+
+    def parMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : ParIterable[T] = {
+        requirePathAndPattern()
+
+        val fs = qualifiedPath.getFileSystem(hadoopConf)
+        partitions.par.map(p => fn(fs, resolve(p)))
+    }
+
+    /**
+     * Executes a specific function for a list of partitions. Note that no globbing will be performed by this function.
+     * @param partitions
+     * @param fn
+     */
     def foreach(partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Unit) : Unit = {
         map(partitions)(fn)
     }
 
+    /**
+     * Executes a specific function for a list of partitions. Note that no globbing will be performed by this function.
+     * @param partitions
+     * @param fn
+     */
     def foreach(fn:(HadoopFileSystem,Path) => Unit) : Unit = {
         map(fn)
     }
@@ -279,7 +428,7 @@ case class FileCollector(
     }
 
     private def deletePath(fs:HadoopFileSystem, path:Path) : Unit = {
-        if (!isGlobPath(path)) {
+        if (!FileUtils.isGlobbingPattern(path)) {
           logger.info(s"Deleting directory '$path'")
           fs.delete(path, true)
         }
@@ -287,14 +436,23 @@ case class FileCollector(
           logger.info(s"Deleting file(s) '$path'")
           val files = try fs.globStatus(path) catch { case _:FileNotFoundException => null }
           if (files != null)
-            files.foreach(f => fs.delete(f.getPath, true))
+            files.foreach { f =>
+                if (!fs.delete(f.getPath, true)) {
+                    logger.warn(s"Cannot delete file '${f.getPath}'")
+                }
+            }
         }
     }
 
 
-    private def collectPath(fs:HadoopFileSystem, path:Path) : Seq[Path] = {
-        if (isGlobPath(path)) {
-            globPath(fs, path)
+    private def collectPath(fs:HadoopFileSystem, path:Path, performGlobbing:Boolean) : Seq[Path] = {
+        if (FileUtils.isGlobbingPattern(path)) {
+            if (performGlobbing) {
+                globPath(fs, path)
+            }
+            else {
+                globPathNonEmpty(fs, path)
+            }
         }
         else {
             if (fs.exists(path))
@@ -304,13 +462,17 @@ case class FileCollector(
         }
     }
 
-    private def isGlobPath(pattern: Path): Boolean = {
-        pattern.toString.exists("{}[]*?\\".toSet.contains)
-    }
     private def globPath(fs:HadoopFileSystem, pattern: Path): Seq[Path] = {
         Option(fs.globStatus(pattern)).map { statuses =>
             statuses.map(_.getPath.makeQualified(fs.getUri, fs.getWorkingDirectory)).toSeq
         }.getOrElse(Seq.empty[Path])
+    }
+    private def globPathNonEmpty(fs:HadoopFileSystem, pattern: Path): Seq[Path] = {
+        val nonEmpty = Option(fs.globStatus(pattern)).exists { statuses => statuses.nonEmpty }
+        if (nonEmpty)
+            Seq(pattern)
+        else
+            Seq()
     }
 
     private def requirePathAndPattern() : Unit = {

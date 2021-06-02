@@ -58,6 +58,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         fileSystem.mkdirs(new Path(workingDirectory, "data/2017/06/19/"))
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497830400.i-02255f88.rtb-imp.log")).close()
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f88.rtb-imp.log")).close()
+        fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f89.rtb-imp.log")).close()
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497832200.i-02255f88.rtb-imp.log")).close()
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497833100.i-02255f88.rtb-imp.log")).close()
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497834000.i-02255f88.rtb-imp.log")).close()
@@ -71,7 +72,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(new Path(workingDirectory, "data/2016/02/01"))
             .build()
-        val files = collector.collect()
+        val files = collector.glob()
 
         files.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/02/01")
@@ -83,7 +84,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .path(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
-        val files = collector.collect()
+        val files = collector.glob()
 
         files.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
@@ -94,6 +95,38 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
+    it should "not return empty directories when using glob" in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(workingDirectory)
+            .path(new Path(workingDirectory, "data/2018/0*/0*"))
+            .build()
+        val files = collector.glob()
+
+        files.sortBy(_.toString) should be (Seq())
+    }
+
+    it should "not glob when using collect" in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(workingDirectory)
+            .path(new Path(workingDirectory, "data/2016/0*/0*"))
+            .build()
+        val files = collector.collect()
+
+        files.sortBy(_.toString) should be (Seq(
+            new Path(workingDirectory, "data/2016/0*/0*")
+        ))
+    }
+
+    it should "not return empty directories when using collect" in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(workingDirectory)
+            .path(new Path(workingDirectory, "data/2018/0*/0*"))
+            .build()
+        val files = collector.collect()
+
+        files.sortBy(_.toString) should be (Seq())
+    }
+
     it should "support default values" in {
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
@@ -102,24 +135,24 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
 
-        val files1 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01", "day" -> "03"))))
+        val files1 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01", "day" -> "03"))))
         files1.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03")
         ))
 
-        val files2 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01"))))
+        val files2 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01"))))
         files2.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05")
         ))
 
-        val files3 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016", "day" -> "01"))))
+        val files3 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "day" -> "01"))))
         files3.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/02/01")
         ))
 
-        val files4 = collector.collect(Seq(PartitionSpec(Map("year" -> "2016"))))
+        val files4 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016"))))
         files4.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
@@ -129,7 +162,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect all directories in given daily range (1)" in {
+    it should "glob all directories in given daily range (1)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.FEBRUARY, 2, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -140,7 +173,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
@@ -150,7 +183,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect all files in given daily range (2)" in {
+    it should "glob all files in given daily range (2)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -161,14 +194,14 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
     }
 
-    it should "collect all files in given daily range (3)" in {
+    it should "glob all files in given daily range (3)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 1, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -179,14 +212,14 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
     }
 
-    it should "collect all files in given daily range (4)" in {
+    it should "glob all files in given daily range (4)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 6, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -197,7 +230,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04"),
@@ -205,7 +238,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect all files in given daily range (5)" in {
+    it should "glob all files in given daily range (5)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 4, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 6, 0, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -216,7 +249,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""$ts.format("'data/'yyyy/MM/dd")""")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04"),
@@ -224,7 +257,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect all files in given hourly range (1)" in {
+    it should "glob all files in given hourly range (1)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 1, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 2, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -235,14 +268,14 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/05/01.seq")
         ))
     }
 
-    it should "collect all files in given hourly range (2)" in {
+    it should "glob all files in given hourly range (2)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 2, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -253,7 +286,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03/01.seq"),
@@ -262,7 +295,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect all files in given hourly range (3)" in {
+    it should "glob all files in given hourly range (3)" in {
         val firstDate = UtcTimestamp.of(2016, Month.JANUARY, 3, 0, 0)
         val lastDate = UtcTimestamp.of(2016, Month.JANUARY, 5, 3, 0)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -273,7 +306,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .build()
-        val files = collector.collect(partitions)
+        val files = collector.glob(partitions)
 
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03/01.seq"),
@@ -283,7 +316,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect unixtimestamps as well (1)" in {
+    it should "glob unixtimestamps as well (1)" in {
         val firstDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 0)
         val lastDate = UtcTimestamp.of(2017, Month.JUNE, 19, 23, 59)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -294,11 +327,12 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
             .build()
-        val files = collector.collect(partitions)
 
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2017/06/19/1497830400.i-02255f88.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f88.rtb-imp.log"),
+            new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f89.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497832200.i-02255f88.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497833100.i-02255f88.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497834000.i-02255f88.rtb-imp.log"),
@@ -306,7 +340,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         ))
     }
 
-    it should "collect unixtimestamps as well (2)" in {
+    it should "glob/collect unixtimestamps as well (2)" in {
         val firstDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 15)
         val lastDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 45)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -317,15 +351,22 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
             .build()
-        val files = collector.collect(partitions)
 
-        files.toSeq.sortBy(_.toString) should be (Seq(
+        val globbedFiles = collector.glob(partitions)
+        globbedFiles.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f88.rtb-imp.log"),
+            new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f89.rtb-imp.log"),
             new Path(workingDirectory, "data/2017/06/19/1497832200.i-02255f88.rtb-imp.log")
+        ))
+
+        val collectedFiles = collector.collect(partitions)
+        collectedFiles.toSeq.sortBy(_.toString) should be (Seq(
+            new Path(workingDirectory, "data/2017/06/19/1497831300.i-*.log"),
+            new Path(workingDirectory, "data/2017/06/19/1497832200.i-*.log")
         ))
     }
 
-    it should "collect unixtimestamps as well (3)" in {
+    it should "glob/collect unixtimestamps as well (3)" in {
         val firstDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 15)
         val lastDate = UtcTimestamp.of(2017, Month.JUNE, 19, 0, 44)
         val range = RangeValue(firstDate.toString, lastDate.toString)
@@ -336,9 +377,16 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
             .build()
-        val files = collector.collect(partitions)
 
-        files.size should be (1)
-        files.head.toString should be(workingDirectory.toString + "/data/2017/06/19/1497831300.i-02255f88.rtb-imp.log")
+        val globbedFiles = collector.glob(partitions)
+        globbedFiles.toSeq.sortBy(_.toString) should be(Seq(
+            new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f88.rtb-imp.log"),
+            new Path(workingDirectory, "data/2017/06/19/1497831300.i-02255f89.rtb-imp.log")
+        ))
+
+        val collectedFiles = collector.collect(partitions)
+        collectedFiles.toSeq.sortBy(_.toString) should be(Seq(
+            new Path(workingDirectory, "data/2017/06/19/1497831300.i-*.log")
+        ))
     }
 }

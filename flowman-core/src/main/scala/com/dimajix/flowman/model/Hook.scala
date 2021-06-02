@@ -16,12 +16,15 @@
 
 package com.dimajix.flowman.model
 
+import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.JobListener
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.RunnerListener
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
+import com.dimajix.flowman.execution.TestToken
+import com.dimajix.flowman.execution.Token
 
 
 object Hook {
@@ -51,7 +54,7 @@ object Hook {
 }
 
 
-trait Hook extends Instance with JobListener {
+trait Hook extends Instance with RunnerListener {
     /**
      * Returns the category of this resource
      * @return
@@ -63,7 +66,7 @@ trait Hook extends Instance with JobListener {
      * @param job
      * @return
      */
-    override def startJob(job:JobInstance, phase:Phase) : JobToken
+    override def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken
 
     /**
      * Sets the status of a job after it has been started
@@ -77,7 +80,7 @@ trait Hook extends Instance with JobListener {
      * @param target
      * @return
      */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
+    override def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[Token]) : TargetToken
 
     /**
      * Sets the status of a job after it has been started
@@ -93,4 +96,13 @@ trait Hook extends Instance with JobListener {
  */
 abstract class BaseHook extends AbstractInstance with Hook {
     protected override def instanceProperties: Hook.Properties
+
+    override def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken = new JobToken {}
+    override def finishJob(token: JobToken, status: Status): Unit = {}
+    override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
+    override def finishTarget(token: TargetToken, status: Status): Unit = {}
+    override def startTest(test: Test, instance: TestInstance): TestToken = new TestToken {}
+    override def finishTest(token: TestToken, status: Status): Unit = {}
+    override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
+    override def finishAssertion(token: AssertionToken, status: Status): Unit = {}
 }

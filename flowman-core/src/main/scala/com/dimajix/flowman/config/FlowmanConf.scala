@@ -70,9 +70,13 @@ object FlowmanConf {
         .booleanConf
         .createWithDefault(false)
     val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.executor.class")
-        .doc("Class name for executing targets")
+        .doc("Class name for executor used to run targets")
         .classConf(classOf[Executor])
         .createWithDefault(classOf[SimpleExecutor])
+    val EXECUTION_EXECUTOR_PARALLELISM = buildConf("flowman.execution.executor.parallelism")
+        .doc("Number of parallel targets to execute")
+        .intConf
+        .createWithDefault(4)
     val EXECUTION_SCHEDULER_CLASS = buildConf("flowman.execution.scheduler.class")
         .doc("Class name for scheduling targets")
         .classConf(classOf[Scheduler])

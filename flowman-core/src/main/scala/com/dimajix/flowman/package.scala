@@ -20,10 +20,11 @@ import com.dimajix.common.Resources
 
 
 package object flowman {
+    final private val props = Resources.loadProperties("com/dimajix/flowman/flowman.properties")
     final val SPARK_VERSION = org.apache.spark.SPARK_VERSION
+    final val HADOOP_VERSION = org.apache.hadoop.util.VersionInfo.getVersion
     final val JAVA_VERSION = System.getProperty("java.version")
-    final val FLOWMAN_VERSION = {
-        Resources.loadProperties("com/dimajix/flowman/flowman.properties")
-            .getProperty("version")
-    }
+    final val FLOWMAN_VERSION = props.getProperty("version")
+    final val SPARK_BUILD_VERSION = props.getProperty("spark_version")
+    final val HADOOP_BUILD_VERSION = props.getProperty("hadoop_version")
 }

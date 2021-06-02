@@ -28,20 +28,23 @@ import dev.dirs.ProjectDirectories
 import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
-import org.jline.reader.impl.DefaultParser
 import org.jline.reader.impl.history.DefaultHistory
+import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 
 import com.dimajix.flowman.FLOWMAN_VERSION
+import com.dimajix.flowman.HADOOP_BUILD_VERSION
+import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
+import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.common.Logging
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.StatefulTool
-import com.dimajix.flowman.tools.ToolConfig
-import com.dimajix.flowman.util.withShutdownHook
+import com.dimajix.flowman.util.ConsoleColors.yellow
 
 
 object Shell {
@@ -103,15 +106,16 @@ class Shell(args:Arguments) extends StatefulTool(
     args.sparkMaster,
     args.sparkName
 ) {
-    val historyFile = new File(
+    private val historyFile = new File(
         ProjectDirectories.from("com", "dimajix", "Flowman").dataDir,
         "shell-history")
+
     /**
      * Main method for running this command
      * @return
      */
     def run() : Boolean = {
-        val terminal = TerminalBuilder.builder()
+        val terminal:Terminal = TerminalBuilder.builder()
             .build()
         val console = LineReaderBuilder.builder()
             .appName("Flowman")
@@ -126,6 +130,14 @@ class Shell(args:Arguments) extends StatefulTool(
             .build()
         val writer = terminal.writer()
 
+        val signalHandler = new Terminal.SignalHandler {
+            override def handle(signal: Terminal.Signal): Unit = {
+                writer.println("Aborting all Spark jobs on user request")
+                session.spark.sparkContext.cancelAllJobs()
+            }
+        }
+        //terminal.handle(Signal.INT, signalHandler)
+
         console.getHistory.load()
         Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
 
@@ -139,8 +151,14 @@ class Shell(args:Arguments) extends StatefulTool(
 
         writer.println("\nWelcome to")
         writer.println(s"$logo    $FLOWMAN_VERSION\n")
-        writer.println(s"Using Spark version $SPARK_VERSION and Java version $JAVA_VERSION\n")
-        writer.println("Type in 'help' for getting help")
+        writer.println(s"Using Spark version $SPARK_VERSION and Hadoop version $HADOOP_VERSION and Java version $JAVA_VERSION")
+        if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {
+            writer.println(yellow("Detected Version mismatch between build and execution:"))
+            writer.println(yellow(s"  Hadoop build version: ${HADOOP_BUILD_VERSION}, Hadoop execution version: ${HADOOP_VERSION}"))
+            writer.println(yellow(s"  Spark build version: ${SPARK_BUILD_VERSION}, Spark execution version: ${SPARK_VERSION}"))
+            writer.println(yellow("It is highly recommended to use matching versions, specifically for Spark."))
+        }
+        writer.println("\nType in 'help' for getting help")
 
         // REPL-loop
         while (true) {

@@ -21,6 +21,7 @@ import java.sql.Statement
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
@@ -167,9 +168,10 @@ case class JdbcRelation(
         val (url,props) = createProperties()
         val dialect = SqlDialects.get(url)
 
-        // Write partition into DataBase
-        val dfExt = addPartition(df, partition)
+        // Apply schema and add partition column
+        val dfExt = addPartition(applyOutputSchema(execution, df), partition)
 
+        // Write partition into DataBase
         if (partition.isEmpty) {
             // Write partition into DataBase
             this.writer(execution, dfExt, "jdbc", Map(), mode.batchMode)
@@ -288,18 +290,23 @@ case class JdbcRelation(
         logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                if (this.schema.isEmpty)
+                if (this.schema.isEmpty) {
                     throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' without a schema")
-                val schema = this.schema.get
-                val table = TableDefinition(
-                    tableIdentifier,
-                    schema.fields ++ partitions.map(_.field),
-                    schema.description,
-                    schema.primaryKey
-                )
-                JdbcUtils.createTable(con, table, options)
+                }
+                doCreate(con, options)
             }
         }
+    }
+
+    private def doCreate(con:Connection, options:JDBCOptions): Unit = {
+        val schema = this.schema.get
+        val table = TableDefinition(
+            tableIdentifier,
+            schema.fields ++ partitions.map(_.field),
+            schema.description,
+            schema.primaryKey
+        )
+        JdbcUtils.createTable(con, table, options)
     }
 
     /**
@@ -320,7 +327,32 @@ case class JdbcRelation(
         }
     }
 
-    override def migrate(execution:Execution) : Unit = ???
+    override def migrate(execution:Execution) : Unit = {
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
+
+        // Only try migration if schema is explicitly specified
+        if (schema.isDefined) {
+            // Get Connection
+            val (url, props) = createProperties()
+
+            // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
+            val reader = execution.spark.read
+            val df = reader.jdbc(url, tableIdentifier.unquotedString, props)
+
+            withConnection { (con, options) =>
+                if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
+                    val dfSchema = SchemaUtils.dropMetadata(df.schema)
+                    val curSchema = SchemaUtils.dropMetadata(schema.get.sparkSchema)
+                    if (dfSchema != curSchema) {
+                        logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier")
+                        JdbcUtils.dropTable(con, tableIdentifier, options)
+                        doCreate(con, options)
+                    }
+                }
+            }
+        }
+    }
 
     /**
       * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
@@ -360,10 +392,17 @@ case class JdbcRelation(
         connection.username.foreach(props.update("user", _))
         connection.password.foreach(props.update("password", _))
 
-        logger.info("Connecting to jdbc source at {}", connection.url)
+        logger.debug("Connecting to jdbc source at {}", connection.url)
 
         val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
-        val conn = JdbcUtils.createConnection(options)
+        val conn = try {
+            JdbcUtils.createConnection(options)
+        } catch {
+            case NonFatal(e) =>
+                logger.error(s"Error connecting to jdbc source at ${connection.url}: ${e.getMessage}")
+                throw e
+        }
+
         try {
             fn(conn, options)
         }

@@ -19,10 +19,10 @@ package com.dimajix.flowman.tools.exec
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.ToolConfig
 
 
 class VersionCommand extends Command {

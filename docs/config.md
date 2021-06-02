@@ -31,7 +31,11 @@ the existence of targets to decide if a rebuild is required.
   
 - `flowman.execution.executor.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleExecutor`)*
 Configure the executor to use. The default `SimpleExecutor` will process all targets in the correct order
-sequentially.
+  sequentially. The alternative implementation `com.dimajix.flowman.execution.ParallelExecutor` will run multiple 
+  targets in parallel (if they are not depending on each other)
+  
+- `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)*
+The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
 
 - `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleScheduler`)*
   Configure the scheduler to use. The default `SimpleScheduler` will sort all targets according to their dependency.

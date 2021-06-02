@@ -18,10 +18,10 @@ package com.dimajix.flowman.tools.exec.info
 
 import scala.collection.JavaConverters._
 
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.tools.ToolConfig
 import com.dimajix.flowman.tools.exec.Command
 
 

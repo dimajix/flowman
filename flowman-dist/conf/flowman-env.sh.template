@@ -64,8 +64,8 @@ fi
 https_proxy_host=$(echo $https_proxy | sed 's#.*//\([^:]*\).*#\1#') && \
 https_proxy_port=$(echo $https_proxy | sed 's#.*//[^:]*:\([0-9]*\)#\1#') && \
 if [[ "$https_proxy_host" != "" ]]; then
-    SPARK_DRIVER_JAVA_OPTS="-Dhttps.proxyHost=${http_proxy_host} -Dhttps.proxyPort=${http_proxy_port} $SPARK_DRIVER_JAVA_OPTS"
-    SPARK_EXECUTOR_JAVA_OPTS="-Dhttps.proxyHost=${http_proxy_host} -Dhttps.proxyPort=${http_proxy_port} $SPARK_EXECUTOR_JAVA_OPTS"
+    SPARK_DRIVER_JAVA_OPTS="-Dhttps.proxyHost=${https_proxy_host} -Dhttps.proxyPort=${https_proxy_port} $SPARK_DRIVER_JAVA_OPTS"
+    SPARK_EXECUTOR_JAVA_OPTS="-Dhttps.proxyHost=${https_proxy_host} -Dhttps.proxyPort=${https_proxy_port} $SPARK_EXECUTOR_JAVA_OPTS"
 fi
 
 # Set AWS credentials if required. You can also specify these in project config

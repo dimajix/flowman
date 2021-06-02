@@ -31,6 +31,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
+import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -53,11 +54,7 @@ object Runner {
             PropertyConfigurator.configure(url)
         }
 
-        // Adjust Spark logging level
-        val l = org.apache.log4j.Level.toLevel("WARN")
-        org.apache.log4j.Logger.getLogger("org").setLevel(l)
-        org.apache.log4j.Logger.getLogger("akka").setLevel(l)
-        org.apache.log4j.Logger.getLogger("hive").setLevel(l)
+        Logging.setSparkLogging("WARN")
     }
 
     setupLogging()
@@ -159,12 +156,19 @@ class Runner private(
     sparkMaster:String,
     sparkName:String
 ) {
-
+    /** Temp directory which can be used for storing test data */
     val tempDir : File = createTempDir()
 
+    /** Hive MetaStore directory inside the [[tempDir]] */
     val metastorePath : String = new File(tempDir, "metastore").getCanonicalPath
+
+    /** Hive Warehouse directory inside the [[tempDir]] */
     val warehousePath : String = new File(tempDir, "wharehouse").getCanonicalPath
+
+    /** Spark checkpoint directory inside the [[tempDir]] */
     val checkpointPath : String = new File(tempDir, "checkpoints").getCanonicalPath
+
+    /** Spark streaming checkpoint directory inside the [[tempDir]] */
     val streamingCheckpointPath : String = new File(tempDir, "streamingCheckpoints").getCanonicalPath
 
     // Spark override properties
@@ -218,7 +222,7 @@ class Runner private(
     }
 
     /**
-      * Run a single job within the project
+      * Run the specified phases of a single job within the project with the given arguments
       * @param jobName
       * @param args
       * @return
@@ -229,6 +233,13 @@ class Runner private(
         runJob(job, phases, args)
     }
 
+    /**
+     * RUn the specified phases of a job with the specified arguments
+     * @param job
+     * @param phases
+     * @param args
+     * @return
+     */
     def runJob(job:Job, phases:Seq[Phase], args:Map[String,String]) : Boolean = {
         val runner = session.runner
         val result = runner.executeJob(job, phases, args, force=true)
@@ -240,10 +251,24 @@ class Runner private(
         }
     }
 
+    /**
+     * Run the specified phases of a job with the specified arguments
+     * @param job
+     * @param phases
+     * @param args
+     * @return
+     */
     def runJob(jobName:String, phases:Seq[Phase], args:java.util.Map[String,String]) : Boolean = {
         runJob(jobName, phases, args.asScala.toMap)
     }
 
+    /**
+     * Run the specified phases of a job with the specified arguments (Java API)
+     * @param job
+     * @param phases
+     * @param args
+     * @return
+     */
     def runJob(jobName:String, phases:java.util.List[Phase], args:java.util.Map[String,String]) : Boolean = {
         runJob(jobName, phases.asScala, args.asScala.toMap)
     }
@@ -261,6 +286,11 @@ class Runner private(
         runTest(test)
     }
 
+    /**
+     * Runs an individual test
+     * @param test
+     * @return
+     */
     def runTest(test:Test) : Boolean = {
         val runner = session.runner
         val result = runner.executeTest(test)
@@ -276,10 +306,10 @@ class Runner private(
      * Runs all non-empty tests in a project. Tests without any assertions will be skipped.
      * @return
      */
-    def runTests() : Boolean = {
+    def runTests(parallel:Boolean=false) : Boolean = {
         val context = session.getContext(project)
 
-        project.tests.keys.toSeq.forall { testName =>
+        def run(testName:String) : Boolean = {
             val test = context.getTest(TestIdentifier(testName))
             if (test.assertions.nonEmpty) {
                 runTest(test)
@@ -288,6 +318,12 @@ class Runner private(
                 true
             }
         }
+
+        val testNames = project.tests.keys.toSeq
+        if (parallel)
+            testNames.par.forall(run)
+        else
+            testNames.forall(run)
     }
 
     /**

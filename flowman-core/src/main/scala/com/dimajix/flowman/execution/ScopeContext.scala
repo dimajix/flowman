@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
@@ -105,12 +106,12 @@ final class ScopeContext(
     scopeJobs:Map[String,Template[Job]] = Map(),
     scopeTests:Map[String,Template[Test]] = Map()
 ) extends AbstractContext(fullEnv, fullConfig) {
-    private val mappings = mutable.Map[String,Mapping]()
-    private val relations = mutable.Map[String,Relation]()
-    private val targets = mutable.Map[String,Target]()
-    private val connections = mutable.Map[String,Connection]()
-    private val jobs = mutable.Map[String,Job]()
-    private val tests = mutable.Map[String,Test]()
+    private val mappings = TrieMap[String,Mapping]()
+    private val relations = TrieMap[String,Relation]()
+    private val targets = TrieMap[String,Target]()
+    private val connections = TrieMap[String,Connection]()
+    private val jobs = TrieMap[String,Job]()
+    private val tests = TrieMap[String,Test]()
 
     /**
      * Returns the namespace associated with this context. Can be null
@@ -143,9 +144,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeConnections.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        connections.put(identifier.name, result)
-                        result
+                        connections.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getConnection(identifier)
                 }
             }
@@ -160,9 +159,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeMappings.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        mappings.put(identifier.name, result)
-                        result
+                        mappings.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getMapping(identifier, allowOverrides)
                 }
             }
@@ -177,9 +174,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeRelations.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        relations.put(identifier.name, result)
-                        result
+                        relations.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getRelation(identifier, allowOverrides)
                 }
             }
@@ -194,9 +189,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeTargets.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        targets.put(identifier.name, result)
-                        result
+                        targets.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getTarget(identifier)
                 }
             }
@@ -211,9 +204,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeJobs.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        jobs.put(identifier.name, result)
-                        result
+                        jobs.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getJob(identifier)
                 }
             }
@@ -228,9 +219,7 @@ final class ScopeContext(
                 case Some(result) => result
                 case None => scopeTests.get(identifier.name) match {
                     case Some(spec) =>
-                        val result = spec.instantiate(this)
-                        tests.put(identifier.name, result)
-                        result
+                        tests.getOrElseUpdate(identifier.name, spec.instantiate(this))
                     case None => parent.getTest(identifier)
                 }
             }

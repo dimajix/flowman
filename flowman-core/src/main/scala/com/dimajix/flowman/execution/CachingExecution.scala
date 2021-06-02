@@ -16,7 +16,13 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
+import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
@@ -25,7 +31,7 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
-import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.common.SynchronizedMap
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
@@ -34,21 +40,30 @@ import com.dimajix.flowman.types.StructType
 abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends Execution {
     protected val logger:Logger
 
-    private val frameCache:IdentityHashMap[Mapping,Map[String,DataFrame]] = {
+    private val frameCache:SynchronizedMap[Mapping,Map[String,DataFrame]] = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
                 ce.frameCache
             case _ =>
-                IdentityHashMap[Mapping,Map[String,DataFrame]]()
+                SynchronizedMap(IdentityHashMap[Mapping,Map[String,DataFrame]]())
         }
     }
 
-    private val schemaCache:IdentityHashMap[Mapping, mutable.Map[String,StructType]] = {
+    private val frameCacheFutures:SynchronizedMap[Mapping,Future[Map[String,DataFrame]]] = {
+        parent match {
+            case Some(ce:CachingExecution) if !isolated =>
+                ce.frameCacheFutures
+            case _ =>
+                SynchronizedMap(IdentityHashMap[Mapping,Future[Map[String,DataFrame]]]())
+        }
+    }
+
+    private val schemaCache:SynchronizedMap[Mapping,TrieMap[String,StructType]] = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
                 ce.schemaCache
             case _ =>
-                IdentityHashMap[Mapping, mutable.Map[String,StructType]]()
+                SynchronizedMap(IdentityHashMap[Mapping,TrieMap[String,StructType]]())
         }
     }
 
@@ -60,7 +75,25 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
-        frameCache.getOrElseUpdate(mapping, createTables(mapping))
+        // We do not simply call getOrElseUpdate, since the creation of the DataFrame might be slow and
+        // concurrent trials
+        def createOrWait() : Map[String,DataFrame] = {
+            val p = Promise[Map[String,DataFrame]]()
+            val f = frameCacheFutures.getOrElseUpdate(mapping, p.future)
+            // Check if the returned future is the one we passed in. If that is the case, the current thread
+            // is responsible for fullfilling the promise
+            if (f eq p.future) {
+                val tables = Try(createTables(mapping))
+                p.complete(tables)
+                tables.get
+            }
+            else {
+                // Other threads simply wait for the promise to be fullfilled.
+                Await.result(f, Duration.Inf)
+            }
+        }
+
+        frameCache.getOrElseUpdate(mapping, createOrWait())
     }
 
     /**
@@ -71,7 +104,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @return
      */
     override def describe(mapping:Mapping, output:String) : StructType = {
-        schemaCache.getOrElseUpdate(mapping, mutable.Map())
+        schemaCache.getOrElseUpdate(mapping, TrieMap())
             .getOrElseUpdate(output, {
                 if (!mapping.outputs.contains(output))
                     throw new NoSuchMappingOutputException(mapping.identifier, output)

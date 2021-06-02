@@ -95,7 +95,7 @@ class CountTargetSpec extends TargetSpec {
 
     override def instantiate(context: Context): CountTarget = {
         CountTarget(
-            Target.Properties(context),
+            instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping))
         )
     }

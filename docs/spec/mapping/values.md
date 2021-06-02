@@ -18,8 +18,8 @@ mappings:
         - name: str_col
           type: string
     records:
-        - [1,"some_string"]
-        - [2,"cat"]
+      - [1,"some_string"]
+      - [2,"cat"]
 ```
 
 ```yaml
@@ -30,8 +30,21 @@ mappings:
       int_col: integer
       str_col: string
     records:
-        - [1,"some_string"]
-        - [2,"cat"]
+      - [1,"some_string"]
+      - [2,"cat"]
+```
+
+```yaml
+mappings:
+  fake_input:
+    kind: values
+    columns:
+      int_col: integer
+      str_col: string
+    records:
+      - int_col: 1
+        str_col: "some_string"
+      - str_col: "cat"
 ```
 
 

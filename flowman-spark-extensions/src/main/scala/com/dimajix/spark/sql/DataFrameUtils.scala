@@ -16,6 +16,8 @@
 
 package com.dimajix.spark.sql
 
+import java.util.concurrent.locks.ReentrantLock
+
 import scala.collection.JavaConverters._
 
 import org.apache.commons.lang3.StringUtils
@@ -30,27 +32,45 @@ import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.util.Utils
 
 import com.dimajix.spark.sql.catalyst.PlanUtils
 import com.dimajix.spark.sql.local.csv.CsvOptions
 
 
 object DataFrameUtils {
-    private val csvOptions = new CsvOptions(Map())
     private val rowParserOptions = RowParser.Options()
+    private val tempViewLock = new ReentrantLock
 
+    /**
+     * Creates a DataFrame containing a single Row for a given Schema, either with NULL values or with default values.
+     * @param sparkSession
+     * @param schema
+     * @return
+     */
     def singleRow(sparkSession: SparkSession, schema: StructType): DataFrame = {
         val logicalPlan = PlanUtils.singleRowPlan(schema)
         new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
     }
 
+    /**
+     * Creates a DataFrame from a Spark [[LogicalPlan]]
+     * @param sparkSession
+     * @param logicalPlan
+     * @return
+     */
     def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame = {
         val qe = sparkSession.sessionState.executePlan(logicalPlan)
         qe.assertAnalyzed()
         new Dataset[Row](sparkSession, logicalPlan, RowEncoder(qe.analyzed.schema))
     }
 
+    /**
+     * Creates a DataFrame from a sequence of Spark [[Row]] objects and a Spark schema.
+     * @param sparkSession
+     * @param rows
+     * @param schema
+     * @return
+     */
     def ofRows(sparkSession: SparkSession, rows:Seq[Row], schema:StructType): DataFrame = {
         sparkSession.createDataFrame(rows.asJava, schema)
     }
@@ -95,27 +115,51 @@ object DataFrameUtils {
         withCaches(Seq(df), level)(fn(df))
     }
 
+    /**
+     * Registers a DataFrame as a TempView, executes some code and then removes the TempView again. Note that the
+     * execution will be performed inside a lock, such that multiple threads won't overwrite their temp views
+     * @param name
+     * @param df
+     * @param fn
+     * @tparam T
+     * @return
+     */
     def withTempView[T](name:String,df:DataFrame)(fn: => T) : T = {
         withTempViews(Seq(name -> df))(fn)
     }
 
+    /**
+     * Registers multiple DataFrame as TempViews, executes some code and then removes the TempViews again. Note that the
+     * execution will be performed inside a lock, such that multiple threads won't overwrite their temp views
+     * @param name
+     * @param df
+     * @param fn
+     * @tparam T
+     * @return
+     */
     def withTempViews[T](input:Iterable[(String,DataFrame)])(fn: => T) : T = {
-        // Register all input DataFrames as temp views
-        input.foreach(kv => kv._2.createOrReplaceTempView(kv._1))
+        tempViewLock.lock()
 
-        val result = try {
-            fn
+        try {
+            // Register all input DataFrames as temp views
+            input.foreach(kv => kv._2.createOrReplaceTempView(kv._1))
+
+            try {
+                fn
+            }
+            finally {
+                // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
+                input.foreach(kv => kv._2.sparkSession.sessionState.catalog.dropTempView(kv._1))
+            }
         }
         finally {
-            // Call SessionCatalog.dropTempView to avoid unpersisting the possibly cached dataset.
-            input.foreach(kv => kv._2.sparkSession.sessionState.catalog.dropTempView(kv._1))
+            tempViewLock.unlock()
         }
-
-        result
     }
 
     /**
-     * Creates a DataFrame from a sequence of string array records
+     * Creates a DataFrame from a sequence of string array records. The string values will be converted to appropriate
+     * data types as specified in the schema
      * @param sparkSession
      * @param lines
      * @param schema

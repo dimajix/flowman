@@ -23,6 +23,7 @@ import scala.concurrent.Promise
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.StatusCodes.Found
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
@@ -66,17 +67,19 @@ class Server(
                 ~
                 pathPrefix("swagger") {(
                     pathEndOrSingleSlash {
-                        getFromResource("swagger/index.html")
+                        redirectToTrailingSlashIfMissing(Found) {
+                            getFromResource("swagger/index.html")
+                        }
                     }
                     ~
                     getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
                 )}
                 ~
                 pathEndOrSingleSlash {
-                    getFromResource("META-INF/resources/webjars/flowman-ui/index.html")
+                    getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
                 }
                 ~
-                getFromResourceDirectory("META-INF/resources/webjars/flowman-ui")
+                getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
             )
 
         logger.info("Starting http server")

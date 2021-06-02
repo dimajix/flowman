@@ -95,7 +95,9 @@ object Velocity {
       * Creates a new VelocityEngine
       * @return
       */
-    def newEngine() : VelocityEngine = {
+    def newEngine() : VelocityEngine = singletonEngine
+
+    private lazy val singletonEngine = {
         val ve = new VelocityEngine()
         ve.setProperty(RuntimeConstants.VM_ARGUMENTS_STRICT, "true")
         ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "true")

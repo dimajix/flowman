@@ -22,8 +22,8 @@ import scala.util.Try
 
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.Logging
 import com.dimajix.flowman.tools.Tool
 
 

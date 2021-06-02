@@ -37,7 +37,7 @@ object SystemSettings {
         private val logger = LoggerFactory.getLogger(classOf[SystemSettings])
 
         def file(file: File): SystemSettings = {
-            logger.info(s"Reading system settings file ${file.toString}")
+            logger.info(s"Reading Flowman system settings file ${file.toString}")
             ObjectMapper.read[SystemSettings](file)
         }
         def file(filename:String) : SystemSettings = {
@@ -47,7 +47,7 @@ object SystemSettings {
             ObjectMapper.read[SystemSettings](stream)
         }
         def url(url:URL) : SystemSettings = {
-            logger.info(s"Reading system settings from url ${url.toString}")
+            logger.info(s"Reading Flowman system settings from url ${url.toString}")
             val con = url.openConnection()
             con.setUseCaches(false)
             stream(con.getInputStream)
@@ -56,7 +56,7 @@ object SystemSettings {
             ObjectMapper.parse[SystemSettings](text)
         }
         def default() : SystemSettings = {
-            logger.info(s"Using default system settings")
+            logger.info(s"Using Flowman default system settings")
             new SystemSettings
         }
     }

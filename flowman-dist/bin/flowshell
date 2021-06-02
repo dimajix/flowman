@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-basedir=$(readlink -f $(dirname $0)/..)
-source $basedir/libexec/flowman-common.sh
+basedir=$(readlink -f "$(dirname "$0")"/..)
+source "$basedir"/libexec/flowman-common.sh
 
 APP_NAME="flowman-tools"
 APP_VERSION="${project.version}"
 APP_MAIN="com.dimajix.flowman.tools.shell.Shell"
 
-APP_JAR=$FLOWMAN_HOME/lib/"$APP_NAME-$APP_VERSION.jar"
+APP_JAR="$APP_NAME-$APP_VERSION.jar"
 LIB_JARS="${flowman-tools.classpath}"
 
 spark_submit $APP_JAR $LIB_JARS $APP_MAIN "$@"

@@ -3,7 +3,18 @@
 The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
 is installed on the build machine.
 
-## Build with Maven
+## Prerequisites
+
+You need the following tools installed on your machine:
+* JDK 1.8 or later. If you build a variant with Scala 2.11, you have to use JDK 1.8 (and not anything newer like
+  Java 11). This mainly affects builds with Spark 2.x
+* Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
+* npm (install via package manager or download from https://www.npmjs.com/get-npm)
+* Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
+and later. See some additional details for building on Windows below.
+
+
+# Build with Maven
 
 Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
 
@@ -22,9 +33,11 @@ in a complex environment with Kerberos. You can find the `tar.gz` file in the di
 
 ## Build on Windows
 
-Although you can normally build Flowman on Windows, you will need the Hadoop WinUtils installed. You can download
-the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto your 
-machine. Do not forget to set the HADOOP_HOME environment variable to the installation directory of these utils!
+Although you can normally build Flowman on Windows, it is recommended to use Linux instead. But nevertheless Windows
+is still supported to some extend, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
+download the binaries from https://github.com/cdarlint/winutils and install an appropriate version somewhere onto 
+your machine. Do not forget to set the HADOOP_HOME or PATH environment variable to the installation directory of these 
+utils!
 
 You should also configure git such that all files are checked out using "LF" endings instead of "CRLF", otherwise
 some unittests may fail and Docker images might not be useable. This can be done by setting the git configuration
@@ -46,24 +59,23 @@ the `master` branch really builds clean with all unittests passing on Linux.
 
 ## Build for Custom Spark / Hadoop Version
 
-Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and Hadoop (2.8.5). 
+Per default, Flowman will be built for fairly recent versions of Spark (3.0.2 as of this writing) and Hadoop (3.2.0). 
 But of course you can also build for a different version by either using a profile
 
 ```shell
-mvn install -Pspark2.3 -Phadoop2.7 -DskipTests
+mvn install -Pspark2.4 -Phadoop2.7 -DskipTests
 ```
  
 This will always select the latest bugfix version within the minor version. You can also specify versions explicitly 
 as follows:    
 
 ```shell
-mvn install -Dspark.version=2.2.1 -Dhadoop.version=2.7.3
+mvn install -Dspark.version=2.4.3 -Dhadoop.version=2.7.3
 ```
         
 Note that using profiles is the preferred way, as this guarantees that also dependencies are selected
 using the correct version. The following profiles are available:
 
-* spark-2.3
 * spark-2.4
 * spark-3.0
 * spark-3.1 
@@ -73,36 +85,11 @@ using the correct version. The following profiles are available:
 * hadoop-2.9
 * hadoop-3.1
 * hadoop-3.2
-* CDH-5.15
 * CDH-6.3
 
 With these profiles it is easy to build Flowman to match your environment. 
 
 ## Building for Open Source Hadoop and Spark
-
-### Spark 2.3 and Hadoop 2.6:
-
-```shell
-mvn clean install -Pspark-2.3 -Phadoop-2.6
-```
-
-### Spark 2.3 and Hadoop 2.7:
-
-```shell
-mvn clean install -Pspark-2.3 -Phadoop-2.7
-```
-
-### Spark 2.3 and Hadoop 2.8:
-
-```shell
-mvn clean install -Pspark-2.3 -Phadoop-2.8
-```
-
-### Spark 2.3 and Hadoop 2.9:
-
-```shell
-mvn clean install -Pspark-2.3 -Phadoop-2.9
-```
 
 ### Spark 2.4 and Hadoop 2.6:
 
@@ -148,13 +135,7 @@ mvn clean install -Pspark-3.1 -Phadoop-3.2
 
 ## Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera.
-
-```shell
-mvn clean install -Pspark-2.3 -PCDH-5.15 -DskipTests
-```
-    
-Or for Cloudera 6.3 
+The Maven project also contains preconfigured profiles for Cloudera CDH 6.3.
 
 ```shell
 mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests

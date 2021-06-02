@@ -22,6 +22,10 @@ import org.apache.hadoop.fs.Path
 
 
 object FileUtils {
+    def isGlobbingPattern(pattern: Path) : Boolean = {
+        pattern.toString.exists("{}[]*?\\".toSet.contains)
+    }
+
     /**
      * Returns true if the path refers to a successfully written Hadoop/Spark job. This is the case if either the
      * location refers to an existing file or if the location refers to a directory which contains a "_SUCCESS" file.

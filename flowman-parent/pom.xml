@@ -10,8 +10,8 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.16.0</version>
-        <relativePath>..</relativePath>
+        <version>0.17.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <build>
@@ -97,7 +97,7 @@
                     <inherited>true</inherited>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.4.0</version>
+                    <version>4.5.1</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
@@ -119,17 +119,9 @@
                     </configuration>
                     <executions>
                         <execution>
-                            <id>scala-compile-first</id>
-                            <phase>process-resources</phase>
                             <goals>
                                 <goal>add-source</goal>
                                 <goal>compile</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>scala-test-compile</id>
-                            <phase>process-test-resources</phase>
-                            <goals>
                                 <goal>testCompile</goal>
                             </goals>
                         </execution>
@@ -256,6 +248,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-common</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>
@@ -317,6 +315,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mysql</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mssqlserver</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -424,12 +428,6 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.databricks</groupId>
-                <artifactId>spark-avro_${scala.api_version}</artifactId>
-                <version>${spark-avro.version}</version>
                 <scope>provided</scope>
             </dependency>
 

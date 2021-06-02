@@ -60,20 +60,19 @@ You might also want to skip unittests (the HBase plugin is currently failing und
 
 ### Build for Custom Spark / Hadoop Version
 
-Per default, Flowman will be built for fairly recent versions of Spark (2.4.5 as of this writing) and Hadoop (2.8.5). 
+Per default, Flowman will be built for fairly recent versions of Spark (3.0.2 as of this writing) and Hadoop (3.2.0). 
 But of course you can also build for a different version by either using a profile
     
-    mvn install -Pspark2.2 -Phadoop2.7 -DskipTests
+    mvn install -Pspark2.4 -Phadoop2.7 -DskipTests
     
 This will always select the latest bugfix version within the minor version. You can also specify versions explicitly 
 as follows:    
 
-    mvn install -Dspark.version=2.2.1 -Dhadoop.version=2.7.3
+    mvn install -Dspark.version=2.4.1 -Dhadoop.version=2.7.3
         
 Note that using profiles is the preferred way, as this guarantees that also dependencies are selected
 using the correct version. The following profiles are available:
 
-* spark-2.3
 * spark-2.4
 * spark-3.0
 * spark-3.1
@@ -83,28 +82,11 @@ using the correct version. The following profiles are available:
 * hadoop-2.9
 * hadoop-3.1
 * hadoop-3.2
-* CDH-5.15
 * CDH-6.3
 
 With these profiles it is easy to build Flowman to match your environment. 
 
 ### Building for Open Source Hadoop and Spark
-
-Spark 2.3 and Hadoop 2.6:
-
-    mvn clean install -Pspark-2.3 -Phadoop-2.6
-    
-Spark 2.3 and Hadoop 2.7:
-    
-    mvn clean install -Pspark-2.3 -Phadoop-2.7
-
-Spark 2.3 and Hadoop 2.8:
-
-    mvn clean install -Pspark-2.3 -Phadoop-2.8
-
-Spark 2.3 and Hadoop 2.9:
-
-    mvn clean install -Pspark-2.3 -Phadoop-2.9
 
 Spark 2.4 and Hadoop 2.6:
 
@@ -137,11 +119,7 @@ Spark 3.1 and Hadoop 3.2
 
 ### Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera.
-
-    mvn clean install -Pspark-2.3 -PCDH-5.15 -DskipTests
-    
-Or for Cloudera 6.3 
+The Maven project also contains preconfigured profiles for Cloudera CDH 6.3.
 
     mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
 

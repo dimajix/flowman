@@ -25,15 +25,23 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
+import com.dimajix.flowman.execution.TestToken
+import com.dimajix.flowman.execution.Token
+import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Hook
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestInstance
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
 
@@ -66,8 +74,8 @@ case class WebHook(
      * @param job
      * @return
      */
-    override def startJob(job: JobInstance, phase: Phase): JobToken = {
-        val env = job.asMap -- context.environment.keys
+    override def startJob(job:Job, instance: JobInstance, phase: Phase): JobToken = {
+        val env = instance.asMap -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)
     }
@@ -96,8 +104,12 @@ case class WebHook(
      * @param target
      * @return
      */
-    override def startTarget(target: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken =  {
-        val env = parent.map(_.asInstanceOf[DummyJobToken].env).getOrElse(Map()) ++ target.asMap -- context.environment.keys
+    override def startTarget(target:Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken =  {
+        val parentEnv = parent.map {
+                case t:DummyJobToken => t.env
+                case _ => Map()
+            }.getOrElse(Map())
+        val env = parentEnv ++ instance.asMap -- context.environment.keys
         invoke(targetStart, env)
         DummyTargetToken(env)
     }

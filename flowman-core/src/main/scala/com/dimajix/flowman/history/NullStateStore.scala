@@ -16,10 +16,8 @@
 
 package com.dimajix.flowman.history
 
-import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.TargetInstance
 

@@ -16,17 +16,16 @@
 
 package com.dimajix.flowman.history
 
-import com.dimajix.flowman.execution.JobListener
-import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.TargetInstance
 
 
+abstract class JobToken
+abstract class TargetToken
 
-abstract class StateStore extends JobListener {
+abstract class StateStore {
     /**
       * Returns the state of a job, or None if no information is available
       * @param job
@@ -39,14 +38,14 @@ abstract class StateStore extends JobListener {
       * @param job
       * @return
       */
-    override def startJob(job:JobInstance, phase:Phase) : JobToken
+    def startJob(job:JobInstance, phase:Phase) : JobToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    override def finishJob(token:JobToken, status:Status) : Unit
+    def finishJob(token:JobToken, status:Status) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -60,14 +59,14 @@ abstract class StateStore extends JobListener {
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
+    def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    override def finishTarget(token:TargetToken, status:Status) : Unit
+    def finishTarget(token:TargetToken, status:Status) : Unit
 
     /**
       * Returns a list of job matching the query criteria

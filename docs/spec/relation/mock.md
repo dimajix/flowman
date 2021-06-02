@@ -13,6 +13,33 @@ relations:
     relation: real_relation
 ```
 
+```yaml
+relations:
+  some_relation:
+    kind: mock
+    relation: some_relation
+    records:
+        - [1,2,"some_string",""]
+        - [2,null,"cat","black"]
+```
+
+```yaml
+relations:
+  data_raw:
+    kind: mock
+    records:
+      - Campaign ID: DIR_36919
+        LineItemID ID: DIR_260390
+        SiteID ID: 23374
+        CreativeID ID: 292668
+        PlacementID ID: 108460
+      - Campaign ID: DIR_36919
+        LineItemID ID: DIR_260390
+        SiteID ID: 23374
+        CreativeID ID: 292668
+        PlacementID ID: 108460
+```
+
 ## Fields
 * `kind` **(mandatory)** *(string)*: `null` or `empty`
 

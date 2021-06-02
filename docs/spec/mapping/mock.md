@@ -15,12 +15,30 @@ mappings:
 
 ```yaml
 mappings:
-  empty_mapping:
+  some_other_mapping:
     kind: mock
     mapping: some_mapping
     records:
       - [1,2,"some_string",""]
       - [2,null,"cat","black"]
+```
+
+```yaml
+mappings:
+  some_mapping:
+    kind: mock
+    mapping: some_mapping
+    records:
+      - Campaign ID: DIR_36919
+        LineItemID ID: DIR_260390
+        SiteID ID: 23374
+        CreativeID ID: 292668
+        PlacementID ID: 108460
+      - Campaign ID: DIR_36919
+        LineItemID ID: DIR_260390
+        SiteID ID: 23374
+        CreativeID ID: 292668
+        PlacementID ID: 108460
 ```
 
 ## Fields
@@ -39,7 +57,7 @@ mappings:
     * `MEMORY_AND_DISK_SER`
 
 * `mapping` **(optional)** *(type: string)*:
-  Specifies the name of the mapping to be mocked. If no name is given, the a mapping with the same name will be 
+  Specifies the name of the mapping to be mocked. If no name is given, then a mapping with the same name will be 
   mocked. Note that this will only work when used as an override mapping in test cases, otherwise an infinite loop
   would be created by referencing to itself.
 

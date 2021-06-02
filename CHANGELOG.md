@@ -1,4 +1,4 @@
-# Version 0.17.0
+# Version 0.17.0 - 2021-06-02
 
 * New Flowman Kernel and Flowman Studio application prototypes
 * New ParallelExecutor

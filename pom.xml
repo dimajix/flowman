@@ -157,7 +157,7 @@
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
-                <spark.version>2.4.0-cdh6.3.3</spark.version>
+                <spark.version>2.4.0-cdh6.3.4</spark.version>
                 <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.4</spark-api.version>
                 <hadoop.version>3.0.0-${cdh.version}</hadoop.version>

@@ -62,9 +62,12 @@
         <re2j.version>1.1</re2j.version>
         <scalamock.version>5.1.0</scalamock.version>
         <protobuf.version>2.5.0</protobuf.version>
+        <joda-time.version>2.10.5</joda-time.version>
+        <joda-time.scope>compile</joda-time.scope>
         <commons-cli.version>1.2</commons-cli.version>
         <commons-compiler.version>3.0.9</commons-compiler.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
+        <commons-dbcp.scope>compile</commons-dbcp.scope>
         <commons-digester.version>1.8.1</commons-digester.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <commons-io.version>2.4</commons-io.version>
@@ -73,6 +76,7 @@
         <commons-math3.version>3.4.1</commons-math3.version>
         <commons-net.version>3.1</commons-net.version>
         <commons-pool.version>1.5.4</commons-pool.version>
+        <commons-pool.scope>compile</commons-pool.scope>
         <commons-text.version>1.6</commons-text.version>
         <commons-validator.version>1.6</commons-validator.version>
         <netty.version>3.9.9.Final</netty.version>
@@ -147,7 +151,7 @@
             </repositories>
             <properties>
                 <hadoop.dist>cdh6</hadoop.dist>
-                <cdh.version>cdh6.3.3</cdh.version>
+                <cdh.version>cdh6.3.4</cdh.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
@@ -173,6 +177,10 @@
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
+                <joda-time.version>2.9.9</joda-time.version>
+                <joda-time.scope>provided</joda-time.scope>
+                <commons-pool.scope>provided</commons-pool.scope>
+                <commons-dbcp.scope>provided</commons-dbcp.scope>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
@@ -215,6 +223,8 @@
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
+                <joda-time.version>2.9.3</joda-time.version>
+                <joda-time.scope>compile</joda-time.scope>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.8.1</commons-compress.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
@@ -245,6 +255,7 @@
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
+                <joda-time.version>2.10.5</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.20</commons-compress.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
@@ -275,6 +286,7 @@
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
+                <joda-time.version>2.10.5</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.20</commons-compress.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
@@ -1034,6 +1046,13 @@
             </dependency>
 
             <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda-time.version}</version>
+                <scope>${joda-time.scope}</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.xerial.snappy</groupId>
                 <artifactId>snappy-java</artifactId>
                 <version>${snappy.version}</version>
@@ -1426,12 +1445,6 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>commons-dbcp</groupId>
-                <artifactId>commons-dbcp</artifactId>
-                <version>${commons-dbcp.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
@@ -1444,21 +1457,28 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>commons-pool</groupId>
-                <artifactId>commons-pool</artifactId>
-                <version>${commons-pool.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
                 <groupId>commons-compiler</groupId>
                 <artifactId>commons-compiler</artifactId>
                 <version>${commons-compiler.version}</version>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>commons-validator</groupId>
                 <artifactId>commons-validator</artifactId>
                 <version>${commons-validator.version}</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>commons-dbcp</groupId>
+                <artifactId>commons-dbcp</artifactId>
+                <version>${commons-dbcp.version}</version>
+                <scope>${commons-dbcp.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>commons-pool</groupId>
+                <artifactId>commons-pool</artifactId>
+                <version>${commons-pool.version}</version>
+                <scope>${commons-pool.scope}</scope>
             </dependency>
 
             <dependency>

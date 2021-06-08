@@ -1,3 +1,9 @@
+# Version 0.17.1
+
+* Bump CDH version to 6.3.4
+* Fix scope of some dependencies
+
+
 # Version 0.17.0 - 2021-06-02
 
 * New Flowman Kernel and Flowman Studio application prototypes

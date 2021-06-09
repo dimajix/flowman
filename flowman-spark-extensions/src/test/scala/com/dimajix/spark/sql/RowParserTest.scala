@@ -22,13 +22,13 @@ import java.sql.Timestamp
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.util.BadRecordException
 import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
-import org.apache.spark.unsafe.types.UTF8String
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -38,27 +38,28 @@ import com.dimajix.util.DateTimeUtils
 class RowParserTest extends AnyFlatSpec with Matchers {
     "The RowParser" should "work different data types" in {
         val lines = Seq(
-            Array("1","lala","2.3","2019-02-01","2019-02-01T12:34:00.000"),
-            Array("2","lolo","3.4","2019-02-02","2019-02-01T12:34:00"),
-            Array("","","","",""),
-            Array(null:String,null:String,null:String,null:String,null:String)
+            Array("1","lala","2.3","3.4","2019-02-01","2019-02-01T12:34:00.000"),
+            Array("2","lolo","3.4","4.5","2019-02-02","2019-02-01T12:34:00"),
+            Array("","","","","",""),
+            Array(null:String,null:String,null:String,null:String,null:String,null:String)
         )
         val schema = StructType(Seq(
             StructField("c1", IntegerType),
             StructField("c2", StringType),
             StructField("c3", DoubleType),
-            StructField("c4", DateType),
-            StructField("c5", TimestampType)
+            StructField("c4", DecimalType(30,6)),
+            StructField("c5", DateType),
+            StructField("c6", TimestampType)
         ))
         val parser = new RowParser(schema, RowParser.Options())
 
         val result = lines.map(parser.parse)
 
         result should be (Seq(
-            Row(1,"lala",2.3, Date.valueOf("2019-02-01"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
-            Row(2,"lolo",3.4, Date.valueOf("2019-02-02"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
-            Row(null,null,null,null,null),
-            Row(null,null,null,null,null)
+            Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
+            Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
+            Row(null,null,null,null,null,null),
+            Row(null,null,null,null,null,null)
         ))
     }
 

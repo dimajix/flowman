@@ -3,6 +3,7 @@
 * Bump CDH version to 6.3.4
 * Fix scope of some dependencies
 * Update Spark to 3.1.2
+* Add new `values` relation
 
 
 # Version 0.17.0 - 2021-06-02

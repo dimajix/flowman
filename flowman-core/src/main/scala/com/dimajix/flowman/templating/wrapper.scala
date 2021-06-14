@@ -16,9 +16,11 @@
 
 package com.dimajix.flowman.templating
 
+import java.io.FileInputStream
 import java.io.StringWriter
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -27,6 +29,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.Temporal
 
+import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
@@ -35,9 +38,29 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.util.UtcTimestamp
 
 
+object FileWrapper {
+    def read(str:String) : String = {
+        val input = new FileInputStream(str)
+        try {
+            IOUtils.toString(input, Charset.forName("UTF-8"))
+        }
+        finally {
+            input.close()
+        }
+    }
+}
 case class FileWrapper(file:File) {
     override def toString: String = file.toString
 
+    def read() : String = {
+        val input = file.open()
+        try {
+            IOUtils.toString(input, Charset.forName("UTF-8"))
+        }
+        finally {
+            input.close()
+        }
+    }
     def getParent() : FileWrapper = FileWrapper(file.parent)
     def getAbsPath() : FileWrapper = FileWrapper(file.absolute)
     def getPath() : String = Path.getPathWithoutSchemeAndAuthority(file.path).toString
@@ -208,4 +231,23 @@ object FloatWrapper {
     def valueOf(value:Double) : Double = value
     def parse(value:String) : Double = java.lang.Double.parseDouble(value)
     def valueOf(value:String) : Double = java.lang.Double.parseDouble(value)
+}
+
+object JsonWrapper {
+    private val conf = com.jayway.jsonpath.Configuration
+        .builder()
+        .jsonProvider(new com.jayway.jsonpath.spi.json.JsonOrgJsonProvider())
+        .build();
+
+    def path(json:String, path:String) : Any = {
+        import com.jayway.jsonpath.JsonPath.using
+
+        using(conf).parse(json).read[AnyRef](path) match {
+            case l:org.json.JSONArray => l.get(0)
+            case s:String => s
+            case d:java.lang.Double => d.doubleValue()
+            case i:java.lang.Integer => i.intValue()
+            case b:java.lang.Boolean => b.booleanValue()
+        }
+    }
 }

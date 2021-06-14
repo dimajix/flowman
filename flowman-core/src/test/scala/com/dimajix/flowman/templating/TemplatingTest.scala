@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.templating
 
+import java.io.File
+import java.io.FileOutputStream
+import java.io.PrintWriter
 import java.io.StringWriter
 import java.sql.Date
 import java.time.LocalDate
@@ -26,6 +29,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.util.UtcTimestamp
+import com.dimajix.spark.testing.LocalTempDir
 
 
 object TemplatingTest {
@@ -36,7 +40,7 @@ object TemplatingTest {
 }
 
 
-class TemplatingTest extends AnyFlatSpec with Matchers {
+class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
     private val engine = Velocity.newEngine()
     private val context = Velocity.newContext()
 
@@ -209,6 +213,42 @@ class TemplatingTest extends AnyFlatSpec with Matchers {
         evaluate("$System.getenv('NO_SUCH_ENV', 'default')") should be ("default")
         evaluate("$System.getenv('NO_SUCH_ENV', $System.getenv('PATH'))") should be (System.getenv("PATH"))
         evaluate("$System.getenv('NO_SUCH_ENV', $String.concat('lala/',$System.getenv('PATH')))") should be ("lala/" + System.getenv("PATH"))
+    }
+
+    "File" should "provide access to files" in {
+        val file = new File(tempDir, "text.txt")
+        file.createNewFile()
+        val out = new PrintWriter(new FileOutputStream(file))
+        out.write("This is a test")
+        out.close()
+        evaluate(s"$$File.read('$file')") should be ("This is a test")
+    }
+
+    "JSON" should "provide some JSON functionality" in {
+        val json =
+            """
+              |{"security":
+              |  [
+              |    {
+              |      "key":"user",
+              |      "value":"user1"
+              |    },
+              |    {
+              |      "key":"password",
+              |      "value":"secret"
+              |    }
+              |  ],
+              |  "str":"bar",
+              |  "int":12,
+              |  "bool":true,
+              |  "float":13.2
+              }""".stripMargin
+        evaluate(s"""$$JSON.path('$json', '$$.security[?(@.key=="user")].value')""") should be ("user1")
+        evaluate(s"""$$JSON.path('$json', '$$.security[?(@.key=="password")].value')""") should be ("secret")
+        evaluate(s"""$$JSON.path('$json', '$$.str')""") should be ("bar")
+        evaluate(s"""$$JSON.path('$json', '$$.int')""") should be ("12")
+        evaluate(s"""$$JSON.path('$json', '$$.bool')""") should be ("true")
+        evaluate(s"""$$JSON.path('$json', '$$.float')""") should be ("13.2")
     }
 
     "The Velocity system" should "support new classes via annotation" in {

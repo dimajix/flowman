@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.plugin.aws
+package com.dimajix.flowman.spi
 
 import java.util.ServiceLoader
 
@@ -23,19 +23,20 @@ import scala.collection.JavaConverters._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.spi.LogFilter
 
-
-class AwsLogFilterTest extends AnyFlatSpec with Matchers {
-    "The AwsLogFilter" should "be loadable via ServiceLoader" in {
+class DefaultLogFilterTest extends AnyFlatSpec with Matchers {
+    "The DefaultLogFilter" should "be loadable via ServiceLoader" in {
         val logFilters = ServiceLoader.load(classOf[LogFilter]).iterator().asScala.toSeq
-        logFilters.count(_.isInstanceOf[AwsLogFilter]) should be (1)
+        logFilters.count(_.isInstanceOf[DefaultLogFilter]) should be (1)
     }
 
     it should "redact sensitive keys" in {
-        val filter = new AwsLogFilter
-        filter.filterConfig("some_config", "some_value") should be(Some(("some_config", "some_value")))
-        filter.filterConfig("spark.hadoop.fs.s3a.secret.key", "secret") should be(Some(("spark.hadoop.fs.s3a.secret.key", "***redacted***")))
-        filter.filterConfig("spark.hadoop.fs.s3a.123.secret.key", "secret") should be(Some(("spark.hadoop.fs.s3a.123.secret.key", "***redacted***")))
+        val filter = new DefaultLogFilter
+        filter.filterConfig("some_config", "some_value") should be (Some(("some_config", "some_value")))
+        filter.filterConfig("MyPassword", "secret") should be (Some(("MyPassword", "***redacted***")))
+        filter.filterConfig("MyPasswordId", "123") should be (Some(("MyPasswordId", "123")))
+        filter.filterConfig("my.password", "secret") should be (Some(("my.password", "***redacted***")))
+        filter.filterConfig("my.secret", "secret") should be (Some(("my.secret", "***redacted***")))
+        filter.filterConfig("my.credential", "secret") should be (Some(("my.credential", "***redacted***")))
     }
 }

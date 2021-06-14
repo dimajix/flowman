@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.plugin.aws
+package com.dimajix.flowman.spi
 
-import com.dimajix.flowman.plugin.aws.AwsLogFilter.redactedKeys
-import com.dimajix.flowman.spi.LogFilter
+import java.util.Locale
 
-object AwsLogFilter {
+import com.dimajix.flowman.spi.DefaultLogFilter.redactedKeys
+
+
+object DefaultLogFilter {
     val redactedKeys = Seq(
-        "spark.hadoop.fs.s3a.proxy.password".r,
-        "spark.hadoop.fs.s3a.server-side-encryption.key".r,
-        "spark.hadoop.fs.s3a.*.server-side-encryption.key".r,
-        "spark.hadoop.fs.s3a.secret.key".r,
-        "spark.hadoop.fs.s3a.*.secret.key".r,
-        "spark.hadoop.fs.s3a.session.key".r,
-        "spark.hadoop.fs.s3a.*.session.key".r,
-        "spark.hadoop.fs.s3a.session.token".r,
-        "spark.hadoop.fs.s3a.*.session.token".r
+        "password$".r,
+        "secret$".r,
+        "credential$".r
     )
 }
 
-class AwsLogFilter extends LogFilter {
+class DefaultLogFilter extends LogFilter {
     override def filterConfig(key: String, value: String): Option[(String, String)] = {
-        if (redactedKeys.exists(_.findFirstIn(key).nonEmpty)) {
+        val lwrKey = key.toLowerCase(Locale.ROOT)
+        if (redactedKeys.exists(_.findFirstIn(lwrKey).nonEmpty)) {
             Some((key, "***redacted***"))
         }
         else {

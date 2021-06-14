@@ -86,9 +86,7 @@ abstract class ExternalSchema extends AbstractInstance with Schema {
             val fs = context.fs
             val input = fs.file(file.get).open()
             try {
-                val writer = new StringWriter()
-                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                writer.toString
+                IOUtils.toString(input, Charset.forName("UTF-8"))
             }
             finally {
                 input.close()

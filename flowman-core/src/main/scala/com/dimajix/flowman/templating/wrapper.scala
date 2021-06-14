@@ -236,7 +236,7 @@ object FloatWrapper {
 object JsonWrapper {
     private val conf = com.jayway.jsonpath.Configuration
         .builder()
-        .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonProvider())
+        .jsonProvider(new com.jayway.jsonpath.spi.json.JsonSmartJsonProvider())
         .build();
 
     def path(json:String, path:String) : Any = {

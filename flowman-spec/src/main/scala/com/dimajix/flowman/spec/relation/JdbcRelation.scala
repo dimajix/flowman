@@ -50,6 +50,8 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.JdbcConnection
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
@@ -127,7 +129,6 @@ case class JdbcRelation(
             if (query.nonEmpty) {
                 logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
                 reader.format("jdbc")
-                    .options(properties)
                     .option("query", query.get)
                     .option("url", url)
                     .options(props.asScala)
@@ -336,15 +337,23 @@ case class JdbcRelation(
             // Get Connection
             val (url, props) = createProperties()
 
-            // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
-            val reader = execution.spark.read
-            val df = reader.jdbc(url, tableIdentifier.unquotedString, props)
-
             withConnection { (con, options) =>
+                val dialect = SqlDialects.get(options.url)
+                def getJdbcType(field:Field) : String = {
+                    dialect.getJdbcType(field.ftype)
+                        .getOrElse(throw new IllegalArgumentException(s"Can't get JDBC type for field '${field.name}' with type ${field.ftype}"))
+                        .databaseTypeDefinition
+                }
+
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    val dfSchema = SchemaUtils.dropMetadata(df.schema)
-                    val curSchema = SchemaUtils.dropMetadata(schema.get.sparkSchema)
-                    if (dfSchema != curSchema) {
+                    // Read schema from database using Spark.
+                    val df = execution.spark.read.jdbc(url, tableIdentifier.unquotedString, props)
+
+                    // Map all data types to JDBC types and sort field names
+                    val dfFields = df.schema.fields.map(field => (field.name, getJdbcType(Field.of(field)), field.nullable)).toSeq.sorted
+                    val curFields = schema.get.fields.map(field => (field.name, getJdbcType(field), field.nullable)).sorted
+
+                    if (dfFields != curFields) {
                         logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier")
                         JdbcUtils.dropTable(con, tableIdentifier, options)
                         doCreate(con, options)

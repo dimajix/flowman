@@ -236,14 +236,14 @@ object FloatWrapper {
 object JsonWrapper {
     private val conf = com.jayway.jsonpath.Configuration
         .builder()
-        .jsonProvider(new com.jayway.jsonpath.spi.json.JsonOrgJsonProvider())
+        .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonProvider())
         .build();
 
     def path(json:String, path:String) : Any = {
         import com.jayway.jsonpath.JsonPath.using
 
         using(conf).parse(json).read[AnyRef](path) match {
-            case l:org.json.JSONArray => l.get(0)
+            case l:java.util.List[_] => l.get(0)
             case s:String => s
             case d:java.lang.Double => d.doubleValue()
             case i:java.lang.Integer => i.intValue()

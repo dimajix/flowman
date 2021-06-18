@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.17.0</version>
+        <version>0.17.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -531,6 +531,12 @@
                 <version>${slf4j.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda-time.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.avro</groupId>
@@ -713,6 +719,12 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <groupId>commons-validator</groupId>
+                <artifactId>commons-validator</artifactId>
+                <version>${commons-validator.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>commons-pool</groupId>
                 <artifactId>commons-pool</artifactId>
                 <version>${commons-pool.version}</version>
@@ -722,11 +734,6 @@
                 <groupId>commons-compiler</groupId>
                 <artifactId>commons-compiler</artifactId>
                 <version>${commons-compiler.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-validator</groupId>
-                <artifactId>commons-validator</artifactId>
-                <version>${commons-validator.version}</version>
                 <scope>provided</scope>
             </dependency>
 

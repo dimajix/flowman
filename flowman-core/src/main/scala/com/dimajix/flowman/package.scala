@@ -24,7 +24,9 @@ package object flowman {
     final val SPARK_VERSION = org.apache.spark.SPARK_VERSION
     final val HADOOP_VERSION = org.apache.hadoop.util.VersionInfo.getVersion
     final val JAVA_VERSION = System.getProperty("java.version")
+    final val SCALA_VERSION = scala.util.Properties.versionNumberString
     final val FLOWMAN_VERSION = props.getProperty("version")
     final val SPARK_BUILD_VERSION = props.getProperty("spark_version")
     final val HADOOP_BUILD_VERSION = props.getProperty("hadoop_version")
+    final val SCALA_BUILD_VERSION = props.getProperty("scala_version")
 }

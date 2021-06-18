@@ -42,6 +42,7 @@ object Velocity {
         objects.update(name, obj)
     }
 
+    addObject("File", FileWrapper)
     addObject("Boolean", BooleanWrapper)
     addObject("Integer", IntegerWrapper)
     addObject("Float", FloatWrapper)
@@ -53,6 +54,7 @@ object Velocity {
     addObject("System", SystemWrapper)
     addObject("String", StringWrapper)
     addObject("URL", URLWrapper)
+    addObject("JSON", JsonWrapper)
 
 
     /**

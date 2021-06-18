@@ -138,7 +138,8 @@ class RowParser(schema: StructType, options:RowParser.Options) {
         case dt: DecimalType => (d: String) =>
             nullSafeDatum(d, name, nullable) { datum =>
                 val value = new BigDecimal(datum.replaceAll(",", ""))
-                Decimal(value, dt.precision, dt.scale)
+                //Decimal(value, dt.precision, dt.scale)
+                value
             }
 
         case _: TimestampType => (d: String) =>

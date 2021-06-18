@@ -43,6 +43,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
   */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "const", value = classOf[ValuesRelationSpec]),
     new JsonSubTypes.Type(name = "empty", value = classOf[NullRelationSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "generic", value = classOf[GenericRelationSpec]),
@@ -56,6 +57,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
     new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
+    new JsonSubTypes.Type(name = "values", value = classOf[ValuesRelationSpec]),
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {

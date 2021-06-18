@@ -120,7 +120,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         val strSchema = table.fields.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype)
-                .getOrElse(throw new IllegalArgumentException(s"Can't get JDBC type for ${field.ftype}"))
+                .getOrElse(throw new IllegalArgumentException(s"Can't get JDBC type for field '${field.name}' with type ${field.ftype}"))
                 .databaseTypeDefinition
             val nullable = if (field.nullable) ""
             else "NOT NULL"

@@ -38,6 +38,7 @@ import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
 import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
+import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
@@ -151,7 +152,7 @@ class Shell(args:Arguments) extends StatefulTool(
 
         writer.println("\nWelcome to")
         writer.println(s"$logo    $FLOWMAN_VERSION\n")
-        writer.println(s"Using Spark version $SPARK_VERSION and Hadoop version $HADOOP_VERSION and Java version $JAVA_VERSION")
+        writer.println(s"Using Spark $SPARK_VERSION and Hadoop $HADOOP_VERSION and Scala $SCALA_VERSION (Java $JAVA_VERSION)")
         if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {
             writer.println(yellow("Detected Version mismatch between build and execution:"))
             writer.println(yellow(s"  Hadoop build version: ${HADOOP_BUILD_VERSION}, Hadoop execution version: ${HADOOP_VERSION}"))

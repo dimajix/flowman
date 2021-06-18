@@ -21,6 +21,7 @@ import java.sql.Timestamp
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -32,30 +33,32 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
+import com.dimajix.util.DateTimeUtils
 
 
 class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "DataFrameUtils.ofStringValues" should "create a DataFrame" in {
         val lines = Seq(
-            Array("1","lala","2.3","2019-02-01","2019-02-01T12:34:00.000"),
-            Array("2","","3.4","","2019-02-01T12:34:00"),
-            Array("","","","",""),
-            Array(null:String,null,null,null,null)
+            Array("1","lala","2.3","3.4","2019-02-01","2019-02-01T12:34:00.000"),
+            Array("2","lolo","3.4","4.5","2019-02-02","2019-02-01T12:34:00"),
+            Array("","","","","",""),
+            Array(null:String,null:String,null:String,null:String,null:String,null:String)
         )
         val schema = StructType(Seq(
             StructField("c1", IntegerType),
             StructField("c2", StringType),
             StructField("c3", DoubleType),
-            StructField("c4", DateType),
-            StructField("c5", TimestampType)
+            StructField("c4", DecimalType(30,6)),
+            StructField("c5", DateType),
+            StructField("c6", TimestampType)
         ))
         val df = DataFrameUtils.ofStringValues(spark, lines, schema)
 
         df.collect() should be (Seq(
-            Row(1,"lala",2.3, Date.valueOf("2019-02-01"),Timestamp.valueOf("2019-02-01 12:34:00")),
-            Row(2,null,3.4,null,Timestamp.valueOf("2019-02-01 12:34:00")),
-            Row(null,null,null,null,null),
-            Row(null,null,null,null,null)
+            Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
+            Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
+            Row(null,null,null,null,null,null),
+            Row(null,null,null,null,null,null)
         ))
         df.schema should be (schema)
     }
@@ -78,12 +81,13 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("c1", IntegerType),
             StructField("c2", StringType),
             StructField("c3", DoubleType),
-            StructField("c4", DateType)
+            StructField("c4", DecimalType(30,6)),
+            StructField("c5", DateType)
         ))
         val lines = Seq(
-            Array("1","lala","2.3","2019-02-01"),
-            Array("2","","3.4",""),
-            Array("",null,"",null)
+            Array("1","lala","2.3","2.5","2019-02-01"),
+            Array("2","","3.4","",""),
+            Array("",null,"",null,null)
         )
         val df1 = DataFrameUtils.ofStringValues(spark, lines, schema)
         val df2 = DataFrameUtils.ofStringValues(spark, lines, schema)
@@ -100,12 +104,13 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("c1", IntegerType),
             StructField("c2", StringType),
             StructField("c3", DoubleType),
-            StructField("c4", DateType)
+            StructField("c4", DecimalType(30,6)),
+            StructField("c5", DateType)
         ))
         val lines = Seq(
-            Array("1","lala","2.3","2019-02-01"),
-            Array("2","","3.4",""),
-            Array("",null,"",null)
+            Array("1","lala","2.3","4.5","2019-02-01"),
+            Array("2","","3.4","", ""),
+            Array("",null,"",null, null)
         )
         val df1 = DataFrameUtils.ofStringValues(spark, lines, schema)
         val df2 = DataFrameUtils.ofStringValues(spark, lines, schema)
@@ -120,12 +125,13 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("c1", IntegerType),
             StructField("c2", StringType),
             StructField("c3", DoubleType),
-            StructField("c4", DateType)
+            StructField("c4", DecimalType(30,6)),
+            StructField("c5", DateType)
         ))
         val lines = Seq(
-            Array("1","lala","2.3","2019-02-01"),
-            Array("2","","3.4",""),
-            Array("",null,"",null)
+            Array("1","lala","2.3","2.5","2019-02-01"),
+            Array("2","","3.4","",""),
+            Array("",null,"",null,null)
         )
         val df1 = DataFrameUtils.ofStringValues(spark, lines, schema)
 

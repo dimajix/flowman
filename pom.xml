@@ -104,7 +104,7 @@
         <zookeeper.version>3.5.7</zookeeper.version>
         <avro.version>1.8.2</avro.version>
         <json4s.version>3.7.0-M5</json4s.version>
-        <json-smart.version>2.3</json-smart.version>
+        <json-smart.version>2.4.1</json-smart.version>
         <guava.version>14.0.1</guava.version>
         <slf4j.version>1.7.30</slf4j.version>
         <httpclient.version>4.5.6</httpclient.version>

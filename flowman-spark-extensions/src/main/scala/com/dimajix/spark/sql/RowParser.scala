@@ -146,12 +146,13 @@ class RowParser(schema: StructType, options:RowParser.Options) {
             nullSafeDatum(d, name, nullable) { datum =>
                 // This one will lose microseconds parts.
                 // See https://issues.apache.org/jira/browse/SPARK-10681.
-                Try(new Timestamp(options.timestampFormat.parse(datum).getTime))
-                    .getOrElse {
-                        // If it fails to parse, then tries the way used in 2.0 and 1.x for backwards
-                        // compatibility.
-                        new Timestamp(DateTimeUtils.stringToTime(datum).getTime)
-                    }
+                Try {
+                    new Timestamp(options.timestampFormat.parse(datum).getTime)
+                }.getOrElse {
+                    // If it fails to parse, then tries the way used in 2.0 and 1.x for backwards
+                    // compatibility.
+                    new Timestamp(DateTimeUtils.stringToTime(datum).getTime)
+                }
             }
 
         case _: DateType => (d: String) =>

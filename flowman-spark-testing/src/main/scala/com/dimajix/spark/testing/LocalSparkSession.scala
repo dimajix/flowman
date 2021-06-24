@@ -45,6 +45,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             .master("local[4]")
             .config("spark.ui.enabled", "false")
             .config("spark.sql.shuffle.partitions", "8")
+            .config("spark.sql.session.timeZone", "UTC")
 
         val localMetastorePath = new File(tempDir, "metastore").getCanonicalPath
         val localWarehousePath = new File(tempDir, "wharehouse").getCanonicalPath

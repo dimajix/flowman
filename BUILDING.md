@@ -12,7 +12,7 @@ You need the following tools installed on your machine:
 * npm (install via package manager or download from https://www.npmjs.com/get-npm)
 * Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
 and later. See some additional details for building on Windows below.
-
+  
 
 # Build with Maven
 
@@ -27,6 +27,23 @@ mvn clean install
 The main artifacts will be a Docker image 'dimajix/flowman' and additionally a tar.gz file containing a runnable 
 version of Flowman for direct installation in cases where Docker is not available or when you want to run Flowman 
 in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
+
+## Skip Tests
+
+In case you don't want to run tests, you can simply append `-DskipTests`
+
+```shell
+mvn clean install -DskipTests
+```
+
+## Skip Docker Image
+
+In case you don't want to build the Docker image (for example when the build itself is done within a Docker container), 
+you can simply append `-Ddockerfile.skip`
+
+```shell
+mvn clean install -Ddockerfile.skip
+```
 
 
 # Custom Builds
@@ -47,12 +64,7 @@ value "core.autocrlf" to "input"
 git config --global core.autocrlf input
 ```
 
-You might also want to skip unittests (the HBase plugin is currently failing under windows)
-
-```shell
-mvn clean install -DskipTests
-```
-    
+   
 It may well be the case that some unittests fail on Windows - don't panic, we focus on Linux systems and ensure that
 the `master` branch really builds clean with all unittests passing on Linux.
 

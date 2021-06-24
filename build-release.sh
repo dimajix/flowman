@@ -9,7 +9,7 @@ build_profile() {
     do
         profiles="$profiles -P$p"
     done
-    mvn clean install $profiles -DskipTests
+    mvn clean install $profiles -DskipTests -Ddockerfile.skip
     cp flowman-dist/target/flowman-dist-*.tar.gz release
 }
 

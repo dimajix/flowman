@@ -221,7 +221,7 @@ case class ValuesRelation(
      * @return
      */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        Some(StructType(effectiveSchema.fields.map(_.sparkField)))
+        Some(StructType(effectiveSchema.fields.map(_.catalogField)))
     }
 }
 

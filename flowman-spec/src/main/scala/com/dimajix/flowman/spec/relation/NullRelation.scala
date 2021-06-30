@@ -162,7 +162,7 @@ case class NullRelation(
      * @return
      */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        schema.map(s => StructType(s.fields.map(_.catalogField) ++ partitions.map(_.catalogField)))
     }
 }
 

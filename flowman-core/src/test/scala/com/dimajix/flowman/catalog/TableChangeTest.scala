@@ -209,7 +209,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("F2", StringType),
                 Field("F3", LongType),
                 Field("F5", StringType),
-                Field("F6", StringType, true),
+                Field("F6", StringType, true)
             )),
             MigrationPolicy.STRICT
         )
@@ -220,7 +220,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             UpdateColumnType("f2", StringType),
             UpdateColumnType("f3", LongType),
             AddColumn(Field("F5", StringType)),
-            UpdateColumnNullability("f6", true),
+            UpdateColumnNullability("f6", true)
         ))
     }
 

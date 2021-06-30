@@ -354,7 +354,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         )))
         table.dataSchema should be (StructType(Seq(
             StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
+            StructField("int_col", IntegerType)
         )))
         table.partitionColumnNames should be (Seq("partition_col"))
         table.partitionSchema should be (StructType(Seq(

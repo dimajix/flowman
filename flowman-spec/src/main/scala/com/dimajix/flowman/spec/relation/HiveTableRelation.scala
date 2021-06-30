@@ -31,7 +31,11 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
+import org.apache.spark.sql.types.CharType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.VarcharType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
@@ -58,13 +62,29 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.features.hiveVarcharSupported
+import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
 import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveTableRelation {
     val AVRO_SCHEMA_URL = "avro.schema.url"
+
+    def cleanupSchema(schema:StructType) : StructType = {
+        if (hiveVarcharSupported)
+            schema
+        else
+            replaceCharVarchar(schema)
+    }
+    def cleanupFields(schema:Seq[StructField]) : Seq[StructField] = {
+        if (hiveVarcharSupported)
+            schema
+        else
+            schema.map(replaceCharVarchar)
+    }
 }
 
 
@@ -318,7 +338,7 @@ case class HiveTableRelation(
         require(execution != null)
 
         if (!ifNotExists || exists(execution) == No) {
-            val sparkSchema = StructType(fields.map(_.catalogField))
+            val sparkSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
             logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 
             // Create and save Avro schema
@@ -426,9 +446,15 @@ case class HiveTableRelation(
                 }
             }
             else {
-                // TODO: Check if catalogSchema really works as desired
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
-                val targetSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
+                val targetSchema = {
+                    val dataSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
+                    if (hiveVarcharSupported)
+                        dataSchema
+                    else
+                        SchemaUtils.replaceCharVarchar(dataSchema)
+                }
+
                 val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
 
                 if (requiresMigration) {
@@ -500,7 +526,25 @@ case class HiveTableRelation(
 
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
         // We specifically use the existing physical Hive schema
-        Some(execution.catalog.getTable(tableIdentifier).dataSchema)
+        val currentSchema = execution.catalog.getTable(tableIdentifier).dataSchema
+        // If a schema is explicitly specified, we use that one to back-merge VarChar(n) and Char(n)
+        schema.map { schema =>
+            val desiredSchema = schema.catalogSchema.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
+            val mergedFields = currentSchema.map { field =>
+                field.dataType match {
+                    case StringType =>
+                        desiredSchema.get(field.name.toLowerCase(Locale.ROOT)).map { dfield =>
+                            dfield.dataType match {
+                                case VarcharType(n) => field.copy(dataType = VarcharType(n))
+                                case CharType(n) => field.copy(dataType = CharType(n))
+                                case _ => field
+                            }
+                        }.getOrElse(field)
+                    case _ => field
+                }
+            }
+            StructType(mergedFields)
+        }.orElse(Some(currentSchema))
     }
 
     /**

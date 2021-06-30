@@ -30,14 +30,13 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
-import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.PartitionedRelation
@@ -50,8 +49,8 @@ import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
-import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 import com.dimajix.spark.sql.catalyst.SqlBuilder
+import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveUnionTableRelation {
@@ -425,7 +424,7 @@ case class HiveUnionTableRelation(
                 val targetSchema = table.dataSchema
                 val targetFields = targetSchema.map(f => f.name.toLowerCase(Locale.ROOT)).toSet
 
-                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
+                val missingFields = HiveTableRelation.cleanupFields(sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT))))
                 if (missingFields.nonEmpty) {
                     val newSchema = StructType(targetSchema.fields ++ missingFields)
                     logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")

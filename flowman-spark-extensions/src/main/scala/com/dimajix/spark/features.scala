@@ -18,10 +18,17 @@ package com.dimajix.spark
 
 import scala.util.Try
 
+import org.apache.spark.sql.types.DataType
+
 
 object features {
-    def hiveSupported: Boolean = Try {
+    lazy val hiveSupported: Boolean = Try {
         org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
+        true
+    }.getOrElse(false)
+
+    lazy val hiveVarcharSupported: Boolean = Try {
+        DataType.fromJson("""{"type":"struct","fields":[{"name":"vc","type":"varchar(10)","nullable":true}]}""")
         true
     }.getOrElse(false)
 }

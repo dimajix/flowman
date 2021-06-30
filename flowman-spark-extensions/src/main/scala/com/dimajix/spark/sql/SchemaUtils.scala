@@ -41,6 +41,8 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.TimestampType
 import org.apache.spark.sql.types.VarcharType
 
+import com.dimajix.spark.features.hiveVarcharSupported
+
 
 object SchemaUtils {
     def mapType(typeName:String) : DataType  = {

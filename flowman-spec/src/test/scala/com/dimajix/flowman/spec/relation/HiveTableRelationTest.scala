@@ -51,6 +51,7 @@ import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
@@ -74,10 +75,6 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |          type: string
               |        - name: int_col
               |          type: integer
-              |        - name: char_col
-              |          type: char(10)
-              |        - name: varchar_col
-              |          type: varchar(10)
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
@@ -91,9 +88,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
         relation.fields should be(Seq(
             Field("str_col", ftypes.StringType),
-            Field("int_col", ftypes.IntegerType),
-            Field("char_col", ftypes.CharType(10)),
-            Field("varchar_col", ftypes.VarcharType(10))
+            Field("int_col", ftypes.IntegerType)
         ))
 
         // == Create ===================================================================
@@ -111,9 +106,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
-            StructField("char_col", CharType(10)),
-            StructField("varchar_col", VarcharType(10))
+            StructField("int_col", IntegerType)
         )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
@@ -871,7 +864,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |        - name: int_col
               |          type: integer
               |        - name: char_col
-              |          type: varchar(10)
+              |          type: string
               |
               |  t2:
               |    kind: hiveTable
@@ -883,7 +876,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |        - name: str_col
               |          type: string
               |        - name: char_col
-              |          type: varchar(10)
+              |          type: string
               |        - name: int_col
               |          type: integer
               |""".stripMargin
@@ -897,7 +890,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_1.fields should be(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),
-            Field("char_col", ftypes.VarcharType(10))
+            Field("char_col", ftypes.StringType)
         ))
 
         // == Create ===================================================================
@@ -911,24 +904,23 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
-            StructField("char_col", VarcharType(10))
+            StructField("char_col", StringType)
         )))
         table.dataSchema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
-            StructField("char_col", VarcharType(10))
+            StructField("char_col", StringType)
         )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
 
         // == Write ===================================================================
         val relation_2 = context.getRelation(RelationIdentifier("t2"))
-        val schema = StructType(
-            StructField("str_col", StringType) ::
-                StructField("char_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                Nil
-        )
+        val schema = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("char_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
         val rdd = spark.sparkContext.parallelize(Seq(
             Row("v1", "str", 21)
         ))
@@ -974,16 +966,30 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table_1 = session.catalog.getTable(TableIdentifier("some_table", Some("default")))
         table_1.identifier should be (TableIdentifier("some_table", Some("default")))
         table_1.tableType should be (CatalogTableType.MANAGED)
-        table_1.schema should be (StructType(Seq(
-            StructField("f1", VarcharType(4)),
-            StructField("f2", CharType(4)),
-            StructField("f3", StringType)
-        )))
-        table_1.dataSchema should be (StructType(Seq(
-            StructField("f1", VarcharType(4)),
-            StructField("f2", CharType(4)),
-            StructField("f3", StringType)
-        )))
+        if (hiveVarcharSupported) {
+            table_1.schema should be(StructType(Seq(
+                StructField("f1", VarcharType(4)),
+                StructField("f2", CharType(4)),
+                StructField("f3", StringType)
+            )))
+            table_1.dataSchema should be(StructType(Seq(
+                StructField("f1", VarcharType(4)),
+                StructField("f2", CharType(4)),
+                StructField("f3", StringType)
+            )))
+        }
+        else {
+            table_1.schema should be(StructType(Seq(
+                StructField("f1", StringType),
+                StructField("f2", StringType),
+                StructField("f3", StringType)
+            )))
+            table_1.dataSchema should be(StructType(Seq(
+                StructField("f1", StringType),
+                StructField("f2", StringType),
+                StructField("f3", StringType)
+            )))
+        }
         table_1.partitionColumnNames should be (Seq())
         table_1.partitionSchema should be (StructType(Seq()))
 
@@ -1070,22 +1076,19 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         table_1.identifier should be (TableIdentifier("lala", Some("default")))
         table_1.tableType should be (CatalogTableType.MANAGED)
-        table_1.schema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                StructField("partition_col", StringType, nullable = false) ::
-                Nil
-        ))
-        table_1.dataSchema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                Nil
-        ))
+        table_1.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("partition_col", StringType, nullable = false)
+        )))
+        table_1.dataSchema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
         table_1.partitionColumnNames should be (Seq("partition_col"))
-        table_1.partitionSchema should be (StructType(
-            StructField("partition_col", StringType, nullable = false) ::
-                Nil
-        ))
+        table_1.partitionSchema should be (StructType(Seq(
+            StructField("partition_col", StringType, nullable = false)
+        )))
 
         // == Write ===================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
@@ -1102,24 +1105,36 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         table_2.identifier should be (TableIdentifier("lala", Some("default")))
         table_2.tableType should be (CatalogTableType.MANAGED)
-        table_2.schema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                StructField("char_col", VarcharType(10)) ::
-                StructField("partition_col", StringType, nullable = false) ::
-                Nil
-        ))
-        table_2.dataSchema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                StructField("char_col", VarcharType(10)) ::
-                Nil
-        ))
+        if (hiveVarcharSupported) {
+            table_2.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", VarcharType(10)),
+                StructField("partition_col", StringType, nullable = false)
+            )))
+            table_2.dataSchema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", VarcharType(10))
+            )))
+        }
+        else {
+            table_2.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", StringType),
+                StructField("partition_col", StringType, nullable = false)
+            )))
+            table_2.dataSchema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", StringType)
+            )))
+        }
         table_2.partitionColumnNames should be (Seq("partition_col"))
-        table_2.partitionSchema should be (StructType(
-            StructField("partition_col", StringType, nullable = false) ::
-                Nil
-        ))
+        table_2.partitionSchema should be (StructType(Seq(
+            StructField("partition_col", StringType, nullable = false)
+        )))
 
         // == Write ===================================================================
         val rdd_2 = spark.sparkContext.parallelize(Seq(

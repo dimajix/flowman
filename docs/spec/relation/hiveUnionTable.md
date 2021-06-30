@@ -113,7 +113,7 @@ following changes to a data schema are supported
   adjusted.
 
 
-## Description
+## Remarks
 
 When using Hive union tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
 whole lifecycle for you. This means that
@@ -122,3 +122,9 @@ whole lifecycle for you. This means that
 * Hive tables will be truncated or individual partitions will be dropped during `clean` phase
 * Hive tables will be removed during `destroy` phase
 
+### Supported Data Types
+Please note that depending on the used tools accessing the data and the used Spark version, not all data types are
+supported:
+* `VARCHAR(n)` and `CHAR(n)` require Spark 3.1+ to be supported. Older version will fall back to writing `STRING`
+  columns instead
+* `DATE` types might not be supported in older Impala version (if you plan to query Hive tables using Impala)  

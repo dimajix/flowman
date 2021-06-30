@@ -46,6 +46,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
@@ -106,12 +107,22 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         view.comment should be (None)
         view.identifier should be (TableIdentifier("lala", Some("default")))
         view.tableType should be (CatalogTableType.VIEW)
-        SchemaUtils.dropMetadata(view.schema) should be (StructType(Seq(
-            StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
-            StructField("char_col", CharType(10)),
-            StructField("varchar_col", VarcharType(10))
-        )))
+        if (hiveVarcharSupported) {
+            SchemaUtils.dropMetadata(view.schema) should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", CharType(10)),
+                StructField("varchar_col", VarcharType(10))
+            )))
+        }
+        else {
+            SchemaUtils.dropMetadata(view.schema) should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", StringType),
+                StructField("varchar_col", StringType)
+            )))
+        }
         view.partitionColumnNames should be (Seq())
         view.partitionSchema should be (StructType(Nil))
 
@@ -121,12 +132,22 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         table.comment should be(Some("This is a test table"))
         table.identifier should be (TableIdentifier("lala_1", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
-        table.schema should be (StructType(Seq(
-            StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
-            StructField("char_col", CharType(10)),
-            StructField("varchar_col", VarcharType(10))
-        )))
+        if (hiveVarcharSupported) {
+            table.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", CharType(10)),
+                StructField("varchar_col", VarcharType(10))
+            )))
+        }
+        else {
+            table.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", StringType),
+                StructField("varchar_col", StringType)
+            )))
+        }
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location.toString should not be ("")
@@ -497,12 +518,22 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         view_2.comment should be (None)
         view_2.identifier should be (TableIdentifier("lala", Some("default")))
         view_2.tableType should be (CatalogTableType.VIEW)
-        view_2.schema should be (StructType(Seq(
-            StructField("str_col", StringType),
-            StructField("char_col", CharType(10)),
-            StructField("int_col", IntegerType),
-            StructField("partition_col", StringType)
-        )))
+        if (hiveVarcharSupported) {
+            view_2.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("char_col", CharType(10)),
+                StructField("int_col", IntegerType),
+                StructField("partition_col", StringType)
+            )))
+        }
+        else {
+            view_2.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("char_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("partition_col", StringType)
+            )))
+        }
         view_2.partitionColumnNames should be (Seq())
         view_2.partitionSchema should be (StructType(Nil))
 
@@ -510,17 +541,32 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val table_2 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
         table_2.identifier should be (TableIdentifier("lala_1", Some("default")))
         table_2.tableType should be (CatalogTableType.MANAGED)
-        table_2.schema should be (StructType(Seq(
-            StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
-            StructField("char_col", CharType(10)),
-            StructField("partition_col", StringType, nullable = false)
-        )))
-        table_2.dataSchema should be (StructType(Seq(
-            StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
-            StructField("char_col", CharType(10))
-        )))
+        if (hiveVarcharSupported) {
+            table_2.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", CharType(10)),
+                StructField("partition_col", StringType, nullable = false)
+            )))
+            table_2.dataSchema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", CharType(10))
+            )))
+        }
+        else {
+            table_2.schema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", StringType),
+                StructField("partition_col", StringType, nullable = false)
+            )))
+            table_2.dataSchema should be(StructType(Seq(
+                StructField("str_col", StringType),
+                StructField("int_col", IntegerType),
+                StructField("char_col", StringType)
+            )))
+        }
         table_2.partitionColumnNames should be (Seq("partition_col"))
         table_2.partitionSchema should be (StructType(Seq(
             StructField("partition_col", StringType, nullable = false)

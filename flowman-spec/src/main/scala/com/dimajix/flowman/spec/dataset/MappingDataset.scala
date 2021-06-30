@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 object MappingDataset {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,14 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
             "p1" -> "lala",
             "p2" -> 12
         ))
-        dialect.expr.partition(partitionSpec) should be ("PARTITION(p1='lala',p2=12)")
+        dialect.expr.partition(partitionSpec) should be ("""PARTITION(p1='lala',p2=12)""")
     }
 
     it should "provide appropriate IN expression" in {
         val dialect = NoopDialect
-        dialect.expr.in("col", Seq()) should be ("col IN ()")
-        dialect.expr.in("col", Seq(1)) should be ("col IN (1)")
-        dialect.expr.in("col", Seq(1,7)) should be ("col IN (1,7)")
-        dialect.expr.in("col", Seq("left","right")) should be ("col IN ('left','right')")
+        dialect.expr.in("col", Seq()) should be (""""col" IN ()""")
+        dialect.expr.in("col", Seq(1)) should be (""""col" IN (1)""")
+        dialect.expr.in("col", Seq(1,7)) should be (""""col" IN (1,7)""")
+        dialect.expr.in("col", Seq("left","right")) should be (""""col" IN ('left','right')""")
     }
 }

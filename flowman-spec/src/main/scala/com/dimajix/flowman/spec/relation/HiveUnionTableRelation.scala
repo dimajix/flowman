@@ -32,20 +32,25 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 
@@ -82,6 +87,21 @@ case class HiveUnionTableRelation(
     serdeProperties: Map[String, String] = Map()
 )  extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
+    private lazy val tableSchema = schema.map { schema =>
+        EmbeddedSchema(
+            Schema.Properties(
+                schema.context,
+                schema.namespace,
+                schema.project,
+                schema.name,
+                schema.kind,
+                schema.labels
+            ),
+            schema.description,
+            schema.fields.map(com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar),
+            schema.primaryKey
+        )
+    }
 
     def viewIdentifier: TableIdentifier = TableIdentifier(view, viewDatabase)
     def tableIdentifier(version:Int) : TableIdentifier = {
@@ -200,7 +220,7 @@ case class HiveUnionTableRelation(
         val tableDf = execution.spark.read.table(viewIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
 
-        SchemaUtils.applySchema(df, schema)
+        SparkSchemaUtils.applySchema(df, schema)
     }
 
     /**
@@ -228,19 +248,31 @@ case class HiveUnionTableRelation(
                 val table = catalog.getTable(id)
                 SchemaUtils.isCompatible(df.schema, table.schema)
             }
+            .orElse {
+                // Try to use provided schema instead
+                schema.flatMap { schema =>
+                    val catalogSchema = schema.catalogSchema
+                    allTables.find { id =>
+                        val table = catalog.getTable(id)
+                        SchemaUtils.isCompatible(catalogSchema, table.schema)
+                    }
+                }
+            }
             .getOrElse {
                 logger.error(s"Cannot find appropriate target table for Hive Union Table '$identifier'. Required schema is\n ${df.schema.treeString}")
                 throw new ExecutionException(s"Cannot find appropriate target table for Hive Union Table '$identifier'")
             }
 
         // 3. Drop  partition from all other tables
-        allTables.filter(_ != table).foreach { table =>
-            catalog.dropPartition(table, partitionSpec, ignoreIfNotExists=true)
+        if (mode == OutputMode.OVERWRITE) {
+            allTables.filter(_ != table).foreach { table =>
+                catalog.dropPartition(table, partitionSpec, ignoreIfNotExists = true)
+            }
         }
 
         // 4. Write to that table
         val relation = tableRelation(table, None)
-        relation.write(execution, df, partition, OutputMode.OVERWRITE)
+        relation.write(execution, df, partition, mode)
     }
 
     /**
@@ -364,11 +396,11 @@ case class HiveUnionTableRelation(
       *
       * @param execution
       */
-    override def migrate(execution: Execution): Unit = {
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
-        val sourceSchema = schema.get.sparkSchema
+        val sourceSchema = schema.get.catalogSchema
         val allTables = listTables(execution)
 
         // 1. Find all tables
@@ -412,7 +444,7 @@ case class HiveUnionTableRelation(
 
         //  4 Always migrate union view, maybe SQL generator changed
         val hiveViewRelation = viewRelationFromTables(execution)
-        hiveViewRelation.migrate(execution)
+        hiveViewRelation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
     }
 }
 

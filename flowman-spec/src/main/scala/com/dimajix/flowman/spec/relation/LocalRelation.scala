@@ -31,9 +31,10 @@ import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
-import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -44,8 +45,8 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.flowman.util.UtcTimestamp
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.local.implicits._
 
 
@@ -272,7 +273,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
      *
      * @param execution
      */
-    override def migrate(execution: Execution): Unit = {
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
     }
 
     /**

@@ -17,7 +17,13 @@
 package com.dimajix.flowman.spec.relation
 
 import java.sql.Connection
+import java.sql.SQLDataException
+import java.sql.SQLException
+import java.sql.SQLInvalidAuthorizationSpecException
+import java.sql.SQLNonTransientConnectionException
+import java.sql.SQLNonTransientException
 import java.sql.Statement
+import java.util.Locale
 import java.util.Properties
 
 import scala.collection.JavaConverters._
@@ -33,8 +39,17 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
@@ -51,10 +66,10 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.types.{StructType => FlowmanStructType}
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class JdbcRelation(
@@ -328,37 +343,98 @@ case class JdbcRelation(
         }
     }
 
-    override def migrate(execution:Execution) : Unit = {
+    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
         // Only try migration if schema is explicitly specified
         if (schema.isDefined) {
-            // Get Connection
-            val (url, props) = createProperties()
-
             withConnection { (con, options) =>
                 val dialect = SqlDialects.get(options.url)
                 def getJdbcType(field:Field) : String = {
-                    dialect.getJdbcType(field.ftype)
-                        .getOrElse(throw new IllegalArgumentException(s"Can't get JDBC type for field '${field.name}' with type ${field.ftype}"))
-                        .databaseTypeDefinition
+                    dialect.getJdbcType(field.ftype).databaseTypeDefinition
                 }
 
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    // Read schema from database using Spark.
-                    val df = execution.spark.read.jdbc(url, tableIdentifier.unquotedString, props)
+                    // Map all fields to JDBC field definitions and sort field names
+                    val targetSchema = FlowmanStructType(schema.get.fields)
+                    val curJdbcSchema = JdbcUtils.getJdbcSchema(con, tableIdentifier, options)
+                    val curJdbcFields = curJdbcSchema.map(field => (field.name.toLowerCase(Locale.ROOT), field.typeName.toUpperCase(Locale.ROOT), field.nullable)).sorted
+                    val tgtJdbcFields = targetSchema.fields.map(field => (field.name.toLowerCase(Locale.ROOT), getJdbcType(field).toUpperCase(Locale.ROOT), field.nullable)).sorted
 
-                    // Map all data types to JDBC types and sort field names
-                    val dfFields = df.schema.fields.map(field => (field.name, getJdbcType(Field.of(field)), field.nullable)).toSeq.sorted
-                    val curFields = schema.get.fields.map(field => (field.name, getJdbcType(field), field.nullable)).sorted
-
-                    if (dfFields != curFields) {
-                        logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier")
-                        JdbcUtils.dropTable(con, tableIdentifier, options)
-                        doCreate(con, options)
+                    if (curJdbcFields != tgtJdbcFields) {
+                        val currentSchema = JdbcUtils.getSchema(curJdbcSchema, dialect)
+                        doMigration(execution, currentSchema, targetSchema, migrationPolicy, migrationStrategy)
                     }
                 }
+            }
+        }
+    }
+
+    private def doMigration(execution:Execution, currentSchema:FlowmanStructType, targetSchema:FlowmanStructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+        withConnection { (con, options) =>
+            migrationStrategy match {
+                case MigrationStrategy.NEVER =>
+                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.")
+                case MigrationStrategy.FAIL =>
+                    throw new MigrationFailedException(identifier)
+                case MigrationStrategy.ALTER =>
+                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    if (migrations.exists(m => !supported(m))) {
+                        logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes")
+                        throw new MigrationFailedException(identifier)
+                    }
+                    alter(migrations, con, options)
+                case MigrationStrategy.ALTER_REPLACE =>
+                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    if (migrations.forall(m => supported(m))) {
+                        try {
+                            alter(migrations, con, options)
+                        }
+                        catch {
+                            case e:SQLNonTransientConnectionException => throw e
+                            case e:SQLInvalidAuthorizationSpecException => throw e
+                            case _:SQLNonTransientException => recreate(con,options)
+                        }
+                    }
+                    else {
+                        recreate(con, options)
+                    }
+                case MigrationStrategy.REPLACE =>
+                    recreate(con, options)
+            }
+        }
+
+        def alter(migrations:Seq[TableChange], con:Connection, options:JDBCOptions) : Unit = {
+            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier")
+
+            try {
+                execution.catalog.alterTable(tableIdentifier, migrations)
+            }
+            catch {
+                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            }
+        }
+
+        def recreate(con:Connection, options:JDBCOptions) : Unit = {
+            try {
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier")
+                JdbcUtils.dropTable(con, tableIdentifier, options)
+                doCreate(con, options)
+            }
+            catch {
+                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            }
+        }
+
+        def supported(change:TableChange) : Boolean = {
+            change match {
+                case _:DropColumn => true
+                case _:AddColumn => true
+                case _:UpdateColumnNullability => true
+                case _:UpdateColumnType => true
+                case _:UpdateColumnComment => true
+                case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }
     }
@@ -378,7 +454,8 @@ case class JdbcRelation(
       * @return
       */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        // TODO: Is this the best approach to use the specified schema, or should we infer the actual schema via JDBC instead?
+        schema.map(s => StructType(s.fields.map(_.catalogField) ++ partitions.map(_.catalogField)))
     }
 
     private def createProperties() = {

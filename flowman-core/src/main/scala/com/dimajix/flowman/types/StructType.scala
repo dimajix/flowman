@@ -26,13 +26,28 @@ object StructType {
 }
 
 
-case class StructType(
-    @JsonProperty(value = "fields") fields:Seq[Field]
-                     ) extends ContainerType {
+case class StructType(@JsonProperty(value = "fields") fields:Seq[Field]) extends ContainerType {
     def this() = { this(Seq()) }
+
+    /**
+     * The Spark type to use
+     */
     override def sparkType : org.apache.spark.sql.types.StructType = {
         org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
     }
+
+    /**
+     * The type to use in catalogs like Hive etc. In contrast to [[sparkType]], this method will keep VarChartype
+     * and similar types, which are not used in Spark itself
+     */
+    override def catalogType : org.apache.spark.sql.types.StructType = {
+        org.apache.spark.sql.types.StructType(fields.map(_.catalogField))
+    }
+
+    /**
+     * Short Type Name as used in SQL and in YAML specification files
+     * @return
+     */
     override def sqlType : String = {
         "struct<" + fields.map(f => f.name + ":" + f.sqlType).mkString(",") + ">"
     }

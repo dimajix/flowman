@@ -33,6 +33,8 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -336,7 +338,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         relation.create(executor, true)
-        relation.migrate(executor)
+        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         val df1 = relation.read(executor, None, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
         df1.as[(String,Int,Int)].collect().sorted should be (Seq(
@@ -443,7 +445,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         relation.create(executor, true)
-        relation.migrate(executor)
+        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         val df1 = relation.read(executor, None, Map("month" -> SingleValue("1")))
         df1.as[(String,Int)].collect().sorted should be (Seq(

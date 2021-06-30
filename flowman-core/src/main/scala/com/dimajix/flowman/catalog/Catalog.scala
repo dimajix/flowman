@@ -17,8 +17,12 @@
 package com.dimajix.flowman.catalog
 
 import java.io.FileNotFoundException
+import java.util.Locale
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import scala.collection.mutable
+
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
@@ -31,6 +35,7 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.execution.command.AlterTableAddColumnsCommand
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
+import org.apache.spark.sql.execution.command.AlterTableChangeColumnCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
@@ -43,10 +48,14 @@ import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.config.Configuration
+import TableChange.AddColumn
+import TableChange.UpdateColumnComment
+import TableChange.UpdateColumnNullability
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalogs: Seq[ExternalCatalog] = Seq()) {
@@ -204,7 +213,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
     def getTable(table:TableIdentifier) : CatalogTable = {
         require(table != null)
 
-        catalog.getTableMetadata(table)
+        SparkShim.getTableRawMetadata(catalog, table)
     }
 
     /**
@@ -274,6 +283,49 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         externalCatalogs.foreach(_.truncateTable(catalogTable))
     }
 
+    /**
+     * Applies a list of [[TableChange]] modifications to an existing Hive table. If a certain change is not
+     * supported, then an [[UnsupportedOperationException]] will be thrown and no change will be applied at all.
+     * @param table
+     * @param changes
+     */
+    def alterTable(table:TableIdentifier, changes:Seq[TableChange]) : Unit = {
+        require(table != null)
+        require(changes != null)
+        logger.info(s"Changing columns of existing Hive table '$table'")
+
+        val catalogTable = catalog.getTableMetadata(table)
+        require(catalogTable.tableType != CatalogTableType.VIEW)
+        val tableColumns = catalogTable.schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+
+        val colsToAdd = mutable.Buffer[StructField]()
+        changes.foreach {
+            case a:AddColumn =>
+                colsToAdd.append(a.column.catalogField)
+            case u:UpdateColumnNullability =>
+                val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
+                    .copy(nullable = u.nullable)
+                val cmd = AlterTableChangeColumnCommand(table, u.column, field)
+                cmd.run(spark)
+            case u:UpdateColumnComment =>
+                val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
+                    .withComment(u.comment.getOrElse(""))
+                val cmd = AlterTableChangeColumnCommand(table, u.column, field)
+                cmd.run(spark)
+            case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
+        }
+
+        val cmd = AlterTableAddColumnsCommand(table, colsToAdd)
+        cmd.run(spark)
+
+        externalCatalogs.foreach(_.alterTable(catalogTable))
+    }
+
+    /**
+     * Adds one or more new columns to an existing Hive table.
+     * @param table
+     * @param colsToAdd
+     */
     def addTableColumns(table:TableIdentifier, colsToAdd: Seq[StructField]) : Unit = {
         require(table != null)
         require(colsToAdd != null)

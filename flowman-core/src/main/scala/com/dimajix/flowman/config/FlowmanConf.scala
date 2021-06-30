@@ -21,6 +21,8 @@ import java.nio.file.FileSystem
 import java.util.NoSuchElementException
 
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
 import com.dimajix.flowman.execution.SimpleScheduler
@@ -82,15 +84,24 @@ object FlowmanConf {
         .classConf(classOf[Scheduler])
         .createWithDefault(classOf[SimpleScheduler])
 
+    val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
+        .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")
+        .stringConf
+        .createWithDefault(MigrationPolicy.RELAXED.toString)
+    val DEFAULT_RELATION_MIGRATION_STRATEGY = buildConf("flowman.default.relation.migrationStrategy")
+        .doc("Default migration strategy. Allowed values are 'never', 'fail', 'alter', 'alter_replace' and 'replace'")
+        .stringConf
+        .createWithDefault(MigrationStrategy.ALTER.toString)
+
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")
         .stringConf
         .createWithDefault(OutputMode.OVERWRITE.toString)
-    val DEFAULT_TARGET_REBALANCE = buildConf("floman.default.target.rebalance")
+    val DEFAULT_TARGET_REBALANCE = buildConf("flowman.default.target.rebalance")
         .doc("Rebalances all outputs before writing")
         .booleanConf
         .createWithDefault(false)
-    val DEFAULT_TARGET_PARALLELISM = buildConf("floman.default.target.parallelism")
+    val DEFAULT_TARGET_PARALLELISM = buildConf("flowman.default.target.parallelism")
         .doc("Uses the specified number of partitions for writing targets. -1 disables")
         .intConf
         .createWithDefault(16)

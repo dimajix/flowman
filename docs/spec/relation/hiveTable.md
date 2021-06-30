@@ -123,6 +123,19 @@ relations:
  files and can be used to workaround some bugs in the Hive backend.
 
 
+## Automatic Migrations
+Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE` 
+and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
+see [configuration](../../config.md) for more details).
+
+The migration strategy `ALTER` supports the following alterations:
+* Changing nullability
+* Adding new columns
+
+Other changes (like changing the data type or dropping columns) is not supported in the `ALTER` strategy and
+will require either `REPLACE` or `ALTER_REPLACE` - but this will remove all existing data in that table!
+
+
 ## Remarks
 
 When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the

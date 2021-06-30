@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class ReadStreamMapping (

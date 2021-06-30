@@ -25,24 +25,33 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.VarcharType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
@@ -80,12 +89,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
         relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
         relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
-        relation.fields should be(
-            Field("str_col", ftypes.StringType) ::
-            Field("int_col", ftypes.IntegerType) ::
-            Field("char_col", ftypes.CharType(10)) ::
-            Field("varchar_col", ftypes.VarcharType(10)) ::
-            Nil)
+        relation.fields should be(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("char_col", ftypes.CharType(10)),
+            Field("varchar_col", ftypes.VarcharType(10))
+        ))
 
         // == Create ===================================================================
         relation.exists(executor) should be (No)
@@ -100,13 +109,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.comment should be(Some("This is a test table"))
         table.identifier should be (TableIdentifier("lala_0001", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
-        table.schema should be (StructType(
-            StructField("str_col", StringType) ::
-            StructField("int_col", IntegerType) ::
-            StructField("char_col", StringType) ::
-            StructField("varchar_col", StringType) ::
-            Nil
-        ))
+        table.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("char_col", CharType(10)),
+            StructField("varchar_col", VarcharType(10))
+        )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location.toString should not be ("")
@@ -171,11 +179,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0002", Some("default")))
         table.tableType should be (CatalogTableType.EXTERNAL)
-        table.schema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                Nil
-        ))
+        table.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should be (location)
@@ -864,7 +871,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |        - name: int_col
               |          type: integer
               |        - name: char_col
-              |          type: char(10)
+              |          type: varchar(10)
               |
               |  t2:
               |    kind: hiveTable
@@ -876,7 +883,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |        - name: str_col
               |          type: string
               |        - name: char_col
-              |          type: char(10)
+              |          type: varchar(10)
               |        - name: int_col
               |          type: integer
               |""".stripMargin
@@ -887,11 +894,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
-        relation_1.fields should be(
-            Field("str_col", ftypes.StringType) ::
-                Field("int_col", ftypes.IntegerType) ::
-                Field("char_col", ftypes.CharType(10)) ::
-                Nil)
+        relation_1.fields should be(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("char_col", ftypes.VarcharType(10))
+        ))
 
         // == Create ===================================================================
         relation_1.create(executor)
@@ -901,18 +908,16 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         table.identifier should be (TableIdentifier("lala", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
-        table.schema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                StructField("char_col", StringType) ::
-                Nil
-        ))
-        table.dataSchema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                StructField("char_col", StringType) ::
-                Nil
-        ))
+        table.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("char_col", VarcharType(10))
+        )))
+        table.dataSchema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("char_col", VarcharType(10))
+        )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
 
@@ -939,6 +944,72 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Destroy ===================================================================
         relation_2.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+    })
+
+    it should "support char/varchar columns" in (if (hiveSupported) {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+        val context = session.context
+
+        val relation = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.VarcharType(4)),
+                    Field("f2", com.dimajix.flowman.types.CharType(4)),
+                    Field("f3", com.dimajix.flowman.types.StringType)
+                )
+            )),
+            table = "some_table",
+            database = Some("default")
+        )
+
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+        relation.create(executor)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("some_table", Some("default")))
+        table_1.identifier should be (TableIdentifier("some_table", Some("default")))
+        table_1.tableType should be (CatalogTableType.MANAGED)
+        table_1.schema should be (StructType(Seq(
+            StructField("f1", VarcharType(4)),
+            StructField("f2", CharType(4)),
+            StructField("f3", StringType)
+        )))
+        table_1.dataSchema should be (StructType(Seq(
+            StructField("f1", VarcharType(4)),
+            StructField("f2", CharType(4)),
+            StructField("f3", StringType)
+        )))
+        table_1.partitionColumnNames should be (Seq())
+        table_1.partitionSchema should be (StructType(Seq()))
+
+        // == Write ===================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, null),
+            Row("234", "123", ""),
+            Row("2345", "1234", "1234567"),
+            Row("23456", "12345", "1234567")
+        ))
+        val df = spark.createDataFrame(rdd, SchemaUtils.replaceCharVarchar(table_1.dataSchema))
+        relation.write(executor, df, Map())
+
+        // == Read ===================================================================
+        val rows = Seq(
+            Row(null, null, null),
+            Row("234", "123 ", ""),
+            Row("2345", "1234", "1234567"),
+            Row("2345", "1234", "1234567")
+        )
+        checkAnswer(relation.read(executor, None, Map()), rows)
+
+        // == Destroy ===================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        relation.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
     })
 
     it should "support migration by adding new columns" in (if (hiveSupported) {
@@ -970,7 +1041,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |        - name: str_col
               |          type: string
               |        - name: char_col
-              |          type: char(10)
+              |          type: varchar(10)
               |        - name: int_col
               |          type: integer
               |    partitions:
@@ -1025,7 +1096,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Migrate ===================================================================
         val relation_2 = context.getRelation(RelationIdentifier("t2"))
-        relation_2.migrate(executor)
+        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         // Inspect Hive table
         val table_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
@@ -1034,14 +1105,14 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table_2.schema should be (StructType(
             StructField("str_col", StringType) ::
                 StructField("int_col", IntegerType) ::
-                StructField("char_col", StringType) ::
+                StructField("char_col", VarcharType(10)) ::
                 StructField("partition_col", StringType, nullable = false) ::
                 Nil
         ))
         table_2.dataSchema should be (StructType(
             StructField("str_col", StringType) ::
                 StructField("int_col", IntegerType) ::
-                StructField("char_col", StringType) ::
+                StructField("char_col", VarcharType(10)) ::
                 Nil
         ))
         table_2.partitionColumnNames should be (Seq("partition_col"))
@@ -1054,7 +1125,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val rdd_2 = spark.sparkContext.parallelize(Seq(
             Row("v2", 22, "lala")
         ))
-        val df2 = spark.createDataFrame(rdd_2, table_2.dataSchema)
+        val df2 = spark.createDataFrame(rdd_2, SchemaUtils.replaceCharVarchar(table_2.dataSchema))
         relation_2.write(executor, df2, Map("partition_col" -> SingleValue("part_2")))
 
         // == Read ===================================================================
@@ -1072,7 +1143,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val rdd_2a = spark.sparkContext.parallelize(Seq(
             Row("v3", 23, "lala")
         ))
-        val df2a = spark.createDataFrame(rdd_2a, table_2.dataSchema)
+        val df2a = spark.createDataFrame(rdd_2a, SchemaUtils.replaceCharVarchar(table_2.dataSchema))
         relation_2.write(executor, df2a, Map("partition_col" -> SingleValue("part_2")))
 
         // == Read ===================================================================
@@ -1087,6 +1158,79 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.destroy(executor)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
     })
+
+    it should "support relaxed migrations" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+        val context = session.context
+
+        val relation_1 = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = "some_table",
+            database = Some("default")
+        )
+        val relation_2 = HiveTableRelation(
+            Relation.Properties(context, "rel_2"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.ShortType),
+                    Field("f4", com.dimajix.flowman.types.LongType)
+                )
+            )),
+            table = "some_table",
+            database = Some("default")
+        )
+
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+        relation_1.create(executor)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        session.catalog.getTable(relation_1.tableIdentifier).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+
+        // == Migrate ===================================================================
+        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        session.catalog.getTable(relation_1.tableIdentifier).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+
+        // == Migrate ===================================================================
+        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        a[MigrationFailedException] should be thrownBy(relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
+        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        //relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        //relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        session.catalog.getTable(relation_2.tableIdentifier).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType),
+            StructField("f4", LongType)
+        )))
+
+        // == Destroy ===================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        relation_1.destroy(executor)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+    }
 
     it should "support mapping schemas" in {
         val spec =

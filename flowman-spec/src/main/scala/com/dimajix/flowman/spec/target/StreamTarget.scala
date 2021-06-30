@@ -21,9 +21,13 @@ import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.BaseTarget
@@ -69,19 +73,21 @@ case class StreamTarget(
 
     /**
       * Creates the empty containing (Hive tabl, SQL table, etc) for holding the data
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Execution) : Unit = {
-        require(executor != null)
+    override def create(execution: Execution) : Unit = {
+        require(execution != null)
 
         val rel = context.getRelation(relation)
-        if (rel.exists(executor) == Yes) {
+        if (rel.exists(execution) == Yes) {
             logger.info(s"Migrating existing relation '$relation'")
-            rel.migrate(executor)
+            val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
+            val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
+            rel.migrate(execution, migrationPolicy, migrationStrategy)
         }
         else {
             logger.info(s"Creating relation '$relation'")
-            rel.create(executor, true)
+            rel.create(execution, true)
         }
     }
 

@@ -105,7 +105,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             .withColumnRenamed("_2", "int_col")
 
         withDatabase(driver, url) { statement =>
-            an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
+            an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_001"""))
         }
 
         // == Create ===================================================================
@@ -116,10 +116,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(executor, Map()) should be (No)
 
         withDatabase(driver, url) { statement =>
-            val result = statement.executeQuery("SELECT * FROM lala_001")
+            val result = statement.executeQuery("""SELECT * FROM LALA_001""")
             val meta = result.getMetaData
-            meta.getColumnName(1) should be ("STR_COL")
-            meta.getColumnName(2) should be ("INT_COL")
+            meta.getColumnName(1) should be ("str_col")
+            meta.getColumnName(2) should be ("int_col")
             result.next() should be (false)
         }
 
@@ -162,7 +162,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.exists(executor) should be (No)
         relation.loaded(executor, Map()) should be (No)
         withDatabase(driver, url) { statement =>
-            an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
+            an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
     }
 
@@ -211,7 +211,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             .withColumnRenamed("_2", "int_col")
 
         withDatabase(driver, url) { statement =>
-            an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_001"))
+            an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_001"""))
         }
 
         // == Create ===================================================================
@@ -222,11 +222,11 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(executor, Map()) should be (No)
 
         withDatabase(driver, url) { statement =>
-            val result = statement.executeQuery("SELECT * FROM lala_001")
+            val result = statement.executeQuery("""SELECT * FROM lala_001""")
             val meta = result.getMetaData
-            meta.getColumnName(1) should be ("STR_COL")
-            meta.getColumnName(2) should be ("INT_COL")
-            meta.getColumnName(3) should be ("P_COL")
+            meta.getColumnName(1) should be ("str_col")
+            meta.getColumnName(2) should be ("int_col")
+            meta.getColumnName(3) should be ("p_col")
             result.next() should be (false)
         }
 
@@ -352,9 +352,9 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation_t1 = context.getRelation(RelationIdentifier("t1"))
 
         val df = spark.createDataFrame(Seq(
-            ("lala", 1),
-            ("lolo", 2)
-        ))
+                ("lala", 1),
+                ("lolo", 2)
+            ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
 

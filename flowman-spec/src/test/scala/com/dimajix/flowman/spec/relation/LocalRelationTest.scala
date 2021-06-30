@@ -23,8 +23,11 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -333,7 +336,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(executor) should be (Yes)
         relation.create(executor, true)
         relation.exists(executor) should be (Yes)
-        relation.migrate(executor)
+        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         // ===== Read =============================================================================================
         val df1 = relation.read(executor, None, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))

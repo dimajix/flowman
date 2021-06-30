@@ -30,6 +30,8 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
@@ -45,7 +47,7 @@ import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class KafkaRelation(
@@ -236,7 +238,7 @@ case class KafkaRelation(
       *
       * @param execution
       */
-    override def migrate(execution: Execution): Unit = ???
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
 
     /**
       * Returns empty schema, so we read in all columns from Kafka

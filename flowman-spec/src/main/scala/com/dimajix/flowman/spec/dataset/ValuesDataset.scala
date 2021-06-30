@@ -29,15 +29,12 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
-import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.MapRecord
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.types.ValueRecord
-import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class ValuesDataset(

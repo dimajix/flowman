@@ -46,7 +46,9 @@ case class PartitionField(
     def field : Field = Field(name, ftype, false, description)
 
     def sparkType : DataType = ftype.sparkType
+    def catalogType : DataType = ftype.catalogType
     def sparkField : StructField = StructField(name, sparkType, false)
+    def catalogField : StructField = StructField(name, catalogType, false)
 
     def parse(value: String) : Any = ftype.parse(value, granularity)
     def interpolate(value: FieldValue) : Iterable[Any] = ftype.interpolate(value, granularity)

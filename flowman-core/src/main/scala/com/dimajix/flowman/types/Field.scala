@@ -59,7 +59,7 @@ object Field {
 class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
-    @JsonProperty(value="nullable", required = true) private var _nullable: Boolean = true
+    @JsonProperty(value="nullable", required = false) private var _nullable: Boolean = true
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
     @JsonProperty(value="default", required = false) private var _default: Option[String] = None
     @JsonProperty(value="size", required = false) private var _size: Option[Int] = None
@@ -130,16 +130,35 @@ class Field {
     def sparkType : DataType = _type.sparkType
 
     /**
+     * Returns the Spark data type used for this field in catalog definitions (i.e. Hive)
+     * @return
+     */
+    def catalogType : DataType = _type.catalogType
+
+    /**
       * Converts the field into a Spark field including metadata containing the fields description and size
       * @return
       */
     def sparkField : StructField = {
+        StructField(name, sparkType, nullable, metadata)
+    }
+
+    /**
+     * Converts the field into a Spark field including metadata containing the fields description and size. This
+     * method is to be used for creating a schema for external catalogs (Hive)
+     * @return
+     */
+    def catalogField : StructField = {
+        StructField(name, catalogType, nullable, metadata)
+    }
+
+    private def metadata = {
         val metadata = new MetadataBuilder()
         description.map(_.trim).filter(_.nonEmpty).foreach(d => metadata.putString("comment", d))
         default.foreach(d => metadata.putString("default", d))
         format.filter(_.nonEmpty).foreach(f => metadata.putString("format", f))
         size.foreach(s => metadata.putLong("size", s))
-        StructField(name, sparkType, nullable, metadata.build())
+        metadata.build()
     }
 
     override def toString: String = {

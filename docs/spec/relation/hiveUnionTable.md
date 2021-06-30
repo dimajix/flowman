@@ -99,6 +99,20 @@ Name of the Hive database where the tables should be created in
  to the `TBLPROPERTIES` in a `CREATE TABLE` statement.
 
 
+## Automatic Migrations
+
+The core idea of the `hiveUnionTable` relation type is to support a broad range of non-destructive migrations. The
+following changes to a data schema are supported
+* New columns can be added. This will be performed without created a new underlying table.
+* Existing columns can be dropped, although the previously existing columns will be still included in the Hive view
+  on top of all physical tables.
+* Column nullability can be changed. If changing from nullable to non-nullable, the currently underlying table will
+  be reused (since the new type is stricter than before), otherwise a new table will be created.
+* The data type of on existing column can be changed. Depending on the change (i.e. more or less restrictive data type), 
+  either the existing physical table will be reused, or a new underlying table will be created and the view will be
+  adjusted.
+
+
 ## Description
 
 When using Hive union tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the

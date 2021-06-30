@@ -23,12 +23,16 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
@@ -177,17 +181,19 @@ case class RelationTarget(
      *
      * @param executor
       */
-    override def create(executor: Execution) : Unit = {
-        require(executor != null)
+    override def create(execution: Execution) : Unit = {
+        require(execution != null)
 
         val rel = context.getRelation(relation)
-        if (rel.exists(executor) == Yes) {
+        if (rel.exists(execution) == Yes) {
             logger.info(s"Migrating existing relation '$relation'")
-            rel.migrate(executor)
+            val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
+            val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
+            rel.migrate(execution, migrationPolicy, migrationStrategy)
         }
         else {
             logger.info(s"Creating relation '$relation'")
-            rel.create(executor, true)
+            rel.create(execution, true)
         }
     }
 

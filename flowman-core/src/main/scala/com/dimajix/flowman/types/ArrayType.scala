@@ -47,6 +47,14 @@ case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED) (
     }
 
     /**
+     * The Spark type to use
+     * @return
+     */
+    override def catalogType : org.apache.spark.sql.types.ArrayType = {
+        org.apache.spark.sql.types.ArrayType(elementType.catalogType, containsNull)
+    }
+
+    /**
       * Short Type Name as used in SQL and in YAML specification files
       * @return
       */

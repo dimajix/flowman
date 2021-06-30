@@ -55,6 +55,23 @@ relations:
  a relation property can overwrite a connection property if it has the same name.
 
 
+## Automatic Migrations
+Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
+and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
+see [configuration](../../config.md) for more details).
+
+The migration strategy `ALTER` supports the following alterations for JDBC relations:
+* Changing nullability
+* Adding new columns
+* Dropping columns
+* Changing the column type
+
+Note that although Flowman will try to apply these changes, not all SQL databases support all of these changes in
+all variations. Therefore it may well be the case, that the SQL database will fail performing these changes. If
+the migration strategy is set to `ALTER_REPLACE`, then Flowman will fall back to trying to replace the whole table
+altogether on *any* non-recoverable exception during migration.
+
+
 ## Remarks
 
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally

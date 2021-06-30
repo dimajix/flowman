@@ -21,7 +21,12 @@ import java.util.TimeZone
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
+import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.ViewType
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
@@ -77,6 +82,12 @@ object SparkShim {
         SQLExecution.withNewExecutionId(queryExecution, name)(body)
 
     def getCachedPlan(ir:InMemoryRelation) : SparkPlan = ir.cachedPlan
+
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    def getTableRawMetadata(catalog:SessionCatalog, table: TableIdentifier): CatalogTable = {
+        catalog.getTableMetadata(table)
+    }
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView

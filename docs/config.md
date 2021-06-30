@@ -44,6 +44,26 @@ The number of targets to be executed in parallel, when the `ParallelExecutor` is
 Turns on automatic eager caching of Spark jobs that reference a single cached DataFrame multiple times. This is to
 avoid parallel computation of the same partitions, which can be seen in some scenarios.
 
+- `flowman.default.relation.migrationPolicy` *(type: string)* *(default:`RELAXED`)*
+Sets the default policy when to migrate tables. Possible values are:
+  - *`STRICT`*: A migration will be initiated, whenever the physical table definition does not match the required
+      one, even if the types would be compatible.
+  - *`RELAXED`*: A migration will only be initiated, whenever the physical table definition is not sufficient for
+    storing information with the required schema. If all types are compatible, not migration will be initiated.
+
+- `flowman.default.relation.migrationStrategy` *(type: string)* *(default:`ALTER`)*
+Sets the strategy to use how tables should be migrated. Possible values are:
+  - *`NEVER`* even if a migration would be required, it will not be performed. No error will be generated.
+  - *`FAIL`* even if a migration would be required, it will not be performed, instead an error will be generated.
+  - *`ALTER`* Flowman will try to modify an existing table with `ALTER TABLE` statements. This will preserve all
+    current contents of the record. On the other hand, this strategy might not be well supported with all table types 
+    and/or changes.
+  - *`ALTER_REPLACE`* Flowman will try to modify an existing table with `ALTER TABLE` statements. If that is not
+    possible, the table will be dropped and recreated. Note that all contents will be lost if a table replacement
+    is required.
+  - *`REPLACE`* If a migration is required, Flowman will always replace the existing table with a new one.
+    Note that all contents will be lost.
+
 - `flowman.default.target.outputMode` *(type: string)* *(default:`OVERWRITE`)*
 Sets the default target output mode. Possible values are 
   - *`OVERWRITE`*: Will overwrite existing data. Only supported in batch output.

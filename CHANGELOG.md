@@ -1,4 +1,7 @@
-# Version 0.17.2
+# Version 0.18.0
+
+* Improve automatic schema migration for Hive and JDBC relations
+* Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive
 
 
 # Version 0.17.1 - 2021-06-18

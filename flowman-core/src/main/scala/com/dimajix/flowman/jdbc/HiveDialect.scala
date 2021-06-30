@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.jdbc
 
+import com.dimajix.flowman.catalog.PartitionSpec
+
+
 object HiveDialect extends BaseDialect {
     override def canHandle(url : String): Boolean = url.startsWith("jdbc:hive")
 

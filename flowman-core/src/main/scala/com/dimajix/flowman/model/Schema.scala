@@ -86,6 +86,10 @@ trait Schema extends Instance {
         org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
     }
 
+    def catalogSchema : org.apache.spark.sql.types.StructType = {
+        org.apache.spark.sql.types.StructType(fields.map(_.catalogField))
+    }
+
     /**
       * Provides a human readable string representation of the schema
       */

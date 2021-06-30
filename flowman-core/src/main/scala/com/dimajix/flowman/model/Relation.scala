@@ -18,14 +18,6 @@ package com.dimajix.flowman.model
 
 import java.util.Locale
 
-import com.dimajix.common.Trilean
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
@@ -38,8 +30,18 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
+import com.dimajix.common.Trilean
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.SchemaUtils
 
 
 object Relation {
@@ -223,7 +225,7 @@ trait Relation extends Instance {
       * This will update any existing relation to the specified metadata.
       * @param execution
       */
-    def migrate(execution:Execution) : Unit
+    def migrate(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED, migrationStrategy:MigrationStrategy=MigrationStrategy.ALTER) : Unit
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow

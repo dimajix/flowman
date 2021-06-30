@@ -16,13 +16,11 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.FileNotFoundException
 import java.util.Locale
 
-import scala.util.Try
+import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
@@ -37,12 +35,19 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
-import com.dimajix.common.Unknown
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.IncompatibleSchemaException
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
@@ -55,7 +60,7 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveTableRelation {
@@ -155,7 +160,7 @@ case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
+        logger.info(s"Writing Hive relation '$identifier' to table $tableIdentifier partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(executor, df)
@@ -213,7 +218,7 @@ case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table '$tableIdentifier' partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using direct write")
+        logger.info(s"Writing Hive relation '$identifier' to table $tableIdentifier partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using direct write")
 
         if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -258,12 +263,12 @@ case class HiveTableRelation(
         if (partitions.nonEmpty) {
             val partitionSchema = PartitionSchema(this.partitions)
             partitionSchema.interpolate(partitions).foreach { spec =>
-                logger.info(s"Cleaning Hive relation '$identifier' by truncating table '$tableIdentifier' partition ${HiveDialect.expr.partition(spec)}")
+                logger.info(s"Cleaning Hive relation '$identifier' by truncating table $tableIdentifier partition ${HiveDialect.expr.partition(spec)}")
                 catalog.dropPartition(tableIdentifier, spec)
             }
         }
         else {
-            logger.info(s"Cleaning Hive relation '$identifier' by truncating table '$tableIdentifier'")
+            logger.info(s"Cleaning Hive relation '$identifier' by truncating table $tableIdentifier")
             catalog.truncateTable(tableIdentifier)
         }
     }
@@ -313,7 +318,7 @@ case class HiveTableRelation(
         require(execution != null)
 
         if (!ifNotExists || exists(execution) == No) {
-            val sparkSchema = StructType(fields.map(_.sparkField))
+            val sparkSchema = StructType(fields.map(_.catalogField))
             logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 
             // Create and save Avro schema
@@ -401,43 +406,100 @@ case class HiveTableRelation(
       * Performs migration of a Hive table by adding new columns
       * @param execution
       */
-    override def migrate(execution: Execution): Unit = {
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
         if (catalog.tableExists(tableIdentifier)) {
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
-                logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
-                catalog.dropTable(tableIdentifier, false)
-                create(execution, false)
+                migrationStrategy match {
+                    case MigrationStrategy.NEVER =>
+                        logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE $tableIdentifier, but migrations are disabled.")
+                    case MigrationStrategy.FAIL =>
+                        logger.error(s"Cannot migrate relation HiveTable '$identifier' from VIEW to a TABLE $tableIdentifier, since migrations are disabled.")
+                        throw new MigrationFailedException(identifier)
+                    case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                        logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
+                        catalog.dropTable(tableIdentifier, false)
+                        create(execution, false)
+                }
             }
             else {
-                val sourceSchema = schema.get.sparkSchema
-                val targetSchema = table.dataSchema
-                val targetFields = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                // TODO: Check if catalogSchema really works as desired
+                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
+                val targetSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
+                val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
 
-                // Ensure that current real Hive schema is compatible with specified schema
-                val isCompatible = sourceSchema.forall { field =>
-                    targetFields.get(field.name.toLowerCase(Locale.ROOT))
-                        .forall(tgt => SchemaUtils.isCompatible(field, tgt))
-                }
-                if (!isCompatible) {
-                    logger.error(s"Cannot migrate existing schema\n ${targetSchema.treeString}\n to new schema\n ${sourceSchema.treeString}")
-                    throw new IncompatibleSchemaException(identifier)
-                }
-
-                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
-                if (missingFields.nonEmpty) {
-                    val newSchema = StructType(targetSchema.fields ++ missingFields)
-                    logger.info(s"Migrating HiveTable relation '$identifier' with table $tableIdentifier by adding new columns ${missingFields.map(_.name).mkString(",")}. Final schema is\n ${newSchema.treeString}")
-                    catalog.addTableColumns(tableIdentifier, missingFields)
+                if (requiresMigration) {
+                    doMigration(execution, sourceSchema, targetSchema, migrationPolicy, migrationStrategy)
                 }
             }
         }
     }
 
+    private def doMigration(execution: Execution, currentSchema:com.dimajix.flowman.types.StructType, targetSchema:com.dimajix.flowman.types.StructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $tableIdentifier, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since migrations are disabled")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER =>
+                val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                if (migrations.exists(m => !supported(m))) {
+                    logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes")
+                    throw new MigrationFailedException(identifier)
+                }
+                alter(migrations)
+            case MigrationStrategy.ALTER_REPLACE =>
+                val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                if (migrations.forall(m => supported(m))) {
+                    alter(migrations)
+                }
+                else {
+                    recreate()
+                }
+            case MigrationStrategy.REPLACE =>
+                recreate()
+        }
+
+        def alter(migrations:Seq[TableChange]) : Unit = {
+            logger.info(s"Migrating HiveTable relation '$identifier', this will the Hive table $tableIdentifier")
+
+            try {
+                execution.catalog.alterTable(tableIdentifier, migrations)
+            }
+            catch {
+                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            }
+        }
+
+        def recreate() : Unit = {
+            logger.info(s"Migrating HiveTable relation '$identifier', this will the Hive table $tableIdentifier")
+            try {
+                destroy(execution, true)
+                create(execution, true)
+            }
+            catch {
+                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            }
+        }
+
+        def supported(change:TableChange) : Boolean = {
+            change match {
+                case _:DropColumn => false
+                case _:AddColumn => true
+                case _:UpdateColumnNullability => true
+                case _:UpdateColumnType => false
+                case _:UpdateColumnComment => true
+                case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
+            }
+        }
+    }
+
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
+        // We specifically use the existing physical Hive schema
         Some(execution.catalog.getTable(tableIdentifier).dataSchema)
     }
 
@@ -449,9 +511,9 @@ case class HiveTableRelation(
       * @return
       */
     override protected def applyOutputSchema(execution:Execution, df: DataFrame) : DataFrame = {
-        val mixedCaseDf = SchemaUtils.applySchema(df, outputSchema(execution))
+        val mixedCaseDf = SparkSchemaUtils.applySchema(df, outputSchema(execution))
         if (needsLowerCaseSchema) {
-            val lowerCaseSchema = SchemaUtils.toLowerCase(mixedCaseDf.schema)
+            val lowerCaseSchema = SparkSchemaUtils.toLowerCase(mixedCaseDf.schema)
             df.sparkSession.createDataFrame(mixedCaseDf.rdd, lowerCaseSchema)
         }
         else {

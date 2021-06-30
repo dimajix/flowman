@@ -35,7 +35,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class FileDataset(

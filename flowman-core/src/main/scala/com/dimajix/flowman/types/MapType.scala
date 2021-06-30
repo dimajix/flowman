@@ -33,8 +33,20 @@ case class MapType(
       @JsonProperty(value="valueType") valueType:FieldType,
       @JsonProperty(value="containsNull") containsNull:Boolean = true
 ) extends ContainerType {
+    /**
+     * The Spark type to use
+     * @return
+     */
     override def sparkType : org.apache.spark.sql.types.MapType = {
         org.apache.spark.sql.types.MapType(keyType.sparkType, valueType.sparkType, containsNull)
+    }
+
+    /**
+     * The Spark type to use
+     * @return
+     */
+    override def catalogType : org.apache.spark.sql.types.MapType = {
+        org.apache.spark.sql.types.MapType(keyType.catalogType, valueType.catalogType, containsNull)
     }
 
     override def parse(value:String, granularity:Option[String]=None) : Any = ???

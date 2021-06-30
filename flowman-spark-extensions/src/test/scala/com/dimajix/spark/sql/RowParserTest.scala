@@ -76,7 +76,7 @@ class RowParserTest extends AnyFlatSpec with Matchers {
             Array("2019-02-01T12:34:03"),               // local time
             Array("2019-02-01T12:34:04.000+00:00"),     // utc time
             Array("2019-02-01T12:34:05+00:00"),         // utc time
-            Array("2019-02-01 12:34:06"),               // local time
+            Array("2019-02-01 12:34:06")                // local time
         )
         val schema = StructType(Seq(
             StructField("c1", TimestampType)

@@ -10,7 +10,7 @@ specification (see [module documentation](spec/module.md)) or in the naamespace 
 - `flowman.spark.enableHive` *(type: boolean)* *(default:true)*
 If set to `false`, then Hive support will be disabled in Flowman.
 
-- `floman.hive.analyzeTable` *(type: boolean)* *(default:true)*
+- `flowman.hive.analyzeTable` *(type: boolean)* *(default:true)*
 If enabled (i.e. set to `true`), then Flowman will perform a `ANALYZE TABLE` for all Hive table updates.
 
 - `flowman.home` *(type: string)*
@@ -73,12 +73,12 @@ Sets the default target output mode. Possible values are
   - *`ERROR_IF_EXISTS`*: Throws an error if the output already exists
 Note that you can still explicitly specify a different output mode in each target.
     
-- `floman.default.target.rebalance` *(type: boolean)* *(default:false)*
+- `flowman.default.target.rebalance` *(type: boolean)* *(default:false)*
 If set to `true`, Flowman will try to write a similar records per each output file. Rebelancing might be an expensive
 operation since it will invoke a Spark network shuffle. Note that you can still explicitly use different settings per
 target. 
 
-- `floman.default.target.parallelism` *(type: int)* *(default:16)*
+- `flowman.default.target.parallelism` *(type: int)* *(default:16)*
 Sets the default number of output files per target. If set to zero or a negative value, the number of output files is 
 implicitly determined by the number of internal Spark partitions, i.e. no explicit change will be performed. Note that 
 you can still explicitly use different settings per target. 

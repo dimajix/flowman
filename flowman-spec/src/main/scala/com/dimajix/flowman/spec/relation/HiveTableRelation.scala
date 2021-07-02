@@ -527,7 +527,8 @@ case class HiveTableRelation(
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
         // We specifically use the existing physical Hive schema
         val currentSchema = execution.catalog.getTable(tableIdentifier).dataSchema
-        // If a schema is explicitly specified, we use that one to back-merge VarChar(n) and Char(n)
+        // If a schema is explicitly specified, we use that one to back-merge VarChar(n) and Char(n). This
+        // is mainly required for Spark < 3.1, which cannot correctly handle VARCHAR and CHAR types in Hive
         schema.map { schema =>
             val desiredSchema = schema.catalogSchema.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
             val mergedFields = currentSchema.map { field =>

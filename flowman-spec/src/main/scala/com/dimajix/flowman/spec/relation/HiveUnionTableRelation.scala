@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -32,6 +34,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
+import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
@@ -424,26 +427,57 @@ case class HiveUnionTableRelation(
                 val targetSchema = table.dataSchema
                 val targetFields = targetSchema.map(f => f.name.toLowerCase(Locale.ROOT)).toSet
 
-                val missingFields = HiveTableRelation.cleanupFields(sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT))))
+                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
                 if (missingFields.nonEmpty) {
-                    val newSchema = StructType(targetSchema.fields ++ missingFields)
-                    logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
-                    catalog.addTableColumns(id, missingFields)
+                    doMigrateAlterTable(execution, table, missingFields, migrationStrategy)
                 }
 
             case None =>
                 // 3. If not found:
                 //  3.2 Create new table
-                val tableSet = allTables.toSet
-                val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
-                logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
-                val hiveTableRelation = tableRelation(version)
-                hiveTableRelation.create(execution, false)
+                doMigrateNewTable(execution, allTables, migrationStrategy)
         }
 
         //  4 Always migrate union view, maybe SQL generator changed
         val hiveViewRelation = viewRelationFromTables(execution)
         hiveViewRelation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+    }
+
+    private def doMigrate(migrationStrategy:MigrationStrategy)(alter: => Unit) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate HiveUnionTable HiveTable '$identifier' of Hive union table $viewIdentifier, since migrations are disabled")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE =>
+                alter
+            case MigrationStrategy.REPLACE =>
+                logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier with migration strategy ${MigrationStrategy.REPLACE}, altering table instead.")
+                alter
+        }
+    }
+
+    private def doMigrateAlterTable(execution:Execution, table:CatalogTable, rawMissingFields:Seq[StructField], migrationStrategy:MigrationStrategy) : Unit = {
+        doMigrate(migrationStrategy) {
+            val catalog = execution.catalog
+            val id = table.identifier
+            val targetSchema = table.dataSchema
+            val missingFields = HiveTableRelation.cleanupFields(rawMissingFields)
+            val newSchema = StructType(targetSchema.fields ++ missingFields)
+            logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
+            catalog.addTableColumns(id, missingFields)
+        }
+    }
+
+    private def doMigrateNewTable(execution:Execution, allTables:Seq[TableIdentifier], migrationStrategy:MigrationStrategy) : Unit = {
+        doMigrate(migrationStrategy) {
+            val tableSet = allTables.toSet
+            val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
+            logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
+            val hiveTableRelation = tableRelation(version)
+            hiveTableRelation.create(execution, false)
+        }
     }
 }
 

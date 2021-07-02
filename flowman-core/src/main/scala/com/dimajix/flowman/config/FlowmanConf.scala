@@ -50,7 +50,7 @@ object FlowmanConf {
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
         .createWithDefault(features.hiveSupported)
-    val HIVE_ANALYZE_TABLE = buildConf("floman.hive.analyzeTable")
+    val HIVE_ANALYZE_TABLE = buildConf("flowman.hive.analyzeTable")
         .doc("Performs ANALYZE TABLE commands")
         .booleanConf
         .createWithDefault(true)

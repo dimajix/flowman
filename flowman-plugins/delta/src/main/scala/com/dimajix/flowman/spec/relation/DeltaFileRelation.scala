@@ -157,40 +157,6 @@ case class DeltaFileRelation(
     }
 
     /**
-     * Removes one or more partitions.
-     *
-     * @param execution
-     * @param partitions
-     */
-    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
-        requireValidPartitionKeys(partitions)
-
-        if (partitions.nonEmpty) {
-            val deltaTable = DeltaTable.forPath(execution.spark, location.toString)
-            PartitionSchema(this.partitions).interpolate(partitions).foreach { p =>
-                deltaTable.delete(p.predicate)
-            }
-            deltaTable.vacuum()
-        }
-        else {
-            val fs = location.getFileSystem(execution.hadoopConf)
-            FileUtils.truncateLocation(fs, location)
-
-            // TODO: Pickup existing physical schema
-            val sparkSchema = StructType(fields.map(_.catalogField))
-            DeltaUtils.createTable(
-                execution,
-                None,
-                Some(location),
-                sparkSchema,
-                this.partitions,
-                properties,
-                description
-            )
-        }
-    }
-
-    /**
      * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
      * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
      * [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
@@ -250,6 +216,40 @@ case class DeltaFileRelation(
                 Some(location),
                 sparkSchema,
                 partitions,
+                properties,
+                description
+            )
+        }
+    }
+
+    /**
+     * Removes one or more partitions.
+     *
+     * @param execution
+     * @param partitions
+     */
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        requireValidPartitionKeys(partitions)
+
+        if (partitions.nonEmpty) {
+            val deltaTable = DeltaTable.forPath(execution.spark, location.toString)
+            PartitionSchema(this.partitions).interpolate(partitions).foreach { p =>
+                deltaTable.delete(p.predicate)
+            }
+            deltaTable.vacuum()
+        }
+        else {
+            val fs = location.getFileSystem(execution.hadoopConf)
+            FileUtils.truncateLocation(fs, location)
+
+            // TODO: Pickup existing physical schema
+            val sparkSchema = StructType(fields.map(_.catalogField))
+            DeltaUtils.createTable(
+                execution,
+                None,
+                Some(location),
+                sparkSchema,
+                this.partitions,
                 properties,
                 description
             )

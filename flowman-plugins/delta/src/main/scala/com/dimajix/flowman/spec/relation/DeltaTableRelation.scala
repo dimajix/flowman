@@ -168,42 +168,6 @@ case class DeltaTableRelation(
     }
 
     /**
-     * Removes one or more partitions.
-     *
-     * @param execution
-     * @param partitions
-     */
-    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
-        requireValidPartitionKeys(partitions)
-
-        if (partitions.nonEmpty) {
-            val deltaTable = DeltaTable.forName(execution.spark, tableIdentifier.quotedString)
-            PartitionSchema(this.partitions).interpolate(partitions).foreach { p =>
-                deltaTable.delete(p.predicate)
-            }
-            deltaTable.vacuum()
-        }
-        else {
-            logger.info(s"Truncating Delta table relation '$identifier' by truncating table $tableIdentifier")
-            val deltaTable = DeltaTable.forName(execution.spark, tableIdentifier.quotedString)
-            deltaTable.delete()
-            deltaTable.vacuum()
-/*
-            val catalog = execution.catalog
-            val catalogTable = catalog.getTable(tableIdentifier)
-            require(catalogTable.tableType != CatalogTableType.VIEW)
-
-            val location = new Path(catalogTable.location)
-            val fs = location.getFileSystem(execution.hadoopConf)
-            FileUtils.truncateLocation(fs, location)
-
-            DeltaUtils.createLog(execution.spark, catalogTable)
-            execution.spark.catalog.refreshTable(tableIdentifier.quotedString)
-*/
-        }
-    }
-
-    /**
      * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
      * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
      * [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
@@ -268,6 +232,42 @@ case class DeltaTableRelation(
                 properties,
                 description
             )
+        }
+    }
+
+    /**
+     * Removes one or more partitions.
+     *
+     * @param execution
+     * @param partitions
+     */
+    override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+        requireValidPartitionKeys(partitions)
+
+        if (partitions.nonEmpty) {
+            val deltaTable = DeltaTable.forName(execution.spark, tableIdentifier.quotedString)
+            PartitionSchema(this.partitions).interpolate(partitions).foreach { p =>
+                deltaTable.delete(p.predicate)
+            }
+            deltaTable.vacuum()
+        }
+        else {
+            logger.info(s"Truncating Delta table relation '$identifier' by truncating table $tableIdentifier")
+            val deltaTable = DeltaTable.forName(execution.spark, tableIdentifier.quotedString)
+            deltaTable.delete()
+            deltaTable.vacuum()
+            /*
+                        val catalog = execution.catalog
+                        val catalogTable = catalog.getTable(tableIdentifier)
+                        require(catalogTable.tableType != CatalogTableType.VIEW)
+
+                        val location = new Path(catalogTable.location)
+                        val fs = location.getFileSystem(execution.hadoopConf)
+                        FileUtils.truncateLocation(fs, location)
+
+                        DeltaUtils.createLog(execution.spark, catalogTable)
+                        execution.spark.catalog.refreshTable(tableIdentifier.quotedString)
+            */
         }
     }
 

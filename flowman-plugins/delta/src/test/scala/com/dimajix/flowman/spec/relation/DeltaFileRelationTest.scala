@@ -89,6 +89,11 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             location = new Path(location.toURI)
         )
 
+        relation.fields should be (Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
+        ))
+
         // == Create ===================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
@@ -170,6 +175,12 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                 PartitionField("part", ftypes.StringType)
             )
         )
+
+        relation.fields should be (Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("part", ftypes.StringType, false)
+        ))
 
         // == Create ===================================================================
         location.exists() should be (false)
@@ -304,6 +315,150 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
     }
 
     it should "support read/write without schema" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
 
+        val location = new File(tempDir, "delta/default/lala2")
+        val relation0 = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            )),
+            location = new Path(location.toURI),
+            partitions = Seq(
+                PartitionField("part", ftypes.StringType)
+            )
+        )
+
+        // == Create =================================================================================================
+        location.exists() should be (false)
+        relation0.exists(execution) should be (No)
+        relation0.loaded(execution, Map()) should be (No)
+        relation0.create(execution, false)
+        location.exists() should be (true)
+        relation0.exists(execution) should be (Yes)
+        relation0.loaded(execution, Map()) should be (No)
+        relation0.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
+        relation0.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+
+        // == Check =================================================================================================
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = None,
+            location = new Path(location.toURI),
+            partitions = Seq(
+                PartitionField("part", ftypes.StringType)
+            )
+        )
+        relation.schema should be (None)
+        relation.fields should be (Seq(Field("part", ftypes.StringType, false)))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+
+        // == Read =================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType, false)
+        )))
+        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+
+        // == Write =================================================================================================
+        val schema = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("char_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", "str", 21)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation0.write(execution, df, Map("part" -> SingleValue("p0")))
+
+        // == Check =================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+
+        // == Read ==================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType, false)
+        )))
+        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+
+        // == Write external ========================================================================================
+        relation.write(execution, df, Map("part" -> SingleValue("p1")))
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
+
+        // == Read ==================================================================================================
+        relation0.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType, false)
+        )))
+        relation0.read(execution, None, Map()).count() should be (2)
+        relation0.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation0.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+
+        // == Truncate =============================================================================================
+        relation0.truncate(execution, Map("part" -> SingleValue("p0")))
+
+        // == Check =================================================================================================
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
+
+        // == Read ==================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType, false)
+        )))
+        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+
+        // == Truncate ==============================================================================================
+        relation0.truncate(execution)
+
+        // == Check =================================================================================================
+        location.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+
+        // == Read =================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType, false)
+        )))
+        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+
+        // == Destroy ===============================================================================================
+        relation0.destroy(execution)
+
+        // == Check =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
     }
 }

@@ -281,13 +281,15 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val catalogTable = catalog.getTableMetadata(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
 
-        val location = new Path(catalogTable.location)
-        val fs = location.getFileSystem(hadoopConf)
-        FileUtils.truncateLocation(fs, location)
-
+        // First drop partitions
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
             dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.spec)))
         }
+
+        // Then cleanup directory from any remainders
+        val location = new Path(catalogTable.location)
+        val fs = location.getFileSystem(hadoopConf)
+        FileUtils.truncateLocation(fs, location)
 
         spark.catalog.refreshTable(table.quotedString)
         externalCatalogs.foreach(_.truncateTable(catalogTable))

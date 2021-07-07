@@ -4,6 +4,7 @@
 * Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive
 * Fix the name of some config variables (floman. => flowman.)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
+* Add support for DeltaLake (https://delta.io)
 
 
 # Version 0.17.1 - 2021-06-18

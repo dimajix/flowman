@@ -2,6 +2,12 @@
 
 The *Swagger schema* refers to a schema in the Swagger format.
 
+## Plugin
+
+This schema type is provided as part of the `flowman-swagger` plugin, which needs to be enabled in your
+`namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
+
 ## Example
 ```yaml
 kind: swagger

@@ -16,12 +16,10 @@
 
 package com.dimajix.flowman.catalog
 
-import java.io.FileNotFoundException
 import java.util.Locale
 
 import scala.collection.mutable
 
-import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
@@ -49,10 +47,11 @@ import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.config.Configuration
-import TableChange.AddColumn
-import TableChange.UpdateColumnComment
-import TableChange.UpdateColumnNullability
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.spark.sql.SchemaUtils
@@ -163,7 +162,11 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             cmd.run(spark)
 
             // Create directory if not exists
-            table.storage.locationUri.foreach(location => createLocation(new Path(location)))
+            table.storage.locationUri.foreach { uri =>
+                val location = new Path(uri)
+                val fs = location.getFileSystem(hadoopConf)
+                FileUtils.createLocation(fs, location)
+            }
 
             // Publish table to external catalog
             externalCatalogs.foreach(_.createTable(table))
@@ -247,11 +250,16 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
 
             // Delete all partitions
             if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-                catalog.listPartitions(table).foreach(p => deleteLocation(new Path(p.location)))
+                catalog.listPartitions(table).foreach { p =>
+                    val location = new Path(p.location)
+                    val fs = location.getFileSystem(hadoopConf)
+                    FileUtils.deleteLocation(fs, location)
+                }
             }
 
             val location = getTableLocation(table)
-            deleteLocation(location)
+            val fs = location.getFileSystem(hadoopConf)
+            FileUtils.deleteLocation(fs, location)
 
             // Delete table itself
             val cmd = DropTableCommand(table, ignoreIfNotExists, false, true)
@@ -274,12 +282,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         require(catalogTable.tableType != CatalogTableType.VIEW)
 
         val location = new Path(catalogTable.location)
-        truncateLocation(location)
+        val fs = location.getFileSystem(hadoopConf)
+        FileUtils.truncateLocation(fs, location)
 
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.parameters)))
+            dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.spec)))
         }
 
+        spark.catalog.refreshTable(table.quotedString)
         externalCatalogs.foreach(_.truncateTable(catalogTable))
     }
 
@@ -468,7 +478,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
 
         logger.info(s"Truncating partition ${partition.spec} of Hive table $table")
         val location = getPartitionLocation(table, partition)
-        truncateLocation(location)
+        val fs = location.getFileSystem(hadoopConf)
+        FileUtils.truncateLocation(fs, location)
 
         externalCatalogs.foreach { ec =>
             val sparkPartition = partition.mapValues(_.toString).toMap
@@ -511,7 +522,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         logger.info(s"Dropping partitions ${dropPartitions.map(_.spec).mkString(",")} from Hive table $table")
         catalogPartitions.foreach { partition =>
             val location = new Path(partition.location)
-            deleteLocation(location)
+            val fs = location.getFileSystem(hadoopConf)
+            FileUtils.deleteLocation(fs, location)
         }
 
         // Note that "purge" is not supported with Hive < 1.2
@@ -580,47 +592,6 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
 
             // Remove table from external catalog
             externalCatalogs.foreach(_.dropView(catalogTable))
-        }
-    }
-
-    private def truncateLocation(location:Path): Unit = {
-      val fs = location.getFileSystem(hadoopConf)
-      try {
-        val status = fs.getFileStatus(location)
-        if (status.isDirectory()) {
-            logger.info(s"Deleting all files in directory '$location'")
-            java.lang.System.gc() // Release open file handles on Windows
-            fs.listStatus(location).foreach { f =>
-                doDelete(fs, f.getPath, true)
-            }
-        }
-        else if (status.isFile()) {
-            logger.info(s"Deleting single file '$location'")
-            doDelete(fs, location, false)
-        }
-      } catch {
-        case _:FileNotFoundException =>
-      }
-    }
-    private def createLocation(location:Path) : Unit = {
-      val fs = location.getFileSystem(hadoopConf)
-      if (!fs.exists(location)) {
-        logger.info(s"Creating directory '$location'")
-        fs.mkdirs(location)
-      }
-    }
-    private def deleteLocation(location:Path): Unit = {
-        val fs = location.getFileSystem(hadoopConf)
-        if (fs.exists(location)) {
-            logger.info(s"Deleting file or directory '$location'")
-            doDelete(fs, location, true)
-        }
-    }
-
-    private def doDelete(fs:FileSystem, location:Path, recursive:Boolean) : Unit = {
-        java.lang.System.gc() // Release open file handles on Windows
-        if (!fs.delete(location, recursive)) {
-            logger.warn(s"Cannot delete file or directory '$location'")
         }
     }
 

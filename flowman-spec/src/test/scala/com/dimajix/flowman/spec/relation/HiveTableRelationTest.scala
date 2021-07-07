@@ -79,7 +79,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -92,11 +92,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         ))
 
         // == Create ===================================================================
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (true)
 
         val table = session.catalog.getTable(TableIdentifier("lala_0001", Some("default")))
@@ -113,28 +113,28 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.location.toString should not be ("")
 
         // Try to create relation, although it already exists
-        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
-        relation.create(executor, true)
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
+        relation.create(execution, true)
 
         // == Truncate ===================================================================
-        relation.truncate(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
 
         // == Destroy ===================================================================
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (false)
 
-        an[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
-        relation.destroy(executor, true)
+        an[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+        relation.destroy(execution, true)
     }
 
     it should "support external tables" in {
-        val location = new File(tempDir, "hive/default/lala").toURI
+        val location = new File(tempDir, "hive/default/lala")
         val spec =
             s"""
                |relations:
@@ -143,7 +143,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                |    database: default
                |    table: lala_0002
                |    external: true
-               |    location: $location
+               |    location: ${location.toURI}
                |    schema:
                |      kind: inline
                |      fields:
@@ -155,16 +155,22 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
         val hiveRelation = relation.asInstanceOf[HiveTableRelation]
-        hiveRelation.location should be (Some(new Path(location)))
+        hiveRelation.location should be (Some(new Path(location.toURI)))
 
         // == Create ===================================================================
-        relation.create(executor)
+        location.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        location.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (true)
 
         val table = session.catalog.getTable(TableIdentifier("lala_0002", Some("default")))
@@ -178,10 +184,13 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
-        table.location should be (location)
+        new File(table.location) should be (location)
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
+        location.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (false)
     }
 
@@ -210,7 +219,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -219,11 +228,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
         relation.resources(Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))))
 
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"))) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"))) should be (No)
+        // == Create ===================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"))) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"))) should be (No)
 
         val table = session.catalog.getTable(TableIdentifier("lala_0003", Some("default")))
         table.provider should be (Some("hive"))
@@ -244,9 +254,9 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.location should be (location)
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"))) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"))) should be (No)
     }
 
     it should "support multiple partition columns" in {
@@ -275,16 +285,17 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
+        // == Create ===================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
 
         val table = session.catalog.getTable(TableIdentifier("lala_0004", Some("default")))
         table.provider should be (Some("hive"))
@@ -307,11 +318,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.location should be (location)
 
         // == Destroy ===================================================================
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
     }
 
     it should "support TBLPROPERTIES" in {
@@ -336,12 +347,13 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.create(executor)
+        // == Create ===================================================================
+        relation.create(execution)
         val table = session.catalog.getTable(TableIdentifier("lala_0005", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
@@ -359,7 +371,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.properties("hive.property") should be ("TRUE")
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
     it should "support parquet format" in {
@@ -382,12 +394,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.create(executor)
+        relation.create(execution)
         val table = session.catalog.getTable(TableIdentifier("lala_0006", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0006", Some("default")))
@@ -406,7 +418,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.serde should be (Some("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"))
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
     it should "support avro format" in {
@@ -429,12 +441,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.create(executor)
+        relation.create(execution)
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0007", Some("default")))
@@ -453,7 +465,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
     it should "support csv format" in (if (hiveSupported) {
@@ -479,12 +491,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.create(executor)
+        relation.create(execution)
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0007", Some("default")))
@@ -504,7 +516,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.properties should be (Map("separatorChar" -> "\t", "serialization.format" -> "1"))
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
     })
 
     it should "support a row format" in {
@@ -527,12 +539,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.create(executor)
+        relation.create(execution)
         val table = session.catalog.getTable(TableIdentifier("lala_0008", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0008", Some("default")))
@@ -551,7 +563,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
     it should "support input and output format" in {
@@ -576,12 +588,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        relation.create(executor)
+        relation.create(execution)
         val table = session.catalog.getTable(TableIdentifier("lala_0009", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0009", Some("default")))
@@ -600,11 +612,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
 
-    it should "support create, clean and destroy without partitions" in {
+    it should "support create, clean and destroy without partitions" in { if (hiveSupported) {
         val location = new File(tempDir, "hive/default/lala601")
         val spec =
             s"""
@@ -626,7 +638,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -634,53 +646,68 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
 
-        // Test create
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        // == Create ===================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         location.exists() should be (true)
+        spark.catalog.getTable("default", "lala_0010") should not be (null)
 
-        if (hiveSupported) {
-            spark.catalog.getTable("default", "lala_0010") should not be (null)
-            spark.read.table("default.lala_0010").count() should be(0)
+        // == Read ===================================================================
+        spark.read.table("default.lala_0010").count() should be(0)
+        relation.read(execution, None).count() should be (0)
 
-            // Test write
-            val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
-                .withColumnRenamed("_1", "str_col")
-                .withColumnRenamed("_2", "int_col")
-            relation.exists(executor) should be (Yes)
-            relation.loaded(executor, Map()) should be (No)
-            relation.write(executor, df)
-            relation.exists(executor) should be (Yes)
-            relation.loaded(executor, Map()) should be (Yes)
-            spark.read.table("default.lala_0010").count() should be(2)
+        // == Write ===================================================================
+        val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.write(execution, df)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
 
-            // Test clean
-            relation.truncate(executor)
-            relation.exists(executor) should be (Yes)
-            relation.loaded(executor, Map()) should be (No)
-            location.exists() should be(true)
-            spark.catalog.getTable("default", "lala_0010") should not be (null)
-            spark.read.table("default.lala_0010").count() should be(0)
-        }
+        // == Read ===================================================================
+        spark.read.table("default.lala_0010").count() should be(2)
+        relation.read(execution, None).count() should be (2)
+
+        // == Overwrite ===================================================================
+        relation.write(execution, df)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+
+        // == Read ===================================================================
+        spark.read.table("default.lala_0010").count() should be(2)
+        relation.read(execution, None).count() should be (2)
+
+        // == Truncate ===================================================================
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        location.exists() should be(true)
+        spark.catalog.getTable("default", "lala_0010") should not be (null)
+
+        // == Read ===================================================================
+        spark.read.table("default.lala_0010").count() should be(0)
+        relation.read(execution, None).count() should be (0)
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
 
         // Test 2nd destruction
-        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
-        relation.destroy(executor, true)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+        relation.destroy(execution, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
-    }
+    }}
 
-    it should "support external tables for create, clean and destroy without partitions" in {
+    it should "support external tables for create, clean and destroy without partitions" in { if (hiveSupported) {
         val location = new File(tempDir, "hive/default/lala677")
         val spec =
             s"""
@@ -702,7 +729,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -711,46 +738,53 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
 
         // == Create ===================================================================
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         location.exists() should be (true)
-        if (hiveSupported) {
-            spark.catalog.getTable("default", "lala_0011") should not be (null)
-            spark.read.table("default.lala_0011").count() should be(0)
+        spark.catalog.getTable("default", "lala_0011") should not be (null)
 
-            // Test write
-            val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
-                .withColumnRenamed("_1", "str_col")
-                .withColumnRenamed("_2", "int_col")
-            relation.write(executor, df)
-            relation.exists(executor) should be (Yes)
-            relation.loaded(executor, Map()) should be (Yes)
-            spark.read.table("default.lala_0011").count() should be(2)
+        // == Read ===================================================================
+        spark.read.table("default.lala_0011").count() should be(0)
+        relation.read(execution, None).count() should be (0)
 
-            // Test clean
-            relation.truncate(executor)
-            location.exists() should be(true)
-            relation.loaded(executor, Map()) should be (No)
-            spark.catalog.getTable("default", "lala_0011") should not be (null)
-            spark.read.table("default.lala_0011").count() should be(0)
-        }
+        // == Write ===================================================================
+        val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        relation.write(execution, df)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+
+        // == Read ===================================================================
+        spark.read.table("default.lala_0011").count() should be(2)
+        relation.read(execution, None).count() should be (2)
+
+        // == Truncate ===================================================================
+        relation.truncate(execution)
+        location.exists() should be(true)
+        relation.loaded(execution, Map()) should be (No)
+        spark.catalog.getTable("default", "lala_0011") should not be (null)
+
+        // == Read ===================================================================
+        spark.read.table("default.lala_0011").count() should be(0)
+        relation.read(execution, None).count() should be (0)
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
 
         // Test 2nd destruction
-        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
-        relation.destroy(executor, true)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+        relation.destroy(execution, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
-    }
+    }}
 
-    it should "support create, clean and with partitions" in {
+    it should "support create, clean and with partitions" in { if (hiveSupported) {
         val location = new File(tempDir, "hive/default/lala744")
         val spec =
             s"""
@@ -777,7 +811,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -786,13 +820,13 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
 
         // == Create ===================================================================
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
         if (hiveSupported) {
@@ -821,32 +855,123 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                 StructField("ipart", IntegerType, nullable = false) ::
                 Nil
         ))
+        // == Write ===================================================================
+        val schema = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("char_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", "str", 21)
+        ))
+
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23")))
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (No)
+
+        // == Read ===================================================================
+        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
+
+        // == Overwrite ===================================================================
+        relation.write(execution, df, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23")))
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (No)
+
+        // == Read ===================================================================
+        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
+
+        // == Write ===================================================================
+        relation.write(execution, df, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23")))
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (Yes)
+
+        // == Read ===================================================================
+        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (1)
 
         // == Truncate ===================================================================
-        relation.truncate(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
+        relation.truncate(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"))) should be (Yes)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (Yes)
         location.exists() should be (true)
         spark.catalog.getTable("default", "lala_0012") should not be (null)
-        if (hiveSupported) {
-            spark.read.table("default.lala_0012").count() should be(0)
-        }
+        spark.read.table("default.lala_0012").count() should be(1)
+
+        // == Read ===================================================================
+        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (1)
+
+        // == Truncate ===================================================================
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (No)
+        location.exists() should be (true)
+        spark.catalog.getTable("default", "lala_0012") should not be (null)
+        spark.read.table("default.lala_0012").count() should be(0)
+
+        // == Read ===================================================================
+        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
 
         // == Destroy ===================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("spart" -> SingleValue("1"), "ipart" -> SingleValue("2"))) should be (No)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
 
         // Test 2nd destruction
-        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
-        relation.destroy(executor, true)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+        relation.destroy(execution, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
-    }
+    }}
 
     it should "support different column orders" in (if (hiveSupported) {
         val spec =
@@ -883,7 +1008,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -894,7 +1019,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         ))
 
         // == Create ===================================================================
-        relation_1.create(executor)
+        relation_1.create(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
 
         // Inspect Hive table
@@ -925,22 +1050,22 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("v1", "str", 21)
         ))
         val df = spark.createDataFrame(rdd, schema)
-        relation_2.write(executor, df, Map())
+        relation_2.write(execution, df, Map())
 
         // == Read ===================================================================
         val rows_1 = Seq(
             Row("v1", 21, "str")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1)
+        checkAnswer(relation_2.read(execution, None, Map()), rows_1)
 
         // == Destroy ===================================================================
-        relation_2.destroy(executor)
+        relation_2.destroy(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
     })
 
     it should "support char/varchar columns" in (if (hiveSupported) {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.context
 
         val relation = HiveTableRelation(
@@ -959,7 +1084,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
-        relation.create(executor)
+        relation.create(execution)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
 
         // Inspect Hive table
@@ -1001,7 +1126,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("23456", "12345", "1234567")
         ))
         val df = spark.createDataFrame(rdd, SchemaUtils.replaceCharVarchar(table_1.dataSchema))
-        relation.write(executor, df, Map())
+        relation.write(execution, df, Map())
 
         // == Read ===================================================================
         val rows = Seq(
@@ -1010,11 +1135,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("2345", "1234", "1234567"),
             Row("2345", "1234", "1234567")
         )
-        checkAnswer(relation.read(executor, None, Map()), rows)
+        checkAnswer(relation.read(execution, None, Map()), rows)
 
         // == Destroy ===================================================================
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
-        relation.destroy(executor)
+        relation.destroy(execution)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
     })
 
@@ -1057,7 +1182,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -1069,7 +1194,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
-        relation_1.create(executor)
+        relation_1.create(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
 
         // Inspect Hive table
@@ -1095,11 +1220,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("v1", 21)
         ))
         val df = spark.createDataFrame(rdd, table_1.dataSchema)
-        relation_1.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
+        relation_1.write(execution, df, Map("partition_col" -> SingleValue("part_1")))
 
         // == Migrate ===================================================================
         val relation_2 = context.getRelation(RelationIdentifier("t2"))
-        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         // Inspect Hive table
         val table_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
@@ -1141,7 +1266,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("v2", 22, "lala")
         ))
         val df2 = spark.createDataFrame(rdd_2, SchemaUtils.replaceCharVarchar(table_2.dataSchema))
-        relation_2.write(executor, df2, Map("partition_col" -> SingleValue("part_2")))
+        relation_2.write(execution, df2, Map("partition_col" -> SingleValue("part_2")))
 
         // == Read ===================================================================
         val rows_1 = Seq(
@@ -1150,33 +1275,33 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val rows_2 = Seq(
             Row("v2", 22, "lala", "part_2")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+        checkAnswer(relation_2.read(execution, None, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
 
         // == Overwrite ===================================================================
         val rdd_2a = spark.sparkContext.parallelize(Seq(
             Row("v3", 23, "lala")
         ))
         val df2a = spark.createDataFrame(rdd_2a, SchemaUtils.replaceCharVarchar(table_2.dataSchema))
-        relation_2.write(executor, df2a, Map("partition_col" -> SingleValue("part_2")))
+        relation_2.write(execution, df2a, Map("partition_col" -> SingleValue("part_2")))
 
         // == Read ===================================================================
         val rows_2a = Seq(
             Row("v3", 23, "lala", "part_2")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2a)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+        checkAnswer(relation_2.read(execution, None, Map()), rows_1 ++ rows_2a)
+        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
 
         // == Destroy ===================================================================
-        relation_2.destroy(executor)
+        relation_2.destroy(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
     })
 
     it should "support relaxed migrations" in {
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.context
 
         val relation_1 = HiveTableRelation(
@@ -1208,7 +1333,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Create ===================================================================
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
-        relation_1.create(executor)
+        relation_1.create(execution)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
         session.catalog.getTable(relation_1.tableIdentifier).schema should be (StructType(Seq(
             StructField("f1", StringType),
@@ -1217,11 +1342,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )))
 
         // == Migrate ===================================================================
-        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
-        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
-        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
-        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
-        relation_1.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
         session.catalog.getTable(relation_1.tableIdentifier).schema should be (StructType(Seq(
             StructField("f1", StringType),
             StructField("f2", IntegerType),
@@ -1229,11 +1354,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )))
 
         // == Migrate ===================================================================
-        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
-        a[MigrationFailedException] should be thrownBy(relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
-        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
-        //relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
-        //relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        a[MigrationFailedException] should be thrownBy(relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        //relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        //relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
         session.catalog.getTable(relation_2.tableIdentifier).schema should be (StructType(Seq(
             StructField("f1", StringType),
             StructField("f2", IntegerType),
@@ -1243,7 +1368,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===================================================================
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
-        relation_1.destroy(executor)
+        relation_1.destroy(execution)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
     }
 
@@ -1275,12 +1400,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))
 
-        val schema = mapping.describe(executor, Map(), "main")
+        val schema = mapping.describe(execution, Map(), "main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

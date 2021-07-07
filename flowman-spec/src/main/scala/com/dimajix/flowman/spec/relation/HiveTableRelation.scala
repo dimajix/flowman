@@ -174,8 +174,8 @@ case class HiveTableRelation(
       * @param partitionSpec
       * @param mode
       */
-    private def writeHive(executor: Execution, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
-        require(executor != null)
+    private def writeHive(execution: Execution, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
+        require(execution != null)
         require(df != null)
         require(partitionSpec != null)
         require(mode != null)
@@ -183,13 +183,13 @@ case class HiveTableRelation(
         logger.info(s"Writing Hive relation '$identifier' to table $tableIdentifier partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
 
         // Apply output schema before writing to Hive
-        val outputDf = applyOutputSchema(executor, df)
+        val outputDf = applyOutputSchema(execution, df)
 
         // Helper method for Spark < 2.4
         implicit def toAttributeNames(atts:Seq[Attribute]) : Seq[String] = atts.map(_.name)
 
-        val spark = executor.spark
-        val catalog = executor.catalog
+        val spark = execution.spark
+        val catalog = execution.catalog
 
         if (partitionSpec.nonEmpty) {
             val hiveTable = catalog.getTable(TableIdentifier(table, database))
@@ -232,8 +232,8 @@ case class HiveTableRelation(
       * @param partitionSpec
       * @param mode
       */
-    private def writeSpark(executor: Execution, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
-        require(executor != null)
+    private def writeSpark(execution: Execution, df: DataFrame, partitionSpec: PartitionSpec, mode:OutputMode): Unit = {
+        require(execution != null)
         require(df != null)
         require(partitionSpec != null)
         require(mode != null)
@@ -253,11 +253,11 @@ case class HiveTableRelation(
         }
 
         logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
-        this.writer(executor, df, format, options, mode.batchMode)
+        this.writer(execution, df, format, options, mode.batchMode)
             .save(outputPath.toString)
 
         // Finally add Hive partition
-        val catalog = executor.catalog
+        val catalog = execution.catalog
         if (partitionSpec.nonEmpty) {
             catalog.addOrReplacePartition(tableIdentifier, partitionSpec, outputPath)
         }
@@ -283,12 +283,12 @@ case class HiveTableRelation(
         if (partitions.nonEmpty) {
             val partitionSchema = PartitionSchema(this.partitions)
             partitionSchema.interpolate(partitions).foreach { spec =>
-                logger.info(s"Cleaning Hive relation '$identifier' by truncating table $tableIdentifier partition ${HiveDialect.expr.partition(spec)}")
+                logger.info(s"Truncating Hive relation '$identifier' by truncating table $tableIdentifier partition ${HiveDialect.expr.partition(spec)}")
                 catalog.dropPartition(tableIdentifier, spec)
             }
         }
         else {
-            logger.info(s"Cleaning Hive relation '$identifier' by truncating table $tableIdentifier")
+            logger.info(s"Truncating Hive relation '$identifier' by truncating table $tableIdentifier")
             catalog.truncateTable(tableIdentifier)
         }
     }
@@ -317,7 +317,6 @@ case class HiveTableRelation(
                 catalog.partitionExists(tableIdentifier, partitionSpec)
         }
         else {
-            // Since we do not know for an unpartitioned table if it contains data, we simply return "Unknown"
             if (catalog.tableExists(tableIdentifier)) {
                 val location = catalog.getTableLocation(tableIdentifier)
                 val fs = location.getFileSystem(execution.hadoopConf)
@@ -602,7 +601,7 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(database),
             context.evaluate(table),
             context.evaluate(external).toBoolean,
-            context.evaluate(location).map(p => new Path(context.evaluate(p))),
+            context.evaluate(location).map(p => new Path(p)),
             context.evaluate(format),
             context.evaluate(options),
             context.evaluate(rowFormat),

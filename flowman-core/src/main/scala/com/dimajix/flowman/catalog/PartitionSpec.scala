@@ -18,8 +18,12 @@ package com.dimajix.flowman.catalog
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
 
 import com.dimajix.common.MapIgnoreCase
+import com.dimajix.flowman.jdbc.HiveDialect
 
 
 object PartitionSpec {
@@ -78,6 +82,10 @@ case class PartitionSpec(values:MapIgnoreCase[Any]) {
         }
 
         values.map(kv => kv._1 + "=" + str(kv._2)).mkString("(",", ",")")
+    }
+
+    def predicate : String = {
+        values.map { case (k, v) => k + "=" + HiveDialect.literal(v) }.mkString(" AND ")
     }
 
     override def toString: String = {

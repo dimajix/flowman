@@ -38,6 +38,10 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
           true
         }.getOrElse(false)
 
+    def configureSpark(builder: SparkSession.Builder) : SparkSession.Builder = {
+        builder
+    }
+
     override def beforeAll() : Unit = {
         super.beforeAll()
 
@@ -72,6 +76,9 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         builder.config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath.toString)
             .config("spark.sql.warehouse.dir", localWarehousePath)
             .config(conf)
+
+        configureSpark(builder)
+
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
         sc = spark.sparkContext

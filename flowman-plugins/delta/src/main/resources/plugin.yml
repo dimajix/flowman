@@ -1,0 +1,7 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ - delta-core_${scala.api-version}-${delta.version}.jar

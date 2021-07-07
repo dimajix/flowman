@@ -3,6 +3,11 @@
 The Kafak relation is provided via the `flowman-kafka` plugin. It allows you to access Kafka topics both in batch
 and in stream processing, both as sources and as sinks
 
+## Plugin
+
+This relation type is provided as part of the `flowman-kafka` plugin, which needs to be enabled in your
+`namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
 ## Example
 
 ```yaml

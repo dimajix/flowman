@@ -71,7 +71,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         project.relations.keys should contain("t0")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -81,7 +81,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         fileRelation.format should be ("csv")
         fileRelation.location should be (new Path(inputPath.toURI))
 
-        val df = relation.read(executor, None)
+        val df = relation.read(execution, None)
         df.schema should be (StructType(
             StructField("f1", StringType) ::
                 StructField("f2", StringType) ::
@@ -99,7 +99,6 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |  local:
                |    kind: file
                |    location: ${outputPath.toUri}
-               |    pattern: data.csv
                |    format: csv
                |    schema:
                |      kind: inline
@@ -113,56 +112,66 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.location should be (new Path(outputPath.toUri))
 
+        // == Create ===================================================================
         outputPath.toFile.exists() should be (false)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (true)
-        outputPath.resolve("data.csv").toFile.exists() should be (false)
 
-        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
-        relation.create(executor, true)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
+        relation.create(execution, true)
 
+        // == Read ===================================================================
+        relation.read(execution, None).count() should be (0)
+
+        // == Write ===================================================================
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
                 ("lolo", 2)
             ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        outputPath.resolve("data.csv").toFile.exists() should be (false)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        outputPath.resolve("data.csv").toFile.exists() should be (true)
-
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.truncate(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
         outputPath.toFile.exists() should be (true)
 
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        // == Read ===================================================================
+        relation.read(execution, None).count() should be (2)
+
+        // == Truncate ===================================================================
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        outputPath.toFile.exists() should be (true)
+
+        // == Read ===================================================================
+        relation.read(execution, None).count() should be (0)
+
+        // == Destroy ===================================================================
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (false)
 
-        a[FileNotFoundException] shouldBe thrownBy(relation.destroy(executor))
-        relation.destroy(executor, true)
+        a[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
+        relation.destroy(execution, true)
     }
 
     it should "support partitions" in {
@@ -190,20 +199,20 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (true)
 
         // ===== Write =============================================================================================
@@ -213,16 +222,22 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
-        relation.write(executor, df, Map("p_col" -> SingleValue("2")), OutputMode.OVERWRITE)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("3"))) should be (No)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.write(execution, df, Map("p_col" -> SingleValue("2")), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
 
-        val df_p1 = relation.read(executor, None, Map("p_col" -> SingleValue("1")))
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (0)
+
+        // ===== Write =============================================================================================
+        val df_p1 = relation.read(execution, None, Map("p_col" -> SingleValue("1")))
         df_p1.count() should be (0)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
@@ -230,7 +245,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 StructField("p_col", IntegerType, false) ::
                 Nil
         ))
-        val df_p2 = relation.read(executor, None, Map("p_col" -> SingleValue("2")))
+        val df_p2 = relation.read(execution, None, Map("p_col" -> SingleValue("2")))
         df_p2.count() should be (2)
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
@@ -239,37 +254,53 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 Nil
         ))
 
-        relation.write(executor, df, Map("p_col" -> SingleValue("3")), OutputMode.OVERWRITE)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("3"))) should be (Yes)
+        relation.write(execution, df, Map("p_col" -> SingleValue("3")), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
+
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
 
         // ===== Truncate =============================================================================================
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("3"))) should be (Yes)
-        relation.truncate(executor, Map("p_col" -> SingleValue("2")))
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("3"))) should be (Yes)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
+        relation.truncate(execution, Map("p_col" -> SingleValue("2")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
 
-        relation.truncate(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("3"))) should be (No)
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
+
+        // ===== Truncate =============================================================================================
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         outputPath.toFile.exists() should be (true)
 
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (0)
+
         // ===== Destroy =============================================================================================
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (false)
     }
 
@@ -320,7 +351,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -337,16 +368,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=*/p2=*"))
         ))
 
-        relation.create(executor, true)
-        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.create(execution, true)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
-        val df1 = relation.read(executor, None, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
+        val df1 = relation.read(execution, None, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
         df1.as[(String,Int,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1,1),
             ("p1=1/p2=1/112.txt",1,1)
         ))
 
-        val df2 = relation.read(executor, None, Map("p1" -> SingleValue("1")))
+        val df2 = relation.read(execution, None, Map("p1" -> SingleValue("1")))
         df2.as[(String,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1),
             ("p1=1/p2=1/112.txt",1),
@@ -354,7 +385,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("p1=1/p2=2/122.txt",1)
         ))
 
-        val df3 = relation.read(executor, None, Map("p2" -> SingleValue("1")))
+        val df3 = relation.read(execution, None, Map("p2" -> SingleValue("1")))
         df3.as[(String,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1),
             ("p1=1/p2=1/112.txt",1),
@@ -362,7 +393,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("p1=2/p2=1/212.txt",1)
         ))
 
-        val df4 = relation.read(executor, None, Map())
+        val df4 = relation.read(execution, None, Map())
         df4.as[String].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt"),
             ("p1=1/p2=1/112.txt"),
@@ -374,8 +405,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("p1=2/p2=2/222.txt")
         ))
 
-        relation.truncate(executor, Map("p2" -> SingleValue("1")))
-        val df5 = relation.read(executor, None, Map())
+        relation.truncate(execution, Map("p2" -> SingleValue("1")))
+        val df5 = relation.read(execution, None, Map())
         df5.as[String].collect().sorted should be (Seq(
             ("p1=1/p2=2/121.txt"),
             ("p1=1/p2=2/122.txt"),
@@ -383,7 +414,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("p1=2/p2=2/222.txt")
         ))
 
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
     it should "support using environment variables in pattern" in {
@@ -433,7 +464,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -444,16 +475,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=*"))
         ))
 
-        relation.create(executor, true)
-        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.create(execution, true)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
-        val df1 = relation.read(executor, None, Map("month" -> SingleValue("1")))
+        val df1 = relation.read(execution, None, Map("month" -> SingleValue("1")))
         df1.as[(String,Int)].collect().sorted should be (Seq(
             ("year=2016/month=1/111.txt",1),
             ("year=2016/month=1/112.txt",1)
         ))
 
-        val df2 = relation.read(executor, None, Map())
+        val df2 = relation.read(execution, None, Map())
         df2.as[String].collect().sorted should be (Seq(
             ("year=2016/month=1/111.txt"),
             ("year=2016/month=1/112.txt"),
@@ -461,7 +492,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("year=2016/month=2/122.txt")
         ))
 
-        relation.destroy(executor)
+        relation.destroy(execution)
     }
 
     it should "support mapping schemas" in {
@@ -495,11 +526,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))
-        val schema = mapping.describe(executor, Map(), "main")
+        val schema = mapping.describe(execution, Map(), "main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

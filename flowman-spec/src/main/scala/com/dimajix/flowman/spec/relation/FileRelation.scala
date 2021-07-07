@@ -206,8 +206,7 @@ case class FileRelation(
             collector.glob(partitionSpec).exists(checkPartition)
         }
         else {
-            val partitionSpec = PartitionSchema(partitions).spec(partition)
-            val outputPath = collector.resolve(partitionSpec)
+            val outputPath = collector.resolve()
             checkPartition(outputPath)
         }
     }

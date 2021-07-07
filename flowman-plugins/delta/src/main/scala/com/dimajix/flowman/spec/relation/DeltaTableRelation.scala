@@ -16,25 +16,12 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.FileNotFoundException
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
-import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
-import org.apache.spark.sql.catalyst.catalog.CatalogTable
-import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.delta.DeltaLog
-import org.apache.spark.sql.delta.DeltaOperations
-import org.apache.spark.sql.delta.actions.AddFile
-import org.apache.spark.sql.delta.actions.Metadata
-import org.apache.spark.sql.delta.commands.CreateDeltaTableCommand
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -46,8 +33,6 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.hadoop.FileCollector
-import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -70,7 +55,7 @@ case class DeltaTableRelation(
     table: String,
     location: Option[Path] = None,
     options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map(),
+    properties: Map[String, String] = Map()
 ) extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
 

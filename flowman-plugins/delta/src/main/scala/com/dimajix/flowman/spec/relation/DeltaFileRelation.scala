@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -56,7 +55,7 @@ case class DeltaFileRelation(
     override val partitions: Seq[PartitionField] = Seq(),
     location: Path,
     options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map(),
+    properties: Map[String, String] = Map()
 ) extends BaseRelation with PartitionedRelation {
     protected  val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
 

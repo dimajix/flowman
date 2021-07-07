@@ -26,8 +26,10 @@ store:
 plugins:
   - flowman-aws
   - flowman-azure
+  - flowman-delta
   - flowman-kafka
   - flowman-mariadb
   - flowman-mysql
+  - flowman-mssqlserver
   - flowman-swagger
   - flowman-json

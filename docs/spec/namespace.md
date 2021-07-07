@@ -32,7 +32,7 @@ config:
   - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
 plugins:
-  - flowman-example
+  - flowman-delta
   - flowman-hbase
   - flowman-aws
   - flowman-azure

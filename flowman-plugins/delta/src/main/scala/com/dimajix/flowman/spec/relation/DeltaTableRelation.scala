@@ -206,7 +206,7 @@ case class DeltaTableRelation(
             logger.info(s"Creating Delta table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
 
             if (tableExists)
-                throw new TableAlreadyExistsException(s"Delta table $tableIdentifier already exists")
+                throw new TableAlreadyExistsException(database, table)
 
             DeltaUtils.createTable(
                 execution,
@@ -241,18 +241,6 @@ case class DeltaTableRelation(
             val deltaTable = DeltaTable.forName(execution.spark, tableIdentifier.quotedString)
             deltaTable.delete()
             deltaTable.vacuum()
-            /*
-                        val catalog = execution.catalog
-                        val catalogTable = catalog.getTable(tableIdentifier)
-                        require(catalogTable.tableType != CatalogTableType.VIEW)
-
-                        val location = new Path(catalogTable.location)
-                        val fs = location.getFileSystem(execution.hadoopConf)
-                        FileUtils.truncateLocation(fs, location)
-
-                        DeltaUtils.createLog(execution.spark, catalogTable)
-                        execution.spark.catalog.refreshTable(tableIdentifier.quotedString)
-            */
         }
     }
 

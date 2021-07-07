@@ -257,13 +257,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
                 }
             }
 
-            val location = getTableLocation(table)
-            val fs = location.getFileSystem(hadoopConf)
-            FileUtils.deleteLocation(fs, location)
-
             // Delete table itself
             val cmd = DropTableCommand(table, ignoreIfNotExists, false, true)
             cmd.run(spark)
+
+            // Delete location to cleanup any remaining files
+            val location = new Path(catalogTable.location)
+            val fs = location.getFileSystem(hadoopConf)
+            FileUtils.deleteLocation(fs, location)
 
             // Remove table from external catalog
             externalCatalogs.foreach(_.dropTable(catalogTable))

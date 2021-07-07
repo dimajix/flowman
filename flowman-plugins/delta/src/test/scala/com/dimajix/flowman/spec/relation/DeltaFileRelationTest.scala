@@ -32,6 +32,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -307,11 +308,124 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
     }
 
     it should "support append for unpartitioned tables" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
 
+        val location = new File(tempDir, "delta/default/lala")
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            )),
+            location = new Path(location.toURI)
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution, false)
+        relation.exists(execution) should be (Yes)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (No)
+        relation.read(execution, None, Map()).count() should be (0)
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("char_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", "str", 21)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map())
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (1)
+
+        // == Append =================================================================================================
+        relation.write(execution, df, Map(), OutputMode.APPEND)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (2)
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
     }
 
     it should "support append for partitioned tables" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
 
+        val location = new File(tempDir, "delta/default/lala")
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            )),
+            location = new Path(location.toURI),
+            partitions = Seq(
+                PartitionField("part", ftypes.StringType)
+            )
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution, false)
+        relation.exists(execution) should be (Yes)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (No)
+        relation.read(execution, None, Map()).count() should be (0)
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("char_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", "str", 21)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map("part" -> SingleValue("p0")))
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+
+        // == Append =================================================================================================
+        relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.APPEND)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (2)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
     }
 
     it should "support read/write without schema" in {

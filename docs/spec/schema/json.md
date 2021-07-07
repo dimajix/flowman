@@ -4,7 +4,7 @@ ordering of fields within the definition.
 
 ## Plugin
 
-This schema type is provided as part of the `flowman-json` plugin, which needs to be enabled in your 
+This schema type is provided as part of the [`flowman-json` plugin](../../plugins/json.md), which needs to be enabled in your 
 `namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
 
 

@@ -38,10 +38,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.PartitionField
 
 
-class DeltaUtils
 object DeltaUtils {
-    private val logger = LoggerFactory.getLogger(classOf[DeltaUtils])
-
     def tableIdentifier(location:Path) : TableIdentifier = {
         TableIdentifier(location.toString, Some("delta"))
     }

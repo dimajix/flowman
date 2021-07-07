@@ -5,7 +5,7 @@ and in stream processing, both as sources and as sinks
 
 ## Plugin
 
-This relation type is provided as part of the `flowman-kafka` plugin, which needs to be enabled in your
+This relation type is provided as part of the [`flowman-kafka` plugin](../../plugins/kafka.md), which needs to be enabled in your
 `namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
 
 ## Example

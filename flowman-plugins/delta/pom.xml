@@ -24,13 +24,13 @@
         <profile>
             <id>CDH-6.3</id>
             <properties>
-                <delta.version>0.7.0</delta.version>
+                <delta.version>0.6.1</delta.version>
             </properties>
         </profile>
         <profile>
             <id>spark-2.4</id>
             <properties>
-                <delta.version>0.7.0</delta.version>
+                <delta.version>0.6.1</delta.version>
             </properties>
         </profile>
         <profile>

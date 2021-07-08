@@ -29,7 +29,9 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -173,9 +175,25 @@ case class FileRelation(
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
-
         logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
 
+        mode match {
+            // Since Flowman has a slightly different semantics of when data is available, we need to handle some
+            // cases explicitly
+            case OutputMode.IGNORE_IF_EXISTS =>
+                if (loaded(execution, partition) == No) {
+                    doWrite(execution, df, outputPath, OutputMode.OVERWRITE)
+                }
+            case OutputMode.ERROR_IF_EXISTS =>
+                if (loaded(execution, partition) == Yes) {
+                    throw new FileAlreadyExistsException(outputPath.toString)
+                }
+                doWrite(execution, df, outputPath, OutputMode.OVERWRITE)
+            case m => m.batchMode
+                doWrite(execution, df, outputPath, mode)
+        }
+    }
+    private def doWrite(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
         this.writer(execution, df, format, options, mode.batchMode)
             .save(outputPath.toString)
     }

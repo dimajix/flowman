@@ -38,6 +38,7 @@ import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -112,7 +113,7 @@ case class HiveUnionTableRelation(
 
     private def listTables(executor: Execution) : Seq[TableIdentifier] = {
         val catalog = executor.catalog
-        val regex = (TableIdentifier(tablePrefix, tableDatabase).unquotedString + "_[0-9]+").r
+        val regex = (TableIdentifier(tablePrefix, tableDatabase.orElse(Some(catalog.currentDatabase))).unquotedString + "_[0-9]+").r
         catalog.listTables(tableDatabase.getOrElse(catalog.currentDatabase), tablePrefix + "_*")
             .filter { table =>
                 table.unquotedString match {
@@ -315,10 +316,12 @@ case class HiveUnionTableRelation(
         val catalog = execution.catalog
 
         if (this.partitions.isEmpty) {
-            if (catalog.tableExists(viewIdentifier))
-                Unknown
-            else
-                No
+            catalog.tableExists(viewIdentifier) &&
+                listTables(execution).exists { table =>
+                    val location = catalog.getTableLocation(table)
+                    val fs = location.getFileSystem(execution.hadoopConf)
+                    FileUtils.isValidHiveData(fs, location)
+                }
         }
         else {
             val partitionSchema = PartitionSchema(this.partitions)

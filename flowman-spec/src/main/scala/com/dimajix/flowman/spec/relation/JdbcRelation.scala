@@ -210,6 +210,10 @@ case class JdbcRelation(
                     writePartition()
                 case OutputMode.APPEND =>
                     writePartition()
+                case OutputMode.UPDATE =>
+                    ???
+                case OutputMode.MERGE =>
+                    ???
                 case OutputMode.IGNORE_IF_EXISTS =>
                     if (!checkPartition(partition)) {
                         writePartition()

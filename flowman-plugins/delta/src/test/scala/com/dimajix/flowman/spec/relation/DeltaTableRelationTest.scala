@@ -593,4 +593,16 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
+
+    it should "support migrations by adding new columns" in {
+
+    }
+
+    it should "support migrations by removing columns" in {
+
+    }
+
+    it should "support migrations by changing data types" in {
+
+    }
 }

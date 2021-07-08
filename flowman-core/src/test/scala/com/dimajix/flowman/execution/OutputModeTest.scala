@@ -26,6 +26,8 @@ class OutputModeTest extends AnyFlatSpec with Matchers {
         OutputMode.ofString("overwrite") should be (OutputMode.OVERWRITE)
         OutputMode.ofString("APPEND") should be (OutputMode.APPEND)
         OutputMode.ofString("UPDATE") should be (OutputMode.UPDATE)
+        OutputMode.ofString("UPSERT") should be (OutputMode.UPDATE)
+        OutputMode.ofString("MERGE") should be (OutputMode.MERGE)
         OutputMode.ofString("IGNORE_IF_EXISTS") should be (OutputMode.IGNORE_IF_EXISTS)
         OutputMode.ofString("ERROR_IF_EXISTS") should be (OutputMode.ERROR_IF_EXISTS)
         a[NullPointerException] shouldBe thrownBy(OutputMode.ofString(null))
@@ -36,6 +38,7 @@ class OutputModeTest extends AnyFlatSpec with Matchers {
         OutputMode.OVERWRITE.toString should be ("OVERWRITE")
         OutputMode.APPEND.toString should be ("APPEND")
         OutputMode.UPDATE.toString should be ("UPDATE")
+        OutputMode.MERGE.toString should be ("MERGE")
         OutputMode.IGNORE_IF_EXISTS.toString should be ("IGNORE_IF_EXISTS")
         OutputMode.ERROR_IF_EXISTS.toString should be ("ERROR_IF_EXISTS")
     }
@@ -44,6 +47,7 @@ class OutputModeTest extends AnyFlatSpec with Matchers {
         OutputMode.ofString(OutputMode.OVERWRITE.toString) should be (OutputMode.OVERWRITE)
         OutputMode.ofString(OutputMode.APPEND.toString) should be (OutputMode.APPEND)
         OutputMode.ofString(OutputMode.UPDATE.toString) should be (OutputMode.UPDATE)
+        OutputMode.ofString(OutputMode.MERGE.toString) should be (OutputMode.MERGE)
         OutputMode.ofString(OutputMode.IGNORE_IF_EXISTS.toString) should be (OutputMode.IGNORE_IF_EXISTS)
         OutputMode.ofString(OutputMode.ERROR_IF_EXISTS.toString) should be (OutputMode.ERROR_IF_EXISTS)
     }

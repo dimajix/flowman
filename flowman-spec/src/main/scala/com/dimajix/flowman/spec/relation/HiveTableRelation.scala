@@ -22,9 +22,12 @@ import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
@@ -40,6 +43,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -185,15 +189,45 @@ case class HiveTableRelation(
         // Apply output schema before writing to Hive
         val outputDf = applyOutputSchema(execution, df)
 
-        // Helper method for Spark < 2.4
-        implicit def toAttributeNames(atts:Seq[Attribute]) : Seq[String] = atts.map(_.name)
+        def loaded() : Boolean = {
+            val catalog = execution.catalog
+            if (partitions.nonEmpty) {
+                catalog.partitionExists(tableIdentifier, partitionSpec)
+            }
+            else {
+                val location = catalog.getTableLocation(tableIdentifier)
+                val fs = location.getFileSystem(execution.hadoopConf)
+                FileUtils.isValidHiveData(fs, location)
+            }
+        }
 
+        mode match {
+            case OutputMode.APPEND|OutputMode.OVERWRITE =>
+                writeHiveTable(execution, outputDf, partitionSpec, mode)
+            case OutputMode.IGNORE_IF_EXISTS =>
+                if (!loaded()) {
+                    writeHiveTable(execution, outputDf, partitionSpec, mode)
+                }
+            case OutputMode.ERROR_IF_EXISTS =>
+                if (loaded()) {
+                    if (partitionSpec.nonEmpty)
+                        throw new PartitionAlreadyExistsException(database.getOrElse(""), table, partitionSpec.mapValues(_.toString).toMap)
+                    else
+                        throw new TableAlreadyExistsException(database.getOrElse(""), table)
+                }
+                writeHiveTable(execution, outputDf, partitionSpec, mode)
+            case _ =>
+                throw new IllegalArgumentException(s"Unsupported output mode '$mode' for Hive table relation $identifier")
+        }
+    }
+
+    private def writeHiveTable(execution: Execution, df:DataFrame, partitionSpec: PartitionSpec, mode: OutputMode) : Unit = {
         val spark = execution.spark
         val catalog = execution.catalog
 
         if (partitionSpec.nonEmpty) {
             val hiveTable = catalog.getTable(TableIdentifier(table, database))
-            val query = outputDf.queryExecution.logical
+            val query = df.queryExecution.logical
 
             val overwrite = mode == OutputMode.OVERWRITE
             val cmd = InsertIntoHiveTable(
@@ -202,7 +236,7 @@ case class HiveTableRelation(
                 query = query,
                 overwrite = overwrite,
                 ifPartitionNotExists = false,
-                query.output
+                query.output.map(_.name)
             )
             val qe = spark.sessionState.executePlan(cmd)
             SparkShim.withNewExecutionId(spark, qe)(qe.toRdd)
@@ -211,15 +245,13 @@ case class HiveTableRelation(
             catalog.refreshPartition(tableIdentifier, partitionSpec)
         }
         else {
-            // Create and configure writer
-            val writer = outputDf.write
+            val writer = df.write
                 .mode(mode.batchMode)
                 .options(options)
             format.foreach(writer.format)
-
             writer.insertInto(tableIdentifier.unquotedString)
 
-            catalog.refreshTable(tableIdentifier)
+            execution.catalog.refreshTable(tableIdentifier)
         }
     }
 

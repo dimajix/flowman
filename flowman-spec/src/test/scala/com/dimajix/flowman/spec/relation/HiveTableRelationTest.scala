@@ -976,7 +976,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
     }}
 
-    it should "support different output modes with unpartitioned tables" in {
+    it should "support different output modes with unpartitioned tables" in (if (hiveSupported) {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -1058,9 +1058,9 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
-    }
+    })
 
-    it should "support different output modes with partitioned tables" in {
+    it should "support different output modes with partitioned tables" in (if (hiveSupported) {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -1179,7 +1179,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
-    }
+    })
 
     it should "support different column orders" in (if (hiveSupported) {
         val spec =

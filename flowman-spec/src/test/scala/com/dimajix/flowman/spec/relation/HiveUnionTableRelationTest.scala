@@ -407,7 +407,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
     })
 
-    it should "support different output modes with unpartitioned tables" in {
+    it should "support different output modes with unpartitioned tables" in (if (hiveSupported) {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -489,9 +489,9 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
-    }
+    })
 
-    it should "support different output modes with partitioned tables" in {
+    it should "support different output modes with partitioned tables" in (if (hiveSupported) {
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -610,7 +610,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
-    }
+    })
 
     it should "support migration by adding new columns" in (if (hiveSupported) {
         val spec =

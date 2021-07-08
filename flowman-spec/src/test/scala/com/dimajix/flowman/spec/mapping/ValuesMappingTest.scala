@@ -92,6 +92,9 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
               |    columns:
               |      str_col: string
               |      int_col: integer
+              |      some_col: string
+              |      other_col: string
+              |      last_col: string
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
@@ -106,6 +109,13 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
         mapping.outputs should be (Seq("main"))
+        mapping.columns should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType),
+            Field("some_col", StringType),
+            Field("other_col", StringType),
+            Field("last_col", StringType)
+        ))
         mapping.records should be (Seq(
             ArrayRecord("a","12","3"),
             ArrayRecord("cat","","7"),

@@ -16,8 +16,13 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import scala.collection.immutable.ListMap
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -103,7 +108,8 @@ extends BaseMapping {
 
 class SchemaMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "columns", required = false) private var columns: ListMap[String,String] = ListMap()
     @JsonProperty(value = "schema", required = false) private var schema: Option[SchemaSpec] = None
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
@@ -116,7 +122,7 @@ class SchemaMappingSpec extends MappingSpec {
         SchemaMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(this.input)),
-            context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
+            columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
             context.evaluate(filter)
         )

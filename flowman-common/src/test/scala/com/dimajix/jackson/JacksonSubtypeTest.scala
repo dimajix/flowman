@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman
+package com.dimajix.jackson
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes

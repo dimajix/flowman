@@ -16,9 +16,15 @@
 
 package com.dimajix.flowman.spec.relation
 
+import scala.collection.immutable.ListMap
+import scala.collection.mutable
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -228,7 +234,8 @@ case class ValuesRelation(
 
 class ValuesRelationSpec extends RelationSpec {
     @JsonProperty(value = "schema", required=false) private var schema:Option[SchemaSpec] = None
-    @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "columns", required = false) private var columns:ListMap[String,String] = ListMap()
     @JsonProperty(value = "records", required=false) private var records:Seq[Record] = Seq()
 
     /**
@@ -239,7 +246,7 @@ class ValuesRelationSpec extends RelationSpec {
     override def instantiate(context: Context): ValuesRelation = {
         ValuesRelation(
             instanceProperties(context),
-            context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
+            columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
             records.map(_.map(context.evaluate))
         )

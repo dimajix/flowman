@@ -1,4 +1,4 @@
-package com.dimajix.flowman
+package com.dimajix.jackson
 
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonCreator

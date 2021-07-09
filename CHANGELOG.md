@@ -6,6 +6,7 @@
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
 * Add support for DeltaLake (https://delta.io)
 * Fix non-deterministic column order in `schema` mapping, `values` mapping and `values` relation 
+* Mark Hive dependencies has 'provided', which reduces the size of dist packages
 
 
 # Version 0.17.1 - 2021-06-18

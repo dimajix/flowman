@@ -594,6 +594,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map()) should be (No)
     }
 
+    it should "support update output mode without partitions" in {
+
+    }
+
+    it should "support update output mode with partitions" in {
+
+    }
+
     it should "support migrations by adding new columns" in {
 
     }

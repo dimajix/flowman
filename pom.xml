@@ -63,11 +63,12 @@
         <scalamock.version>5.1.0</scalamock.version>
         <protobuf.version>2.5.0</protobuf.version>
         <joda-time.version>2.10.5</joda-time.version>
-        <joda-time.scope>compile</joda-time.scope>
+        <gson.version>2.2.4</gson.version>
+        <antlr.version>3.5.2</antlr.version>
+        <antlr-st4.version>4.0.4</antlr-st4.version>
         <commons-cli.version>1.2</commons-cli.version>
         <commons-compiler.version>3.0.9</commons-compiler.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
-        <commons-dbcp.scope>compile</commons-dbcp.scope>
         <commons-digester.version>1.8.1</commons-digester.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <commons-io.version>2.4</commons-io.version>
@@ -76,7 +77,6 @@
         <commons-math3.version>3.4.1</commons-math3.version>
         <commons-net.version>3.1</commons-net.version>
         <commons-pool.version>1.5.4</commons-pool.version>
-        <commons-pool.scope>compile</commons-pool.scope>
         <commons-text.version>1.6</commons-text.version>
         <commons-validator.version>1.6</commons-validator.version>
         <netty.version>3.9.9.Final</netty.version>
@@ -95,7 +95,6 @@
         <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
         <spark.version>3.1.2</spark.version>
         <spark-api.version>3.1</spark-api.version>
-        <spark-hive.scope>compile</spark-hive.scope>
         <netty-all.version>4.1.51.Final</netty-all.version>
         <antlr4.version>4.8-1</antlr4.version>
         <jackson.version>2.10.0</jackson.version>
@@ -159,7 +158,6 @@
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.0-cdh6.3.4</spark.version>
-                <spark-hive.scope>provided</spark-hive.scope>
                 <spark-api.version>2.4</spark-api.version>
                 <hadoop.version>3.0.0-${cdh.version}</hadoop.version>
                 <hadoop-api.version>3.0</hadoop-api.version>
@@ -180,9 +178,6 @@
                 <httpcore.version>4.4.10</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
                 <joda-time.version>2.9.9</joda-time.version>
-                <joda-time.scope>provided</joda-time.scope>
-                <commons-pool.scope>provided</commons-pool.scope>
-                <commons-dbcp.scope>provided</commons-dbcp.scope>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
@@ -227,7 +222,6 @@
                 <httpcore.version>4.4.10</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
                 <joda-time.version>2.9.3</joda-time.version>
-                <joda-time.scope>compile</joda-time.scope>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.8.1</commons-compress.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
@@ -998,7 +992,7 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-hive_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>${spark-hive.scope}</scope>
+                <scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.velocity</groupId>
@@ -1053,6 +1047,18 @@
 
             <dependency>
                 <groupId>org.antlr</groupId>
+                <artifactId>antlr-runtime</artifactId>
+                <version>${antlr.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>ST4</artifactId>
+                <version>${antlr-st4.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
                 <artifactId>antlr4-runtime</artifactId>
                 <version>${antlr4.version}</version>
                 <scope>provided</scope>
@@ -1062,7 +1068,7 @@
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
                 <version>${joda-time.version}</version>
-                <scope>${joda-time.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -1076,6 +1082,13 @@
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>jsr305</artifactId>
                 <version>1.3.9</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1485,13 +1498,13 @@
                 <groupId>commons-dbcp</groupId>
                 <artifactId>commons-dbcp</artifactId>
                 <version>${commons-dbcp.version}</version>
-                <scope>${commons-dbcp.scope}</scope>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>commons-pool</groupId>
                 <artifactId>commons-pool</artifactId>
                 <version>${commons-pool.version}</version>
-                <scope>${commons-pool.scope}</scope>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -1592,7 +1605,7 @@
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
 
             <!-- Test Dependencies -->

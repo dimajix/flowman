@@ -49,6 +49,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.SparkUtils.withJobGroup
@@ -56,7 +57,8 @@ import com.dimajix.spark.sql.DataFrameUtils
 
 
 private[execution] sealed class RunnerImpl {
-    val logger = LoggerFactory.getLogger(classOf[Runner])
+    protected val logger = LoggerFactory.getLogger(classOf[Runner])
+    protected val logFilters = LogFilter.filters
 
     def withStatus[T](target:Target, phase:Phase)(fn: => T) : Status = {
         Try {
@@ -96,7 +98,10 @@ private[execution] sealed class RunnerImpl {
 
     def logEnvironment(context:Context) : Unit = {
         logger.info("Environment:")
-        context.environment.toSeq.sortBy(_._1).foreach { case (k, v) => logger.info(s"  $k=$v") }
+        context.environment.toSeq.sortBy(_._1).foreach { keyValue =>
+            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2.toString)))
+                .foreach { case (key,value) => logger.info(s"  $key=$value") }
+        }
         logger.info("")
     }
 

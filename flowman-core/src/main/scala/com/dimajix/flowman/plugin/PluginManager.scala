@@ -83,7 +83,7 @@ class PluginManager {
                 .iterator().asScala
                 .filter(path => matcher.matches(path.getFileName))
                 .map(_.toUri.toURL)
-        }
+        }.distinct
 
         // Extend classpath
         val classLoader = classOf[PluginManager].getClassLoader.asInstanceOf[URLClassLoader]

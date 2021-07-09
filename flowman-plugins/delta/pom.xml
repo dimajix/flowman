@@ -123,6 +123,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_${scala.api_version}</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-core_${scala.api_version}</artifactId>
             <version>${delta.version}</version>

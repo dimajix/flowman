@@ -65,7 +65,6 @@
         </dependency>
 
         <dependency>
-            <!-- Required by CDH -->
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_${scala.api_version}</artifactId>
             <scope>provided</scope>

@@ -5,6 +5,7 @@
 * Fix the name of some config variables (floman. => flowman.)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
 * Add support for DeltaLake (https://delta.io)
+* Fix non-deterministic column order in `schema` mapping, `values` mapping and `values` relation 
 
 
 # Version 0.17.1 - 2021-06-18

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -55,7 +56,8 @@ case class DeltaFileRelation(
     override val partitions: Seq[PartitionField] = Seq(),
     location: Path,
     options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map()
+    properties: Map[String, String] = Map(),
+    mergeKey: Seq[String] = Seq()
 ) extends BaseRelation with PartitionedRelation {
     protected  val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
 
@@ -129,7 +131,7 @@ case class DeltaFileRelation(
      * @param partition - destination partition
      */
     override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
-        requireAllPartitionKeys(partition)
+        requireAllPartitionKeys(partition, df.columns)
 
         // TODO: Static partitions / dynamic partitions
         val partitionSpec = PartitionSchema(partitions).spec(partition)
@@ -138,14 +140,20 @@ case class DeltaFileRelation(
 
         val extDf = SchemaUtils.applySchema(addPartition(df, partition), outputSchema(execution))
 
+        mode match {
+            case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)
+            case _ => doWrite(extDf, partitionSpec, mode)
+        }
+    }
+    private def doWrite(df: DataFrame, partitionSpec: PartitionSpec, mode: OutputMode) : Unit = {
         val writer =
-            if (partition.nonEmpty) {
-                extDf.write
+            if (partitionSpec.nonEmpty) {
+                df.write
                     .partitionBy(this.partitions.map(_.name):_*)
                     .option("replaceWhere", partitionSpec.predicate)
             }
             else {
-                extDf.write
+                df.write
             }
 
         writer
@@ -154,8 +162,14 @@ case class DeltaFileRelation(
             .mode(mode.batchMode)
             .save(location.toString)
     }
+    private def doUpdate(df: DataFrame, partitionSpec: PartitionSpec) : Unit = {
+        val withinPartitionKeyColumns = if (mergeKey.nonEmpty) mergeKey else schema.map(_.primaryKey).getOrElse(Seq())
+        val keyColumns = partitions.map(_.name).toSet -- partitionSpec.keys ++ withinPartitionKeyColumns
+        val table = DeltaTable.forPath(df.sparkSession, location.toString)
+        DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
+    }
 
-    /**
+        /**
      * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
      * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
      * [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.
@@ -298,6 +312,7 @@ class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
     @JsonProperty(value = "location", required = false) private var location: String = ""
     @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
 
     override def instantiate(context: Context): DeltaFileRelation = {
         DeltaFileRelation(
@@ -306,7 +321,8 @@ class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),
             context.evaluate(options),
-            context.evaluate(properties)
+            context.evaluate(properties),
+            mergeKey.map(context.evaluate)
         )
     }
 }

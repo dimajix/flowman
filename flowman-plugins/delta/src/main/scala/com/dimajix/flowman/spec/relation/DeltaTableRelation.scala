@@ -22,12 +22,15 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -55,7 +58,8 @@ case class DeltaTableRelation(
     table: String,
     location: Option[Path] = None,
     options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map()
+    properties: Map[String, String] = Map(),
+    mergeKey: Seq[String] = Seq()
 ) extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
 
@@ -125,7 +129,7 @@ case class DeltaTableRelation(
      * @param partition - destination partition
      */
     override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
-        requireAllPartitionKeys(partition)
+        requireAllPartitionKeys(partition, df.columns)
 
         // TODO: Static partitions / dynamic partitions
         val partitionSpec = PartitionSchema(partitions).spec(partition)
@@ -134,13 +138,21 @@ case class DeltaTableRelation(
 
         val extDf = SchemaUtils.applySchema(addPartition(df, partition), outputSchema(execution))
 
+        mode match {
+            case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)
+            case _ => doWrite(extDf, partitionSpec, mode)
+        }
+
+        execution.catalog.refreshTable(tableIdentifier)
+    }
+    private def doWrite(df: DataFrame, partitionSpec: PartitionSpec, mode: OutputMode) : Unit = {
         val writer =
-            if (partition.nonEmpty) {
-                extDf.write
+            if (partitionSpec.nonEmpty) {
+                df.write
                     .option("replaceWhere", partitionSpec.predicate)
             }
             else {
-                extDf.write
+                df.write
             }
 
         writer
@@ -148,8 +160,12 @@ case class DeltaTableRelation(
             .options(options)
             .mode(mode.batchMode)
             .insertInto(tableIdentifier.quotedString)
-
-        execution.catalog.refreshTable(tableIdentifier)
+    }
+    private def doUpdate(df: DataFrame, partitionSpec: PartitionSpec) : Unit = {
+        val withinPartitionKeyColumns = if (mergeKey.nonEmpty) mergeKey else schema.map(_.primaryKey).getOrElse(Seq())
+        val keyColumns = partitions.map(_.name).toSet -- partitionSpec.keys ++ withinPartitionKeyColumns
+        val table = DeltaTable.forName(df.sparkSession, tableIdentifier.quotedString)
+        DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
     }
 
     /**
@@ -283,6 +299,7 @@ class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with P
     @JsonProperty(value = "location", required = false) private var location: Option[String] = None
     @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
 
     override def instantiate(context: Context): DeltaTableRelation = {
         DeltaTableRelation(
@@ -293,7 +310,8 @@ class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with P
             context.evaluate(table),
             context.evaluate(location).map(p => new Path(p)),
             context.evaluate(options),
-            context.evaluate(properties)
+            context.evaluate(properties),
+            mergeKey.map(context.evaluate)
         )
     }
 }

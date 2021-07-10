@@ -443,6 +443,47 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (2)
         relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
 
+        // == Append =================================================================================================
+        val schema2 = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType)
+        ))
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row("v2", 22, "p0"),
+            Row("v2", 23, "p1"),
+        ))
+        val df2 = spark.createDataFrame(rdd2, schema2)
+        relation.write(execution, df2, Map(), OutputMode.APPEND)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("v1", 21, "p0"),
+                Row("v1", 21, "p0"),
+                Row("v2", 22, "p0"),
+                Row("v2", 23, "p1")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            Seq(
+                Row("v1", 21, "p0"),
+                Row("v1", 21, "p0"),
+                Row("v2", 22, "p0")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            Seq(
+                Row("v2", 23, "p1")
+            )
+        )
+
         // == Destroy ================================================================================================
         relation.destroy(execution)
         relation.exists(execution) should be (No)
@@ -595,11 +636,267 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
     }
 
     it should "support update output mode without partitions" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
 
+        val relation = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table2",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("key_col", ftypes.StringType),
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            )),
+            mergeKey = Seq("key_col")
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution, false)
+        relation.exists(execution) should be (Yes)
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("key_col", StringType),
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v1", 1),
+            Row("id-1", "v2", 1),
+            Row("id-2", "v3", 1)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map())
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("id-1", "v1", 1),
+                Row("id-1", "v2", 1),
+                Row("id-2", "v3", 1)
+            )
+        )
+
+        // == Update =================================================================================================
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v11", 2),
+            Row("id-3", "v21", 2)
+        ))
+        val df2 = spark.createDataFrame(rdd2, schema)
+        relation.write(execution, df2, Map(), OutputMode.UPDATE)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("id-1", "v11", 2),
+                Row("id-1", "v11", 2),
+                Row("id-2", "v3", 1),
+                Row("id-3", "v21", 2)
+            )
+        )
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
     }
 
     it should "support update output mode with partitions" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
 
+        val relation = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table2",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("key_col", ftypes.StringType),
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", ftypes.StringType)
+            ),
+            mergeKey = Seq("key_col")
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution, false)
+        relation.exists(execution) should be (Yes)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (0)
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("key_col", StringType),
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v1", 1),
+            Row("id-1", "v2", 1),
+            Row("id-2", "v3", 1)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map("part" -> SingleValue("p0")))
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("id-1", "v1", 1, "p0"),
+                Row("id-1", "v2", 1, "p0"),
+                Row("id-2", "v3", 1, "p0")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            Seq(
+                Row("id-1", "v1", 1, "p0"),
+                Row("id-1", "v2", 1, "p0"),
+                Row("id-2", "v3", 1, "p0")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            Seq()
+        )
+
+        // == Update =================================================================================================
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v11", 2),
+            Row("id-3", "v21", 2)
+        ))
+        val df2 = spark.createDataFrame(rdd2, schema)
+        relation.write(execution, df2, Map("part" -> SingleValue("p0")), OutputMode.UPDATE)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-2", "v3", 1, "p0"),
+                Row("id-3", "v21", 2, "p0")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            Seq(
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-2", "v3", 1, "p0"),
+                Row("id-3", "v21", 2, "p0")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            Seq()
+        )
+
+        // == Update =================================================================================================
+        val rdd3 = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v12", 3),
+            Row("id-3", "v22", 3)
+        ))
+        val df3 = spark.createDataFrame(rdd3, schema)
+        relation.write(execution, df3, Map("part" -> SingleValue("p1")), OutputMode.UPDATE)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-2", "v3", 1, "p0"),
+                Row("id-3", "v21", 2, "p0"),
+                Row("id-1", "v12", 3, "p1"),
+                Row("id-3", "v22", 3, "p1")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            Seq(
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-1", "v11", 2, "p0"),
+                Row("id-2", "v3", 1, "p0"),
+                Row("id-3", "v21", 2, "p0")
+            )
+        )
+        checkAnswer(
+            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            Seq(
+                Row("id-1", "v12", 3, "p1"),
+                Row("id-3", "v22", 3, "p1")
+            )
+        )
+
+        // == Update =================================================================================================
+        val schema4 = StructType(Seq(
+            StructField("key_col", StringType),
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("part", StringType)
+        ))
+        val rdd4 = spark.sparkContext.parallelize(Seq(
+            Row("id-5", "v55", 4, "p3"),
+            Row("id-1", "v13", 4, "p0")
+        ))
+        val df4 = spark.createDataFrame(rdd4, schema4)
+        relation.write(execution, df4, Map(), OutputMode.UPDATE)
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (Yes)
+        checkAnswer(
+            relation.read(execution, None, Map()),
+            Seq(
+                Row("id-1", "v13", 4, "p0"),
+                Row("id-1", "v13", 4, "p0"),
+                Row("id-2", "v3", 1, "p0"),
+                Row("id-3", "v21", 2, "p0"),
+                Row("id-1", "v12", 3, "p1"),
+                Row("id-3", "v22", 3, "p1"),
+                Row("id-5", "v55", 4, "p3"),
+            )
+        )
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
     }
 
     it should "support migrations by adding new columns" in {

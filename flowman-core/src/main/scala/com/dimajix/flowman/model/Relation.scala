@@ -439,6 +439,11 @@ trait PartitionedRelation { this:Relation =>
         partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
     }
 
+    /**
+     * This method ensures that the given map contains entries for all partitions of the relations. It also ensures
+     * that the map does not contain any additional key which is not a partition key
+     * @param map
+     */
     protected def requireAllPartitionKeys(map: Map[String,_]) : Unit = {
         val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
         val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
@@ -446,6 +451,25 @@ trait PartitionedRelation { this:Relation =>
         partitionKeys.foreach(key => if (!valueKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
     }
 
+    /**
+     * This method ensures that the given map contains entries for all partitions of the relations. It also ensures
+     * that the map does not contain any additional key which is not a partition key. In this method the partition
+     * keys can also be contained in the second argument [[columns]], which would be the columns of a DataFrame
+     * when dynamically writing to partitions.
+     * @param map
+     */
+    protected def requireAllPartitionKeys(parts: Map[String,_], columns:Iterable[String]) : Unit = {
+        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
+        val valueKeys = parts.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        val columnKeys = columns.map(_.toLowerCase(Locale.ROOT)).toSet
+        valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
+        partitionKeys.foreach(key => if (!valueKeys.contains(key) && !columnKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
+    }
+
+    /**
+     * This method ensures that the given map does not contain any additional key which is not a partition key
+     * @param map
+     */
     protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
         val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
         val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet

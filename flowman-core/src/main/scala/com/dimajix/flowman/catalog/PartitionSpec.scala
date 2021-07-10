@@ -23,6 +23,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lit
 
 import com.dimajix.common.MapIgnoreCase
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.jdbc.HiveDialect
 
 
@@ -38,6 +39,8 @@ case class PartitionSpec(values:MapIgnoreCase[Any]) {
     def toMap : Map[String,Any] = values.toMap
 
     def apply(name:String) : Any = values(name)
+
+    def keys : Iterable[String] = values.keys
 
     def get(name:String) : Option[Any] = values.get(name)
 

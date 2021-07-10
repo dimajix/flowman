@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.relation
 
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
@@ -102,6 +103,20 @@ object DeltaUtils {
             snapshot.metadata.partitionSchema,
             snapshot.allFiles.toDF(),
             partitionFilters).count() > 0
+    }
+
+    def upsert(table:DeltaTable, df: DataFrame, keyColumns:Iterable[String], partitionSpec: PartitionSpec) : Unit = {
+        if (keyColumns.isEmpty)
+            throw new IllegalArgumentException(s"Cannot perform upsert operation without primary key")
+
+        val keyCondition = keyColumns.map(k => col("relation." + k) === col("df." + k))
+        val partitionCondition = partitionSpec.values.map { case (k, v) => (col("relation." + k) === lit(v)) }
+        val mergeCondition = (keyCondition ++ partitionCondition).reduce(_ && _)
+        table.as("relation")
+            .merge(df.as("df"), mergeCondition)
+            .whenMatched().updateAll()
+            .whenNotMatched().insertAll()
+            .execute()
     }
 
     def createTable(execution: Execution, table:Option[TableIdentifier], location:Option[Path], schema:StructType, partitions: Seq[PartitionField], properties:Map[String,String], description:Option[String]): Unit = {

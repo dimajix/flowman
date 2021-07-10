@@ -44,7 +44,7 @@ relations:
     # Specify additional serialization/deserialization properties
     serdeProperties:
       separatorChar: "\t"
-    # Specify a schema, which is mandatory for write operations
+    # Specify a schema, which is mandatory for creating the table during CREATE phase
     schema:
       kind: inline
       fields:
@@ -58,15 +58,16 @@ relations:
  * `kind` **(mandatory)** *(string)*: `hiveTable`
  
  * `schema` **(optional)** *(schema)* *(default: empty)*: 
- Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
- try to infer the schema.
+ Explicitly specifies the schema of the Hive table. Alternatively Flowman will automatically use the schema of 
+   the Hive table, if it already exists.
  
  * `description` **(optional)** *(string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
  
  * `options` **(optional)** *(map:string)* *(default: empty)*:
- All key-value pairs specified in *options* are directly passed to Apache spark for reading
- and/or writing to this relation.
+ All key-value pairs specified in *options* are directly passed to Apache Spark for reading
+ and/or writing to this relation. The `options` will not be persisted in the Hive metastore. If that is what you
+ want, then have a closer look at `properties` below.
  
  * `database` **(mandatory)** *(string)*:
  Defines the Hive database where the table is defined. When no database is specified, the

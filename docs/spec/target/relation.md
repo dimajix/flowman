@@ -33,9 +33,11 @@ Specifies the name of the relation to write to
 Specifies the behavior when data or table or partition already exists. Options include:
   * `overwrite`: overwrite the existing data.
   * `append`: append the data.
+  * `update`: perform upserts - not all relations support this ([JDBC](../relation/jdbc.md) and 
+    [Delta Lake](../relation/deltaTable.md) are two examples supporting upserts).
   * `ignore`: ignore the operation (i.e. no-op).
   * `error` or `errorifexists`: throw an exception at runtime . 
-The default value is controlled by the Flowman config variable `floman.default.target.outputMode`.
+The default value is controlled by the Flowman config variable `flowman.default.target.outputMode`.
 
 * `partition` **(optional)** *(type: map:string)* *(default=empty)*:
 

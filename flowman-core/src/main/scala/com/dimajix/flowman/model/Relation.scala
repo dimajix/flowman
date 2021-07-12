@@ -28,6 +28,7 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.DataStreamReader
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
 import com.dimajix.common.Trilean
@@ -185,7 +186,7 @@ trait Relation extends Instance {
       * @param df
       * @return
       */
-    def writeStream(execution:Execution, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
+    def writeStream(execution:Execution, df:DataFrame, mode:OutputMode, trigger:Trigger, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
@@ -350,12 +351,13 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
+    protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, trigger:Trigger, checkpointLocation:Path) : DataStreamWriter[Row]= {
         val outputDf = applyOutputSchema(execution, df)
         outputDf.writeStream
             .format(format)
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
+            .trigger(trigger)
             .outputMode(outputMode)
     }
 

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
@@ -191,15 +192,15 @@ case class KafkaRelation(
       * @param df
       * @return
       */
-    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, checkpointLocation: Path): StreamingQuery = {
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger:Trigger, checkpointLocation: Path): StreamingQuery = {
         require(execution != null)
         require(df != null)
 
         val hosts = this.hosts.mkString(",")
-        val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
+        val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in Kafka relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.streamWriter(execution, df, "kafka", options, mode.streamMode, checkpointLocation)
+        this.streamWriter(execution, df, "kafka", options, mode.streamMode, trigger, checkpointLocation)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .start()

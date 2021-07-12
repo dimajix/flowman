@@ -269,7 +269,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("int_col", StringType)
         ))
         val incompatibleDf = spark.createDataFrame(rdd3, incompatibleSchema)
-        //an[Exception] shouldBe thrownBy(relation.write(executor, incompatibleDf, Map()))
+        //an[Exception] shouldBe thrownBy(relation.write(execution, incompatibleDf, Map()))
         relation.write(executor, incompatibleDf, Map())
 
         // == Read ===================================================================

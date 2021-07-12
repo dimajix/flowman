@@ -16,13 +16,19 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.io.File
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.streaming.Trigger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
@@ -42,7 +48,9 @@ case class StreamTarget(
     mapping:MappingOutputIdentifier,
     relation:RelationIdentifier,
     mode:OutputMode,
+    trigger:Trigger,
     parallelism:Int,
+    rebalance: Boolean = false,
     checkpointLocation:Path
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
@@ -95,14 +103,24 @@ case class StreamTarget(
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
-      * @param executor
+      * @param execution
       */
-    override def build(executor: Execution): Unit = {
+    override def build(execution: Execution): Unit = {
+        require(execution != null)
+
         logger.info(s"Writing mapping '${this.mapping}' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")
         val mapping = context.getMapping(this.mapping.mapping)
         val rel = context.getRelation(relation)
-        val table = executor.instantiate(mapping, this.mapping.output).coalesce(parallelism)
-        rel.writeStream(executor, table, mode, checkpointLocation)
+        val dfIn = execution.instantiate(mapping, this.mapping.output)
+        val dfOut =
+            if (parallelism <= 0)
+                dfIn
+            else if (rebalance)
+                dfIn.repartition(parallelism)
+            else
+                dfIn.coalesce(parallelism)
+
+        rel.writeStream(execution, dfOut, mode, trigger, checkpointLocation)
     }
 
     /**
@@ -110,22 +128,24 @@ case class StreamTarget(
       *
       * @param executor
       */
-    override def truncate(executor: Execution): Unit = {
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
+
         logger.info(s"Cleaining streaming relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.truncate(executor)
+        rel.truncate(execution)
     }
 
     /**
       * Destroys both the logical relation and the physical data
       * @param executor
       */
-    override def destroy(executor: Execution) : Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution) : Unit = {
+        require(execution != null)
 
         logger.info(s"Destroying relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.destroy(executor, true)
+        rel.destroy(execution, true)
     }
 }
 
@@ -133,26 +153,33 @@ case class StreamTarget(
 
 
 class StreamTargetSpec extends TargetSpec {
-    @JsonProperty(value="input", required=true) private var input:String = _
+    @JsonProperty(value="mapping", required=true) private var mapping:String = _
     @JsonProperty(value="relation", required=true) private var relation:String = _
     @JsonProperty(value="mode", required=false) private var mode:String = OutputMode.UPDATE.toString
-    @JsonProperty(value="checkpointLocation", required=false) private var checkpointLocation:String = _
-    @JsonProperty(value="parallelism", required=false) private var parallelism:String = "16"
+    @JsonProperty(value="trigger", required=false) private var trigger:Option[String] = None
+    @JsonProperty(value="checkpointLocation", required=false) private var checkpointLocation:Option[String] = None
+    @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
+    @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
     override def instantiate(context: Context): Target = {
-        val  mode = OutputMode.ofString(context.evaluate(this.mode))
-        val checkpointLocation = Option(context.evaluate(this.checkpointLocation))
-            .map(_.trim)
-            .filter(_.nonEmpty)
-            .getOrElse("/tmp/flowman-streaming-sink-" + name + "-" + System.currentTimeMillis())
+        val conf = context.flowmanConf
+        val checkpointLocation = context.evaluate(this.checkpointLocation)
+            .getOrElse(new File(System.getProperty("java.io.tmpdir"), "flowman-streaming-sink-" + name + "-" + System.currentTimeMillis()).toString)
 
+        val trigger = context.evaluate(this.trigger).map(_.toLowerCase(Locale.ROOT)) match {
+            case Some("once") => Trigger.Once()
+            case Some(interval) => Trigger.ProcessingTime(interval)
+            case None => Trigger.ProcessingTime(0L)
+        }
 
         StreamTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(input)),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             RelationIdentifier.parse(context.evaluate(relation)),
-            mode,
-            context.evaluate(parallelism).toInt,
+            OutputMode.ofString(context.evaluate(this.mode)),
+            trigger,
+            context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE)),
             new Path(checkpointLocation)
         )
     }

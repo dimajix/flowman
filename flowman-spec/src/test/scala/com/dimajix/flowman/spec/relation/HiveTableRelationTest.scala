@@ -355,8 +355,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = context.getRelation(RelationIdentifier("t0"))
 
-        // == Create ===================================================================
+        // == Create ================================================================================================
         relation.create(execution)
+
+        // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0005", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
@@ -373,36 +375,33 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.properties("lala") should be ("lolo")
         table.properties("hive.property") should be ("TRUE")
 
-        // == Destroy ===================================================================
+        // == Destroy ===============================================================================================
         relation.destroy(execution)
     }
 
     it should "support parquet format" in {
-        val spec =
-            """
-              |relations:
-              |  t0:
-              |    kind: hiveTable
-              |    database: default
-              |    table: lala_0006
-              |    format: parquet
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-            """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = HiveTableRelation(
+            Relation.Properties(context, "t0"),
+            database = Some("default"),
+            table = "lala_0006",
+            format = Some("parquet"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            ))
+        )
 
+        // == Create ================================================================================================
         relation.create(execution)
+
+        // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0006", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0006", Some("default")))
@@ -420,45 +419,41 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"))
 
-        // == Destroy ===================================================================
+        // == Destroy ================================================================================================
         relation.destroy(execution)
     }
 
     it should "support avro format" in {
-        val spec =
-            """
-              |relations:
-              |  t0:
-              |    kind: hiveTable
-              |    database: default
-              |    table: lala_0007
-              |    format: avro
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-            """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = HiveTableRelation(
+            Relation.Properties(context, "t0"),
+            database = Some("default"),
+            table = "lala_0007",
+            format = Some("avro"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            ))
+        )
 
+        // == Create ================================================================================================
         relation.create(execution)
+
+        // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0007", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
-        table.schema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                Nil
-        ))
+        table.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
@@ -467,48 +462,46 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
 
-        // == Destroy ===================================================================
+        // == Destroy ===============================================================================================
         relation.destroy(execution)
     }
 
     it should "support csv format" in (if (hiveSupported) {
-        val spec =
-            """
-              |relations:
-              |  t0:
-              |    kind: hiveTable
-              |    database: default
-              |    table: lala_0007
-              |    format: textfile
-              |    rowFormat: org.apache.hadoop.hive.serde2.OpenCSVSerde
-              |    serdeProperties:
-              |      separatorChar: "\t"
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-            """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = HiveTableRelation(
+            Relation.Properties(context, "t0"),
+            database = Some("default"),
+            table = "lala_0007",
+            format = Some("textfile"),
+            rowFormat = Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"),
+            serdeProperties = Map(
+                "respectSparkSchema" -> "true", // If not set, Spark will return StringType
+                "separatorChar" -> "\t"
+            ),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            ))
+        )
 
+        // == Create ================================================================================================
         relation.create(execution)
+
+        // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0007", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
-        SchemaUtils.dropMetadata(table.schema) should be (StructType(
-            StructField("str_col", StringType) ::
-            StructField("int_col", StringType) ::
-            Nil
-        ))
+        SchemaUtils.dropMetadata(table.schema) should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
@@ -516,47 +509,43 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.inputFormat should be (Some("org.apache.hadoop.mapred.TextInputFormat"))
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"))
-        table.storage.properties should be (Map("separatorChar" -> "\t", "serialization.format" -> "1"))
+        table.storage.properties should be (Map("separatorChar" -> "\t", "respectSparkSchema" -> "true", "serialization.format" -> "1"))
 
-        // == Destroy ===================================================================
+        // == Destroy ===============================================================================================
         relation.destroy(execution)
     })
 
     it should "support a row format" in {
-        val spec =
-            """
-              |relations:
-              |  t0:
-              |    kind: hiveTable
-              |    database: default
-              |    table: lala_0008
-              |    rowFormat: org.apache.hadoop.hive.serde2.avro.AvroSerDe
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-            """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = HiveTableRelation(
+            Relation.Properties(context, "t0"),
+            database = Some("default"),
+            table = "lala_0008",
+            rowFormat = Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            ))
+        )
 
+        // == Create ================================================================================================
         relation.create(execution)
+
+        // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0008", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0008", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
-        table.schema should be (StructType(
-            StructField("str_col", StringType) ::
-                StructField("int_col", IntegerType) ::
-                Nil
-        ))
+        table.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
         table.partitionColumnNames should be (Seq())
         table.partitionSchema should be (StructType(Nil))
         table.location should not be (None)
@@ -565,38 +554,35 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
 
-        // == Destroy ===================================================================
+        // == Destroy ===============================================================================================
         relation.destroy(execution)
     }
 
     it should "support input and output format" in {
-        val spec =
-            """
-              |relations:
-              |  t0:
-              |    kind: hiveTable
-              |    database: default
-              |    table: lala_0009
-              |    rowFormat: org.apache.hadoop.hive.serde2.avro.AvroSerDe
-              |    inputFormat: org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat
-              |    outputFormat: org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat
-              |    schema:
-              |      kind: inline
-              |      fields:
-              |        - name: str_col
-              |          type: string
-              |        - name: int_col
-              |          type: integer
-            """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = HiveTableRelation(
+            Relation.Properties(context, "t0"),
+            database = Some("default"),
+            table = "lala_0009",
+            rowFormat = Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"),
+            inputFormat = Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"),
+            outputFormat = Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            ))
+        )
 
+        // == Create ================================================================================================
         relation.create(execution)
+
+        // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0009", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0009", Some("default")))
@@ -614,7 +600,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.storage.outputFormat should be (Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
         table.storage.serde should be (Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"))
 
-        // == Destroy ===================================================================
+        // == Destroy ===============================================================================================
         relation.destroy(execution)
     }
 

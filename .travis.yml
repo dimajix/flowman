@@ -46,3 +46,7 @@ jobs:
     - name: CDH 6.3
       jdk: openjdk8
       script: mvn clean install -PCDH-6.3 -Ddockerfile.skip
+
+    - name: CDP 7.1
+      jdk: openjdk8
+      script: mvn clean install -PCDP-7.1 -Ddockerfile.skip

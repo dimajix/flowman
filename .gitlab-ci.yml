@@ -131,3 +131,12 @@ build-cdh6.3:
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
+
+build-cdp7.1:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDP-7.1 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-cdp7.1"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days

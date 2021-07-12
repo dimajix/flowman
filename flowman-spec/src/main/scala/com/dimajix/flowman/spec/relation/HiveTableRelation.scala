@@ -391,7 +391,7 @@ case class HiveTableRelation(
                             outputFormat = s.outputFormat,
                             serde = s.serde)
                     case None =>
-                        throw new IllegalArgumentException(s"File format '$format' not supported")
+                        throw new IllegalArgumentException(s"File format '$format' not supported in Hive relation '$identifier' while creating hive table $tableIdentifier")
                 }
             }
             else {
@@ -415,8 +415,11 @@ case class HiveTableRelation(
             // Configure catalog table by assembling all options
             val catalogTable = CatalogTable(
                 identifier = tableIdentifier,
-                tableType = if (external) CatalogTableType.EXTERNAL
-                else CatalogTableType.MANAGED,
+                tableType =
+                    if (external)
+                        CatalogTableType.EXTERNAL
+                    else
+                        CatalogTableType.MANAGED,
                 storage = CatalogStorageFormat(
                     locationUri = location.map(_.toUri),
                     inputFormat = inputFormat,

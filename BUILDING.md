@@ -98,6 +98,7 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * CDH-6.3
+* CDP-7.1
 
 With these profiles it is easy to build Flowman to match your environment. 
 

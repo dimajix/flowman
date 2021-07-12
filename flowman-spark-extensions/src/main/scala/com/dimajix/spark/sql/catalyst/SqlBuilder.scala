@@ -30,7 +30,6 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.optimizer.CollapseProject
 import org.apache.spark.sql.catalyst.optimizer.CombineFilters
 import org.apache.spark.sql.catalyst.optimizer.CombineUnions
-import org.apache.spark.sql.catalyst.optimizer.PushDownPredicate
 import org.apache.spark.sql.catalyst.optimizer.PushProjectionThroughUnion
 import org.apache.spark.sql.catalyst.optimizer.RemoveRedundantAliases
 import org.apache.spark.sql.catalyst.optimizer.SimplifyCasts
@@ -44,6 +43,8 @@ import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.NullType
+
+import com.dimajix.spark.sql.catalyst.optimizer.PushDownPredicate
 
 
 object SqlBuilder {

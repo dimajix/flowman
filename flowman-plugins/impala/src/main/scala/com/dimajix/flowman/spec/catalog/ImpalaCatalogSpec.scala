@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.catalog.ImpalaExternalCatalog
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.spec.annotation.CatalogType
@@ -32,6 +33,7 @@ class ImpalaCatalogSpec extends CatalogSpec {
     @JsonProperty(value="connection", required=true) private var _connection:String = ""
 
     override def instantiate(context: Context): ExternalCatalog = {
+        val computeStats = context.flowmanConf.getConf(FlowmanConf.IMPALA_COMPUTE_STATS)
         val con = context.getConnection(ConnectionIdentifier.parse(context.evaluate(_connection)))
         val connection = con match {
             case jdbc:JdbcConnection => ImpalaExternalCatalog.Connection(
@@ -54,6 +56,6 @@ class ImpalaCatalogSpec extends CatalogSpec {
             )
         }
 
-        new ImpalaExternalCatalog(connection)
+        new ImpalaExternalCatalog(connection, computeStats)
     }
 }

@@ -54,6 +54,10 @@ object FlowmanConf {
         .doc("Performs ANALYZE TABLE commands")
         .booleanConf
         .createWithDefault(true)
+    val IMPALA_COMPUTE_STATS = buildConf("flowman.impala.computeStats")
+        .doc("Performs COMPUTE STATS commands")
+        .booleanConf
+        .createWithDefault(true)
     val HOME_DIRECTORY = buildConf("flowman.home")
         .doc("Home directory of Flowman")
         .fileConf

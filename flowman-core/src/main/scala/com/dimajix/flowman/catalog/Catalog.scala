@@ -193,7 +193,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         // Publish table to external catalog
         externalCatalogs.foreach { catalog =>
             val definition = this.catalog.externalCatalog.getTable(table.database.getOrElse(""), table.table)
-            catalog.alterTable(definition)
+            catalog.refreshTable(definition)
         }
     }
 

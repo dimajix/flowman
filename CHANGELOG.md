@@ -8,7 +8,8 @@
 * Fix non-deterministic column order in `schema` mapping, `values` mapping and `values` relation 
 * Mark Hive dependencies has 'provided', which reduces the size of dist packages
 * Significantly reduce size of AWS dependencies in AWS plugin
-* Add new profile for Cloudera CDP-7.1
+* Add new build profile for Cloudera CDP-7.1
+* Update Spark 3.0 build profile to Spark 3.0.3
 
 
 # Version 0.17.1 - 2021-06-18

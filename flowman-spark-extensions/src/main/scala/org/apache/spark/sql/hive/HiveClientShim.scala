@@ -28,7 +28,6 @@ import org.apache.spark.sql.catalyst.catalog.ExternalCatalogWithListener
 object HiveClientShim {
     private val _currentSparkSession = new ThreadLocal[SparkSession]()
     private val _currentHive = new ThreadLocal[Hive]()
-    private val _currentListener= new ThreadLocal[SparkListener]()
 
     /** Run a function within Hive state (SessionState, HiveConf, Hive client and class loader) */
     def withHiveState[A](spark:SparkSession)(f: => A): A = {
@@ -49,43 +48,23 @@ object HiveClientShim {
         // Check if the given Spark session is the same as last time. If so, then do not create a new Hive client.
         val currentSparkSession = _currentSparkSession.get()
         if (currentSparkSession ne spark) {
-            val currentListener = _currentListener.get()
             val currentHive = _currentHive.get()
             if (currentHive != null) {
-                assert(currentSparkSession != null)
-                assert(currentListener != null)
-
-                // Remove Spark listener again
-                currentSparkSession.sparkContext.removeSparkListener(currentListener)
-                _currentListener.remove()
-
-                if (Hive.getThreadLocal eq currentHive) {
-                    Hive.closeCurrent()
-                }
-                currentHive.close(false)
                 _currentHive.remove()
             }
+
+            // Close any previous session before creating a new one. Otherwise there will be some issues at least
+            // with derby not being registered with the DriverManager any more.
+            Hive.closeCurrent()
 
             // Create new Hive Session
             val conf = new HiveConf(spark.sparkContext.hadoopConfiguration, classOf[Hive])
             val hive = Hive.get(conf)
 
-            // Release Hive session when Spark Context is destroyed
-            val listener = new SparkListener {
-                override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-                    if (Hive.getThreadLocal() eq hive) {
-                        Hive.closeCurrent()
-                    }
-                    hive.close(false)
-                }
-            }
-            spark.sparkContext.addSparkListener(listener)
-
             // Set Hive session
             Hive.set(hive)
             _currentSparkSession.set(spark)
             _currentHive.set(hive)
-            _currentListener.set(listener)
         }
         f
     }

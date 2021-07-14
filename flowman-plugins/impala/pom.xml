@@ -17,7 +17,7 @@
         <plugin.name>flowman-impala</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <impala.jdbc.version>2.6.17.1020</impala.jdbc.version>
+        <impala.jdbc.version>2.6.23.1028</impala.jdbc.version>
     </properties>
 
     <repositories>

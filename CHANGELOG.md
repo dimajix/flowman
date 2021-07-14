@@ -9,7 +9,13 @@
 * Mark Hive dependencies has 'provided', which reduces the size of dist packages
 * Significantly reduce size of AWS dependencies in AWS plugin
 * Add new build profile for Cloudera CDP-7.1
+* Improve Spark configuration of `LocalSparkSession` and `TestRunner`  
 * Update Spark 3.0 build profile to Spark 3.0.3
+* Upgrade Impala JDBC driver from 2.6.17.1020 to 2.6.23.1028
+* Upgrade MySQL JDBC driver from 8.0.20 to 8.0.25  
+* Upgrade MariaDB JDBC driver from 2.2.4 to 2.7.3
+* Upgrade several Maven plugins to latest versions
+* Add new config option `flowman.workaround.analyze_partition` to workaround CDP 7.1 issues
 
 
 # Version 0.17.1 - 2021-06-18

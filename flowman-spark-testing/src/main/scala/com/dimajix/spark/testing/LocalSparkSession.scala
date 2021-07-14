@@ -21,7 +21,6 @@ import java.io.File
 import scala.util.Try
 
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -52,7 +51,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             .config("spark.sql.session.timeZone", "UTC")
 
         val localMetastorePath = new File(tempDir, "metastore").getCanonicalPath
-        val localWarehousePath = new File(tempDir, "wharehouse").getCanonicalPath
+        val localWarehousePath = new File(tempDir, "warehouse").getCanonicalPath
         val checkpointPath  = new File(tempDir, "checkpoints").getCanonicalPath
         val streamingCheckpointPath  = new File(tempDir, "streamingCheckpoints").getCanonicalPath
 
@@ -64,12 +63,21 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             hiveConfVars.foreach { confvar =>
                 if (confvar.varname.contains("datanucleus") ||
                     confvar.varname.contains("jdo")) {
-                    builder.config(confvar.varname, confvar.getDefaultExpr())
+                    builder.config("spark.hadoop." + confvar.varname, confvar.getDefaultExpr())
                 }
             }
-            builder.config("javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=$localMetastorePath;create=true")
-                .config("datanucleus.rdbms.datastoreAdapterClassName", "org.datanucleus.store.rdbms.adapter.DerbyAdapter")
-                .config(ConfVars.METASTOREURIS.varname, "")
+            builder.config("spark.hadoop.javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=$localMetastorePath;create=true")
+                .config("spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName", "org.datanucleus.store.rdbms.adapter.DerbyAdapter")
+                .config("spark.hadoop.datanucleus.schema.autoCreateTables", true)
+                .config("spark.hadoop.datanucleus.schema.autoCreateAll", true)
+                .config("spark.hadoop.datanucleus.autoCreateSchema", true)
+                .config("spark.hadoop.datanucleus.autoCreateColumns", true)
+                .config("spark.hadoop.datanucleus.autoCreateConstraints", true)
+                .config("spark.hadoop.datanucleus.autoStartMechanismMode", "ignored")
+                .config("spark.hadoop.hive.metastore.schema.verification.record.version", true)
+                .config("spark.hadoop.hive.metastore.schema.verification", false)
+                .config("spark.hadoop.hive.metastore.uris", "")
+                .config("spark.sql.hive.metastore.sharedPrefixes", "org.apache.derby")
                 .enableHiveSupport()
         }
 

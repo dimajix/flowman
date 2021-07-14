@@ -42,4 +42,16 @@ connections:
 catalog:
   kind: impala
   connection: impala
+
+config:
+  # Enable COMPUTE STATS (already enabled by default)
+  - flowman.impala.computeStats=true
 ```
+
+You can disable the statistics computation (`COMPUTE STATS`) which is normally also performed by the plugin by
+setting the following configuration variable:
+
+- `flowman.impala.computeStats` *(type: boolean)* *(default:true)*
+  If enabled (i.e. set to `true`), then Flowman will perform a `COMPUTE STATS` within the
+  [Impala Catalog plugin](plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
+  be executed by the plugin.

@@ -44,6 +44,7 @@ import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
+import org.apache.spark.sql.hive.HiveClientShim
 import org.apache.spark.sql.types.StructField
 import org.slf4j.LoggerFactory
 
@@ -459,8 +460,11 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         }
 
         if (config.flowmanConf.hiveAnalyzeTable) {
-            val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
-            cmd.run(spark)
+            // This is a workaround for CDP 7.1, where Hive State is not set in AnalyzePartitions
+            HiveClientShim.withHiveSession(spark) {
+                val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
+                cmd.run(spark)
+            }
         }
 
         externalCatalogs.foreach { ec =>

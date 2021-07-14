@@ -259,6 +259,7 @@
                 <paranamer.version>2.8</paranamer.version>
                 <avro.version>1.8.2</avro.version>
                 <kafka.version>2.0.0</kafka.version>
+                <derby.version>10.12.1.1</derby.version>
                 <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.5.3</json4s.version>
                 <json-smart.version>1.1.1</json-smart.version>
@@ -290,6 +291,7 @@
                 <jackson.databind.version>2.10.0</jackson.databind.version>
                 <paranamer.version>2.8</paranamer.version>
                 <kafka.version>2.4.1</kafka.version>
+                <derby.version>10.12.1.1</derby.version>
                 <zookeeper.version>3.4.14</zookeeper.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.6.6</json4s.version>
@@ -322,6 +324,7 @@
                 <jackson.databind.version>2.10.0</jackson.databind.version>
                 <paranamer.version>2.8</paranamer.version>
                 <kafka.version>2.6.0</kafka.version>
+                <derby.version>10.12.1.1</derby.version>
                 <zookeeper.version>3.5.7</zookeeper.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.7.0-M5</json4s.version>
@@ -1009,6 +1012,28 @@
                 <artifactId>spark-core_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.hive</groupId>
+                        <artifactId>hive-common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hive</groupId>
+                        <artifactId>hive-serde</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hive</groupId>
+                        <artifactId>hive-shims</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hive</groupId>
+                        <artifactId>hive-llap-common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hive</groupId>
+                        <artifactId>hive-storage-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.spark-project.spark</groupId>

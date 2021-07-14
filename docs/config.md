@@ -10,9 +10,6 @@ specification (see [module documentation](spec/module.md)) or in the naamespace 
 - `flowman.spark.enableHive` *(type: boolean)* *(default:true)*
 If set to `false`, then Hive support will be disabled in Flowman.
 
-- `flowman.hive.analyzeTable` *(type: boolean)* *(default:true)*
-If enabled (i.e. set to `true`), then Flowman will perform a `ANALYZE TABLE` for all Hive table updates.
-
 - `flowman.home` *(type: string)*
 Contains the home location of the Flowman installation. This will be set implicitly by the system environment 
 variable `FLOWMAN_HOME`.
@@ -24,6 +21,14 @@ variable `FLOWMAN_CONF_DIR` or `FLOWMAN_HOME`.
 - `flowman.plugin.directory` *(type: string)*
 Contains the location of the Flowman plugin directory. This will be set implicitly by the system environment 
 variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
+
+- `flowman.hive.analyzeTable` *(type: boolean)* *(default:true)*
+  If enabled (i.e. set to `true`), then Flowman will perform a `ANALYZE TABLE` for all Hive table updates.
+
+- `flowman.impala.computeStats` *(type: boolean)* *(default:true)*
+  If enabled (i.e. set to `true`), then Flowman will perform a `COMPUTE STATS` within the 
+  [Impala Catalog plugin](plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
+  be executed by the plugin.
 
 - `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)*
 When enabled (i.e. set to `true`), then Flowman will treat all targets as being dirty. Otherwise Flowman will check

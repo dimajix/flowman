@@ -173,9 +173,18 @@ class Runner private(
 
     // Spark override properties
     private val sparkOverrides = Map(
-        "javax.jdo.option.ConnectionURL" -> s"jdbc:derby:;databaseName=$metastorePath;create=true",
-        "datanucleus.rdbms.datastoreAdapterClassName" -> "org.datanucleus.store.rdbms.adapter.DerbyAdapter",
-        "hive.metastore.uris" -> "",
+        "spark.hadoop.javax.jdo.option.ConnectionURL" -> s"jdbc:derby:;databaseName=$metastorePath;create=true",
+        "spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName" -> "org.datanucleus.store.rdbms.adapter.DerbyAdapter",
+        "spark.hadoop.datanucleus.schema.autoCreateTables" -> "true",
+        "spark.hadoop.datanucleus.schema.autoCreateAll" -> "true",
+        "spark.hadoop.datanucleus.autoCreateSchema" -> "true",
+        "spark.hadoop.datanucleus.autoCreateColumns" -> "true",
+        "spark.hadoop.datanucleus.autoCreateConstraints" -> "true",
+        "spark.hadoop.datanucleus.autoStartMechanismMode" -> "ignored",
+        "spark.hadoop.hive.metastore.schema.verification.record.version" -> "true",
+        "spark.hadoop.hive.metastore.schema.verification" -> "false",
+        "spark.hadoop.hive.metastore.uris" -> "",
+        "spark.sql.hive.metastore.sharedPrefixes" -> "org.apache.derby",
         SQLConf.CHECKPOINT_LOCATION.key -> streamingCheckpointPath,
         "spark.sql.warehouse.dir" -> warehousePath,
         SQLConf.SHUFFLE_PARTITIONS.key -> "8",

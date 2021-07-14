@@ -20,7 +20,7 @@ package com.dimajix.util
 object Reflection {
     def companion[T](name : String)(implicit man: Manifest[T]) : Option[T] = {
         try {
-            Some(Class.forName(name + "$").getField("MODULE$").get(man.erasure).asInstanceOf[T])
+            Some(Class.forName(name + "$").getField("MODULE$").get(man.runtimeClass).asInstanceOf[T])
         }
         catch {
             case _:ClassNotFoundException => None

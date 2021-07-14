@@ -26,9 +26,9 @@ import org.apache.spark.sql.catalyst.catalog.ExternalCatalogWithListener
 
 
 object HiveClientShim {
-    private var _currentSparkSession:SparkSession = null
-    private var _currentHive:Hive = null
-    private var _currentListener:SparkListener = null
+    private val _currentSparkSession = new ThreadLocal[SparkSession]()
+    private val _currentHive = new ThreadLocal[Hive]()
+    private val _currentListener= new ThreadLocal[SparkListener]()
 
     /** Run a function within Hive state (SessionState, HiveConf, Hive client and class loader) */
     def withHiveState[A](spark:SparkSession)(f: => A): A = {
@@ -36,24 +36,34 @@ object HiveClientShim {
         catalog.client.withHiveState(f)
     }
 
+    /**
+     * This methid will create a Hive session without using the Hive classloaders. This method is mainly used
+     * to mitigate a bug in CDP 7.1, where Hive is accessed from within the Spark world without class loader
+     * isolation.
+     * @param spark
+     * @param f
+     * @tparam A
+     * @return
+     */
     def withHiveSession[A](spark:SparkSession)(f: => A): A = {
         // Check if the given Spark session is the same as last time. If so, then do not create a new Hive client.
-        if (_currentSparkSession ne spark) {
-            if (_currentHive != null) {
-                assert(_currentSparkSession != null)
-                assert(_currentSparkSession != null)
+        val currentSparkSession = _currentSparkSession.get()
+        if (currentSparkSession ne spark) {
+            val currentListener = _currentListener.get()
+            val currentHive = _currentHive.get()
+            if (currentHive != null) {
+                assert(currentSparkSession != null)
+                assert(currentListener != null)
 
                 // Remove Spark listener again
-                _currentSparkSession.sparkContext.removeSparkListener(_currentListener)
-                _currentListener = null
+                currentSparkSession.sparkContext.removeSparkListener(currentListener)
+                _currentListener.remove()
 
-                if (Hive.getThreadLocal == _currentHive) {
+                if (Hive.getThreadLocal eq currentHive) {
                     Hive.closeCurrent()
                 }
-                else {
-                    _currentHive.close(false)
-                }
-                _currentHive = null
+                currentHive.close(false)
+                _currentHive.remove()
             }
 
             // Create new Hive Session
@@ -63,21 +73,19 @@ object HiveClientShim {
             // Release Hive session when Spark Context is destroyed
             val listener = new SparkListener {
                 override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-                    if (Hive.getThreadLocal() == hive) {
+                    if (Hive.getThreadLocal() eq hive) {
                         Hive.closeCurrent()
                     }
-                    else {
-                        hive.close(false)
-                    }
+                    hive.close(false)
                 }
             }
             spark.sparkContext.addSparkListener(listener)
 
             // Set Hive session
             Hive.set(hive)
-            _currentSparkSession = spark
-            _currentHive = hive
-            _currentListener = listener
+            _currentSparkSession.set(spark)
+            _currentHive.set(hive)
+            _currentListener.set(listener)
         }
         f
     }

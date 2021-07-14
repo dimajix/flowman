@@ -2,7 +2,7 @@
 
 Flowman supports some configuration properties, which influence the behaviour. These properties either can be set
 on the command line via `--conf` (See [flowexec documentation](cli/flowexec.md)), or in the `config` section of the flow 
-specification (see [module documentation](spec/module.md)) or in the naamespace configuration (see
+specification (see [module documentation](spec/module.md)) or in the namespace configuration (see
 [namespace documentation](spec/namespace.md))
 
 
@@ -87,3 +87,29 @@ target.
 Sets the default number of output files per target. If set to zero or a negative value, the number of output files is 
 implicitly determined by the number of internal Spark partitions, i.e. no explicit change will be performed. Note that 
 you can still explicitly use different settings per target. 
+
+
+### Workarounds
+
+Sometimes some workarounds are required, especially for non-quite-open-source Big Data platforms.
+
+- `flowman.workaround.analyze_partition` *(type: boolean)*
+Enables a workaround for CDP 7.1, where ANALYZE TABLES wouldn't always work correctly (especially in unittests). The
+  workaround is enabled per default if the Spark version matches ?.?.?.7.?.?.?.+ (i.e. 2.4.0.7.1.6.0-297) AND if 
+  the Spark repository url contains "cloudera".
+  
+
+## Example
+
+You can set the properties either at namespace level or at project level in the `config` section as follows:
+```yaml
+# default-namespace.yml
+
+config:
+  # Generic Spark configs  
+  - spark.sql.suffle.partitions=20
+  - spark.sql.session.timeZone=UTC
+  # Flowman specific config  
+  - flowman.workaround.analyze_partition=true
+  - flowman.default.relation.migrationStrategy=FAIL
+```

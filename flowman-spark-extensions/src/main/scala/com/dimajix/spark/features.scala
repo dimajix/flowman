@@ -17,15 +17,19 @@
 package com.dimajix.spark
 
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.types.DataType
 
 
 object features {
-    lazy val hiveSupported: Boolean = Try {
+    lazy val hiveSupported: Boolean = try {
         org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
         true
-    }.getOrElse(false)
+    } catch {
+        case _:ClassNotFoundException => false
+        case NonFatal(_) => false
+    }
 
     lazy val hiveVarcharSupported: Boolean = Try {
         DataType.fromJson("""{"type":"struct","fields":[{"name":"vc","type":"varchar(10)","nullable":true}]}""")

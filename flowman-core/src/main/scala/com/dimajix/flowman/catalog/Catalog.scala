@@ -52,6 +52,7 @@ import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.config.Configuration
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -407,10 +408,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
         cmd.run(spark)
 
-        if (config.flowmanConf.hiveAnalyzeTable) {
-            val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
-            cmd.run(spark)
-        }
+        analyzePartition(table, sparkPartition)
 
         externalCatalogs.foreach { ec =>
             val catalogTable = catalog.getTableMetadata(table)
@@ -459,18 +457,31 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
             throw new NoSuchPartitionException(table.database.getOrElse(""), table.table, sparkPartition)
         }
 
-        if (config.flowmanConf.hiveAnalyzeTable) {
-            // This is a workaround for CDP 7.1, where Hive State is not set in AnalyzePartitions
-            HiveClientShim.withHiveSession(spark) {
-                val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
-                cmd.run(spark)
-            }
-        }
+        analyzePartition(table, sparkPartition)
 
         externalCatalogs.foreach { ec =>
             val catalogTable = catalog.getTableMetadata(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
             ec.alterPartition(catalogTable, catalogPartition)
+        }
+    }
+
+    private def analyzePartition(table:TableIdentifier, sparkPartition:Map[String,String]) : Unit = {
+        def doIt(): Unit = {
+            val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
+            cmd.run(spark)
+        }
+
+        if (config.flowmanConf.hiveAnalyzeTable) {
+            if (config.flowmanConf.getConf (FlowmanConf.WORKAROUND_ANALYZE_PARTITION) ) {
+                // This is a workaround for CDP 7.1, where Hive State is not set in AnalyzePartitions
+                HiveClientShim.withHiveSession (spark) {
+                    doIt ()
+                }
+            }
+            else {
+                doIt ()
+            }
         }
     }
 

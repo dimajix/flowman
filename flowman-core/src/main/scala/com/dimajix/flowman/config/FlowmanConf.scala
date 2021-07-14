@@ -18,8 +18,12 @@ package com.dimajix.flowman.config
 
 import java.io.File
 import java.nio.file.FileSystem
+import java.util.Locale
 import java.util.NoSuchElementException
 
+import org.apache.spark.SPARK_REPO_URL
+
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -109,6 +113,11 @@ object FlowmanConf {
         .doc("Uses the specified number of partitions for writing targets. -1 disables")
         .intConf
         .createWithDefault(16)
+
+    val WORKAROUND_ANALYZE_PARTITION = buildConf("flowman.workaround.analyze_partition")
+        .doc("Enables workaround to setup a new HMS connection for ANALYZE PARTITION. Required for CDP 7.1")
+        .booleanConf
+        .createWithDefault(SPARK_VERSION.matches("\\d.\\d.\\d.7.\\d.\\d.\\d.+") && SPARK_REPO_URL.contains("cloudera"))
 }
 
 

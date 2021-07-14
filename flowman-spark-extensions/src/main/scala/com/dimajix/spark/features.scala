@@ -28,6 +28,7 @@ object features {
         true
     } catch {
         case _:ClassNotFoundException => false
+        case _:NoClassDefFoundError => false
         case NonFatal(_) => false
     }
 

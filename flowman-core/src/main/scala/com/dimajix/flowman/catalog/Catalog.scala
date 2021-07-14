@@ -473,14 +473,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         }
 
         if (config.flowmanConf.hiveAnalyzeTable) {
-            if (config.flowmanConf.getConf (FlowmanConf.WORKAROUND_ANALYZE_PARTITION) ) {
+            if (config.flowmanConf.getConf(FlowmanConf.WORKAROUND_ANALYZE_PARTITION)) {
                 // This is a workaround for CDP 7.1, where Hive State is not set in AnalyzePartitions
-                HiveClientShim.withHiveSession (spark) {
-                    doIt ()
+                HiveClientShim.withHiveSession(spark) {
+                    doIt()
                 }
             }
             else {
-                doIt ()
+                doIt()
             }
         }
     }

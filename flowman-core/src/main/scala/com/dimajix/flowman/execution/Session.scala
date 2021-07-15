@@ -377,6 +377,8 @@ class Session private[execution](
         new RootExecution(this)
     }
 
+    private lazy val operationsManager = new OperationManager
+
     private lazy val _catalog = {
         val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))
         new Catalog(spark, config, externalCatalogs)
@@ -440,7 +442,8 @@ class Session private[execution](
     def hooks : Seq[Template[Hook]] = _hooks
 
     /**
-      * Returns an appropriate runner for a specific job
+      * Returns an appropriate runner for a specific job. Note that every invocation will actually create a new
+      * runner.
       *
       * @return
       */
@@ -504,6 +507,13 @@ class Session private[execution](
       * @return
       */
     def execution : Execution = rootExecution
+
+    /**
+     * Returns the [[OperationManager]] of this session, where all background operations and streaming queries are
+     * managed.
+     * @return
+     */
+    def operations : OperationManager = operationsManager
 
     /**
       * Either returns an existing or creates a new project specific context

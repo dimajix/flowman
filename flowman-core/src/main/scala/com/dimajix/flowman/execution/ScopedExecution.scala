@@ -65,4 +65,11 @@ class ScopedExecution(parent:Execution) extends CachingExecution(Some(parent), t
      * @return
      */
     override def catalog: Catalog = parent.catalog
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     *
+     * @return
+     */
+    override def oeprations: OperationManager = parent.oeprations
 }

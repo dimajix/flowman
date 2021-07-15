@@ -67,6 +67,13 @@ class RootExecution(session:Session) extends CachingExecution(None, true) {
     override def catalog: Catalog = session.catalog
 
     /**
+     * Returns the [[OperationManager]] of this execution, which is the same instance created by the [[Session]]
+     *
+     * @return
+     */
+    override def oeprations: OperationManager = session.operations
+
+    /**
      * Releases any temporary tables
      */
     override def cleanup() : Unit = {

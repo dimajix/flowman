@@ -25,6 +25,12 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TestIdentifier
 
 
+class OperationException(
+    val message: String = "",
+    val cause: Throwable = None.orNull
+) extends Exception(message, cause) {
+}
+
 class ExecutionException(
     val message: String = "",
     val cause: Throwable = None.orNull

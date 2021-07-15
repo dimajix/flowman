@@ -74,4 +74,11 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
      * @return
      */
     override def catalog: Catalog = ???
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     *
+     * @return
+     */
+    override def oeprations: OperationManager = ???
 }

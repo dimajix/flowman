@@ -124,7 +124,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     }
 
     /**
-     * Releases any temporary tables
+     * Releases all DataFrames and all caches of DataFrames which have been created within this scope. This method
+     * will not cleanup the parent Execution (if any).
      */
     override def cleanup() : Unit = {
         frameCache.values.foreach(_.values.foreach(_.unpersist(true)))

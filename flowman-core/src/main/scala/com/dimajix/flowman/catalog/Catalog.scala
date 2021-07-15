@@ -30,7 +30,9 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchPartitionException
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
 import org.apache.spark.sql.execution.command.AlterTableAddColumnsCommand
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableChangeColumnCommand
@@ -59,6 +61,12 @@ import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.spark.sql.SchemaUtils
 
 
+/**
+ * The Catalog is a wrapper around the Spark external catalog, which mainly contains Hive tables.
+ * @param spark
+ * @param config
+ * @param externalCatalogs
+ */
 class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalogs: Seq[ExternalCatalog] = Seq()) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
@@ -77,6 +85,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
     /**
       * Creates a new database
       */
+    @throws[DatabaseAlreadyExistsException]
     def createDatabase(database:String, ignoreIfExists:Boolean) : Unit = {
         require(database != null && database.nonEmpty)
 
@@ -99,13 +108,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       */
     def databaseExists(database:String) : Boolean = {
         require(database != null)
-        // "SHOW TABLES IN training LIKE 'weather_raw'"
-        catalog.databaseExists(database)
+        val dbName = formatDatabaseName(database)
+        catalog.externalCatalog.databaseExists(dbName)
     }
 
     /**
       * Creates a new database
       */
+    @throws[NoSuchDatabaseException]
     def dropDatabase(database:String, ignoreIfNotExists:Boolean) : Unit = {
         require(database != null && database.nonEmpty)
 
@@ -125,9 +135,12 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * Lists all tables in an external database
       * @return
       */
+    @throws[NoSuchDatabaseException]
     def listTables(database:String) : Seq[TableIdentifier] = {
+        // Directly query external catalog, so we don't get temp tables
+        val dbName = formatDatabaseName(database)
         catalog.externalCatalog
-            .listTables(database)
+            .listTables(dbName)
             .map(name =>TableIdentifier(name, Some(database)))
     }
 
@@ -135,9 +148,12 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * Lists all tables matching a specific name pattern in an external database
       * @return
       */
+    @throws[NoSuchDatabaseException]
     def listTables(database:String, pattern:String) : Seq[TableIdentifier] = {
+        // Directly query external catalog, so we don't get temp tables
+        val dbName = formatDatabaseName(database)
         catalog.externalCatalog
-            .listTables(database, pattern)
+            .listTables(dbName, pattern)
             .map(name =>TableIdentifier(name, Some(database)))
     }
 
@@ -146,6 +162,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param table
       * @param ignoreIfExists
       */
+    @throws[NoSuchDatabaseException]
+    @throws[TableAlreadyExistsException]
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
         require(table != null)
 
@@ -180,11 +198,13 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * or when new data is written into a table
       * @param table
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def refreshTable(table:TableIdentifier) : Unit = {
         require(table != null)
 
         if (!tableExists(table)) {
-            throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
+            throw new NoSuchTableException(table.database.getOrElse(""), table.table)
         }
 
         if (config.flowmanConf.hiveAnalyzeTable) {
@@ -194,41 +214,45 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
 
         // Publish table to external catalog
         externalCatalogs.foreach { catalog =>
-            val definition = this.catalog.externalCatalog.getTable(table.database.getOrElse(""), table.table)
+            val definition = getTable(table)
             catalog.refreshTable(definition)
         }
     }
 
     /**
       * Returns true if the specified Hive table or view actually exists
-      * @param table
+      * @param name
       * @return
       */
-    def tableExists(table:TableIdentifier) : Boolean = {
-        require(table != null)
-
-        catalog.tableExists(table)
+    def tableExists(name:TableIdentifier) : Boolean = {
+        catalog.tableExists(name)
     }
 
     /**
-      * Returns information about a Hive table or view
-      * @param table
+      * Returns information about a Hive table or view. Note that this call will return the catalog information itself,
+      * which may contain data types not directly supported by Spark (VARCHAR, CHAR)
+      * @param name
       * @return
       */
-    def getTable(table:TableIdentifier) : CatalogTable = {
-        require(table != null)
-
-        SparkShim.getTableRawMetadata(catalog, table)
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    def getTable(name:TableIdentifier) : CatalogTable = {
+        val db = formatDatabaseName(name.database.getOrElse(catalog.getCurrentDatabase))
+        val table = formatTableName(name.table)
+        requireDbExists(db)
+        requireTableExists(TableIdentifier(table, Some(db)))
+        catalog.externalCatalog.getTable(db, table)
     }
 
     /**
       * Returns the storage location of a Hive table
-      * @param table
+      * @param name
       * @return
       */
-    def getTableLocation(table:TableIdentifier) : Path = {
-        require(table != null)
-        val meta = catalog.getTableMetadata(table)
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    def getTableLocation(name:TableIdentifier) : Path = {
+        val meta = getTable(name)
         require(meta.tableType != CatalogTableType.VIEW)
         new Path(meta.location)
     }
@@ -237,12 +261,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * Drops a whole table including all partitions and all files
       * @param table
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
 
         val exists = tableExists(table)
         if (!ignoreIfNotExists && !exists) {
-            throw new NoSuchTableException(table.database.getOrElse(""), table.table)
+            throw new NoSuchTableException(table.database.getOrElse(catalog.getCurrentDatabase), table.table)
         }
 
         if (exists) {
@@ -277,11 +303,13 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * Truncates a table by either removing the corresponding file or by dropping all partitions
       * @param table
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def truncateTable(table:TableIdentifier) : Unit = {
         require(table != null)
         logger.info(s"Truncating Hive table $table")
 
-        val catalogTable = catalog.getTableMetadata(table)
+        val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
 
         // First drop partitions
@@ -304,12 +332,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
      * @param table
      * @param changes
      */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def alterTable(table:TableIdentifier, changes:Seq[TableChange]) : Unit = {
         require(table != null)
         require(changes != null)
         logger.info(s"Changing columns of existing Hive table '$table'")
 
-        val catalogTable = catalog.getTableMetadata(table)
+        val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
         val tableColumns = catalogTable.schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
 
@@ -341,12 +371,14 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
      * @param table
      * @param colsToAdd
      */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def addTableColumns(table:TableIdentifier, colsToAdd: Seq[StructField]) : Unit = {
         require(table != null)
         require(colsToAdd != null)
         logger.info(s"Adding new columns ${colsToAdd.map(_.name).mkString(",")} to existing Hive table '$table'")
 
-        val catalogTable = catalog.getTableMetadata(table)
+        val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
 
         val cmd = AlterTableAddColumnsCommand(table, colsToAdd)
@@ -356,11 +388,13 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
     }
 
     /**
-      * Returns the storage location of a single partition of a Hive table
+      * Checks if the given partition exists. Will throw an exception if the corresponding table does not exist
       * @param table
       * @param partition
       * @return
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null)
@@ -368,16 +402,29 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
     }
 
     /**
+     * Retrieve the metadata of a table partition, assuming it exists.
+     * If no database is specified, assume the table is in the current database.
+     */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    @throws[NoSuchPartitionException]
+    def getPartition(table: TableIdentifier, partition:PartitionSpec): CatalogTablePartition = {
+        catalog.getPartition(table, partition.mapValues(_.toString).toMap)
+    }
+
+    /**
       * Returns the storage location of a single partition of a Hive table
       * @param table
       * @param partition
       * @return
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    @throws[NoSuchPartitionException]
     def getPartitionLocation(table:TableIdentifier, partition:PartitionSpec) : Path = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
-        // "DESCRIBE FORMATTED training.weather_raw PARTITION(year=2005, station='x')"
-        new Path(catalog.getPartition(table, partition.mapValues(_.toString).toMap).location)
+        new Path(getPartition(table, partition).location)
     }
 
     /**
@@ -385,10 +432,11 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param table
       * @return
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def getPartitionSchema(table:TableIdentifier) : PartitionSchema = {
         require(table != null)
-        // "DESCRIBE FORMATTED training.weather_raw"
-        val schema = catalog.getTableMetadata(table).partitionSchema
+        val schema = getTable(table).partitionSchema
         PartitionSchema(schema.fields.map(field => PartitionField.fromSpark(field)))
     }
 
@@ -398,6 +446,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param partition
       * @param location
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def addPartition(table:TableIdentifier, partition:PartitionSpec, location:Path) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -411,7 +461,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         analyzePartition(table, sparkPartition)
 
         externalCatalogs.foreach { ec =>
-            val catalogTable = catalog.getTableMetadata(table)
+            val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
             ec.addPartition(catalogTable, catalogPartition)
         }
@@ -423,6 +473,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param partition
       * @param location
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def addOrReplacePartition(table:TableIdentifier, partition:PartitionSpec, location:Path) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -446,6 +498,9 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param table
       * @param partition
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    @throws[NoSuchPartitionException]
     def refreshPartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -454,13 +509,13 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         logger.info(s"Refreshing partition ${partition.spec} of table $table")
 
         if (!partitionExists(table, partition)) {
-            throw new NoSuchPartitionException(table.database.getOrElse(""), table.table, sparkPartition)
+            throw new NoSuchPartitionException(table.database.getOrElse(catalog.getCurrentDatabase), table.table, sparkPartition)
         }
 
         analyzePartition(table, sparkPartition)
 
         externalCatalogs.foreach { ec =>
-            val catalogTable = catalog.getTableMetadata(table)
+            val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
             ec.alterPartition(catalogTable, catalogPartition)
         }
@@ -490,6 +545,9 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param table
       * @param partition
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    @throws[NoSuchPartitionException]
     def truncatePartition(table:TableIdentifier, partition:PartitionSpec) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
@@ -501,7 +559,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
 
         externalCatalogs.foreach { ec =>
             val sparkPartition = partition.mapValues(_.toString).toMap
-            val catalogTable = catalog.getTableMetadata(table)
+            val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table, sparkPartition)
             ec.truncatePartition(catalogTable, catalogPartition)
         }
@@ -512,12 +570,18 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * @param table
       * @param partition
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    @throws[NoSuchPartitionException]
     def dropPartition(table:TableIdentifier, partition:PartitionSpec, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
         require(partition != null && partition.nonEmpty)
         dropPartitions(table, Seq(partition), ignoreIfNotExists)
     }
 
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
+    @throws[NoSuchPartitionException]
     def dropPartitions(table:TableIdentifier, partitions:Seq[PartitionSpec], ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
         require(partitions != null)
@@ -549,11 +613,13 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         cmd.run(spark)
 
         externalCatalogs.foreach { ec =>
-            val catalogTable = catalog.getTableMetadata(table)
+            val catalogTable = getTable(table)
             catalogPartitions.foreach(ec.dropPartition(catalogTable, _))
         }
     }
 
+    @throws[NoSuchDatabaseException]
+    @throws[TableAlreadyExistsException]
     def createView(table:TableIdentifier, select:String, ignoreIfExists:Boolean): Unit = {
         require(table != null)
 
@@ -574,6 +640,8 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         }
     }
 
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def alterView(table:TableIdentifier, select:String): Unit = {
         require(table != null)
 
@@ -591,17 +659,19 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
       * Drops a whole table including all partitions and all files
       * @param table
       */
+    @throws[NoSuchDatabaseException]
+    @throws[NoSuchTableException]
     def dropView(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
 
         val exists = tableExists(table)
         if (!ignoreIfNotExists && !exists) {
-            throw new NoSuchTableException(table.database.getOrElse(""), table.table)
+            throw new NoSuchTableException(table.database.getOrElse(catalog.getCurrentDatabase), table.table)
         }
 
         if (exists) {
             logger.info(s"Dropping Hive view $table")
-            val catalogTable = catalog.getTableMetadata(table)
+            val catalogTable = getTable(table)
             require(catalogTable.tableType == CatalogTableType.VIEW)
 
             // Delete table itself
@@ -620,6 +690,41 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         }
         else {
             4000
+        }
+    }
+
+
+    /**
+     * Format table name, taking into account case sensitivity.
+     */
+    private def formatTableName(name: String): String = {
+        if (catalog.conf.caseSensitiveAnalysis) name else name.toLowerCase(Locale.ROOT)
+    }
+
+    /**
+     * Format database name, taking into account case sensitivity.
+     */
+    private def formatDatabaseName(name: String): String = {
+        if (catalog.conf.caseSensitiveAnalysis) name else name.toLowerCase(Locale.ROOT)
+    }
+
+    private def requireDbExists(db: String): Unit = {
+        if (!databaseExists(db)) {
+            throw new NoSuchDatabaseException(db)
+        }
+    }
+
+    private def requireTableExists(name: TableIdentifier): Unit = {
+        if (!tableExists(name)) {
+            val db = name.database.getOrElse(catalog.getCurrentDatabase)
+            throw new NoSuchTableException(db = db, table = name.table)
+        }
+    }
+
+    private def requireTableNotExists(name: TableIdentifier): Unit = {
+        if (tableExists(name)) {
+            val db = name.database.getOrElse(catalog.getCurrentDatabase)
+            throw new TableAlreadyExistsException(db = db, table = name.table)
         }
     }
 }

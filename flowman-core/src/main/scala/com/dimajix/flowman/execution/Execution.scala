@@ -82,10 +82,17 @@ abstract class Execution {
     def sparkRunning: Boolean
 
     /**
-      * Returns the table catalog used for managing table instances
+      * Returns the table catalog used for managing Hive table instances. The Catalog will take care of many
+      * technical details, like refreshing additional external catalogs like Impala.
       * @return
       */
     def catalog: Catalog
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     * @return
+     */
+    def oeprations: OperationManager
 
     /**
       * Creates an instance of a mapping, or retrieves it from cache

@@ -92,12 +92,6 @@ object SparkShim {
 
     def getCachedPlan(ir:InMemoryRelation) : SparkPlan = ir.cachedPlan
 
-    @throws[NoSuchDatabaseException]
-    @throws[NoSuchTableException]
-    def getTableRawMetadata(catalog:SessionCatalog, table: TableIdentifier): CatalogTable = {
-        catalog.getTableRawMetadata(table)
-    }
-
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView
     val PersistedView : ViewType = org.apache.spark.sql.catalyst.analysis.PersistedView

@@ -77,8 +77,6 @@ object SparkShim {
         name: Option[String] = None)(body: => T): T =
         SQLExecution.withNewExecutionId(sparkSession, queryExecution)(body)
 
-    def getCachedPlan(ir:InMemoryRelation) : SparkPlan = ir.cachedPlan
-
     val LocalTempView : ViewType = org.apache.spark.sql.execution.command.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.execution.command.GlobalTempView
     val PersistedView : ViewType = org.apache.spark.sql.execution.command.PersistedView

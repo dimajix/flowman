@@ -37,13 +37,13 @@ object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
         val cacheCounts = new util.IdentityHashMap[SparkPlan,(InMemoryRelation,Int)]()
 
         def addCache(relation:InMemoryRelation) : Unit = {
-            val cp = SparkShim.getCachedPlan(relation)
+            val cp = relation.cachedPlan
             val (rel,count) = cacheCounts.getOrDefault(cp, (null,0))
             if (count >= 0)
                 cacheCounts.put(cp, (relation, count + 1))
         }
         def disallowCache(relation:InMemoryRelation) : Unit = {
-            val cp = SparkShim.getCachedPlan(relation)
+            val cp = relation.cachedPlan
             cacheCounts.put(cp, (relation, -1))
         }
 
@@ -51,7 +51,7 @@ object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
             addCache(relation)
 
             // Recursively follow any sub-caches below current cache
-            val cp = SparkShim.getCachedPlan(relation)
+            val cp = relation.cachedPlan
             cp.foreachUp {
                 case tableScan:InMemoryTableScanExec =>
                     countSubCaches(tableScan.relation)

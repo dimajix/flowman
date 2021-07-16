@@ -598,6 +598,7 @@
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
                         <args>
+                            <arg>-nc</arg>
                             <arg>-nobootcp</arg>
                             <arg>-unchecked</arg>
                             <arg>-deprecation</arg>

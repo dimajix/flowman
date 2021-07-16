@@ -206,6 +206,7 @@
             <properties>
                 <hadoop.dist>cdp7</hadoop.dist>
                 <cdp.version>7.1.6.0-297</cdp.version>
+                <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
@@ -244,6 +245,7 @@
         <profile>
             <id>spark-2.4</id>
             <properties>
+                <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
@@ -598,8 +600,6 @@
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
                         <args>
-                            <arg>-nc</arg>
-                            <arg>-nobootcp</arg>
                             <arg>-unchecked</arg>
                             <arg>-deprecation</arg>
                             <arg>-feature</arg>

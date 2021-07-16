@@ -32,6 +32,23 @@ Building Flowman with the default settings (i.e. Hadoop and Spark version) is as
 
     mvn clean install
 
+### Skip Tests
+
+In case you don't want to run tests, you can simply append `-DskipTests`
+
+```shell
+mvn clean install -DskipTests
+```
+
+### Skip Docker Image
+
+In case you don't want to build the Docker image (for example when the build itself is done within a Docker container),
+you can simply append `-Ddockerfile.skip`
+
+```shell
+mvn clean install -Ddockerfile.skip
+```
+
 ## Main Artifacts
 
 The main artifacts will be a Docker image 'dimajix/flowman' and additionally a tar.gz file containing a runnable 
@@ -40,6 +57,9 @@ in a complex environment with Kerberos. You can find the `tar.gz` file in the di
 
 
 ## Custom Builds
+
+Flowman supports various versions of Spark and Hadoop to match your requirements and your environment. By providing
+appropriate build profiles, you can easily create a custom build.
 
 ### Build on Windows
 
@@ -86,6 +106,18 @@ using the correct version. The following profiles are available:
 
 With these profiles it is easy to build Flowman to match your environment. 
 
+
+### Building for specific Java Version
+
+If nothing else is set on the command line, Flowman will now build for Java 11 (except when building the profile
+CDH-6.3, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version by
+specifying the property `java.version`
+
+```shell
+mvn install -Djava.version=1.8
+```
+
+
 ### Building for Open Source Hadoop and Spark
 
 Spark 2.4 and Hadoop 2.6:
@@ -119,10 +151,20 @@ Spark 3.1 and Hadoop 3.2
 
 ### Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera CDH 6.3.
+The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for CDP 7.1.
 
-    mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
+    mvn clean install -PCDH-6.3 -DskipTests
+    mvn clean install -PCDP-7.1 -DskipTests
 
+
+## Coverage Analysis
+
+Flowman also now supports creating a coverage analysis via the scoverage Maven plugin. It is not part of the default
+build and has to be triggered explicitly:
+
+```shell
+mvn scoverage:report
+```
 
 ## Building Documentation
 

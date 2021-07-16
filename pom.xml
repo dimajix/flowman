@@ -119,7 +119,7 @@
         <flowman.version>${project.version}</flowman.version>
 
         <!-- Language versions -->
-        <java.version>1.8</java.version>
+        <java.version>11</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
@@ -152,6 +152,7 @@
             <properties>
                 <hadoop.dist>cdh6</hadoop.dist>
                 <cdh.version>cdh6.3.4</cdh.version>
+                <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>

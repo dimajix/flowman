@@ -698,14 +698,16 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
      * Format table name, taking into account case sensitivity.
      */
     private def formatTableName(name: String): String = {
-        if (catalog.conf.caseSensitiveAnalysis) name else name.toLowerCase(Locale.ROOT)
+        val caseSensitive = false // catalog.conf.caseSensitiveAnalysis
+        if (caseSensitive) name else name.toLowerCase(Locale.ROOT)
     }
 
     /**
      * Format database name, taking into account case sensitivity.
      */
     private def formatDatabaseName(name: String): String = {
-        if (catalog.conf.caseSensitiveAnalysis) name else name.toLowerCase(Locale.ROOT)
+        val caseSensitive = false // catalog.conf.caseSensitiveAnalysis
+        if (caseSensitive) name else name.toLowerCase(Locale.ROOT)
     }
 
     private def requireDbExists(db: String): Unit = {

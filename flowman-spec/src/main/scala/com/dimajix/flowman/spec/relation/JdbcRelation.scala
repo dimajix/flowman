@@ -27,6 +27,7 @@ import java.util.Locale
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -135,23 +136,23 @@ case class JdbcRelation(
         require(partitions != null)
 
         // Get Connection
-        val (url,props) = createProperties()
+        val (_,props) = createProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
+            .format("jdbc")
+            .options(props)
 
         val tableDf =
             if (query.nonEmpty) {
-                logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
-                reader.format("jdbc")
-                    .option("query", query.get)
-                    .option("url", url)
-                    .options(props.asScala)
+                logger.info(s"Reading JDBC relation '$identifier' with a custom query via connection '$connection' partition $partitions")
+                reader.option(JDBCOptions.JDBC_QUERY_STRING, query.get)
                     .load()
             }
             else {
-                logger.info(s"Reading data from JDBC table $tableIdentifier using connection '$connection' using partition values $partitions")
-                reader.jdbc(url, tableIdentifier.unquotedString, props)
+                logger.info(s"Reading JDBC relation '$identifier' from table $tableIdentifier via connection '$connection' partition $partitions")
+                reader.option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
+                    .load()
             }
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
@@ -175,52 +176,48 @@ case class JdbcRelation(
         require(df != null)
         require(partition != null)
 
+        logger.info(s"Writing JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' partition $partition with mode '$mode'")
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
-
-        logger.info(s"Writing data to JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' with mode '$mode'")
-
-        // Get Connection
-        val (url,props) = createProperties()
-        val dialect = SqlDialects.get(url)
 
         // Apply schema and add partition column
         val dfExt = addPartition(applyOutputSchema(execution, df), partition)
 
+        def writeData(df:DataFrame ,saveMode: SaveMode): Unit = {
+            val (_,props) = createProperties()
+            this.writer(execution, df, "jdbc", Map(), saveMode)
+                .options(props)
+                .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
+                .save()
+        }
+
         // Write partition into DataBase
         if (partition.isEmpty) {
-            // Write partition into DataBase
-            this.writer(execution, dfExt, "jdbc", Map(), mode.batchMode)
-                .mode(mode.batchMode)
-                .jdbc(url, tableIdentifier.unquotedString, props)
+            writeData(dfExt, mode.batchMode)
         }
         else {
-            def writePartition(): Unit = {
-                this.writer(execution, dfExt, "jdbc", Map(), SaveMode.Append)
-                    .jdbc(url, tableIdentifier.unquotedString, props)
-            }
-
             mode match {
                 case OutputMode.OVERWRITE =>
-                    withStatement { (statement, _) =>
+                    withStatement { (statement, options) =>
+                        val dialect = SqlDialects.get(options.url)
                         val condition = partitionCondition(dialect, partition)
                         val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
                         statement.executeUpdate(query)
                     }
-                    writePartition()
+                    writeData(dfExt, SaveMode.Append)
                 case OutputMode.APPEND =>
-                    writePartition()
+                    writeData(dfExt, SaveMode.Append)
                 case OutputMode.UPDATE =>
                     ???
                 case OutputMode.MERGE =>
                     ???
                 case OutputMode.IGNORE_IF_EXISTS =>
                     if (!checkPartition(partition)) {
-                        writePartition()
+                        writeData(dfExt, SaveMode.Append)
                     }
                 case OutputMode.ERROR_IF_EXISTS =>
                     if (!checkPartition(partition)) {
-                        writePartition()
+                        writeData(dfExt, SaveMode.Append)
                     }
                     else {
                         throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
@@ -464,32 +461,29 @@ case class JdbcRelation(
 
     private def createProperties() = {
         val connection = jdbcConnection
-        val props = new Properties()
-        props.setProperty("driver", connection.driver)
-        connection.username.foreach(props.setProperty("user", _))
-        connection.password.foreach(props.setProperty("password", _))
+        val props = mutable.Map[String,String]()
+        props.put(JDBCOptions.JDBC_URL, connection.url)
+        props.put(JDBCOptions.JDBC_DRIVER_CLASS, connection.driver)
+        connection.username.foreach(props.put("user", _))
+        connection.password.foreach(props.put("password", _))
 
-        connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
-        properties.foreach(kv => props.setProperty(kv._1, kv._2))
+        connection.properties.foreach(kv => props.put(kv._1, kv._2))
+        properties.foreach(kv => props.put(kv._1, kv._2))
 
-        (jdbcConnection.url,props)
+        (jdbcConnection.url,props.toMap)
     }
 
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
         val connection = jdbcConnection
-        val props = scala.collection.mutable.Map[String,String]()
-        props.update("driver", connection.driver)
-        connection.username.foreach(props.update("user", _))
-        connection.password.foreach(props.update("password", _))
+        val (url,props) = createProperties()
+        logger.debug(s"Connecting to jdbc source at $url")
 
-        logger.debug("Connecting to jdbc source at {}", connection.url)
-
-        val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
+        val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
         val conn = try {
             JdbcUtils.createConnection(options)
         } catch {
             case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at ${connection.url}: ${e.getMessage}")
+                logger.error(s"Error connecting to jdbc source at $url: ${e.getMessage}")
                 throw e
         }
 

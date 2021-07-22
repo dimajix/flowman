@@ -375,7 +375,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val df = spark.createDataFrame(Seq(
             ("lala", 1, 1),
             ("lolo", 2, 1),
-            ("abc", 3, 2),
+            ("abc", 3, 2)
         ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")

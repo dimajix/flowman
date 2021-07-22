@@ -84,6 +84,7 @@
         <!-- Default Hadoop version (3.2) -->
         <hadoop.version>3.2.0</hadoop.version>
         <hadoop-api.version>3.2</hadoop-api.version>
+        <json-smart.version>2.3</json-smart.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-codec.version>1.11</commons-codec.version>
 
@@ -104,7 +105,6 @@
         <zookeeper.version>3.5.7</zookeeper.version>
         <avro.version>1.8.2</avro.version>
         <json4s.version>3.7.0-M5</json4s.version>
-        <json-smart.version>2.3</json-smart.version>
         <guava.version>14.0.1</guava.version>
         <slf4j.version>1.7.30</slf4j.version>
         <httpclient.version>4.5.6</httpclient.version>
@@ -170,7 +170,7 @@
                 <avro.version>1.8.2-${cdh.version}</avro.version>
                 <guava.version>14.0.1</guava.version>
                 <json4s.version>3.5.3</json4s.version>
-                <json-smart.version>1.1.1</json-smart.version>
+                <json-smart.version>2.3</json-smart.version>
                 <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <antlr4.version>4.7</antlr4.version>
@@ -224,7 +224,7 @@
                 <avro.version>1.8.2.${cdp.version}</avro.version>
                 <guava.version>28.1-jre</guava.version>
                 <json4s.version>3.5.3</json4s.version>
-                <json-smart.version>1.1.1</json-smart.version>
+                <json-smart.version>2.3</json-smart.version>
                 <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.51.Final</netty-all.version>
                 <antlr4.version>4.7</antlr4.version>
@@ -264,7 +264,6 @@
                 <derby.version>10.12.1.1</derby.version>
                 <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.5.3</json4s.version>
-                <json-smart.version>1.1.1</json-smart.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.16</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
@@ -297,7 +296,6 @@
                 <zookeeper.version>3.4.14</zookeeper.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.6.6</json4s.version>
-                <json-smart.version>2.3</json-smart.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
@@ -330,7 +328,6 @@
                 <zookeeper.version>3.5.7</zookeeper.version>
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.7.0-M5</json4s.version>
-                <json-smart.version>2.3</json-smart.version>
                 <guava.version>14.0.1</guava.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
@@ -348,6 +345,7 @@
             <properties>
                 <hadoop.version>2.6.5</hadoop.version>
                 <hadoop-api.version>2.6</hadoop-api.version>
+                <json-smart.version>1.3.1</json-smart.version>
                 <commons-beanutils.version>1.9.2</commons-beanutils.version>
                 <commons-codec.version>1.10</commons-codec.version>
             </properties>
@@ -357,6 +355,7 @@
             <properties>
                 <hadoop.version>2.7.7</hadoop.version>
                 <hadoop-api.version>2.7</hadoop-api.version>
+                <json-smart.version>1.3.1</json-smart.version>
                 <commons-beanutils.version>1.9.2</commons-beanutils.version>
                 <commons-codec.version>1.10</commons-codec.version>
             </properties>
@@ -366,6 +365,7 @@
             <properties>
                 <hadoop.version>2.8.5</hadoop.version>
                 <hadoop-api.version>2.8</hadoop-api.version>
+                <json-smart.version>1.3.1</json-smart.version>
                 <commons-beanutils.version>1.9.2</commons-beanutils.version>
                 <commons-codec.version>1.10</commons-codec.version>
             </properties>
@@ -375,6 +375,7 @@
             <properties>
                 <hadoop.version>2.9.2</hadoop.version>
                 <hadoop-api.version>2.9</hadoop-api.version>
+                <json-smart.version>1.3.1</json-smart.version>
                 <commons-beanutils.version>1.9.2</commons-beanutils.version>
                 <commons-codec.version>1.10</commons-codec.version>
             </properties>
@@ -382,8 +383,9 @@
         <profile>
             <id>hadoop-3.1</id>
             <properties>
-                <hadoop.version>3.1.2</hadoop.version>
+                <hadoop.version>3.1.4</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
+                <json-smart.version>2.3</json-smart.version>
                 <commons-beanutils.version>1.9.3</commons-beanutils.version>
                 <commons-codec.version>1.11</commons-codec.version>
             </properties>
@@ -391,8 +393,9 @@
         <profile>
             <id>hadoop-3.2</id>
             <properties>
-                    <hadoop.version>3.2.0</hadoop.version>
+                <hadoop.version>3.2.0</hadoop.version>
                 <hadoop-api.version>3.2</hadoop-api.version>
+                <json-smart.version>2.3</json-smart.version>
                 <commons-beanutils.version>1.9.3</commons-beanutils.version>
                 <commons-codec.version>1.11</commons-codec.version>
             </properties>

@@ -92,7 +92,7 @@ abstract class Execution {
      * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
      * @return
      */
-    def oeprations: OperationManager
+    def operations: OperationManager
 
     /**
       * Creates an instance of a mapping, or retrieves it from cache

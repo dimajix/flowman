@@ -352,7 +352,17 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, trigger:Trigger, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        val outputDf = applyOutputSchema(execution, df)
+        // Add all partition columns to the output schema
+        val outputSchema = this.outputSchema(execution).map { schema =>
+            partitions.foldLeft(schema)((schema, partition) =>
+                if (!schema.fieldNames.exists(_.toLowerCase(Locale.ROOT) == partition.name.toLowerCase(Locale.ROOT)))
+                    org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
+                else
+                    schema
+            )
+        }
+
+        val outputDf = SchemaUtils.applySchema(df, outputSchema)
         outputDf.writeStream
             .format(format)
             .options(options)

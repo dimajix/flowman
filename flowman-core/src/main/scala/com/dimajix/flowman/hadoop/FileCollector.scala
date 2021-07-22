@@ -32,6 +32,7 @@ import scala.math.Ordering
 
 object FileCollector {
     class Builder(hadoopConf:Configuration) {
+        private var _partitions:Seq[String] = Seq()
         private var _pattern:Option[String] = None
         private var _path:Path = _
         private var _defaults:Map[String,Any] = Map()
@@ -55,6 +56,12 @@ object FileCollector {
         def pattern(pattern:Option[String]) : Builder = {
             require(pattern != null)
             this._pattern = pattern
+            this
+        }
+
+        def partitionBy(partitions:String*) : Builder = {
+            require(partitions != null)
+            this._partitions = partitions
             this
         }
 
@@ -95,6 +102,7 @@ object FileCollector {
             new FileCollector(
                 hadoopConf,
                 _path,
+                _partitions,
                 _pattern,
                 _defaults
             )
@@ -113,6 +121,7 @@ object FileCollector {
 case class FileCollector(
     hadoopConf:Configuration,
     path:Path,
+    partitions:Seq[String],
     pattern:Option[String],
     defaults:Map[String,Any]
 ) {
@@ -128,6 +137,7 @@ case class FileCollector(
         val fs = path.getFileSystem(hadoopConf)
         path.makeQualified(fs.getUri, fs.getWorkingDirectory)
     }
+    private val filePattern = pattern.orElse(Some(partitions.map(p => s"$p=$$$p").mkString("/"))).filter(_.nonEmpty)
 
     /**
      * Resolves the root location and performs any variable substitution.
@@ -189,12 +199,12 @@ case class FileCollector(
      * @return
      */
     def resolvePattern(partition:Seq[(String,Any)]) : String = {
-        if (pattern.exists(_.nonEmpty)) {
+        if (filePattern.nonEmpty) {
             val context = new VelocityContext(templateContext)
             val partitionValues = defaults ++ partition.toMap
             partitionValues.foreach(kv => context.put(kv._1, kv._2))
             val output = new StringWriter()
-            templateEngine.evaluate(context, output, "FileCollector", pattern.get)
+            templateEngine.evaluate(context, output, "FileCollector", filePattern.get)
             output.getBuffer.toString
         }
         else {
@@ -212,9 +222,7 @@ case class FileCollector(
      * @return
      */
     def collect(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
-        requirePathAndPattern()
-
-        logger.debug(s"Collecting files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.get}'")
+        logger.debug(s"Collecting files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.get}'")
         parFlatMap(partitions)((fs,p) => collectPath(fs,p,false)).toList
     }
 
@@ -228,9 +236,7 @@ case class FileCollector(
      * @return
      */
     def collect(partition:PartitionSpec) : Seq[Path] = {
-        requirePathAndPattern()
-
-        logger.debug(s"Collecting files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${pattern.get}'")
+        logger.debug(s"Collecting files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${filePattern.get}'")
         map(partition)((fs,p) => collectPath(fs,p,false))
     }
 
@@ -255,9 +261,7 @@ case class FileCollector(
      * @return
      */
     def glob(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
-        requirePathAndPattern()
-
-        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.get}'")
+        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.get}'")
         parFlatMap(partitions)((fs,p) => collectPath(fs,p,true)).toList
     }
 
@@ -269,9 +273,7 @@ case class FileCollector(
      * @return
      */
     def glob(partition:PartitionSpec) : Seq[Path] = {
-        requirePathAndPattern()
-
-        logger.debug(s"Globbing files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${pattern.get}'")
+        logger.debug(s"Globbing files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${filePattern.get}'")
         map(partition)((fs,p) => collectPath(fs,p,true))
     }
 
@@ -293,8 +295,9 @@ case class FileCollector(
      */
     def mkGlob(partitions:Iterable[PartitionSpec]) : Path = {
         requirePathAndPattern()
+        requireValidPartitions(partitions)
 
-        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.get}'")
+        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.get}'")
         val parts = partitions.map(p => resolvePattern(p)).mkString("{",",","}")
         new Path(qualifiedPath, parts)
     }
@@ -306,9 +309,7 @@ case class FileCollector(
       * @return
       */
     def delete(partitions:Iterable[PartitionSpec]) : Unit = {
-        requirePathAndPattern()
-
-        logger.info(s"Deleting files in location ${qualifiedPath} with pattern '${pattern.get}'")
+        logger.info(s"Deleting files in location ${qualifiedPath} with pattern '${filePattern.get}'")
         foreach(partitions)(deletePath)
     }
 
@@ -341,6 +342,7 @@ case class FileCollector(
       */
     def flatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : Iterable[T] = {
         requirePathAndPattern()
+        requireValidPartitions(partitions)
 
         val fs = qualifiedPath.getFileSystem(hadoopConf)
         partitions.flatMap(p => fn(fs, resolve(p)))
@@ -355,6 +357,7 @@ case class FileCollector(
       */
     def map[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : Iterable[T] = {
         requirePathAndPattern()
+        requireValidPartitions(partitions)
 
         val fs = qualifiedPath.getFileSystem(hadoopConf)
         partitions.map(p => fn(fs, resolve(p)))
@@ -369,6 +372,7 @@ case class FileCollector(
      */
     def map[T](partition:PartitionSpec)(fn:(HadoopFileSystem,Path) => T) : T = {
         requirePathAndPattern()
+        requireValidPartitions(partition)
 
         val fs = qualifiedPath.getFileSystem(hadoopConf)
         fn(fs, resolve(partition))
@@ -383,6 +387,7 @@ case class FileCollector(
 
     def parFlatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : ParIterable[T] = {
         requirePathAndPattern()
+        requireValidPartitions(partitions)
 
         val fs = qualifiedPath.getFileSystem(hadoopConf)
         partitions.par.flatMap(p => fn(fs, resolve(p)))
@@ -390,6 +395,7 @@ case class FileCollector(
 
     def parMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : ParIterable[T] = {
         requirePathAndPattern()
+        requireValidPartitions(partitions)
 
         val fs = qualifiedPath.getFileSystem(hadoopConf)
         partitions.par.map(p => fn(fs, resolve(p)))
@@ -475,10 +481,18 @@ case class FileCollector(
             Seq()
     }
 
+    private def requireValidPartitions(partitionSpec: PartitionSpec) : Unit = {
+        if (!partitionSpec.values.keys.forall(partitions.contains))
+            throw new IllegalArgumentException(s"Invalid entry in partition spec ${partitionSpec.spec} for partitions ${partitions.mkString(",")}")
+    }
+    private def requireValidPartitions(partitions: Iterable[PartitionSpec]) : Unit = {
+        partitions.foreach(requireValidPartitions)
+    }
+
     private def requirePathAndPattern() : Unit = {
         if (path.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
-        if (!pattern.exists(_.nonEmpty))
+        if (filePattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
     }
 

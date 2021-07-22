@@ -66,6 +66,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         FileCollector.builder(context.hadoopConf)
             .path(location)
             .pattern(pattern)
+            .partitionBy(partitions.map(_.name):_*)
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }

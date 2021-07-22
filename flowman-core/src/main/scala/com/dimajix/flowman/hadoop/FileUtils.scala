@@ -18,6 +18,8 @@ package com.dimajix.flowman.hadoop
 
 import java.io.FileNotFoundException
 
+import scala.util.Try
+
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
@@ -38,21 +40,36 @@ object FileUtils {
      * @param location
      * @return
      */
-    def isValidFileData(fs:org.apache.hadoop.fs.FileSystem, location:Path): Boolean = {
+    def isValidFileData(fs:org.apache.hadoop.fs.FileSystem, location:Path, requireSuccessFile:Boolean = true): Boolean = {
         try {
             val status = fs.getFileStatus(location)
             if (status.isFile) {
                 true
             }
             else {
-                val success = new Path(location, "_SUCCESS")
-                fs.getFileStatus(success).isFile
+                if (requireSuccessFile) {
+                    val success = new Path(location, "_SUCCESS")
+                    fs.getFileStatus(success).isFile
+                }
+                else {
+                    fs.listStatus(location).nonEmpty
+                }
             }
         }
         catch {
             case _: FileNotFoundException => false
         }
    }
+
+    def isValidStreamData(fs:org.apache.hadoop.fs.FileSystem, location:Path) : Boolean = {
+        try {
+            val meta = new Path(location, "_spark_metadata") // For streaming queries
+            fs.getFileStatus(meta).isDirectory
+        }
+        catch {
+            case _: FileNotFoundException => false
+        }
+    }
 
     /**
      * Returns true if the path refers to a successfully written Hadoop/Spark job. This is the case if either the
@@ -63,28 +80,7 @@ object FileUtils {
      * @return
      */
     def isValidHiveData(fs:org.apache.hadoop.fs.FileSystem, location:Path): Boolean = {
-        try {
-            val status = fs.getFileStatus(location)
-            if (status.isFile) {
-                true
-            }
-            else {
-                fs.listStatus(location).nonEmpty
-            }
-        }
-        catch {
-            case _: FileNotFoundException => false
-        }
-    }
-
-    /**
-     * Returns true if the path refers to a successfully written Hadoop job. This is the case if either the location
-     * refers to an existing file or if the location refers to a directory which contains a "_SUCCESS" file.
-     * @param file
-     * @return
-     */
-    def isValidData(file:File) : Boolean = {
-        isValidFileData(file.fs, file.path)
+        isValidFileData(fs, location, false)
     }
 
     /**

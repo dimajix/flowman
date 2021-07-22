@@ -80,5 +80,5 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
      *
      * @return
      */
-    override def oeprations: OperationManager = ???
+    override def operations: OperationManager = ???
 }

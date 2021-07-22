@@ -128,9 +128,16 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * will not cleanup the parent Execution (if any).
      */
     override def cleanup() : Unit = {
-        frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
-        frameCache.clear()
-        schemaCache.clear()
+        // Find out if we are using a shared cache. If that is the case, do not perform a cleanup operation!
+        val sharedCache = parent match {
+            case Some(_:CachingExecution) if !isolated => true
+            case _ => false
+        }
+        if (!sharedCache) {
+            frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
+            frameCache.clear()
+            schemaCache.clear()
+        }
     }
 
     /**

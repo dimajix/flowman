@@ -21,10 +21,13 @@ import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
+import java.util.UUID
 
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -49,6 +52,7 @@ import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -180,34 +184,26 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "support partitions" in {
-        val outputPath = Paths.get(tempDir.toString, "csv", "test")
-        val spec =
-            s"""
-               |relations:
-               |  local:
-               |    kind: file
-               |    location: ${outputPath.toUri}
-               |    pattern: p_col=$$p_col
-               |    format: csv
-               |    schema:
-               |      kind: inline
-               |      fields:
-               |        - name: str_col
-               |          type: string
-               |        - name: int_col
-               |          type: integer
-               |    partitions:
-               |        - name: p_col
-               |          type: integer
-            """.stripMargin
-
-        val project = Module.read.string(spec).toProject("project")
-
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("local"))
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            pattern = Some("p_col=$p_col"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", com.dimajix.flowman.types.StringType),
+                    Field("int_col", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
+            )
+        )
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
@@ -225,6 +221,127 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 ("lala", 1),
                 ("lolo", 2)
             ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.write(execution, df, Map("p_col" -> SingleValue("2")), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
+
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (0)
+
+        // ===== Write =============================================================================================
+        val df_p1 = relation.read(execution, None, Map("p_col" -> SingleValue("1")))
+        df_p1.count() should be (0)
+        df_p1.schema should be (StructType(
+            StructField("str_col", StringType, true) ::
+                StructField("int_col", IntegerType, true) ::
+                StructField("p_col", IntegerType, false) ::
+                Nil
+        ))
+        val df_p2 = relation.read(execution, None, Map("p_col" -> SingleValue("2")))
+        df_p2.count() should be (2)
+        df_p1.schema should be (StructType(
+            StructField("str_col", StringType, true) ::
+                StructField("int_col", IntegerType, true) ::
+                StructField("p_col", IntegerType, false) ::
+                Nil
+        ))
+
+        relation.write(execution, df, Map("p_col" -> SingleValue("3")), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
+
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
+
+        // ===== Truncate =============================================================================================
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
+        relation.truncate(execution, Map("p_col" -> SingleValue("2")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
+
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
+
+        // ===== Truncate =============================================================================================
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
+        outputPath.resolve("data.csv").toFile.exists() should be (false)
+        outputPath.toFile.exists() should be (true)
+
+        // == Read ===================================================================================================
+        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (0)
+
+        // ===== Destroy =============================================================================================
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        outputPath.toFile.exists() should be (false)
+    }
+
+    it should "support partitions without explicit pattern" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "csv", "test2")
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", com.dimajix.flowman.types.StringType),
+                    Field("int_col", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
+            )
+        )
+
+        // ===== Create =============================================================================================
+        outputPath.toFile.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        outputPath.toFile.exists() should be (true)
+
+        // ===== Write =============================================================================================
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         relation.exists(execution) should be (Yes)
@@ -333,33 +450,29 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         mkPartitionFile("2","2","221.txt")
         mkPartitionFile("2","2","222.txt")
 
-        val spec =
-            s"""
-               |relations:
-               |  local:
-               |    kind: file
-               |    location: ${outputPath.toUri}
-               |    pattern: p1=$$p1/p2=$$p2
-               |    format: text
-               |    schema:
-               |      kind: inline
-               |      fields:
-               |        - name: value
-               |          type: string
-               |    partitions:
-               |        - name: p1
-               |          type: integer
-               |        - name: p2
-               |          type: integer
-               |""".stripMargin
-
-        val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
-        val context = session.getContext(project)
+        val context = session.context
 
-        val relation = context.getRelation(RelationIdentifier("local"))
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "text",
+            pattern = Some("p1=$p1/p2=$p2"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("value", com.dimajix.flowman.types.StringType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p1", com.dimajix.flowman.types.IntegerType),
+                PartitionField("p2", com.dimajix.flowman.types.IntegerType)
+            )
+        )
+
+
         relation.resources(Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=1/p2=1"))
         ))
@@ -373,9 +486,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=*/p2=*"))
         ))
 
+        // == Create =================================================================================================
         relation.create(execution, true)
         relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
+        // == Read ===================================================================================================
         val df1 = relation.read(execution, None, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
         df1.as[(String,Int,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1,1),
@@ -410,7 +525,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("p1=2/p2=2/222.txt")
         ))
 
+        // == Truncate ===============================================================================================
         relation.truncate(execution, Map("p2" -> SingleValue("1")))
+
+        // == Read ===================================================================================================
         val df5 = relation.read(execution, None, Map())
         df5.as[String].collect().sorted should be (Seq(
             ("p1=1/p2=2/121.txt"),
@@ -419,6 +537,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ("p1=2/p2=2/222.txt")
         ))
 
+        // == Destroy ================================================================================================
         relation.destroy(execution)
     }
 
@@ -747,5 +866,258 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("int_col", ftypes.IntegerType),
             Field("p_col", ftypes.IntegerType, false)
         )))
+    }
+
+    it should "support stream reading" in {
+        val outputPath = Paths.get(tempDir.toString, "streaming_test_1")
+        def mkFile(f:String) : Unit = {
+            val child = s"$f"
+            val file = new File(outputPath.toFile, child)
+            file.getParentFile.mkdirs()
+            file.createNewFile()
+            val out = new PrintWriter(file)
+            out.println(child)
+            out.close()
+        }
+
+        mkFile("111.txt")
+        mkFile("112.txt")
+        mkFile("121.txt")
+        mkFile("122.txt")
+        mkFile("211.txt")
+        mkFile("212.txt")
+        mkFile("221.txt")
+        mkFile("222.txt")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "text",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("value", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+
+        // == Read ==================================================================================================
+        def verify(df:Dataset[Row]) : Unit = {
+            df.count() should be (8)
+        }
+        val df = relation.readStream(execution, None)
+        val query = df.writeStream
+            .trigger(Trigger.Once())
+            .foreachBatch((df:Dataset[Row], _:Long) => verify(df))
+            .start()
+
+        query.awaitTermination()
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+    }
+
+    it should "support stream reading with partitions" in {
+        val outputPath = Paths.get(tempDir.toString, "streaming_test_2")
+        def mkPartitionFile(p1:String, p2:String, f:String) : Unit = {
+            val child = s"magic_p1=$p1/$p2/$f"
+            val file = new File(outputPath.toFile, child)
+            file.getParentFile.mkdirs()
+            file.createNewFile()
+            val out = new PrintWriter(file)
+            out.println(child)
+            out.close()
+        }
+
+        mkPartitionFile("1","1","111.txt")
+        mkPartitionFile("1","1","112.txt")
+        mkPartitionFile("1","2","121.txt")
+        mkPartitionFile("1","2","122.txt")
+        mkPartitionFile("2","1","211.txt")
+        mkPartitionFile("2","1","212.txt")
+        mkPartitionFile("2","2","221.txt")
+        mkPartitionFile("2","2","222.txt")
+
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "text",
+            pattern = Some("magic_p1=$p1/$p2"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("value", com.dimajix.flowman.types.StringType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p1", com.dimajix.flowman.types.IntegerType),
+                PartitionField("p2", com.dimajix.flowman.types.IntegerType)
+            )
+        )
+
+        // == Read ==================================================================================================
+        def verify(df:Dataset[Row]) : Unit = {
+            df.count() should be (8)
+        }
+        val df = relation.readStream(execution, None)
+        val query = df.writeStream
+            .trigger(Trigger.Once())
+            .foreachBatch((df:Dataset[Row], _:Long) => verify(df))
+            .start()
+
+        query.awaitTermination()
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+    }
+
+    it should "support stream writing" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "streaming_test_" + UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "csv",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c1", com.dimajix.flowman.types.DoubleType),
+                    Field("c2", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, null),
+            Row(234, 123.0, ""),
+            Row(2345, 1234.0, "1234567"),
+            Row(23456, 12345.0, "1234567")
+        ))
+        val df0 = spark.createDataFrame(rdd, relation.schema.get.catalogSchema)
+        val df1 = StreamingUtils.createSingleTriggerStreamingDF(df0)
+
+        val checkpoint = Paths.get(tempDir.toString, "streaming_checkpoint_" + UUID.randomUUID().toString).toUri
+        val query1 = relation.writeStream(execution, df1, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query1.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (4)
+
+        // == Write ==================================================================================================
+        val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
+        val query2 = relation.writeStream(execution, df2, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query2.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (8)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+    }
+
+    it should "support stream writing with partitions" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "streaming_test_" + UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "csv",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c1", com.dimajix.flowman.types.DoubleType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", com.dimajix.flowman.types.StringType)
+            )
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1"),
+            Row(234, 123.0, "1"),
+            Row(2345, 1234.0, "1"),
+            Row(23456, 12345.0, "2")
+        ))
+        val df0 = spark.createDataFrame(rdd, StructType(relation.fields.map(_.catalogField)))
+        val df1 = StreamingUtils.createSingleTriggerStreamingDF(df0)
+
+        val checkpoint = Paths.get(tempDir.toString, "streaming_checkpoint_" + UUID.randomUUID().toString).toUri
+        val query1 = relation.writeStream(execution, df1, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query1.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Write ==================================================================================================
+        val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
+        val query2 = relation.writeStream(execution, df2, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query2.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
     }
 }

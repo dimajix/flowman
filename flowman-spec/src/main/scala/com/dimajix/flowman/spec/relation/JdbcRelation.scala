@@ -183,17 +183,9 @@ case class JdbcRelation(
         // Apply schema and add partition column
         val dfExt = addPartition(applyOutputSchema(execution, df), partition)
 
-        def writeData(df:DataFrame ,saveMode: SaveMode): Unit = {
-            val (_,props) = createProperties()
-            this.writer(execution, df, "jdbc", Map(), saveMode)
-                .options(props)
-                .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
-                .save()
-        }
-
         // Write partition into DataBase
         if (partition.isEmpty) {
-            writeData(dfExt, mode.batchMode)
+            doWrite(execution, dfExt, mode.batchMode)
         }
         else {
             mode match {
@@ -204,20 +196,20 @@ case class JdbcRelation(
                         val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
                         statement.executeUpdate(query)
                     }
-                    writeData(dfExt, SaveMode.Append)
+                    doWrite(execution, dfExt, SaveMode.Append)
                 case OutputMode.APPEND =>
-                    writeData(dfExt, SaveMode.Append)
+                    doWrite(execution, dfExt, SaveMode.Append)
                 case OutputMode.UPDATE =>
                     ???
                 case OutputMode.MERGE =>
                     ???
                 case OutputMode.IGNORE_IF_EXISTS =>
                     if (!checkPartition(partition)) {
-                        writeData(dfExt, SaveMode.Append)
+                        doWrite(execution, dfExt, SaveMode.Append)
                     }
                 case OutputMode.ERROR_IF_EXISTS =>
                     if (!checkPartition(partition)) {
-                        writeData(dfExt, SaveMode.Append)
+                        doWrite(execution, dfExt, SaveMode.Append)
                     }
                     else {
                         throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
@@ -226,6 +218,13 @@ case class JdbcRelation(
                     "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
             }
         }
+    }
+    private def doWrite(execution: Execution, df:DataFrame ,saveMode: SaveMode): Unit = {
+        val (_,props) = createProperties()
+        this.writer(execution, df, "jdbc", Map(), saveMode)
+            .options(props)
+            .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
+            .save()
     }
 
     /**

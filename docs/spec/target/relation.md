@@ -10,8 +10,8 @@ the physical location or connection, the format and so on.
 targets:
   stations:
     kind: relation
-    input: stations-mapping
-    target: stations-relation
+    mapping: stations-mapping
+    relation: stations-relation
     mode: overwrite
     parallelism: 32
     rebalance: true

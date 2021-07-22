@@ -25,8 +25,9 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class ScopedExecution(parent:Execution) extends CachingExecution(Some(parent), true) {
+class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
     override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecution])
+    private val operationsManager = new OperationManager(parent.operations)
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
@@ -71,5 +72,5 @@ class ScopedExecution(parent:Execution) extends CachingExecution(Some(parent), t
      *
      * @return
      */
-    override def oeprations: OperationManager = parent.oeprations
+    override def operations: OperationManager = operationsManager
 }

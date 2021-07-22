@@ -54,11 +54,11 @@ class RootExecution(session:Session) extends CachingExecution(None, true) {
      */
     override def spark: SparkSession = session.spark
 
-     /**
+    /**
      * Returns true if a SparkSession is already available
      * @return
      */
-     override def sparkRunning: Boolean = session.sparkRunning
+    override def sparkRunning: Boolean = session.sparkRunning
 
     /**
      * Returns the table catalog used for managing table instances
@@ -71,7 +71,7 @@ class RootExecution(session:Session) extends CachingExecution(None, true) {
      *
      * @return
      */
-    override def oeprations: OperationManager = session.operations
+    override def operations: OperationManager = session.operations
 
     /**
      * Releases any temporary tables

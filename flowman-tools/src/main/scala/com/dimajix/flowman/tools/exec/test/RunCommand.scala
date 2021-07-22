@@ -33,6 +33,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.util.ConsoleColors.red
 
 
 class RunCommand extends Command {
@@ -68,7 +69,9 @@ class RunCommand extends Command {
         match {
             case Success(Status.SUCCESS) => true
             case Success(Status.SKIPPED) => true
-            case Success(_) => false
+            case Success(_) =>
+                logger.error(red("There have been test failures"))
+                false
             case Failure(e) =>
                 logger.error(e.getMessage)
                 false

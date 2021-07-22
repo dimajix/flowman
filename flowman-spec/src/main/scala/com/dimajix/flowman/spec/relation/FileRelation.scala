@@ -26,6 +26,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -70,6 +72,7 @@ case class FileRelation(
         FileCollector.builder(context.hadoopConf)
             .path(location)
             .pattern(pattern)
+            .partitionBy(partitions.map(_.name):_*)
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
@@ -200,6 +203,50 @@ case class FileRelation(
 
 
     /**
+     * Reads data from a streaming source
+     *
+     * @param execution
+     * @param schema
+     * @return
+     */
+    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+        logger.info(s"Streaming from file relation '$identifier' at '$location'")
+
+        //if (partitions.nonEmpty)
+        //    throw new IllegalArgumentException(s"Partitions not supported in streaming mode for 'file' relation '$identifier'")
+        //if (pattern.nonEmpty)
+        //    throw new IllegalArgumentException(s"Pattern not supported in streaming mode for 'file' relation '$identifier'")
+
+        val df = streamReader(execution, format, options).load(location.toString)
+        SchemaUtils.applySchema(df, schema)
+    }
+
+    /**
+     * Writes data to a streaming sink
+     *
+     * @param execution
+     * @param df
+     * @return
+     */
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
+        logger.info(s"Streaming to file relation '$identifier' at '$location'")
+
+        if (pattern.nonEmpty)
+            throw new IllegalArgumentException(s"Pattern not supported in streaming mode for 'file' relation '$identifier'")
+
+        val writer = streamWriter(execution, df, format, options, mode.streamMode, trigger, checkpointLocation)
+        if (partitions.nonEmpty) {
+            writer
+                .partitionBy(partitions.map(_.name):_*)
+                .start(location.toString)
+        }
+        else {
+            writer.start(location.toString)
+        }
+    }
+
+
+    /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
@@ -214,9 +261,15 @@ case class FileRelation(
 
         requireValidPartitionKeys(partition)
 
+        val rootLocation = collector.path
+        val fs = rootLocation.getFileSystem(execution.hadoopConf)
+        val isStream = FileUtils.isValidStreamData(fs, rootLocation)
+
         def checkPartition(path:Path) = {
-            val fs = path.getFileSystem(execution.hadoopConf)
-            FileUtils.isValidFileData(fs, path)
+            if (isStream)
+                FileUtils.isValidHiveData(fs, path)
+            else
+                FileUtils.isValidFileData(fs, path)
         }
 
         if (this.partitions.nonEmpty) {
@@ -224,8 +277,7 @@ case class FileRelation(
             collector.glob(partitionSpec).exists(checkPartition)
         }
         else {
-            val outputPath = collector.resolve()
-            checkPartition(outputPath)
+            checkPartition(collector.resolve())
         }
     }
 

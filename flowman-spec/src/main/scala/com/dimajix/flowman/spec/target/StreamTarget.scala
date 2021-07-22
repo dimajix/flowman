@@ -36,6 +36,7 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.StreamingOperation
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
@@ -108,7 +109,7 @@ case class StreamTarget(
     override def build(execution: Execution): Unit = {
         require(execution != null)
 
-        logger.info(s"Writing mapping '${this.mapping}' to streaming relation '$relation' using mode '$mode' and checkpoint location '$checkpointLocation'")
+        logger.info(s"Streaming mapping '${this.mapping}' to relation '$relation' with trigger '$trigger', mode '$mode' and checkpoint '$checkpointLocation'")
         val mapping = context.getMapping(this.mapping.mapping)
         val rel = context.getRelation(relation)
         val dfIn = execution.instantiate(mapping, this.mapping.output)
@@ -120,7 +121,17 @@ case class StreamTarget(
             else
                 dfIn.coalesce(parallelism)
 
-        rel.writeStream(execution, dfOut, mode, trigger, checkpointLocation)
+        val query = rel.writeStream(execution, dfOut, mode, trigger, checkpointLocation)
+        query.exception.foreach(ex => throw new RuntimeException("Error while starting streaming query", ex))
+
+        // When the trigger is 'one', wait until the query has finished
+        if (trigger == Trigger.Once()) {
+            query.awaitTermination()
+        }
+        else {
+            // Otherwise create background operation
+            execution.operations.post(StreamingOperation(identifier.toString, query))
+        }
     }
 
     /**

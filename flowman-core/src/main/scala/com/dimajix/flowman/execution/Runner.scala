@@ -221,11 +221,21 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
 
     def withExecution[T](job:Job)(fn:Execution => T) : T = {
         val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
-        val execution : Execution = if (isolated) new ScopedExecution(parentExecution) else parentExecution
+        val execution : Execution = new ScopedExecution(parentExecution, isolated)
         val result = fn(execution)
-        if (isolated) {
-            execution.cleanup()
+
+        // Wait for any running background operation, and do not perform a cleanup
+        val ops = execution.operations
+        val activeOps = ops.listActive()
+        if (activeOps.nonEmpty) {
+            logger.info("Some background operations are still active:")
+            activeOps.foreach(o => logger.info(s"  - s${o.name}"))
+            logger.info("Waiting for termination...")
+            ops.awaitTermination()
         }
+
+        // Finally release any resources
+        execution.cleanup()
         result
     }
 

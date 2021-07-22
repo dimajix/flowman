@@ -104,6 +104,14 @@ object Session {
             this
         }
 
+        def withConfig(key:String, value:Boolean) : Builder = {
+            withConfig(key, value.toString)
+        }
+
+        def withConfig(key:String, value:Int) : Builder = {
+            withConfig(key, value.toString)
+        }
+
         /**
          * Adds environment variables which actually will override any variables given in specs
          * @param env

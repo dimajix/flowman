@@ -21,7 +21,7 @@ import scala.collection.mutable
 import javax.annotation.concurrent.GuardedBy
 
 
-class OperationManager {
+class OperationManager(parent:Option[OperationManager]=None) {
     @GuardedBy("opsLock")
     private val ops = new mutable.HashMap[String,Operation]()
     private val opsLock = new Object
@@ -36,11 +36,17 @@ class OperationManager {
         }
     }
 
+    def this(parent:OperationManager) = {
+        this(Some(parent))
+    }
+
     /**
      * Posts a new [[Operation]] to the manager. The operation is probably already be running.
      * @param op
      */
     def post(op:Operation) : Unit = opsLock.synchronized {
+        parent.foreach(_.post(op))
+
         if (ops.contains(op.name))
             throw new IllegalArgumentException(s"Cannot post operation with name '${op.name}', as an operation with the same name already exists")
 

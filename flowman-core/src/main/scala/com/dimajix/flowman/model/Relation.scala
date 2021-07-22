@@ -352,18 +352,8 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, trigger:Trigger, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        // Add all partition columns to the output schema
-        val outputSchema = this.outputSchema(execution).map { schema =>
-            partitions.foldLeft(schema)((schema, partition) =>
-                if (!schema.fieldNames.exists(_.toLowerCase(Locale.ROOT) == partition.name.toLowerCase(Locale.ROOT)))
-                    org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
-                else
-                    schema
-            )
-        }
-
-        val outputDf = SchemaUtils.applySchema(df, outputSchema)
-        outputDf.writeStream
+        applyOutputSchema(execution, df, includePartitions=true)
+            .writeStream
             .format(format)
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
@@ -398,7 +388,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     protected def outputSchema(execution:Execution) : Option[org.apache.spark.sql.types.StructType] = {
-        schema.map(_.sparkSchema)
+        schema.map(_.catalogSchema)
     }
 
     /**
@@ -407,8 +397,27 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def applyOutputSchema(execution:Execution, df:DataFrame) : DataFrame = {
-        SchemaUtils.applySchema(df, outputSchema(execution))
+    protected def applyOutputSchema(execution:Execution, df:DataFrame, includePartitions:Boolean=false) : DataFrame = {
+        // Add all partition columns to the output schema
+        val outputSchema = {
+            val baseSchema = this.outputSchema(execution)
+            if (includePartitions) {
+                baseSchema.map { schema =>
+                    val schemaFieldNames = schema.fieldNames.map(_.toLowerCase(Locale.ROOT)).toSet
+                    partitions.foldLeft(schema)((schema, partition) =>
+                        if (!schemaFieldNames.contains(partition.name.toLowerCase(Locale.ROOT)))
+                            org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
+                        else
+                            schema
+                    )
+                }
+            }
+            else {
+                baseSchema
+            }
+        }
+
+        SchemaUtils.applySchema(df, outputSchema)
     }
 }
 
@@ -442,13 +451,13 @@ trait PartitionedRelation { this:Relation =>
     protected def addPartition(df:DataFrame, partition:Map[String,SingleValue]) : DataFrame = {
         val partitionSchema = PartitionSchema(this.partitions)
 
-        def addPartitioColumn(df: DataFrame, partitionName: String, partitionValue: SingleValue): DataFrame = {
+        def addPartitionColumn(df: DataFrame, partitionName: String, partitionValue: SingleValue): DataFrame = {
             val field = partitionSchema.get(partitionName)
             val value = field.parse(partitionValue.value)
             df.withColumn(partitionName, lit(value))
         }
 
-        partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
+        partition.foldLeft(df)((df, pv) => addPartitionColumn(df, pv._1, pv._2))
     }
 
     /**

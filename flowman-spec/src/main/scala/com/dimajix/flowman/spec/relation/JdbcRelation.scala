@@ -441,7 +441,7 @@ case class JdbcRelation(
 
     /**
       * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
-      * these are required for reading.
+      * these will be present while reading.
       * @return
       */
     override protected def inputSchema : Option[StructType] = {

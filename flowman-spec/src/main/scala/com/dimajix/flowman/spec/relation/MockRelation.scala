@@ -223,8 +223,8 @@ case class MockRelation(
     }
 
     /**
-     * Creates a Spark schema from the list of fields. This mocking implementation will add partition columns, since
-     * these are required for reading.
+     * Creates a Spark schema from the list of fields. This implementation will add partition columns, since
+     * these are part of the specification.
      * @return
      */
     override protected def inputSchema : Option[StructType] = {
@@ -233,7 +233,7 @@ case class MockRelation(
 
     /**
      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
-     * This mocking implementation will add partition columns, since these are required for writing.
+     * This implementation will add partition columns, since these are required for writing.
      * @return
      */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {

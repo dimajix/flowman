@@ -63,12 +63,15 @@ relations:
  directories are created.
  
  * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
- In order to use partitioned file based data sources, you need to define the partitioning
- columns. Each partitioning column has a name and a type and optionally a granularity.
+ In order to use partitioned file based data sources, you need to define the partitioning columns. Each partitioning 
+   column has a name and a type and optionally a granularity. Normally the partition columns are separate from the
+   schema, but you *may* also include the partition column in the schema, although this is not considered to be best 
+   practice. But it turns out to be quite useful in combination with dynamically writing to multiple partitions.
  
  * `pattern` **(optional)** *(string)* *(default: empty)*:
  This field specifies the directory and/or file name pattern to access specific partitions. 
  Please see the section [Partitioning](#Partitioning) below. 
+
 
 
 ## Remarks
@@ -89,6 +92,17 @@ particular in case of self-contained tests. To prevent Flowman from creating a c
 source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema
 in all situations where only schema information is required.
 
+### Partitioning
+
+Flowman also supports partitioning, i.e. written to different sub directories.
+
+### Writing to Dynamic Partitions
+
+Beside explicitly writing to a single Hive partition, Flowman also supports to write to multiple partitions where
+the records need to contain values for the partition columns. This feature cannot be combined with explicitly specifying
+a value for the file `pattern`, instead the standard Hive directory pattern for partitioned data will be used (i.e. 
+`location/partition=value/`).
+
 
 ### Supported File Format
 
@@ -107,5 +121,3 @@ in the `options` section.
 ### ORC
 
 ### Avro
-
-## Partitioning

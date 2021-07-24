@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.streaming.Trigger
+import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -205,6 +206,18 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
+        // == Inspect ===============================================================================================
+        relation.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("str_col", com.dimajix.flowman.types.StringType),
+            Field("int_col", com.dimajix.flowman.types.IntegerType),
+            Field("p_col", com.dimajix.flowman.types.IntegerType, nullable = false)
+        )))
+        relation.fields should be (Seq(
+            Field("str_col", com.dimajix.flowman.types.StringType),
+            Field("int_col", com.dimajix.flowman.types.IntegerType),
+            Field("p_col", com.dimajix.flowman.types.IntegerType, nullable = false)
+        ))
+
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
         relation.exists(execution) should be (No)
@@ -215,6 +228,18 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (true)
+
+        // == Inspect ================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+            //StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, None, Map("p_col" ->  SingleValue("1"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType, nullable=false)
+        )))
 
         // ===== Write =============================================================================================
         val df = spark.createDataFrame(Seq(
@@ -231,6 +256,18 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
+
+        // == Inspect ================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+            //StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, None, Map("p_col" ->  SingleValue("1"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType, nullable=false)
+        )))
 
         // == Read ===================================================================================================
         relation.read(execution, None, Map()).count() should be (2)
@@ -617,6 +654,208 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         relation.destroy(execution)
+    }
+
+    it should "support different output modes with dynamic partitions" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "csv",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c1", com.dimajix.flowman.types.DoubleType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", com.dimajix.flowman.types.StringType)
+            )
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1"),
+            Row(234, 123.0, "1"),
+            Row(2345, 1234.0, "1"),
+            Row(23456, 12345.0, "2")
+        ))
+        val df = spark.createDataFrame(rdd, StructType(relation.fields.map(_.catalogField)))
+        relation.write(execution, df, Map(), OutputMode.APPEND)
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Write ==================================================================================================
+        relation.write(execution, df, Map(), OutputMode.APPEND)
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Overwrite ==============================================================================================
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1"),
+            Row(234, 123.0, "1"),
+            Row(2345, 1234.0, "1"),
+            Row(23456, 12345.0, "3")
+        ))
+        val df2 = spark.createDataFrame(rdd2, StructType(relation.fields.map(_.catalogField)))
+        relation.write(execution, df2, Map(), OutputMode.OVERWRITE_DYNAMIC)
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("4"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (6)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("4"))).count() should be (0)
+
+        // == Overwrite ==============================================================================================
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+    }
+
+    it should "support partition columns already present in the schema" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "csv",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.IntegerType),
+                    Field("f2", com.dimajix.flowman.types.DoubleType),
+                    Field("part", com.dimajix.flowman.types.StringType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", com.dimajix.flowman.types.StringType)
+            )
+        )
+
+        // == Inspect ===============================================================================================
+        relation.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("f1", com.dimajix.flowman.types.IntegerType),
+            Field("f2", com.dimajix.flowman.types.DoubleType),
+            Field("part", com.dimajix.flowman.types.StringType, nullable = false)
+        )))
+        relation.fields should be (Seq(
+            Field("f1", com.dimajix.flowman.types.IntegerType),
+            Field("f2", com.dimajix.flowman.types.DoubleType),
+            Field("part", com.dimajix.flowman.types.StringType, nullable = false)
+        ))
+
+        // == Create ================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
+
+        // == Inspect ================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("f1", IntegerType),
+            StructField("f2", DoubleType),
+            StructField("part", StringType)
+        )))
+
+        // == Write =================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null),
+            Row(234, 123.0),
+            Row(2345, 1234.0),
+            Row(23456, 12345.0)
+        ))
+        val partitionSchema = StructType(relation.schema.get.fields.map(_.catalogField).dropRight(1))
+        val df = spark.createDataFrame(rdd, partitionSchema)
+        relation.write(execution, df, Map("part" -> SingleValue("p0")))
+
+        // == Inspect ================================================================================================
+        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+            StructField("f1", IntegerType),
+            StructField("f2", DoubleType),
+            StructField("part", StringType)
+        )))
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
+            StructField("f1", IntegerType),
+            StructField("f2", DoubleType),
+            StructField("part", StringType, nullable=false)
+        )))
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).schema should be (StructType(Seq(
+            StructField("f1", IntegerType),
+            StructField("f2", DoubleType),
+            StructField("part", StringType, nullable=false)
+        )))
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
     }
 
     it should "support different output modes with unpartitioned tables" in {

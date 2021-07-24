@@ -59,7 +59,7 @@ object FileUtils {
         catch {
             case _: FileNotFoundException => false
         }
-   }
+    }
 
     def isValidStreamData(fs:org.apache.hadoop.fs.FileSystem, location:Path) : Boolean = {
         try {

@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.model
 
-import java.util.Locale
-
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
@@ -31,6 +29,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -272,7 +271,11 @@ abstract class BaseRelation extends AbstractInstance with Relation {
       * inference.
       * @return
       */
-    override def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
+    override def fields : Seq[Field] = {
+        val partitions = this.partitions
+        val partitionFields = SetIgnoreCase(partitions.map(_.name))
+        schema.toSeq.flatMap(_.fields).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.field)
+    }
 
     /**
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
@@ -281,9 +284,9 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     override def describe(execution:Execution) : StructType = {
-        val partitions = this.partitions.map(_.name).toSet
+        val partitions = SetIgnoreCase(this.partitions.map(_.name))
         if (!fields.forall(f => partitions.contains(f.name))) {
-            // Use given fields if relation contains valid list of fields
+            // Use given fields if relation contains valid list of fields in addition to the partition columns
             StructType(fields)
         }
         else {
@@ -336,8 +339,8 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def writer(execution: Execution, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode) : DataFrameWriter[Row] = {
-        applyOutputSchema(execution, df)
+    protected def writer(execution: Execution, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode, dynamicPartitions:Boolean=false) : DataFrameWriter[Row] = {
+        applyOutputSchema(execution, df, includePartitions = dynamicPartitions)
             .write
             .format(format)
             .options(options)
@@ -403,9 +406,9 @@ abstract class BaseRelation extends AbstractInstance with Relation {
             val baseSchema = this.outputSchema(execution)
             if (includePartitions) {
                 baseSchema.map { schema =>
-                    val schemaFieldNames = schema.fieldNames.map(_.toLowerCase(Locale.ROOT)).toSet
+                    val schemaFieldNames = SetIgnoreCase(schema.fieldNames)
                     partitions.foldLeft(schema)((schema, partition) =>
-                        if (!schemaFieldNames.contains(partition.name.toLowerCase(Locale.ROOT)))
+                        if (!schemaFieldNames.contains(partition.name))
                             org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
                         else
                             schema
@@ -466,8 +469,8 @@ trait PartitionedRelation { this:Relation =>
      * @param map
      */
     protected def requireAllPartitionKeys(map: Map[String,_]) : Unit = {
-        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
-        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        val partitionKeys = SetIgnoreCase(partitions.map(_.name))
+        val valueKeys = SetIgnoreCase(map.keys)
         valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
         partitionKeys.foreach(key => if (!valueKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
     }
@@ -480,9 +483,9 @@ trait PartitionedRelation { this:Relation =>
      * @param map
      */
     protected def requireAllPartitionKeys(parts: Map[String,_], columns:Iterable[String]) : Unit = {
-        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
-        val valueKeys = parts.keys.map(_.toLowerCase(Locale.ROOT)).toSet
-        val columnKeys = columns.map(_.toLowerCase(Locale.ROOT)).toSet
+        val partitionKeys = SetIgnoreCase(partitions.map(_.name))
+        val valueKeys = SetIgnoreCase(parts.keys)
+        val columnKeys = SetIgnoreCase(columns)
         valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
         partitionKeys.foreach(key => if (!valueKeys.contains(key) && !columnKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
     }
@@ -492,8 +495,8 @@ trait PartitionedRelation { this:Relation =>
      * @param map
      */
     protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
-        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
-        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        val partitionKeys = SetIgnoreCase(partitions.map(_.name))
+        val valueKeys = SetIgnoreCase(map.keys)
         valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
     }
 }

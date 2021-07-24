@@ -131,7 +131,6 @@ case class DeltaTableRelation(
     override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
         requireAllPartitionKeys(partition, df.columns)
 
-        // TODO: Static partitions / dynamic partitions
         val partitionSpec = PartitionSchema(partitions).spec(partition)
 
         logger.info(s"Writing Delta relation '$identifier' to table $tableIdentifier partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode'")
@@ -139,6 +138,7 @@ case class DeltaTableRelation(
         val extDf = SchemaUtils.applySchema(addPartition(df, partition), outputSchema(execution))
 
         mode match {
+            case OutputMode.OVERWRITE_DYNAMIC => throw new IllegalArgumentException(s"Output mode 'overwrite_dynamic' not supported by Delta table relation $identifier")
             case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)
             case _ => doWrite(extDf, partitionSpec, mode)
         }

@@ -17,16 +17,12 @@
 package com.dimajix.flowman.spec.relation
 
 import java.sql.Connection
-import java.sql.SQLDataException
-import java.sql.SQLException
 import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLNonTransientConnectionException
 import java.sql.SQLNonTransientException
 import java.sql.Statement
 import java.util.Locale
-import java.util.Properties
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
@@ -39,6 +35,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -445,17 +442,23 @@ case class JdbcRelation(
       * @return
       */
     override protected def inputSchema : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        schema.map { s =>
+            val partitions = this.partitions
+            val partitionFields = SetIgnoreCase(partitions.map(_.name))
+            StructType(s.fields.map(_.sparkField).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.sparkField))
+        }
     }
 
     /**
       * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
-      * This JDBC implementation will add partition columns, since these are required for writing.
+      * This JDBC implementation will infer the curren schema from the database.
       * @return
       */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        // TODO: Is this the best approach to use the specified schema, or should we infer the actual schema via JDBC instead?
-        schema.map(s => StructType(s.fields.map(_.catalogField) ++ partitions.map(_.catalogField)))
+        // Always use the current schema
+        withConnection { (con, options) =>
+            Some(JdbcUtils.getSchema(con, tableIdentifier, options).sparkType)
+        }
     }
 
     private def createProperties() = {
@@ -473,7 +476,6 @@ case class JdbcRelation(
     }
 
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
-        val connection = jdbcConnection
         val (url,props) = createProperties()
         logger.debug(s"Connecting to jdbc source at $url")
 

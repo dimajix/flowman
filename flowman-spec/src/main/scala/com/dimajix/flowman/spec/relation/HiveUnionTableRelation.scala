@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
@@ -27,9 +25,10 @@ import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
-import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -414,10 +413,10 @@ case class HiveUnionTableRelation(
             .find { id =>
                 val table = catalog.getTable(id)
                 val targetSchema = table.dataSchema
-                val targetFieldsByName = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                val targetFieldsByName = MapIgnoreCase(targetSchema.map(f => (f.name, f)))
 
                 sourceSchema.forall { field =>
-                    targetFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
+                    targetFieldsByName.get(field.name)
                         .forall(tgt => SchemaUtils.isCompatible(field, tgt))
                 }
             }
@@ -428,9 +427,9 @@ case class HiveUnionTableRelation(
                 //  3.1 Migrate table (add new columns)
                 val table = catalog.getTable(id)
                 val targetSchema = table.dataSchema
-                val targetFields = targetSchema.map(f => f.name.toLowerCase(Locale.ROOT)).toSet
+                val targetFields = SetIgnoreCase(targetSchema.map(f => f.name))
 
-                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
+                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name))
                 if (missingFields.nonEmpty) {
                     doMigrateAlterTable(execution, table, missingFields, migrationStrategy)
                 }

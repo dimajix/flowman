@@ -174,11 +174,51 @@ case class FileRelation(
         require(df != null)
         require(partition != null)
 
-        requireAllPartitionKeys(partition)
+        if (partition.isEmpty && this.partitions.nonEmpty)
+            doWriteDynamicPartitions(execution, df, mode)
+        else
+            doWriteStaticPartitions(execution, df, partition, mode)
+    }
+    private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
+        val outputPath = collector.root
+        logger.info(s"Writing file relation '$identifier' to output location '$outputPath' as '$format' with mode '$mode' with dynamic partitions")
 
+        if (pattern.nonEmpty)
+            throw new IllegalArgumentException(s"Pattern not supported for 'file' relation '$identifier' with dynamic partitions")
+
+        mode match {
+            // Since Flowman has a slightly different semantics of when data is available, we need to handle some
+            // cases explicitly
+            case OutputMode.IGNORE_IF_EXISTS =>
+                if (loaded(execution) == No) {
+                    doWriteDynamic(execution, df, outputPath, OutputMode.OVERWRITE)
+                }
+            case OutputMode.ERROR_IF_EXISTS =>
+                if (loaded(execution) == Yes) {
+                    throw new FileAlreadyExistsException(outputPath.toString)
+                }
+                doWriteDynamic(execution, df, outputPath, OutputMode.OVERWRITE)
+            case m => m.batchMode
+                doWriteDynamic(execution, df, outputPath, mode)
+        }
+
+    }
+    private def doWriteDynamic(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
+        val overwriteMode = mode match {
+            case OutputMode.OVERWRITE_DYNAMIC => "dynamic"
+            case _ => "static"
+        }
+        this.writer(execution, df, format, options, mode.batchMode, dynamicPartitions=true)
+            .option("partitionOverwriteMode", overwriteMode)
+            .partitionBy(partitions.map(_.name):_*)
+            .save(outputPath.toString)
+    }
+    private def doWriteStaticPartitions(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
         logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
+
+        requireAllPartitionKeys(partition)
 
         mode match {
             // Since Flowman has a slightly different semantics of when data is available, we need to handle some
@@ -261,15 +301,16 @@ case class FileRelation(
 
         requireValidPartitionKeys(partition)
 
-        val rootLocation = collector.path
+        val rootLocation = collector.root
         val fs = rootLocation.getFileSystem(execution.hadoopConf)
         val isStream = FileUtils.isValidStreamData(fs, rootLocation)
 
         def checkPartition(path:Path) = {
-            if (isStream)
-                FileUtils.isValidHiveData(fs, path)
-            else
-                FileUtils.isValidFileData(fs, path)
+            // TODO: Valid file data detection is difficult, since
+            //  * streaming won't write a _SUCCESS file
+            //  * dynamic partitioning writes a _SUCCESS file at the top level
+            // FileUtils.isValidFileData(fs, path)
+            FileUtils.isValidHiveData(fs, path)
         }
 
         if (this.partitions.nonEmpty) {

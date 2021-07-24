@@ -32,6 +32,10 @@ object OutputMode {
         override def batchMode: SaveMode = SaveMode.Overwrite
         override def streamMode : StreamingMode = StreamingMode.Complete()
     }
+    case object OVERWRITE_DYNAMIC extends OutputMode {
+        override def batchMode: SaveMode = SaveMode.Overwrite
+        override def streamMode : StreamingMode = StreamingMode.Complete()
+    }
     case object APPEND extends OutputMode {
         override def batchMode: SaveMode = SaveMode.Append
         override def streamMode : StreamingMode = StreamingMode.Append()
@@ -56,6 +60,7 @@ object OutputMode {
     def ofString(mode:String) : OutputMode = {
         mode.toLowerCase(Locale.ROOT) match {
             case "overwrite" | "complete" => OutputMode.OVERWRITE
+            case "overwrite_dynamic" | "dynamic_overwrite" => OutputMode.OVERWRITE_DYNAMIC
             case "append" => OutputMode.APPEND
             case "update"|"upsert" => OutputMode.UPDATE
             case "merge" => OutputMode.MERGE

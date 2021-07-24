@@ -22,7 +22,6 @@ import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
@@ -31,7 +30,6 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.CharType
@@ -41,9 +39,9 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.VarcharType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
-import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -157,7 +155,7 @@ case class HiveTableRelation(
         require(df != null)
         require(partition != null)
 
-        requireAllPartitionKeys(partition)
+        //requireAllPartitionKeys(partition)
 
         val schema = PartitionSchema(partitions)
         val partitionSpec = schema.spec(partition)
@@ -187,11 +185,16 @@ case class HiveTableRelation(
         logger.info(s"Writing Hive relation '$identifier' to table $tableIdentifier partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
 
         // Apply output schema before writing to Hive
-        val outputDf = applyOutputSchema(execution, df)
+        val outputDf = {
+            if (partitionSpec.isEmpty)
+                applyOutputSchema(execution, df, includePartitions = true)
+            else
+                applyOutputSchema(execution, df)
+        }
 
         def loaded() : Boolean = {
             val catalog = execution.catalog
-            if (partitions.nonEmpty) {
+            if (partitionSpec.nonEmpty) {
                 catalog.partitionExists(tableIdentifier, partitionSpec)
             }
             else {
@@ -202,7 +205,7 @@ case class HiveTableRelation(
         }
 
         mode match {
-            case OutputMode.APPEND|OutputMode.OVERWRITE =>
+            case OutputMode.APPEND|OutputMode.OVERWRITE|OutputMode.OVERWRITE_DYNAMIC =>
                 writeHiveTable(execution, outputDf, partitionSpec, mode)
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (!loaded()) {
@@ -245,6 +248,10 @@ case class HiveTableRelation(
             catalog.refreshPartition(tableIdentifier, partitionSpec)
         }
         else {
+            // If OVERWRITE is specified, perform a full overwrite
+            if (mode == OutputMode.OVERWRITE) {
+                catalog.truncateTable(tableIdentifier)
+            }
             val writer = df.write
                 .mode(mode.batchMode)
                 .options(options)
@@ -369,8 +376,8 @@ case class HiveTableRelation(
         require(execution != null)
 
         if (!ifNotExists || exists(execution) == No) {
-            val sparkSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
-            logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
+            val catalogSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
+            logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${catalogSchema.treeString}")
 
             // Create and save Avro schema
             import HiveTableRelation._
@@ -429,7 +436,7 @@ case class HiveTableRelation(
                     properties = fileStorage.properties ++ serdeProperties
                 ),
                 provider = Some("hive"),
-                schema = sparkSchema,
+                schema = catalogSchema,
                 partitionColumnNames = partitions.map(_.name),
                 properties = properties,
                 comment = description
@@ -566,11 +573,11 @@ case class HiveTableRelation(
         // is mainly required for Spark < 3.1, which cannot correctly handle VARCHAR and CHAR types in Hive
         if (!hiveVarcharSupported) {
             schema.map { schema =>
-                val desiredSchema = schema.catalogSchema.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
+                val desiredSchema = MapIgnoreCase(schema.catalogSchema.map(f => f.name -> f))
                 val mergedFields = currentSchema.map { field =>
                     field.dataType match {
                         case StringType =>
-                            desiredSchema.get(field.name.toLowerCase(Locale.ROOT)).map { dfield =>
+                            desiredSchema.get(field.name).map { dfield =>
                                 dfield.dataType match {
                                     case VarcharType(n) => field.copy(dataType = VarcharType(n))
                                     case CharType(n) => field.copy(dataType = CharType(n))

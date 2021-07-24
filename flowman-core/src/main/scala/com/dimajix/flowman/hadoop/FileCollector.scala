@@ -139,8 +139,10 @@ case class FileCollector(
     }
     private val filePattern = pattern.orElse(Some(partitions.map(p => s"$p=$$$p").mkString("/"))).filter(_.nonEmpty)
 
+    def root : Path = qualifiedPath
+
     /**
-     * Resolves the root location and performs any variable substitution.
+     * Resolves the root location and performs any variable substitution of the pattern with default values.
      * @return
      */
     def resolve() : Path = {

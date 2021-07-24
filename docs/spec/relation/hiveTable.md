@@ -107,10 +107,11 @@ relations:
  to the `OUTPUT FORMAT` in a `CREATE TABLE` statement.
 
  * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
- Specifies all partition columns. This is used both for creating Hive tables, but also for
- writing and reading to and from them. Therefore if you are working with partitioned Hive
- tables **you have to specify partition columns, even if Flowman is not used for creating
- the table**.
+ Specifies all partition columns. This is used both for creating Hive tables, but also for  writing and reading to and 
+   from them. Therefore if you are working with partitioned Hive  tables **you have to specify partition columns, even 
+   if Flowman is not used for creating the table**. You *may* also include the partition column in the schema, although
+   this is not considered to be best practice. But it turns out to be quite useful in combination with dynamically
+   writing to multiple partitions.
 
  * `properties` **(optional)** *(map:string)* *(default: empty)*:
  Specifies additional properties of the Hive table. This setting is only used
@@ -160,3 +161,15 @@ for describing the schema of a relation. This might create unwanted connections 
 particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data
 source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema
 in all situations where only schema information is required.
+
+
+### Writing to Dynamic Partitions
+Beside explicitly writing to a single Hive partition, Flowman also supports to write to multiple partitions where
+the records need to contain values for the partition columns. In order to activate this feature, you need to set
+the following Spark configuration properties:
+
+```yaml
+config:
+  - hive.exec.dynamic.partition=true  
+  - hive.exec.dynamic.partition.mode=nonstrict
+```

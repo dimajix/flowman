@@ -2,6 +2,7 @@
 
 * Improve automatic schema migration for Hive and JDBC relations
 * Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive
+* Support writing to dynamic partitions for file relations, Hive tables, JDBC relations and Delta tables
 * Fix the name of some config variables (floman. => flowman.)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
 * Add support for DeltaLake (https://delta.io)

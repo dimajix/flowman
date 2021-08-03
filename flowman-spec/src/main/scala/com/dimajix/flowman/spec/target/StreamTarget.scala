@@ -142,7 +142,7 @@ case class StreamTarget(
     override def truncate(execution: Execution): Unit = {
         require(execution != null)
 
-        logger.info(s"Cleaining streaming relation '$relation'")
+        logger.info(s"Truncating relation '$relation'")
         val rel = context.getRelation(relation)
         rel.truncate(execution)
     }

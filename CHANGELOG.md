@@ -1,11 +1,11 @@
 # Version 0.18.0
 
 * Improve automatic schema migration for Hive and JDBC relations
-* Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive
+* Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive with newer Spark versions
 * Support writing to dynamic partitions for file relations, Hive tables, JDBC relations and Delta tables
-* Fix the name of some config variables (floman. => flowman.)
+* Fix the name of some config variables (floman.* => flowman.*)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
-* Add support for DeltaLake (https://delta.io)
+* Add plugin for supporting DeltaLake (https://delta.io)
 * Fix non-deterministic column order in `schema` mapping, `values` mapping and `values` relation 
 * Mark Hive dependencies has 'provided', which reduces the size of dist packages
 * Significantly reduce size of AWS dependencies in AWS plugin
@@ -17,6 +17,7 @@
 * Upgrade MariaDB JDBC driver from 2.2.4 to 2.7.3
 * Upgrade several Maven plugins to latest versions
 * Add new config option `flowman.workaround.analyze_partition` to workaround CDP 7.1 issues
+* Fix migrating Hive views to tables and vice-versa
 
 
 # Version 0.17.1 - 2021-06-18

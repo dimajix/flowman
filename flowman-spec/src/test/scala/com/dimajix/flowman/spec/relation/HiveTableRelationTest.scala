@@ -45,6 +45,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -1810,5 +1811,102 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("spart", ftypes.StringType, false),
             Field("ip", ftypes.IntegerType, false)
         )))
+    }
+
+    it should "replace an existing Hive view with a Hive table" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: hiveTable
+              |    database: default
+              |    table: t0
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |        - name: t0_exclusive_col
+              |          type: long
+              |
+              |mappings:
+              |  t0:
+              |    kind: readRelation
+              |    relation: t0
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        context.getRelation(RelationIdentifier("t0")).create(execution)
+
+        val view = HiveViewRelation(
+            Relation.Properties(context),
+            database = Some("default"),
+            table = "table_or_view",
+            mapping = Some(MappingOutputIdentifier("t0"))
+        )
+        val table = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = "table_or_view",
+            database = Some("default")
+        )
+
+        // == Create VIEW ============================================================================================
+        view.exists(execution) should be (No)
+        view.create(execution)
+        view.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+
+        table.exists(execution) should be (Yes)
+        view.exists(execution) should be (Yes)
+
+        // == Create TABLE ============================================================================================
+        a[TableAlreadyExistsException] should be thrownBy (table.create(execution, ifNotExists = false))
+        table.create(execution, ifNotExists = true)
+        view.exists(execution) should be (Yes)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+
+        // == Create VIEW ============================================================================================
+        a[TableAlreadyExistsException] should be thrownBy (view.create(execution, ifNotExists = false))
+        view.create(execution, ifNotExists = true)
+        view.exists(execution) should be (Yes)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+
+        // == Migrate TABLE ==========================================================================================
+        table.migrate(execution)
+        view.exists(execution) should be (Yes)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+
+        // == Destroy TABLE ===========================================================================================
+        table.destroy(execution)
+        view.exists(execution) should be (No)
+        table.exists(execution) should be (No)
+        session.catalog.tableExists(TableIdentifier("table_or_view", Some("default"))) should be (false)
+
+        // == Destroy VIEW ===========================================================================================
+        view.destroy(execution, ifExists = true)
+        a[NoSuchTableException] should be thrownBy(view.destroy(execution, ifExists = false))
+
+        // == Destroy TABLE ==========================================================================================
+        table.destroy(execution, ifExists = true)
+        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
+
+        context.getRelation(RelationIdentifier("t0")).destroy(execution)
     }
 }

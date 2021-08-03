@@ -58,3 +58,17 @@ Flowman config variable `floman.default.target.rebalance`.
 * `VERIFY`
 * `TRUNCATE`
 * `DESTROY`
+
+
+## Provided Metrics
+The relation target also provides some metric containing the number of records written:
+
+* Metric `target_records` with the following set of attributes
+    - `name` - The name of the target
+    - `category` - Always set to `target`
+    - `kind` - Always set to `file`
+    - `namespace` - Name of the namespace (typically `default`)
+    - `project` - Name of the project
+    - `version` - Version of the project
+
+See [Execution Metrics](../../cookbook/metrics.md) for more information how to use these metrics.

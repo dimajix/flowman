@@ -44,10 +44,6 @@ object OutputMode {
         override def batchMode: SaveMode = ???
         override def streamMode : StreamingMode = StreamingMode.Update()
     }
-    case object MERGE extends OutputMode {
-        override def batchMode: SaveMode = ???
-        override def streamMode : StreamingMode = ???
-    }
     case object IGNORE_IF_EXISTS extends OutputMode {
         override def batchMode: SaveMode = SaveMode.Ignore
         override def streamMode : StreamingMode = ???
@@ -63,7 +59,6 @@ object OutputMode {
             case "overwrite_dynamic" | "dynamic_overwrite" => OutputMode.OVERWRITE_DYNAMIC
             case "append" => OutputMode.APPEND
             case "update"|"upsert" => OutputMode.UPDATE
-            case "merge" => OutputMode.MERGE
             case "ignore" | "ignore_if_exists" | "ignoreifexists" => OutputMode.IGNORE_IF_EXISTS
             case "error" | "error_if_exists" | "errorifexists" | "default" => OutputMode.ERROR_IF_EXISTS
             case _ => throw new IllegalArgumentException(s"Unknown save mode: '$mode'. " +

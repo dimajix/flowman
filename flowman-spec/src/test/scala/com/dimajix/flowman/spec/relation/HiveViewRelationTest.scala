@@ -17,6 +17,9 @@
 package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -28,6 +31,9 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types.Field
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -63,7 +69,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
     context.getRelation(RelationIdentifier("t0")).create(executor)
 
-    val relation = new HiveViewRelation(
+    val relation = HiveViewRelation(
       Relation.Properties(context),
       Some("default"),
       "v0",
@@ -184,4 +190,101 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     context.getRelation(RelationIdentifier("t0")).destroy(executor)
     context.getRelation(RelationIdentifier("t1")).destroy(executor)
   }
+
+    it should "replace an existing Hive table with a Hive view" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: hiveTable
+              |    database: default
+              |    table: t0
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |        - name: t0_exclusive_col
+              |          type: long
+              |
+              |mappings:
+              |  t0:
+              |    kind: readRelation
+              |    relation: t0
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        context.getRelation(RelationIdentifier("t0")).create(execution)
+
+        val view = HiveViewRelation(
+            Relation.Properties(context),
+            database = Some("default"),
+            table = "table_or_view",
+            mapping = Some(MappingOutputIdentifier("t0"))
+        )
+        val table = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = "table_or_view",
+            database = Some("default")
+        )
+
+        // == Create TABLE ============================================================================================
+        table.exists(execution) should be (No)
+        table.create(execution)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+
+        table.exists(execution) should be (Yes)
+        view.exists(execution) should be (Yes)
+
+        // == Create VIEW ============================================================================================
+        a[TableAlreadyExistsException] should be thrownBy (view.create(execution, ifNotExists = false))
+        table.create(execution, ifNotExists = true)
+        view.exists(execution) should be (Yes)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+
+        // == Create TABLE ============================================================================================
+        a[TableAlreadyExistsException] should be thrownBy (table.create(execution, ifNotExists = false))
+        table.create(execution, ifNotExists = true)
+        view.exists(execution) should be (Yes)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+
+        // == Migrate VIEW ==========================================================================================
+        view.migrate(execution)
+        view.exists(execution) should be (Yes)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+
+        // == Destroy VIEW ===========================================================================================
+        view.destroy(execution)
+        view.exists(execution) should be (No)
+        table.exists(execution) should be (No)
+        session.catalog.tableExists(TableIdentifier("table_or_view", Some("default"))) should be (false)
+
+        // == Destroy TABLE ===========================================================================================
+        table.destroy(execution, ifExists = true)
+        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
+
+        // == Destroy VIEW ==========================================================================================
+        view.destroy(execution, ifExists = true)
+        a[NoSuchTableException] should be thrownBy(view.destroy(execution, ifExists = false))
+
+        context.getRelation(RelationIdentifier("t0")).destroy(execution)
+    }
 }

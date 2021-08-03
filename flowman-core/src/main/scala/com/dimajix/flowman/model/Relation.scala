@@ -17,6 +17,7 @@
 package com.dimajix.flowman.model
 
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
@@ -33,6 +34,7 @@ import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
@@ -163,6 +165,15 @@ trait Relation extends Instance {
       * @param partition - destination partition
       */
     def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
+
+    /**
+     * Performs a merge operation. All condition columns should reference the relation using the alias `relation`.
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    def merge(execution:Execution, df:DataFrame, mergeCondition:Column, clauses:Seq[MergeClause]) : Unit = ???
 
     /**
       * Removes one or more partitions.

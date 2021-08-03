@@ -198,8 +198,6 @@ case class JdbcRelation(
                     doWrite(execution, dfExt, SaveMode.Append)
                 case OutputMode.UPDATE =>
                     ???
-                case OutputMode.MERGE =>
-                    ???
                 case OutputMode.IGNORE_IF_EXISTS =>
                     if (!checkPartition(partition)) {
                         doWrite(execution, dfExt, SaveMode.Append)

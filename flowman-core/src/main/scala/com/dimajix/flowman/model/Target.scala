@@ -16,12 +16,17 @@
 
 package com.dimajix.flowman.model
 
+import org.apache.spark.sql.DataFrame
+
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.metric.LongAccumulatorMetric
+import com.dimajix.flowman.metric.Selector
+import com.dimajix.spark.sql.functions.count_records
 
 /**
   *
@@ -291,4 +296,18 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * @param executor
      */
     protected def destroy(executor:Execution) : Unit = {}
+
+    protected def countRecords(executor:Execution, df:DataFrame) : DataFrame = {
+        val counter = executor.metrics.findMetric(Selector(Some("target_records"), metadata.asMap))
+            .headOption
+            .map(_.asInstanceOf[LongAccumulatorMetric].counter)
+            .getOrElse {
+                val counter = executor.spark.sparkContext.longAccumulator
+                val metric = LongAccumulatorMetric("target_records", metadata.asMap, counter)
+                executor.metrics.addMetric(metric)
+                counter
+            }
+
+        count_records(df, counter)
+    }
 }

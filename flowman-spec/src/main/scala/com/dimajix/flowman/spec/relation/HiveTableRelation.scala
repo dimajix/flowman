@@ -482,7 +482,7 @@ case class HiveTableRelation(
                         throw new MigrationFailedException(identifier)
                     case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                         logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
-                        catalog.dropTable(tableIdentifier, false)
+                        catalog.dropView(tableIdentifier, false)
                         create(execution, false)
                 }
             }

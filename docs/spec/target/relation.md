@@ -90,3 +90,5 @@ The relation target also provides some metric containing the number of records w
   - `namespace` - Name of the namespace (typically `default`)
   - `project` - Name of the project
   - `version` - Version of the project
+
+See [Execution Metrics](../../cookbook/metrics.md) for more information how to use these metrics.

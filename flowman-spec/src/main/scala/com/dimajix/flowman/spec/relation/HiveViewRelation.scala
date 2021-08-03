@@ -44,9 +44,9 @@ case class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
     override val database: Option[String],
     override val table: String,
-    override val partitions: Seq[PartitionField],
-    sql: Option[String],
-    mapping: Option[MappingOutputIdentifier]
+    override val partitions: Seq[PartitionField] = Seq(),
+    sql: Option[String] = None,
+    mapping: Option[MappingOutputIdentifier] = None
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
 

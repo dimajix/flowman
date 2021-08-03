@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.catalog
+package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.Column
 

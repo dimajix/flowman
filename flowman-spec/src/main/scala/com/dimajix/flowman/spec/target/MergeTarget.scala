@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,30 +49,27 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.functions.count_records
 
 
-object RelationTarget {
-    def apply(context: Context, relation: RelationIdentifier) : RelationTarget = {
+object MergeTarget {
+    def apply(context: Context, relation: RelationIdentifier) : MergeTarget = {
         val conf = context.flowmanConf
-        new RelationTarget(
+        new MergeTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
             relation,
-            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
-            Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
             conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
     }
 }
-case class RelationTarget(
+
+case class MergeTarget(
     instanceProperties: Target.Properties,
     mapping:MappingOutputIdentifier,
     relation: RelationIdentifier,
-    mode: OutputMode = OutputMode.OVERWRITE,
-    partition: Map[String,String] = Map(),
     parallelism: Int = 16,
     rebalance: Boolean = false
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
+    private val logger = LoggerFactory.getLogger(classOf[MergeTarget])
 
     /**
       * Returns an instance representing this target with the context
@@ -83,7 +80,7 @@ case class RelationTarget(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
-            partition
+            Map()
         )
     }
 
@@ -103,12 +100,11 @@ case class RelationTarget(
       * @return
       */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources(partition)
+            case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources()
             case Phase.BUILD => rel.provides
             case _ => Set()
         }
@@ -139,7 +135,6 @@ case class RelationTarget(
      * @return
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
 
         phase match {
@@ -151,16 +146,10 @@ case class RelationTarget(
                 else
                     Yes
             case Phase.BUILD =>
-                if (mode == OutputMode.APPEND) {
-                    Yes
-                } else if (mode == OutputMode.UPDATE) {
-                    Unknown
-                } else {
-                    !rel.loaded(execution, partition)
-                }
+                Unknown
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
-                rel.loaded(execution, partition)
+                rel.loaded(execution)
             case Phase.DESTROY =>
                 rel.exists(execution)
         }
@@ -172,10 +161,9 @@ case class RelationTarget(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
         if (mapping.nonEmpty)
             linker.input(mapping.mapping, mapping.output)
-        linker.write(relation, partition)
+        linker.write(relation, Map())
     }
 
     /**
@@ -208,9 +196,7 @@ case class RelationTarget(
         require(executor != null)
 
         if (mapping.nonEmpty) {
-            val partition = this.partition.mapValues(v => SingleValue(v))
-
-            logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition with mode '$mode'")
+            logger.info(s"Merging mapping '${this.mapping}' into relation '$relation'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
             val dfOut =
@@ -221,9 +207,10 @@ case class RelationTarget(
                 else
                     dfIn.coalesce(parallelism)
 
+            // Setup metric for counting number of records
             val dfCount = countRecords(executor, dfOut)
             val rel = context.getRelation(relation)
-            rel.write(executor, dfCount, partition, mode)
+            //rel.merge(executor, dfCount)
         }
     }
 
@@ -235,10 +222,9 @@ case class RelationTarget(
     override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
-        val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = context.getRelation(relation)
-        if (rel.loaded(executor, partition) == No) {
-            logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '$relation' does not exist")
+        if (rel.loaded(executor) == No) {
+            logger.error(s"Verification of target '$identifier' failed - relation '$relation' does not exist")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -250,11 +236,9 @@ case class RelationTarget(
     override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
-        val partition = this.partition.mapValues(v => SingleValue(v))
-
-        logger.info(s"Truncating partition $partition of relation '$relation'")
+        logger.info(s"Truncating relation '$relation'")
         val rel = context.getRelation(relation)
-        rel.truncate(executor, partition)
+        rel.truncate(executor)
     }
 
     /**
@@ -271,32 +255,27 @@ case class RelationTarget(
 }
 
 
-
-object RelationTargetSpec {
-    def apply(name:String, relation:String, partition:Map[String,String]=Map()) : RelationTargetSpec = {
-        val spec = new RelationTargetSpec
+object MergeTargetSpec {
+    def apply(name:String, relation:String) : MergeTargetSpec = {
+        val spec = new MergeTargetSpec
         spec.name = name
         spec.relation = relation
-        spec.partition = partition
         spec
     }
 }
-class RelationTargetSpec extends TargetSpec {
+
+class MergeTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:String = _
-    @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
-    @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
-    override def instantiate(context: Context): RelationTarget = {
+    override def instantiate(context: Context): MergeTarget = {
         val conf = context.flowmanConf
-        RelationTarget(
+        MergeTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             RelationIdentifier.parse(context.evaluate(relation)),
-            OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
-            context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
             context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )

@@ -76,6 +76,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
                 .config("spark.hadoop.datanucleus.autoStartMechanismMode", "ignored")
                 .config("spark.hadoop.hive.metastore.schema.verification.record.version", true)
                 .config("spark.hadoop.hive.metastore.schema.verification", false)
+                .config("spark.hadoop.hive.metastore.try.direct.sql", false)
                 .config("spark.hadoop.hive.metastore.uris", "")
                 .config("spark.sql.hive.metastore.sharedPrefixes", "org.apache.derby")
                 .enableHiveSupport()

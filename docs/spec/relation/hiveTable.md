@@ -138,6 +138,19 @@ Other changes (like changing the data type or dropping columns) is not supported
 will require either `REPLACE` or `ALTER_REPLACE` - but this will remove all existing data in that table!
 
 
+## Output Modes
+The `hive` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the Hive table already exists|
+|`ignoreIfExists`|yes|Do nothing if the Hive table already exists|
+|`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`append`|yes|Append new records to the existing table|
+|`update`|no|-|
+|`merge`|no|-|
+
+
 ## Remarks
 
 When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
@@ -155,7 +168,6 @@ columns instead
 * `DATE` types might not be supported in older Impala version (if you plan to query Hive tables using Impala)  
 
 ### Schema Inference
-
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
 for describing the schema of a relation. This might create unwanted connections to the physical data source,
 particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data

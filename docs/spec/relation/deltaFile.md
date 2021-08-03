@@ -35,7 +35,7 @@ relations:
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(string)*: `hiveTable`
+* `kind` **(mandatory)** *(string)*: `deltaFile`
 
 * `schema` **(optional)** *(schema)* *(default: empty)*:
   Explicitly specifies the schema of the Delta Lake table.  Alternatively Flowman will automatically use the schema of
@@ -62,6 +62,34 @@ relations:
 * `properties` **(optional)** *(map:string)* *(default: empty)*:
   Specifies additional properties of the Hive table. This setting is only used when Flowman is used to create the 
   Delta table and is ignored otherwise.
+
+* `mergeKey` **(optional)** *(list:string)* *(default: empty)*:
+  List of column names specifying the key to identify matching records on `update` operations.
+
+
+## Output Modes
+
+### Batch Writing
+The `deltaFile` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the Delta table already exists|
+|`ignoreIfExists`|yes|Do nothing if the Delta table already exists|
+|`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`append`|yes|Append new records to the existing table|
+|`update`|yes|Updates existing records, either using `mergeKey` or the primary key of the specified `schema`|
+|`merge`|no|-|
+
+### Stream Writing
+In addition to batch writing, the Delta file relation also supports stream writing via the
+[`stream` target](../target/stream.md) with the following semantics:
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`append`|yes|Append new records from the streaming process once they don't change any more|
+|`update`|yes|Append records every time they are updated|
+|`complete`|no|-|
 
 
 ## Remarks

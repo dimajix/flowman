@@ -72,6 +72,19 @@ the migration strategy is set to `ALTER_REPLACE`, then Flowman will fall back to
 altogether on *any* non-recoverable exception during migration.
 
 
+## Output Modes
+The `jdbc` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the JDBC table already exists|
+|`ignoreIfExists`|yes|Do nothing if the JDBC table already exists|
+|`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`append`|yes|Append new records to the existing table|
+|`update`|no|-|
+|`merge`|no|-|
+
+
 ## Remarks
 
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally

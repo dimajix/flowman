@@ -73,6 +73,18 @@ relations:
  Please see the section [Partitioning](#Partitioning) below. 
 
 
+## Output Modes
+The `hive` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the files already exists|
+|`ignoreIfExists`|yes|Do nothing if the files already exists|
+|`overwrite`|yes|Overwrite the whole location or the specified partitions|
+|`append`|yes|Append new records to the existing files|
+|`update`|no|-|
+|`merge`|no|-|
+
 
 ## Remarks
 

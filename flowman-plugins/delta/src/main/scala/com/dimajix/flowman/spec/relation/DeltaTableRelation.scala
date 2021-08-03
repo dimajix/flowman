@@ -22,8 +22,14 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
+import org.apache.spark.sql.delta.DeltaErrors
+import org.apache.spark.sql.delta.DeltaTableIdentifier
+import org.apache.spark.sql.delta.DeltaTableUtils
+import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -166,6 +172,43 @@ case class DeltaTableRelation(
         val keyColumns = partitions.map(_.name).toSet -- partitionSpec.keys ++ withinPartitionKeyColumns
         val table = DeltaTable.forName(df.sparkSession, tableIdentifier.quotedString)
         DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
+    }
+
+    /**
+     * Reads data from a streaming source
+     *
+     * @param execution
+     * @param schema
+     * @return
+     */
+    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+        logger.info(s"Streaming from Delta table relation '$identifier' at $tableIdentifier")
+
+        val location = DeltaUtils.getLocation(execution, tableIdentifier)
+        val df = streamReader(execution, "delta", options).load(location.toString)
+        SchemaUtils.applySchema(df, schema)
+    }
+
+    /**
+     * Writes data to a streaming sink
+     *
+     * @param execution
+     * @param df
+     * @return
+     */
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
+        logger.info(s"Streaming to Delta table relation '$identifier' $tableIdentifier")
+
+        val location = DeltaUtils.getLocation(execution, tableIdentifier)
+        val writer = streamWriter(execution, df, "delta", options, mode.streamMode, trigger, checkpointLocation)
+        if (partitions.nonEmpty) {
+            writer
+                .partitionBy(partitions.map(_.name):_*)
+                .start(location.toString)
+        }
+        else {
+            writer.start(location.toString)
+        }
     }
 
     /**

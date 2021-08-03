@@ -25,8 +25,11 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.delta.DeltaErrors
 import org.apache.spark.sql.delta.DeltaLog
 import org.apache.spark.sql.delta.DeltaOperations
+import org.apache.spark.sql.delta.DeltaTableIdentifier
+import org.apache.spark.sql.delta.DeltaTableUtils
 import org.apache.spark.sql.delta.actions.Metadata
 import org.apache.spark.sql.delta.commands.CreateDeltaTableCommand
 import org.apache.spark.sql.functions.col
@@ -42,6 +45,16 @@ import com.dimajix.flowman.model.PartitionField
 object DeltaUtils {
     def tableIdentifier(location:Path) : TableIdentifier = {
         TableIdentifier(location.toString, Some("delta"))
+    }
+
+    def getLocation(execution: Execution, tableIdentifier:TableIdentifier) : Path = {
+        val sparkSession = execution.spark
+        if (DeltaTableUtils.isDeltaTable(sparkSession, tableIdentifier)) {
+            val tbl = sparkSession.sessionState.catalog.getTableMetadata(tableIdentifier)
+            new Path(tbl.location)
+        } else {
+            throw DeltaErrors.notADeltaTableException(DeltaTableIdentifier(table = Some(tableIdentifier)))
+        }
     }
 
     /**

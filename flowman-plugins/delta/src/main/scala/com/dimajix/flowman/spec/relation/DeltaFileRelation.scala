@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -170,7 +172,43 @@ case class DeltaFileRelation(
         DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
     }
 
-        /**
+
+    /**
+     * Reads data from a streaming source
+     *
+     * @param execution
+     * @param schema
+     * @return
+     */
+    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+        logger.info(s"Streaming from Delta file relation '$identifier' at '$location'")
+
+        val df = streamReader(execution, "delta", options).load(location.toString)
+        SchemaUtils.applySchema(df, schema)
+    }
+
+    /**
+     * Writes data to a streaming sink
+     *
+     * @param execution
+     * @param df
+     * @return
+     */
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
+        logger.info(s"Streaming to Delta file relation '$identifier' at '$location'")
+
+        val writer = streamWriter(execution, df, "delta", options, mode.streamMode, trigger, checkpointLocation)
+        if (partitions.nonEmpty) {
+            writer
+                .partitionBy(partitions.map(_.name):_*)
+                .start(location.toString)
+        }
+        else {
+            writer.start(location.toString)
+        }
+    }
+
+    /**
      * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
      * the relation itself, not to the data or a specific partition. [[loaded]] should return [[Yes]] after
      * [[[create]] has been called, and it should return [[No]] after [[destroy]] has been called.

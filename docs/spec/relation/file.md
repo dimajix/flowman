@@ -74,7 +74,9 @@ relations:
 
 
 ## Output Modes
-The `hive` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+### Batch Writing
+The `file` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
 |Output Mode |Supported  | Comments|
 --- | --- | ---
@@ -84,6 +86,16 @@ The `hive` relation supports the following output modes in a [`relation` target]
 |`append`|yes|Append new records to the existing files|
 |`update`|no|-|
 |`merge`|no|-|
+
+### Stream Writing
+In addition to batch writing, the file relation also supports stream writing via the
+[`stream` target](../target/stream.md) with the following semantics:
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`append`|yes|Append new records from the streaming process once they don't change any more|
+|`update`|yes|Append records every time they are updated|
+|`complete`|no|-|
 
 
 ## Remarks

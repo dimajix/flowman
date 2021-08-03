@@ -89,7 +89,7 @@ In addition to batch writing, the Delta file relation also supports stream writi
 --- | --- | ---
 |`append`|yes|Append new records from the streaming process once they don't change any more|
 |`update`|yes|Append records every time they are updated|
-|`complete`|no|-|
+|`complete`|yes|-|
 
 
 ## Remarks

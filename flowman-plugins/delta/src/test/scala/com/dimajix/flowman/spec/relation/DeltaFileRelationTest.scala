@@ -19,10 +19,13 @@ package com.dimajix.flowman.spec.relation
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Paths
+import java.util.UUID
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -42,6 +45,7 @@ import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
@@ -1076,5 +1080,144 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+    }
+
+    it should "support stream writing" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "streaming_test_" + UUID.randomUUID().toString)
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            location = new Path(outputPath.toUri),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c1", com.dimajix.flowman.types.DoubleType),
+                    Field("c2", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, null),
+            Row(234, 123.0, ""),
+            Row(2345, 1234.0, "1234567"),
+            Row(23456, 12345.0, "1234567")
+        ))
+        val df0 = spark.createDataFrame(rdd, relation.schema.get.catalogSchema)
+        val df1 = StreamingUtils.createSingleTriggerStreamingDF(df0)
+
+        val checkpoint = Paths.get(tempDir.toString, "streaming_checkpoint_" + UUID.randomUUID().toString).toUri
+        val query1 = relation.writeStream(execution, df1, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query1.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (4)
+
+        // == Write ==================================================================================================
+        val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
+        val query2 = relation.writeStream(execution, df2, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query2.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.read(execution, None, Map()).count() should be (8)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+    }
+
+    it should "support stream writing with partitions" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "streaming_test_" + UUID.randomUUID().toString)
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            location = new Path(outputPath.toUri),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", ftypes.IntegerType),
+                    Field("c1", ftypes.DoubleType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", ftypes.StringType)
+            )
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1"),
+            Row(234, 123.0, "1"),
+            Row(2345, 1234.0, "1"),
+            Row(23456, 12345.0, "2")
+        ))
+        val df0 = spark.createDataFrame(rdd, StructType(relation.fields.map(_.catalogField)))
+        val df1 = StreamingUtils.createSingleTriggerStreamingDF(df0)
+
+        val checkpoint = Paths.get(tempDir.toString, "streaming_checkpoint_" + UUID.randomUUID().toString).toUri
+        val query1 = relation.writeStream(execution, df1, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query1.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Write ==================================================================================================
+        val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
+        val query2 = relation.writeStream(execution, df2, OutputMode.APPEND, Trigger.Once(), new Path(checkpoint))
+        query2.awaitTermination()
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
     }
 }

@@ -252,11 +252,6 @@ case class FileRelation(
     override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
         logger.info(s"Streaming from file relation '$identifier' at '$location'")
 
-        //if (partitions.nonEmpty)
-        //    throw new IllegalArgumentException(s"Partitions not supported in streaming mode for 'file' relation '$identifier'")
-        //if (pattern.nonEmpty)
-        //    throw new IllegalArgumentException(s"Pattern not supported in streaming mode for 'file' relation '$identifier'")
-
         val df = streamReader(execution, format, options).load(location.toString)
         SchemaUtils.applySchema(df, schema)
     }

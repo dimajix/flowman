@@ -19,7 +19,6 @@ package com.dimajix.flowman.types
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.util.ObjectMapper
 
 
@@ -31,9 +30,6 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
               |  keyType: String
               |  valueType: String
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[MapType]
@@ -49,9 +45,6 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
               |  containsNull: true
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[MapType]
         result.sparkType shouldBe a[org.apache.spark.sql.types.MapType]
@@ -65,9 +58,6 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
               |  valueType: String
               |  containsNull: false
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[MapType]
@@ -84,9 +74,6 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
               |    kind: array
               |    elementType: String
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[MapType]

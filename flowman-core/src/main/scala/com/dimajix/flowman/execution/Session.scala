@@ -44,7 +44,7 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 object Session {
     class Builder {
-        private var sparkSession: SparkConf => SparkSession = (_ => null)
+        private var sparkSession: SparkConf => SparkSession = null
         private var sparkMaster:Option[String] = None
         private var sparkName:Option[String] = None
         private var config = Map[String,String]()
@@ -194,11 +194,18 @@ object Session {
             this
         }
 
+        def enableSpark() : Builder = {
+            sparkSession = _ => null
+            this
+        }
+
         /**
          * Build the Flowman session and applies all previously specified options
          * @return
          */
         def build() : Session = {
+            if (sparkSession == null)
+                throw new IllegalArgumentException("You need to either enable or disable Spark before creating a Flowman Session.")
             new Session(namespace, project, sparkSession, sparkMaster, sparkName, config, environment, profiles, jars)
         }
     }
@@ -286,31 +293,30 @@ class Session private[execution](
             .setMaster(sparkMaster)
             .setAppName(sparkName)
 
-        Option(_sparkSession)
-            .flatMap(builder => Option(builder(sparkConf)))
-            .map { spark =>
-                logger.info("Creating Spark session using provided builder")
-                // Set all session properties that can be changed in an existing session
-                sparkConf.getAll.foreach { case (key, value) =>
-                    if (!SparkShim.isStaticConf(key)) {
-                        spark.conf.set(key, value)
-                    }
+        val spark = _sparkSession(sparkConf)
+        if (spark != null) {
+            logger.info("Creating Spark session using provided builder")
+            // Set all session properties that can be changed in an existing session
+            sparkConf.getAll.foreach { case (key, value) =>
+                if (!SparkShim.isStaticConf(key)) {
+                    spark.conf.set(key, value)
                 }
-                spark
             }
-            .getOrElse {
-                logger.info("Creating new Spark session")
-                val sessionBuilder = SparkSession.builder()
-                    .config(sparkConf)
-                if (flowmanConf.sparkEnableHive) {
-                    logger.info("Enabling Spark Hive support")
-                    sessionBuilder.enableHiveSupport()
-                }
-                // Apply all session extensions to builder
-                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
-                // Create Spark session
-                sessionBuilder.getOrCreate()
+            spark
+        }
+        else {
+            logger.info("Creating new Spark session")
+            val sessionBuilder = SparkSession.builder()
+                .config(sparkConf)
+            if (flowmanConf.sparkEnableHive) {
+                logger.info("Enabling Spark Hive support")
+                sessionBuilder.enableHiveSupport()
             }
+            // Apply all session extensions to builder
+            SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
+            // Create Spark session
+            sessionBuilder.getOrCreate()
+        }
     }
     private def createSession() : SparkSession = {
         val spark = createOrReuseSession()

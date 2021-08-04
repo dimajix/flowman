@@ -68,7 +68,7 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
               |            description: The Pets ID
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[SwaggerSchemaSpec]
 
@@ -137,7 +137,7 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
               |                description: The Pets ID
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[SwaggerSchemaSpec]
 
@@ -206,7 +206,7 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
               |            type: "array"
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[SwaggerSchemaSpec]
 
@@ -272,7 +272,7 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
               |            maximum: 10000000
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[SwaggerSchemaSpec]
 

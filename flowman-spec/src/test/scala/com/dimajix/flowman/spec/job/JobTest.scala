@@ -40,6 +40,7 @@ import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.relation.MockRelation
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 object GrabEnvironmentTarget {
@@ -63,7 +64,7 @@ class GrabEnvironmentTargetSpec extends TargetSpec {
 }
 
 
-class JobTest extends AnyFlatSpec with Matchers with MockFactory {
+class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
     "A Job" should "be deseializable from" in {
         val spec =
             """
@@ -79,7 +80,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val job = context.getJob(JobIdentifier("job"))
@@ -109,7 +110,10 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
         val executor = session.execution
         val context = session.getContext(project)
 
@@ -158,7 +162,10 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
         val executor = session.execution
         val context = session.getContext(project)
 
@@ -192,7 +199,10 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
         val executor = session.execution
         val context = session.getContext(project)
 
@@ -220,7 +230,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
         val job = module.jobs("job").instantiate(session.context)
@@ -241,7 +251,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
         val job = module.jobs("job").instantiate(session.context)
@@ -260,7 +270,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
         val job = module.jobs("job").instantiate(session.context)
@@ -284,7 +294,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val module = Module.read.string(spec)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
@@ -311,7 +321,10 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
         val executor = session.execution
         val context = session.getContext(project)
 
@@ -360,7 +373,10 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
         val executor = session.execution
         val context = session.getContext(project)
 
@@ -412,7 +428,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             """.stripMargin
 
         val project  = Module.read.string(spec).toProject("default")
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.getContext(project)
 

@@ -70,7 +70,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val relationSpec = ObjectMapper.parse[RelationSpec](spec)
         relationSpec shouldBe a[DeltaTableRelationSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val relation = relationSpec.instantiate(session.context).asInstanceOf[DeltaTableRelation]
         relation.description should be (Some("Some Delta Table"))
         relation.partitions should be (Seq())

@@ -53,7 +53,7 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
               |    }
             """.stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[AvroSchemaSpec]
 
@@ -95,7 +95,7 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
               |    }
             """.stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[AvroSchemaSpec]
 
@@ -133,7 +133,7 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
               |    }
             """.stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[AvroSchemaSpec]
 
@@ -157,7 +157,7 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
               |file: $basedir/schema/AvroSchema.json
             """.stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[AvroSchemaSpec]
 

@@ -80,6 +80,7 @@ class MappingUtilsTest extends AnyFlatSpec with Matchers {
         )
 
         val session = Session.builder()
+            .disableSpark()
             .build()
 
         val context = session.getContext(project)

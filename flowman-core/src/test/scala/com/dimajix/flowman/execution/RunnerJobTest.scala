@@ -37,6 +37,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 object RunnerJobTest {
@@ -61,7 +62,7 @@ object RunnerJobTest {
 }
 
 
-class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
+class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with LocalSparkSession {
     "The Runner for Jobs" should "correctly handle environments and arguments" in {
         val project = Project(
             name = "default",
@@ -73,6 +74,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         val session = Session.builder()
             .withEnvironment("global_env", "global")
             .withEnvironment("global_env_to_overwrite", "global")
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
         val job = Job.builder(context)
@@ -124,6 +126,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "work" in {
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
@@ -136,6 +139,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "throw exceptions on missing parameters" in {
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
@@ -148,6 +152,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "fail on missing targets" in {
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
@@ -166,6 +171,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             targets = Map("some_target" -> targetTemplate)
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(project))
             .setName("batch")
@@ -227,6 +233,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             val project = genProject(Map("a" -> true, "ax" -> true, "b" -> false))
             val session = Session.builder()
                 .withProject(project)
+                .withSparkSession(spark)
                 .build()
             val job = genJob(session, project)
             val runner = session.runner
@@ -259,6 +266,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
         val session = Session.builder()
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(session.project.get))
             .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
@@ -306,6 +314,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val session = Session.builder()
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(session.project.get))
             .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
@@ -348,6 +357,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val session = Session.builder()
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(session.project.get))
             .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
@@ -383,6 +393,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             targets = Map("t0" -> NullTarget("t0", Map("p1" -> "$p1")))
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .withNamespace(ns)
             .withProject(project)
             .build()

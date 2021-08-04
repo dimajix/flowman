@@ -54,7 +54,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val project = Project(
             name = "project"
         )
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = new DummyMapping(
@@ -66,7 +66,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
     }
 
     it should "return a MappingOutputIdentifier without a project" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
 
         val mapping = new DummyMapping(
@@ -78,7 +78,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
     }
 
     "Mapping.describe default implementation" should "return meaningful results" in {
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
         val execution = session.execution
 
@@ -111,7 +111,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
                 "m2" -> mappingTemplate2
             )
         )
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping1 = new DummyMapping(

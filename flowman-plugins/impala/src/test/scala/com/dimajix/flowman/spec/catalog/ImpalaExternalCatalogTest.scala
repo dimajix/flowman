@@ -43,6 +43,7 @@ class ImpalaExternalCatalogTest extends AnyFlatSpec with Matchers {
         namespace.catalogs.head shouldBe an[ImpalaCatalogSpec]
 
         val session = Session.builder()
+            .disableSpark()
             .withNamespace(namespace)
             .build()
 

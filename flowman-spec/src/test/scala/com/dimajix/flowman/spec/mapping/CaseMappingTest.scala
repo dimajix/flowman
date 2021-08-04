@@ -45,7 +45,7 @@ class CaseMappingTest extends AnyFlatSpec with Matchers {
 
         mapping shouldBe an[CaseMappingSpec]
 
-        val session = Session.builder().withEnvironment("env", "").build()
+        val session = Session.builder().disableSpark().withEnvironment("env", "").build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("switch")).asInstanceOf[AliasMapping]
         instance shouldBe an[AliasMapping]
@@ -55,7 +55,7 @@ class CaseMappingTest extends AnyFlatSpec with Matchers {
     it should "select the first valid case" in {
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withEnvironment("env", "2").build()
+        val session = Session.builder().disableSpark().withEnvironment("env", "2").build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("switch")).asInstanceOf[AliasMapping]
         instance shouldBe an[AliasMapping]

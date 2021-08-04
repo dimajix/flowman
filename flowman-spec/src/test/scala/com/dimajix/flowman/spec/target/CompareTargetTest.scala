@@ -51,7 +51,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "work on same files" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -74,7 +74,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "fail on non existing actual file" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -98,7 +98,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "throw an exception on an non existing expected file" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -113,7 +113,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "work with a directory as expected" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -128,7 +128,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "work with a directory as actual" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -143,7 +143,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "work with a directory as expected and actual" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 

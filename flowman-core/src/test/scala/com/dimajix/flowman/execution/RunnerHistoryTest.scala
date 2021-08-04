@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 
 package com.dimajix.flowman.execution
 
-import java.nio.file.Files
-import java.nio.file.Path
-
 import scala.util.Random
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -41,6 +37,8 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
+
 
 object RunnerHistoryTest {
     object NullTarget {
@@ -64,19 +62,9 @@ object RunnerHistoryTest {
 }
 
 
-class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with BeforeAndAfter {
-    var tempDir:Path = _
-
-    before {
-        tempDir = Files.createTempDirectory("jdbc_logged_runner_test")
-    }
-    after {
-        tempDir.toFile.listFiles().foreach(_.delete())
-        tempDir.toFile.delete()
-    }
-
+class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with LocalSparkSession {
     "The Runner with History" should "work with empty jobs" in {
-        val db = tempDir.resolve("mydb")
+        val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
@@ -84,6 +72,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         )
         val session = Session.builder()
             .withNamespace(ns)
+            .withSparkSession(spark)
             .build()
 
         val job = Job.builder(session.context)
@@ -97,7 +86,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "be used in a Session" in {
-        val db = tempDir.resolve("mydb")
+        val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
@@ -105,6 +94,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         )
         val session = Session.builder()
             .withNamespace(ns)
+            .withSparkSession(spark)
             .build()
 
         val job = Job.builder(session.context)
@@ -118,7 +108,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "work with non-empty jobs" in {
-        val db = tempDir.resolve("mydb")
+        val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
@@ -131,6 +121,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         val session = Session.builder()
             .withNamespace(ns)
             .withProject(project)
+            .withSparkSession(spark)
             .build()
 
         val job = Job.builder(session.getContext(project))
@@ -167,7 +158,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
                 .build()
         }
 
-        val db = tempDir.resolve("mydb")
+        val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
@@ -187,6 +178,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             val session = Session.builder()
                 .withNamespace(ns)
                 .withProject(project)
+                .withSparkSession(spark)
                 .build()
             val runner = session.runner
             runner.executeJob(genJob(session, "clean0"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
@@ -201,6 +193,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
                 .withNamespace(ns)
                 .withConfig(EXECUTION_TARGET_FORCE_DIRTY.key, "true")
                 .withProject(project)
+                .withSparkSession(spark)
                 .build()
             val runner = session.runner
             runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
@@ -213,13 +206,14 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "catch exceptions" in {
-        val db = tempDir.resolve("mydb")
+        val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
             history = Some(JdbcStateStore(connection))
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .withNamespace(ns)
             .build()
         val batch = Job.builder(session.context)
@@ -233,7 +227,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "support parameters in targets" in {
-        val db = tempDir.resolve("mydb")
+        val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
@@ -246,6 +240,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         val session = Session.builder()
             .withNamespace(ns)
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(project))
             .setName("job")

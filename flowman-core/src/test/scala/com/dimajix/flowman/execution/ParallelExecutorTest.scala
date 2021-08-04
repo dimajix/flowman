@@ -27,7 +27,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
     "The ParallelExecutor" should "return SUCCESS on empty lists" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val execution = session.execution
 
@@ -42,7 +42,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
     }
 
     it should "work" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val execution = session.execution
 

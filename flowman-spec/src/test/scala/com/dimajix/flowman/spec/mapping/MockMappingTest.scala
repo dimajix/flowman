@@ -59,7 +59,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("mock")).asInstanceOf[MockMapping]

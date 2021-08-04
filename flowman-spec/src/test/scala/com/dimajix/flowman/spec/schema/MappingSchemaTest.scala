@@ -55,7 +55,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers {
               |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val schema = MappingSchema(context, "alias")
@@ -99,7 +99,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers {
               |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val sink = context.getRelation(RelationIdentifier("sink"))

@@ -40,7 +40,7 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t0"))
 

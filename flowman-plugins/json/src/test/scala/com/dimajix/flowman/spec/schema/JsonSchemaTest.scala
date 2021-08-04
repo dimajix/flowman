@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.schema
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.DoubleType
@@ -79,12 +79,11 @@ class JsonSchemaTest extends AnyFlatSpec with Matchers {
               |  }
               |""".stripMargin
 
-        val session = Session.builder().build()
-
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[JsonSchemaSpec]
 
-        val result = schemaSpec.instantiate(session.context)
+        val context = RootContext.builder().build()
+        val result = schemaSpec.instantiate(context)
         result shouldBe an[JsonSchema]
         result.description should be (Some("Total amount for this Fee"))
 
@@ -143,12 +142,11 @@ class JsonSchemaTest extends AnyFlatSpec with Matchers {
               |  }
               |""".stripMargin
 
-        val session = Session.builder().build()
-
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe an[JsonSchemaSpec]
 
-        val result = schemaSpec.instantiate(session.context)
+        val context = RootContext.builder().build()
+        val result = schemaSpec.instantiate(context)
         result shouldBe an[JsonSchema]
         result.description should be (Some("Total amount for this Fee"))
 

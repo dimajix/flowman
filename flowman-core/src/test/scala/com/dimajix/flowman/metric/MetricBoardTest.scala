@@ -27,6 +27,7 @@ import com.dimajix.spark.accumulator.CounterAccumulator
 class MetricBoardTest extends AnyFlatSpec with Matchers {
     "A MetricBoard" should "return relabelled metrics" in  {
         val session = Session.builder()
+            .disableSpark()
             .withEnvironment("env_var", "env_value")
             .build()
 

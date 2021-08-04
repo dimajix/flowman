@@ -51,7 +51,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "execute assertions" in {
-        val session = Session.builder.build()
+        val session = Session.builder.disableSpark().build()
         val execution = session.execution
         val context = session.context
 
@@ -78,7 +78,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "return success on an empty list of assertions" in {
-        val session = Session.builder.build()
+        val session = Session.builder.disableSpark().build()
         val execution = session.execution
         val context = session.context
 
@@ -105,7 +105,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "throw an exception when an assertion fails" in {
-        val session = Session.builder.build()
+        val session = Session.builder.disableSpark().build()
         val execution = session.execution
         val context = session.context
 

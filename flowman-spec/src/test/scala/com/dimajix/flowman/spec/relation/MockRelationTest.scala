@@ -65,7 +65,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("mock")).asInstanceOf[MockRelation]

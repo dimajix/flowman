@@ -47,7 +47,7 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
         project.mappings.contains("t1") should be (true)
         project.mappings("t1") shouldBe a[RecursiveSqlMappingSpec]
 
-        val session = Session.builder().withProject(project).build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping shouldBe a[RecursiveSqlMapping]

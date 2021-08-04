@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.schema
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.Field
@@ -46,12 +47,12 @@ class UnionSchemaTest extends AnyFlatSpec with Matchers {
               |        type: string
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val context = RootContext.builder().build()
 
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe a[UnionSchemaSpec]
 
-        val result = schemaSpec.instantiate(session.context)
+        val result = schemaSpec.instantiate(context)
         result shouldBe a[UnionSchema]
         result.fields should be (Seq(
             Field("str_col", StringType, nullable = true),

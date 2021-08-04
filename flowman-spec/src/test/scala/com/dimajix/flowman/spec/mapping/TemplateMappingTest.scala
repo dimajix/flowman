@@ -46,6 +46,7 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder()
+            .disableSpark()
             .withEnvironment("default_input", "lala")
             .build()
         val context = session.getContext(project)

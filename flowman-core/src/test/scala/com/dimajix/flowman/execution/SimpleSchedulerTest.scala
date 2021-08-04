@@ -70,7 +70,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     "The SimpleScheduler" should "work with simple resources" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",
@@ -117,7 +119,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     it should "work with partitions" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",
@@ -159,7 +163,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     it should "work with wildcards" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",
@@ -206,7 +212,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     it should "work with Windows paths" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",
@@ -226,7 +234,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     it should "work with before and after" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",
@@ -257,7 +267,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     it should "work with filters" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",
@@ -275,7 +287,9 @@ class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
     }
 
     it should "error on cyclic dependencies" in {
-        val session = Session.builder().build()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
         val context = session.context
 
         val t1 = DummyTarget(context, "t1",

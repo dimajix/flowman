@@ -1170,7 +1170,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
     })
 
     it should "support different output modes with dynamic partitions" in (if (hiveSupported) {
-        val session = Session.builder().withSparkSession(spark)
+        val session = Session.builder()
+            .withSparkSession(spark)
             .withConfig("hive.exec.dynamic.partition.mode", "nonstrict")
             .build()
         val execution = session.execution

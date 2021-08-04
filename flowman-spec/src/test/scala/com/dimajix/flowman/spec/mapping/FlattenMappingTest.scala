@@ -46,7 +46,7 @@ class FlattenMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val mapping = project.mappings("my_structure")
         mapping shouldBe an[FlattenMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("my_structure"))
         instance shouldBe an[FlattenMapping]

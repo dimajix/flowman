@@ -196,7 +196,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val mappingSpec = ObjectMapper.parse[MappingSpec](spec)
         mappingSpec shouldBe a[LatestMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val mapping = mappingSpec.instantiate(session.context)
         val latest = mapping.asInstanceOf[RankMapping]
         latest.input should be (MappingOutputIdentifier("df1"))
@@ -216,7 +216,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val mappingSpec = ObjectMapper.parse[MappingSpec](spec)
         mappingSpec shouldBe a[EarliestMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val mapping = mappingSpec.instantiate(session.context)
         val latest = mapping.asInstanceOf[RankMapping]
         latest.input should be (MappingOutputIdentifier("df1"))

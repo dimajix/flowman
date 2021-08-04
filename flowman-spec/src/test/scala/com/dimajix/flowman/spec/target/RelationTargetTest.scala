@@ -69,7 +69,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |    relation: some_relation
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val target = context.getTarget(TargetIdentifier("out"))
@@ -103,7 +103,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |    relation: some_relation
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val target = context.getTarget(TargetIdentifier("out"))

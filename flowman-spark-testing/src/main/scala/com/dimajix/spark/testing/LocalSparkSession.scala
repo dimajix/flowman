@@ -25,6 +25,7 @@ import org.apache.hive.common.util.HiveVersionInfo
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.hive.HiveClientAccessor
 import org.scalatest.Suite
 
 
@@ -80,6 +81,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
                 .config("spark.hadoop.hive.metastore.uris", "")
                 .config("spark.sql.hive.metastore.sharedPrefixes", "org.apache.derby")
 
+            // Either way, we get some warnings, depending on the Hive features being used
             val version = HiveVersionInfo.getShortVersion.split('.')
             if (version(0).toInt >= 3)
                 builder.config("spark.hadoop.hive.metastore.try.direct.sql", false)
@@ -89,7 +91,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             builder.enableHiveSupport()
         }
 
-        builder.config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath.toString)
+        builder.config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath)
             .config("spark.sql.warehouse.dir", localWarehousePath)
             .config(conf)
 
@@ -106,6 +108,22 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
 
     override def afterAll() : Unit = {
         if (spark != null) {
+            if (hiveSupported) {
+                // Newer version of Hive have background thread-pools which screw up the local Derby database
+                // when not properly shut down
+                HiveClientAccessor.withHiveState(spark) {
+                    try {
+                        val clazz = Class.forName("org.apache.hadoop.hive.metastore.ThreadPool")
+                        val method = clazz.getMethod("shutdown")
+                        method.invoke(clazz)
+                    }
+                    catch {
+                        case _:ClassNotFoundException =>
+                        case _:NoSuchMethodException =>
+                    }
+                }
+            }
+
             spark.stop()
             spark = null
             sc = null

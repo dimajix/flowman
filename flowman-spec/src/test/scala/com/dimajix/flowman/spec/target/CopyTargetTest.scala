@@ -55,7 +55,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    tpc: p2
               |mode: append
               |""".stripMargin
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
 
         val targetSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyTargetSpec]
@@ -108,7 +108,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    mode: overwrite
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.getContext(project)
 

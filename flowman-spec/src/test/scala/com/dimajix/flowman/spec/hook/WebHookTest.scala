@@ -36,12 +36,14 @@ import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spec.target.NullTarget
 import com.dimajix.flowman.spec.target.NullTargetSpec
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class WebHookTest extends AnyFlatSpec with Matchers {
+class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The WebHook" should "provide a working job API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
+            .withSparkSession(spark)
             .build()
         val hook = WebHook(
             Hook.Properties(session.context),
@@ -59,6 +61,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
     it should "provide a working target API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
+            .withSparkSession(spark)
             .build()
         val hook = new WebHook(
             Hook.Properties(session.context),
@@ -92,6 +95,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
         val ns = Namespace.read.string(spec)
         val session = Session.builder()
                 .withNamespace(ns)
+                .withSparkSession(spark)
                 .build()
         val hook = session.hooks.head.instantiate(session.context).asInstanceOf[WebHook]
         hook.jobStart should be (Some("job_start/$job/$target"))
@@ -125,6 +129,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
               |        targetFailure: target_failure/$job/$target
               |""".stripMargin
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Module.read.string(spec)
             .toProject("project")
@@ -172,6 +177,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
             targets = Map("t0" -> NullTargetSpec("t0"))
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .withNamespace(ns)
             .withEnvironment("env", "some_env")
             .withProject(project)

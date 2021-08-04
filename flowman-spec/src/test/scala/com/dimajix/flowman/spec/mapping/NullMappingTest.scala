@@ -56,7 +56,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping1 = context.getMapping(MappingIdentifier("empty1")).asInstanceOf[NullMapping]
@@ -153,7 +153,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "raise an error on wrong construction" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
 
         an[IllegalArgumentException] should be thrownBy (NullMapping(

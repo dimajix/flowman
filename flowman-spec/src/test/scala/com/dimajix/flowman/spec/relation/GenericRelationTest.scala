@@ -56,7 +56,7 @@ class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val project = Module.read.string(spec).toProject("project")
         project.relations.keys should contain("t0")
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))

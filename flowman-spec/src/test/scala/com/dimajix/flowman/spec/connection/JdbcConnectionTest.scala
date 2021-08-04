@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.connection
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
 
@@ -31,12 +31,12 @@ class JdbcConnectionTest extends AnyFlatSpec with Matchers {
               |url: my_url
               |driver: my_driver
             """.stripMargin
-        val session = Session.builder().build()
 
         val result = ObjectMapper.parse[ConnectionSpec](spec)
         result shouldBe a[JdbcConnectionSpec]
 
-        val jdbc = result.instantiate(session.context).asInstanceOf[JdbcConnection]
+        val context = RootContext.builder().build()
+        val jdbc = result.instantiate(context).asInstanceOf[JdbcConnection]
         jdbc.url should be ("my_url")
         jdbc.driver should be ("my_driver")
     }
@@ -47,12 +47,12 @@ class JdbcConnectionTest extends AnyFlatSpec with Matchers {
               |url: my_url
               |driver: my_driver
             """.stripMargin
-        val session = Session.builder().build()
 
         val result = ObjectMapper.parse[ConnectionSpec](spec)
         result shouldBe a[JdbcConnectionSpec]
 
-        val jdbc = result.instantiate(session.context).asInstanceOf[JdbcConnection]
+        val context = RootContext.builder().build()
+        val jdbc = result.instantiate(context).asInstanceOf[JdbcConnection]
         jdbc.url should be ("my_url")
         jdbc.driver should be ("my_driver")
     }

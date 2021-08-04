@@ -49,6 +49,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .withEnvironment("global_env", "global")
             .withEnvironment("global_env_to_overwrite", "global")
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
         val test = Test(
@@ -108,6 +109,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             )
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 
@@ -195,6 +197,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             name = "default"
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 
@@ -230,6 +233,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             )
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 
@@ -313,6 +317,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             )
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 
@@ -359,6 +364,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             name = "default"
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 
@@ -395,6 +401,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             name = "default"
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 

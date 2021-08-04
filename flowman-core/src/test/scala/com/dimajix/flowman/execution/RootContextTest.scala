@@ -51,6 +51,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
             .withNamespace(namespace)
             .withProfile("profile")
             .withProfile("profile2")
+            .disableSpark()
             .build()
 
         val rootContext = session.context
@@ -95,6 +96,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
             .withNamespace(namespace)
             .withProfile("profile")
             .withProfile("profile2")
+            .disableSpark()
             .build()
 
         // Access everything via root context
@@ -149,6 +151,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
         val session = Session.builder()
             .withProfile("profile")
+            .disableSpark()
             .build()
         val rootContext = RootContext.builder(session.context)
             .overrideMappings(Map(MappingIdentifier("my_project/m2") -> overrideMappingTemplate))
@@ -201,6 +204,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
         val session = Session.builder()
             .withProfile("profile")
+            .disableSpark()
             .build()
         val rootContext = RootContext.builder(session.context)
             .overrideRelations(Map(RelationIdentifier("my_project/m2") -> overrideRelationTemplate))

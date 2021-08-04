@@ -67,7 +67,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val relationSpec = ObjectMapper.parse[RelationSpec](spec)
         relationSpec shouldBe a[DeltaFileRelationSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val relation = relationSpec.instantiate(session.context).asInstanceOf[DeltaFileRelation]
         relation.description should be (Some("Some Delta Table"))
         relation.partitions should be (Seq())

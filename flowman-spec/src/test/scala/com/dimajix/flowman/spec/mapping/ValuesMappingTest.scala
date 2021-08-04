@@ -61,7 +61,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
@@ -98,7 +98,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]

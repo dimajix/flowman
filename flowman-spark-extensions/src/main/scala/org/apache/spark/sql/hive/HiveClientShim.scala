@@ -18,6 +18,7 @@ package org.apache.spark.sql.hive
 
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.ql.metadata.Hive
+import org.apache.hive.common.util.HiveVersionInfo
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.scheduler.SparkListenerApplicationEnd
 import org.apache.spark.sql.SparkSession
@@ -28,6 +29,8 @@ import org.apache.spark.sql.catalyst.catalog.ExternalCatalogWithListener
 object HiveClientShim {
     private val _currentSparkSession = new ThreadLocal[SparkSession]()
     private val _currentHive = new ThreadLocal[Hive]()
+
+    def hiveVersion : String = HiveVersionInfo.getShortVersion
 
     /** Run a function within Hive state (SessionState, HiveConf, Hive client and class loader) */
     def withHiveState[A](spark:SparkSession)(f: => A): A = {

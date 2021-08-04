@@ -21,6 +21,7 @@ import java.io.File
 import scala.util.Try
 
 import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hive.common.util.HiveVersionInfo
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -76,10 +77,16 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
                 .config("spark.hadoop.datanucleus.autoStartMechanismMode", "ignored")
                 .config("spark.hadoop.hive.metastore.schema.verification.record.version", true)
                 .config("spark.hadoop.hive.metastore.schema.verification", false)
-                .config("spark.hadoop.hive.metastore.try.direct.sql", false)
                 .config("spark.hadoop.hive.metastore.uris", "")
                 .config("spark.sql.hive.metastore.sharedPrefixes", "org.apache.derby")
-                .enableHiveSupport()
+
+            val version = HiveVersionInfo.getShortVersion.split('.')
+            if (version(0).toInt >= 3)
+                builder.config("spark.hadoop.hive.metastore.try.direct.sql", false)
+            else
+                builder.config("spark.hadoop.hive.metastore.try.direct.sql", true)
+
+            builder.enableHiveSupport()
         }
 
         builder.config("spark.sql.streaming.checkpointLocation", streamingCheckpointPath.toString)

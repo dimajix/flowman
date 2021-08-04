@@ -109,7 +109,7 @@ case class RelationTarget(
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
             case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources(partition)
-            case Phase.BUILD => rel.provides
+            //case Phase.BUILD => rel.provides
             case _ => Set()
         }
     }
@@ -124,7 +124,7 @@ case class RelationTarget(
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
             case Phase.BUILD if mapping.nonEmpty => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
-            case Phase.BUILD => rel.requires
+            //case Phase.BUILD => rel.requires
             case _ => Set()
         }
     }
@@ -150,7 +150,7 @@ case class RelationTarget(
                     Unknown
                 else
                     Yes
-            case Phase.BUILD =>
+            case Phase.BUILD if mapping.nonEmpty =>
                 if (mode == OutputMode.APPEND) {
                     Yes
                 } else if (mode == OutputMode.UPDATE) {
@@ -158,6 +158,7 @@ case class RelationTarget(
                 } else {
                     !rel.loaded(execution, partition)
                 }
+            case Phase.BUILD => No
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
                 rel.loaded(execution, partition)

@@ -24,6 +24,9 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.streaming.Trigger
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
@@ -37,11 +40,13 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.StreamingOperation
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.types.SingleValue
 
 
 case class StreamTarget(
@@ -55,6 +60,14 @@ case class StreamTarget(
     checkpointLocation:Path
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
+
+    /**
+     * Returns all phases which are implemented by this target in the execute method
+     * @return
+     */
+    override def phases : Set[Phase] = {
+        Set(Phase.CREATE, Phase.BUILD, Phase.TRUNCATE, Phase.DESTROY)
+    }
 
     /**
       * Returns a list of physical resources produced by this target
@@ -74,10 +87,51 @@ case class StreamTarget(
       * @return
       */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+
         phase match {
+            case Phase.CREATE|Phase.DESTROY => rel.requires
             case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
         }
+    }
+
+
+    /**
+     * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
+     * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
+     *
+     * @param execution
+     * @param phase
+     * @return
+     */
+    override def dirty(execution: Execution, phase: Phase): Trilean = {
+        val rel = context.getRelation(relation)
+
+        phase match {
+            case Phase.VALIDATE => No
+            case Phase.CREATE =>
+                // Since an existing relation might need a migration, we return "unknown"
+                if (rel.exists(execution) == Yes)
+                    Unknown
+                else
+                    Yes
+            case Phase.BUILD => Yes
+            case Phase.VERIFY => No
+            case Phase.TRUNCATE =>
+                rel.loaded(execution, Map())
+            case Phase.DESTROY =>
+                rel.exists(execution)
+        }
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker): Unit = {
+        linker.input(mapping.mapping, mapping.output)
+        linker.write(relation, Map())
     }
 
     /**

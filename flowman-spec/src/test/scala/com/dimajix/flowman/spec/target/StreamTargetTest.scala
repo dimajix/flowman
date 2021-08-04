@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,27 +28,17 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.common.No
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
-import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.metric.GaugeMetric
-import com.dimajix.flowman.metric.Selector
-import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
-import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.spec.mapping.ProvidedMapping
-import com.dimajix.flowman.spec.relation.NullRelation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The RelationTarget" should "provide correct dependencies" in {
+class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "The StreamTarget" should "provide correct dependencies" in {
         val spec =
             s"""
                |mappings:
@@ -64,7 +54,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |
                |targets:
                |  out:
-               |    kind: relation
+               |    kind: stream
                |    mapping: some_table
                |    relation: some_relation
             """.stripMargin
@@ -73,7 +63,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val context = session.getContext(project)
 
         val target = context.getTarget(TargetIdentifier("out"))
-        target.kind should be ("relation")
+        target.kind should be ("stream")
 
         target.requires(Phase.CREATE) should be (Set())
         target.requires(Phase.BUILD) should be (Set())
@@ -88,40 +78,6 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
     }
 
-    it should "work without a mapping" in {
-        val spec =
-            s"""
-               |relations:
-               |  some_relation:
-               |    kind: file
-               |    location: test/data/data_1.csv
-               |    format: csv
-               |
-               |targets:
-               |  out:
-               |    kind: relation
-               |    relation: some_relation
-            """.stripMargin
-        val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
-        val context = session.getContext(project)
-
-        val target = context.getTarget(TargetIdentifier("out"))
-        target.kind should be ("relation")
-
-        target.requires(Phase.CREATE) should be (Set())
-        target.requires(Phase.BUILD) should be (Set())
-        target.requires(Phase.VERIFY) should be (Set())
-        target.requires(Phase.TRUNCATE) should be (Set())
-        target.requires(Phase.DESTROY) should be (Set())
-
-        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
-        target.provides(Phase.BUILD) should be (Set())
-        target.provides(Phase.VERIFY) should be (Set())
-        target.provides(Phase.TRUNCATE) should be (Set())
-        target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
-    }
-
     it should "support the whole lifecycle" in {
         val inputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
         val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
@@ -129,7 +85,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             s"""
                |mappings:
                |  input:
-               |    kind: read
+               |    kind: readStream
                |    relation: input
                |
                |relations:
@@ -162,9 +118,10 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |
                |targets:
                |  out:
-               |    kind: relation
+               |    kind: stream
                |    mapping: input
                |    relation: output
+               |    mode: append
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder()
@@ -212,16 +169,14 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.execute(execution, Phase.BUILD)
         output.exists(execution) should be (Yes)
         output.loaded(execution) should be (Yes)
-        target.dirty(execution, Phase.BUILD) should be (No)
+        target.dirty(execution, Phase.BUILD) should be (Yes)
+
+        Thread.sleep(2000)
+        execution.operations.stop()
+        execution.operations.awaitTermination()
         output.read(execution).count() should be (4)
 
         // == Verify =================================================================================================
-        target.dirty(execution, Phase.VERIFY) should be (Yes)
-        target.execute(execution, Phase.VERIFY)
-        output.exists(execution) should be (Yes)
-        output.loaded(execution) should be (Yes)
-        target.dirty(execution, Phase.VERIFY) should be (Yes)
-        output.read(execution).count() should be (4)
 
         // == Truncate ===============================================================================================
         target.dirty(execution, Phase.TRUNCATE) should be (Yes)
@@ -239,50 +194,95 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.dirty(execution, Phase.DESTROY) should be (No)
     }
 
-    it should "count the number of records" in {
-        val spark = this.spark
-        import spark.implicits._
-
-        val data = Seq(("v1", 12), ("v2", 23)).toDF()
-        data.createOrReplaceTempView("some_table")
-
-        val relationGen = (context:Context) => NullRelation(
-            Relation.Properties(context)
-        )
-        val mappingGen = (context:Context) => ProvidedMapping(
-            Mapping.Properties(context),
-            "some_table"
-        )
-        val targetGen = (context:Context) => RelationTarget(
-            Target.Properties(context),
-            MappingOutputIdentifier("mapping"),
-            RelationIdentifier("relation")
-        )
-        val project = Project(
-            name = "test",
-            targets = Map("target" -> targetGen),
-            relations = Map("relation" -> relationGen),
-            mappings = Map("mapping" -> mappingGen)
-        )
-
+    it should "support trigger-once" in {
+        val inputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val spec =
+            s"""
+               |mappings:
+               |  input:
+               |    kind: readStream
+               |    relation: input
+               |
+               |relations:
+               |  input:
+               |    kind: file
+               |    location: ${inputPath.toUri}
+               |    format: csv
+               |    schema:
+               |      kind: embedded
+               |      fields:
+               |        - name: int_col
+               |          type: integer
+               |        - name: dbl_col
+               |          type: double
+               |        - name: str_col
+               |          type: string
+               |  output:
+               |    kind: file
+               |    location: ${outputPath.toUri}
+               |    format: csv
+               |    schema:
+               |      kind: embedded
+               |      fields:
+               |        - name: int_col
+               |          type: integer
+               |        - name: dbl_col
+               |          type: double
+               |        - name: str_col
+               |          type: string
+               |
+               |targets:
+               |  out:
+               |    kind: stream
+               |    mapping: input
+               |    relation: output
+               |    mode: append
+               |    trigger: once
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
         val session = Session.builder()
             .withSparkSession(spark)
             .withProject(project)
             .build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
-        val target = context.getTarget(TargetIdentifier("target"))
-        target.execute(executor, Phase.BUILD)
+        val input = context.getRelation(RelationIdentifier("input"))
+        val output = context.getRelation(RelationIdentifier("output"))
+        val target = context.getTarget(TargetIdentifier("out"))
 
-        val metric = executor.metrics
-            .findMetric(Selector(Some("target_records"), target.metadata.asMap))
-            .head
-            .asInstanceOf[GaugeMetric]
+        // == Create =================================================================================================
+        input.create(execution)
 
-        metric.value should be (2)
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1"),
+            Row(234, 123.0, "1"),
+            Row(2345, 1234.0, "1"),
+            Row(23456, 12345.0, "2")
+        ))
+        val df = spark.createDataFrame(rdd, StructType(input.fields.map(_.catalogField)))
+        input.write(execution, df)
 
-        target.execute(executor, Phase.BUILD)
-        metric.value should be (4)
+        // == Create =================================================================================================
+        target.execute(execution, Phase.CREATE)
+        output.read(execution).count() should be (0)
+
+        // == Build ==================================================================================================
+        target.execute(execution, Phase.BUILD)
+        output.exists(execution) should be (Yes)
+        output.loaded(execution) should be (Yes)
+        target.dirty(execution, Phase.BUILD) should be (Yes)
+        output.read(execution).count() should be (4)
+
+        // == Verify =================================================================================================
+
+        // == Truncate ===============================================================================================
+        target.execute(execution, Phase.TRUNCATE)
+        output.read(execution).count() should be (0)
+
+        // == Destroy ================================================================================================
+        target.execute(execution, Phase.DESTROY)
     }
 }

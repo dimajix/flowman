@@ -156,7 +156,7 @@ trait Relation extends Instance {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType] = None, partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition

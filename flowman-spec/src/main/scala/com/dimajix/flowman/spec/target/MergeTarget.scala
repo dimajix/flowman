@@ -89,10 +89,7 @@ case class MergeTarget(
      * @return
      */
     override def phases : Set[Phase] = {
-        if (mapping.nonEmpty)
-            Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
-        else
-            Set(Phase.CREATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+        Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
     }
 
     /**
@@ -104,8 +101,7 @@ case class MergeTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources()
-            case Phase.BUILD => rel.provides
+            case Phase.BUILD => rel.provides ++ rel.resources()
             case _ => Set()
         }
     }
@@ -119,8 +115,7 @@ case class MergeTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD if mapping.nonEmpty => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
-            case Phase.BUILD => rel.requires
+            case Phase.BUILD => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
         }
     }
@@ -161,8 +156,7 @@ case class MergeTarget(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        if (mapping.nonEmpty)
-            linker.input(mapping.mapping, mapping.output)
+        linker.input(mapping.mapping, mapping.output)
         linker.write(relation, Map())
     }
 
@@ -195,23 +189,21 @@ case class MergeTarget(
     override def build(executor:Execution) : Unit = {
         require(executor != null)
 
-        if (mapping.nonEmpty) {
-            logger.info(s"Merging mapping '${this.mapping}' into relation '$relation'")
-            val mapping = context.getMapping(this.mapping.mapping)
-            val dfIn = executor.instantiate(mapping, this.mapping.output)
-            val dfOut =
-                if (parallelism <= 0)
-                    dfIn
-                else if (rebalance)
-                    dfIn.repartition(parallelism)
-                else
-                    dfIn.coalesce(parallelism)
+        logger.info(s"Merging mapping '${this.mapping}' into relation '$relation'")
+        val mapping = context.getMapping(this.mapping.mapping)
+        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        val dfOut =
+            if (parallelism <= 0)
+                dfIn
+            else if (rebalance)
+                dfIn.repartition(parallelism)
+            else
+                dfIn.coalesce(parallelism)
 
-            // Setup metric for counting number of records
-            val dfCount = countRecords(executor, dfOut)
-            val rel = context.getRelation(relation)
-            //rel.merge(executor, dfCount)
-        }
+        // Setup metric for counting number of records
+        val dfCount = countRecords(executor, dfOut)
+        val rel = context.getRelation(relation)
+        //rel.merge(executor, dfCount)
     }
 
     /**

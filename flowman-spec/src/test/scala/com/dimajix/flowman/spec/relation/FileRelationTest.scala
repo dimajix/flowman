@@ -129,7 +129,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.location should be (new Path(outputPath.toUri))
 
-        // == Create ===================================================================
+        // == Create =================================================================================================
         outputPath.toFile.exists() should be (false)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
@@ -141,10 +141,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.create(execution, true)
 
-        // == Read ===================================================================
+        // == Read ===================================================================================================
         relation.read(execution, None).count() should be (0)
 
-        // == Write ===================================================================
+        // == Write ==================================================================================================
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
                 ("lolo", 2)
@@ -158,10 +158,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (Yes)
         outputPath.toFile.exists() should be (true)
 
-        // == Read ===================================================================
+        // == Read ===================================================================================================
         relation.read(execution, None).count() should be (2)
 
-        // == Truncate ===================================================================
+        // == Truncate ===============================================================================================
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.truncate(execution)
@@ -169,10 +169,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (true)
 
-        // == Read ===================================================================
+        // == Read ===================================================================================================
         relation.read(execution, None).count() should be (0)
 
-        // == Destroy ===================================================================
+        // == Destroy ================================================================================================
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.destroy(execution)
@@ -182,6 +182,56 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         a[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
         relation.destroy(execution, true)
+    }
+
+    it should "work without an explicit schema" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "csv", "test")
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "csv",
+            options = Map(
+                "inferSchema" -> "true",
+                "header" -> "true"
+            )
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+
+        // == Write ==================================================================================================
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+
+        // == Read ===================================================================================================
+        val df1 = relation.read(execution, None)
+        df1.count() should be (2)
+        df1.schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
     }
 
     it should "support partitions" in {

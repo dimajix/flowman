@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import scala.collection.immutable.ListMap
+
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.LongType
@@ -49,30 +51,39 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             Mapping.Properties(session.context),
             MappingOutputIdentifier("myview"),
             Seq("_1", "_2"),
-            Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)")
+            ListMap(
+                "agg3" -> "sum(_3)",
+                "agg4" -> "sum(_4)",
+                "agg5" -> "sum(_4)",
+                "agg6" -> "sum(_4)",
+                "agg7" -> "sum(_4)"
+            )
         )
 
         xfs.input should be (MappingOutputIdentifier("myview"))
         xfs.outputs should be (Seq("main"))
         xfs.dimensions should be (Array("_1", "_2"))
-        xfs.aggregations should be (Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)"))
+        xfs.aggregations should be (Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)", "agg5" -> "sum(_4)", "agg6" -> "sum(_4)", "agg7" -> "sum(_4)"))
         xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
 
         val df2 = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1", "_2")
         df2.schema should be (
-            StructType(
-                StructField("_1", StringType) ::
-                StructField("_2", StringType) ::
-                StructField("agg3", LongType) ::
-                StructField("agg4", DoubleType) :: Nil
-            )
+            StructType(Seq(
+                StructField("_1", StringType),
+                StructField("_2", StringType),
+                StructField("agg3", LongType),
+                StructField("agg4", DoubleType),
+                StructField("agg5", DoubleType),
+                StructField("agg6", DoubleType),
+                StructField("agg7", DoubleType)
+            ))
         )
         val result = df2.collect()
         result.size should be (3)
-        result(0) should be (Row("c1_v1", "c2_v1", 25l, 41.0))
-        result(1) should be (Row("c1_v2", "c2_v1", 118l, 123.0))
-        result(2) should be (Row("c1_v2", "c2_v2", 113l, 118.0))
+        result(0) should be (Row("c1_v1", "c2_v1", 25l, 41.0, 41.0, 41.0, 41.0))
+        result(1) should be (Row("c1_v2", "c2_v1", 118l, 123.0, 123.0, 123.0, 123.0))
+        result(2) should be (Row("c1_v2", "c2_v2", 113l, 118.0, 118.0, 118.0, 118.0))
     }
 
     "An appropriate project" should "be readable from YML" in {

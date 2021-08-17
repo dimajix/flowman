@@ -18,8 +18,6 @@ package com.dimajix.spark.testing
 
 import java.io.File
 
-import scala.util.Try
-
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hive.common.util.HiveVersionInfo
 import org.apache.spark.SparkConf
@@ -34,10 +32,14 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
     var sc: SparkContext = _
     val conf = new SparkConf(false)
 
-    val hiveSupported: Boolean = Try {
+    val hiveSupported: Boolean = try {
           org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
           true
-        }.getOrElse(false)
+        }
+        catch {
+            case _: ClassNotFoundException => false
+            case _: NoClassDefFoundError => false
+        }
 
     def configureSpark(builder: SparkSession.Builder) : SparkSession.Builder = {
         builder
@@ -98,8 +100,8 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         configureSpark(builder)
 
         spark = builder.getOrCreate()
-        spark.sparkContext.setLogLevel("WARN")
         sc = spark.sparkContext
+        sc.setLogLevel("WARN")
         sc.setCheckpointDir(checkpointPath)
 
         // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown

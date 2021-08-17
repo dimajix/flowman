@@ -16,10 +16,15 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import scala.collection.immutable.ListMap
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -74,7 +79,8 @@ case class AggregateMapping(
 class AggregateMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private[spec] var input: String = _
     @JsonProperty(value = "dimensions", required = true) private[spec] var dimensions: Array[String] = _
-    @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: Map[String, String] = _
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "aggregations", required = true) private[spec] var aggregations: ListMap[String, String] = ListMap()
     @JsonProperty(value = "filter", required = false) private var filter: Option[String] = None
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = ""
 

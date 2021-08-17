@@ -37,8 +37,9 @@
                             <includeScope>runtime</includeScope>
                             <outputProperty>flowman-server.classpath</outputProperty>
                             <outputAbsoluteArtifactFilename>false</outputAbsoluteArtifactFilename>
+                            <fileSeparator>/</fileSeparator>
                             <pathSeparator>,</pathSeparator>
-                            <prefix>$FLOWMAN_HOME/lib</prefix>
+                            <prefix>lib</prefix>
                             <!-- Manually exclude shaded artifacts -->
                             <excludeArtifactIds>json,org.everit.json.schema,velocity-engine-core</excludeArtifactIds>
                         </configuration>

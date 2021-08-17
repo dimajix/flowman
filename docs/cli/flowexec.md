@@ -47,10 +47,22 @@ This will execute the whole job by executing the desired lifecycle for the `main
 * `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceeding phases. For example
 the whole lifecycle for `verify` includes the phases `create` and `build` and these phases would be executed before
 `verify`. If this is not what you want, then use the option `-nl`
+* `-j <n>` runs multiple job instances in parallel. This is very useful for running a job for a whole range of dates.
+* `-t <target>` only executes the given target(s), which are specified as a RegEx.
+
+The following example will only execute the `BUILD` phase of the job `daily`, which defines a parameter
+`processing_datetime` with type datetiem. The job will be executed for the whole date range from 2021-06-01 until 
+2021-08-10 with a step size of one day. Flowman will execute up to four jobs in parallel (`-j 4`).
+
+```
+flowexec job build daily processing_datetime:start=2021-06-01T00:00 processing_datetime:end=2021-08-10T00:00 processing_datetime:step=P1D --target parquet_lineitem --no-lifecycle -j 4
+```
 
 
 ## Target Commands
-It is also possible to perform actions on individual targets using the `target` command group.
+It is also possible to perform actions on individual targets using the `target` command group. In most cases this is
+inferior to using the `job` interface above, since typical jobs will also define appropriate environment variables
+which might be required by targets.
 
 ### List Targets
 ```shell script

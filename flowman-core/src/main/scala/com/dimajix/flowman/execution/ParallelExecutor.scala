@@ -103,7 +103,6 @@ class ParallelExecutor extends Executor {
             tasks
         }
 
-
         @tailrec
         def wait(tasks:Seq[Future[Status]]) : Unit = {
             val runningTasks = tasks.filter(!_.isCompleted)

@@ -18,6 +18,8 @@ package com.dimajix.spark.testing
 
 import java.io.File
 
+import scala.util.control.NonFatal
+
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hive.common.util.HiveVersionInfo
 import org.apache.spark.SparkConf
@@ -39,6 +41,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         catch {
             case _: ClassNotFoundException => false
             case _: NoClassDefFoundError => false
+            case NonFatal(_) => false
         }
 
     def configureSpark(builder: SparkSession.Builder) : SparkSession.Builder = {

@@ -18,6 +18,7 @@
 * Upgrade several Maven plugins to latest versions
 * Add new config option `flowman.workaround.analyze_partition` to workaround CDP 7.1 issues
 * Fix migrating Hive views to tables and vice-versa
+* Add new option "-j <n>" to allow running multiple job instances in parallel
 
 
 # Version 0.17.1 - 2021-06-18

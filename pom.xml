@@ -205,14 +205,14 @@
             </repositories>
             <properties>
                 <hadoop.dist>cdp7</hadoop.dist>
-                <cdp.version>7.1.6.0-297</cdp.version>
+                <cdp.version>7.1.7.0-551</cdp.version>
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
-                <spark.version>2.4.0.${cdp.version}</spark.version>
+                <spark.version>2.4.7.${cdp.version}</spark.version>
                 <spark-api.version>2.4</spark-api.version>
                 <hadoop.version>3.1.1.${cdp.version}</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
@@ -222,14 +222,15 @@
                 <derby.version>10.14.2.0</derby.version>
                 <zookeeper.version>3.5.5.${cdp.version}</zookeeper.version>
                 <avro.version>1.8.2.${cdp.version}</avro.version>
-                <guava.version>28.1-jre</guava.version>
                 <json4s.version>3.5.3</json4s.version>
                 <json-smart.version>2.3</json-smart.version>
-                <snappy.version>1.1.7.3</snappy.version>
-                <netty-all.version>4.1.51.Final</netty-all.version>
+                <guava.version>28.0-jre</guava.version>
+                <snappy.version>1.1.7.5</snappy.version>
+                <netty-all.version>4.1.63.Final</netty-all.version>
                 <antlr4.version>4.7</antlr4.version>
                 <jackson.version>2.10.5</jackson.version>
-                <jackson.databind.version>2.10.5</jackson.databind.version>
+                <jackson.databind.version>2.10.5.1</jackson.databind.version>
+                <slf4j.version>1.7.25</slf4j.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.13</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
@@ -237,7 +238,6 @@
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
                 <commons-lang3.version>3.8.1</commons-lang3.version>
-                <slf4j.version>1.7.25</slf4j.version>
             </properties>
         </profile>
 

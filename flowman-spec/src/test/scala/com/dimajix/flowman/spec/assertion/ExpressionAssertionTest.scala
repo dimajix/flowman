@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class ExpressionAsserionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class ExpressionAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The ExpressionAssertion" should "be parsable" in {
         val spec =
             """

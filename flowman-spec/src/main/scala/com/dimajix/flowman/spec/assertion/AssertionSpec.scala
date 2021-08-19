@@ -43,7 +43,9 @@ object AssertionSpec extends TypeRegistry[AssertionSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionAssertionSpec]),
     new JsonSubTypes.Type(name = "columns", value = classOf[ColumnsAssertionSpec]),
-    new JsonSubTypes.Type(name = "sql", value = classOf[SqlAssertionSpec])
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaAssertionSpec]),
+    new JsonSubTypes.Type(name = "sql", value = classOf[SqlAssertionSpec]),
+    new JsonSubTypes.Type(name = "uniqueKey", value = classOf[UniqueKeyAssertionSpec])
 ))
 abstract class AssertionSpec  extends NamedSpec[Assertion] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None

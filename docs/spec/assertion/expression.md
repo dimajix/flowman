@@ -50,10 +50,10 @@ test:
 * `description` **(optional)** *(type: string)*:
   A textual description of the assertion
 
-* `mapping` **(optional)** *(type: srting)*:
+* `mapping` **(required)** *(type: string)*:
  The name of the mapping which is to be tested.
 
-* `expected` **(optional)** *(type: list:srting)*:
+* `expected` **(optional)** *(type: list:string)*:
   A list of Spark SQL expressions, which are tested for every single record that is produced by the specified 
   mapping. You can imagine that the expression will be used in a SQL `WHERE` condition, which means that you
   can access all columns from the mapping, but you cannot perform any aggregations or more complex transformations.

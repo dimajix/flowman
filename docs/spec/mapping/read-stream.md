@@ -1,6 +1,6 @@
 # Read Stream Mapping
 
-The `readStream` mapping is very similar to the [`read`](read.md) mapping, except that it will create a streaming
+The `readStream` mapping is very similar to the [`read`](read-relation.md) mapping, except that it will create a streaming
 result used for creating continuous event processing applications
 
 ## Example

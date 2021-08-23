@@ -26,7 +26,9 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.streaming.Trigger
+import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -36,16 +38,21 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
@@ -104,7 +111,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             Field("int_col", ftypes.IntegerType)
         ))
 
-        // == Create ===================================================================
+        // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
@@ -116,14 +123,23 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.create(execution, true)
 
-        // == Read ===================================================================
+        // == Read ===================================================================================================
         relation.read(execution, None, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
         )))
         relation.read(execution, None, Map()).count() should be (0)
 
-        // == Write ===================================================================
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("delta_table", Some("default")))
+        table_1.identifier should be (TableIdentifier("delta_table", Some("default")))
+        table_1.tableType should be (CatalogTableType.MANAGED)
+        table_1.schema should be (StructType(Seq()))
+        table_1.dataSchema should be (StructType(Seq()))
+        table_1.partitionColumnNames should be (Seq())
+        table_1.partitionSchema should be (StructType(Seq()))
+
+        // == Write ==================================================================================================
         val schema = StructType(Seq(
             StructField("str_col", StringType),
             StructField("char_col", StringType),
@@ -136,7 +152,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.write(execution, df, Map())
         relation.loaded(execution, Map()) should be (Yes)
 
-        // == Read ===================================================================
+        // == Read ===================================================================================================
         relation.read(execution, None, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
@@ -147,11 +163,11 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )
         checkAnswer(df2, rows_1)
 
-        // == Overwrite ==================================================================
+        // == Overwrite ==============================================================================================
         relation.write(execution, df, Map())
         relation.loaded(execution, Map()) should be (Yes)
 
-        // == Read ===================================================================
+        // == Read ===================================================================================================
         relation.read(execution, None, Map()).count() should be (1)
 
         // == Truncate ===================================================================
@@ -222,6 +238,15 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // Try to create relation, although it already exists
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.create(execution, true)
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("delta_table2", Some("default")))
+        table_1.identifier should be (TableIdentifier("delta_table2", Some("default")))
+        table_1.tableType should be (CatalogTableType.EXTERNAL)
+        table_1.schema should be (StructType(Seq()))
+        table_1.dataSchema should be (StructType(Seq()))
+        table_1.partitionColumnNames should be (Seq())
+        table_1.partitionSchema should be (StructType(Seq()))
 
         // == Read ==================================================================================================
         relation.read(execution, None, Map()).schema should be (StructType(Seq(
@@ -1102,15 +1127,287 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
     }
 
     it should "support migrations by adding new columns" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
 
+        val rel_1 = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c2", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+        val rel_2 = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c1", com.dimajix.flowman.types.DoubleType),
+                    Field("c2", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
+        rel_1.create(execution, false)
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
+
+        rel_1.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.IntegerType),
+            Field("c2", com.dimajix.flowman.types.StringType)
+        )))
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("delta_table", Some("default")))
+        table_1.identifier should be (TableIdentifier("delta_table", Some("default")))
+        table_1.tableType should be (CatalogTableType.MANAGED)
+        table_1.schema should be (StructType(Seq()))
+        table_1.dataSchema should be (StructType(Seq()))
+        table_1.partitionColumnNames should be (Seq())
+        table_1.partitionSchema should be (StructType(Seq()))
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(21, "v1")
+        ))
+        val df = spark.createDataFrame(rdd, table_1.dataSchema)
+        rel_1.write(execution, df)
+
+        // == Read ===================================================================================================
+        val df_1 = rel_1.read(execution)
+        df_1.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType)
+        )))
+        val df_1s = spark.read.table("delta_table")
+        df_1s.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType)
+        )))
+
+        // == Migrate ================================================================================================
+        rel_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        rel_2.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.IntegerType),
+            Field("c1", com.dimajix.flowman.types.DoubleType),
+            Field("c2", com.dimajix.flowman.types.StringType)
+        )))
+
+        // == Read ===================================================================================================
+        val df_2 = rel_2.read(execution)
+        df_2.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType),
+            StructField("c1", DoubleType)
+        )))
+        val df_2s = spark.read.table("delta_table")
+        df_2s.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType),
+            StructField("c1", DoubleType)
+        )))
+
+        // == Write ==================================================================================================
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row(22, "v2", 123.8)
+        ))
+        val df2 = spark.createDataFrame(rdd2, df_2s.schema)
+        rel_2.write(execution, df2)
+
+        // == Destroy ================================================================================================
+        rel_1.destroy(execution)
+        session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be (false)
     }
 
-    it should "support migrations by removing columns" in {
+    it should "support migrations by updating nullability" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
 
+        val rel_1 = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c2", com.dimajix.flowman.types.StringType, nullable=false)
+                )
+            ))
+        )
+        val rel_2 = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c2", com.dimajix.flowman.types.StringType, nullable=true)
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
+        rel_1.create(execution, false)
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
+
+        rel_1.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.IntegerType),
+            Field("c2", com.dimajix.flowman.types.StringType, nullable=false)
+        )))
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(21, "v1")
+        ))
+        val df = spark.createDataFrame(rdd, rel_1.schema.get.sparkSchema)
+        rel_1.write(execution, df)
+
+        // == Read ===================================================================================================
+        val df_1 = rel_1.read(execution)
+        df_1.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType, nullable=false)
+        )))
+        val df_1s = spark.read.table("delta_table")
+        df_1s.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType, nullable=false)
+        )))
+
+        // == Migrate ================================================================================================
+        rel_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        rel_2.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.IntegerType),
+            Field("c2", com.dimajix.flowman.types.StringType, nullable=true)
+        )))
+
+        // == Read ===================================================================================================
+        val df_2 = rel_2.read(execution)
+        df_2.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType, nullable=true)
+        )))
+        val df_2s = spark.read.table("delta_table")
+        df_2s.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType, nullable=true)
+        )))
+
+        // == Destroy ================================================================================================
+        rel_1.destroy(execution)
+        session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be (false)
     }
 
     it should "support migrations by changing data types" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
 
+        val rel_1 = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c2", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+        val rel_2 = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c2", com.dimajix.flowman.types.DoubleType)
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
+        rel_1.create(execution, false)
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
+
+        rel_1.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.IntegerType),
+            Field("c2", com.dimajix.flowman.types.StringType)
+        )))
+
+        // == Write ==================================================================================================
+        val rdd1 = spark.sparkContext.parallelize(Seq(
+            Row(21, "v1")
+        ))
+        val df1 = spark.createDataFrame(rdd1, rel_1.schema.get.sparkSchema)
+        rel_1.write(execution, df1)
+
+        // == Read ===================================================================================================
+        val df_1 = rel_1.read(execution)
+        df_1.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType)
+        )))
+        val df_1s = spark.read.table("delta_table")
+        df_1s.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", StringType)
+        )))
+
+        // == Migrate ================================================================================================
+        a[MigrationFailedException] should be thrownBy(rel_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL))
+        a[MigrationFailedException] should be thrownBy(rel_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER))
+        rel_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        rel_2.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.IntegerType),
+            Field("c2", com.dimajix.flowman.types.DoubleType)
+        )))
+
+        // == Write ==================================================================================================
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row(21, 12.37)
+        ))
+        val df2 = spark.createDataFrame(rdd2, rel_2.schema.get.sparkSchema)
+        rel_2.write(execution, df2)
+
+        // == Read ===================================================================================================
+        val df_2 = rel_2.read(execution)
+        df_2.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", DoubleType)
+        )))
+        val df_2s = spark.read.table("delta_table")
+        df_2s.schema should be (StructType(Seq(
+            StructField("c0", IntegerType),
+            StructField("c2", DoubleType)
+        )))
+
+        // == Destroy ================================================================================================
+        rel_1.destroy(execution)
+        session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be (false)
     }
 
     it should "support stream writing" in {

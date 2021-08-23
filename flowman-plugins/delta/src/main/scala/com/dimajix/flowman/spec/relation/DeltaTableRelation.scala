@@ -22,12 +22,8 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
-import org.apache.spark.sql.delta.DeltaErrors
-import org.apache.spark.sql.delta.DeltaTableIdentifier
-import org.apache.spark.sql.delta.DeltaTableUtils
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
@@ -39,14 +35,14 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.jdbc.HiveDialect
-import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
-import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
@@ -66,7 +62,7 @@ case class DeltaTableRelation(
     options: Map[String,String] = Map(),
     properties: Map[String, String] = Map(),
     mergeKey: Seq[String] = Seq()
-) extends BaseRelation with PartitionedRelation {
+) extends DeltaRelation(options) {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
 
     private lazy val tableIdentifier: TableIdentifier = {
@@ -183,10 +179,8 @@ case class DeltaTableRelation(
      */
     override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
         logger.info(s"Streaming from Delta table relation '$identifier' at $tableIdentifier")
-
         val location = DeltaUtils.getLocation(execution, tableIdentifier)
-        val df = streamReader(execution, "delta", options).load(location.toString)
-        SchemaUtils.applySchema(df, schema)
+        readStreamFrom(execution, location, schema)
     }
 
     /**
@@ -198,17 +192,8 @@ case class DeltaTableRelation(
      */
     override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
         logger.info(s"Streaming to Delta table relation '$identifier' $tableIdentifier")
-
         val location = DeltaUtils.getLocation(execution, tableIdentifier)
-        val writer = streamWriter(execution, df, "delta", options, mode.streamMode, trigger, checkpointLocation)
-        if (partitions.nonEmpty) {
-            writer
-                .partitionBy(partitions.map(_.name):_*)
-                .start(location.toString)
-        }
-        else {
-            writer.start(location.toString)
-        }
+        writeStreamTo(execution, df, location, mode, trigger, checkpointLocation)
     }
 
     /**
@@ -262,7 +247,10 @@ case class DeltaTableRelation(
         val tableExists = exists(execution) == Yes
         if (!ifNotExists || !tableExists) {
             val sparkSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
-            logger.info(s"Creating Delta table relation '$identifier' with table $tableIdentifier and schema\n ${sparkSchema.treeString}")
+            logger.info(s"Creating Delta table relation '$identifier' with table $tableIdentifier and schema\n${sparkSchema.treeString}")
+            if (schema.isEmpty) {
+                throw new UnspecifiedSchemaException(identifier)
+            }
 
             if (tableExists)
                 throw new TableAlreadyExistsException(database, table)
@@ -325,11 +313,44 @@ case class DeltaTableRelation(
      * @param execution
      */
     override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
-        ???
+        require(execution != null)
+
+        val catalog = execution.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            val table = catalog.getTable(tableIdentifier)
+            if (table.tableType == CatalogTableType.VIEW) {
+                migrationStrategy match {
+                    case MigrationStrategy.NEVER =>
+                        logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE $tableIdentifier, but migrations are disabled.")
+                    case MigrationStrategy.FAIL =>
+                        logger.error(s"Cannot migrate relation HiveTable '$identifier' from VIEW to a TABLE $tableIdentifier, since migrations are disabled.")
+                        throw new MigrationFailedException(identifier)
+                    case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                        logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
+                        catalog.dropView(tableIdentifier, false)
+                        create(execution, false)
+                }
+            }
+            else {
+                migrateInternal(execution, migrationPolicy, migrationStrategy)
+            }
+        }
     }
 
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
         Some(DeltaTable.forName(execution.spark, tableIdentifier.quotedString).toDF.schema)
+    }
+
+    override protected def loadDeltaTable(execution: Execution): DeltaTableV2 = {
+        val catalog = execution.catalog
+        val table = catalog.getTable(tableIdentifier)
+
+        DeltaTableV2(
+            execution.spark,
+            new Path(table.location),
+            catalogTable = Some(table),
+            tableIdentifier = Some(tableIdentifier.toString())
+        )
     }
 }
 

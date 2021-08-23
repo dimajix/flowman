@@ -67,6 +67,20 @@ relations:
   List of column names specifying the key to identify matching records on `update` operations.
 
 
+## Automatic Migrations
+Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
+and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
+see [configuration](../../config.md) for more details).
+
+The migration strategy `ALTER` supports the following alterations:
+* Changing nullability
+* Changing the comment
+* Adding new columns
+
+Other changes (like changing the data type or dropping columns) is not supported in the `ALTER` strategy and
+will require either `REPLACE` or `ALTER_REPLACE` - but this will remove all existing data in that table!
+
+
 ## Output Modes
 
 ### Batch Writing

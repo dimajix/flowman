@@ -49,6 +49,7 @@ import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -298,18 +299,18 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                if (this.schema.isEmpty) {
-                    throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' without a schema")
-                }
                 doCreate(con, options)
             }
         }
     }
 
     private def doCreate(con:Connection, options:JDBCOptions): Unit = {
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${this.schema.map(_.treeString).orNull}")
+        if (this.schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
+        }
         val schema = this.schema.get
         val table = TableDefinition(
             tableIdentifier,
@@ -401,7 +402,7 @@ case class JdbcRelation(
         }
 
         def alter(migrations:Seq[TableChange], con:Connection, options:JDBCOptions) : Unit = {
-            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier")
+            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
 
             try {
                 execution.catalog.alterTable(tableIdentifier, migrations)
@@ -413,7 +414,7 @@ case class JdbcRelation(
 
         def recreate(con:Connection, options:JDBCOptions) : Unit = {
             try {
-                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier")
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
                 JdbcUtils.dropTable(con, tableIdentifier, options)
                 doCreate(con, options)
             }
@@ -425,7 +426,7 @@ case class JdbcRelation(
         def supported(change:TableChange) : Boolean = {
             change match {
                 case _:DropColumn => true
-                case _:AddColumn => true
+                case a:AddColumn => a.column.nullable // Only allow nullable columns to be added
                 case _:UpdateColumnNullability => true
                 case _:UpdateColumnType => true
                 case _:UpdateColumnComment => true

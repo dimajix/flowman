@@ -71,5 +71,8 @@ class VerificationFailedException(val target:TargetIdentifier, cause:Throwable =
 class IncompatibleSchemaException(val relation:RelationIdentifier)
     extends ExecutionException(s"Incompatible schema in relation '$relation'")
 
+class UnspecifiedSchemaException(val relation:RelationIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"No schema specified for '$relation' failed", cause)
+
 class MigrationFailedException(val relation:RelationIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Migration of '$relation' failed", cause)

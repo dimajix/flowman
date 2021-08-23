@@ -37,6 +37,7 @@ import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
@@ -357,6 +358,10 @@ case class HiveUnionTableRelation(
 
         if (!ifNotExists || exists(execution) == No) {
             logger.info(s"Creating Hive union relation '$identifier'")
+            if (schema.isEmpty) {
+                throw new UnspecifiedSchemaException(identifier)
+            }
+
             // Create first table using current schema
             val hiveTableRelation = tableRelation(1)
             hiveTableRelation.create(execution, ifNotExists)

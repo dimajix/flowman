@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
@@ -37,12 +38,11 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
-import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
-import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
@@ -60,7 +60,7 @@ case class DeltaFileRelation(
     options: Map[String,String] = Map(),
     properties: Map[String, String] = Map(),
     mergeKey: Seq[String] = Seq()
-) extends BaseRelation with PartitionedRelation {
+) extends DeltaRelation(options) {
     protected  val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
 
     /**
@@ -182,9 +182,7 @@ case class DeltaFileRelation(
      */
     override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
         logger.info(s"Streaming from Delta file relation '$identifier' at '$location'")
-
-        val df = streamReader(execution, "delta", options).load(location.toString)
-        SchemaUtils.applySchema(df, schema)
+        readStreamFrom(execution, location, schema)
     }
 
     /**
@@ -196,16 +194,7 @@ case class DeltaFileRelation(
      */
     override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
         logger.info(s"Streaming to Delta file relation '$identifier' at '$location'")
-
-        val writer = streamWriter(execution, df, "delta", options, mode.streamMode, trigger, checkpointLocation)
-        if (partitions.nonEmpty) {
-            writer
-                .partitionBy(partitions.map(_.name):_*)
-                .start(location.toString)
-        }
-        else {
-            writer.start(location.toString)
-        }
+        writeStreamTo(execution, df, location, mode, trigger, checkpointLocation)
     }
 
     /**
@@ -257,7 +246,10 @@ case class DeltaFileRelation(
         val tableExists = exists(execution) == Yes
         if (!ifNotExists || !tableExists) {
             val sparkSchema = StructType(fields.map(_.catalogField))
-            logger.info(s"Creating Delta file relation '$identifier' at '$location' and schema\n ${sparkSchema.treeString}")
+            logger.info(s"Creating Delta file relation '$identifier' at '$location' and schema\n${sparkSchema.treeString}")
+            if (schema.isEmpty) {
+                throw new UnspecifiedSchemaException(identifier)
+            }
 
             if (tableExists)
                 throw new FileAlreadyExistsException(s"Delta file relation at at '$location' already exists")
@@ -336,11 +328,20 @@ case class DeltaFileRelation(
      * @param execution
      */
     override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
-        ???
+        require(execution != null)
+
+        val tableExists = exists(execution) == Yes
+        if (tableExists) {
+            migrateInternal(execution, migrationPolicy, migrationStrategy)
+        }
     }
 
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
         Some(DeltaTable.forPath(execution.spark, location.toString).toDF.schema)
+    }
+
+    override protected def loadDeltaTable(execution: Execution): DeltaTableV2 = {
+        DeltaTableV2(execution.spark, location)
     }
 }
 

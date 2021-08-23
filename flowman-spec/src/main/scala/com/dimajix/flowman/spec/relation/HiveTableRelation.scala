@@ -55,6 +55,7 @@ import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
@@ -377,7 +378,10 @@ case class HiveTableRelation(
 
         if (!ifNotExists || exists(execution) == No) {
             val catalogSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
-            logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n ${catalogSchema.treeString}")
+            logger.info(s"Creating Hive table relation '$identifier' with table $tableIdentifier and schema\n${catalogSchema.treeString}")
+            if (schema.isEmpty) {
+                throw new UnspecifiedSchemaException(identifier)
+            }
 
             // Create and save Avro schema
             import HiveTableRelation._
@@ -532,7 +536,7 @@ case class HiveTableRelation(
         }
 
         def alter(migrations:Seq[TableChange]) : Unit = {
-            logger.info(s"Migrating HiveTable relation '$identifier', this will the Hive table $tableIdentifier")
+            logger.info(s"Migrating HiveTable relation '$identifier', this will alter the Hive table $tableIdentifier. New schema:\n${targetSchema.treeString}")
 
             try {
                 execution.catalog.alterTable(tableIdentifier, migrations)
@@ -543,7 +547,7 @@ case class HiveTableRelation(
         }
 
         def recreate() : Unit = {
-            logger.info(s"Migrating HiveTable relation '$identifier', this will the Hive table $tableIdentifier")
+            logger.info(s"Migrating HiveTable relation '$identifier', this will drop/create the Hive table $tableIdentifier.")
             try {
                 destroy(execution, true)
                 create(execution, true)
@@ -556,7 +560,7 @@ case class HiveTableRelation(
         def supported(change:TableChange) : Boolean = {
             change match {
                 case _:DropColumn => false
-                case _:AddColumn => true
+                case a:AddColumn => a.column.nullable // Only allow nullable columns to be added
                 case _:UpdateColumnNullability => true
                 case _:UpdateColumnType => false
                 case _:UpdateColumnComment => true

@@ -8,8 +8,23 @@ import com.dimajix.flowman.execution.Execution
 
 case class AssertionResult(
     name:String,
-    valid:Boolean
+    valid:Boolean,
+    exception:Boolean=false
 )
+
+case class AssertionSuiteResult(
+    name:String,
+    description:String,
+    assertions:Seq[AssertionResult]
+) {
+    def success : Boolean = assertions.forall(_.valid)
+    def failure : Boolean = assertions.exists(a => !a.valid)
+
+    def numFailures : Int = assertions.count(a => !a.valid)
+    def numSuccesses : Int = assertions.count(_.valid)
+    def numExceptions : Int = assertions.count(_.exception)
+}
+
 
 object Assertion {
     object Properties {

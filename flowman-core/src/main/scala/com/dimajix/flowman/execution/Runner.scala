@@ -519,58 +519,19 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
         try {
             val startTime = Instant.now()
-            var numExceptions = 0
 
             // First instantiate all assertions
-            val instances = test.assertions.map { case (name, assertion) =>
-                val instance = assertion.instantiate(context)
-                name -> instance
-            }
+            val instances = test.assertions.values.toSeq.map( _.instantiate(context))
 
-            // Collect all required DataFrames for caching. We assume that each DataFrame might be used in multiple
-            // assertions and that the DataFrames aren't very huge (we are talking about tests!)
-            val inputDataFrames = instances
-                .flatMap { case(_,instance) =>  if(!dryRun) instance.inputs else Seq() }
-                .toSeq
-                .distinct
-                .map(id => execution.instantiate(context.getMapping(id.mapping), id.output))
-
-            val results = DataFrameUtils.withCaches(inputDataFrames) {
-                instances.map { case (name, instance) =>
-                    val description = instance.description.getOrElse(name)
-
-                    val status = if (!dryRun) {
-                        try {
-                            execution.assert(instance)
-                        }
-                        catch {
-                            case NonFatal(ex) =>
-                                // Pass on exception when keepGoing is false, so next assertions won't be executed
-                                numExceptions = numExceptions + 1
-                                if (!keepGoing)
-                                    throw ex
-                                logger.error(s"Caught exception during $description:", ex)
-                                Seq()
-                        }
-                    }
-                    else {
-                        Seq()
-                    }
-
-                    if (status.forall(_.valid))
-                        logger.info(green(s" ✓ passed: $description"))
-                    else
-                        logger.error(red(s" ✘ failed: $description"))
-
-                    // Remember test name, description and status for potential report
-                    (name, description, status)
-                }
-            }
+            // Execute all assertions
+            val runner = new AssertionRunner(context, execution)
+            val results = runner.run(instances, keepGoing=keepGoing, dryRun=dryRun)
 
             val endTime = Instant.now()
             val duration = Duration.between(startTime, endTime)
-            val numSucceeded = results.map(_._3.count(_.valid)).sum
-            val numFailed = results.map(_._3.count(!_.valid)).sum
+            val numSucceeded = results.map(_.numSuccesses).sum
+            val numFailed = results.map(_.numFailures).sum
+            val numExceptions = results.map(_.numExceptions).sum
 
             logger.info(cyan(s"$numSucceeded assertions passed, $numFailed failed, $numExceptions exceptions"))
             logger.info(cyan(s"Executed ${numSucceeded + numFailed} assertions in  ${duration.toMillis / 1000.0} s"))

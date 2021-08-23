@@ -63,6 +63,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (assertion.requires _).expects().returns(Set())
         (assertion.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
         (assertion.execute _).expects(*,*).returns(Seq(AssertionResult("a1", true)))
@@ -90,6 +91,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (assertion.requires _).expects().returns(Set())
         (assertion.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
         (assertion.execute _).expects(*,*).returns(Seq())
@@ -117,6 +119,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (assertion.requires _).expects().returns(Set())
         (assertion.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
         (assertion.execute _).expects(*,*).returns(Seq(

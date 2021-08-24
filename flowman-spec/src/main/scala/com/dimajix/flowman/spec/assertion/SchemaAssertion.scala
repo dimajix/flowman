@@ -35,7 +35,7 @@ import com.dimajix.jackson.ListMapDeserializer
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -79,7 +79,7 @@ case class SchemaAssertion(
      * @param input
      * @return
      */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionTestResult] = {
         require(execution != null)
         require(input != null)
 
@@ -149,14 +149,16 @@ case class SchemaAssertion(
         val actualSchema = input(mapping).schema
         val desiredSchema = schema.map(_.sparkSchema).getOrElse(ftypes.StructType(columns).sparkType)
 
-        if (!compareStructs(actualSchema, desiredSchema)) {
+        val result = if (!compareStructs(actualSchema, desiredSchema)) {
             logger.error(
                 s"""Mapping '$mapping' has wrong schema.\nActual schema:\n${actualSchema.treeString}\nDesired schema:\n${desiredSchema.treeString}""")
-            Seq(AssertionResult(name, false))
+            false
         }
         else {
-            Seq(AssertionResult(name, true))
+            true
         }
+
+        Seq(AssertionTestResult(name, result))
     }
 }
 

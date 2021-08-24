@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -60,7 +61,7 @@ case class UniqueKeyAssertion(
      * @param input
      * @return
      */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionTestResult] = {
         require(execution != null)
         require(input != null)
 
@@ -71,14 +72,16 @@ case class UniqueKeyAssertion(
             .filter("flowman_key_count > 1")
         val numDuplicates = duplicates.count()
 
-        if (numDuplicates > 0) {
+        val status = if (numDuplicates > 0) {
             val diff = DataFrameUtils.showString(duplicates, 20, -1)
             logger.error(s"""Mapping '$mapping' contains $numDuplicates duplicate entries for key '${key.mkString(",")}':\n$diff""")
-            Seq(AssertionResult(name, false))
+            false
         }
         else {
-            Seq(AssertionResult(name, true))
+            true
         }
+
+        Seq(AssertionTestResult(name, status))
     }
 }
 

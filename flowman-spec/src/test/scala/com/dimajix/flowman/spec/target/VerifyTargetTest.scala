@@ -16,16 +16,19 @@
 
 package com.dimajix.flowman.spec.target
 
+import scala.collection.immutable.ListMap
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.ValidationFailedException
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Target
 
@@ -66,7 +69,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
-        (assertion.execute _).expects(*,*).returns(Seq(AssertionResult("a1", true)))
+        (assertion.execute _).expects(*,*).returns(Seq(AssertionTestResult("a1", true)))
 
         target.phases should be (Set(Phase.VERIFY))
         target.requires(Phase.VERIFY) should be (Set())
@@ -111,20 +114,33 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         val execution = session.execution
         val context = session.context
 
-        val assertion = mock[Assertion]
+        val assertion1 = mock[Assertion]
+        val assertion2 = mock[Assertion]
         val target = VerifyTarget(
             Target.Properties(context),
-            Map("a1" -> assertion)
+            ListMap(
+                "a1" -> assertion1,
+                "a2" -> assertion2
+            )
         )
 
-        (assertion.requires _).expects().returns(Set())
-        (assertion.inputs _).expects().atLeastOnce().returns(Seq())
-        (assertion.name _).expects().returns("a1")
-        (assertion.description _).expects().returns(None)
-        (assertion.context _).expects().returns(context)
-        (assertion.execute _).expects(*,*).returns(Seq(
-            AssertionResult("a1", false),
-            AssertionResult("a1", true)
+        (assertion1.requires _).expects().returns(Set())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.name _).expects().returns("a1")
+        (assertion1.description _).expects().returns(None)
+        (assertion1.context _).expects().returns(context)
+        (assertion1.execute _).expects(*,*).returns(Seq(
+            AssertionTestResult("a1", false),
+            AssertionTestResult("a1", true)
+        ))
+
+        (assertion2.requires _).expects().returns(Set())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.name _).expects().returns("a2")
+        (assertion2.description _).expects().returns(None)
+        (assertion2.context _).expects().returns(context)
+        (assertion2.execute _).expects(*,*).returns(Seq(
+            AssertionTestResult("a3", true)
         ))
 
         target.phases should be (Set(Phase.VERIFY))
@@ -134,6 +150,92 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         target.after should be (Seq())
 
         target.dirty(execution, Phase.VERIFY) should be (Yes)
-        a[ValidationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+        a[VerificationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+    }
+
+    it should "execute all exception if fail_fast is used" in {
+        val session = Session.builder.disableSpark().build()
+        val execution = session.execution
+        val context = session.context
+
+        val assertion1 = mock[Assertion]
+        val assertion2 = mock[Assertion]
+        val target = VerifyTarget(
+            Target.Properties(context),
+            ListMap(
+                "a1" -> assertion1,
+                "a2" -> assertion2
+            ),
+            errorMode = ErrorMode.FAIL_FAST
+        )
+
+        (assertion1.requires _).expects().returns(Set())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.name _).expects().returns("a1")
+        (assertion1.description _).expects().returns(None)
+        (assertion1.context _).expects().returns(context)
+        (assertion1.execute _).expects(*,*).returns(Seq(
+            AssertionTestResult("a1", false),
+            AssertionTestResult("a1", true)
+        ))
+
+        (assertion2.requires _).expects().returns(Set())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.name _).expects().returns("a2")
+        (assertion2.description _).expects().returns(None)
+
+        target.phases should be (Set(Phase.VERIFY))
+        target.requires(Phase.VERIFY) should be (Set())
+        target.provides(Phase.VERIFY) should be (Set())
+        target.before should be (Seq())
+        target.after should be (Seq())
+
+        target.dirty(execution, Phase.VERIFY) should be (Yes)
+        a[VerificationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+    }
+
+    it should "not throw an exception if fail_never is used" in {
+        val session = Session.builder.disableSpark().build()
+        val execution = session.execution
+        val context = session.context
+
+        val assertion1 = mock[Assertion]
+        val assertion2 = mock[Assertion]
+        val target = VerifyTarget(
+            Target.Properties(context),
+            ListMap(
+                "a1" -> assertion1,
+                "a2" -> assertion2
+            ),
+            errorMode = ErrorMode.FAIL_NEVER
+        )
+
+        (assertion1.requires _).expects().returns(Set())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.name _).expects().returns("a1")
+        (assertion1.description _).expects().returns(None)
+        (assertion1.context _).expects().returns(context)
+        (assertion1.execute _).expects(*,*).returns(Seq(
+            AssertionTestResult("a1", false),
+            AssertionTestResult("a1", true)
+        ))
+
+        (assertion2.requires _).expects().returns(Set())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.name _).expects().returns("a2")
+        (assertion2.description _).expects().returns(None)
+        (assertion2.context _).expects().returns(context)
+        (assertion2.execute _).expects(*,*).returns(Seq(
+            AssertionTestResult("a3", true)
+        ))
+
+        target.phases should be (Set(Phase.VERIFY))
+        target.requires(Phase.VERIFY) should be (Set())
+        target.provides(Phase.VERIFY) should be (Set())
+        target.before should be (Seq())
+        target.after should be (Seq())
+
+        target.dirty(execution, Phase.VERIFY) should be (Yes)
+        noException should be thrownBy(target.execute(execution, Phase.VERIFY))
     }
 }

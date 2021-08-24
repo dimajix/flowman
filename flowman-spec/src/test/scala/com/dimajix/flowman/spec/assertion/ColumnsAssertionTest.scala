@@ -27,7 +27,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -84,11 +84,11 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
         result should be (Seq(
-            AssertionResult("ID IS PRESENT", true),
-            AssertionResult("id IS ABSENT", false),
-            AssertionResult("no_such_column IS ABSENT", true),
-            AssertionResult("id IS OF TYPE BOOLEAN", false),
-            AssertionResult("ID IS OF TYPE (STRING,BIGINT)", true)
+            AssertionTestResult("ID IS PRESENT", true),
+            AssertionTestResult("id IS ABSENT", false),
+            AssertionTestResult("no_such_column IS ABSENT", true),
+            AssertionTestResult("id IS OF TYPE BOOLEAN", false),
+            AssertionTestResult("ID IS OF TYPE (STRING,BIGINT)", true)
         ))
     }
 }

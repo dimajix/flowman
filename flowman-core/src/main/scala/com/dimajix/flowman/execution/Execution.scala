@@ -119,13 +119,18 @@ abstract class Execution {
      * @param assertion
      * @return
      */
-    def assert(assertion:Assertion) : Seq[AssertionResult] = {
+    def assert(assertion:Assertion) : AssertionResult = {
         val context = assertion.context
         val inputs = assertion.inputs
             .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
             .toMap
 
-        assertion.execute(this, inputs)
+        val result = assertion.execute(this, inputs)
+        AssertionResult(
+            assertion.name,
+            assertion.description,
+            result
+        )
     }
 
     /**

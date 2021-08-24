@@ -22,7 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -72,8 +72,8 @@ class ExpressionAssertionTest extends AnyFlatSpec with Matchers with LocalSparkS
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
         result should be (Seq(
-            AssertionResult("id IS NOT NULL", true),
-            AssertionResult("id IN (4,5)", false)
+            AssertionTestResult("id IS NOT NULL", true),
+            AssertionTestResult("id IN (4,5)", false)
         ))
     }
 }

@@ -22,12 +22,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.types.DataType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -70,8 +69,6 @@ case class ColumnsAssertion(
     mapping:MappingOutputIdentifier,
     expected:Seq[ColumnsAssertion.Predicate]
 ) extends BaseAssertion {
-    private val logger = LoggerFactory.getLogger(classOf[SqlAssertion])
-
     /**
       * Returns a list of physical resources required by this assertion. This list will only be non-empty for assertions
       * which actually read from physical data.
@@ -94,14 +91,14 @@ case class ColumnsAssertion(
       * @param input
       * @return
       */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionTestResult] = {
         require(execution != null)
         require(input != null)
 
         val df = input(mapping)
 
         expected.map { test =>
-            AssertionResult(test.description, test.execute(df))
+            AssertionTestResult(test.description, test.execute(df))
         }
     }
 }

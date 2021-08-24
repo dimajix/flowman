@@ -6,8 +6,8 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.AssertionResult
-import com.dimajix.flowman.model.AssertionSuiteResult
 import com.dimajix.flowman.util.ConsoleColors.green
 import com.dimajix.flowman.util.ConsoleColors.red
 import com.dimajix.spark.sql.DataFrameUtils
@@ -20,7 +20,7 @@ class AssertionRunner(
 ) {
     private val logger = LoggerFactory.getLogger(classOf[AssertionRunner])
 
-    def run(assertions:Seq[Assertion], dryRun:Boolean=false, keepGoing:Boolean=false) : Seq[AssertionSuiteResult] = {
+    def run(assertions:Seq[Assertion], dryRun:Boolean=false, keepGoing:Boolean=false) : Seq[AssertionResult] = {
         // Collect all required DataFrames for caching. We assume that each DataFrame might be used in multiple
         // assertions and that the DataFrames aren't very huge (we are talking about tests!)
         val inputDataFrames = assertions
@@ -29,32 +29,47 @@ class AssertionRunner(
             .map(id => execution.instantiate(context.getMapping(id.mapping), id.output))
 
         DataFrameUtils.withCaches(inputDataFrames, cacheLevel) {
+            var error = false
             assertions.map { instance =>
-                val name = instance.name
-                val description = instance.description.getOrElse(name)
-                val status = if (!dryRun) {
-                    try {
+                if (!dryRun && (!error || keepGoing)) {
+                    val status = try {
                         execution.assert(instance)
                     }
                     catch {
-                        case NonFatal(ex) if keepGoing =>
-                            logger.error(s" ✘ exception: $description: ${ex.getMessage}")
-                            Seq(AssertionResult(name, false, exception = true))
+                        case NonFatal(ex) =>
+                            val name = instance.name
+                            val description = instance.description
+                            logger.error(s" ✘ exception: ${description.getOrElse(name)}: ${ex.getMessage}")
+                            if (!keepGoing)
+                                throw ex
+
+                            AssertionResult(
+                                name,
+                                description,
+                                Seq(AssertionTestResult(name, false, exception = true))
+                            )
                     }
+
+                    val success = status.success
+                    error |= !success
+
+                    val name = status.name
+                    val description = status.description.getOrElse(name)
+                    if (!success) {
+                        logger.error(red(s" ✘ failed: $description"))
+                    }
+                    else {
+                        logger.info(green(s" ✓ passed: $description"))
+                    }
+
+                    status
                 }
                 else {
-                    Seq()
+                    val name = instance.name
+                    val description = instance.description
+                    logger.info(green(s" ✓ skipped: ${description.getOrElse(name)}"))
+                    AssertionResult(name, description, Seq())
                 }
-
-                val success = status.forall(r => r.valid)
-                if (!success) {
-                    logger.error(red(s" ✘ failed: $description"))
-                }
-                else {
-                    logger.info(green(s" ✓ passed: $description"))
-                }
-
-                AssertionSuiteResult(name, description, status)
             }
         }
     }

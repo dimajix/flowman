@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.immutable.ListMap
+
 import org.apache.spark.storage.StorageLevel
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
@@ -416,7 +418,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         val assertion2 = mock[Assertion]
         val test = Test(
             Test.Properties(context),
-            assertions = Map(
+            assertions = ListMap(
                 "assert1" -> assertionTemplate1,
                 "assert2" -> assertionTemplate2
             )

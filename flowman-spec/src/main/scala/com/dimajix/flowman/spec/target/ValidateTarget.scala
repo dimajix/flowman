@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.target
 import java.time.Clock
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
@@ -27,6 +28,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ValidationFailedException
@@ -43,7 +45,8 @@ import com.dimajix.spark.sql.DataFrameUtils
 
 case class ValidateTarget(
     instanceProperties:Target.Properties,
-    assertions:Map[String,Assertion] = Map()
+    assertions:Map[String,Assertion] = Map(),
+    errorMode:ErrorMode = ErrorMode.FAIL_FAST
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[ValidateTarget])
 
@@ -104,23 +107,27 @@ case class ValidateTarget(
      */
     override protected def validate(execution: Execution): Unit = {
         val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
-        val result = runner.run(assertions.values.toSeq, keepGoing = false)
+        val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
         if (!result.forall(_.success)) {
             logger.error(s"Validation $identifier failed.")
-            throw new ValidationFailedException(identifier)
+            if (errorMode != ErrorMode.FAIL_NEVER)
+                throw new ValidationFailedException(identifier)
         }
     }
 }
 
 
 class ValidateTargetSpec extends TargetSpec {
+    @JsonDeserialize(converter=classOf[AssertionSpec.NameResolver])
     @JsonProperty(value = "assertions", required = true) private var assertions: Map[String,AssertionSpec] = Map()
+    @JsonProperty(value = "mode", required = false) private var mode: String = "failFast"
 
     override def instantiate(context: Context): ValidateTarget = {
         ValidateTarget(
             instanceProperties(context),
-            assertions.map {case(name,assertion) => name -> assertion.instantiate(context) }
+            assertions.map {case(name,assertion) => name -> assertion.instantiate(context) },
+            ErrorMode.ofString(context.evaluate(mode))
         )
     }
 }

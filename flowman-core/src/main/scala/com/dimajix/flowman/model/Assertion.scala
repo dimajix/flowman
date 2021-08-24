@@ -6,16 +6,16 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 
 
-case class AssertionResult(
+case class AssertionTestResult(
     name:String,
     valid:Boolean,
     exception:Boolean=false
 )
 
-case class AssertionSuiteResult(
+case class AssertionResult(
     name:String,
-    description:String,
-    assertions:Seq[AssertionResult]
+    description:Option[String],
+    assertions:Seq[AssertionTestResult]
 ) {
     def success : Boolean = assertions.forall(_.valid)
     def failure : Boolean = assertions.exists(a => !a.valid)
@@ -84,7 +84,7 @@ trait Assertion extends Instance {
      * @param input
      * @return
      */
-    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Seq[AssertionResult]
+    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Seq[AssertionTestResult]
 }
 
 

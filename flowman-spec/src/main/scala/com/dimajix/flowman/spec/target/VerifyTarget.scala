@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.target
 import java.time.Clock
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
@@ -27,23 +28,22 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.ValidationFailedException
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.spec.assertion.AssertionSpec
-import com.dimajix.flowman.util.ConsoleColors.green
-import com.dimajix.flowman.util.ConsoleColors.red
-import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class VerifyTarget(
     instanceProperties:Target.Properties,
-    assertions:Map[String,Assertion] = Map()
+    assertions:Map[String,Assertion] = Map(),
+    errorMode:ErrorMode = ErrorMode.FAIL_AT_END
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[VerifyTarget])
 
@@ -103,23 +103,27 @@ case class VerifyTarget(
      */
     override protected def verify(execution: Execution): Unit = {
         val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
-        val result = runner.run(assertions.values.toSeq, keepGoing = false)
+        val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
         if (!result.forall(_.success)) {
             logger.error(s"Verification $identifier failed.")
-            throw new ValidationFailedException(identifier)
+            if (errorMode != ErrorMode.FAIL_NEVER)
+                throw new VerificationFailedException(identifier)
         }
     }
 }
 
 
 class VerifyTargetSpec extends TargetSpec {
+    @JsonDeserialize(converter=classOf[AssertionSpec.NameResolver])
     @JsonProperty(value = "assertions", required = true) private var assertions: Map[String,AssertionSpec] = Map()
+    @JsonProperty(value = "mode", required = false) private var mode: String = "failAtEnd"
 
     override def instantiate(context: Context): VerifyTarget = {
         VerifyTarget(
             instanceProperties(context),
-            assertions.map {case(name,assertion) => name -> assertion.instantiate(context) }
+            assertions.map {case(name,assertion) => name -> assertion.instantiate(context) },
+            ErrorMode.ofString(context.evaluate(mode))
         )
     }
 }

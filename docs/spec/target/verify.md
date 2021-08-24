@@ -11,6 +11,7 @@ used to validate any assumptions on the incoming data.
 targets:
   verify_output:
     kind: verify
+    mode: failNever
     assertions:
       assert_primary_key:
         kind: sql
@@ -34,6 +35,17 @@ targets:
   Map of [assertions](../assertion/index.md) to be executed. The verification is marked as *failed* if a single
   assertion fails.
 
+* `mode`  **(mandatory)** *(type: string)* *(default: `failAtEnd`)*:
+  Specify how to proceed in case individual assertions fail. Possible values are `failFast`, `failAtEnd` and `failNever`
+
 
 ## Supported Phases
 * `VERIDY` - The specified assertions will be run in the `VERIFY` phase after the `CREATE` and `BUILD` phases.
+
+
+## Remarks
+
+This build target works very similar to the [`validate`](validate.md) target, except that it is only active during the
+`VERIFY` phase and the default for the `mode` parameter is set to `failAtEnd`. Here the assumption is that a verification
+should check postconditions implied by the logic of your Flowman project. Flowman should return an error in this case,
+but since the fault is on your side, you want to see all failed checks and not only the first one.

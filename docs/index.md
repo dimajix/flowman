@@ -87,5 +87,6 @@ Flowman also provides optional plugins which extend functionality. You can find 
    cli/index
    spec/index
    cookbook/index
+   plugins/index
    config
 ```

@@ -22,6 +22,7 @@
 * Add new `uniqueKey` assertion
 * Add new `schema` assertion
 * Update Swagger libraries for `swagger` schema
+* Implement new `openapi` plugin
 
 
 # Version 0.17.1 - 2021-06-18

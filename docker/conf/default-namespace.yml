@@ -32,4 +32,5 @@ plugins:
   - flowman-mysql
   - flowman-mssqlserver
   - flowman-swagger
+  - flowman-openapi
   - flowman-json

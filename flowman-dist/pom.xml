@@ -137,6 +137,14 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-openapi</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-json</artifactId>
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>

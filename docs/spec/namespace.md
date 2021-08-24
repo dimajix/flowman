@@ -38,6 +38,8 @@ plugins:
   - flowman-azure
   - flowman-kafka
   - flowman-mariadb
+  - flowman-swagger
+  - flowman-openapi
 
 metrics:
   kind: prometheus

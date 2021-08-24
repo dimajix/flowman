@@ -1,0 +1,13 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ - swagger-annotations-2.1.10.jar
+ - swagger-core-2.1.10.jar
+ - swagger-models-2.1.10.jar
+ - swagger-parser-2.0.27.jar
+ - swagger-parser-core-2.0.27.jar
+ - swagger-parser-v3-2.0.27.jar
+ - jackson-datatype-jsr310-${jackson.version}.jar

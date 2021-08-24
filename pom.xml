@@ -419,6 +419,7 @@
         <module>flowman-plugins/mysql</module>
         <module>flowman-plugins/mssqlserver</module>
         <module>flowman-plugins/swagger</module>
+        <module>flowman-plugins/openapi</module>
         <module>flowman-plugins/json</module>
         <module>flowman-plugins/delta</module>
         <module>flowman-testing</module>
@@ -964,6 +965,11 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-openapi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-json</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1422,6 +1428,12 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${jackson.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${jackson.version}</version>
                 <scope>compile</scope>
             </dependency>

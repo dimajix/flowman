@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.test
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.TargetIdentifier
@@ -33,12 +32,7 @@ import com.dimajix.flowman.spec.target.TargetSpec
 
 
 object TestSpec {
-    class NameResolver extends StdConverter[Map[String, TestSpec], Map[String, TestSpec]] {
-        override def convert(value: Map[String, TestSpec]): Map[String, TestSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    class NameResolver extends NamedSpec.NameResolver[TestSpec]
 }
 
 

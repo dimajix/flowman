@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.job
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -32,13 +31,9 @@ import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StringType
 
+
 object JobSpec extends TypeRegistry[JobSpec] {
-    class NameResolver extends StdConverter[Map[String, JobSpec], Map[String, JobSpec]] {
-        override def convert(value: Map[String, JobSpec]): Map[String, JobSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    class NameResolver extends NamedSpec.NameResolver[JobSpec]
 
     class Parameter extends Spec[Job.Parameter] {
         @JsonProperty(value = "name") private var name: String = ""

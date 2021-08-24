@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.assertion
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -30,12 +29,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object AssertionSpec extends TypeRegistry[AssertionSpec] {
-    class NameResolver extends StdConverter[Map[String, AssertionSpec], Map[String, AssertionSpec]] {
-        override def convert(value: Map[String, AssertionSpec]): Map[String, AssertionSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    class NameResolver extends NamedSpec.NameResolver[AssertionSpec]
 }
 
 

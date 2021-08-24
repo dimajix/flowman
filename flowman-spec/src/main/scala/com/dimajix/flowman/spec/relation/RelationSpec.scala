@@ -30,12 +30,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object RelationSpec extends TypeRegistry[RelationSpec] {
-    class NameResolver extends StdConverter[Map[String, RelationSpec], Map[String, RelationSpec]] {
-        override def convert(value: Map[String, RelationSpec]): Map[String, RelationSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    class NameResolver extends NamedSpec.NameResolver[RelationSpec]
 }
 
 /**

@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.mapping
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
@@ -31,12 +30,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object MappingSpec extends TypeRegistry[MappingSpec] {
-    class NameResolver extends StdConverter[Map[String, MappingSpec], Map[String, MappingSpec]] {
-        override def convert(value: Map[String, MappingSpec]): Map[String, MappingSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    class NameResolver extends NamedSpec.NameResolver[MappingSpec]
 }
 
 /**

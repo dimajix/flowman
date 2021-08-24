@@ -80,6 +80,7 @@ The `jdbc` relation supports the following output modes in a [`relation` target]
 |`errorIfExists`|yes|Throw an error if the JDBC table already exists|
 |`ignoreIfExists`|yes|Do nothing if the JDBC table already exists|
 |`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`overwrite_dynamic`|no|-|
 |`append`|yes|Append new records to the existing table|
 |`update`|no|-|
 |`merge`|no|-|

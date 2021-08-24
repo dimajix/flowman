@@ -74,7 +74,7 @@ target.
 * `CREATE` - This will create the target relation or migrate it to the newest schema (if possible).
 * `BUILD` - This will write the output of the specified mapping into the relation. If no mapping is specified, nothing
  will be done. 
-* `VERIFY`
+* `VERIFY` - This will verify that the relation (and any specified partition) actually contains data.
 * `TRUNCATE` - This removes the contents of the specified relation. The relation itself will not be removed (for example
 if the relation refers to a Hive table)
 * `DESTROY` - This drops the relation itself and all its content.

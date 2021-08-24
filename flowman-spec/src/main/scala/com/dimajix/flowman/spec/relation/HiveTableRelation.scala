@@ -475,7 +475,7 @@ case class HiveTableRelation(
         require(execution != null)
 
         val catalog = execution.catalog
-        if (catalog.tableExists(tableIdentifier)) {
+        if (schema.nonEmpty && catalog.tableExists(tableIdentifier)) {
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
                 migrationStrategy match {

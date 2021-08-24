@@ -27,7 +27,6 @@ import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.MetadataBuilder
-import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -44,7 +43,6 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
-import com.dimajix.flowman.types.Field
 import com.dimajix.spark.sql.SchemaUtils
 
 
@@ -200,5 +198,9 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                 case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }
+    }
+
+    override protected def outputSchema(execution:Execution) : Option[StructType] = {
+        Some(loadDeltaTable(execution).schema())
     }
 }

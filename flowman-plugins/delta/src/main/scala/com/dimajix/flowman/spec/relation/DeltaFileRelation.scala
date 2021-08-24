@@ -135,7 +135,6 @@ case class DeltaFileRelation(
     override def write(execution: Execution, df: DataFrame, partition: Map[String, SingleValue], mode: OutputMode): Unit = {
         requireAllPartitionKeys(partition, df.columns)
 
-        // TODO: Static partitions / dynamic partitions
         val partitionSpec = PartitionSchema(partitions).spec(partition)
 
         logger.info(s"Writing Delta file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to location '$location' with mode '$mode'")
@@ -330,14 +329,10 @@ case class DeltaFileRelation(
     override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
         require(execution != null)
 
-        val tableExists = exists(execution) == Yes
-        if (tableExists) {
+        // Only perform migration when the schema is defined and when the relation actually exists
+        if (schema.nonEmpty && exists(execution) == Yes) {
             migrateInternal(execution, migrationPolicy, migrationStrategy)
         }
-    }
-
-    override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        Some(DeltaTable.forPath(execution.spark, location.toString).toDF.schema)
     }
 
     override protected def loadDeltaTable(execution: Execution): DeltaTableV2 = {

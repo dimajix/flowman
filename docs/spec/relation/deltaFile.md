@@ -91,6 +91,7 @@ The `deltaFile` relation supports the following output modes in a [`relation` ta
 |`errorIfExists`|yes|Throw an error if the Delta table already exists|
 |`ignoreIfExists`|yes|Do nothing if the Delta table already exists|
 |`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`overwrite_dynamic`|no|-|
 |`append`|yes|Append new records to the existing table|
 |`update`|yes|Updates existing records, either using `mergeKey` or the primary key of the specified `schema`|
 |`merge`|no|-|

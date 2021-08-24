@@ -210,7 +210,7 @@ case class JdbcRelation(
                     else {
                         throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
                     }
-                case _ => throw new IllegalArgumentException(s"Unknown save mode: '$mode'. " +
+                case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
                     "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
             }
         }

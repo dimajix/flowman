@@ -66,6 +66,7 @@ The `kafa` relation supports the following output modes in a [`relation` target]
 |`errorIfExists`|yes|Throw an error if the Kafka topic already exists|
 |`ignoreIfExists`|yes|Do nothing if the Kafka topic already exists|
 |`overwrite`|no|-|
+|`overwrite_dynamic`|no|-|
 |`append`|yes|Append new records to the existing Kafka topic|
 |`update`|no|-|
 |`merge`|no|-|

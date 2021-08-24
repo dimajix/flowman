@@ -145,7 +145,8 @@ The `hive` relation supports the following output modes in a [`relation` target]
 --- | --- | ---
 |`errorIfExists`|yes|Throw an error if the Hive table already exists|
 |`ignoreIfExists`|yes|Do nothing if the Hive table already exists|
-|`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`overwrite`|yes|Overwrite the whole table or the specified partitions. If using dynamic partitioning, the table is truncated first.|
+|`overwrite_dynamic`|yes|Overwrite only the partitions dynamically inferred from the data.|
 |`append`|yes|Append new records to the existing table|
 |`update`|no|-|
 |`merge`|no|-|

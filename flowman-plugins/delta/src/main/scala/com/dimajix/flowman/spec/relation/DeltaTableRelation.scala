@@ -316,7 +316,7 @@ case class DeltaTableRelation(
         require(execution != null)
 
         val catalog = execution.catalog
-        if (catalog.tableExists(tableIdentifier)) {
+        if (schema.nonEmpty && catalog.tableExists(tableIdentifier)) {
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
                 migrationStrategy match {
@@ -335,10 +335,6 @@ case class DeltaTableRelation(
                 migrateInternal(execution, migrationPolicy, migrationStrategy)
             }
         }
-    }
-
-    override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        Some(DeltaTable.forName(execution.spark, tableIdentifier.quotedString).toDF.schema)
     }
 
     override protected def loadDeltaTable(execution: Execution): DeltaTableV2 = {

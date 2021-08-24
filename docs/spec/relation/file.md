@@ -83,6 +83,7 @@ The `file` relation supports the following output modes in a [`relation` target]
 |`errorIfExists`|yes|Throw an error if the files already exists|
 |`ignoreIfExists`|yes|Do nothing if the files already exists|
 |`overwrite`|yes|Overwrite the whole location or the specified partitions|
+|`overwrite_dynamic`|yes|Overwrite only partitions dynamically determined by the data itself|
 |`append`|yes|Append new records to the existing files|
 |`update`|no|-|
 |`merge`|no|-|

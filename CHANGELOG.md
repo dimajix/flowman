@@ -21,6 +21,7 @@
 * Add new option "-j <n>" to allow running multiple job instances in parallel
 * Add new `uniqueKey` assertion
 * Add new `schema` assertion
+* Update Swagger libraries for `swagger` schema
 
 
 # Version 0.17.1 - 2021-06-18

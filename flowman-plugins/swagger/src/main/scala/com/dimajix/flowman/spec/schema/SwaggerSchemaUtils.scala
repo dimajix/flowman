@@ -129,7 +129,7 @@ object SwaggerSchemaUtils {
             mapper.readTree(data)
         }
         else {
-            DeserializationUtils.readYamlTree(data)
+            DeserializationUtils.readYamlTree(data, null)
         }
 
         // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"

@@ -126,11 +126,7 @@ abstract class Execution {
             .toMap
 
         val result = assertion.execute(this, inputs)
-        AssertionResult(
-            assertion.name,
-            assertion.description,
-            result
-        )
+        AssertionResult(assertion, result)
     }
 
     /**

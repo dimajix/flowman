@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier

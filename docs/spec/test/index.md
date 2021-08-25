@@ -20,11 +20,17 @@ tests:
         kind: mock
         records:
           - "042599999963897201301010000I"
+            
+  common_hooks:
+    hooks:
+      - kind: web
+        testSuccess: http://$webhook_host/success&startdate=$URL.encode($start_ts)&enddate=$URL.encode($end_ts)&period=$processing_duration&force=$force
 
   test_aggregation:
     description: "Test all aggregations"
     extends:
       - common_fixtures
+      - common_hooks
         
     environment:
       - some_value=12  
@@ -78,7 +84,11 @@ tests:
 * `assertions`: **(optional)** *(type: map:assertion)*:
   This section contains the set of [assertions](../assertion/index.md) to be executed. The test is considered to have
   failed if a single assertion has failed.
-  
+
+* `hooks` **(optional)** *(type: list:hook)*:
+  A list of [hooks](../hooks/index.md) which will be called before and after each test and assertion is executed. Hooks 
+  provide some ways to notify external systems (or possibly plugins) about the current execution status of tests.
+
 
 ## Sub Pages
 ```eval_rst

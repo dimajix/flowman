@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.Target
@@ -87,7 +88,7 @@ trait RunnerListener {
      * @param token The token returned by startJob
      * @param status
      */
-    def finishAssertion(token:AssertionToken, status:Status) : Unit
+    def finishAssertion(token:AssertionToken, result:AssertionResult) : Unit
 }
 
 
@@ -99,5 +100,5 @@ abstract class AbstractRunnerListener extends RunnerListener {
     override def startTest(test: Test, instance: TestInstance): TestToken = new TestToken {}
     override def finishTest(token: TestToken, status: Status): Unit = {}
     override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
-    override def finishAssertion(token: AssertionToken, status: Status): Unit = {}
+    override def finishAssertion(token: AssertionToken, result: AssertionResult): Unit = {}
 }

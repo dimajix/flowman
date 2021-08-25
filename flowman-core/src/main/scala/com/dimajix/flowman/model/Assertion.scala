@@ -13,16 +13,18 @@ case class AssertionTestResult(
 )
 
 case class AssertionResult(
-    name:String,
-    description:Option[String],
-    assertions:Seq[AssertionTestResult]
+    assertion: Assertion,
+    tests:Seq[AssertionTestResult]
 ) {
-    def success : Boolean = assertions.forall(_.valid)
-    def failure : Boolean = assertions.exists(a => !a.valid)
+    def name : String = assertion.name
+    def description: Option[String] = assertion.description
 
-    def numFailures : Int = assertions.count(a => !a.valid)
-    def numSuccesses : Int = assertions.count(_.valid)
-    def numExceptions : Int = assertions.count(_.exception)
+    def success : Boolean = tests.forall(a => a.valid && !a.exception)
+    def failure : Boolean = tests.exists(a => !a.valid || a.exception)
+
+    def numFailures : Int = tests.count(a => !a.valid)
+    def numSuccesses : Int = tests.count(_.valid)
+    def numExceptions : Int = tests.count(_.exception)
 }
 
 

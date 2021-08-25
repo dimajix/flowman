@@ -25,6 +25,7 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.assertion.AssertionSpec
+import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.splitSettings
@@ -49,6 +50,7 @@ class TestSpec extends NamedSpec[Test] {
     @JsonProperty(value="overrideRelations") private var overrideRelations: Map[String,RelationSpec] = Map()
     @JsonDeserialize(converter=classOf[AssertionSpec.NameResolver])
     @JsonProperty(value="assertions") private var assertions: Map[String,AssertionSpec] = Map()
+    @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq()
 
     override def instantiate(context: Context): Test = {
         require(context != null)
@@ -61,7 +63,8 @@ class TestSpec extends NamedSpec[Test] {
             fixtures = fixtures,
             overrideMappings = overrideMappings,
             overrideRelations = overrideRelations,
-            assertions = assertions
+            assertions = assertions,
+            hooks = hooks
         )
 
         Test.merge(test, parents)

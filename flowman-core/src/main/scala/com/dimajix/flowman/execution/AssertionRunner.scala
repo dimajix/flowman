@@ -5,18 +5,23 @@ import scala.util.control.NonFatal
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.util.ConsoleColors.green
 import com.dimajix.flowman.util.ConsoleColors.red
+import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.sql.DataFrameUtils
 
 
 class AssertionRunner(
     context:Context,
     execution:Execution,
-    cacheLevel:StorageLevel=StorageLevel.MEMORY_AND_DISK
+    cacheLevel:StorageLevel=StorageLevel.MEMORY_AND_DISK,
+    hooks:Seq[(RunnerListener,Token)] = Seq()
 ) {
     private val logger = LoggerFactory.getLogger(classOf[AssertionRunner])
 
@@ -31,46 +36,78 @@ class AssertionRunner(
         DataFrameUtils.withCaches(inputDataFrames, cacheLevel) {
             var error = false
             assertions.map { instance =>
-                if (!dryRun && (!error || keepGoing)) {
-                    val status = try {
-                        execution.assert(instance)
-                    }
-                    catch {
-                        case NonFatal(ex) =>
-                            val name = instance.name
-                            val description = instance.description
-                            logger.error(s" ✘ exception: ${description.getOrElse(name)}: ${ex.getMessage}")
-                            if (!keepGoing)
-                                throw ex
+                withListeners(instance) {
+                    if (!dryRun && (!error || keepGoing)) {
+                        val result = executeAssertion(instance)
+                        val success = result.success
+                        error |= !success
 
-                            AssertionResult(
-                                name,
-                                description,
-                                Seq(AssertionTestResult(name, false, exception = true))
-                            )
-                    }
+                        val name = result.name
+                        val description = result.description.getOrElse(name)
+                        if (!success) {
+                            logger.error(red(s" ✘ failed: $description"))
+                        }
+                        else {
+                            logger.info(green(s" ✓ passed: $description"))
+                        }
 
-                    val success = status.success
-                    error |= !success
-
-                    val name = status.name
-                    val description = status.description.getOrElse(name)
-                    if (!success) {
-                        logger.error(red(s" ✘ failed: $description"))
+                        result
                     }
                     else {
-                        logger.info(green(s" ✓ passed: $description"))
+                        val name = instance.name
+                        val description = instance.description.getOrElse(name)
+                        logger.info(green(s" ✓ skipped: $description}"))
+                        AssertionResult(instance, Seq())
                     }
-
-                    status
-                }
-                else {
-                    val name = instance.name
-                    val description = instance.description
-                    logger.info(green(s" ✓ skipped: ${description.getOrElse(name)}"))
-                    AssertionResult(name, description, Seq())
                 }
             }
         }
+    }
+
+    private def executeAssertion(assertion: Assertion) : AssertionResult = {
+        try {
+            execution.assert(assertion)
+        }
+        catch {
+            case NonFatal(ex) =>
+                val name = assertion.name
+                val description = assertion.description.getOrElse(name)
+                logger.error(s" ✘ exception: $description}: ${ex.getMessage}")
+                AssertionResult(
+                    assertion,
+                    Seq(AssertionTestResult(name, false, exception = true))
+                )
+        }
+    }
+
+    private def withListeners(assertion: Assertion)(fn: => AssertionResult) : AssertionResult = {
+        def startAssertion() : Seq[(RunnerListener, AssertionToken)] = {
+            hooks.flatMap { case(listener,jobToken) =>
+                try {
+                    Some((listener, listener.startAssertion(assertion, Some(jobToken))))
+                }
+                catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on startAssertion: ${ex.toString}.")
+                        None
+                }
+            }
+        }
+
+        def finishAssertion(tokens:Seq[(RunnerListener, AssertionToken)], status:AssertionResult) : Unit = {
+            tokens.foreach { case(listener, token) =>
+                try {
+                    listener.finishAssertion(token, status)
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on finishAssertion: ${ex.toString}.")
+                }
+            }
+        }
+
+        val tokens = startAssertion()
+        val status = fn
+        finishAssertion(tokens, status)
+        status
     }
 }

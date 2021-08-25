@@ -25,7 +25,6 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
@@ -33,7 +32,6 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.TestToken
 import com.dimajix.flowman.execution.Token
-import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
@@ -44,11 +42,13 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestInstance
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
+import com.dimajix.flowman.spec.hook.WebHook.DummyTestToken
 
 
 object WebHook {
     private case class DummyJobToken(env:Map[String,String]) extends JobToken
     private case class DummyTargetToken(env:Map[String,String]) extends TargetToken
+    private case class DummyTestToken(env:Map[String,String]) extends TestToken
 }
 
 
@@ -63,7 +63,12 @@ case class WebHook(
     targetFinish:Option[String] = None,
     targetSuccess:Option[String] = None,
     targetSkip:Option[String] = None,
-    targetFailure:Option[String] = None
+    targetFailure:Option[String] = None,
+    testStart:Option[String] = None,
+    testFinish:Option[String] = None,
+    testSuccess:Option[String] = None,
+    testSkip:Option[String] = None,
+    testFailure:Option[String] = None
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[WebHook])
 
@@ -132,6 +137,36 @@ case class WebHook(
         }
     }
 
+    /**
+     * Starts the run and returns a token, which can be anything
+     *
+     * @param test
+     * @return
+     */
+    override def startTest(test:Test, instance: TestInstance): TestToken =  {
+        val env = instance.asMap -- context.environment.keys
+        invoke(testStart, env)
+        DummyTestToken(env)
+    }
+
+    /**
+     * Sets the status of a job after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param status
+     */
+    override def finishTest(token: TestToken, status: Status): Unit = {
+        val env = token.asInstanceOf[DummyTestToken].env + ("status" -> status.toString)
+        invoke(testFinish, env)
+
+        status match {
+            case Status.FAILED | Status.ABORTED => invoke(testFailure, env)
+            case Status.SKIPPED  => invoke(testSkip, env)
+            case Status.SUCCESS  => invoke(testSuccess, env)
+            case _ =>
+        }
+    }
+
     private def invoke(urlTemplate:Option[String], args:Map[String,String]) : Unit = {
         urlTemplate.foreach { v =>
             val url = context.environment.evaluate(v, args)
@@ -175,6 +210,11 @@ class WebHookSpec extends HookSpec {
     @JsonProperty(value="targetSuccess", required=false) private var targetSuccess:Option[String] = None
     @JsonProperty(value="targetSkip", required=false) private var targetSkip:Option[String] = None
     @JsonProperty(value="targetFailure", required=false) private var targetFailure:Option[String] = None
+    @JsonProperty(value="testStart", required=false) private var testStart:Option[String] = None
+    @JsonProperty(value="testFinish", required=false) private var testFinish:Option[String] = None
+    @JsonProperty(value="testSuccess", required=false) private var testSuccess:Option[String] = None
+    @JsonProperty(value="testSkip", required=false) private var testSkip:Option[String] = None
+    @JsonProperty(value="testFailure", required=false) private var testFailure:Option[String] = None
 
     override def instantiate(context: Context): WebHook = {
         new WebHook(
@@ -188,7 +228,12 @@ class WebHookSpec extends HookSpec {
             targetFinish,
             targetSuccess,
             targetSkip,
-            targetFailure
+            targetFailure,
+            testStart,
+            testFinish,
+            testSuccess,
+            testSkip,
+            testFailure
         )
     }
 }

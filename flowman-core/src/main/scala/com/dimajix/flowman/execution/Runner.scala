@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
+import com.dimajix.flowman.execution.TestRunnerImpl.RunnerTestToken
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
@@ -48,6 +49,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestInstance
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
@@ -71,6 +73,25 @@ private[execution] sealed class RunnerImpl {
                 logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
                 Status.FAILED
         }
+    }
+
+    def withExecution[T](parent:Execution, isolated:Boolean=false)(fn:Execution => T) : T = {
+        val execution : Execution = new ScopedExecution(parent, isolated)
+        val result = fn(execution)
+
+        // Wait for any running background operation, and do not perform a cleanup
+        val ops = execution.operations
+        val activeOps = ops.listActive()
+        if (activeOps.nonEmpty) {
+            logger.info("Some background operations are still active:")
+            activeOps.foreach(o => logger.info(s"  - s${o.name}"))
+            logger.info("Waiting for termination...")
+            ops.awaitTermination()
+        }
+
+        // Finally release any resources
+        execution.cleanup()
+        result
     }
 
     private val separator = boldWhite((0 to 79).map(_ => "-").mkString)
@@ -151,7 +172,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         require(args != null)
 
         runner.withJobContext(job, args, force, dryRun) { (jobContext, arguments) =>
-            withExecution(job) { execution =>
+            val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
+            withExecution(parentExecution, isolated) { execution =>
                 Status.ofAll(phases, keepGoing) { phase =>
                     // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
                     // as SUCCESS (an empty list is always executed as SUCCESS)
@@ -217,26 +239,6 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             logStatus(title, status, duration, endTime)
             status
         }
-    }
-
-    def withExecution[T](job:Job)(fn:Execution => T) : T = {
-        val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
-        val execution : Execution = new ScopedExecution(parentExecution, isolated)
-        val result = fn(execution)
-
-        // Wait for any running background operation, and do not perform a cleanup
-        val ops = execution.operations
-        val activeOps = ops.listActive()
-        if (activeOps.nonEmpty) {
-            logger.info("Some background operations are still active:")
-            activeOps.foreach(o => logger.info(s"  - s${o.name}"))
-            logger.info("Waiting for termination...")
-            ops.awaitTermination()
-        }
-
-        // Finally release any resources
-        execution.cleanup()
-        result
     }
 
     /**
@@ -439,6 +441,11 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     }
 }
 
+private[execution] object TestRunnerImpl {
+    private final case class RunnerTestToken(tokens:Seq[(RunnerListener, TestToken)]) extends TestToken
+    private final case class RunnerTargetToken(tokens:Seq[(RunnerListener, TargetToken)]) extends TargetToken
+}
+
 /**
  * Private Implementation for Test specific methods
  * @param runner
@@ -448,62 +455,64 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
     def executeTest(test:Test, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
         runner.withTestContext(test, dryRun) { context =>
-            val title = s"Running test '${test.identifier}'"
-            logTitle(title)
-            logEnvironment(context)
+            withExecution(parentExecution, true) { execution =>
+                val title = s"Running test '${test.identifier}'"
+                logTitle(title)
+                logEnvironment(context)
 
-            val startTime = Instant.now()
-            val execution = new ScopedExecution(parentExecution)
+                val instance = test.instance
+                val allHooks = if (!dryRun) (runner.hooks ++ test.hooks).map(_.instantiate(context)) else Seq()
+                val startTime = Instant.now()
 
-            // Get all targets once here. Otherwise the fixtures would be instantiated over and over again for
-            // each phase.
-            val targets = test.targets.map(t => context.getTarget(t)) ++ test.fixtures.values.map(_.instantiate(context))
+                val status = withListeners(test, instance, allHooks) { token =>
+                    // Get all targets once here. Otherwise the fixtures would be instantiated over and over again for
+                    // each phase.
+                    val targets = test.targets.map(t => context.getTarget(t)) ++ test.fixtures.values.map(_.instantiate(context))
 
-            def runPhase(phase:Phase) : Status = {
-                // Only execute phase if there are targets. This will save some logging outputs
-                if (targets.exists(_.phases.contains(phase))) {
-                    runner.withPhaseContext(context, phase) { context =>
-                        executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
+                    def runPhase(phase: Phase): Status = {
+                        // Only execute phase if there are targets. This will save some logging outputs
+                        if (targets.exists(_.phases.contains(phase))) {
+                            runner.withPhaseContext(context, phase) { context =>
+                                executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
+                            }
+                        }
+                        else {
+                            Status.SUCCESS
+                        }
                     }
-                }
-                else {
-                    Status.SUCCESS
-                }
-            }
 
-            // First create test environment via fixtures
-            val buildStatus = Status.ofAll(Lifecycle.BUILD, keepGoing) { phase =>
-                runPhase(phase)
-            }
-            // Now run tests if fixtures where successful
-            val testStatus =
-                if (buildStatus == Status.SUCCESS || keepGoing) {
-                    val sc = execution.spark.sparkContext
-                    withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
-                        executeTestAssertions(execution, context, test, keepGoing, dryRun)
+                    // First create test environment via fixtures
+                    val buildStatus = Status.ofAll(Lifecycle.BUILD, keepGoing) { phase =>
+                        runPhase(phase)
                     }
+                    // Now run tests if fixtures where successful
+                    val testStatus =
+                        if (buildStatus == Status.SUCCESS || keepGoing) {
+                            val sc = execution.spark.sparkContext
+                            withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
+                                executeTestAssertions(execution, context, test, token, keepGoing, dryRun)
+                            }
+                        }
+                        else {
+                            Status.SKIPPED
+                        }
+                    // Finally clean up, even in case of possible failures.
+                    val destroyStatus = Status.ofAll(Lifecycle.DESTROY, true) { phase =>
+                        runPhase(phase)
+                    }
+
+                    // Compute complete status - which is only SUCCESS if all steps have been executed successfully
+                    if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
+                        Status.SUCCESS
+                    else
+                        Status.FAILED
                 }
-                else {
-                    Status.SKIPPED
-                }
-            // Finally clean up, even in case of possible failures.
-            val destroyStatus = Status.ofAll(Lifecycle.DESTROY, true) { phase =>
-                runPhase(phase)
+
+                val endTime = Instant.now()
+                val duration = Duration.between(startTime, endTime)
+                logStatus(title, status, duration, endTime)
+                status
             }
-
-            // Compute complete status - which is only SUCCESS if all steps have been executed successfully
-            val status =
-                if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
-                    Status.SUCCESS
-                else
-                    Status.FAILED
-
-            execution.cleanup()
-
-            val endTime = Instant.now()
-            val duration = Duration.between(startTime, endTime)
-            logStatus(title, status, duration, endTime)
-            status
         }
     }
 
@@ -511,6 +520,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         execution: Execution,
         context:Context,
         test:Test,
+        token:RunnerTestToken,
         keepGoing:Boolean,
         dryRun:Boolean
     ) : Status = {
@@ -524,7 +534,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val instances = test.assertions.values.toSeq.map( _.instantiate(context))
 
             // Execute all assertions
-            val runner = new AssertionRunner(context, execution)
+            val runner = new AssertionRunner(context, execution, hooks=token.tokens)
             val results = runner.run(instances, keepGoing=keepGoing, dryRun=dryRun)
 
             val endTime = Instant.now()
@@ -572,6 +582,45 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             if (!dryRun) {
                 target.execute(execution, phase)
             }
+        }
+    }
+
+    /**
+     * Monitors the job execution by invoking all listeners
+     * @param test
+     * @param listeners
+     * @param fn
+     * @return
+     */
+    private def withListeners(test:Test, instance:TestInstance, listeners:Seq[RunnerListener])(fn: RunnerTestToken => Status) : Status = {
+        def startTest() : Seq[(RunnerListener, TestToken)] = {
+            listeners.flatMap { hook =>
+                try {
+                    Some((hook, hook.startTest(test, instance)))
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on startTest: ${ex.toString}.")
+                        None
+                }
+            }
+        }
+
+        def finishTest(tokens:Seq[(RunnerListener, TestToken)], status:Status) : Unit = {
+            tokens.foreach { case (listener, token)  =>
+                try {
+                    listener.finishTest(token, status)
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on finishTest: ${ex.toString}.")
+                }
+            }
+        }
+
+        val tokens = startTest()
+        withShutdownHook(finishTest(tokens, Status.FAILED)) {
+            val status = fn(RunnerTestToken(tokens))
+            finishTest(tokens, status)
+            status
         }
     }
 }

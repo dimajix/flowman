@@ -22,7 +22,6 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper

@@ -25,12 +25,10 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Lifecycle
-import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.util.ConsoleColors.red
@@ -41,40 +39,58 @@ class RunCommand extends Command {
 
     @Argument(required = false, usage = "specifies tests(s) to execute", metaVar = "<tests>")
     var tests: Array[String] = Array()
-    @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of all targets in case of errors")
+    @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of all tests in case of errors")
     var keepGoing: Boolean = false
+    @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
+    var dryRun: Boolean = false
+    @Option(name = "-j", aliases=Array("--jobs"), usage = "number of tests to run in parallel")
+    var parallelism: Int = 1
 
 
     override def execute(session: Session, project: Project, context:Context) : Boolean = {
-        Try {
-            val allTests = if (tests.nonEmpty) {
-                tests.flatMap(_.split(",")).toSeq.distinct
-            }
-            else {
-                project.tests.keySet.toSeq
-            }
-
-            Status.ofAll(allTests, true) { test =>
-                val runner = session.runner
-                val instance = context.getTest(TestIdentifier(test))
-                if (instance.assertions.nonEmpty) {
-                    runner.executeTest(instance, keepGoing = keepGoing)
-                }
-                else {
-                    logger.info(s"Skipping test '$test' which does not provide any assertions")
-                    Status.SUCCESS
-                }
-            }
+        val allTests = if (tests.nonEmpty) {
+            tests.flatMap(_.split(",")).toSeq.distinct
         }
-        match {
-            case Success(Status.SUCCESS) => true
-            case Success(Status.SKIPPED) => true
-            case Success(_) =>
+        else {
+            project.tests.keySet.toSeq
+        }
+
+        val status = if (parallelism > 1)
+            executeParallel(session, context, allTests)
+        else
+            executeLinear(session, context, allTests)
+
+        status match {
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
+            case _ =>
                 logger.error(red("There have been test failures"))
                 false
-            case Failure(e) =>
-                logger.error(e.getMessage)
-                false
+        }
+    }
+
+    private def executeLinear(session: Session, context:Context, tests:Seq[String]) : Status = {
+        Status.ofAll(tests, keepGoing=keepGoing) { test =>
+            val instance = context.getTest(TestIdentifier(test))
+            executeSingle(session, instance)
+        }
+    }
+
+    private def executeParallel(session: Session, context:Context, tests:Seq[String]) : Status = {
+        Status.parallelOfAll(tests, parallelism, keepGoing=keepGoing, prefix="TestExecution") { test =>
+            val instance = context.getTest(TestIdentifier(test))
+            executeSingle(session, instance)
+        }
+    }
+
+    private def executeSingle(session: Session, test:Test) : Status = {
+        val runner = session.runner
+        if (test.assertions.nonEmpty) {
+            runner.executeTest(test, keepGoing = keepGoing, dryRun = dryRun)
+        }
+        else {
+            logger.info(s"Skipping test ${test.identifier} which does not provide any assertions")
+            Status.SUCCESS
         }
     }
 }

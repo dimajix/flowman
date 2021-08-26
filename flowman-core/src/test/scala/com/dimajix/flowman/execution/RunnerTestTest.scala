@@ -35,6 +35,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
+import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -74,6 +75,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
                 "global_env_to_overwrite" -> "global",
                 "force" -> false,
                 "dryRun" -> false,
+                "test" -> TestWrapper(test),
                 "project" -> ProjectWrapper(project),
                 "namespace" -> NamespaceWrapper(None)
             ))
@@ -87,6 +89,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
                 "global_env_to_overwrite" -> "global",
                 "force" -> false,
                 "dryRun" -> false,
+                "test" -> TestWrapper(test),
                 "project" -> ProjectWrapper(project),
                 "namespace" -> NamespaceWrapper(None)
             ))
@@ -433,6 +436,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
         (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
         (assertionTemplate2.instantiate _).expects(*).returns(assertion2)
+        (assertion2.name _).expects().atLeastOnce().returns("assertion2")
+        (assertion2.description _).expects().atLeastOnce().returns(None)
         (assertion2.inputs _).expects().returns(Seq())
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)

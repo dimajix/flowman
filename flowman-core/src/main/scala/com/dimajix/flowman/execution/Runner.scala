@@ -50,6 +50,7 @@ import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestInstance
+import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
@@ -742,7 +743,7 @@ final class Runner(
         val rootContext = RootContext.builder(test.context)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
-            //.withEnvironment("job", JobWrapper(job))
+            .withEnvironment("test", TestWrapper(test))
             .withEnvironment(test.environment, SettingLevel.JOB_OVERRIDE)
             .overrideRelations(test.overrideRelations.map(kv => RelationIdentifier(kv._1, project) -> kv._2))
             .overrideMappings(test.overrideMappings.map(kv => MappingIdentifier(kv._1, project) -> kv._2))

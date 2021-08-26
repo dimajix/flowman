@@ -49,3 +49,12 @@ case class JobWrapper(job:Job) {
 
     override def toString: String = getName()
 }
+
+
+case class TestWrapper(test:Test) {
+    def getName() : String = test.name
+    def getProject() : ProjectWrapper = ProjectWrapper(test.project)
+    def getNamespace() : NamespaceWrapper = NamespaceWrapper(test.namespace)
+
+    override def toString: String = getName()
+}

@@ -18,6 +18,12 @@ package com.dimajix.flowman.execution
 
 import java.util.Locale
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import com.dimajix.flowman.common.ThreadUtils
+
 
 sealed abstract class Status {
     val value: String
@@ -64,6 +70,53 @@ object Status {
             skipped &= (status == Status.SKIPPED)
         }
 
+        if (empty)
+            Status.SUCCESS
+        else if (error)
+            Status.FAILED
+        else if (skipped)
+            Status.SKIPPED
+        else
+            Status.SUCCESS
+    }
+
+    /**
+     * This function determines a common status of multiple actions, which are executed in parallel
+     * @param seq
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def parallelOfAll[T](seq: Seq[T], parallelism:Int, keepGoing:Boolean=false, prefix:String="ParallelExecution")(fn:T => Status) : Status = {
+        // Allocate state variables for tracking overall Status
+        val statusLock = new Object
+        var error = false
+        var skipped = true
+        var empty = true
+
+        ThreadUtils.parmap(seq, prefix, parallelism) { p =>
+            if (!error || keepGoing) {
+                val result = Try {
+                    fn(p)
+                }
+                // Evaluate status
+                statusLock.synchronized {
+                    result match {
+                        case Success(status) =>
+                            empty = false
+                            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+                            skipped &= (status == Status.SKIPPED)
+                            status
+                        case Failure(_) =>
+                            empty = false
+                            error = true
+                            Status.FAILED
+                    }
+                }
+            }
+        }
+
+        // Evaluate overall status
         if (empty)
             Status.SUCCESS
         else if (error)

@@ -81,66 +81,30 @@ sealed class PhaseCommand(phase:Phase) extends Command {
             else
                 Lifecycle.ofPhase(phase)
 
-        if (parallelism > 1)
+        val status = if (parallelism > 1)
             executeParallel(session, job, args, lifecycle)
         else
             executeLinear(session, job, args, lifecycle)
+
+        status match {
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
+            case _ => false
+        }
     }
 
-    private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Boolean = {
-        job.interpolate(args).forall { args =>
+    private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
+        Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
-            result match {
-                case Status.SUCCESS => true
-                case Status.SKIPPED => true
-                case _ => false
-            }
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
         }
     }
 
-    private def executeParallel(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Boolean = {
-        val threadPool = ThreadUtils.newThreadPool("ParallelJobs", parallelism)
-        implicit val ec:ExecutionContext = ExecutionContext.fromExecutorService(threadPool)
-
-        // Allocate state variables for tracking overall Status
-        val statusLock = new Object
-        var error = false
-        var skipped = true
-        var empty = true
-
-        ThreadUtils.parmap(job.interpolate(args).toSeq, "JobExecution", parallelism) { args =>
-            if (!error || keepGoing) {
-                val result = Try {
-                    val runner = session.runner
-                    runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
-                }
-                // Evaluate status
-                statusLock.synchronized {
-                    result match {
-                        case Success(status) =>
-                            empty = false
-                            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
-                            skipped &= (status == Status.SKIPPED)
-                            status
-                        case Failure(_) =>
-                            empty = false
-                            error = true
-                            Status.FAILED
-                    }
-                }
-            }
+    private def executeParallel(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
+        Status.parallelOfAll(job.interpolate(args).toSeq, parallelism, keepGoing=keepGoing, prefix="JobExecution") { args =>
+            val runner = session.runner
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
         }
-
-        // Evaluate overall status
-        if (empty)
-            true
-        else if (error)
-            false
-        else if (skipped)
-            false
-        else
-            true
     }
 }
 

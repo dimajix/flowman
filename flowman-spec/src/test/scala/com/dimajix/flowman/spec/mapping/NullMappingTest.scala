@@ -40,7 +40,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |mappings:
               |  empty1:
               |    kind: null
-              |    fields:
+              |    columns:
               |      str_col: string
               |      int_col: integer
               |
@@ -64,7 +64,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         mapping1.category should be ("mapping")
         mapping1.kind should be ("null")
-        mapping1.fields should be (Seq(
+        mapping1.columns should be (Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
         ))

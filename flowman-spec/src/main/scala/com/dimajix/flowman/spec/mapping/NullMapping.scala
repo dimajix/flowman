@@ -17,8 +17,11 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -34,16 +37,16 @@ import com.dimajix.flowman.types.StructType
 
 case class NullMapping(
     instanceProperties:Mapping.Properties,
-    fields:Seq[Field] = Seq(),
+    columns:Seq[Field] = Seq(),
     schema:Option[Schema]
 ) extends BaseMapping {
-    if (fields.nonEmpty && schema.nonEmpty)
+    if (columns.nonEmpty && schema.nonEmpty)
         throw new IllegalArgumentException("Cannot specify both fields and schema in NullMapping")
-    if (fields.isEmpty && schema.isEmpty)
+    if (columns.isEmpty && schema.isEmpty)
         throw new IllegalArgumentException("Need either fields or schema in NullMapping")
 
     private lazy val effectiveSchema  = {
-        new StructType(schema.map(_.fields).getOrElse(fields))
+        new StructType(schema.map(_.fields).getOrElse(columns))
     }
     private lazy val sparkSchema = effectiveSchema.sparkType
 
@@ -83,7 +86,8 @@ case class NullMapping(
 
 
 class NullMappingSpec extends MappingSpec {
-    @JsonProperty(value = "fields", required=false) private var fields:Map[String,String] = Map()
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "schema", required = false) protected var schema: Option[SchemaSpec] = None
 
     /**
@@ -94,7 +98,7 @@ class NullMappingSpec extends MappingSpec {
     override def instantiate(context: Context): NullMapping = {
         NullMapping(
             instanceProperties(context),
-            context.evaluate(fields).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
+            context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             schema.map(_.instantiate(context))
         )
     }

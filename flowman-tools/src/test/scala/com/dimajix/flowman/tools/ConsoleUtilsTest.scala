@@ -33,7 +33,7 @@ class ConsoleUtilsTest extends AnyFlatSpec with Matchers {
         result should be ("""+---+---------+-------+--------+-----+---------+-------+--------+------+
                             || id|namespace|project|     job|phase|     args| status|start_dt|end_dt|
                             |+---+---------+-------+--------+-----+---------+-------+--------+------+
-                            ||123|  default|     p1|some_job|build|arg1=val1|success|        |      |
+                            ||123|  default|     p1|some_job|build|arg1=val1|SUCCESS|        |      |
                             |+---+---------+-------+--------+-----+---------+-------+--------+------+
                             |""".stripMargin)
     }

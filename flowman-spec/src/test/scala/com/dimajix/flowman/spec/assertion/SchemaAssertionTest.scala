@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
@@ -120,7 +121,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -132,7 +137,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_1", StringType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df2)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_2", IntegerType),
@@ -144,7 +153,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df3)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -155,7 +168,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df4)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df5 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -166,7 +183,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df5)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df6 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -180,7 +201,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             Field("extra_col", IntegerType)
         )).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df6)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
     }
 
     it should "compare schema ignoring ordering" in {
@@ -214,7 +239,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -226,7 +255,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_1", StringType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df2)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_2", IntegerType),
@@ -238,7 +271,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df3)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -249,7 +286,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df4)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df5 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -260,7 +301,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df5)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df6 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -274,7 +319,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             Field("extra_col", IntegerType)
         )).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df6)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
     }
 
@@ -303,7 +352,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("COL_1", StringType),
@@ -312,7 +365,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_1", StringType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df2)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("COL_1", StringType),
@@ -321,7 +378,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("NESTED_COL_1", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df4)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
     }
 
     it should "compare schema ignoring nullability" in {
@@ -349,7 +410,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType, nullable = false),
@@ -358,7 +423,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType, nullable = false)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df2)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -367,7 +436,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df3)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
     }
 
     it should "compare schema with nullability" in {
@@ -395,7 +468,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType, nullable = false),
@@ -404,7 +481,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType, nullable = false)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df2)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -413,7 +494,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df3)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
     }
 
     it should "compare schema ignoring types" in {
@@ -447,7 +532,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", StringType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -459,7 +548,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df2)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -471,7 +564,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", IntegerType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df3)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -480,7 +577,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             Field("array", ArrayType(BooleanType)),
             Field("struct", StringType))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df4)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
 
         val df5 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -492,7 +593,11 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", DoubleType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df5)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", true))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, true))
+            )
+        )
 
         val df6 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
@@ -507,6 +612,10 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Field("nested_col_2", DoubleType)
             ))))).sparkType)
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df6)) should be (
-            (Seq(AssertionTestResult("schema for 'df:main'", false))))
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("schema for 'df:main'", None, false))
+            )
+        )
     }
 }

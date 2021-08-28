@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
@@ -154,10 +155,15 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val my = execution.spark.range(3).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx, MappingOutputIdentifier("my") -> my))
-        result should be (Seq(
-            AssertionTestResult("SELECT COUNT(*), SUM(id) FROM mx", true),
-            AssertionTestResult("SELECT COUNT(*) FROM my", true)
-        ))
+        result should be (
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("SELECT COUNT(*), SUM(id) FROM mx", None, true),
+                    AssertionTestResult("SELECT COUNT(*) FROM my", None, true)
+                )
+            )
+        )
     }
 
     it should "fail on too many columns" in {
@@ -181,7 +187,14 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val mx = execution.spark.range(2).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
-        result should be (Seq(AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", false)))
+        result should be (
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false)
+                )
+            )
+        )
     }
 
     it should "fail on too few columns" in {
@@ -205,7 +218,12 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val mx = execution.spark.range(2).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
-        result should be (Seq(AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", false)))
+        result should be (
+            AssertionResult(
+                assertion,
+                Seq(AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false))
+            )
+        )
     }
 
     it should "fail on wrong column types" in {
@@ -229,6 +247,13 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val mx = execution.spark.range(2).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
-        result should be (Seq(AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", false)))
+        result should be (
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false)
+                )
+            )
+        )
     }
 }

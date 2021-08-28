@@ -63,7 +63,7 @@ object SparkShim {
     }
 
     def relationSupportsMultiplePaths(providingClass:Class[_]) : Boolean = {
-        providingClass.newInstance() match {
+        providingClass.getDeclaredConstructor().newInstance() match {
             case _: RelationProvider => false
             case _: SchemaRelationProvider => false
             case _: FileFormat => true

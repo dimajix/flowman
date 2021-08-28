@@ -38,9 +38,6 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.spec.assertion.AssertionSpec
-import com.dimajix.flowman.util.ConsoleColors.green
-import com.dimajix.flowman.util.ConsoleColors.red
-import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class ValidateTarget(

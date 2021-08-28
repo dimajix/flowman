@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
@@ -91,7 +92,14 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
         ))
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
-        result should be (Seq(AssertionTestResult("unique_key for 'df:main' with keys 'id_1,id_2'", true)))
+        result should be (
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("unique_key for 'df:main' with keys 'id_1,id_2'", None, true)
+                )
+            )
+        )
     }
 
     it should "return an error" in {
@@ -112,6 +120,13 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
         ))
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
-        result should be (Seq(AssertionTestResult("unique_key for 'df:main' with keys 'id_1,id_2'", false)))
+        result should be (
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("unique_key for 'df:main' with keys 'id_1,id_2'", None, false)
+                )
+            )
+        )
     }
 }

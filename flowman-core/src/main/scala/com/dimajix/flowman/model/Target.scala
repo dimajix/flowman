@@ -23,6 +23,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
@@ -153,7 +154,7 @@ trait Target extends Instance {
       * @param execution
       * @param phase
       */
-    def execute(execution: Execution, phase: Phase) : Unit
+    def execute(execution: Execution, phase: Phase) : TargetResult
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
@@ -238,7 +239,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * @param execution
      * @param phase
      */
-    override def execute(execution: Execution, phase: Phase) : Unit = {
+    override def execute(execution: Execution, phase: Phase) : TargetResult = {
         phase match {
             case Phase.VALIDATE => validate(execution)
             case Phase.CREATE => create(execution)
@@ -247,6 +248,8 @@ abstract class BaseTarget extends AbstractInstance with Target {
             case Phase.TRUNCATE => truncate(execution)
             case Phase.DESTROY => destroy(execution)
         }
+
+        TargetResult(this, phase, Status.SUCCESS)
     }
 
     /**

@@ -75,7 +75,7 @@ class AssertionRunner(
                 logger.error(s" ✘ exception: $description}: ${ex.getMessage}")
                 AssertionResult(
                     assertion,
-                    Seq(AssertionTestResult(name, false, exception = true))
+                    Seq(AssertionTestResult(name, None, false, exception = true))
                 )
         }
     }

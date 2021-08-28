@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -62,24 +63,26 @@ case class ExpressionAssertion(
       * @param input
       * @return
       */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionTestResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): AssertionResult = {
         require(execution != null)
         require(input != null)
 
         val mapping = input(this.mapping)
-        expected.map { test =>
+        val results = expected.map { test =>
             DataFrameUtils.withCache(mapping.filter(!expr(test)).limit(21)) { df =>
                 if (df.count() > 0) {
                     val columns = CatalystSqlParser.parseExpression(test).references.map(_.name).toSeq.distinct.map(col)
                     val diff = DataFrameUtils.showString(mapping.select(columns: _*), 20, -1)
                     logger.error(s"failed expectation: $test\n$diff")
-                    AssertionTestResult(test, false)
+                    AssertionTestResult(test, None, false)
                 }
                 else {
-                    AssertionTestResult(test, true)
+                    AssertionTestResult(test, None, true)
                 }
             }
         }
+
+        AssertionResult(this, results)
     }
 }
 

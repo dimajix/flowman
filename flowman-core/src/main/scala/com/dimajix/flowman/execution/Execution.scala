@@ -125,8 +125,7 @@ abstract class Execution {
             .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
             .toMap
 
-        val result = assertion.execute(this, inputs)
-        AssertionResult(assertion, result)
+        assertion.execute(this, inputs)
     }
 
     /**

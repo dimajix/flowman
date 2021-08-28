@@ -101,7 +101,7 @@ trait Hook extends Instance with RunnerListener {
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishTest(token:TestToken, status:Status) : Unit
+    override def finishTest(token:TestToken, result:TestResult) : Unit
 
     /**
      * Starts the assertion and returns a token, which can be anything
@@ -130,7 +130,7 @@ abstract class BaseHook extends AbstractInstance with Hook {
     override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
     override def finishTarget(token: TargetToken, status: Status): Unit = {}
     override def startTest(test: Test, instance: TestInstance): TestToken = new TestToken {}
-    override def finishTest(token: TestToken, status: Status): Unit = {}
+    override def finishTest(token: TestToken, result:TestResult): Unit = {}
     override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
     override def finishAssertion(token: AssertionToken, result:AssertionResult): Unit = {}
 }

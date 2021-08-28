@@ -79,6 +79,27 @@ object Status {
             Status.SUCCESS
     }
 
+    def ofAll[T](seq: Iterable[Status]) : Status = {
+        val iter = seq.iterator
+        var error = false
+        var skipped = true
+        val empty = !iter.hasNext
+        while (iter.hasNext && (!error)) {
+            val status = iter.next()
+            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+            skipped &= (status == Status.SKIPPED)
+        }
+
+        if (empty)
+            Status.SUCCESS
+        else if (error)
+            Status.FAILED
+        else if (skipped)
+            Status.SKIPPED
+        else
+            Status.SUCCESS
+    }
+
     /**
      * This function determines a common status of multiple actions, which are executed in parallel
      * @param seq

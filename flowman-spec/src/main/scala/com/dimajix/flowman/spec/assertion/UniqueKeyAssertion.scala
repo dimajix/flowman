@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -60,7 +61,7 @@ case class UniqueKeyAssertion(
      * @param input
      * @return
      */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionTestResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): AssertionResult = {
         require(execution != null)
         require(input != null)
 
@@ -80,7 +81,7 @@ case class UniqueKeyAssertion(
             true
         }
 
-        Seq(AssertionTestResult(name, status))
+        AssertionResult(this, Seq(AssertionTestResult(name, description, status)))
     }
 }
 

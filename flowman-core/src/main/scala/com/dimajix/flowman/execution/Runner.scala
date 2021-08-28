@@ -50,6 +50,7 @@ import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestInstance
+import com.dimajix.flowman.model.TestResult
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.util.ConsoleColors._
@@ -504,9 +505,9 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
                     // Compute complete status - which is only SUCCESS if all steps have been executed successfully
                     if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
-                        Status.SUCCESS
+                        TestResult(test, Status.SUCCESS)
                     else
-                        Status.FAILED
+                        TestResult(test, Status.FAILED)
                 }
 
                 val endTime = Instant.now()
@@ -593,7 +594,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
      * @param fn
      * @return
      */
-    private def withListeners(test:Test, instance:TestInstance, listeners:Seq[RunnerListener])(fn: RunnerTestToken => Status) : Status = {
+    private def withListeners(test:Test, instance:TestInstance, listeners:Seq[RunnerListener])(fn: RunnerTestToken => TestResult) : Status = {
         def startTest() : Seq[(RunnerListener, TestToken)] = {
             listeners.flatMap { hook =>
                 try {
@@ -606,10 +607,10 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             }
         }
 
-        def finishTest(tokens:Seq[(RunnerListener, TestToken)], status:Status) : Unit = {
+        def finishTest(tokens:Seq[(RunnerListener, TestToken)], result:TestResult) : Unit = {
             tokens.foreach { case (listener, token)  =>
                 try {
-                    listener.finishTest(token, status)
+                    listener.finishTest(token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishTest: ${ex.toString}.")
@@ -618,10 +619,10 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         }
 
         val tokens = startTest()
-        withShutdownHook(finishTest(tokens, Status.FAILED)) {
-            val status = fn(RunnerTestToken(tokens))
-            finishTest(tokens, status)
-            status
+        withShutdownHook(finishTest(tokens, TestResult(test, Status.FAILED))) {
+            val result = fn(RunnerTestToken(tokens))
+            finishTest(tokens, result)
+            result.status
         }
     }
 }

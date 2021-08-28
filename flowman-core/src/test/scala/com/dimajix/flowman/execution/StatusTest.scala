@@ -22,20 +22,37 @@ import org.scalatest.matchers.should.Matchers
 
 class StatusTest extends AnyFlatSpec with Matchers {
     "Status.ofAll" should "return SUCCESS for empty lists" in {
-        Status.ofAll(Seq())(identity) should be (Status.SUCCESS)
+        Status.ofAll(Seq()) should be (Status.SUCCESS)
     }
     it should "return SUCCESS if all succeed" in {
-        Status.ofAll(Seq(Status.SUCCESS, Status.SUCCESS))(identity) should be (Status.SUCCESS)
+        Status.ofAll(Seq(Status.SUCCESS, Status.SUCCESS)) should be (Status.SUCCESS)
     }
     it should "return FAILED for any failure" in {
-        Status.ofAll(Seq(Status.SKIPPED, Status.FAILED, Status.SUCCESS))(identity) should be (Status.FAILED)
+        Status.ofAll(Seq(Status.SKIPPED, Status.FAILED, Status.SUCCESS)) should be (Status.FAILED)
     }
     it should "return FAILED for any UNKNOWN" in {
-        Status.ofAll(Seq(Status.SKIPPED, Status.UNKNOWN, Status.SUCCESS))(identity) should be (Status.FAILED)
+        Status.ofAll(Seq(Status.SKIPPED, Status.UNKNOWN, Status.SUCCESS)) should be (Status.FAILED)
     }
     it should "return SKIPPED if all are skipped" in {
-        Status.ofAll(Seq(Status.SKIPPED, Status.SKIPPED, Status.SUCCESS))(identity) should be (Status.SUCCESS)
-        Status.ofAll(Seq(Status.SKIPPED, Status.SKIPPED))(identity) should be (Status.SKIPPED)
+        Status.ofAll(Seq(Status.SKIPPED, Status.SKIPPED, Status.SUCCESS)) should be (Status.SUCCESS)
+        Status.ofAll(Seq(Status.SKIPPED, Status.SKIPPED)) should be (Status.SKIPPED)
+    }
+
+    "Status.parallelOfAll" should "return SUCCESS for empty lists" in {
+        Status.parallelOfAll(Seq(),4)(identity) should be (Status.SUCCESS)
+    }
+    it should "return SUCCESS if all succeed" in {
+        Status.parallelOfAll(Seq(Status.SUCCESS, Status.SUCCESS),4)(identity) should be (Status.SUCCESS)
+    }
+    it should "return FAILED for any failure" in {
+        Status.parallelOfAll(Seq(Status.SKIPPED, Status.FAILED, Status.SUCCESS),4)(identity) should be (Status.FAILED)
+    }
+    it should "return FAILED for any UNKNOWN" in {
+        Status.parallelOfAll(Seq(Status.SKIPPED, Status.UNKNOWN, Status.SUCCESS),4)(identity) should be (Status.FAILED)
+    }
+    it should "return SKIPPED if all are skipped" in {
+        Status.parallelOfAll(Seq(Status.SKIPPED, Status.SKIPPED, Status.SUCCESS),4)(identity) should be (Status.SUCCESS)
+        Status.parallelOfAll(Seq(Status.SKIPPED, Status.SKIPPED),4)(identity) should be (Status.SKIPPED)
     }
 
     "The Status" should "parse correctly" in {

@@ -35,6 +35,7 @@ import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -210,9 +211,9 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 (target.instance _).expects().atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
-                (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS))
             } else {
-                (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+                (target.execute _).expects(*, Phase.CREATE).never()
             }
 
             target
@@ -254,7 +255,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             (target.instance _).expects().atLeastOnce().returns(instance)
             (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
-            (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+            (target.execute _).expects(*, Phase.CREATE).never()
 
             target
         }
@@ -296,7 +297,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                     (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
                 }
                 else {
-                    (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                    (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS))
                 }
             } else {
                 (target.execute _).expects(*, Phase.CREATE).never()
@@ -342,7 +343,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
             }
             else {
-                (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS))
             }
 
             target

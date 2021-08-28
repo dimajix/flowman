@@ -40,6 +40,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestInstance
+import com.dimajix.flowman.model.TestResult
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTestToken
@@ -155,7 +156,8 @@ case class WebHook(
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishTest(token: TestToken, status: Status): Unit = {
+    override def finishTest(token: TestToken, result:TestResult): Unit = {
+        val status = result.status
         val env = token.asInstanceOf[DummyTestToken].env + ("status" -> status.lower)
         invoke(testFinish, env)
 

@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.DataType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -91,15 +92,17 @@ case class ColumnsAssertion(
       * @param input
       * @return
       */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionTestResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): AssertionResult = {
         require(execution != null)
         require(input != null)
 
         val df = input(mapping)
 
-        expected.map { test =>
-            AssertionTestResult(test.description, test.execute(df))
+        val results = expected.map { test =>
+            AssertionTestResult(test.description, None, test.execute(df))
         }
+
+        AssertionResult(this, results)
     }
 }
 

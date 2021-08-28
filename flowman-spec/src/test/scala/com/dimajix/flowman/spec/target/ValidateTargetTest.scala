@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.ValidationFailedException
 import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Target
@@ -69,7 +70,7 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
-        (assertion.execute _).expects(*,*).returns(Seq(AssertionTestResult("a1", true)))
+        (assertion.execute _).expects(*,*).returns(AssertionResult(assertion, Seq(AssertionTestResult("a1", None, true))))
 
         target.phases should be (Set(Phase.VALIDATE))
         target.requires(Phase.VALIDATE) should be (Set())
@@ -97,7 +98,7 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
-        (assertion.execute _).expects(*,*).returns(Seq())
+        (assertion.execute _).expects(*,*).returns(AssertionResult(assertion, Seq()))
 
         target.phases should be (Set(Phase.VALIDATE))
         target.requires(Phase.VALIDATE) should be (Set())
@@ -129,10 +130,15 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion1.name _).expects().returns("a1")
         (assertion1.description _).expects().returns(None)
         (assertion1.context _).expects().returns(context)
-        (assertion1.execute _).expects(*,*).returns(Seq(
-            AssertionTestResult("a1", false),
-            AssertionTestResult("a1", true)
-        ))
+        (assertion1.execute _).expects(*,*).returns(
+            AssertionResult(
+                assertion1,
+                Seq(
+                    AssertionTestResult("a1", None, false),
+                    AssertionTestResult("a1", None, true)
+                )
+            )
+        )
 
         (assertion2.requires _).expects().returns(Set())
         (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
@@ -170,18 +176,23 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion1.name _).expects().returns("a1")
         (assertion1.description _).expects().returns(None)
         (assertion1.context _).expects().returns(context)
-        (assertion1.execute _).expects(*,*).returns(Seq(
-            AssertionTestResult("a1", false),
-            AssertionTestResult("a1", true)
-        ))
+        (assertion1.execute _).expects(*,*).returns(
+            AssertionResult(
+                assertion1,
+                Seq(
+                    AssertionTestResult("a1", None, false),
+                    AssertionTestResult("a1", None, true)
+                )
+            )
+        )
 
         (assertion2.requires _).expects().returns(Set())
         (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
         (assertion2.name _).expects().returns("a2")
         (assertion2.description _).expects().returns(None)
         (assertion2.context _).expects().returns(context)
-        (assertion2.execute _).expects(*,*).returns(Seq(
-            AssertionTestResult("a3", true)
+        (assertion2.execute _).expects(*,*).returns(
+            AssertionResult(assertion2,Seq(AssertionTestResult("a3", None, true))
         ))
 
         target.phases should be (Set(Phase.VALIDATE))
@@ -215,19 +226,24 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion1.name _).expects().returns("a1")
         (assertion1.description _).expects().returns(None)
         (assertion1.context _).expects().returns(context)
-        (assertion1.execute _).expects(*,*).returns(Seq(
-            AssertionTestResult("a1", false),
-            AssertionTestResult("a1", true)
-        ))
+        (assertion1.execute _).expects(*,*).returns(
+            AssertionResult(
+                assertion1,
+                Seq(
+                    AssertionTestResult("a1", None, false),
+                    AssertionTestResult("a1", None, true)
+                )
+            )
+        )
 
         (assertion2.requires _).expects().returns(Set())
         (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
         (assertion2.name _).expects().returns("a2")
         (assertion2.description _).expects().returns(None)
         (assertion2.context _).expects().returns(context)
-        (assertion2.execute _).expects(*,*).returns(Seq(
-            AssertionTestResult("a3", true)
-        ))
+        (assertion2.execute _).expects(*,*).returns(
+            AssertionResult(assertion2, Seq(AssertionTestResult("a3", None, true)))
+        )
 
         target.phases should be (Set(Phase.VALIDATE))
         target.requires(Phase.VALIDATE) should be (Set())

@@ -37,4 +37,35 @@ class StatusTest extends AnyFlatSpec with Matchers {
         Status.ofAll(Seq(Status.SKIPPED, Status.SKIPPED, Status.SUCCESS))(identity) should be (Status.SUCCESS)
         Status.ofAll(Seq(Status.SKIPPED, Status.SKIPPED))(identity) should be (Status.SKIPPED)
     }
+
+    "The Status" should "parse correctly" in {
+        Status.ofString("UNKNOWN") should be (Status.UNKNOWN)
+        Status.ofString("unknown") should be (Status.UNKNOWN)
+        Status.ofString("RUNNING") should be (Status.RUNNING)
+        Status.ofString("SUCCESS") should be (Status.SUCCESS)
+        Status.ofString("FAILED") should be (Status.FAILED)
+        Status.ofString("aborted") should be (Status.ABORTED)
+        Status.ofString("killed") should be (Status.ABORTED)
+        Status.ofString("skipped") should be (Status.SKIPPED)
+        a[NullPointerException] shouldBe thrownBy(Status.ofString(null))
+        an[IllegalArgumentException] shouldBe thrownBy(Status.ofString("NO_SUCH_MODE"))
+    }
+
+    it should "provide a toString method" in {
+        Status.UNKNOWN.toString should be ("UNKNOWN")
+        Status.RUNNING.toString should be ("RUNNING")
+        Status.SUCCESS.toString should be ("SUCCESS")
+        Status.FAILED.toString should be ("FAILED")
+        Status.ABORTED.toString should be ("ABORTED")
+        Status.SKIPPED.toString should be ("SKIPPED")
+    }
+
+    it should "parse toString correctly" in {
+        Status.ofString(Status.UNKNOWN.toString) should be (Status.UNKNOWN)
+        Status.ofString(Status.RUNNING.toString) should be (Status.RUNNING)
+        Status.ofString(Status.SUCCESS.toString) should be (Status.SUCCESS)
+        Status.ofString(Status.FAILED.toString) should be (Status.FAILED)
+        Status.ofString(Status.ABORTED.toString) should be (Status.ABORTED)
+        Status.ofString(Status.SKIPPED.toString) should be (Status.SKIPPED)
+    }
 }

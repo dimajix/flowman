@@ -26,27 +26,26 @@ import com.dimajix.flowman.common.ThreadUtils
 
 
 sealed abstract class Status {
-    val value: String
-
-    override def toString: String = value
+    def lower : String = toString.toLowerCase(Locale.ROOT)
+    def upper : String = toString.toUpperCase(Locale.ROOT)
 }
 
 object Status {
-    case object UNKNOWN extends Status { val value = "unknown" }
-    case object RUNNING extends Status { val value = "running" }
-    case object SUCCESS extends Status { val value = "success" }
-    case object FAILED extends Status { val value = "failed" }
-    case object ABORTED extends Status { val value = "killed" }
-    case object SKIPPED extends Status { val value = "skipped" }
+    case object UNKNOWN extends Status
+    case object RUNNING extends Status
+    case object SUCCESS extends Status
+    case object FAILED extends Status
+    case object ABORTED extends Status
+    case object SKIPPED extends Status
 
     def ofString(status:String) : Status = {
         status.toLowerCase(Locale.ROOT) match {
-            case UNKNOWN.value => UNKNOWN
-            case RUNNING.value => RUNNING
-            case SUCCESS.value => SUCCESS
-            case FAILED.value => FAILED
-            case ABORTED.value => ABORTED
-            case SKIPPED.value => SKIPPED
+            case "unknown" => UNKNOWN
+            case "running" => RUNNING
+            case "success" => SUCCESS
+            case "failed" => FAILED
+            case "aborted"|"killed" => ABORTED
+            case "skipped" => SKIPPED
             case _ => throw new IllegalArgumentException(s"No status defined for '$status'")
         }
     }

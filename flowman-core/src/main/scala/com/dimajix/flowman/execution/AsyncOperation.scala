@@ -62,6 +62,7 @@ case class AsyncOperation(
      */
     override def exception: Option[OperationException] = value.value match {
         case Some(Failure(exception:OperationException)) => Some(exception)
+        case Some(Failure(ex:Throwable)) => Some(new OperationException(ex.getMessage, ex)) // Should not happen
         case Some(Success(_)) => None
         case None => None
     }

@@ -92,7 +92,7 @@ case class WebHook(
      * @param status
      */
     override def finishJob(token: JobToken, status: Status): Unit = {
-        val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status.toString)
+        val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status.lower)
         invoke(jobFinish, env)
 
         status match {
@@ -126,7 +126,7 @@ case class WebHook(
      * @param status
      */
     override def finishTarget(token: TargetToken, status: Status): Unit = {
-        val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status.toString)
+        val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status.lower)
         invoke(targetFinish, env)
 
         status match {
@@ -156,7 +156,7 @@ case class WebHook(
      * @param status
      */
     override def finishTest(token: TestToken, status: Status): Unit = {
-        val env = token.asInstanceOf[DummyTestToken].env + ("status" -> status.toString)
+        val env = token.asInstanceOf[DummyTestToken].env + ("status" -> status.lower)
         invoke(testFinish, env)
 
         status match {

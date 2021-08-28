@@ -91,7 +91,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             hashArgs(job),
             now,
             new Timestamp(0),
-            Status.RUNNING.value
+            Status.RUNNING.toString
         )
 
         logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in state database")
@@ -112,7 +112,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setJobStatus(run.copy(end_ts = now, status=status.value))
+            repository.setJobStatus(run.copy(end_ts = now, status=status.toString))
         }
     }
 
@@ -157,7 +157,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             hashPartitions(target),
             now,
             new Timestamp(0),
-            Status.RUNNING.value
+            Status.RUNNING.toString
         )
 
         logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in state database")
@@ -178,7 +178,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setTargetStatus(run.copy(end_ts = now, status=status.value))
+            repository.setTargetStatus(run.copy(end_ts = now, status=status.toString))
         }
     }
 

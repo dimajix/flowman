@@ -70,7 +70,7 @@ object Velocity {
         // Add instances of all custom classses
         classes.foreach { case (name, cls) =>
             try {
-                context.put(name, cls.newInstance())
+                context.put(name, cls.getDeclaredConstructor().newInstance())
             }
             catch {
                 case NonFatal(e) =>

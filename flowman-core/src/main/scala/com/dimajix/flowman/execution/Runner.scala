@@ -62,14 +62,21 @@ private[execution] sealed class RunnerImpl {
     protected val logger = LoggerFactory.getLogger(classOf[Runner])
     protected val logFilters = LogFilter.filters
 
-    def resultOf(target:Target, phase:Phase)(fn: => TargetResult) : TargetResult = {
+    def resultOf(target:Target, phase:Phase, dryRun:Boolean)(fn: => TargetResult) : TargetResult = {
         val result = Try {
-            fn
+            if (!dryRun) {
+                fn
+            }
+            else {
+                TargetResult(target, phase, Status.SUCCESS)
+            }
         }
-        .fold({
-            e => logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
-            TargetResult(target, phase, Status.FAILED)
-        }, identity)
+        match {
+            case Success(r) => r
+            case Failure(e) =>
+                logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
+                TargetResult(target, phase, Status.FAILED)
+        }
 
         result match {
             case TargetResult(_,_,_,_,Status.SUCCESS) =>
@@ -77,11 +84,11 @@ private[execution] sealed class RunnerImpl {
             case TargetResult(_,_,_,_,Status.SKIPPED) =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case TargetResult(_,_,_,_,Status.FAILED) =>
-                logger.info(green(s"Failed phase '$phase' for target '${target.identifier}'"))
+                logger.info(red(s"Failed phase '$phase' for target '${target.identifier}'"))
             case TargetResult(_,_,_,_,Status.ABORTED) =>
-                logger.info(green(s"Aborted phase '$phase' for target '${target.identifier}'"))
+                logger.info(red(s"Aborted phase '$phase' for target '${target.identifier}'"))
             case TargetResult(_,_,_,_,status) =>
-                logger.info(green(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
+                logger.info(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
         }
 
         result
@@ -286,14 +293,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 TargetResult(target, phase, Status.SKIPPED)
             }
             else {
-                resultOf(target, phase) {
-                    if (!dryRun) {
-                        withWallTime(execution.metrics, target.metadata, phase) {
-                            target.execute(execution, phase)
-                        }
-                    }
-                    else {
-                        TargetResult(target, phase, Status.SUCCESS)
+                resultOf(target, phase, dryRun) {
+                    withWallTime(execution.metrics, target.metadata, phase) {
+                        target.execute(execution, phase)
                     }
                 }
             }
@@ -590,13 +592,8 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         logSubtitle(s"$phase target '${target.identifier}'")
 
         // First checkJob if execution is really required
-        resultOf(target, phase) {
-            if (!dryRun) {
-                target.execute(execution, phase)
-            }
-            else {
-                TargetResult(target, phase, Status.SUCCESS)
-            }
+        resultOf(target, phase, dryRun) {
+            target.execute(execution, phase)
         }
     }
 }

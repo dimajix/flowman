@@ -84,11 +84,11 @@ private[execution] sealed class RunnerImpl {
             case TargetResult(_,_,_,_,Status.SKIPPED) =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case TargetResult(_,_,_,_,Status.FAILED) =>
-                logger.info(red(s"Failed phase '$phase' for target '${target.identifier}'"))
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'"))
             case TargetResult(_,_,_,_,Status.ABORTED) =>
-                logger.info(red(s"Aborted phase '$phase' for target '${target.identifier}'"))
+                logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}'"))
             case TargetResult(_,_,_,_,status) =>
-                logger.info(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
+                logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
         }
 
         result
@@ -209,7 +209,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         }
 
                     if (isActive) {
-                        executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing, dryRun)
+                        val result = executeJobPhase(execution, jobContext, job, phase, arguments, targets, force, keepGoing, dryRun)
+                        result.status
                     }
                     else {
                         Status.SUCCESS
@@ -227,7 +228,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         targets:Seq[Regex],
         force:Boolean,
         keepGoing:Boolean,
-        dryRun:Boolean) : Status = {
+        dryRun:Boolean) : JobResult = {
         runner.withPhaseContext(jobContext, phase) { context =>
             val title = s"${phase.toString.toUpperCase} job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
             logTitle(title)
@@ -248,6 +249,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         }
                         catch {
                             case NonFatal(ex) =>
+                                // Primarily exceptions during target instantiation will be caught here
                                 logger.error(s"Caught exception during $phase $title:", ex)
                                 JobResult(job, instance, phase, Status.FAILED)
                         }
@@ -259,7 +261,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             val duration = Duration.between(startTime, endTime)
             val status = result.status
             logStatus(title, status, duration, endTime)
-            status
+            result
         }
     }
 
@@ -314,6 +316,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
         require(phase != null)
 
+        // This will throw an exception if instantiation fails
         val jobTargets = job.targets.map(t => context.getTarget(t))
 
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)

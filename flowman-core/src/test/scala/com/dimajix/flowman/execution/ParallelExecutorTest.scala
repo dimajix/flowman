@@ -81,7 +81,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
         result.sortBy(_.name) should be (Seq(
             TargetResult(t1, t1.instance, Phase.BUILD, Seq(), Status.SUCCESS),
-            TargetResult(t2, t2.instance, Phase.BUILD, Seq(), Status.SUCCESS),
+            TargetResult(t2, t2.instance, Phase.BUILD, Seq(), Status.SUCCESS)
         ))
     }
 }

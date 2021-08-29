@@ -150,10 +150,11 @@ trait Target extends Instance {
     def dirty(execution: Execution, phase: Phase) : Trilean
 
     /**
-      * Executes a specific phase of this target
-      * @param execution
-      * @param phase
-      */
+     * Executes a specific phase of this target. This method is explicitly allowed to throw an exception, which will
+     * be caught by the [[com.dimajix.flowman.execution.Runner]]
+     * @param execution
+     * @param phase
+     */
     def execute(execution: Execution, phase: Phase) : TargetResult
 
     /**
@@ -234,8 +235,9 @@ abstract class BaseTarget extends AbstractInstance with Target {
     override def dirty(execution: Execution, phase: Phase): Trilean = Unknown
 
     /**
-     * Executes a specific phase of this target
- *
+     * Executes a specific phase of this target. This method is explicitly allowed to throw an exception, which will
+     * be caught by the [[com.dimajix.flowman.execution.Runner]]
+     *
      * @param execution
      * @param phase
      */

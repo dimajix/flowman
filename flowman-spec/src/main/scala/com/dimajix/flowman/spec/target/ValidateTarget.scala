@@ -31,12 +31,14 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.ValidationFailedException
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
 
 

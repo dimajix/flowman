@@ -19,12 +19,13 @@ package com.dimajix.flowman.history
 import com.dimajix.flowman.execution
 import com.dimajix.flowman.execution.AbstractRunnerListener
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 
 
 object StateStoreAdaptorListener {
@@ -37,7 +38,8 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractRunnerLi
     override def startJob(job:Job, instance: JobInstance, phase: Phase): execution.JobToken = {
         StateStoreJobToken(store.startJob(instance, phase))
     }
-    override def finishJob(token: execution.JobToken, status: Status): Unit = {
+    override def finishJob(token: execution.JobToken, result: JobResult): Unit = {
+        val status = result.status
         val t = token.asInstanceOf[StateStoreJobToken].token
         store.finishJob(t, status)
     }
@@ -45,7 +47,8 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractRunnerLi
         val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)
         StateStoreTargetToken(store.startTarget(instance, phase, t))
     }
-    override def finishTarget(token: execution.TargetToken, status: Status): Unit = {
+    override def finishTarget(token: execution.TargetToken, result:TargetResult): Unit = {
+        val status = result.status
         val t = token.asInstanceOf[StateStoreTargetToken].token
         store.finishTarget(t, status)
     }

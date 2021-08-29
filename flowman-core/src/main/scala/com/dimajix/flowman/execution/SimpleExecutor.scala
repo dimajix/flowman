@@ -16,10 +16,13 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.mutable
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 
 
 class SimpleExecutor extends Executor {
@@ -37,7 +40,7 @@ class SimpleExecutor extends Executor {
      * @param fn - Function to call. Note that the function is expected not to throw a non-fatal exception.
      * @return
      */
-    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => Status) : Status = {
+    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult] = {
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_SCHEDULER_CLASS)
         val ctor = clazz.getDeclaredConstructor()
         val scheduler = ctor.newInstance()
@@ -49,8 +52,17 @@ class SimpleExecutor extends Executor {
         logger.info(s"Target order for $phase:")
         orderedTargets.foreach(t => logger.info("  - " + t.identifier))
 
-        Status.ofAll(orderedTargets, keepGoing) { target =>
-            fn(execution, target, phase)
+        val results = mutable.ListBuffer[TargetResult]()
+        var error = false
+        val iter = orderedTargets.iterator
+        while (iter.hasNext && (!error || keepGoing)) {
+            val target = iter.next()
+            val result = fn(execution, target, phase)
+            val status = result.status
+            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+            results += result
         }
+
+        results.toList
     }
 }

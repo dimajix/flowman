@@ -72,7 +72,7 @@ class AssertionRunner(
             case NonFatal(ex) =>
                 val name = assertion.name
                 val description = assertion.description.getOrElse(name)
-                logger.error(s" ✘ exception: $description}: ${ex.getMessage}")
+                logger.error(s" ✘ exception: $description: ${ex.getMessage}")
                 AssertionResult(
                     assertion,
                     Seq(AssertionTestResult(name, None, false, exception = true))

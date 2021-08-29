@@ -20,11 +20,10 @@ import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
-import com.dimajix.flowman.model.Test
-import com.dimajix.flowman.model.TestInstance
-import com.dimajix.flowman.model.TestResult
+import com.dimajix.flowman.model.TargetResult
 
 
 abstract class Token
@@ -45,9 +44,9 @@ trait RunnerListener {
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    def finishJob(token:JobToken, status:Status) : Unit
+    def finishJob(token:JobToken, result:JobResult) : Unit
 
     /**
      * Starts the run and returns a token, which can be anything
@@ -59,23 +58,9 @@ trait RunnerListener {
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    def finishTarget(token:TargetToken, status:Status) : Unit
-
-    /**
-     * Starts the test and returns a token, which can be anything
-     * @param test
-     * @return
-     */
-    def startTest(test:Test, instance:TestInstance) : TestToken
-
-    /**
-     * Sets the status of a test after it has been started
-     * @param token The token returned by startJob
-     * @param status
-     */
-    def finishTest(token:TestToken, result:TestResult) : Unit
+    def finishTarget(token:TargetToken, result:TargetResult) : Unit
 
     /**
      * Starts the assertion and returns a token, which can be anything
@@ -87,7 +72,7 @@ trait RunnerListener {
     /**
      * Sets the status of a assertion after it has been started
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
     def finishAssertion(token:AssertionToken, result:AssertionResult) : Unit
 }
@@ -95,11 +80,9 @@ trait RunnerListener {
 
 abstract class AbstractRunnerListener extends RunnerListener {
     override def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken = new JobToken {}
-    override def finishJob(token: JobToken, status: Status): Unit = {}
+    override def finishJob(token: JobToken, result: JobResult): Unit = {}
     override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
-    override def finishTarget(token: TargetToken, status: Status): Unit = {}
-    override def startTest(test: Test, instance: TestInstance): TestToken = new TestToken {}
-    override def finishTest(token: TestToken, result:TestResult): Unit = {}
+    override def finishTarget(token: TargetToken, result: TargetResult): Unit = {}
     override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
     override def finishAssertion(token: AssertionToken, result: AssertionResult): Unit = {}
 }

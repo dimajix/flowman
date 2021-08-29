@@ -85,7 +85,6 @@ object Test {
         val allMappingMocks = parents.foldLeft(Map[String,Template[Mapping]]())((f,t) => f ++ t.overrideMappings) ++ test.overrideMappings
         val allFixtures = parents.foldLeft(Map[String,Template[Target]]())((f,t) => f ++ t.fixtures) ++ test.fixtures
         val allAssertions = parents.foldLeft(Map[String,Template[Assertion]]())((f,t) => f ++ t.assertions) ++ test.assertions
-        val allHooks = parents.foldLeft(Seq[Template[Hook]]())((f,t) => f ++ t.hooks) ++ test.hooks
 
         Test(
             test.instanceProperties,
@@ -94,8 +93,7 @@ object Test {
             allRelationMocks,
             allMappingMocks,
             allFixtures,
-            allAssertions,
-            allHooks
+            allAssertions
         )
     }
 }
@@ -109,8 +107,7 @@ final case class Test(
     overrideRelations:Map[String,Template[Relation]] = Map(),
     overrideMappings:Map[String,Template[Mapping]] = Map(),
     fixtures:Map[String,Template[Target]] = Map(),
-    assertions:Map[String,Template[Assertion]] = Map(),
-    hooks:Seq[Template[Hook]] = Seq()
+    assertions:Map[String,Template[Assertion]] = Map()
 ) extends AbstractInstance {
     override def category: String = "test"
     override def kind : String = "test"

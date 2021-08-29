@@ -50,7 +50,6 @@ class TestSpec extends NamedSpec[Test] {
     @JsonProperty(value="overrideRelations") private var overrideRelations: Map[String,RelationSpec] = Map()
     @JsonDeserialize(converter=classOf[AssertionSpec.NameResolver])
     @JsonProperty(value="assertions") private var assertions: Map[String,AssertionSpec] = Map()
-    @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq()
 
     override def instantiate(context: Context): Test = {
         require(context != null)
@@ -63,8 +62,7 @@ class TestSpec extends NamedSpec[Test] {
             fixtures = fixtures,
             overrideMappings = overrideMappings,
             overrideRelations = overrideRelations,
-            assertions = assertions,
-            hooks = hooks
+            assertions = assertions
         )
 
         Test.merge(test, parents)

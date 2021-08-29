@@ -37,12 +37,23 @@ sealed abstract class Result {
     def numExceptions : Int = children.count(_.exception)
 }
 
+object JobResult {
+    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status) : JobResult =
+        JobResult(
+            job,
+            instance,
+            phase,
+            Seq(),
+            status
+        )
+}
 case class JobResult(
     job: Job,
     instance : JobInstance,
     phase: Phase,
-    override val children : Seq[Result]
-) extends Result {
+    override val children : Seq[Result],
+    override val status: Status)
+extends Result {
     override def name : String = job.name
     override def category : String = job.category
     override def kind : String = job.kind

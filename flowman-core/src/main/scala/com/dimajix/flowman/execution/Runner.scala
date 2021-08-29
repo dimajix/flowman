@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
-import com.dimajix.flowman.execution.TestRunnerImpl.RunnerTestToken
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
@@ -42,39 +41,50 @@ import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.Test
-import com.dimajix.flowman.model.TestInstance
-import com.dimajix.flowman.model.TestResult
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.SparkUtils.withJobGroup
-import com.dimajix.spark.sql.DataFrameUtils
 
 
 private[execution] sealed class RunnerImpl {
     protected val logger = LoggerFactory.getLogger(classOf[Runner])
     protected val logFilters = LogFilter.filters
 
-    def withStatus[T](target:Target, phase:Phase)(fn: => T) : Status = {
-        Try {
+    def resultOf(target:Target, phase:Phase)(fn: => TargetResult) : TargetResult = {
+        val result = Try {
             fn
         }
-        match {
-            case Success(_) =>
+        .fold({
+            e => logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
+            TargetResult(target, phase, Status.FAILED)
+        }, identity)
+
+        result match {
+            case TargetResult(_,_,_,_,Status.SUCCESS) =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
-                Status.SUCCESS
-            case Failure(NonFatal(e)) =>
-                logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
-                Status.FAILED
+            case TargetResult(_,_,_,_,Status.SKIPPED) =>
+                logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
+            case TargetResult(_,_,_,_,Status.FAILED) =>
+                logger.info(green(s"Failed phase '$phase' for target '${target.identifier}'"))
+            case TargetResult(_,_,_,_,Status.ABORTED) =>
+                logger.info(green(s"Aborted phase '$phase' for target '${target.identifier}'"))
+            case TargetResult(_,_,_,_,status) =>
+                logger.info(green(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
         }
+
+        result
     }
 
     def withExecution[T](parent:Execution, isolated:Boolean=false)(fn:Execution => T) : T = {
@@ -221,16 +231,18 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             val allMetrics = job.metrics.map(_.instantiate(context))
 
             val startTime = Instant.now()
-            val status = withListeners(job, instance, phase, allHooks) { token =>
+            val result = withListeners(job, instance, phase, allHooks) { token =>
                 withMetrics(execution.metrics, allMetrics) {
                     withWallTime(execution.metrics, job.metadata, phase) {
                         try {
-                            executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing, dryRun)
+                            val results = executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing, dryRun)
+                            val status = Status.ofAll(results.map(_.status))
+                            JobResult(job, instance, phase, results, status)
                         }
                         catch {
                             case NonFatal(ex) =>
                                 logger.error(s"Caught exception during $phase $title:", ex)
-                                Status.FAILED
+                                JobResult(job, instance, phase, Status.FAILED)
                         }
                     }
                 }
@@ -238,6 +250,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
 
             val endTime = Instant.now()
             val duration = Duration.between(startTime, endTime)
+            val status = result.status
             logStatus(title, status, duration, endTime)
             status
         }
@@ -251,7 +264,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phase
      * @return
      */
-    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean, dryRun:Boolean) : Status = {
+    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean, dryRun:Boolean) : TargetResult = {
         // Create target instance for state server
         val instance = target.instance
 
@@ -265,19 +278,22 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             if (canSkip) {
                 logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
-                Status.SKIPPED
+                TargetResult(target, phase, Status.SKIPPED)
             }
             else if (!forceDirty && target.dirty(execution, phase) == No) {
                 logger.info(cyan(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution"))
                 logger.info("")
-                Status.SKIPPED
+                TargetResult(target, phase, Status.SKIPPED)
             }
             else {
-                withStatus(target, phase) {
+                resultOf(target, phase) {
                     if (!dryRun) {
                         withWallTime(execution.metrics, target.metadata, phase) {
                             target.execute(execution, phase)
                         }
+                    }
+                    else {
+                        TargetResult(target, phase, Status.SUCCESS)
                     }
                 }
             }
@@ -293,7 +309,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param token
      * @return
      */
-    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Status = {
+    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
         require(phase != null)
 
         val jobTargets = job.targets.map(t => context.getTarget(t))
@@ -321,7 +337,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param fn
      * @return
      */
-    private def withListeners(job:Job, instance:JobInstance, phase:Phase, listeners:Seq[RunnerListener])(fn: RunnerJobToken => Status) : Status = {
+    private def withListeners(job:Job, instance:JobInstance, phase:Phase, listeners:Seq[RunnerListener])(fn: RunnerJobToken => JobResult) : JobResult = {
         def startJob() : Seq[(RunnerListener, JobToken)] = {
             listeners.flatMap { hook =>
                 try {
@@ -334,10 +350,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
         }
 
-        def finishJob(tokens:Seq[(RunnerListener, JobToken)], status:Status) : Unit = {
+        def finishJob(tokens:Seq[(RunnerListener, JobToken)], result:JobResult) : Unit = {
             tokens.foreach { case (listener, token)  =>
                 try {
-                    listener.finishJob(token, status)
+                    listener.finishJob(token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishJob: ${ex.toString}.")
@@ -346,14 +362,14 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         }
 
         val tokens = startJob()
-        withShutdownHook(finishJob(tokens, Status.FAILED)) {
-            val status = fn(RunnerJobToken(tokens))
-            finishJob(tokens, status)
-            status
+        withShutdownHook(finishJob(tokens, JobResult(job, instance, phase, Status.FAILED))) {
+            val result = fn(RunnerJobToken(tokens))
+            finishJob(tokens, result)
+            result
         }
     }
 
-    private def withListeners(target:Target, instance:TargetInstance, phase:Phase, job:RunnerJobToken)(fn: => Status) : Status = {
+    private def withListeners(target:Target, instance:TargetInstance, phase:Phase, job:RunnerJobToken)(fn: => TargetResult) : TargetResult = {
         def startTarget() : Seq[(RunnerListener, TargetToken)] = {
             job.tokens.flatMap { case(listener,jobToken) =>
                 try {
@@ -367,10 +383,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
         }
 
-        def finishTarget(tokens:Seq[(RunnerListener, TargetToken)], status:Status) : Unit = {
+        def finishTarget(tokens:Seq[(RunnerListener, TargetToken)], result:TargetResult) : Unit = {
             tokens.foreach { case(listener, token) =>
                 try {
-                    listener.finishTarget(token, status)
+                    listener.finishTarget(token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishTarget: ${ex.toString}.")
@@ -379,10 +395,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         }
 
         val tokens = startTarget()
-        withShutdownHook(finishTarget(tokens, Status.FAILED)) {
-            val status = fn
-            finishTarget(tokens, status)
-            status
+        withShutdownHook(finishTarget(tokens, TargetResult(target, phase, Status.FAILED))) {
+            val result = fn
+            finishTarget(tokens, result)
+            result
         }
     }
 
@@ -411,7 +427,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         }
     }
 
-    private def withMetrics(metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => Status) : Status = {
+    private def withMetrics[T <: Result](metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => T) : T = {
         // Publish metrics
         metrics.foreach { metrics =>
             metrics.reset(metricSystem)
@@ -421,7 +437,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         // Run original function
         var status:Status = Status.UNKNOWN
         try {
-            status = fn
+            val result = fn
+            status = result.status
+            result
         }
         catch {
             case NonFatal(ex) =>
@@ -438,15 +456,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 metricSystem.removeBoard(metrics)
             }
         }
-
-        status
     }
 }
 
-private[execution] object TestRunnerImpl {
-    private final case class RunnerTestToken(tokens:Seq[(RunnerListener, TestToken)]) extends TestToken
-    private final case class RunnerTargetToken(tokens:Seq[(RunnerListener, TargetToken)]) extends TargetToken
-}
 
 /**
  * Private Implementation for Test specific methods
@@ -463,52 +475,49 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                 logEnvironment(context)
 
                 val instance = test.instance
-                val allHooks = if (!dryRun) (runner.hooks ++ test.hooks).map(_.instantiate(context)) else Seq()
                 val startTime = Instant.now()
 
-                val status = withListeners(test, instance, allHooks) { token =>
-                    // Get all targets once here. Otherwise the fixtures would be instantiated over and over again for
-                    // each phase.
-                    val targets = test.targets.map(t => context.getTarget(t)) ++ test.fixtures.values.map(_.instantiate(context))
+                // Get all targets once here. Otherwise the fixtures would be instantiated over and over again for
+                // each phase.
+                val targets = test.targets.map(t => context.getTarget(t)) ++ test.fixtures.values.map(_.instantiate(context))
 
-                    def runPhase(phase: Phase): Status = {
-                        // Only execute phase if there are targets. This will save some logging outputs
-                        if (targets.exists(_.phases.contains(phase))) {
-                            runner.withPhaseContext(context, phase) { context =>
-                                executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
-                            }
-                        }
-                        else {
-                            Status.SUCCESS
+                def runPhase(phase: Phase): Status = {
+                    // Only execute phase if there are targets. This will save some logging outputs
+                    if (targets.exists(_.phases.contains(phase))) {
+                        runner.withPhaseContext(context, phase) { context =>
+                            executeTestTargets(execution, context, targets, phase, keepGoing, dryRun)
                         }
                     }
-
-                    // First create test environment via fixtures
-                    val buildStatus = Status.ofAll(Lifecycle.BUILD, keepGoing) { phase =>
-                        runPhase(phase)
+                    else {
+                        Status.SUCCESS
                     }
-                    // Now run tests if fixtures where successful
-                    val testStatus =
-                        if (buildStatus == Status.SUCCESS || keepGoing) {
-                            val sc = execution.spark.sparkContext
-                            withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
-                                executeTestAssertions(execution, context, test, token, keepGoing, dryRun)
-                            }
-                        }
-                        else {
-                            Status.SKIPPED
-                        }
-                    // Finally clean up, even in case of possible failures.
-                    val destroyStatus = Status.ofAll(Lifecycle.DESTROY, true) { phase =>
-                        runPhase(phase)
-                    }
-
-                    // Compute complete status - which is only SUCCESS if all steps have been executed successfully
-                    if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
-                        TestResult(test, Status.SUCCESS)
-                    else
-                        TestResult(test, Status.FAILED)
                 }
+
+                // First create test environment via fixtures
+                val buildStatus = Status.ofAll(Lifecycle.BUILD, keepGoing) { phase =>
+                    runPhase(phase)
+                }
+                // Now run tests if fixtures where successful
+                val testStatus =
+                    if (buildStatus == Status.SUCCESS || keepGoing) {
+                        val sc = execution.spark.sparkContext
+                        withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
+                            executeTestAssertions(execution, context, test, keepGoing, dryRun)
+                        }
+                    }
+                    else {
+                        Status.SKIPPED
+                    }
+                // Finally clean up, even in case of possible failures.
+                val destroyStatus = Status.ofAll(Lifecycle.DESTROY, true) { phase =>
+                    runPhase(phase)
+                }
+
+                // Compute complete status - which is only SUCCESS if all steps have been executed successfully
+                val status = if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
+                    Status.SUCCESS
+                else
+                    Status.FAILED
 
                 val endTime = Instant.now()
                 val duration = Duration.between(startTime, endTime)
@@ -522,7 +531,6 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         execution: Execution,
         context:Context,
         test:Test,
-        token:RunnerTestToken,
         keepGoing:Boolean,
         dryRun:Boolean
     ) : Status = {
@@ -536,7 +544,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
             val instances = test.assertions.values.toSeq.map( _.instantiate(context))
 
             // Execute all assertions
-            val runner = new AssertionRunner(context, execution, hooks=token.tokens)
+            val runner = new AssertionRunner(context, execution)
             val results = runner.run(instances, keepGoing=keepGoing, dryRun=dryRun)
 
             val endTime = Instant.now()
@@ -568,61 +576,27 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         def targetFilter(target:Target) : Boolean =
             target.phases.contains(phase)
 
-        executor.execute(execution, context, phase, targets, targetFilter, keepGoing) { (execution, target, phase) =>
+        val results = executor.execute(execution, context, phase, targets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
                 executeTestTargetPhase(execution, target, phase, dryRun)
             }
         }
+
+        Status.ofAll(results.map(_.status))
     }
 
-    private def executeTestTargetPhase(execution: Execution, target:Target, phase:Phase, dryRun:Boolean) : Status = {
+    private def executeTestTargetPhase(execution: Execution, target:Target, phase:Phase, dryRun:Boolean) : TargetResult = {
         logSubtitle(s"$phase target '${target.identifier}'")
 
         // First checkJob if execution is really required
-        withStatus(target, phase) {
+        resultOf(target, phase) {
             if (!dryRun) {
                 target.execute(execution, phase)
             }
-        }
-    }
-
-    /**
-     * Monitors the job execution by invoking all listeners
-     * @param test
-     * @param listeners
-     * @param fn
-     * @return
-     */
-    private def withListeners(test:Test, instance:TestInstance, listeners:Seq[RunnerListener])(fn: RunnerTestToken => TestResult) : Status = {
-        def startTest() : Seq[(RunnerListener, TestToken)] = {
-            listeners.flatMap { hook =>
-                try {
-                    Some((hook, hook.startTest(test, instance)))
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startTest: ${ex.toString}.")
-                        None
-                }
+            else {
+                TargetResult(target, phase, Status.SUCCESS)
             }
-        }
-
-        def finishTest(tokens:Seq[(RunnerListener, TestToken)], result:TestResult) : Unit = {
-            tokens.foreach { case (listener, token)  =>
-                try {
-                    listener.finishTest(token, result)
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishTest: ${ex.toString}.")
-                }
-            }
-        }
-
-        val tokens = startTest()
-        withShutdownHook(finishTest(tokens, TestResult(test, Status.FAILED))) {
-            val result = fn(RunnerTestToken(tokens))
-            finishTest(tokens, result)
-            result.status
         }
     }
 }

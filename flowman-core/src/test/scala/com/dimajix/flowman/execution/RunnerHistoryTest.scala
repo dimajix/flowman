@@ -36,6 +36,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -149,6 +150,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             (target.identifier _).when().returns(TargetIdentifier(name))
             (target.instance _).when().returns(instance)
             (target.dirty _).when(*, Phase.CREATE).returns(dirty)
+            (target.execute _).when(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS))
             target
         }
         def genJob(session:Session, target:String) : Job = {

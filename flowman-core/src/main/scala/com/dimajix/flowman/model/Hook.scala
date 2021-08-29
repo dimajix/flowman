@@ -71,9 +71,9 @@ trait Hook extends Instance with RunnerListener {
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    override def finishJob(token:JobToken, status:Status) : Unit
+    override def finishJob(token:JobToken, result:JobResult) : Unit
 
     /**
      * Starts the run and returns a token, which can be anything
@@ -85,23 +85,9 @@ trait Hook extends Instance with RunnerListener {
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    override def finishTarget(token:TargetToken, status:Status) : Unit
-
-    /**
-     * Starts the test and returns a token, which can be anything
-     * @param test
-     * @return
-     */
-    override def startTest(test:Test, instance:TestInstance) : TestToken
-
-    /**
-     * Sets the status of a test after it has been started
-     * @param token The token returned by startJob
-     * @param status
-     */
-    override def finishTest(token:TestToken, result:TestResult) : Unit
+    override def finishTarget(token:TargetToken, result:TargetResult) : Unit
 
     /**
      * Starts the assertion and returns a token, which can be anything
@@ -126,11 +112,9 @@ abstract class BaseHook extends AbstractInstance with Hook {
     protected override def instanceProperties: Hook.Properties
 
     override def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken = new JobToken {}
-    override def finishJob(token: JobToken, status: Status): Unit = {}
+    override def finishJob(token: JobToken, result: JobResult): Unit = {}
     override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
-    override def finishTarget(token: TargetToken, status: Status): Unit = {}
-    override def startTest(test: Test, instance: TestInstance): TestToken = new TestToken {}
-    override def finishTest(token: TestToken, result:TestResult): Unit = {}
+    override def finishTarget(token: TargetToken, result:TargetResult): Unit = {}
     override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
     override def finishAssertion(token: AssertionToken, result:AssertionResult): Unit = {}
 }

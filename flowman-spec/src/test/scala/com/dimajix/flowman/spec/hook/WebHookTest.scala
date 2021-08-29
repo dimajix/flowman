@@ -26,12 +26,14 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spec.target.NullTarget
 import com.dimajix.flowman.spec.target.NullTargetSpec
@@ -55,7 +57,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val instance = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
 
         val token = hook.startJob(job, instance, Phase.BUILD)
-        hook.finishJob(token, Status.SUCCESS)
+        hook.finishJob(token, JobResult(job, instance, Phase.BUILD, Seq(), Status.SUCCESS))
     }
 
     it should "provide a working target API" in {
@@ -73,7 +75,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val instance = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
 
         val token = hook.startTarget(target, instance, Phase.BUILD, None)
-        hook.finishTarget(token, Status.SUCCESS)
+        hook.finishTarget(token, TargetResult(target, instance, Phase.BUILD, Seq(), Status.SUCCESS))
     }
 
     it should "be deserializable in a namespace" in {

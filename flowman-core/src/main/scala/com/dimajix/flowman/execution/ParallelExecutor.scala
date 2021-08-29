@@ -30,6 +30,7 @@ import scala.util.Success
 import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 
 
 class ParallelExecutor extends Executor {
@@ -45,7 +46,7 @@ class ParallelExecutor extends Executor {
      * @param fn - Function to call. Note that the function is expected not to throw a non-fatal exception.
      * @return
      */
-    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => Status) : Status = {
+    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult] = {
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_SCHEDULER_CLASS)
         val ctor = clazz.getDeclaredConstructor()
         val scheduler = ctor.newInstance()
@@ -58,38 +59,35 @@ class ParallelExecutor extends Executor {
 
         // Allocate state variables for tracking overall Status
         val statusLock = new Object
+        val results = mutable.ListBuffer[TargetResult]()
         var error = false
-        var skipped = true
-        var empty = true
 
-        def executeTarget(target:Target) : Future[Status] = {
+        def executeTarget(target:Target) : Future[TargetResult] = {
             Future {
                 fn(execution, target, phase)
-            }.andThen { case status =>
+            }.andThen { case result =>
                 // Inform scheduler that Target is built
                 scheduler.synchronized {
                     scheduler.complete(target)
                 }
 
-                // Evaluate status
+                // Store result and evaluate status
                 statusLock.synchronized {
-                    status match {
-                        case Success(status) =>
-                            empty = false
+                    result match {
+                        case Success(r) =>
+                            results += r
+                            val status = r.status
                             error |= (status != Status.SUCCESS && status != Status.SKIPPED)
-                            skipped &= (status == Status.SKIPPED)
-                            status
                         case Failure(_) =>
-                            empty = false
+                            results += TargetResult(target, phase, Status.FAILED)
                             error = true
-                            Status.FAILED
                     }
                 }
             }
         }
 
-        def scheduleTargets(): Seq[Future[Status]] = {
-            val tasks = mutable.ListBuffer[Future[Status]]()
+        def scheduleTargets(): Seq[Future[TargetResult]] = {
+            val tasks = mutable.ListBuffer[Future[TargetResult]]()
             var noMoreWork = false
             while (!noMoreWork) {
                 scheduler.synchronized(scheduler.next()) match {
@@ -104,7 +102,7 @@ class ParallelExecutor extends Executor {
         }
 
         @tailrec
-        def wait(tasks:Seq[Future[Status]]) : Unit = {
+        def wait(tasks:Seq[Future[TargetResult]]) : Unit = {
             val runningTasks = tasks.filter(!_.isCompleted)
             if (runningTasks.nonEmpty) {
                 val next = Future.firstCompletedOf(runningTasks)
@@ -114,7 +112,7 @@ class ParallelExecutor extends Executor {
         }
 
         @tailrec
-        def run(tasks:Seq[Future[Status]] = Seq()) : Unit = {
+        def run(tasks:Seq[Future[TargetResult]] = Seq()) : Unit = {
             // First wait for tasks
             val (finishedTasks,runningTasks) = tasks.partition(_.isCompleted)
             if (finishedTasks.isEmpty && runningTasks.nonEmpty) {
@@ -140,14 +138,6 @@ class ParallelExecutor extends Executor {
         threadPool.shutdown()
         threadPool.awaitTermination(3600, TimeUnit.SECONDS)
 
-        // Evaluate overall status
-        if (empty)
-            Status.SUCCESS
-        else if (error)
-            Status.FAILED
-        else if (skipped)
-            Status.SKIPPED
-        else
-            Status.SUCCESS
+        results.toList
     }
 }

@@ -26,6 +26,7 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
@@ -372,16 +373,16 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         val jobJobToken = new JobToken {}
         val jobTargetToken = new TargetToken {}
         (jobHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(jobJobToken)
-        (jobHook.finishJob _).expects(jobJobToken, Status.SUCCESS)
+        (jobHook.finishJob _).expects(where( (token:JobToken, result:JobResult) => token == jobJobToken && result.status == Status.SUCCESS))
         (jobHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
-        (jobHook.finishTarget _).expects(jobTargetToken, Status.SUCCESS)
+        (jobHook.finishTarget _).expects(where( (token:TargetToken, result:TargetResult) => token == jobTargetToken && result.status == Status.SUCCESS))
         val namespaceHook = mock[Hook]
         val namespaceJobToken = new JobToken {}
         val namespaceTargetToken = new TargetToken {}
         (namespaceHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(namespaceJobToken)
-        (namespaceHook.finishJob _).expects(namespaceJobToken, Status.SUCCESS)
+        (namespaceHook.finishJob _).expects(where( (token:JobToken, result:JobResult) => token == namespaceJobToken && result.status == Status.SUCCESS))
         (namespaceHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
-        (namespaceHook.finishTarget _).expects(namespaceTargetToken, Status.SUCCESS)
+        (namespaceHook.finishTarget _).expects(where( (token:TargetToken, result:TargetResult) => token == namespaceTargetToken && result.status == Status.SUCCESS))
 
         val ns = Namespace(
             name = "default",

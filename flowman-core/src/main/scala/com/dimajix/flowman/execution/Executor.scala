@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 
 
 abstract class Executor {
@@ -32,5 +33,5 @@ abstract class Executor {
      * @param fn - Function to call. Note that the function is expected not to throw a non-fatal exception.
      * @return
      */
-    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => Status) : Status
+    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult]
 }

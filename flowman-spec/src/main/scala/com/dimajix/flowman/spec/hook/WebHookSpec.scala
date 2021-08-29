@@ -30,26 +30,22 @@ import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
-import com.dimajix.flowman.execution.TestToken
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
-import com.dimajix.flowman.model.Test
-import com.dimajix.flowman.model.TestInstance
-import com.dimajix.flowman.model.TestResult
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
-import com.dimajix.flowman.spec.hook.WebHook.DummyTestToken
 
 
 object WebHook {
     private case class DummyJobToken(env:Map[String,String]) extends JobToken
     private case class DummyTargetToken(env:Map[String,String]) extends TargetToken
-    private case class DummyTestToken(env:Map[String,String]) extends TestToken
 }
 
 
@@ -64,12 +60,7 @@ case class WebHook(
     targetFinish:Option[String] = None,
     targetSuccess:Option[String] = None,
     targetSkip:Option[String] = None,
-    targetFailure:Option[String] = None,
-    testStart:Option[String] = None,
-    testFinish:Option[String] = None,
-    testSuccess:Option[String] = None,
-    testSkip:Option[String] = None,
-    testFailure:Option[String] = None
+    targetFailure:Option[String] = None
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[WebHook])
 
@@ -90,9 +81,10 @@ case class WebHook(
      * Sets the status of a job after it has been started
      *
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    override def finishJob(token: JobToken, status: Status): Unit = {
+    override def finishJob(token: JobToken, result: JobResult): Unit = {
+        val status = result.status
         val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status.lower)
         invoke(jobFinish, env)
 
@@ -124,9 +116,10 @@ case class WebHook(
      * Sets the status of a job after it has been started
      *
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    override def finishTarget(token: TargetToken, status: Status): Unit = {
+    override def finishTarget(token: TargetToken, result: TargetResult): Unit = {
+        val status = result.status
         val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status.lower)
         invoke(targetFinish, env)
 
@@ -134,37 +127,6 @@ case class WebHook(
             case Status.FAILED | Status.ABORTED => invoke(targetFailure, env)
             case Status.SKIPPED  => invoke(targetSkip, env)
             case Status.SUCCESS  => invoke(targetSuccess, env)
-            case _ =>
-        }
-    }
-
-    /**
-     * Starts the run and returns a token, which can be anything
-     *
-     * @param test
-     * @return
-     */
-    override def startTest(test:Test, instance: TestInstance): TestToken =  {
-        val env = instance.asMap -- context.environment.keys
-        invoke(testStart, env)
-        DummyTestToken(env)
-    }
-
-    /**
-     * Sets the status of a job after it has been started
-     *
-     * @param token The token returned by startJob
-     * @param status
-     */
-    override def finishTest(token: TestToken, result:TestResult): Unit = {
-        val status = result.status
-        val env = token.asInstanceOf[DummyTestToken].env + ("status" -> status.lower)
-        invoke(testFinish, env)
-
-        status match {
-            case Status.FAILED | Status.ABORTED => invoke(testFailure, env)
-            case Status.SKIPPED  => invoke(testSkip, env)
-            case Status.SUCCESS  => invoke(testSuccess, env)
             case _ =>
         }
     }
@@ -212,11 +174,6 @@ class WebHookSpec extends HookSpec {
     @JsonProperty(value="targetSuccess", required=false) private var targetSuccess:Option[String] = None
     @JsonProperty(value="targetSkip", required=false) private var targetSkip:Option[String] = None
     @JsonProperty(value="targetFailure", required=false) private var targetFailure:Option[String] = None
-    @JsonProperty(value="testStart", required=false) private var testStart:Option[String] = None
-    @JsonProperty(value="testFinish", required=false) private var testFinish:Option[String] = None
-    @JsonProperty(value="testSuccess", required=false) private var testSuccess:Option[String] = None
-    @JsonProperty(value="testSkip", required=false) private var testSkip:Option[String] = None
-    @JsonProperty(value="testFailure", required=false) private var testFailure:Option[String] = None
 
     override def instantiate(context: Context): WebHook = {
         new WebHook(
@@ -230,12 +187,7 @@ class WebHookSpec extends HookSpec {
             targetFinish,
             targetSuccess,
             targetSkip,
-            targetFailure,
-            testStart,
-            testFinish,
-            testSuccess,
-            testSkip,
-            testFailure
+            targetFailure
         )
     }
 }

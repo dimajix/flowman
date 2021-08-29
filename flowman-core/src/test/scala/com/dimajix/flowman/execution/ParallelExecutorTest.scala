@@ -34,13 +34,14 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val execution = session.execution
 
         val targets = Seq()
+        val target = mock[Target]
 
         val executor = new ParallelExecutor
         val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
-            (execution, target, phase) => Status.SUCCESS
+            (execution, target, phase) => TargetResult(target, Phase.BUILD, Status.SUCCESS)
         }
 
-        result should be (Status.SUCCESS)
+        result should be (Seq())
     }
 
     it should "work" in {
@@ -76,9 +77,11 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
             (execution, target, phase) =>
                 target.execute(execution, phase)
-                Status.SUCCESS
         }
 
-        result should be (Status.SUCCESS)
+        result.sortBy(_.name) should be (Seq(
+            TargetResult(t1, t1.instance, Phase.BUILD, Seq(), Status.SUCCESS),
+            TargetResult(t2, t2.instance, Phase.BUILD, Seq(), Status.SUCCESS),
+        ))
     }
 }

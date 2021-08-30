@@ -1,23 +1,41 @@
-# Read Mapping
+# Read Hive Mapping
 
-The `read` (or `readRelation`, which is simply an alias) mapping is found in almost all Flowman projects, as it will
-read data from relations. It doesn't have any other mappings as inputs, and therefore usually is the first mapping
-in a data flow.
+The `readHibve` mapping is a shortcut for reading from a Hive table or Hive view without explicitly creating a 
+[Hive relation](../relation/hiveTable.md) in Flowman.
 
 ## Example
 ```yaml
 mappings:
   measurements-raw:
+    kind: readHive
+    database: weather
+    table: measurements
+    columns:
+      country: String
+      air_temperature: Double
+    filter: "country IS NOT NULL"
+```
+This would be equivalent to the following more verbose specification:
+```yaml
+relations:
+    measurements-raw:
+    kind: hiveTable
+    database: weather
+    table: measurements
+
+mappings:
+  measurements-raw:
     kind: readRelation
     relation: measurements-raw
-    partitions:
-      year:
-        start: $start_year
-        end: $end_year
     columns:
-      raw_data: String
-    filter: "raw_data IS NOT NULL"
+      country: String
+      air_temperature: Double
+    filter: "country IS NOT NULL"
 ```
+The main scenario for using the shortcut is when reading from existing Hive tables, which are not managed by the
+current Flowman project. Whenever you write to a Hive table within Flowman, you need to create the `hiveTable` relation
+anyway, so you should also use `readRelation` in favor of `readHive`. 
+
 
 ## Fields
 
@@ -35,15 +53,17 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK` - Caches the results first in memory and then spills to disk.
   * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
-* `relation` **(mandatory)** *(type: string)*:
-Specifies the name of the relation to read from.
+* `database` **(mandatory)** *(string)*:
+  Defines the Hive database where the table is defined. When no database is specified, the
+  table is accessed without any specific qualification, meaning that the default database
+  will be used.
 
-* `partitions` **(optional)** *(type: map:partition)*:
-Specifies the partition (or multiple partitions) to read data from.
-
+* `table` **(mandatory)** *(string)*:
+  Contains the name of the Hive table or Hive view.
+* 
 * `columns` **(optional)** *(type: map:data_type)* *(default: empty):
 Specifies the list of columns and types to read from the relation. This schema will be applied to the records after 
-  they have been read and interpreted by the underlying source. This schema will also be used as a subsitute for schema
+  they have been read and interpreted by the underlying source. This schema will also be used as a substitute for schema
   inference and therefore can be very helpful when using [`mock`](mock.md) mappings.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:

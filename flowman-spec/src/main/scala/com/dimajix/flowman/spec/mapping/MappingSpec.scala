@@ -64,6 +64,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
     new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
+    new JsonSubTypes.Type(name = "readHive", value = classOf[ReadHiveMappingSpec]),
     new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
     new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMappingSpec]),

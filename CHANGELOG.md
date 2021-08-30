@@ -24,6 +24,7 @@
 * Add new `schema` assertion
 * Update Swagger libraries for `swagger` schema
 * Implement new `openapi` plugin to support OpenAPI 3.0 schemas
+* Add new `readHive` mapping
 
 
 # Version 0.17.1 - 2021-06-18

@@ -4,7 +4,7 @@ The `readStream` mapping is very similar to the [`read`](read-relation.md) mappi
 result used for creating continuous event processing applications
 
 ## Example
-```
+```yaml
 mappings:
   measurements-raw:
     kind: readStream

@@ -73,7 +73,8 @@ trait Assertion extends Instance {
     def inputs : Seq[MappingOutputIdentifier]
 
     /**
-     * Executes this [[Assertion]] and returns a corresponding DataFrame
+     * Executes this [[Assertion]] and returns a corresponding DataFrame. This method is explicitly allowed to
+     * throw an exception, which will be caught and handled by the [[AssertionRunner]]
      *
      * @param execution
      * @param input

@@ -18,11 +18,13 @@ package com.dimajix.flowman.execution
 
 import java.util.Locale
 
+import scala.collection.mutable
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
 import com.dimajix.flowman.common.ThreadUtils
+import com.dimajix.flowman.model.Result
 
 
 sealed abstract class Status {

@@ -13,6 +13,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.util.ConsoleColors.green
 import com.dimajix.flowman.util.ConsoleColors.red
+import com.dimajix.flowman.util.ConsoleColors.yellow
 import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.sql.DataFrameUtils
 
@@ -37,8 +38,8 @@ class AssertionRunner(
             var error = false
             assertions.map { instance =>
                 withListeners(instance) {
-                    if (!dryRun && (!error || keepGoing)) {
-                        val result = executeAssertion(instance)
+                    if (!error || keepGoing) {
+                        val result = executeAssertion(instance, dryRun)
                         val success = result.success
                         error |= !success
 
@@ -56,7 +57,7 @@ class AssertionRunner(
                     else {
                         val name = instance.name
                         val description = instance.description.getOrElse(name)
-                        logger.info(green(s" ✓ skipped: $description}"))
+                        logger.info(yellow(s" - skipped: $description}"))
                         AssertionResult(instance, Seq())
                     }
                 }
@@ -64,19 +65,21 @@ class AssertionRunner(
         }
     }
 
-    private def executeAssertion(assertion: Assertion) : AssertionResult = {
+    private def executeAssertion(assertion: Assertion, dryRun:Boolean) : AssertionResult = {
         try {
-            execution.assert(assertion)
+            if (!dryRun) {
+                execution.assert(assertion)
+            }
+            else {
+                AssertionResult(assertion, Seq())
+            }
         }
         catch {
             case NonFatal(ex) =>
                 val name = assertion.name
                 val description = assertion.description.getOrElse(name)
                 logger.error(s" ✘ exception: $description: ${ex.getMessage}")
-                AssertionResult(
-                    assertion,
-                    Seq(AssertionTestResult(name, None, false, exception = true))
-                )
+                AssertionResult(assertion, ex)
         }
     }
 

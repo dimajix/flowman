@@ -78,8 +78,8 @@ class ParallelExecutor extends Executor {
                             results += r
                             val status = r.status
                             error |= (status != Status.SUCCESS && status != Status.SKIPPED)
-                        case Failure(_) =>
-                            results += TargetResult(target, phase, Status.FAILED)
+                        case Failure(ex) =>
+                            results += TargetResult(target, phase, ex)
                             error = true
                     }
                 }

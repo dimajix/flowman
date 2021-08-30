@@ -21,6 +21,7 @@ import scala.collection.mutable
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
@@ -52,17 +53,8 @@ class SimpleExecutor extends Executor {
         logger.info(s"Target order for $phase:")
         orderedTargets.foreach(t => logger.info("  - " + t.identifier))
 
-        val results = mutable.ListBuffer[TargetResult]()
-        var error = false
-        val iter = orderedTargets.iterator
-        while (iter.hasNext && (!error || keepGoing)) {
-            val target = iter.next()
-            val result = fn(execution, target, phase)
-            val status = result.status
-            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
-            results += result
+        Result.map(orderedTargets, keepGoing) { target =>
+            fn(execution, target, phase)
         }
-
-        results.toList
     }
 }

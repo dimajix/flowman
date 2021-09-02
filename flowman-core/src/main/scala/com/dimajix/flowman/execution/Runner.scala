@@ -191,9 +191,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         require(phases != null)
         require(args != null)
 
-        runner.withJobContext(job, args, force, dryRun) { (jobContext, arguments) =>
-            val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
-            withExecution(parentExecution, isolated) { execution =>
+        val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
+        withExecution(parentExecution, isolated) { execution =>
+            runner.withJobContext(job, args, Some(execution), force, dryRun) { (jobContext, arguments) =>
                 Result.flatMap(phases, keepGoing) { phase =>
                     // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
                     // as SUCCESS (an empty list is always executed as SUCCESS)
@@ -470,13 +470,12 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
     private val parentExecution = runner.parentExecution
 
     def executeTest(test:Test, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
-        runner.withTestContext(test, dryRun) { context =>
-            withExecution(parentExecution, true) { execution =>
+        withExecution(parentExecution, true) { execution =>
+            runner.withTestContext(test, Some(execution), dryRun) { context =>
                 val title = s"Running test '${test.identifier}'"
                 logTitle(title)
                 logEnvironment(context)
 
-                val instance = test.instance
                 val startTime = Instant.now()
 
                 // Get all targets once here. Otherwise the fixtures would be instantiated over and over again for
@@ -683,7 +682,7 @@ final class Runner(
      * @tparam T
      * @return
      */
-    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), force:Boolean=false, dryRun:Boolean=false)(fn:(Context,Map[String,Any]) => T) : T = {
+    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), execution:Option[Execution]=None, force:Boolean=false, dryRun:Boolean=false)(fn:(Context,Map[String,Any]) => T) : T = {
         val arguments : Map[String,Any] = job.parameters.flatMap(p => p.default.map(d => p.name -> d)).toMap ++ args
         arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
 
@@ -695,6 +694,7 @@ final class Runner(
             .withEnvironment("job", JobWrapper(job))
             .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
+            .withExecution(execution)
             .build()
         val jobContext = if (job.context.project.nonEmpty)
             rootContext.getProjectContext(job.context.project.get)
@@ -712,13 +712,14 @@ final class Runner(
      * @tparam T
      * @return
      */
-    def withTestContext[T](test:Test, dryRun:Boolean=false)(fn:(Context) => T) : T = {
+    def withTestContext[T](test:Test, execution:Option[Execution]=None, dryRun:Boolean=false)(fn:(Context) => T) : T = {
         val project = test.project.map(_.name)
         val rootContext = RootContext.builder(test.context)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
             .withEnvironment("test", TestWrapper(test))
             .withEnvironment(test.environment, SettingLevel.JOB_OVERRIDE)
+            .withExecution(execution)
             .overrideRelations(test.overrideRelations.map(kv => RelationIdentifier(kv._1, project) -> kv._2))
             .overrideMappings(test.overrideMappings.map(kv => MappingIdentifier(kv._1, project) -> kv._2))
             .build()
@@ -751,7 +752,7 @@ final class Runner(
      * @return
      */
     def withEnvironment[T](job:Job, phase:Phase, args:Map[String,Any], force:Boolean, dryRun:Boolean)(fn:Environment => T) : T = {
-        withJobContext(job, args, force, dryRun) { (jobContext,_) =>
+        withJobContext(job, args, force=force, dryRun=dryRun) { (jobContext,_) =>
             withPhaseContext(jobContext, phase) { context =>
                 fn(context.environment)
             }
@@ -759,7 +760,7 @@ final class Runner(
     }
 
     def withEnvironment[T](test:Test, dryRun:Boolean)(fn:Environment => T) : T = {
-        withTestContext(test, dryRun) { context =>
+        withTestContext(test, dryRun=dryRun) { context =>
             fn(context.environment)
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.schema
 
-import java.io.StringWriter
 import java.net.URL
 import java.nio.charset.Charset
 
@@ -25,8 +24,7 @@ import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
 import org.slf4j.Logger
 
-import com.dimajix.flowman.model.AbstractInstance
-import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.model.BaseSchema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field
 
@@ -42,7 +40,7 @@ object ExternalSchema {
 /**
   * Helper class for external schemas which are stored in files or at URLs
   */
-abstract class ExternalSchema extends AbstractInstance with Schema {
+abstract class ExternalSchema extends BaseSchema {
     protected val logger: Logger
     protected val file: Option[Path]
     protected val url: Option[URL]

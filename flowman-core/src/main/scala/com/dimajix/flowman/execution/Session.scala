@@ -356,6 +356,9 @@ class Session private[execution](
     }
     private var sparkSession:SparkSession = null
 
+    private val rootExecution : RootExecution = new RootExecution(this)
+    private val operationsManager = new OperationManager
+
     private lazy val rootContext : RootContext = {
         def loadProject(name:String) : Option[Project] = {
             Some(store.loadProject(name))
@@ -364,6 +367,7 @@ class Session private[execution](
         val builder = RootContext.builder(_namespace, _profiles)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
+            .withExecution(rootExecution)
             .withProjectResolver(loadProject)
         _namespace.foreach { ns =>
             _profiles.foreach(p => ns.profiles.get(p).foreach { profile =>
@@ -386,12 +390,6 @@ class Session private[execution](
             context.config
         }
     }
-
-    private lazy val rootExecution : RootExecution = {
-        new RootExecution(this)
-    }
-
-    private lazy val operationsManager = new OperationManager
 
     private lazy val _catalog = {
         val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))

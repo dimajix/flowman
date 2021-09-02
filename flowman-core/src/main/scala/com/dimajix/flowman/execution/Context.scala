@@ -222,4 +222,10 @@ abstract class Context {
       * @return
       */
     def hadoopConf : HadoopConf
+
+    /**
+     * Returns a possibly shared execution environment
+     * @return
+     */
+    def execution : Execution
 }

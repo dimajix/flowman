@@ -68,7 +68,7 @@ class StatefulTool(
 
     def enterJob(job: Job, args:Map[String,String]): Unit = {
         val jargs = job.arguments(args)
-        _context = _session.runner.withJobContext(job,jargs) { (context,args) => context }
+        _context = _session.runner.withJobContext(job, jargs, Some(_session.execution)) { (context,args) => context }
         _session.execution.cleanup()
         _test = None
         _job = Some(job)

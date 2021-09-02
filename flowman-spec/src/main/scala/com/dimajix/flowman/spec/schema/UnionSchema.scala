@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.BaseSchema
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SchemaUtils
@@ -29,7 +29,7 @@ import com.dimajix.flowman.types.StructType
 case class UnionSchema(
     instanceProperties:Schema.Properties,
     schemas:Seq[Schema]
-) extends AbstractInstance with Schema {
+) extends BaseSchema {
     private val unionSchema = SchemaUtils.union(schemas.map(s => StructType(s.fields)))
     private val unionDescription = schemas.flatMap(_.description).find(_.nonEmpty)
 

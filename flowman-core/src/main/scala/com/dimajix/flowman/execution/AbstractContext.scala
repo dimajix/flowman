@@ -309,4 +309,11 @@ abstract class AbstractContext(
       * @return
       */
     override def hadoopConf : HadoopConf = root.hadoopConf
+
+    /**
+     * Returns a possibly shared execution environment
+     *
+     * @return
+     */
+    override def execution: Execution = root.execution
 }

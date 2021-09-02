@@ -36,7 +36,11 @@ class SessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder()
             .disableSpark()
             .build()
-        session.context should not be (null)
+        val context = session.context
+
+        context should not be (null)
+        context.execution should be (session.execution)
+
         session.shutdown()
     }
 

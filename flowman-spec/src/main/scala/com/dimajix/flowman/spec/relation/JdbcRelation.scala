@@ -341,7 +341,7 @@ case class JdbcRelation(
 
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot migrate JDBC relation '$identifier' which is defined by an SQL query")
 
         // Only try migration if schema is explicitly specified
         if (schema.isDefined) {

@@ -50,6 +50,7 @@ object RootContext {
         private var projectResolver:Option[String => Option[Project]] = None
         private var overrideMappings:Map[MappingIdentifier, Template[Mapping]] = Map()
         private var overrideRelations:Map[RelationIdentifier, Template[Relation]] = Map()
+        private var execution:Option[Execution] = None
 
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
 
@@ -60,6 +61,15 @@ object RootContext {
 
         def withProjectResolver(resolver:String => Option[Project]) : Builder = {
             projectResolver = Some(resolver)
+            this
+        }
+
+        def withExecution(execution:Execution) : Builder = {
+            this.execution = Some(execution)
+            this
+        }
+        def withExecution(execution:Option[Execution]) : Builder = {
+            this.execution = execution
             this
         }
 
@@ -88,7 +98,7 @@ object RootContext {
         }
 
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : RootContext = {
-            new RootContext(namespace, projectResolver, profiles, env, config, connections, overrideMappings, overrideRelations)
+            new RootContext(namespace, projectResolver, profiles, env, config, execution, connections, overrideMappings, overrideRelations)
         }
     }
 
@@ -104,6 +114,7 @@ final class RootContext private[execution](
     _profiles:Set[String],
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
+    _execution:Option[Execution],
     extraConnections:Map[String, Template[Connection]],
     overrideMappings:Map[MappingIdentifier, Template[Mapping]],
     overrideRelations:Map[RelationIdentifier, Template[Relation]]
@@ -113,6 +124,10 @@ final class RootContext private[execution](
 ) {
     private val _children: mutable.Map[String, Context] = mutable.Map()
     private lazy val _fs = FileSystem(hadoopConf)
+    private lazy val _exec = _execution match {
+        case Some(execution) => execution
+        case None => new AnalyzingExecution(this)
+    }
 
     private val connections = mutable.Map[String,Connection]()
 
@@ -306,4 +321,12 @@ final class RootContext private[execution](
       * @return
       */
     override def hadoopConf: HadoopConf = config.hadoopConf
+
+    /**
+     * Returns a possibly shared execution environment. The execution can be a [[AnalyzingExecution]] with limited
+     * capabilities, so you should always prefer to employ
+     *
+     * @return
+     */
+    override def execution: Execution = _exec
 }

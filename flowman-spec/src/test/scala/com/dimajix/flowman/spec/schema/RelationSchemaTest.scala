@@ -25,11 +25,10 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
-import com.dimajix.spark.testing.LocalSparkSession
 
 
-class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "A MappingSchema" should "resolve the correct schema" in {
+class RelationSchemaTest extends AnyFlatSpec with Matchers {
+    "A RelationSchema" should "resolve the correct schema" in {
         val spec =
             """
               |relations:
@@ -45,50 +44,17 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |    partitions:
               |      - name: spart
               |        type: string
-              |mappings:
-              |  read:
-              |    kind: read
-              |    relation: empty
-              |    partitions:
-              |      spart: abc
-              |  alias:
-              |    kind: alias
-              |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val schema = MappingSchema(context, "alias")
+        val schema = RelationSchema(context, "empty")
 
         schema.fields should be (Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
-        ))
-    }
-
-    it should "work with non-trivial schema inferrence" in {
-        val spec =
-            """
-              |mappings:
-              |  sql:
-              |    kind: sql
-              |    sql: "
-              |     SELECT
-              |         'x1' AS str_col,
-              |         12 AS int_col
-              |    "
-              |""".stripMargin
-        val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val context = session.getContext(project)
-
-        val schema = MappingSchema(context, "sql")
-
-        schema.fields should be (Seq(
-            Field("str_col", StringType, nullable=false),
-            Field("int_col", IntegerType, nullable=false)
         ))
     }
 
@@ -111,17 +77,8 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |  sink:
               |    kind: null
               |    schema:
-              |      kind: mapping
-              |      mapping: alias
-              |mappings:
-              |  read:
-              |    kind: read
-              |    relation: empty
-              |    partitions:
-              |      spart: abc
-              |  alias:
-              |    kind: alias
-              |    input: read
+              |      kind: relation
+              |      relation: empty
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().disableSpark().build()

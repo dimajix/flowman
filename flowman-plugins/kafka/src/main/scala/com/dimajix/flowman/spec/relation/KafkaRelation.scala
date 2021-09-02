@@ -40,6 +40,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -90,21 +91,39 @@ case class KafkaRelation(
       * @return
       */
     override def schema : Option[Schema] = {
-        val fields =
-            Field("key", BinaryType, nullable = true) ::
-            Field("value", BinaryType, nullable = false) ::
-            Field("topic", StringType, nullable = false) ::
-            Field("partition", IntegerType, nullable = false) ::
-            Field("offset", LongType, nullable = false) ::
-            Field("timestamp", TimestampType, nullable = false) ::
-            Field("timestampType", IntegerType, nullable = false) ::
-            Nil
         Some(EmbeddedSchema(
             Schema.Properties(context),
             description,
             fields,
             Nil
         ))
+    }
+
+    /**
+     * Returns a list of fields including the partition columns. This method should not perform any physical schema
+     * inference.
+     *
+     * @return
+     */
+    override def fields: Seq[Field] = Seq(
+        Field("key", BinaryType, nullable = true),
+        Field("value", BinaryType, nullable = false),
+        Field("topic", StringType, nullable = false),
+        Field("partition", IntegerType, nullable = false),
+        Field("offset", LongType, nullable = false),
+        Field("timestamp", TimestampType, nullable = false),
+        Field("timestampType", IntegerType, nullable = false)
+    )
+
+    /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     *
+     * @param execution
+     * @return
+     */
+    override def describe(execution: Execution): types.StructType = {
+        types.StructType(fields)
     }
 
     /**

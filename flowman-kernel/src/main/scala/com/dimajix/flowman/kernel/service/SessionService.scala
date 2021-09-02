@@ -83,7 +83,7 @@ class SessionService(_manager:SessionManager, _session:Session)(implicit ec:Exec
     }
     def enterJob(job: Job, args:Map[String,String]): Unit = {
         val jargs = job.arguments(args)
-        _context = runner.withJobContext(job,jargs) { (context,args) => context }
+        _context = runner.withJobContext(job, jargs, Some(_session.execution)) { (context,args) => context }
         _session.execution.cleanup()
         _test = None
         _job = Some(job)

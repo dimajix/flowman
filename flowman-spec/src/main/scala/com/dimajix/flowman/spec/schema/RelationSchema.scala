@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,50 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.BaseSchema
+import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 
 
+object RelationSchema {
+    def apply(context:Context, relation:String) : RelationSchema = {
+        RelationSchema(Schema.Properties(context), RelationIdentifier(relation))
+    }
+}
+
+
 case class RelationSchema(
     instanceProperties:Schema.Properties,
     relation: RelationIdentifier
-) extends AbstractInstance with Schema {
+) extends BaseSchema {
+    private lazy val cachedFields = {
+        val rel = context.getRelation(relation)
+        rel.schema match {
+            case Some(schema) => schema.fields ++ rel.partitions.map(_.field)
+            case None =>
+                val execution = context.execution
+                rel.describe(execution).fields
+        }
+    }
+    private lazy val cachedDescription = {
+        val rel = context.getRelation(relation)
+        rel.schema.flatMap(_.description).orElse(Some(s"Inferred from relation $relation"))
+    }
+    private lazy val cachedPrimaryKey = {
+        val rel = context.getRelation(relation)
+        rel.schema.toSeq.flatMap(_.primaryKey)
+    }
+
     /**
       * Returns the description of the schema
       *
       * @return
       */
     override def description: Option[String] = {
-        val rel = context.getRelation(relation)
-
-        rel.schema.flatMap(_.description)
+        cachedDescription
     }
 
     /**
@@ -46,9 +71,7 @@ case class RelationSchema(
       * @return
       */
     override def fields: Seq[Field] = {
-        val rel = context.getRelation(relation)
-
-        rel.schema.toSeq.flatMap(_.fields)
+       cachedFields
     }
 
     /**
@@ -56,9 +79,7 @@ case class RelationSchema(
       * @return
       */
     override def primaryKey : Seq[String] = {
-        val rel = context.getRelation(relation)
-
-        rel.schema.toSeq.flatMap(_.primaryKey)
+        cachedPrimaryKey
     }
 }
 

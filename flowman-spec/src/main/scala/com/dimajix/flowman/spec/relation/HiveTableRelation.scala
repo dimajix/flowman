@@ -233,7 +233,7 @@ case class HiveTableRelation(
             val hiveTable = catalog.getTable(TableIdentifier(table, database))
             val query = df.queryExecution.logical
 
-            val overwrite = mode == OutputMode.OVERWRITE
+            val overwrite = mode == OutputMode.OVERWRITE || mode == OutputMode.OVERWRITE_DYNAMIC
             val cmd = InsertIntoHiveTable(
                 table = hiveTable,
                 partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
@@ -249,8 +249,8 @@ case class HiveTableRelation(
             catalog.refreshPartition(tableIdentifier, partitionSpec)
         }
         else {
-            // If OVERWRITE is specified, perform a full overwrite
-            if (mode == OutputMode.OVERWRITE) {
+            // If OVERWRITE is specified, remove all partitions for partitioned tables
+            if (partitions.nonEmpty && mode == OutputMode.OVERWRITE) {
                 catalog.truncateTable(tableIdentifier)
             }
             val writer = df.write

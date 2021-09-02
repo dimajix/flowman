@@ -369,22 +369,17 @@ case class JdbcRelation(
                 }
 
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    // Map all fields to JDBC field definitions and sort field names
                     val targetSchema = FlowmanStructType(schema.get.fields)
-                    val curJdbcSchema = JdbcUtils.getJdbcSchema(con, tableIdentifier, options)
-                    val curJdbcFields = curJdbcSchema.map(field => (field.name.toLowerCase(Locale.ROOT), field.typeName.toUpperCase(Locale.ROOT), field.nullable)).sorted
-                    val tgtJdbcFields = targetSchema.fields.map(field => (field.name.toLowerCase(Locale.ROOT), getJdbcType(field).toUpperCase(Locale.ROOT), field.nullable)).sorted
-
-                    if (curJdbcFields != tgtJdbcFields) {
-                        val currentSchema = JdbcUtils.getSchema(curJdbcSchema, dialect)
-                        doMigration(execution, currentSchema, targetSchema, migrationPolicy, migrationStrategy)
+                    val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                    if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
+                        doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)
                     }
                 }
             }
         }
     }
 
-    private def doMigration(execution:Execution, currentSchema:FlowmanStructType, targetSchema:FlowmanStructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(currentSchema:FlowmanStructType, targetSchema:FlowmanStructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         withConnection { (con, options) =>
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
@@ -405,9 +400,9 @@ case class JdbcRelation(
                             alter(migrations, con, options)
                         }
                         catch {
-                            case e:SQLNonTransientConnectionException => throw e
-                            case e:SQLInvalidAuthorizationSpecException => throw e
-                            case _:SQLNonTransientException => recreate(con,options)
+                            case e: SQLNonTransientConnectionException => throw e
+                            case e: SQLInvalidAuthorizationSpecException => throw e
+                            case _: SQLNonTransientException => recreate(con, options)
                         }
                     }
                     else {
@@ -420,6 +415,8 @@ case class JdbcRelation(
 
         def alter(migrations:Seq[TableChange], con:Connection, options:JDBCOptions) : Unit = {
             logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+            if (migrations.isEmpty)
+                logger.warn("Empty list of migrations - nothing to do")
 
             try {
                 JdbcUtils.alterTable(con, tableIdentifier, migrations, options)

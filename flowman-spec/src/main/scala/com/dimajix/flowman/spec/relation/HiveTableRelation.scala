@@ -537,6 +537,9 @@ case class HiveTableRelation(
 
         def alter(migrations:Seq[TableChange]) : Unit = {
             logger.info(s"Migrating HiveTable relation '$identifier', this will alter the Hive table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+            if (migrations.isEmpty) {
+                logger.warn("Empty list of migrations - nothing to do")
+            }
 
             try {
                 execution.catalog.alterTable(tableIdentifier, migrations)

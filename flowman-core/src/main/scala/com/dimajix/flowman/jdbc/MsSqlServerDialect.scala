@@ -66,6 +66,8 @@ object MsSqlServerDialect extends BaseDialect {
                 case java.sql.Types.SMALLINT => ShortType
                 case java.sql.Types.REAL => FloatType
                 case SpecificTypes.GEOMETRY | SpecificTypes.GEOGRAPHY => BinaryType
+                case java.sql.Types.VARCHAR if precision <= 0 || precision >= 1073741823 => StringType
+                case java.sql.Types.NVARCHAR if precision <= 0 || precision >= 1073741823 => StringType
                 case _ => super.getFieldType(sqlType, typeName, precision, scale, signed)
             }
         }

@@ -264,14 +264,14 @@ object JdbcUtils {
                 currentFields.remove(a.column.toLowerCase(Locale.ROOT))
                 Some(statements.deleteColumn(table, a.column))
             case a:AddColumn =>
-                logger.info(s"Adding column ${a.column.name} with type ${a.column.ftype.sqlType} to JDBC table $table")
                 val dataType = dialect.getJdbcType(a.column.ftype)
+                logger.info(s"Adding column ${a.column.name} with type ${dataType.databaseTypeDefinition} (${a.column.ftype.sqlType}) to JDBC table $table")
                 currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable))
                 Some(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable))
             case u:UpdateColumnType =>
-                logger.info(s"Changing column ${u.column} to type ${u.dataType.sqlType} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
+                logger.info(s"Changing column ${u.column} type from ${current.typeName} to ${dataType.databaseTypeDefinition} (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
                 Some(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition))
             case u:UpdateColumnNullability =>

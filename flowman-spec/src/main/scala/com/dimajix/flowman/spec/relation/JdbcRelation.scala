@@ -123,6 +123,23 @@ case class JdbcRelation(
     }
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    override def describe(execution:Execution) : FlowmanStructType = {
+        if (schema.nonEmpty) {
+            FlowmanStructType(fields)
+        }
+        else {
+            withConnection { (con, options) =>
+                JdbcUtils.getSchema(con, tableIdentifier, options)
+            }
+        }
+    }
+
+    /**
       * Reads the configured table from the source
       * @param execution
       * @param schema

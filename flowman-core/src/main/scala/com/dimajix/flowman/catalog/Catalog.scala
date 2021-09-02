@@ -345,7 +345,7 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val colsToAdd = mutable.Buffer[StructField]()
         changes.foreach {
             case a:AddColumn =>
-                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType} to Hive table '$table'")
+                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType.sql} to Hive table '$table'")
                 colsToAdd.append(a.column.catalogField)
             case u:UpdateColumnNullability =>
                 logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table '$table'")

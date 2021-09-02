@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package com.dimajix.flowman.catalog
 import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 class PartitionSpecTest extends AnyFlatSpec with Matchers {
@@ -40,5 +42,16 @@ class PartitionSpecTest extends AnyFlatSpec with Matchers {
 
         val partitions = Seq("p1", "P2")
         partitionSpec.path(new Path("/lala"), partitions) should be (new Path("/lala/P1=lala/p2=123"))
+    }
+
+    it should "create appropriate predicates" in {
+        val partitionSpec = PartitionSpec(Map(
+            "p_str" -> "lala",
+            "p_int" -> 123,
+            "p_date" -> java.sql.Date.valueOf("2021-08-03"),
+            "p_timestamp" -> UtcTimestamp.parse("2021-08-03T02:03:44")
+        ))
+
+        partitionSpec.predicate should be ("p_str='lala' AND p_int=123 AND p_date=date('2021-08-03') AND p_timestamp=timestamp(1627956224)")
     }
 }

@@ -405,7 +405,7 @@ case class JdbcRelation(
             logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
 
             try {
-                execution.catalog.alterTable(tableIdentifier, migrations)
+                JdbcUtils.alterTable(con, tableIdentifier, migrations, options)
             }
             catch {
                 case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)

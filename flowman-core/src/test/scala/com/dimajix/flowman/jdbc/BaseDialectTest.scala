@@ -20,15 +20,17 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.util.UtcTimestamp
 
 class BaseDialectTest extends AnyFlatSpec with Matchers {
     "The BaseDialect" should "create PARTITION spects" in {
         val dialect = NoopDialect
         val partitionSpec = PartitionSpec(Map(
             "p1" -> "lala",
-            "p2" -> 12
+            "p2" -> 12,
+            "p3" -> java.sql.Date.valueOf("2021-08-03")
         ))
-        dialect.expr.partition(partitionSpec) should be ("""PARTITION(p1='lala',p2=12)""")
+        dialect.expr.partition(partitionSpec) should be ("""PARTITION(p1='lala',p2=12,p3='2021-08-03')""")
     }
 
     it should "provide appropriate IN expression" in {
@@ -37,5 +39,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         dialect.expr.in("col", Seq(1)) should be (""""col" IN (1)""")
         dialect.expr.in("col", Seq(1,7)) should be (""""col" IN (1,7)""")
         dialect.expr.in("col", Seq("left","right")) should be (""""col" IN ('left','right')""")
+        dialect.expr.in("col", Seq(java.sql.Date.valueOf("2021-08-03"))) should be (""""col" IN (date('2021-08-03'))""")
+        dialect.expr.in("col", Seq(UtcTimestamp.parse("2021-08-03T02:03:44"))) should be (""""col" IN (timestamp(1627956224))""")
     }
 }

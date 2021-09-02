@@ -29,13 +29,14 @@ import scala.util.Try
 
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.TableChange
-import TableChange.AddColumn
-import TableChange.DropColumn
-import TableChange.UpdateColumnComment
-import TableChange.UpdateColumnNullability
-import TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
@@ -50,7 +51,10 @@ case class JdbcField(
     nullable:Boolean
 )
 
+class JdbcUtils
 object JdbcUtils {
+    private val logger = LoggerFactory.getLogger(classOf[JdbcUtils])
+
     def queryTimeout(options: JDBCOptions) : Int = {
         // This is not very efficient, but in Spark 2.2 we cannot access parameters
         options.asProperties.getProperty("queryTimeout", "0").toInt
@@ -256,24 +260,29 @@ object JdbcUtils {
 
         val sqls = changes.flatMap {
             case a:DropColumn =>
+                logger.info(s"Dropping column ${a.column} from JDBC table $table")
                 currentFields.remove(a.column.toLowerCase(Locale.ROOT))
                 Some(statements.deleteColumn(table, a.column))
             case a:AddColumn =>
+                logger.info(s"Adding column ${a.column} with type ${a.column.ftype} to JDBC table $table")
                 val dataType = dialect.getJdbcType(a.column.ftype)
                 currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable))
                 Some(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable))
             case u:UpdateColumnType =>
+                logger.info(s"Changing column ${u.column} to type ${u.dataType} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
                 Some(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition))
             case u:UpdateColumnNullability =>
+                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(nullable=u.nullable))
                 Some(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable))
-            case _:UpdateColumnComment =>
+            case u:UpdateColumnComment =>
+                logger.info(s"Updating comment of column ${u.column} in JDBC table $table")
                 None
-            case chg:TableChange => throw new SQLException(s"Unsupported TableChange $chg")
+            case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 
         withStatement(conn, options) { statement =>

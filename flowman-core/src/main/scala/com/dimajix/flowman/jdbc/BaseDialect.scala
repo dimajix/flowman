@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.Date
 import java.sql.JDBCType
 import java.sql.SQLException
 
@@ -166,7 +167,8 @@ abstract class BaseDialect extends SqlDialect {
     override def literal(value:Any) : String = {
         value match {
             case s:String => "'" + escape(s) + "'"
-            case ts:UtcTimestamp => ts.toEpochSeconds().toString
+            case ts:Date => s"date('${ts.toString}')"
+            case ts:UtcTimestamp => s"timestamp(${ts.toEpochSeconds()})"
             case v:Any =>  v.toString
         }
     }
@@ -249,8 +251,14 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
     }
 
     override def partition(partition: PartitionSpec): String = {
-        // Do not use column quoting for the PARTITION expression
-        val partitionValues = partition.values.map { case (k, v) => k + "=" + dialect.literal(v) }
+        def literal(value:Any) : String = {
+            value match {
+                case s:String => "'" + dialect.escape(s) + "'"
+                case ts:Date => "'" + ts.toString + "'"
+                case v:Any =>  v.toString
+            }
+        }        // Do not use column quoting for the PARTITION expression
+        val partitionValues = partition.values.map { case (k, v) => k + "=" + literal(v) }
         s"PARTITION(${partitionValues.mkString(",")})"
     }
 }

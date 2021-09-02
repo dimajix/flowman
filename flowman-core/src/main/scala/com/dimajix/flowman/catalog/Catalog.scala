@@ -337,7 +337,6 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
     def alterTable(table:TableIdentifier, changes:Seq[TableChange]) : Unit = {
         require(table != null)
         require(changes != null)
-        logger.info(s"Changing columns of existing Hive table '$table'")
 
         val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
@@ -346,18 +345,21 @@ class Catalog(val spark:SparkSession, val config:Configuration, val externalCata
         val colsToAdd = mutable.Buffer[StructField]()
         changes.foreach {
             case a:AddColumn =>
+                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType} to Hive table '$table'")
                 colsToAdd.append(a.column.catalogField)
             case u:UpdateColumnNullability =>
+                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table '$table'")
                 val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .copy(nullable = u.nullable)
                 val cmd = AlterTableChangeColumnCommand(table, u.column, field)
                 cmd.run(spark)
             case u:UpdateColumnComment =>
+                logger.info(s"Updating comment of column ${u.column} in Hive table '$table'")
                 val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .withComment(u.comment.getOrElse(""))
                 val cmd = AlterTableChangeColumnCommand(table, u.column, field)
                 cmd.run(spark)
-            case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
+            case x:TableChange => throw new UnsupportedOperationException(s"Unsupported table change $x for Hive table $table")
         }
 
         val cmd = AlterTableAddColumnsCommand(table, colsToAdd)

@@ -85,7 +85,8 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
 
     // see https://docs.microsoft.com/en-us/sql/relational-databases/tables/add-columns-to-a-table-database-engine?view=sql-server-ver15
     override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String = {
-        s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType"
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
     }
 
     // See https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-rename-transact-sql?view=sql-server-ver15
@@ -100,6 +101,7 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     //    data_type [NOT NULL | NULL]
     // We don't have column data type here, so we throw Exception for now
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
-        throw new SQLFeatureNotSupportedException(s"UpdateColumnNullability is not supported")
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
     }
 }

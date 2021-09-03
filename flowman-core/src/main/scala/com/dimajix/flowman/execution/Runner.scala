@@ -325,7 +325,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
 
         executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
-            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+            withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 executeTargetPhase(execution, target, phase, token, force, dryRun)
             }
         }
@@ -503,7 +503,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                 val testStatus =
                     if (buildStatus == Status.SUCCESS || keepGoing) {
                         val sc = execution.spark.sparkContext
-                        withJobGroup(sc, test.name, "Flowman test " + test.identifier.toString) {
+                        withJobGroup(sc, test.name, s"EXECUTE test ${test.identifier}") {
                             executeTestAssertions(execution, context, test, keepGoing, dryRun)
                         }
                     }
@@ -581,7 +581,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 
         executor.execute(execution, context, phase, targets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
-            withJobGroup(sc, target.name, "Flowman target " + target.identifier.toString) {
+            withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 executeTestTargetPhase(execution, target, phase, dryRun)
             }
         }

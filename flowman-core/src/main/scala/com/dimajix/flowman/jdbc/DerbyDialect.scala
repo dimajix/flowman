@@ -19,6 +19,12 @@ package com.dimajix.flowman.jdbc
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
 
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
 import com.dimajix.flowman.types.DecimalType
@@ -68,6 +74,18 @@ object DerbyDialect extends BaseDialect {
         sqlType match {
             case java.sql.Types.REAL => FloatType
             case _ => super.getFieldType(sqlType, typeName, precision, scale, signed)
+        }
+    }
+
+    /**
+     * Returns true if the given table supports a specific table change
+     * @param change
+     * @return
+     */
+    override def supportsChange(table:TableIdentifier, change:TableChange) : Boolean = {
+        change match {
+            case _:UpdateColumnType => false
+            case x:TableChange => super.supportsChange(table, change)
         }
     }
 

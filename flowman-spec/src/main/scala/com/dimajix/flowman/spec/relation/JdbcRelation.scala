@@ -73,8 +73,8 @@ import com.dimajix.spark.sql.SchemaUtils
 
 case class JdbcRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Option[Schema],
-    override val partitions: Seq[PartitionField],
+    override val schema:Option[Schema] = None,
+    override val partitions: Seq[PartitionField] = Seq(),
     connection: ConnectionIdentifier,
     properties: Map[String,String] = Map(),
     database: Option[String] = None,
@@ -387,15 +387,17 @@ case class JdbcRelation(
                 case MigrationStrategy.FAIL =>
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER =>
+                    val dialect = SqlDialects.get(options.url)
                     val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
-                    if (migrations.exists(m => !supported(m))) {
-                        logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes")
+                    if (migrations.forall(m => dialect.supportsChange(tableIdentifier, m))) {
+                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes")
                         throw new MigrationFailedException(identifier)
                     }
                     alter(migrations, con, options)
                 case MigrationStrategy.ALTER_REPLACE =>
+                    val dialect = SqlDialects.get(options.url)
                     val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
-                    if (migrations.forall(m => supported(m))) {
+                    if (migrations.forall(m => dialect.supportsChange(tableIdentifier, m))) {
                         try {
                             alter(migrations, con, options)
                         }
@@ -436,17 +438,6 @@ case class JdbcRelation(
                 case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
             }
         }
-
-        def supported(change:TableChange) : Boolean = {
-            change match {
-                case _:DropColumn => true
-                case a:AddColumn => a.column.nullable // Only allow nullable columns to be added
-                case _:UpdateColumnNullability => true
-                case _:UpdateColumnType => true
-                case _:UpdateColumnComment => true
-                case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
-            }
-        }
     }
 
     /**
@@ -474,7 +465,7 @@ case class JdbcRelation(
         }
     }
 
-    private def createProperties() = {
+    private def createProperties() : (String,Map[String,String]) = {
         val connection = jdbcConnection
         val props = mutable.Map[String,String]()
         props.put(JDBCOptions.JDBC_URL, connection.url)
@@ -485,7 +476,7 @@ case class JdbcRelation(
         connection.properties.foreach(kv => props.put(kv._1, kv._2))
         properties.foreach(kv => props.put(kv._1, kv._2))
 
-        (jdbcConnection.url,props.toMap)
+        (connection.url,props.toMap)
     }
 
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {

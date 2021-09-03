@@ -25,6 +25,12 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
@@ -170,6 +176,22 @@ abstract class BaseDialect extends SqlDialect {
             case ts:Date => s"date('${ts.toString}')"
             case ts:UtcTimestamp => s"timestamp(${ts.toEpochSeconds()})"
             case v:Any =>  v.toString
+        }
+    }
+
+    /**
+     * Returns true if the given table supports a specific table change
+     * @param change
+     * @return
+     */
+    override def supportsChange(table:TableIdentifier, change:TableChange) : Boolean = {
+        change match {
+            case _:DropColumn => true
+            case a:AddColumn => a.column.nullable // Only allow nullable columns to be added
+            case _:UpdateColumnNullability => true
+            case _:UpdateColumnType => true
+            case _:UpdateColumnComment => true
+            case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
         }
     }
 

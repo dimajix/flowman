@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,45 @@
 
 package com.dimajix.flowman.spec.relation
 
+import java.sql.Connection
 import java.sql.Driver
 import java.sql.DriverManager
 import java.sql.Statement
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.util.control.NonFatal
 
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.connection.JdbcConnection
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -482,31 +501,30 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |    kind: jdbc
                |    driver: $driver
                |    url: $url
-               |relations:
-               |  t0:
-               |    kind: jdbc
-               |    connection: c0
-               |    table: lala_001
-               |    schema:
-               |      kind: inline
-               |      fields:
-               |        - name: str_col
-               |          type: string
-               |        - name: int_col
-               |          type: integer
-               |  t1:
-               |    kind: jdbc
-               |    connection: c0
-               |    query: "SELECT * FROM lala_001"
                |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
-        val relation_t0 = context.getRelation(RelationIdentifier("t0"))
-        val relation_t1 = context.getRelation(RelationIdentifier("t1"))
+        val relation_t0 = JdbcRelation(
+            Relation.Properties(context, "t0"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType)
+                )
+            )),
+            connection = ConnectionIdentifier("c0"),
+            table = Some("lala_001")
+        )
+        val relation_t1 = JdbcRelation(
+            Relation.Properties(context, "t1"),
+            connection = ConnectionIdentifier("c0"),
+            query = Some("SELECT * FROM lala_001")
+        )
 
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
@@ -515,15 +533,128 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
 
-        relation_t0.create(executor)
-        relation_t0.write(executor, df, mode=OutputMode.OVERWRITE)
+        // == Create =================================================================================================
+        relation_t0.create(execution)
 
-        // Spark up until 2.4.3 has problems with Derby
-        if (spark.version > "2.4.3") {
-            relation_t0.read(executor, None).count() should be(2)
-            relation_t1.read(executor, None).count() should be(2)
+        // == Write ==================================================================================================
+        relation_t0.write(execution, df, mode=OutputMode.OVERWRITE)
+
+        // == Read ===================================================================================================
+        relation_t0.read(execution, None).count() should be(2)
+        relation_t1.read(execution, None).count() should be(2)
+
+        // == Destroy ================================================================================================
+        relation_t0.destroy(execution)
+    }
+
+    it should "support migrations" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val rel0 = JdbcRelation(
+            Relation.Properties(context, "t0"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType)
+                )
+            )),
+            connection = ConnectionIdentifier("c0"),
+            table = Some("lala_001")
+        )
+        val rel1 = JdbcRelation(
+            Relation.Properties(context, "t1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("int_col", DoubleType),
+                    Field("new_col", DateType)
+                )
+            )),
+            connection = ConnectionIdentifier("c0"),
+            table = Some("lala_001")
+        )
+
+        // == Create =================================================================================================
+        rel0.exists(execution) should be (No)
+        rel0.create(execution)
+        rel0.exists(execution) should be (Yes)
+
+        // == Read ===================================================================================================
+        withConnection(url, "lala_001") { (con, options) =>
+            JdbcUtils.getSchema(con, TableIdentifier("lala_001"), options)
+        } should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        )))
+
+        // == Migrate ===============================================================================================
+        rel0.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        rel0.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        rel0.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        rel0.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        rel0.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        rel0.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+        rel0.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+        rel0.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+        rel0.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        rel0.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.REPLACE)
+
+        // == Migrate ===============================================================================================
+        rel1.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+        a[MigrationFailedException] should be thrownBy(rel1.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL))
+        a[MigrationFailedException] should be thrownBy(rel1.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER))
+        rel1.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+
+        // == Read ===================================================================================================
+        withConnection(url, "lala_001") { (con, options) =>
+            JdbcUtils.getSchema(con, TableIdentifier("lala_001"), options)
+        } should be (StructType(Seq(
+            Field("int_col", DoubleType),
+            Field("new_col", DateType)
+        )))
+
+        // == Destroy ===============================================================================================
+        rel1.exists(execution) should be (Yes)
+        rel1.destroy(execution)
+        rel1.exists(execution) should be (No)
+    }
+
+    private def withConnection[T](url:String, table:String)(fn:(Connection,JDBCOptions) => T) : T = {
+        val props = Map(
+            JDBCOptions.JDBC_URL -> url,
+            JDBCOptions.JDBC_DRIVER_CLASS -> "org.apache.derby.jdbc.EmbeddedDriver"
+        )
+
+        val options = new JDBCOptions(url, table, props)
+        val conn = try {
+            JdbcUtils.createConnection(options)
+        } catch {
+            case NonFatal(e) =>
+                throw e
         }
 
-        relation_t0.destroy(executor)
+        try {
+            fn(conn, options)
+        }
+        finally {
+            conn.close()
+        }
     }
 }

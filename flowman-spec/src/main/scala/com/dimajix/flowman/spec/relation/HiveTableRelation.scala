@@ -501,7 +501,6 @@ case class HiveTableRelation(
                 }
 
                 val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
-
                 if (requiresMigration) {
                     doMigration(execution, sourceSchema, targetSchema, migrationPolicy, migrationStrategy)
                 }

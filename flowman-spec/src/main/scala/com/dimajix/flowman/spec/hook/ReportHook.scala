@@ -25,6 +25,7 @@ import java.util.Locale
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.FileAlreadyExistsException
 import org.apache.hadoop.fs.Path
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
@@ -65,6 +66,8 @@ case class ReportHook(
     location:Path,
     mode:OutputMode = OutputMode.OVERWRITE
 ) extends BaseHook {
+    private val logger = LoggerFactory.getLogger(classOf[ReportHook])
+
     private def newOutput():Option[PrintStream] = {
         if (location.toString == "stdout") {
             Some(System.out)
@@ -159,6 +162,7 @@ case class ReportHook(
      */
     override def startLifecycle(job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
         val now = Instant.now()
+        logger.info(s"Creating new report to $location")
         val output = newOutput()
         output.foreach { p =>
             printTitle(p, s"Processing job ${job.identifier} at $now")
@@ -181,6 +185,7 @@ case class ReportHook(
             printStatus(p, s"Finished lifecycle of job ${result.job.identifier}", status, duration, endTime)
             p.flush()
             p.close()
+            logger.info(s"Closed report at $location")
         }
     }
 
@@ -192,7 +197,7 @@ case class ReportHook(
     override def startJob(job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val now = Instant.now()
         val output = parent.flatMap {
-            case ReporterJobToken(_, _, output) => output
+            case ReporterLifecycleToken(_, output) => output
             case _ => newOutput()
         }
         output.foreach { p =>

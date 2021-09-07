@@ -56,7 +56,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val job = Job.builder(session.context).build()
         val instance = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
 
-        val token = hook.startJob(job, instance, Phase.BUILD)
+        val token = hook.startJob(job, instance, Phase.BUILD, None)
         hook.finishJob(token, JobResult(job, instance, Phase.BUILD, Seq(), Status.SUCCESS))
     }
 

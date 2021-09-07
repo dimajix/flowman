@@ -34,6 +34,7 @@ object HookSpec extends TypeRegistry[HookSpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "report", value = classOf[ReportHookSpec]),
     new JsonSubTypes.Type(name = "web", value = classOf[WebHookSpec])
 ))
 abstract class HookSpec extends Spec[Hook] {

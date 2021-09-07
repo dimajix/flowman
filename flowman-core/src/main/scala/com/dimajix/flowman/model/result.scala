@@ -82,6 +82,49 @@ sealed abstract class Result {
     def numExceptions : Int = children.count(_.exception.isDefined) + (if (exception.isDefined) 1 else 0)
 }
 
+
+object LifecycleResult {
+    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], status:Status) : LifecycleResult =
+        LifecycleResult(
+            job,
+            instance,
+            lifecycle,
+            Seq(),
+            status
+        )
+    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], children : Seq[Result]) : LifecycleResult =
+        LifecycleResult(
+            job,
+            instance,
+            lifecycle,
+            children,
+            Status.ofAll(children.map(_.status))
+        )
+    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], exception:Throwable) : LifecycleResult =
+        LifecycleResult(
+            job,
+            instance,
+            lifecycle,
+            Seq(),
+            Status.FAILED,
+            Some(exception)
+        )
+}
+case class LifecycleResult(
+    job: Job,
+    instance: JobInstance,
+    lifecycle: Seq[Phase],
+    override val children : Seq[Result],
+    override val status: Status,
+    override val exception: Option[Throwable] = None)
+extends Result {
+    override def name : String = job.name
+    override def category : String = job.category
+    override def kind : String = job.kind
+    override def description: Option[String] = job.description
+}
+
+
 object JobResult {
     def apply(job:Job, instance: JobInstance, phase: Phase, status:Status) : JobResult =
         JobResult(

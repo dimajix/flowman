@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
 
 
 abstract class Token
+abstract class LifecycleToken extends Token
 abstract class JobToken extends Token
 abstract class TargetToken extends Token
 abstract class TestToken extends Token
@@ -39,7 +41,21 @@ trait RunnerListener {
      * @param job
      * @return
      */
-    def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken
+    def startLifecycle(job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken
+
+    /**
+     * Sets the status of a job after it has been started
+     * @param token The token returned by startJob
+     * @param result
+     */
+    def finishLifecycle(token:LifecycleToken, result:LifecycleResult) : Unit
+
+    /**
+     * Starts the run and returns a token, which can be anything
+     * @param job
+     * @return
+     */
+    def startJob(job:Job, instance:JobInstance, phase:Phase, parent:Option[Token]) : JobToken
 
     /**
      * Sets the status of a job after it has been started
@@ -79,7 +95,9 @@ trait RunnerListener {
 
 
 abstract class AbstractRunnerListener extends RunnerListener {
-    override def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken = new JobToken {}
+    override def startLifecycle(job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = new LifecycleToken {}
+    override def finishLifecycle(token:LifecycleToken, result:LifecycleResult) : Unit = {}
+    override def startJob(job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = new JobToken {}
     override def finishJob(token: JobToken, result: JobResult): Unit = {}
     override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
     override def finishTarget(token: TargetToken, result: TargetResult): Unit = {}

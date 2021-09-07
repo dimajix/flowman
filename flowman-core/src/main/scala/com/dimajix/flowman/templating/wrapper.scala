@@ -135,6 +135,7 @@ object SystemWrapper {
 }
 
 object TimestampWrapper {
+    def now() : UtcTimestamp = UtcTimestamp.now()
     def parse(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def valueOf(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def toEpochSeconds(value:String) : Long = UtcTimestamp.toEpochSeconds(value)
@@ -151,6 +152,8 @@ object TimestampWrapper {
 }
 
 object LocalDateWrapper {
+    def now() : LocalDate = LocalDate.now(ZoneOffset.UTC)
+    def today() : LocalDate = LocalDate.now(ZoneOffset.UTC)
     def parse(value:String) : LocalDate = LocalDate.parse(value)
     def valueOf(value:String) : LocalDate = LocalDate.parse(value)
     def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDate.parse(value))
@@ -167,6 +170,7 @@ object LocalDateWrapper {
 }
 
 object LocalDateTimeWrapper {
+    def now() : LocalDateTime = LocalDateTime.now(ZoneOffset.UTC)
     def parse(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def valueOf(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)

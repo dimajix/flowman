@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ case class WebHook(
      * @param job
      * @return
      */
-    override def startJob(job:Job, instance: JobInstance, phase: Phase): JobToken = {
+    override def startJob(job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val env = instance.asMap -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)

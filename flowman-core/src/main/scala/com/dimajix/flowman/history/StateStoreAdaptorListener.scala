@@ -19,6 +19,7 @@ package com.dimajix.flowman.history
 import com.dimajix.flowman.execution
 import com.dimajix.flowman.execution.AbstractRunnerListener
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.history
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
@@ -35,7 +36,7 @@ object StateStoreAdaptorListener {
 final class StateStoreAdaptorListener(store:StateStore) extends AbstractRunnerListener {
     import StateStoreAdaptorListener._
 
-    override def startJob(job:Job, instance: JobInstance, phase: Phase): execution.JobToken = {
+    override def startJob(job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): execution.JobToken = {
         StateStoreJobToken(store.startJob(instance, phase))
     }
     override def finishJob(token: execution.JobToken, result: JobResult): Unit = {

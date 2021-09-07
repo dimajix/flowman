@@ -28,6 +28,7 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
+import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.NamespaceWrapper
@@ -370,16 +371,22 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
     it should "invoke all hooks (in jobs and namespaces)" in {
         val jobHook = mock[Hook]
+        val jobLifecycleToken = new LifecycleToken {}
         val jobJobToken = new JobToken {}
         val jobTargetToken = new TargetToken {}
-        (jobHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(jobJobToken)
+        (jobHook.startLifecycle _).expects( where( (_:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(jobLifecycleToken)
+        (jobHook.finishLifecycle _).expects(where( (token:LifecycleToken, result:LifecycleResult) => token == jobLifecycleToken && result.status == Status.SUCCESS))
+        (jobHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobLifecycleToken)) ).returning(jobJobToken)
         (jobHook.finishJob _).expects(where( (token:JobToken, result:JobResult) => token == jobJobToken && result.status == Status.SUCCESS))
         (jobHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
         (jobHook.finishTarget _).expects(where( (token:TargetToken, result:TargetResult) => token == jobTargetToken && result.status == Status.SUCCESS))
         val namespaceHook = mock[Hook]
+        val namespaceLifecycleToken = new LifecycleToken {}
         val namespaceJobToken = new JobToken {}
         val namespaceTargetToken = new TargetToken {}
-        (namespaceHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(namespaceJobToken)
+        (namespaceHook.startLifecycle _).expects( where( (_:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(namespaceLifecycleToken)
+        (namespaceHook.finishLifecycle _).expects(where( (token:LifecycleToken, result:LifecycleResult) => token == namespaceLifecycleToken && result.status == Status.SUCCESS))
+        (namespaceHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceLifecycleToken)) ).returning(namespaceJobToken)
         (namespaceHook.finishJob _).expects(where( (token:JobToken, result:JobResult) => token == namespaceJobToken && result.status == Status.SUCCESS))
         (namespaceHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
         (namespaceHook.finishTarget _).expects(where( (token:TargetToken, result:TargetResult) => token == namespaceTargetToken && result.status == Status.SUCCESS))

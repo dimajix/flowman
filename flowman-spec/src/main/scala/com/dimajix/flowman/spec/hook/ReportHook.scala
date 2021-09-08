@@ -293,7 +293,7 @@ class ReportHookSpec extends HookSpec {
         ReportHook(
             instanceProperties(context),
             new Path(context.evaluate(location)),
-            OutputMode.ofString(context.evaluate(mode).getOrElse("overwrite")),
+            OutputMode.ofString(context.evaluate(mode).getOrElse("overwrite"))
         )
     }
 }

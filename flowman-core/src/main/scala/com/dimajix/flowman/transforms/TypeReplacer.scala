@@ -42,7 +42,8 @@ case class TypeReplacer(replace:Map[String, FieldType]) extends Transformer {
     private val typeAliases = Map(
         "text" -> "string",
         "long" -> "bigint",
-        "short" -> "tinyint"
+        "short" -> "smallint",
+        "byte" -> "tinyint"
     )
     private val typeMap = replace
         .map(kv => (kv._1.toLowerCase(Locale.ROOT), kv._2))

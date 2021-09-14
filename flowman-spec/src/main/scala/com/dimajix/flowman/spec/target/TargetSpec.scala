@@ -56,6 +56,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTargetSpec]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateTargetSpec]),
+    new JsonSubTypes.Type(name = "truncate", value = classOf[TruncateTargetSpec]),
     new JsonSubTypes.Type(name = "validate", value = classOf[ValidateTargetSpec]),
     new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
 ))

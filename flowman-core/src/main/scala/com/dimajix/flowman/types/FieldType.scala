@@ -36,10 +36,29 @@ import com.dimajix.flowman.types.DoubleType.parse
 
 object FieldType {
     private val nonDecimalNameToType = {
-        Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
-            DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType, DurationType)
-            .map(t => t.sqlType -> t).toMap ++
-            Map("byte" -> ByteType, "short" -> ShortType, "long" -> LongType, "int" -> IntegerType, "text" -> StringType)
+        Seq(
+            NullType,
+            DateType,
+            TimestampType,
+            BinaryType,
+            IntegerType,
+            BooleanType,
+            LongType,
+            DoubleType,
+            FloatType,
+            ShortType,
+            ByteType,
+            StringType,
+            CalendarIntervalType,
+            DurationType
+        ).map(t => t.sqlType -> t).toMap ++
+            Map(
+                "byte" -> ByteType,
+                "short" -> ShortType,
+                "long" -> LongType,
+                "int" -> IntegerType,
+                "text" -> StringType
+            )
     }
 
     private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r

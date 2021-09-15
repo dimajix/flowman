@@ -125,8 +125,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df1)).withoutTime should be (
             AssertionResult(
                 assertion,
-                Seq(AssertionTestResult("schema for 'df:main'", None, true, Instant.now())),
-                Instant.now()
+                Seq(AssertionTestResult("schema for 'df:main'", None, true, Instant.now()))
             ).withoutTime
         )
 

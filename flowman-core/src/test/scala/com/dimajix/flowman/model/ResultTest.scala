@@ -247,7 +247,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val r1 = AssertionResult(assertion, Seq(
             AssertionTestResult("a1", None, true, Instant.now()),
             AssertionTestResult("a2", None, true, Instant.now())
-        ), Instant.now())
+        ))
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -260,7 +260,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val r2 = AssertionResult(assertion, Seq(
             AssertionTestResult("a1", None, true, Instant.now()),
             AssertionTestResult("a2", None, false, Instant.now())
-        ), Instant.now())
+        ))
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -273,7 +273,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val r3 = AssertionResult(assertion, Seq(
             AssertionTestResult("a1", None, true, Instant.now()),
             AssertionTestResult("a2", None, exception, Instant.now())
-        ), Instant.now())
+        ))
         r3.status should be (Status.FAILED)
         r3.success should be (false)
         r3.failure should be (true)

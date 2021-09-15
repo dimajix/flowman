@@ -41,9 +41,12 @@ class AssertionRunner(
                         val success = result.success
                         error |= !success
 
-                        val name = result.name
-                        val description = result.description.getOrElse(name)
-                        if (!success) {
+                        val description = result.description.getOrElse(result.name)
+                        if (result.exception.nonEmpty) {
+                            val ex = result.exception.get
+                            logger.error(s" ✘ exception: $description: ${ex.getMessage}")
+                        }
+                        else if (!success) {
                             logger.error(red(s" ✘ failed: $description"))
                         }
                         else {
@@ -53,8 +56,7 @@ class AssertionRunner(
                         result
                     }
                     else {
-                        val name = assertion.name
-                        val description = assertion.description.getOrElse(name)
+                        val description = assertion.description.getOrElse(assertion.name)
                         logger.info(yellow(s" - skipped: $description}"))
                         AssertionResult(assertion, startTime)
                     }
@@ -75,9 +77,6 @@ class AssertionRunner(
         }
         catch {
             case NonFatal(ex) =>
-                val name = assertion.name
-                val description = assertion.description.getOrElse(name)
-                logger.error(s" ✘ exception: $description: ${ex.getMessage}")
                 AssertionResult(assertion, ex, startTime)
         }
     }

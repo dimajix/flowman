@@ -96,13 +96,15 @@ case class ColumnsAssertion(
         require(execution != null)
         require(input != null)
 
-        val df = input(mapping)
+        AssertionResult.of(this) {
+            val df = input(mapping)
 
-        val results = expected.map { test =>
-            AssertionTestResult(test.description, None, test.execute(df))
+            expected.map { test =>
+                AssertionTestResult.of(test.description, None) {
+                    test.execute(df)
+                }
+            }
         }
-
-        AssertionResult(this, results)
     }
 }
 

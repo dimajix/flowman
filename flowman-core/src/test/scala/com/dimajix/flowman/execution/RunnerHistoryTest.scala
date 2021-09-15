@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
 import scala.util.Random
 
 import org.scalamock.scalatest.MockFactory
@@ -150,7 +152,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             (target.identifier _).when().returns(TargetIdentifier(name))
             (target.instance _).when().returns(instance)
             (target.dirty _).when(*, Phase.CREATE).returns(dirty)
-            (target.execute _).when(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS))
+            (target.execute _).when(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             target
         }
         def genJob(session:Session, target:String) : Job = {

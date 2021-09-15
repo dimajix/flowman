@@ -66,31 +66,32 @@ private[execution] sealed class RunnerImpl {
     protected val logFilters = LogFilter.filters
 
     def resultOf(target:Target, phase:Phase, dryRun:Boolean)(fn: => TargetResult) : TargetResult = {
+        val startTime = Instant.now()
         val result = Try {
             if (!dryRun) {
                 fn
             }
             else {
-                TargetResult(target, phase, Status.SUCCESS)
+                TargetResult(target, phase, Status.SUCCESS, startTime)
             }
         }
         match {
             case Success(r) => r
             case Failure(e) =>
                 logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
-                TargetResult(target, phase, e)
+                TargetResult(target, phase, e, startTime)
         }
 
         result match {
-            case TargetResult(_,_,_,_,Status.SUCCESS,_) =>
+            case TargetResult(_,_,_,_,Status.SUCCESS,_,_,_) =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,Status.SKIPPED,_) =>
+            case TargetResult(_,_,_,_,Status.SKIPPED,_,_,_) =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,Status.FAILED,_) =>
+            case TargetResult(_,_,_,_,Status.FAILED,_,_,_) =>
                 logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,Status.ABORTED,_) =>
+            case TargetResult(_,_,_,_,Status.ABORTED,_,_,_) =>
                 logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,status,_) =>
+            case TargetResult(_,_,_,_,status,_,_,_) =>
                 logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
         }
 
@@ -194,6 +195,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         require(phases != null)
         require(args != null)
 
+        val startTime = Instant.now()
         val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
         withExecution(parentExecution, isolated) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun) { (context, arguments) =>
@@ -221,7 +223,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                             None
                     }
 
-                    LifecycleResult(job, instance, phases, results)
+                    LifecycleResult(job, instance, phases, results, startTime)
                 }
             }
         }
@@ -251,19 +253,19 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                     withWallTime(execution.metrics, job.metadata, phase) {
                         try {
                             val results = executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing, dryRun)
-                            JobResult(job, instance, phase, results)
+                            JobResult(job, instance, phase, results, startTime)
                         }
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
                                 logger.error(s"Caught exception during $phase $title:", ex)
-                                JobResult(job, instance, phase, ex)
+                                JobResult(job, instance, phase, ex, startTime)
                         }
                     }
                 }
             }
 
-            val endTime = Instant.now()
+            val endTime = result.endTime
             val duration = Duration.between(startTime, endTime)
             val status = result.status
             logStatus(title, status, duration, endTime)
@@ -286,6 +288,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
         val canSkip = !force && checkTarget(instance, phase)
 
+        val startTime = Instant.now()
         withListeners(target, instance, phase, jobToken) {
             logSubtitle(s"$phase target '${target.identifier}'")
 
@@ -293,12 +296,12 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             if (canSkip) {
                 logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
-                TargetResult(target, phase, Status.SKIPPED)
+                TargetResult(target, phase, Status.SKIPPED, startTime)
             }
             else if (!forceDirty && target.dirty(execution, phase) == No) {
                 logger.info(cyan(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution"))
                 logger.info("")
-                TargetResult(target, phase, Status.SKIPPED)
+                TargetResult(target, phase, Status.SKIPPED, startTime)
             }
             else {
                 resultOf(target, phase, dryRun) {
@@ -372,8 +375,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
         }
 
+        val startTime = Instant.now()
         val tokens = startLifecycle()
-        withShutdownHook(finishLifecycle(tokens, LifecycleResult(job, instance, lifecycle, Status.FAILED))) {
+        withShutdownHook(finishLifecycle(tokens, LifecycleResult(job, instance, lifecycle, Status.FAILED, startTime))) {
             val result = fn(RunnerLifecycleToken(tokens))
             finishLifecycle(tokens, result)
             result
@@ -412,8 +416,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
         }
 
+        val startTime = Instant.now()
         val tokens = startJob()
-        withShutdownHook(finishJob(tokens, JobResult(job, instance, phase, Status.FAILED))) {
+        withShutdownHook(finishJob(tokens, JobResult(job, instance, phase, Status.FAILED, startTime))) {
             val result = fn(RunnerJobToken(tokens))
             finishJob(tokens, result)
             result
@@ -445,8 +450,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
         }
 
+        val startTime = Instant.now()
         val tokens = startTarget()
-        withShutdownHook(finishTarget(tokens, TargetResult(target, phase, Status.FAILED))) {
+        withShutdownHook(finishTarget(tokens, TargetResult(target, phase, Status.FAILED, startTime))) {
             val result = fn
             finishTarget(tokens, result)
             result

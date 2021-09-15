@@ -55,10 +55,10 @@ import com.dimajix.flowman.spi.LogFilter
 
 
 object ReportHook {
-    case class ReporterLifecycleToken(startTime:Instant, output:Option[PrintStream]) extends LifecycleToken
-    case class ReporterJobToken(phase:Phase, startTime:Instant, output:Option[PrintStream]) extends JobToken
-    case class ReporterTargetToken(phase:Phase, startTime:Instant, output:Option[PrintStream]) extends TargetToken
-    case class ReporterAssertionToken(startTime:Instant, output:Option[PrintStream]) extends AssertionToken
+    case class ReporterLifecycleToken(output:Option[PrintStream]) extends LifecycleToken
+    case class ReporterJobToken(phase:Phase, output:Option[PrintStream]) extends JobToken
+    case class ReporterTargetToken(phase:Phase, output:Option[PrintStream]) extends TargetToken
+    case class ReporterAssertionToken(output:Option[PrintStream]) extends AssertionToken
 }
 
 case class ReportHook(
@@ -123,6 +123,12 @@ case class ReportHook(
     }
     private def printTitle(p:PrintStream, title:String) : Unit = {
         p.println("")
+        p.println(smallSeparator)
+        p.println(boldWhite(s"  $title"))
+        p.println(smallSeparator)
+    }
+    private def printBigTitle(p:PrintStream, title:String) : Unit = {
+        p.println("")
         p.println(bigSeparator)
         p.println(boldWhite(s"  $title"))
         p.println(bigSeparator)
@@ -133,7 +139,6 @@ case class ReportHook(
             logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2.toString)))
                 .foreach { case (key,value) => p.println(s"  $key=$value") }
         }
-        p.println("")
     }
     private def printStatus(p:PrintStream, title:String, status:Status, duration: Duration, endTime:Instant) : Unit = {
         val msg = status match {
@@ -165,10 +170,10 @@ case class ReportHook(
         logger.info(s"Creating new report to $location")
         val output = newOutput()
         output.foreach { p =>
-            printTitle(p, s"Processing job ${job.identifier} at $now")
+            printBigTitle(p, s"Processing job ${job.identifier} at $now")
             printEnvironment(p, job.context)
         }
-        ReporterLifecycleToken(now, output)
+        ReporterLifecycleToken(output)
     }
 
     /**
@@ -179,8 +184,8 @@ case class ReportHook(
     override def finishLifecycle(token:LifecycleToken, result:LifecycleResult) : Unit = {
         val lifecycleToken = token.asInstanceOf[ReporterLifecycleToken]
         lifecycleToken.output.foreach { p =>
-            val endTime = Instant.now()
-            val duration = Duration.between(lifecycleToken.startTime, endTime)
+            val endTime = result.endTime
+            val duration = result.duration
             val status = result.status
             printStatus(p, s"Finished lifecycle of job ${result.job.identifier}", status, duration, endTime)
             p.flush()
@@ -197,14 +202,16 @@ case class ReportHook(
     override def startJob(job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val now = Instant.now()
         val output = parent.flatMap {
-            case ReporterLifecycleToken(_, output) => output
+            case ReporterLifecycleToken(output) => output
             case _ => newOutput()
         }
         output.foreach { p =>
             printTitle(p, s"${phase} job ${job.identifier} at $now")
-            printEnvironment(p, job.context)
+            if (parent.isEmpty) {
+                printEnvironment(p, job.context)
+            }
         }
-        ReporterJobToken(phase, now, output)
+        ReporterJobToken(phase, output)
     }
 
     /**
@@ -215,8 +222,8 @@ case class ReportHook(
     override def finishJob(token: JobToken, result: JobResult): Unit = {
         val jobToken = token.asInstanceOf[ReporterJobToken]
         jobToken.output.foreach { p =>
-            val endTime = Instant.now()
-            val duration = Duration.between(jobToken.startTime, endTime)
+            val endTime = result.endTime
+            val duration = result.duration
             val status = result.status
             printStatus(p, s"${jobToken.phase} job ${result.job.identifier}", status, duration, endTime)
         }
@@ -230,13 +237,13 @@ case class ReportHook(
     override def startTarget(target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
         val now = Instant.now()
         val output = parent.flatMap {
-            case ReporterJobToken(_, _, output) => output
+            case ReporterJobToken(_, output) => output
             case _ => None
         }
         output.foreach { p =>
             printSubtitle(p, s"${phase} target ${target.identifier} at $now")
         }
-        ReporterTargetToken(phase, now, output)
+        ReporterTargetToken(phase, output)
     }
 
     /**
@@ -245,10 +252,9 @@ case class ReportHook(
      * @param result
      */
     override def finishTarget(token: TargetToken, result: TargetResult): Unit = {
-        val now = Instant.now()
         val targetToken = token.asInstanceOf[ReporterTargetToken]
         targetToken.output.foreach { p =>
-            p.println(s"Finished ${targetToken.phase} target ${result.target.identifier} with status ${result.status} at $now")
+            p.println(s"Finished ${targetToken.phase} target ${result.target.identifier} with status ${result.status} at ${result.endTime}")
         }
     }
 
@@ -260,14 +266,14 @@ case class ReportHook(
     override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = {
         val now = Instant.now()
         val output = parent.flatMap {
-            case ReporterJobToken(_, _, output) => output
-            case ReporterTargetToken(_, _, output) => output
+            case ReporterJobToken(_, output) => output
+            case ReporterTargetToken(_, output) => output
             case _ => None
         }
         output.foreach { p =>
             printSubtitle(p, s"Starting EXECUTE assertion ${assertion.name} at $now")
         }
-        ReporterAssertionToken(now, output)
+        ReporterAssertionToken(output)
     }
 
     /**
@@ -276,10 +282,9 @@ case class ReportHook(
      * @param status
      */
     override def finishAssertion(token: AssertionToken, result: AssertionResult): Unit = {
-        val now = Instant.now()
         val assertionToken = token.asInstanceOf[ReporterAssertionToken]
         assertionToken.output.foreach { p =>
-            printSubtitle(p, s"Finished EXECUTE assertion ${result.assertion.name} with status ${result.status} at $now")
+            printSubtitle(p, s"Finished EXECUTE assertion ${result.assertion.name} with status ${result.status} at ${result.endTime}")
         }
     }
 }

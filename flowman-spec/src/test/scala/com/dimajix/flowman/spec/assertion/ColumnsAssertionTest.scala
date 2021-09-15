@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.assertion
 
+import java.time.Instant
+
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
@@ -83,17 +85,22 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val df = execution.spark.range(2).toDF()
 
+        val ts = Instant.now()
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
-        result should be (
+        val result2 = result.copy(children=result.children.map(_.copy(startTime=ts, endTime=ts)), startTime=ts, endTime=ts)
+        result2 should be (
             AssertionResult(
                 assertion,
                 Seq(
-                    AssertionTestResult("ID IS PRESENT", None, true),
-                    AssertionTestResult("id IS ABSENT", None, false),
-                    AssertionTestResult("no_such_column IS ABSENT", None, true),
-                    AssertionTestResult("id IS OF TYPE BOOLEAN", None, false),
-                    AssertionTestResult("ID IS OF TYPE (STRING,BIGINT)", None, true)
-                )
+                    AssertionTestResult("ID IS PRESENT", None, true, None, ts, ts),
+                    AssertionTestResult("id IS ABSENT", None, false, None, ts, ts),
+                    AssertionTestResult("no_such_column IS ABSENT", None, true, None, ts, ts),
+                    AssertionTestResult("id IS OF TYPE BOOLEAN", None, false, None, ts, ts),
+                    AssertionTestResult("ID IS OF TYPE (STRING,BIGINT)", None, true, None, ts, ts)
+                ),
+                None,
+                ts,
+                ts
             )
         )
     }

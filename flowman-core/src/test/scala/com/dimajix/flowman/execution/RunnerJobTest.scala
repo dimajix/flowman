@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -213,7 +215,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 (target.instance _).expects().atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
-                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS))
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             } else {
                 (target.execute _).expects(*, Phase.CREATE).never()
             }
@@ -299,7 +301,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                     (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
                 }
                 else {
-                    (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS))
+                    (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
                 }
             } else {
                 (target.execute _).expects(*, Phase.CREATE).never()
@@ -345,7 +347,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
             }
             else {
-                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS))
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             }
 
             target

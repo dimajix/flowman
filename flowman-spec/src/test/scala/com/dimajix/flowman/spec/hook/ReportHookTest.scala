@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.hook
 
+import java.time.Instant
+
 import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -64,7 +66,7 @@ class ReportHookTest extends AnyFlatSpec with Matchers {
         val jobInstance = job.instance(Map())
         val lifecycleToken = hook.startLifecycle(job, jobInstance, Seq(Phase.CREATE))
         val jobToken = hook.startJob(job, jobInstance, Phase.CREATE, Some(lifecycleToken))
-        hook.finishJob(jobToken, JobResult(job, jobInstance, Phase.CREATE, Status.SUCCESS))
-        hook.finishLifecycle(lifecycleToken, LifecycleResult(job, jobInstance, Seq(Phase.CREATE), Status.SUCCESS))
+        hook.finishJob(jobToken, JobResult(job, jobInstance, Phase.CREATE, Status.SUCCESS, Instant.now()))
+        hook.finishLifecycle(lifecycleToken, LifecycleResult(job, jobInstance, Seq(Phase.CREATE), Status.SUCCESS, Instant.now()))
     }
 }

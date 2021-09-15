@@ -155,14 +155,14 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val my = execution.spark.range(3).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx, MappingOutputIdentifier("my") -> my))
-        result should be (
+        result.withoutTime should be (
             AssertionResult(
                 assertion,
                 Seq(
                     AssertionTestResult("SELECT COUNT(*), SUM(id) FROM mx", None, true),
                     AssertionTestResult("SELECT COUNT(*) FROM my", None, true)
                 )
-            )
+            ).withoutTime
         )
     }
 
@@ -187,13 +187,13 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val mx = execution.spark.range(2).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
-        result should be (
+        result.withoutTime should be (
             AssertionResult(
                 assertion,
                 Seq(
                     AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false)
                 )
-            )
+            ).withoutTime
         )
     }
 
@@ -218,11 +218,11 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val mx = execution.spark.range(2).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
-        result should be (
+        result.withoutTime should be (
             AssertionResult(
                 assertion,
                 Seq(AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false))
-            )
+            ).withoutTime
         )
     }
 
@@ -247,13 +247,13 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val mx = execution.spark.range(2).toDF()
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
-        result should be (
+        result.withoutTime should be (
             AssertionResult(
                 assertion,
                 Seq(
                     AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false)
                 )
-            )
+            ).withoutTime
         )
     }
 }

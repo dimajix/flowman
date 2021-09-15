@@ -31,6 +31,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.jackson.ListMapDeserializer
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
@@ -145,20 +146,20 @@ case class SchemaAssertion(
             }
         }
 
-        val name = s"schema for '$mapping'"
-        val actualSchema = input(mapping).schema
-        val desiredSchema = schema.map(_.sparkSchema).getOrElse(ftypes.StructType(columns).sparkType)
+        AssertionResult.of(this) {
+            val actualSchema = input(mapping).schema
+            val desiredSchema = schema.map(_.sparkSchema).getOrElse(ftypes.StructType(columns).sparkType)
 
-        val result = if (!compareStructs(actualSchema, desiredSchema)) {
-            logger.error(
-                s"""Mapping '$mapping' has wrong schema.\nActual schema:\n${actualSchema.treeString}\nExpected schema:\n${desiredSchema.treeString}""")
-            false
+            Seq(AssertionTestResult.of(s"schema for '$mapping'") {
+                if (!compareStructs(actualSchema, desiredSchema)) {
+                    logger.error(s"""Mapping '$mapping' has wrong schema.\nActual schema:\n${actualSchema.treeString}\nExpected schema:\n${desiredSchema.treeString}""")
+                    false
+                }
+                else {
+                    true
+                }
+            })
         }
-        else {
-            true
-        }
-
-        AssertionResult(this, Seq(AssertionTestResult(name, None, result)))
     }
 }
 

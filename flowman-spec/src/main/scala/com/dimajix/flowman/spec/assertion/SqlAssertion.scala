@@ -98,24 +98,27 @@ case class SqlAssertion(
         require(execution != null)
         require(input != null)
 
-        val result = DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
-            tests.par.map { test =>
-                // Execute query
-                val sql = test.sql
-                val actual = execution.spark.sql(sql)
+        AssertionResult.of(this) {
+            DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+                tests.par.map { test =>
+                    // Execute query
+                    val sql = test.sql
 
-                val result = DataFrameUtils.diffToStringValues(test.expected, actual)
-                result match {
-                    case Some(diff) =>
-                        logger.error(s"failed query: $sql\n$diff")
-                        AssertionTestResult(sql, None, false)
-                    case None =>
-                        AssertionTestResult(sql, None, true)
-                }
-            }.toList
+                    AssertionTestResult.of(sql) {
+                        val actual = execution.spark.sql(sql)
+
+                        val result = DataFrameUtils.diffToStringValues(test.expected, actual)
+                        result match {
+                            case Some(diff) =>
+                                logger.error(s"failed query: $sql\n$diff")
+                                false
+                            case None =>
+                                true
+                        }
+                    }
+                }.toList
+            }
         }
-
-        AssertionResult(this, result)
     }
 }
 

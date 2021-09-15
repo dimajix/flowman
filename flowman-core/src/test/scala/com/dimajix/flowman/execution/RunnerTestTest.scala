@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
 import scala.collection.immutable.ListMap
 
 import org.apache.spark.storage.StorageLevel
@@ -156,10 +158,10 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (target.before _).expects().atLeastOnce().returns(Seq())
         (target.after _).expects().atLeastOnce().returns(Seq())
         (target.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (target.execute _).expects(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS))
-        (target.execute _).expects(*, Phase.BUILD).returns(TargetResult(target, Phase.BUILD, Status.SUCCESS))
-        (target.execute _).expects(*, Phase.VERIFY).returns(TargetResult(target, Phase.VERIFY, Status.SUCCESS))
-        (target.execute _).expects(*, Phase.DESTROY).returns(TargetResult(target, Phase.DESTROY, Status.SUCCESS))
+        (target.execute _).expects(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
+        (target.execute _).expects(*, Phase.BUILD).returns(TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now()))
+        (target.execute _).expects(*, Phase.VERIFY).returns(TargetResult(target, Phase.VERIFY, Status.SUCCESS, Instant.now()))
+        (target.execute _).expects(*, Phase.DESTROY).returns(TargetResult(target, Phase.DESTROY, Status.SUCCESS, Instant.now()))
 
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
         (fixture.identifier _).expects().atLeastOnce().returns(TargetIdentifier("fixture", "default"))
@@ -170,10 +172,10 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (fixture.before _).expects().atLeastOnce().returns(Seq(TargetIdentifier("target", "default")))
         (fixture.after _).expects().atLeastOnce().returns(Seq())
         (fixture.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (fixture.execute _).expects(*, Phase.CREATE).returns(TargetResult(fixture, Phase.CREATE, Status.SUCCESS))
-        (fixture.execute _).expects(*, Phase.BUILD).returns(TargetResult(fixture, Phase.BUILD, Status.SUCCESS))
-        (fixture.execute _).expects(*, Phase.VERIFY).returns(TargetResult(fixture, Phase.VERIFY, Status.SUCCESS))
-        (fixture.execute _).expects(*, Phase.DESTROY).returns(TargetResult(fixture, Phase.DESTROY, Status.SUCCESS))
+        (fixture.execute _).expects(*, Phase.CREATE).returns(TargetResult(fixture, Phase.CREATE, Status.SUCCESS, Instant.now()))
+        (fixture.execute _).expects(*, Phase.BUILD).returns(TargetResult(fixture, Phase.BUILD, Status.SUCCESS, Instant.now()))
+        (fixture.execute _).expects(*, Phase.VERIFY).returns(TargetResult(fixture, Phase.VERIFY, Status.SUCCESS, Instant.now()))
+        (fixture.execute _).expects(*, Phase.DESTROY).returns(TargetResult(fixture, Phase.DESTROY, Status.SUCCESS, Instant.now()))
 
         var assertionContext:Context = null
         (assertionTemplate.instantiate _).expects(*).onCall { ctx:Context =>
@@ -184,7 +186,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion.description _).expects().atLeastOnce().returns(None)
         (assertion.context _).expects().onCall(() => assertionContext)
         (assertion.inputs _).expects().atLeastOnce().returns(Seq(MappingOutputIdentifier("map", "main", None)))
-        (assertion.execute _).expects(*,*).returns(AssertionResult(assertion, Seq()))
+        (assertion.execute _).expects(*,*).returns(AssertionResult(assertion, Instant.now()))
 
         var overrideMappingContext:Context = null
         (overrideMappingTemplate.instantiate _).expects(*).onCall { ctx:Context =>
@@ -409,7 +411,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion2.description _).expects().atLeastOnce().returns(None)
         (assertion2.name _).expects().atLeastOnce().returns("assertion2")
         (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
-        (assertion2.execute _).expects(*,*).returns(AssertionResult(assertion2, Seq()))
+        (assertion2.execute _).expects(*,*).returns(AssertionResult(assertion2, Instant.now()))
 
         runner.executeTest(test, keepGoing = true) should be (Status.FAILED)
     }

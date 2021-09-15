@@ -15,7 +15,13 @@
  */
 package com.dimajix.flowman.model
 
+import java.time.Duration
+import java.time.Instant
+
 import scala.collection.mutable
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -72,6 +78,10 @@ sealed abstract class Result {
     def children : Seq[Result]
     def status : Status = if (exception.isDefined) Status.FAILED else Status.ofAll(children.map(_.status))
 
+    def startTime : Instant
+    def endTime : Instant
+    def duration : Duration = Duration.between(startTime, endTime)
+
     def success : Boolean = status == Status.SUCCESS
     def failure : Boolean = status == Status.FAILED
     def skipped : Boolean = status == Status.SKIPPED
@@ -84,30 +94,36 @@ sealed abstract class Result {
 
 
 object LifecycleResult {
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], status:Status) : LifecycleResult =
+    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], status:Status, startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
             instance,
             lifecycle,
             Seq(),
-            status
+            status,
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], children : Seq[Result]) : LifecycleResult =
+    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], children : Seq[Result], startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
             instance,
             lifecycle,
             children,
-            Status.ofAll(children.map(_.status))
+            Status.ofAll(children.map(_.status)),
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], exception:Throwable) : LifecycleResult =
+    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], exception:Throwable, startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
             instance,
             lifecycle,
             Seq(),
             Status.FAILED,
-            Some(exception)
+            Some(exception),
+            startTime=startTime,
+            endTime=Instant.now()
         )
 }
 case class LifecycleResult(
@@ -116,8 +132,10 @@ case class LifecycleResult(
     lifecycle: Seq[Phase],
     override val children : Seq[Result],
     override val status: Status,
-    override val exception: Option[Throwable] = None)
-extends Result {
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
+) extends Result {
     override def name : String = job.name
     override def category : String = job.category
     override def kind : String = job.kind
@@ -126,30 +144,36 @@ extends Result {
 
 
 object JobResult {
-    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status) : JobResult =
+    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status, startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
             phase,
             Seq(),
-            status
+            status,
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, children : Seq[Result]) : JobResult =
+    def apply(job:Job, instance: JobInstance, phase: Phase, children : Seq[Result], startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
             phase,
             children,
-            Status.ofAll(children.map(_.status))
+            Status.ofAll(children.map(_.status)),
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, exception:Throwable) : JobResult =
+    def apply(job:Job, instance: JobInstance, phase: Phase, exception:Throwable, startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
             phase,
             Seq(),
             Status.FAILED,
-            Some(exception)
+            Some(exception),
+            startTime=startTime,
+            endTime=Instant.now()
         )
 }
 case class JobResult(
@@ -158,39 +182,48 @@ case class JobResult(
     phase: Phase,
     override val children : Seq[Result],
     override val status: Status,
-    override val exception: Option[Throwable] = None)
-extends Result {
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
+) extends Result {
     override def name : String = job.name
     override def category : String = job.category
     override def kind : String = job.kind
     override def description: Option[String] = job.description
 }
 
+
 object TargetResult {
-    def apply(target:Target, phase: Phase, status:Status) : TargetResult =
+    def apply(target:Target, phase: Phase, status:Status, startTime:Instant) : TargetResult =
         TargetResult(
             target,
             target.instance,
             phase,
             Seq(),
-            status
+            status,
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(target:Target, phase: Phase, children : Seq[Result]) : TargetResult =
+    def apply(target:Target, phase: Phase, children : Seq[Result], startTime:Instant) : TargetResult =
         TargetResult(
             target,
             target.instance,
             phase,
             children,
-            Status.ofAll(children.map(_.status))
+            Status.ofAll(children.map(_.status)),
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(target:Target, phase: Phase, exception:Throwable) : TargetResult =
+    def apply(target:Target, phase: Phase, exception:Throwable, startTime:Instant) : TargetResult =
         TargetResult(
             target,
             target.instance,
             phase,
             Seq(),
             Status.FAILED,
-            Some(exception)
+            Some(exception),
+            startTime=startTime,
+            endTime=Instant.now()
         )
 }
 case class TargetResult(
@@ -199,7 +232,9 @@ case class TargetResult(
     phase: Phase,
     override val children : Seq[Result],
     override val status: Status,
-    override val exception: Option[Throwable] = None
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
 ) extends Result {
     override def name : String = target.name
     override def category : String = target.category
@@ -207,21 +242,26 @@ case class TargetResult(
     override def description: Option[String] = None
 }
 
+
 object TestResult {
-    def apply(test:Test, status:Status) : TestResult =
+    def apply(test:Test, status:Status, startTime:Instant) : TestResult =
         TestResult(
             test,
             test.instance,
             Seq(),
-            status
+            status,
+            startTime=startTime,
+            endTime=Instant.now()
         )
-    def apply(test:Test, exception:Throwable) : TestResult =
+    def apply(test:Test, exception:Throwable, startTime:Instant) : TestResult =
         TestResult(
             test,
             test.instance,
             Seq(),
             Status.FAILED,
-            Some(exception)
+            Some(exception),
+            startTime=startTime,
+            endTime=Instant.now()
         )
 }
 case class TestResult(
@@ -229,7 +269,9 @@ case class TestResult(
     instance : TestInstance,
     override val children : Seq[Result],
     override val status: Status,
-    override val exception: Option[Throwable] = None
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
 ) extends Result {
     override def name : String = test.name
     override def category : String = test.category
@@ -237,30 +279,117 @@ case class TestResult(
     override def description: Option[String] = test.description
 }
 
+
 object AssertionResult {
-    def apply(assertion: Assertion, exception:Throwable) : AssertionResult =
+    def apply(assertion: Assertion, exception:Throwable, startTime:Instant) : AssertionResult =
         AssertionResult(
             assertion,
             Seq(),
-            Some(exception)
+            Some(exception),
+            startTime=startTime,
+            endTime=Instant.now()
         )
+    def apply(assertion: Assertion, children : Seq[AssertionTestResult]) : AssertionResult =
+        AssertionResult(
+            assertion,
+            children,
+            None,
+            startTime=Instant.now(),
+            endTime=Instant.now()
+        )
+    def apply(assertion: Assertion, children : Seq[AssertionTestResult], startTime:Instant) : AssertionResult =
+        AssertionResult(
+            assertion,
+            children,
+            None,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+    def apply(assertion: Assertion, startTime:Instant) : AssertionResult =
+        AssertionResult(
+            assertion,
+            Seq(),
+            None,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+
+    def of(assertion: Assertion)(fn: => Seq[AssertionTestResult]) : AssertionResult = {
+        val startTime = Instant.now()
+        Try(fn) match {
+            case Success(results) =>
+                AssertionResult(assertion, results, None, startTime, Instant.now())
+            case Failure(exception) =>
+                AssertionResult(assertion, Seq(), Some(exception), startTime, Instant.now())
+        }
+    }
 }
 case class AssertionResult(
     assertion: Assertion,
     override val children : Seq[AssertionTestResult],
-    override val exception: Option[Throwable] = None
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
 ) extends Result {
     override def name : String = assertion.name
     override def category : String = assertion.category
     override def kind : String = assertion.kind
     override def description: Option[String] = assertion.description
+
+    def withoutTime : AssertionResult = {
+        val ts = Instant.ofEpochSecond(0)
+        copy(
+            children=children.map(_.copy(startTime=ts, endTime=ts)),
+            startTime=ts,
+            endTime=ts
+        )
+    }
 }
 
+
+object AssertionTestResult {
+    def apply(name:String, description:Option[String], success:Boolean) : AssertionTestResult = AssertionTestResult(
+        name,
+        description,
+        success,
+        None,
+        Instant.now(),
+        Instant.now()
+    )
+    def apply(name:String, description:Option[String], success:Boolean, startTime:Instant) : AssertionTestResult = AssertionTestResult(
+        name,
+        description,
+        success,
+        None,
+        startTime,
+        Instant.now()
+    )
+    def apply(name:String, description:Option[String], exception: Throwable, startTime:Instant) : AssertionTestResult = AssertionTestResult(
+        name,
+        description,
+        false,
+        Some(exception),
+        startTime,
+        Instant.now()
+    )
+
+    def of(name: String, description:Option[String]=None)(fn: => Boolean) : AssertionTestResult = {
+        val startTime = Instant.now()
+        Try(fn) match {
+            case Success(result) =>
+                AssertionTestResult(name, description, result, None, startTime, Instant.now())
+            case Failure(exception) =>
+                AssertionTestResult(name, description, false, Some(exception), startTime, Instant.now())
+        }
+    }
+}
 case class AssertionTestResult(
     override val name:String,
     override val description:Option[String],
     override val success:Boolean,
-    override val exception: Option[Throwable] = None
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
 ) extends Result {
     override def category: String = ""
     override def kind: String = ""

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.hook
 
+import java.time.Instant
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -57,7 +59,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val instance = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
 
         val token = hook.startJob(job, instance, Phase.BUILD, None)
-        hook.finishJob(token, JobResult(job, instance, Phase.BUILD, Seq(), Status.SUCCESS))
+        hook.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS, Instant.now()))
     }
 
     it should "provide a working target API" in {
@@ -75,7 +77,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val instance = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
 
         val token = hook.startTarget(target, instance, Phase.BUILD, None)
-        hook.finishTarget(token, TargetResult(target, instance, Phase.BUILD, Seq(), Status.SUCCESS))
+        hook.finishTarget(token, TargetResult(target, instance, Phase.BUILD, Seq(), Status.SUCCESS, None, Instant.now(), Instant.now()))
     }
 
     it should "be deserializable in a namespace" in {

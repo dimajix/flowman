@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.model
 
+import java.time.Instant
+
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
@@ -242,6 +244,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * @param phase
      */
     override def execute(execution: Execution, phase: Phase) : TargetResult = {
+        val startTime = Instant.now()
         phase match {
             case Phase.VALIDATE => validate(execution)
             case Phase.CREATE => create(execution)
@@ -251,7 +254,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
             case Phase.DESTROY => destroy(execution)
         }
 
-        TargetResult(this, phase, Status.SUCCESS)
+        TargetResult(this, phase, Status.SUCCESS, startTime)
     }
 
     /**

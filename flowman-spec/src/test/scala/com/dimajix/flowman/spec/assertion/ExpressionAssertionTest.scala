@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.assertion
 
+import java.time.Instant
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -71,7 +73,7 @@ class ExpressionAssertionTest extends AnyFlatSpec with Matchers with LocalSparkS
 
         val df = execution.spark.range(2).toDF()
 
-        val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
+        val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df)).withoutTime
         result should be (
             AssertionResult(
                 assertion,
@@ -79,7 +81,7 @@ class ExpressionAssertionTest extends AnyFlatSpec with Matchers with LocalSparkS
                     AssertionTestResult("id IS NOT NULL", None, true),
                     AssertionTestResult("id IN (4,5)", None, false)
                 )
-            )
+            ).withoutTime
         )
     }
 }

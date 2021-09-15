@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 import scala.annotation.tailrec
@@ -79,7 +80,7 @@ class ParallelExecutor extends Executor {
                             val status = r.status
                             error |= (status != Status.SUCCESS && status != Status.SKIPPED)
                         case Failure(ex) =>
-                            results += TargetResult(target, phase, ex)
+                            results += TargetResult(target, phase, ex, Instant.now())
                             error = true
                     }
                 }

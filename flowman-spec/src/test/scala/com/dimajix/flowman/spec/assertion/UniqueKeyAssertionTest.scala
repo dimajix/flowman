@@ -92,13 +92,13 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
         ))
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
-        result should be (
+        result.withoutTime should be (
             AssertionResult(
                 assertion,
                 Seq(
                     AssertionTestResult("unique_key for 'df:main' with keys 'id_1,id_2'", None, true)
                 )
-            )
+            ).withoutTime
         )
     }
 
@@ -120,13 +120,13 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
         ))
 
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
-        result should be (
+        result.withoutTime should be (
             AssertionResult(
                 assertion,
                 Seq(
                     AssertionTestResult("unique_key for 'df:main' with keys 'id_1,id_2'", None, false)
                 )
-            )
+            ).withoutTime
         )
     }
 }

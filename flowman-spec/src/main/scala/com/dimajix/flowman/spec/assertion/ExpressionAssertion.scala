@@ -67,22 +67,25 @@ case class ExpressionAssertion(
         require(execution != null)
         require(input != null)
 
-        val mapping = input(this.mapping)
-        val results = expected.map { test =>
-            DataFrameUtils.withCache(mapping.filter(!expr(test)).limit(21)) { df =>
-                if (df.count() > 0) {
-                    val columns = CatalystSqlParser.parseExpression(test).references.map(_.name).toSeq.distinct.map(col)
-                    val diff = DataFrameUtils.showString(mapping.select(columns: _*), 20, -1)
-                    logger.error(s"failed expectation: $test\n$diff")
-                    AssertionTestResult(test, None, false)
-                }
-                else {
-                    AssertionTestResult(test, None, true)
+        AssertionResult.of(this) {
+            val mapping = input(this.mapping)
+
+            expected.map { test =>
+                AssertionTestResult.of(test) {
+                    DataFrameUtils.withCache(mapping.filter(!expr(test)).limit(21)) { df =>
+                        if (df.count() > 0) {
+                            val columns = CatalystSqlParser.parseExpression(test).references.map(_.name).toSeq.distinct.map(col)
+                            val diff = DataFrameUtils.showString(mapping.select(columns: _*), 20, -1)
+                            logger.error(s"failed expectation: $test\n$diff")
+                            false
+                        }
+                        else {
+                            true
+                        }
+                    }
                 }
             }
         }
-
-        AssertionResult(this, results)
     }
 }
 

@@ -97,10 +97,10 @@ case class RecursiveValue(engine:VelocityEngine, context:VelocityContext, value:
 
 object URLWrapper {
     def encode(str:String) : String = {
-        return URLEncoder.encode(str, "UTF-8")
+        URLEncoder.encode(str, "UTF-8")
     }
     def decode(str:String) : String = {
-        return URLDecoder.decode(str, "UTF-8")
+        URLDecoder.decode(str, "UTF-8")
     }
 }
 

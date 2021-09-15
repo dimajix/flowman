@@ -1,20 +1,17 @@
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
 import scala.util.control.NonFatal
 
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
 import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.AssertionResult
-import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.util.ConsoleColors.green
 import com.dimajix.flowman.util.ConsoleColors.red
 import com.dimajix.flowman.util.ConsoleColors.yellow
-import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -36,10 +33,11 @@ class AssertionRunner(
 
         DataFrameUtils.withCaches(inputDataFrames, cacheLevel) {
             var error = false
-            assertions.map { instance =>
-                withListeners(instance) {
+            assertions.map { assertion =>
+                val startTime = Instant.now()
+                withListeners(assertion) {
                     if (!error || keepGoing) {
-                        val result = executeAssertion(instance, dryRun)
+                        val result = executeAssertion(assertion, dryRun)
                         val success = result.success
                         error |= !success
 
@@ -55,10 +53,10 @@ class AssertionRunner(
                         result
                     }
                     else {
-                        val name = instance.name
-                        val description = instance.description.getOrElse(name)
+                        val name = assertion.name
+                        val description = assertion.description.getOrElse(name)
                         logger.info(yellow(s" - skipped: $description}"))
-                        AssertionResult(instance, Seq())
+                        AssertionResult(assertion, startTime)
                     }
                 }
             }
@@ -66,12 +64,13 @@ class AssertionRunner(
     }
 
     private def executeAssertion(assertion: Assertion, dryRun:Boolean) : AssertionResult = {
+        val startTime = Instant.now()
         try {
             if (!dryRun) {
                 execution.assert(assertion)
             }
             else {
-                AssertionResult(assertion, Seq())
+                AssertionResult(assertion, startTime)
             }
         }
         catch {
@@ -79,7 +78,7 @@ class AssertionRunner(
                 val name = assertion.name
                 val description = assertion.description.getOrElse(name)
                 logger.error(s" ✘ exception: $description: ${ex.getMessage}")
-                AssertionResult(assertion, ex)
+                AssertionResult(assertion, ex, startTime)
         }
     }
 

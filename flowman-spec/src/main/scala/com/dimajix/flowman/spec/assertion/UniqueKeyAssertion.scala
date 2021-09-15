@@ -65,23 +65,25 @@ case class UniqueKeyAssertion(
         require(execution != null)
         require(input != null)
 
-        val name = s"unique_key for '$mapping' with keys '${key.mkString(",")}'"
-        val df = input(mapping)
-        val duplicates = df.groupBy(key.map(df.apply):_*)
-            .agg(functions.count("*").as("flowman_key_count"))
-            .filter("flowman_key_count > 1")
-        val numDuplicates = duplicates.count()
+        AssertionResult.of(this) {
+            val df = input(mapping)
 
-        val status = if (numDuplicates > 0) {
-            val diff = DataFrameUtils.showString(duplicates, 20, -1)
-            logger.error(s"""Mapping '$mapping' contains $numDuplicates duplicate entries for key '${key.mkString(",")}':\n$diff""")
-            false
-        }
-        else {
-            true
-        }
+            Seq(AssertionTestResult.of(s"unique_key for '$mapping' with keys '${key.mkString(",")}'", description) {
+                val duplicates = df.groupBy(key.map(df.apply): _*)
+                    .agg(functions.count("*").as("flowman_key_count"))
+                    .filter("flowman_key_count > 1")
+                val numDuplicates = duplicates.count()
 
-        AssertionResult(this, Seq(AssertionTestResult(name, description, status)))
+                if (numDuplicates > 0) {
+                    val diff = DataFrameUtils.showString(duplicates, 20, -1)
+                    logger.error(s"""Mapping '$mapping' contains $numDuplicates duplicate entries for key '${key.mkString(",")}':\n$diff""")
+                    false
+                }
+                else {
+                    true
+                }
+            })
+        }
     }
 }
 

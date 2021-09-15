@@ -15,6 +15,8 @@
  */
 package com.dimajix.flowman.model
 
+import java.time.Instant
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -37,7 +39,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val instance = job.instance(Map())
         val exception = new IllegalArgumentException()
 
-        val r1 = JobResult(job, instance, Phase.BUILD, Status.SUCCESS)
+        val r1 = JobResult(job, instance, Phase.BUILD, Status.SUCCESS, Instant.now())
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -47,7 +49,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numSuccesses should be (0)
         r1.numExceptions should be (0)
 
-        val r2 = JobResult(job, instance, Phase.BUILD, Status.FAILED)
+        val r2 = JobResult(job, instance, Phase.BUILD, Status.FAILED, Instant.now())
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -57,7 +59,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numSuccesses should be (0)
         r2.numExceptions should be (0)
 
-        val r3 = JobResult(job, instance, Phase.BUILD, Status.SKIPPED)
+        val r3 = JobResult(job, instance, Phase.BUILD, Status.SKIPPED, Instant.now())
         r3.status should be (Status.SKIPPED)
         r3.success should be (false)
         r3.failure should be (false)
@@ -67,7 +69,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r3.numSuccesses should be (0)
         r3.numExceptions should be (0)
 
-        val r4 = JobResult(job, instance, Phase.BUILD, exception)
+        val r4 = JobResult(job, instance, Phase.BUILD, exception, Instant.now())
         r4.status should be (Status.FAILED)
         r4.success should be (false)
         r4.failure should be (true)
@@ -91,9 +93,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val exception = new IllegalArgumentException()
 
         val r1 = JobResult(job, instance, Phase.BUILD, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, true)
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, true, Instant.now())
+        ), Instant.now())
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -104,9 +106,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numExceptions should be (0)
 
         val r2 = JobResult(job, instance, Phase.BUILD, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, false)
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, false, Instant.now())
+        ), Instant.now())
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -117,9 +119,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numExceptions should be (0)
 
         val r3 = JobResult(job, instance, Phase.BUILD, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, false, Some(exception))
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, exception, Instant.now())
+        ), Instant.now())
         r3.status should be (Status.FAILED)
         r3.success should be (false)
         r3.failure should be (true)
@@ -135,7 +137,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         (target.instance _).expects().anyNumberOfTimes().returns(TargetInstance("", "", "", Map()))
         val exception = new IllegalArgumentException()
 
-        val r1 = TargetResult(target, Phase.BUILD, Status.SUCCESS)
+        val r1 = TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now())
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -145,7 +147,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numSuccesses should be (0)
         r1.numExceptions should be (0)
 
-        val r2 = TargetResult(target, Phase.BUILD, Status.FAILED)
+        val r2 = TargetResult(target, Phase.BUILD, Status.FAILED, Instant.now())
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -155,7 +157,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numSuccesses should be (0)
         r2.numExceptions should be (0)
 
-        val r3 = TargetResult(target, Phase.BUILD, Status.SKIPPED)
+        val r3 = TargetResult(target, Phase.BUILD, Status.SKIPPED, Instant.now())
         r3.status should be (Status.SKIPPED)
         r3.success should be (false)
         r3.failure should be (false)
@@ -165,7 +167,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r3.numSuccesses should be (0)
         r3.numExceptions should be (0)
 
-        val r4 = TargetResult(target, Phase.BUILD, exception)
+        val r4 = TargetResult(target, Phase.BUILD, exception, Instant.now())
         r4.status should be (Status.FAILED)
         r4.success should be (false)
         r4.failure should be (true)
@@ -182,9 +184,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val exception = new IllegalArgumentException()
 
         val r1 = TargetResult(target, Phase.BUILD, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, true)
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, true, Instant.now())
+        ), Instant.now())
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -195,9 +197,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numExceptions should be (0)
 
         val r2 = TargetResult(target, Phase.BUILD, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, false)
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, false, Instant.now())
+        ), Instant.now())
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -208,9 +210,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numExceptions should be (0)
 
         val r3 = TargetResult(target, Phase.BUILD, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, false, Some(exception))
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, exception, Instant.now())
+        ), Instant.now())
         r3.status should be (Status.FAILED)
         r3.success should be (false)
         r3.failure should be (true)
@@ -226,7 +228,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         (assertion.name _).expects().anyNumberOfTimes().returns("assertion")
         val exception = new IllegalArgumentException()
 
-        val r4 = AssertionResult(assertion, exception)
+        val r4 = AssertionResult(assertion, exception, Instant.now())
         r4.status should be (Status.FAILED)
         r4.success should be (false)
         r4.failure should be (true)
@@ -243,9 +245,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val exception = new IllegalArgumentException()
 
         val r1 = AssertionResult(assertion, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, true)
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, true, Instant.now())
+        ), Instant.now())
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -256,9 +258,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numExceptions should be (0)
 
         val r2 = AssertionResult(assertion, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, false)
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, false, Instant.now())
+        ), Instant.now())
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -269,9 +271,9 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numExceptions should be (0)
 
         val r3 = AssertionResult(assertion, Seq(
-            AssertionTestResult("a1", None, true),
-            AssertionTestResult("a2", None, false, Some(exception))
-        ))
+            AssertionTestResult("a1", None, true, Instant.now()),
+            AssertionTestResult("a2", None, exception, Instant.now())
+        ), Instant.now())
         r3.status should be (Status.FAILED)
         r3.success should be (false)
         r3.failure should be (true)

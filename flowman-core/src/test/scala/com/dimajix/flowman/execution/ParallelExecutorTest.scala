@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -33,12 +35,13 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val context = session.context
         val execution = session.execution
 
+        val start = Instant.now()
         val targets = Seq()
         val target = mock[Target]
 
         val executor = new ParallelExecutor
         val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
-            (execution, target, phase) => TargetResult(target, Phase.BUILD, Status.SUCCESS)
+            (execution, target, phase) => TargetResult(target, Phase.BUILD, Status.SUCCESS, start)
         }
 
         result should be (Seq())
@@ -49,6 +52,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val context = session.context
         val execution = session.execution
 
+        val start = Instant.now()
         val t1 = mock[Target]
         (t1.identifier _).expects().atLeastOnce().returns(TargetIdentifier("t1", "default"))
         (t1.name _).expects().atLeastOnce().returns("t1")
@@ -58,7 +62,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t1.before _).expects().atLeastOnce().returns(Seq())
         (t1.after _).expects().atLeastOnce().returns(Seq())
         (t1.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t1.execute _).expects(*, Phase.BUILD).returns(TargetResult(t1, Phase.BUILD, Status.SUCCESS))
+        (t1.execute _).expects(*, Phase.BUILD).returns(TargetResult(t1, Phase.BUILD, Status.SUCCESS, start).copy(endTime=start))
 
         val t2 = mock[Target]
         (t2.identifier _).expects().atLeastOnce().returns(TargetIdentifier("t2", "default"))
@@ -69,7 +73,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t2.before _).expects().atLeastOnce().returns(Seq())
         (t2.after _).expects().atLeastOnce().returns(Seq())
         (t2.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t2.execute _).expects(*, Phase.BUILD).returns(TargetResult(t2, Phase.BUILD, Status.SUCCESS))
+        (t2.execute _).expects(*, Phase.BUILD).returns(TargetResult(t2, Phase.BUILD, Status.SUCCESS, start).copy(endTime=start))
 
         val targets = Seq(t1, t2)
 
@@ -80,8 +84,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         }
 
         result.sortBy(_.name) should be (Seq(
-            TargetResult(t1, t1.instance, Phase.BUILD, Seq(), Status.SUCCESS),
-            TargetResult(t2, t2.instance, Phase.BUILD, Seq(), Status.SUCCESS)
+            TargetResult(t1, t1.instance, Phase.BUILD, Seq(), Status.SUCCESS, None, start, start).copy(endTime=start),
+            TargetResult(t2, t2.instance, Phase.BUILD, Seq(), Status.SUCCESS, None, start, start).copy(endTime=start)
         ))
     }
 }

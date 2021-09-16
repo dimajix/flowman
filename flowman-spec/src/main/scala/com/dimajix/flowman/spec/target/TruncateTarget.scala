@@ -110,7 +110,6 @@ case class TruncateTarget(
             case Phase.BUILD =>
                 val rel = context.getRelation(relation)
                 resolvedPartitions(rel).foldLeft(No:Trilean)((l,p) => l || rel.loaded(execution, p))
-            case Phase.BUILD => No
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE => No
             case Phase.DESTROY => No

@@ -29,7 +29,6 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
-import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
@@ -38,15 +37,14 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.target.NullTarget
-import com.dimajix.flowman.spec.target.VerifyTarget
 import com.dimajix.spark.testing.LocalTempDir
 
 
-class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with LocalTempDir {
-    "The ReportHook" should "be parseable" in {
+class SimpleReportHookTest extends AnyFlatSpec with Matchers with MockFactory with LocalTempDir {
+    "The SimpleReportHook" should "be parseable" in {
         val spec =
             """
-              |kind: report
+              |kind: simpleReport
               |location: file:///tmp/some-report.txt
               |mode: overwrite
               |""".stripMargin
@@ -55,7 +53,7 @@ class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with Loc
             .disableSpark()
             .build()
         val hookSpec = ObjectMapper.parse[HookSpec](spec)
-        val hook = hookSpec.instantiate(session.context).asInstanceOf[ReportHook]
+        val hook = hookSpec.instantiate(session.context).asInstanceOf[SimpleReportHook]
         hook.location should be (new Path("file:///tmp/some-report.txt"))
         hook.mode should be (OutputMode.OVERWRITE)
     }
@@ -66,17 +64,15 @@ class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with Loc
             .build()
         val context = session.context
 
-        val hook = ReportHook(
+        val hook = SimpleReportHook(
             Hook.Properties(context),
             new Path(tempDir.getPath, "some-other-report.txt")
-            //new Path("/tmp/some-other-report.txt")
         )
 
         val job = Job.builder(context).setName("some_job").build()
         val target = NullTarget(Target.Properties(context, "null_target"), Map())
         val assertion = mock[Assertion]
         (assertion.name _).expects().anyNumberOfTimes().returns("some_assertion")
-        (assertion.description _).expects().anyNumberOfTimes().returns(Some("Some important assertion"))
         val jobInstance = job.instance(Map())
         val lifecycle = Seq(Phase.VALIDATE, Phase.CREATE, Phase.BUILD, Phase.VERIFY)
         val lifecycleToken = hook.startLifecycle(job, jobInstance, lifecycle)
@@ -103,7 +99,7 @@ class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         val jobTokenVERIFY = hook.startJob(job, jobInstance, Phase.VERIFY, Some(lifecycleToken))
         val targetTokenVERIFY = hook.startTarget(target, target.instance, Phase.VERIFY, Some(jobTokenVERIFY))
         val assertionToken = hook.startAssertion(assertion, Some(targetTokenVERIFY))
-        hook.finishAssertion(assertionToken, AssertionResult(assertion, Seq(AssertionTestResult("test-1", None, true), AssertionTestResult("test-2", None, false)), Instant.now()))
+        hook.finishAssertion(assertionToken, AssertionResult(assertion, Seq(), Instant.now()))
         hook.finishTarget(targetTokenVERIFY, TargetResult(target, Phase.VERIFY, Status.SUCCESS, Instant.now()))
         hook.finishJob(jobTokenVERIFY, JobResult(job, jobInstance, Phase.VERIFY, Status.SUCCESS, Instant.now()))
 

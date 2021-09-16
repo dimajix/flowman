@@ -122,7 +122,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 "job" -> JobWrapper(job),
                 "force" -> false,
                 "dryRun" -> false,
-                "phase" -> "build",
+                "phase" -> "BUILD",
                 "project" -> ProjectWrapper(project),
                 "namespace" -> NamespaceWrapper(None)
             ))

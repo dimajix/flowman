@@ -50,6 +50,9 @@ final case class JobWrapper(job:Job) {
     def getIdentifier() : String = job.identifier.toString
     def getProject() : ProjectWrapper = ProjectWrapper(job.project)
     def getNamespace() : NamespaceWrapper = NamespaceWrapper(job.namespace)
+    def getParameters() : java.util.List[String] = job.parameters.map(_.name).asJava
+    def getTargets() : java.util.List[String] = job.targets.map(_.toString).asJava
+    def getEnvironment() : java.util.Map[String,String] = job.environment.asJava
 
     override def toString: String = getName()
 }
@@ -86,40 +89,69 @@ final case class AssertionWrapper(assertion:Assertion) {
 }
 
 
-final case class LifecycleResultWrapper(result:LifecycleResult) {
-    def getJob() : JobWrapper = JobWrapper(result.job)
-    def getLifecycle() : java.util.List[String] = result.lifecycle.map(_.toString).asJava
+object ResultWrapper {
+    def of(result:Result) : AnyRef = {
+        result match {
+            case r:LifecycleResult => LifecycleResultWrapper(r)
+            case r:TestResult => TestResultWrapper(r)
+            case r:JobResult => JobResultWrapper(r)
+            case r:TargetResult => TargetResultWrapper(r)
+            case r:AssertionResult => AssertionResultWrapper(r)
+            case r:AssertionTestResult => AssertionTestResultWrapper(r)
+        }
+    }
+}
+sealed abstract class ResultWrapper(result:Result) {
+    def getName() : String = result.name
+    def getCategory() : String = result.category
+    def getKind() : String = result.kind
+    def getChildren() : java.util.List[AnyRef] = result.children.map(ResultWrapper.of).asJava
     def getStatus() : String = result.status.toString
+    def getStartTime() : String = result.startTime.toString
+    def getEndTime() : String = result.startTime.toString
+    def getDuration() : String = result.duration.toString
+
+    def getSuccess() : Boolean = result.success
+    def getFailure() : Boolean = result.failure
+    def getSkipped() : Boolean = result.skipped
+
+    def getNumFailures() : Int = result.numFailures
+    def getNumSuccesses() : Int = result.numSuccesses
+    def getNumExceptions() : Int = result.numExceptions
+
+    override def toString: String = getStatus()
 }
 
 
-final case class JobResultWrapper(result:JobResult) {
-    def getName() : String = result.job.name
+final case class LifecycleResultWrapper(result:LifecycleResult) extends ResultWrapper(result) {
+    def getJob() : JobWrapper = JobWrapper(result.job)
+    def getLifecycle() : java.util.List[String] = result.lifecycle.map(_.toString).asJava
+}
+
+
+final case class JobResultWrapper(result:JobResult) extends ResultWrapper(result) {
     def getDescription() : String = result.job.description.getOrElse("")
     def getJob() : JobWrapper = JobWrapper(result.job)
     def getPhase() : String = result.phase.toString
-    def getStatus() : String = result.status.toString
 }
 
 
-final case class TargetResultWrapper(result:TargetResult) {
-    def getName() : String = result.target.name
+final case class TargetResultWrapper(result:TargetResult) extends ResultWrapper(result) {
     def getTarget() : TargetWrapper = TargetWrapper(result.target)
     def getPhase() : String = result.phase.toString
-    def getStatus() : String = result.status.toString
 }
 
 
-final case class TestResultWrapper(result:TestResult) {
-    def getName() : String = result.test.name
+final case class TestResultWrapper(result:TestResult) extends ResultWrapper(result) {
     def getDescription() : String = result.test.description.getOrElse("")
     def getTest() : TestWrapper = TestWrapper(result.test)
-    def getStatus() : String = result.status.toString
 }
 
 
-final case class AssertionResultWrapper(result:AssertionResult) {
-    def getName() : String = result.assertion.name
+final case class AssertionResultWrapper(result:AssertionResult) extends ResultWrapper(result) {
     def getAssertion() : AssertionWrapper = AssertionWrapper(result.assertion)
-    def getStatus() : String = result.status.toString
+}
+
+
+final case class AssertionTestResultWrapper(result:AssertionTestResult) extends ResultWrapper(result) {
 }

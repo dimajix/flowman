@@ -87,11 +87,11 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             Option(job.namespace).getOrElse(""),
             Option(job.project).getOrElse(""),
             job.job,
-            phase.value,
+            phase.upper,
             hashArgs(job),
             now,
             new Timestamp(0),
-            Status.RUNNING.toString
+            Status.RUNNING.upper
         )
 
         logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in state database")
@@ -112,7 +112,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setJobStatus(run.copy(end_ts = now, status=status.toString))
+            repository.setJobStatus(run.copy(end_ts = now, status=status.upper))
         }
     }
 
@@ -153,11 +153,11 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             Option(target.namespace).getOrElse(""),
             Option(target.project).getOrElse(""),
             target.target,
-            phase.value,
+            phase.upper,
             hashPartitions(target),
             now,
             new Timestamp(0),
-            Status.RUNNING.toString
+            Status.RUNNING.upper
         )
 
         logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in state database")
@@ -178,7 +178,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             // Library.setState(run.copy(end_ts = now, status=status))
-            repository.setTargetStatus(run.copy(end_ts = now, status=status.toString))
+            repository.setTargetStatus(run.copy(end_ts = now, status=status.upper))
         }
     }
 

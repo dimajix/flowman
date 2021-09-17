@@ -58,6 +58,7 @@ import com.dimajix.flowman.spec.hook.ReportHook.ReporterAssertionToken
 import com.dimajix.flowman.spec.hook.ReportHook.ReporterJobToken
 import com.dimajix.flowman.spec.hook.ReportHook.ReporterLifecycleToken
 import com.dimajix.flowman.spec.hook.ReportHook.ReporterTargetToken
+import com.dimajix.flowman.spec.hook.ReportHook.defaultTemplate
 import com.dimajix.flowman.spi.LogFilter
 
 
@@ -66,13 +67,15 @@ object ReportHook {
     case class ReporterJobToken(phase:Phase, output:Option[PrintStream]) extends JobToken
     case class ReporterTargetToken(phase:Phase, output:Option[PrintStream]) extends TargetToken
     case class ReporterAssertionToken(output:Option[PrintStream]) extends AssertionToken
+
+    val defaultTemplate : URL = Resources.getResource(classOf[ReportHook], "/com/dimajix/flowman/report/text")
 }
 
 case class ReportHook(
     instanceProperties: Hook.Properties,
     location:Path,
     mode:OutputMode = OutputMode.OVERWRITE,
-    template:URL = Resources.getResource("com/dimajix/flowman/report/text")
+    template:URL = defaultTemplate
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[ReportHook])
 
@@ -108,12 +111,12 @@ case class ReportHook(
 
     private def loadResource(name:String) : String = {
         val path = template.getPath
-        val newPath =
+        val url =
             if (path.endsWith("/"))
-                path + name
+                new URL(template.toString + name)
             else
-                path + "/" + name
-        Resources.toString(new URL(template, newPath), Charset.forName("UTF-8"))
+                new URL(template.toString + "/" + name)
+        Resources.toString(url, Charset.forName("UTF-8"))
     }
 
     private val assertionStartVtl = loadResource("assertion-start.vtl")
@@ -254,7 +257,7 @@ case class ReportHook(
 class ReportHookSpec extends HookSpec {
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
-    @JsonProperty(value="template", required=false) private var template:String = Resources.getResource("com/dimajix/flowman/report/text").toString
+    @JsonProperty(value="template", required=false) private var template:String = defaultTemplate.toString
 
     override def instantiate(context: Context): ReportHook = {
         ReportHook(

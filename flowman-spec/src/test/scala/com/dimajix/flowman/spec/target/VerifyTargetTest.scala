@@ -26,6 +26,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
@@ -79,7 +80,15 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         target.after should be (Seq())
 
         target.dirty(execution, Phase.VERIFY) should be (Yes)
-        target.execute(execution, Phase.VERIFY)
+        val result = target.execute(execution, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (1)
+        result.numExceptions should be (0)
+        result.children.size should be (1)
     }
 
     it should "return success on an empty list of assertions" in {
@@ -87,18 +96,9 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         val execution = session.execution
         val context = session.context
 
-        val assertion = mock[Assertion]
         val target = VerifyTarget(
-            Target.Properties(context),
-            Map("a1" -> assertion)
+            Target.Properties(context)
         )
-
-        (assertion.requires _).expects().returns(Set())
-        (assertion.inputs _).expects().atLeastOnce().returns(Seq())
-        (assertion.name _).expects().returns("a1")
-        (assertion.description _).expects().returns(None)
-        (assertion.context _).expects().returns(context)
-        (assertion.execute _).expects(*,*).returns(AssertionResult(assertion, Seq()))
 
         target.phases should be (Set(Phase.VERIFY))
         target.requires(Phase.VERIFY) should be (Set())
@@ -107,10 +107,18 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         target.after should be (Seq())
 
         target.dirty(execution, Phase.VERIFY) should be (Yes)
-        target.execute(execution, Phase.VERIFY)
+        val result = target.execute(execution, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (0)
+        result.children.size should be (0)
     }
 
-    it should "throw an exception when an assertion fails" in {
+    it should "return a wrapped exception when an assertion fails" in {
         val session = Session.builder.disableSpark().build()
         val execution = session.execution
         val context = session.context
@@ -161,7 +169,15 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         target.after should be (Seq())
 
         target.dirty(execution, Phase.VERIFY) should be (Yes)
-        a[VerificationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+        val result = target.execute(execution, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.FAILED)
+        result.exception.get shouldBe a[VerificationFailedException]
+        result.numFailures should be (1)
+        result.numSuccesses should be (1)
+        result.numExceptions should be (1)
+        result.children.size should be (2)
     }
 
     it should "execute all exception if fail_fast is used" in {
@@ -207,7 +223,15 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         target.after should be (Seq())
 
         target.dirty(execution, Phase.VERIFY) should be (Yes)
-        a[VerificationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+        val result = target.execute(execution, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.FAILED)
+        result.exception.get shouldBe a[VerificationFailedException]
+        result.numFailures should be (1)
+        result.numSuccesses should be (1)
+        result.numExceptions should be (1)
+        result.children.size should be (2)
     }
 
     it should "not throw an exception if fail_never is used" in {
@@ -260,6 +284,14 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         target.after should be (Seq())
 
         target.dirty(execution, Phase.VERIFY) should be (Yes)
-        noException should be thrownBy(target.execute(execution, Phase.VERIFY))
+        val result = target.execute(execution, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (1)
+        result.numSuccesses should be (1)
+        result.numExceptions should be (0)
+        result.children.size should be (2)
     }
 }

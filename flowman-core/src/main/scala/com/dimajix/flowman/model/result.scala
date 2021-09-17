@@ -194,6 +194,16 @@ case class JobResult(
 
 
 object TargetResult {
+    def apply(target:Target, phase: Phase, status:Status) : TargetResult =
+        TargetResult(
+            target,
+            target.instance,
+            phase,
+            Seq(),
+            status,
+            startTime=Instant.now(),
+            endTime=Instant.now()
+        )
     def apply(target:Target, phase: Phase, status:Status, startTime:Instant) : TargetResult =
         TargetResult(
             target,
@@ -214,6 +224,27 @@ object TargetResult {
             startTime=startTime,
             endTime=Instant.now()
         )
+    def apply(target:Target, phase: Phase, children : Seq[Result], status:Status, startTime:Instant) : TargetResult =
+        TargetResult(
+            target,
+            target.instance,
+            phase,
+            children,
+            status,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+    def apply(target:Target, phase: Phase, children : Seq[Result], exception:Throwable, startTime:Instant) : TargetResult =
+        TargetResult(
+            target,
+            target.instance,
+            phase,
+            children,
+            Status.FAILED,
+            Some(exception),
+            startTime=startTime,
+            endTime=Instant.now()
+        )
     def apply(target:Target, phase: Phase, exception:Throwable, startTime:Instant) : TargetResult =
         TargetResult(
             target,
@@ -225,6 +256,17 @@ object TargetResult {
             startTime=startTime,
             endTime=Instant.now()
         )
+
+    def of(target:Target, phase:Phase)(fn: => Unit) : TargetResult = {
+        val startTime = Instant.now()
+        Try {
+            fn
+        }
+        match {
+            case Success(_) => TargetResult(target, phase, Status.SUCCESS, startTime)
+            case Failure(ex) => TargetResult(target, phase, ex, startTime)
+        }
+    }
 }
 case class TargetResult(
     target: Target,
@@ -233,8 +275,8 @@ case class TargetResult(
     override val children : Seq[Result],
     override val status: Status,
     override val exception: Option[Throwable] = None,
-    override val startTime : Instant,
-    override val endTime : Instant
+    override val startTime : Instant = Instant.now(),
+    override val endTime : Instant = Instant.now()
 ) extends Result {
     override def name : String = target.name
     override def category : String = target.category

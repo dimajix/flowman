@@ -25,6 +25,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -122,15 +123,15 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         (relation.partitions _).expects().returns(Seq(PartitionField("p1", StringType), PartitionField("p2", IntegerType)))
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("1"))).returns(No)
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("2"))).returns(Yes)
-        a[VerificationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+        target.execute(execution, Phase.VERIFY).exception.get shouldBe a[VerificationFailedException]
 
         (relation.truncate _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> RangeValue("1", "3")))
-        target.execute(execution, Phase.BUILD)
+        target.execute(execution, Phase.BUILD).status should be (Status.SUCCESS)
 
         (relation.partitions _).expects().returns(Seq(PartitionField("p1", StringType), PartitionField("p2", IntegerType)))
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("1"))).returns(No)
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("2"))).returns(No)
-        target.execute(execution, Phase.VERIFY)
+        target.execute(execution, Phase.VERIFY).status should be (Status.SUCCESS)
 
         (relation.partitions _).expects().returns(Seq(PartitionField("p1", StringType), PartitionField("p2", IntegerType)))
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("1"))).returns(No)
@@ -178,13 +179,13 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.dirty(execution, Phase.VERIFY) should be (Yes)
 
         (relation.loaded _).expects(execution, Map.empty[String,SingleValue]).returns(Yes)
-        a[VerificationFailedException] should be thrownBy(target.execute(execution, Phase.VERIFY))
+        target.execute(execution, Phase.VERIFY).exception.get shouldBe a[VerificationFailedException]
 
         (relation.truncate _).expects(execution, Map.empty[String,FieldValue])
-        target.execute(execution, Phase.BUILD)
+        target.execute(execution, Phase.BUILD).status should be (Status.SUCCESS)
 
         (relation.loaded _).expects(execution, Map.empty[String,SingleValue]).returns(No)
-        target.execute(execution, Phase.VERIFY)
+        target.execute(execution, Phase.VERIFY).status should be (Status.SUCCESS)
 
         (relation.loaded _).expects(execution, Map.empty[String,SingleValue]).returns(No)
         target.dirty(execution, Phase.BUILD) should be (No)

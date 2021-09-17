@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.target
 
 import java.time.Clock
+import java.time.Instant
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
@@ -31,12 +32,15 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.ValidationFailedException
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
 
 
@@ -101,14 +105,22 @@ case class VerifyTarget(
      *
      * @param executor
      */
-    override protected def verify(execution: Execution): Unit = {
+    protected override def verify2(execution: Execution): TargetResult = {
+        val startTime = Instant.now()
         val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
         val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
         if (!result.forall(_.success)) {
             logger.error(s"Verification $identifier failed.")
-            if (errorMode != ErrorMode.FAIL_NEVER)
-                throw new VerificationFailedException(identifier)
+            if (errorMode != ErrorMode.FAIL_NEVER) {
+                TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier), startTime)
+            }
+            else {
+                TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
+            }
+        }
+        else {
+            TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
         }
     }
 }

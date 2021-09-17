@@ -67,31 +67,33 @@ private[execution] sealed class RunnerImpl {
 
     def resultOf(target:Target, phase:Phase, dryRun:Boolean)(fn: => TargetResult) : TargetResult = {
         val startTime = Instant.now()
+        // Normally, targets should not throw any exception, but instead wrap any error inside the TargetResult.
+        // But since we never know, we add a try/catch block
         val result = Try {
             if (!dryRun) {
                 fn
             }
             else {
-                TargetResult(target, phase, Status.SUCCESS, startTime)
+                TargetResult(target, phase, Status.SUCCESS)
             }
         }
         match {
             case Success(r) => r
-            case Failure(e) =>
-                logger.error(s"Caught exception while executing phase '$phase' for target '${target.identifier}'", e)
-                TargetResult(target, phase, e, startTime)
+            case Failure(e) => TargetResult(target, phase, e, startTime)
         }
 
-        result match {
-            case TargetResult(_,_,_,_,Status.SUCCESS,_,_,_) =>
+        result.status match {
+            case Status.SUCCESS =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,Status.SKIPPED,_,_,_) =>
+            case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,Status.FAILED,_,_,_) =>
+            case Status.FAILED if result.exception.nonEmpty =>
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' with exception: "), result.exception.get)
+            case Status.FAILED =>
                 logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,Status.ABORTED,_,_,_) =>
+            case Status.ABORTED =>
                 logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}'"))
-            case TargetResult(_,_,_,_,status,_,_,_) =>
+            case status =>
                 logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
         }
 

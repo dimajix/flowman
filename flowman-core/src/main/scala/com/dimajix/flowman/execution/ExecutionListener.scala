@@ -35,7 +35,7 @@ abstract class TestToken extends Token
 abstract class AssertionToken extends Token
 
 
-trait RunnerListener {
+trait ExecutionListener {
     /**
      * Starts the run and returns a token, which can be anything
      * @param job
@@ -94,7 +94,7 @@ trait RunnerListener {
 }
 
 
-abstract class AbstractRunnerListener extends RunnerListener {
+abstract class AbstractExecutionListener extends ExecutionListener {
     override def startLifecycle(job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = new LifecycleToken {}
     override def finishLifecycle(token:LifecycleToken, result:LifecycleResult) : Unit = {}
     override def startJob(job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = new JobToken {}

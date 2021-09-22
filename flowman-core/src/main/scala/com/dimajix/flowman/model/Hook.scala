@@ -21,7 +21,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.RunnerListener
+import com.dimajix.flowman.execution.ExecutionListener
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.TestToken
@@ -55,7 +55,7 @@ object Hook {
 }
 
 
-trait Hook extends Instance with RunnerListener {
+trait Hook extends Instance with ExecutionListener {
     /**
      * Returns the category of this resource
      * @return

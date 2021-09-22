@@ -27,8 +27,13 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StructType
 
 
@@ -155,4 +160,54 @@ abstract class Execution {
       * Releases any temporary tables
       */
     def cleanup() : Unit
+
+    /**
+     * Invokes a function with a new Executor that with additional listeners.
+     * @param listeners
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T
+
+    /**
+     * Monitors the execution of a lifecycle by calling appropriate listeners at the start and end.
+     * @param job
+     * @param arguments
+     * @param phases
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorLifecycle(job:Job, arguments:Map[String,Any], phases:Seq[Phase])(fn:Execution => LifecycleResult) : LifecycleResult = fn(this)
+
+    /**
+     * Monitors the execution of a job by calling appropriate listeners at the start and end.
+     * @param job
+     * @param arguments
+     * @param phase
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorJob(job:Job, arguments:Map[String,Any], phase:Phase)(fn:Execution => JobResult) : JobResult = fn(this)
+
+    /**
+     * Monitors the execution of a target by calling appropriate listeners at the start and end.
+     * @param target
+     * @param phase
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorTarget(target:Target, phase:Phase)(fn:Execution => TargetResult) : TargetResult = fn(this)
+
+    /**
+     * Monitors the execution of an assertion by calling appropriate listeners at the start and end.
+     * @param assertion
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = fn(this)
 }

@@ -21,7 +21,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
 
-import scala.collection.mutable
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -32,8 +31,6 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.execution.JobRunnerImpl.RunnerJobToken
-import com.dimajix.flowman.execution.JobRunnerImpl.RunnerLifecycleToken
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
@@ -42,7 +39,6 @@ import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
@@ -57,7 +53,6 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.util.ConsoleColors._
-import com.dimajix.flowman.util.withShutdownHook
 import com.dimajix.spark.SparkUtils.withJobGroup
 
 
@@ -175,11 +170,6 @@ private[execution] sealed class RunnerImpl {
 /**
  * Private implementation of Job specific methods
  */
-private[execution] object JobRunnerImpl {
-    private final case class RunnerLifecycleToken(tokens:Seq[(RunnerListener, LifecycleToken)]) extends LifecycleToken
-    private final case class RunnerJobToken(tokens:Seq[(RunnerListener, JobToken)]) extends JobToken
-    private final case class RunnerTargetToken(tokens:Seq[(RunnerListener, TargetToken)]) extends TargetToken
-}
 private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     private val stateStore = runner.stateStore
     private val stateStoreListener = new StateStoreAdaptorListener(stateStore)
@@ -201,31 +191,33 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
         withExecution(parentExecution, isolated) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun) { (context, arguments) =>
-                val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
                 val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
-                withListeners(job, instance, phases, listeners) { token =>
-                    val results = Result.flatMap(phases, keepGoing) { phase =>
-                        // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
-                        // as SUCCESS (an empty list is always executed as SUCCESS)
-                        val isActive = job.targets
-                            .filter(target => targets.exists(_.unapplySeq(target.name).nonEmpty))
-                            .exists { target =>
-                                // This might throw exceptions for non-existing targets. The same
-                                // exception will be thrown and handeled properly in executeJobPhase
-                                try {
-                                    context.getTarget(target).phases.contains(phase)
-                                } catch {
-                                    case NonFatal(_) => true
+                execution.withListeners(listeners) { execution =>
+                    execution.monitorLifecycle(job, arguments, phases) { execution =>
+                        val results = Result.flatMap(phases, keepGoing) { phase =>
+                            // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
+                            // as SUCCESS (an empty list is always executed as SUCCESS)
+                            val isActive = job.targets
+                                .filter(target => targets.exists(_.unapplySeq(target.name).nonEmpty))
+                                .exists { target =>
+                                    // This might throw exceptions for non-existing targets. The same
+                                    // exception will be thrown and handeled properly in executeJobPhase
+                                    try {
+                                        context.getTarget(target).phases.contains(phase)
+                                    } catch {
+                                        case NonFatal(_) => true
+                                    }
                                 }
-                            }
 
-                        if (isActive)
-                            Some(executeJobPhase(execution, context, job, phase, arguments, targets, token, force, keepGoing, dryRun))
-                        else
-                            None
+                            if (isActive)
+                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, force, keepGoing, dryRun))
+                            else
+                                None
+                        }
+
+                        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
+                        LifecycleResult(job, instance, phases, results, startTime)
                     }
-
-                    LifecycleResult(job, instance, phases, results, startTime)
                 }
             }
         }
@@ -237,7 +229,6 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         job:Job, phase:Phase,
         arguments:Map[String,Any],
         targets:Seq[Regex],
-        token:RunnerLifecycleToken,
         force:Boolean,
         keepGoing:Boolean,
         dryRun:Boolean) : JobResult = {
@@ -246,15 +237,15 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             logTitle(title)
             logEnvironment(context)
 
-            val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
             val allMetrics = job.metrics.map(_.instantiate(context))
 
             val startTime = Instant.now()
-            val result = withListeners(job, instance, phase, token) { token =>
+            val result = execution.monitorJob(job, arguments, phase) { execution =>
                 withMetrics(execution.metrics, allMetrics) {
                     withWallTime(execution.metrics, job.metadata, phase) {
+                        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
                         try {
-                            val results = executeJobTargets(execution, context, job, phase, targets, token, force, keepGoing, dryRun)
+                            val results = executeJobTargets(execution, context, job, phase, targets, force, keepGoing, dryRun)
                             JobResult(job, instance, phase, results, startTime)
                         }
                         catch {
@@ -276,6 +267,36 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     }
 
     /**
+     * Executes a single phase of the job. This method will also check if the arguments passed to the constructor
+     * are correct and sufficient, otherwise an IllegalArgumentException will be thrown.
+     *
+     * @param context
+     * @param phase
+     * @param token
+     * @return
+     */
+    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
+        require(phase != null)
+
+        // This will throw an exception if instantiation fails
+        val jobTargets = job.targets.map(t => context.getTarget(t))
+
+        val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
+        val ctor = clazz.getDeclaredConstructor()
+        val executor = ctor.newInstance()
+
+        def targetFilter(target:Target) : Boolean =
+            target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
+
+        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
+            val sc = execution.spark.sparkContext
+            withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
+                executeTargetPhase(execution, target, phase, force, dryRun)
+            }
+        }
+    }
+
+    /**
      * Executes a single target using the given execution and a map of parameters. The Runner may decide not to
      * execute a specific target, because some information may indicate that the job has already been successfully
      * run in the past. This behaviour can be overriden with the force flag
@@ -283,7 +304,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phase
      * @return
      */
-    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, jobToken:RunnerJobToken, force:Boolean, dryRun:Boolean) : TargetResult = {
+    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean) : TargetResult = {
         // Create target instance for state server
         val instance = target.instance
 
@@ -291,7 +312,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val canSkip = !force && checkTarget(instance, phase)
 
         val startTime = Instant.now()
-        withListeners(target, instance, phase, jobToken) {
+        execution.monitorTarget(target, phase) { execution =>
             logSubtitle(s"$phase target '${target.identifier}'")
 
             // First checkJob if execution is really required
@@ -312,152 +333,6 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * Executes a single phase of the job. This method will also check if the arguments passed to the constructor
-     * are correct and sufficient, otherwise an IllegalArgumentException will be thrown.
-     *
-     * @param context
-     * @param phase
-     * @param token
-     * @return
-     */
-    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], token:RunnerJobToken, force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
-        require(phase != null)
-
-        // This will throw an exception if instantiation fails
-        val jobTargets = job.targets.map(t => context.getTarget(t))
-
-        val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val executor = ctor.newInstance()
-
-        def targetFilter(target:Target) : Boolean =
-            target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
-
-        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
-            val sc = execution.spark.sparkContext
-            withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
-                executeTargetPhase(execution, target, phase, token, force, dryRun)
-            }
-        }
-    }
-
-    /**
-     * Monitors the job execution by invoking all listeners
-     * @param job
-     * @param phase
-     * @param listeners
-     * @param fn
-     * @return
-     */
-    private def withListeners(job:Job, instance:JobInstance, lifecycle:Seq[Phase], listeners:Seq[RunnerListener])(fn: RunnerLifecycleToken => LifecycleResult) : LifecycleResult = {
-        def startLifecycle() : Seq[(RunnerListener, LifecycleToken)] = {
-            listeners.flatMap { hook =>
-                try {
-                    Some((hook, hook.startLifecycle(job, instance, lifecycle)))
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startLifecycle: ${ex.toString}.")
-                        None
-                }
-            }
-        }
-
-        def finishLifecycle(tokens:Seq[(RunnerListener, LifecycleToken)], result:LifecycleResult) : Unit = {
-            tokens.foreach { case (listener, token)  =>
-                try {
-                    listener.finishLifecycle(token, result)
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishLifecycle: ${ex.toString}.")
-                }
-            }
-        }
-
-        val startTime = Instant.now()
-        val tokens = startLifecycle()
-        withShutdownHook(finishLifecycle(tokens, LifecycleResult(job, instance, lifecycle, Status.FAILED, startTime))) {
-            val result = fn(RunnerLifecycleToken(tokens))
-            finishLifecycle(tokens, result)
-            result
-        }
-    }
-
-    /**
-     * Monitors the job execution by invoking all listeners
-     * @param job
-     * @param phase
-     * @param listeners
-     * @param fn
-     * @return
-     */
-    private def withListeners(job:Job, instance:JobInstance, phase:Phase, lifecycle:RunnerLifecycleToken)(fn: RunnerJobToken => JobResult) : JobResult = {
-        def startJob() : Seq[(RunnerListener, JobToken)] = {
-            lifecycle.tokens.flatMap { case (hook,token) =>
-                try {
-                    Some((hook, hook.startJob(job, instance, phase, Some(token))))
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startJob: ${ex.toString}.")
-                        None
-                }
-            }
-        }
-
-        def finishJob(tokens:Seq[(RunnerListener, JobToken)], result:JobResult) : Unit = {
-            tokens.foreach { case (listener, token)  =>
-                try {
-                    listener.finishJob(token, result)
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishJob: ${ex.toString}.")
-                }
-            }
-        }
-
-        val startTime = Instant.now()
-        val tokens = startJob()
-        withShutdownHook(finishJob(tokens, JobResult(job, instance, phase, Status.FAILED, startTime))) {
-            val result = fn(RunnerJobToken(tokens))
-            finishJob(tokens, result)
-            result
-        }
-    }
-
-    private def withListeners(target:Target, instance:TargetInstance, phase:Phase, job:RunnerJobToken)(fn: => TargetResult) : TargetResult = {
-        def startTarget() : Seq[(RunnerListener, TargetToken)] = {
-            job.tokens.flatMap { case(listener,jobToken) =>
-                try {
-                    Some((listener, listener.startTarget(target, instance, phase, Some(jobToken))))
-                }
-                catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startTarget: ${ex.toString}.")
-                        None
-                }
-            }
-        }
-
-        def finishTarget(tokens:Seq[(RunnerListener, TargetToken)], result:TargetResult) : Unit = {
-            tokens.foreach { case(listener, token) =>
-                try {
-                    listener.finishTarget(token, result)
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishTarget: ${ex.toString}.")
-                }
-            }
-        }
-
-        val startTime = Instant.now()
-        val tokens = startTarget()
-        withShutdownHook(finishTarget(tokens, TargetResult(target, phase, Status.FAILED, startTime))) {
-            val result = fn
-            finishTarget(tokens, result)
-            result
         }
     }
 

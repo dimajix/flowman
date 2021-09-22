@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dimajix.flowman.execution
 
 import java.time.Instant
@@ -18,8 +34,7 @@ import com.dimajix.spark.sql.DataFrameUtils
 class AssertionRunner(
     context:Context,
     execution:Execution,
-    cacheLevel:StorageLevel=StorageLevel.MEMORY_AND_DISK,
-    hooks:Seq[(RunnerListener,Token)] = Seq()
+    cacheLevel:StorageLevel=StorageLevel.MEMORY_AND_DISK
 ) {
     private val logger = LoggerFactory.getLogger(classOf[AssertionRunner])
 
@@ -35,9 +50,9 @@ class AssertionRunner(
             var error = false
             assertions.map { assertion =>
                 val startTime = Instant.now()
-                withListeners(assertion) {
+                execution.monitorAssertion(assertion) { execution =>
                     if (!error || keepGoing) {
-                        val result = executeAssertion(assertion, dryRun)
+                        val result = executeAssertion(execution, assertion, dryRun)
                         val success = result.success
                         error |= !success
 
@@ -65,7 +80,7 @@ class AssertionRunner(
         }
     }
 
-    private def executeAssertion(assertion: Assertion, dryRun:Boolean) : AssertionResult = {
+    private def executeAssertion(execution:Execution, assertion: Assertion, dryRun:Boolean) : AssertionResult = {
         val startTime = Instant.now()
         try {
             if (!dryRun) {
@@ -79,36 +94,5 @@ class AssertionRunner(
             case NonFatal(ex) =>
                 AssertionResult(assertion, ex, startTime)
         }
-    }
-
-    private def withListeners(assertion: Assertion)(fn: => AssertionResult) : AssertionResult = {
-        def startAssertion() : Seq[(RunnerListener, AssertionToken)] = {
-            hooks.flatMap { case(listener,jobToken) =>
-                try {
-                    Some((listener, listener.startAssertion(assertion, Some(jobToken))))
-                }
-                catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startAssertion: ${ex.toString}.")
-                        None
-                }
-            }
-        }
-
-        def finishAssertion(tokens:Seq[(RunnerListener, AssertionToken)], status:AssertionResult) : Unit = {
-            tokens.foreach { case(listener, token) =>
-                try {
-                    listener.finishAssertion(token, status)
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishAssertion: ${ex.toString}.")
-                }
-            }
-        }
-
-        val tokens = startAssertion()
-        val status = fn
-        finishAssertion(tokens, status)
-        status
     }
 }

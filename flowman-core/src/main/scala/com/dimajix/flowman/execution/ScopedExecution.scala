@@ -73,4 +73,6 @@ class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingEx
      * @return
      */
     override def operations: OperationManager = operationsManager
+
+    override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = parent.withListeners(listeners)(fn)
 }

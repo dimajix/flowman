@@ -141,6 +141,7 @@ case class ReportHook(
         output.foreach { p =>
             val text = context.evaluate(lifecycleStartVtl, Map("job" -> JobWrapper(job), "lifecycle" -> lifecycle.map(_.toString).asJava))
             p.print(text)
+            p.flush()
         }
         ReporterLifecycleToken(output)
     }
@@ -174,6 +175,7 @@ case class ReportHook(
         output.foreach { p =>
             val text = context.evaluate(jobStartVtl, Map("job" -> JobWrapper(job), "phase" -> phase.toString))
             p.print(text)
+            p.flush()
         }
         ReporterJobToken(phase, output)
     }
@@ -188,6 +190,7 @@ case class ReportHook(
         jobToken.output.foreach { p =>
             val text = context.evaluate(jobFinishVtl, Map("job" -> JobWrapper(result.job), "phase" -> result.phase.toString, "status" -> result.status.toString, "result" -> JobResultWrapper(result)))
             p.print(text)
+            p.flush()
         }
     }
 
@@ -204,6 +207,7 @@ case class ReportHook(
         output.foreach { p =>
             val text = context.evaluate(targetStartVtl, Map("target" -> TargetWrapper(target), "phase" -> phase.toString))
             p.print(text)
+            p.flush()
         }
         ReporterTargetToken(phase, output)
     }
@@ -218,6 +222,7 @@ case class ReportHook(
         targetToken.output.foreach { p =>
             val text = context.evaluate(targetFinishVtl, Map("target" -> TargetWrapper(result.target), "phase" -> result.phase.toString, "status" -> result.status.toString, "result" -> TargetResultWrapper(result)))
             p.print(text)
+            p.flush()
         }
     }
 
@@ -235,6 +240,7 @@ case class ReportHook(
         output.foreach { p =>
             val text = context.evaluate(assertionStartVtl, Map("assertion" -> AssertionWrapper(assertion)))
             p.print(text)
+            p.flush()
         }
         ReporterAssertionToken(output)
     }
@@ -249,6 +255,7 @@ case class ReportHook(
         assertionToken.output.foreach { p =>
             val text = context.evaluate(assertionFinishVtl, Map("assertion" -> AssertionWrapper(result.assertion), "status" -> result.status.toString, "result" -> AssertionResultWrapper(result)))
             p.print(text)
+            p.flush()
         }
     }
 }

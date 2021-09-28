@@ -376,22 +376,22 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         val jobLifecycleToken = new LifecycleToken {}
         val jobJobToken = new JobToken {}
         val jobTargetToken = new TargetToken {}
-        (jobHook.startLifecycle _).expects( where( (_:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(jobLifecycleToken)
-        (jobHook.finishLifecycle _).expects(where( (token:LifecycleToken, result:LifecycleResult) => token == jobLifecycleToken && result.status == Status.SUCCESS))
-        (jobHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobLifecycleToken)) ).returning(jobJobToken)
-        (jobHook.finishJob _).expects(where( (token:JobToken, result:JobResult) => token == jobJobToken && result.status == Status.SUCCESS))
-        (jobHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
-        (jobHook.finishTarget _).expects(where( (token:TargetToken, result:TargetResult) => token == jobTargetToken && result.status == Status.SUCCESS))
+        (jobHook.startLifecycle _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(jobLifecycleToken)
+        (jobHook.finishLifecycle _).expects(where( (_:Execution, token:LifecycleToken, result:LifecycleResult) => token == jobLifecycleToken && result.status == Status.SUCCESS))
+        (jobHook.startJob _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobLifecycleToken)) ).returning(jobJobToken)
+        (jobHook.finishJob _).expects(where( (_:Execution, token:JobToken, result:JobResult) => token == jobJobToken && result.status == Status.SUCCESS))
+        (jobHook.startTarget _).expects( where( (_:Execution, _:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
+        (jobHook.finishTarget _).expects(where( (_:Execution, token:TargetToken, result:TargetResult) => token == jobTargetToken && result.status == Status.SUCCESS))
         val namespaceHook = mock[Hook]
         val namespaceLifecycleToken = new LifecycleToken {}
         val namespaceJobToken = new JobToken {}
         val namespaceTargetToken = new TargetToken {}
-        (namespaceHook.startLifecycle _).expects( where( (_:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(namespaceLifecycleToken)
-        (namespaceHook.finishLifecycle _).expects(where( (token:LifecycleToken, result:LifecycleResult) => token == namespaceLifecycleToken && result.status == Status.SUCCESS))
-        (namespaceHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceLifecycleToken)) ).returning(namespaceJobToken)
-        (namespaceHook.finishJob _).expects(where( (token:JobToken, result:JobResult) => token == namespaceJobToken && result.status == Status.SUCCESS))
-        (namespaceHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
-        (namespaceHook.finishTarget _).expects(where( (token:TargetToken, result:TargetResult) => token == namespaceTargetToken && result.status == Status.SUCCESS))
+        (namespaceHook.startLifecycle _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(namespaceLifecycleToken)
+        (namespaceHook.finishLifecycle _).expects(where( (_:Execution, token:LifecycleToken, result:LifecycleResult) => token == namespaceLifecycleToken && result.status == Status.SUCCESS))
+        (namespaceHook.startJob _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceLifecycleToken)) ).returning(namespaceJobToken)
+        (namespaceHook.finishJob _).expects(where( (_:Execution, token:JobToken, result:JobResult) => token == namespaceJobToken && result.status == Status.SUCCESS))
+        (namespaceHook.startTarget _).expects( where( (_:Execution, _:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
+        (namespaceHook.finishTarget _).expects(where( (_:Execution, token:TargetToken, result:TargetResult) => token == namespaceTargetToken && result.status == Status.SUCCESS))
 
         val ns = Namespace(
             name = "default",

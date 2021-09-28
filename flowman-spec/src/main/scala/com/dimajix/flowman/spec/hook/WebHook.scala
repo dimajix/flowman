@@ -26,6 +26,7 @@ import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -71,7 +72,7 @@ case class WebHook(
      * @param job
      * @return
      */
-    override def startJob(job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(excution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val env = instance.asMap -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)
@@ -83,7 +84,7 @@ case class WebHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishJob(token: JobToken, result: JobResult): Unit = {
+    override def finishJob(excution:Execution, token: JobToken, result: JobResult): Unit = {
         val status = result.status
         val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status.lower)
         invoke(jobFinish, env)
@@ -102,7 +103,7 @@ case class WebHook(
      * @param target
      * @return
      */
-    override def startTarget(target:Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken =  {
+    override def startTarget(excution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken =  {
         val parentEnv = parent.map {
                 case t:DummyJobToken => t.env
                 case _ => Map()
@@ -118,7 +119,7 @@ case class WebHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishTarget(token: TargetToken, result: TargetResult): Unit = {
+    override def finishTarget(excution:Execution, token: TargetToken, result: TargetResult): Unit = {
         val status = result.status
         val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status.lower)
         invoke(targetFinish, env)

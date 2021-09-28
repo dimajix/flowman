@@ -67,7 +67,7 @@ import com.dimajix.spark.sql.SchemaUtils
  * @param config
  * @param externalCatalogs
  */
-class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalogs: Seq[ExternalCatalog] = Seq()) {
+final class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalogs: Seq[ExternalCatalog] = Seq()) {
     private val logger = LoggerFactory.getLogger(classOf[Catalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration

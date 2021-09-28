@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.OutputMode
@@ -135,7 +136,7 @@ case class ReportHook(
      * @param job
      * @return
      */
-    override def startLifecycle(job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
+    override def startLifecycle(excution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
         logger.info(s"Creating new report to $location")
         val output = newOutput()
         output.foreach { p =>
@@ -151,7 +152,7 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishLifecycle(token:LifecycleToken, result:LifecycleResult) : Unit = {
+    override def finishLifecycle(excution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit = {
         val lifecycleToken = token.asInstanceOf[ReporterLifecycleToken]
         lifecycleToken.output.foreach { p =>
             val text = context.evaluate(lifecycleFinishVtl, Map("job" -> JobWrapper(result.job), "lifecycle" -> result.lifecycle.map(_.toString).asJava, "status" -> result.status.toString, "result" -> LifecycleResultWrapper(result)))
@@ -167,7 +168,7 @@ case class ReportHook(
      * @param job
      * @return
      */
-    override def startJob(job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(excution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val output = parent.flatMap {
             case ReporterLifecycleToken(output) => output
             case _ => newOutput()
@@ -185,7 +186,7 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishJob(token: JobToken, result: JobResult): Unit = {
+    override def finishJob(excution:Execution, token: JobToken, result: JobResult): Unit = {
         val jobToken = token.asInstanceOf[ReporterJobToken]
         jobToken.output.foreach { p =>
             val text = context.evaluate(jobFinishVtl, Map("job" -> JobWrapper(result.job), "phase" -> result.phase.toString, "status" -> result.status.toString, "result" -> JobResultWrapper(result)))
@@ -199,7 +200,7 @@ case class ReportHook(
      * @param target
      * @return
      */
-    override def startTarget(target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
+    override def startTarget(excution:Execution, target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
         val output = parent.flatMap {
             case ReporterJobToken(_, output) => output
             case _ => None
@@ -217,7 +218,7 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishTarget(token: TargetToken, result: TargetResult): Unit = {
+    override def finishTarget(excution:Execution, token: TargetToken, result: TargetResult): Unit = {
         val targetToken = token.asInstanceOf[ReporterTargetToken]
         targetToken.output.foreach { p =>
             val text = context.evaluate(targetFinishVtl, Map("target" -> TargetWrapper(result.target), "phase" -> result.phase.toString, "status" -> result.status.toString, "result" -> TargetResultWrapper(result)))
@@ -231,7 +232,7 @@ case class ReportHook(
      * @param assertion
      * @return
      */
-    override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = {
+    override def startAssertion(excution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = {
         val output = parent.flatMap {
             case ReporterJobToken(_, output) => output
             case ReporterTargetToken(_, output) => output
@@ -250,7 +251,7 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishAssertion(token: AssertionToken, result: AssertionResult): Unit = {
+    override def finishAssertion(excution:Execution, token: AssertionToken, result: AssertionResult): Unit = {
         val assertionToken = token.asInstanceOf[ReporterAssertionToken]
         assertionToken.output.foreach { p =>
             val text = context.evaluate(assertionFinishVtl, Map("assertion" -> AssertionWrapper(result.assertion), "status" -> result.status.toString, "result" -> AssertionResultWrapper(result)))

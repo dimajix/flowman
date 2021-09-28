@@ -63,6 +63,7 @@ class SimpleReportHookTest extends AnyFlatSpec with Matchers with MockFactory wi
             .disableSpark()
             .build()
         val context = session.context
+        val execution = session.execution
 
         val hook = SimpleReportHook(
             Hook.Properties(context),
@@ -75,34 +76,34 @@ class SimpleReportHookTest extends AnyFlatSpec with Matchers with MockFactory wi
         (assertion.name _).expects().anyNumberOfTimes().returns("some_assertion")
         val jobInstance = job.instance(Map())
         val lifecycle = Seq(Phase.VALIDATE, Phase.CREATE, Phase.BUILD, Phase.VERIFY)
-        val lifecycleToken = hook.startLifecycle(job, jobInstance, lifecycle)
+        val lifecycleToken = hook.startLifecycle(execution, job, jobInstance, lifecycle)
 
         //==== VALIDATE ===============================================================================================
-        val jobTokenVALIDATE = hook.startJob(job, jobInstance, Phase.VALIDATE, Some(lifecycleToken))
-        val targetTokenVALIDATE = hook.startTarget(target, target.instance, Phase.VALIDATE, Some(jobTokenVALIDATE))
-        hook.finishTarget(targetTokenVALIDATE, TargetResult(target, Phase.VALIDATE, Status.SUCCESS, Instant.now()))
-        hook.finishJob(jobTokenVALIDATE, JobResult(job, jobInstance, Phase.VALIDATE, Status.SUCCESS, Instant.now()))
+        val jobTokenVALIDATE = hook.startJob(execution, job, jobInstance, Phase.VALIDATE, Some(lifecycleToken))
+        val targetTokenVALIDATE = hook.startTarget(execution, target, target.instance, Phase.VALIDATE, Some(jobTokenVALIDATE))
+        hook.finishTarget(execution, targetTokenVALIDATE, TargetResult(target, Phase.VALIDATE, Status.SUCCESS, Instant.now()))
+        hook.finishJob(execution, jobTokenVALIDATE, JobResult(job, jobInstance, Phase.VALIDATE, Status.SUCCESS, Instant.now()))
 
         //==== CREATE =================================================================================================
-        val jobTokenCREATE = hook.startJob(job, jobInstance, Phase.CREATE, Some(lifecycleToken))
-        val targetTokenCREATE = hook.startTarget(target, target.instance, Phase.CREATE, Some(jobTokenCREATE))
-        hook.finishTarget(targetTokenCREATE, TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
-        hook.finishJob(jobTokenCREATE, JobResult(job, jobInstance, Phase.CREATE, Status.SUCCESS, Instant.now()))
+        val jobTokenCREATE = hook.startJob(execution, job, jobInstance, Phase.CREATE, Some(lifecycleToken))
+        val targetTokenCREATE = hook.startTarget(execution, target, target.instance, Phase.CREATE, Some(jobTokenCREATE))
+        hook.finishTarget(execution, targetTokenCREATE, TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
+        hook.finishJob(execution, jobTokenCREATE, JobResult(job, jobInstance, Phase.CREATE, Status.SUCCESS, Instant.now()))
 
         //==== BUILD =================================================================================================
-        val jobTokenBUILD = hook.startJob(job, jobInstance, Phase.BUILD, Some(lifecycleToken))
-        val targetTokenBUILD = hook.startTarget(target, target.instance, Phase.BUILD, Some(jobTokenBUILD))
-        hook.finishTarget(targetTokenBUILD, TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now()))
-        hook.finishJob(jobTokenBUILD, JobResult(job, jobInstance, Phase.BUILD, Status.SUCCESS, Instant.now()))
+        val jobTokenBUILD = hook.startJob(execution, job, jobInstance, Phase.BUILD, Some(lifecycleToken))
+        val targetTokenBUILD = hook.startTarget(execution, target, target.instance, Phase.BUILD, Some(jobTokenBUILD))
+        hook.finishTarget(execution, targetTokenBUILD, TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now()))
+        hook.finishJob(execution, jobTokenBUILD, JobResult(job, jobInstance, Phase.BUILD, Status.SUCCESS, Instant.now()))
 
         //==== VERIFY =================================================================================================
-        val jobTokenVERIFY = hook.startJob(job, jobInstance, Phase.VERIFY, Some(lifecycleToken))
-        val targetTokenVERIFY = hook.startTarget(target, target.instance, Phase.VERIFY, Some(jobTokenVERIFY))
-        val assertionToken = hook.startAssertion(assertion, Some(targetTokenVERIFY))
-        hook.finishAssertion(assertionToken, AssertionResult(assertion, Seq(), Instant.now()))
-        hook.finishTarget(targetTokenVERIFY, TargetResult(target, Phase.VERIFY, Status.SUCCESS, Instant.now()))
-        hook.finishJob(jobTokenVERIFY, JobResult(job, jobInstance, Phase.VERIFY, Status.SUCCESS, Instant.now()))
+        val jobTokenVERIFY = hook.startJob(execution, job, jobInstance, Phase.VERIFY, Some(lifecycleToken))
+        val targetTokenVERIFY = hook.startTarget(execution, target, target.instance, Phase.VERIFY, Some(jobTokenVERIFY))
+        val assertionToken = hook.startAssertion(execution, assertion, Some(targetTokenVERIFY))
+        hook.finishAssertion(execution, assertionToken, AssertionResult(assertion, Seq(), Instant.now()))
+        hook.finishTarget(execution, targetTokenVERIFY, TargetResult(target, Phase.VERIFY, Status.SUCCESS, Instant.now()))
+        hook.finishJob(execution, jobTokenVERIFY, JobResult(job, jobInstance, Phase.VERIFY, Status.SUCCESS, Instant.now()))
 
-        hook.finishLifecycle(lifecycleToken, LifecycleResult(job, jobInstance, lifecycle, Status.SUCCESS, Instant.now()))
+        hook.finishLifecycle(execution, lifecycleToken, LifecycleResult(job, jobInstance, lifecycle, Status.SUCCESS, Instant.now()))
     }
 }

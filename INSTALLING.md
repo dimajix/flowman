@@ -216,7 +216,6 @@ config:
 
 plugins:
   - flowman-delta
-  - flowman-hbase
   - flowman-aws
   - flowman-azure
   - flowman-kafka

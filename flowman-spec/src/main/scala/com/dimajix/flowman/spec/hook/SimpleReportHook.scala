@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.OutputMode
@@ -165,7 +166,7 @@ case class SimpleReportHook(
      * @param job
      * @return
      */
-    override def startLifecycle(job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
+    override def startLifecycle(excution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
         val now = Instant.now()
         logger.info(s"Creating new report to $location")
         val output = newOutput()
@@ -181,7 +182,7 @@ case class SimpleReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishLifecycle(token:LifecycleToken, result:LifecycleResult) : Unit = {
+    override def finishLifecycle(excution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit = {
         val lifecycleToken = token.asInstanceOf[ReporterLifecycleToken]
         lifecycleToken.output.foreach { p =>
             val endTime = result.endTime
@@ -199,7 +200,7 @@ case class SimpleReportHook(
      * @param job
      * @return
      */
-    override def startJob(job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(excution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val now = Instant.now()
         val output = parent.flatMap {
             case ReporterLifecycleToken(output) => output
@@ -219,7 +220,7 @@ case class SimpleReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishJob(token: JobToken, result: JobResult): Unit = {
+    override def finishJob(excution:Execution, token: JobToken, result: JobResult): Unit = {
         val jobToken = token.asInstanceOf[ReporterJobToken]
         jobToken.output.foreach { p =>
             val endTime = result.endTime
@@ -234,7 +235,7 @@ case class SimpleReportHook(
      * @param target
      * @return
      */
-    override def startTarget(target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
+    override def startTarget(excution:Execution, target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
         val now = Instant.now()
         val output = parent.flatMap {
             case ReporterJobToken(_, output) => output
@@ -251,7 +252,7 @@ case class SimpleReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishTarget(token: TargetToken, result: TargetResult): Unit = {
+    override def finishTarget(excution:Execution, token: TargetToken, result: TargetResult): Unit = {
         val targetToken = token.asInstanceOf[ReporterTargetToken]
         targetToken.output.foreach { p =>
             p.println(s"Finished ${targetToken.phase} target ${result.target.identifier} with status ${result.status} at ${result.endTime}")
@@ -263,7 +264,7 @@ case class SimpleReportHook(
      * @param assertion
      * @return
      */
-    override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = {
+    override def startAssertion(excution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = {
         val now = Instant.now()
         val output = parent.flatMap {
             case ReporterJobToken(_, output) => output
@@ -281,7 +282,7 @@ case class SimpleReportHook(
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishAssertion(token: AssertionToken, result: AssertionResult): Unit = {
+    override def finishAssertion(excution:Execution, token: AssertionToken, result: AssertionResult): Unit = {
         val assertionToken = token.asInstanceOf[ReporterAssertionToken]
         assertionToken.output.foreach { p =>
             printSubtitle(p, s"Finished EXECUTE assertion ${result.assertion.name} with status ${result.status} at ${result.endTime}")

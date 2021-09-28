@@ -143,7 +143,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def start(instance:JobInstance) : Seq[(ExecutionListener, LifecycleToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startLifecycle(job, instance, lifecycle)))
+                    Some((hook, hook.startLifecycle(this, job, instance, lifecycle)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startLifecycle: ${ex.toString}.")
@@ -155,7 +155,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def finish(tokens:Seq[(ExecutionListener, LifecycleToken)], result:LifecycleResult) : Unit = {
             tokens.foreach { case (listener, token)  =>
                 try {
-                    listener.finishLifecycle(token, result)
+                    listener.finishLifecycle(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishLifecycle: ${ex.toString}.")
@@ -198,7 +198,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def start(instance:JobInstance) : Seq[(ExecutionListener, JobToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startJob(job, instance, phase, parent)))
+                    Some((hook, hook.startJob(this, job, instance, phase, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startJob: ${ex.toString}.")
@@ -210,7 +210,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def finish(tokens:Seq[(ExecutionListener, JobToken)], result:JobResult) : Unit = {
             tokens.foreach { case (listener, token)  =>
                 try {
-                    listener.finishJob(token, result)
+                    listener.finishJob(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishJob: ${ex.toString}.")
@@ -252,7 +252,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def start() : Seq[(ExecutionListener, TargetToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startTarget(target, target.instance, phase, parent)))
+                    Some((hook, hook.startTarget(this, target, target.instance, phase, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startTarget: ${ex.toString}.")
@@ -264,7 +264,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def finish(tokens:Seq[(ExecutionListener, TargetToken)], result:TargetResult) : Unit = {
             tokens.foreach { case (listener, token)  =>
                 try {
-                    listener.finishTarget(token, result)
+                    listener.finishTarget(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishTarget: ${ex.toString}.")
@@ -304,7 +304,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def start() : Seq[(ExecutionListener, AssertionToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startAssertion(assertion, parent)))
+                    Some((hook, hook.startAssertion(this, assertion, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startAssertion: ${ex.toString}.")
@@ -316,7 +316,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def finish(tokens:Seq[(ExecutionListener, AssertionToken)], result:AssertionResult) : Unit = {
             tokens.foreach { case (listener, token)  =>
                 try {
-                    listener.finishAssertion(token, result)
+                    listener.finishAssertion(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on finishAssertion: ${ex.toString}.")

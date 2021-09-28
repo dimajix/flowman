@@ -34,7 +34,7 @@ object PartitionSpec {
 }
 
 
-case class PartitionSpec(values:MapIgnoreCase[Any]) {
+final case class PartitionSpec(values:MapIgnoreCase[Any]) {
     def toSeq : Seq[(String,Any)] = values.toSeq
     def toMap : Map[String,Any] = values.toMap
 
